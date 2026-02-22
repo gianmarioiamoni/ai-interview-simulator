@@ -1,0 +1,5 @@
+[project]
+name = "genai-project-template"
+version = "0.1.0"
+description = "Enterprise-grade Python GenAI project template"
+requires-python = ">=3.10"
