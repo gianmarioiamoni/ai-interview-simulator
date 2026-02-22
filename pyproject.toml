@@ -1,5 +1,64 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "genai-project-template"
+name = "ai-interview-simulator"
 version = "0.1.0"
-description = "Enterprise-grade Python GenAI project template"
-requires-python = ">=3.10"
+description = "AI-driven interview simulation platform with semantic retrieval, structured evaluation, and executable skill validation."
+authors = [
+    { name = "Gianmario", email = "your-email@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+keywords = [
+    "ai",
+    "langchain",
+    "langgraph",
+    "rag",
+    "interview-simulator",
+    "genai",
+    "llm",
+    "semantic-retrieval"
+]
+
+dependencies = [
+    "langchain>=0.2.0",
+    "langgraph>=0.0.50",
+    "pydantic>=2.6.0",
+    "sqlalchemy>=2.0.0",
+    "chromadb>=0.4.24",
+    "tiktoken>=0.7.0",
+    "gradio>=4.0.0",
+    "langdetect>=1.0.9",
+    "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+    "mypy>=1.9.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "domain*", "infrastructure*", "services*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra -q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["migrations"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
