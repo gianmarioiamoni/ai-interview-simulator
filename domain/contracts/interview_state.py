@@ -17,13 +17,13 @@
 from __future__ import annotations
 
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from domain.contracts.question import Question
 from domain.contracts.answer import Answer
 from domain.contracts.evaluation import EvaluationResult
 from domain.contracts.confidence import Confidence
-
+from domain.contracts.interview_progress import InterviewProgress
 
 class InterviewState(BaseModel):
 
@@ -34,6 +34,7 @@ class InterviewState(BaseModel):
     language: str = Field(default="en")
 
     # progress tracking
+    progress: InterviewProgress = Field(default=InterviewProgress.SETUP)
     questions: list[Question] = Field(default_factory=list)
     answers: list[Answer] = Field(default_factory=list)
     evaluations: list[EvaluationResult] = Field(default_factory=list)
@@ -52,7 +53,17 @@ class InterviewState(BaseModel):
 
     confidence: Optional[Confidence] = None
 
-    # machine state
-    completed: bool = False
-
     model_config = {"arbitrary_types_allowed": False}
+
+    @model_validator(mode="after")
+    def validate_progress_consistency(self) -> "InterviewState":
+
+        if self.progress == InterviewProgress.COMPLETED:
+            if not self.evaluations:
+                raise ValueError("Cannot complete interview without evaluations.")
+
+        if self.progress == InterviewProgress.IN_PROGRESS:
+            if not self.questions:
+                raise ValueError("Cannot be in progress without questions.")
+
+        return self
