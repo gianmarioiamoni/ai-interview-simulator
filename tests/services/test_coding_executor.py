@@ -133,6 +133,7 @@ def test_runtime_error_branch():
     )
 
     assert result.status.name == "RUNTIME_ERROR"
+    assert result.status == ExecutionStatus.RUNTIME_ERROR
     assert result.success is False
 
 
@@ -161,4 +162,27 @@ def test_timeout_branch():
     )
 
     assert result.status == ExecutionStatus.TIMEOUT
+    assert result.success is False
+
+def test_syntax_error_detection():
+    mock_sandbox = MagicMock()
+
+    mock_sandbox.execute.return_value = type("Raw", (), {
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "SyntaxError: invalid syntax",
+        "execution_time_ms": 10,
+        "timeout": False,
+    })()
+
+    executor = CodingExecutor(sandbox=mock_sandbox)
+
+    result = executor.execute(
+        question_id="q1",
+        user_code="",
+        function_name="solution",
+        test_cases=[],
+    )
+
+    assert result.status == ExecutionStatus.SYNTAX_ERROR
     assert result.success is False
