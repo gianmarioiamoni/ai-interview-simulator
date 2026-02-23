@@ -55,11 +55,16 @@ class CodingExecutor:
             )
 
         # Syntax error (Python exit before tests)
-        if raw.returncode != 0 and "__RESULT__" not in raw.stdout:
+        if raw.returncode != 0 and TestCaseRunner.RESULT_MARKER not in raw.stdout:
+            error_status = (
+                ExecutionStatus.SYNTAX_ERROR 
+                if "SyntaxError" in raw.stderr 
+                else ExecutionStatus.RUNTIME_ERROR
+            )
             return ExecutionResult(
                 question_id=question_id,
                 execution_type=ExecutionType.CODING,
-                status=ExecutionStatus.RUNTIME_ERROR,
+                status=error_status,
                 success=False,
                 output=raw.stdout,
                 error=raw.stderr,
