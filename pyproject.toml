@@ -51,6 +51,9 @@ include = ["app*", "domain*", "infrastructure*", "services*"]
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = "-ra -q"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 100
