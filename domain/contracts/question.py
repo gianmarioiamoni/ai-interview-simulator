@@ -36,4 +36,6 @@ class Question(BaseModel):
     # difficulty useful for future scoring
     difficulty: int = Field(..., ge=1, le=5)
 
+    humanized: bool = False
+
     model_config = {"frozen": True} # makes the model immutable

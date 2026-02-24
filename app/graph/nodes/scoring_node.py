@@ -15,7 +15,7 @@ def scoring_node(state: InterviewState) -> InterviewState:
 
         # Prevent double scoring of same question
         if state.current_question_id == last_evaluation.question_id:
-            state.total_score += last_evaluation.score
+            state.total_score = state.computed_total_score
 
     # Coding / SQL questions
     elif state.execution_results:
@@ -24,23 +24,17 @@ def scoring_node(state: InterviewState) -> InterviewState:
         if state.current_question_id == last_execution.question_id:
 
             if last_execution.status == ExecutionStatus.SUCCESS:
-                state.total_score += 100.0
+                state.total_score = state.computed_total_score
 
             elif last_execution.status == ExecutionStatus.FAILED_TESTS:
                 if last_execution.total_tests > 0:
                     ratio = last_execution.passed_tests / last_execution.total_tests
-                    state.total_score += ratio * 100.0
+                    state.total_score = state.computed_total_score
 
             else:
-                state.total_score += 0.0
+                state.total_score = state.computed_total_score
 
-    # Move pointer only if not follow-up
-    if not state.last_was_follow_up:
-        state.current_question_index += 1
-
-        if state.current_question_index < len(state.questions):
-            state.current_question_id = state.questions[state.current_question_index].id
-        else:
-            state.current_question_id = None
+    # Note: current_question_index is managed by evaluator_node
+    # to handle both regular questions and follow-ups correctly
 
     return state

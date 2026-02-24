@@ -3,5 +3,9 @@
 from typing import Protocol
 
 
+class LLMResponse(Protocol):
+    content: str
+
+
 class LLMPort(Protocol):
-    def invoke(self, prompt: str): ...
+    def invoke(self, prompt: str) -> LLMResponse: ...

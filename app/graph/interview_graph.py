@@ -48,7 +48,11 @@ def build_interview_graph(llm):
 
     graph.add_conditional_edges(
         "termination",
-        lambda state: ("ask_question" if state.progress.name != "COMPLETED" else END),
+        lambda state: (
+            END
+            if state.awaiting_user_input
+            else (END if state.progress.name == "COMPLETED" else "ask_question")
+        ),
     )
 
     return graph.compile()
