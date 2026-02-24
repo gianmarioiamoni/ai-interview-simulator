@@ -10,12 +10,16 @@
 #
 
 from pydantic import BaseModel, Field
-from typing import Dict, Any
+
+from domain.contracts.retrieval_metadata import RetrievalMetadata
 
 
 class RetrievalDocument(BaseModel):
     id: str = Field(..., min_length=1)
     content: str = Field(..., min_length=1)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: RetrievalMetadata
 
-    model_config = {"frozen": True}
+    model_config = {
+        "frozen": True,
+        "extra": "forbid",
+    }
