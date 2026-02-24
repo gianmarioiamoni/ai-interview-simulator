@@ -38,4 +38,7 @@ class Question(BaseModel):
 
     humanized: bool = False
 
-    model_config = {"frozen": True} # makes the model immutable
+    model_config = {
+        "frozen": True,
+        "extra": "forbid",
+    }

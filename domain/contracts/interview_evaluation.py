@@ -12,6 +12,7 @@ from typing import List
 
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.performance_dimension import PerformanceDimension
+from domain.contracts.confidence import Confidence
 
 
 class InterviewEvaluation(BaseModel):
@@ -20,7 +21,7 @@ class InterviewEvaluation(BaseModel):
     hiring_probability: float = Field(..., ge=0.0, le=100.0)
     per_question_assessment: List[QuestionEvaluation]
     improvement_suggestions: List[str]
-    confidence: float = Field(..., ge=0.0, le=1.0)
+    confidence: Confidence
 
     model_config = {
         "frozen": True,

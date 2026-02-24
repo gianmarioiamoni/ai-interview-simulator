@@ -5,11 +5,11 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.evaluation import EvaluationResult
+from domain.contracts.question_evaluation import QuestionEvaluation
 
 
 def test_evaluation_score_valid() -> None:
-    result = EvaluationResult(
+    result = QuestionEvaluation(
         question_id="q1",
         score=85.0,
         max_score=100.0,
@@ -24,7 +24,7 @@ def test_evaluation_score_valid() -> None:
 
 def test_evaluation_score_above_100_invalid() -> None:
     with pytest.raises(ValidationError):
-        EvaluationResult(
+        QuestionEvaluation(
             question_id="q1",
             score=120.0,
             max_score=100.0,

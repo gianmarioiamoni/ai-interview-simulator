@@ -4,12 +4,12 @@ import pytest
 from pydantic import ValidationError
 
 from domain.contracts.evaluation_report import EvaluationReport
-from domain.contracts.evaluation import EvaluationResult
+from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.confidence import Confidence
 
 
-def _evaluation() -> EvaluationResult:
-    return EvaluationResult(
+def _evaluation() -> QuestionEvaluation:
+    return QuestionEvaluation(
         question_id="q1",
         score=80.0,
         max_score=100.0,

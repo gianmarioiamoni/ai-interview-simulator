@@ -2,14 +2,15 @@
 
 # Confidence contract
 #
-# This contract defines the structure of a confidence that can be used in the interview simulator.
-# It is used to store the confidence in the database and to retrieve it when needed.
+# Represents model confidence in the evaluation process.
 #
-# The confidence is associated with a question and contains the confidence in the answer.
-# The base confidence is the confidence of the model on single answer.
-# The final confidence is the post-interview aggregated confidence.
+# base  -> confidence at question level (LLM certainty)
+# final -> aggregated post-interview confidence
 #
-# Responsability: represents a frozen and immutable confidence in time.
+# Responsibility:
+# - immutable value object
+# - strict bounds validation
+# - no extra fields allowed
 
 from pydantic import BaseModel, Field
 
@@ -18,4 +19,7 @@ class Confidence(BaseModel):
     base: float = Field(..., ge=0.0, le=1.0)
     final: float = Field(..., ge=0.0, le=1.0)
 
-    model_config = {"frozen": True}
+    model_config = {
+        "frozen": True,
+        "extra": "forbid",
+    }
