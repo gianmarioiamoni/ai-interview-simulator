@@ -140,10 +140,6 @@ Constraints:
         if set(names) != ALLOWED_DIMENSIONS:
             raise ValueError("Invalid performance dimension set")
 
-        # Confidence bounds
-        if evaluation.confidence < 0.0 or evaluation.confidence > 1.0:
-            raise ValueError("Invalid confidence value")
-
     # ---------------------------------------------------------
 
     def _verify_consistency(self, evaluation: InterviewEvaluation) -> None:
@@ -220,11 +216,11 @@ Constraints:
             overall = round((avg_score / 100.0) * 10.0, 1)
 
         dimensions = [
-            PerformanceDimension(
-                name=name,
-                score=overall,
-                justification="Deterministic fallback evaluation",
-            )
+            {
+                "name": name,
+                "score": overall,
+                "justification": "Deterministic fallback evaluation",
+            }
             for name in ALLOWED_DIMENSIONS
         ]
 

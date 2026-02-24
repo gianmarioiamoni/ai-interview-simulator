@@ -7,6 +7,8 @@
 # - verify deterministic normalization
 
 import pytest
+import json
+
 from unittest.mock import Mock
 
 from services.interview_evaluation_service import (
@@ -14,6 +16,7 @@ from services.interview_evaluation_service import (
 )
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.interview_evaluation import InterviewEvaluation
+from domain.contracts.performance_dimension import PerformanceDimension
 
 # ------------------------------------------------------------------
 # Helpers
@@ -154,12 +157,15 @@ def test_fail_after_max_retries():
 
     service = InterviewEvaluationService(llm)
 
-    with pytest.raises(Exception):
-        service.evaluate(
-            per_question_evaluations=build_question_evaluations(),
-            interview_type="technical",
-            role="backend engineer",
-        )
+  
+    result = service.evaluate(
+        per_question_evaluations=build_question_evaluations(),
+        interview_type="technical",
+        role="backend engineer",
+    )
+    # Should fallback after retries
+    assert result.confidence == 0.3
+    assert result.improvement_suggestions == ["Manual review recommended"]
 
 
 def test_fail_after_inconsistent_score_retries():
@@ -184,12 +190,309 @@ def test_fail_after_inconsistent_score_retries():
 
     service = InterviewEvaluationService(llm)
 
-    with pytest.raises(Exception):
-        service.evaluate(
-            per_question_evaluations=build_question_evaluations(),
-            interview_type="technical",
-            role="backend engineer",
-        )
+    result = service.evaluate(
+        per_question_evaluations=build_question_evaluations(),
+        interview_type="technical",
+        role="backend engineer",
+    )
 
-    # Should attempt MAX_RETRIES + 1 times
+    # Should fallback after retries
+    assert result.confidence == 0.3
+    assert result.improvement_suggestions == ["Manual review recommended"]
     assert llm.invoke.call_count == 3
+
+
+def test_retry_when_extra_field_in_root():
+
+    llm = Mock()
+
+    invalid_payload = {
+        "overall_score": 7.0,
+        "performance_dimensions": [
+            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
+            {"name": "Communication", "score": 7, "justification": "Clear"},
+            {"name": "Problem Solving", "score": 7, "justification": "Good"},
+            {"name": "System Design", "score": 7, "justification": "Good"},
+        ],
+        "hiring_probability": 70,
+        "per_question_assessment": [],
+        "improvement_suggestions": [],
+        "confidence": 0.9,
+        "unexpected_field": "hallucination",  # <-- extra
+    }
+
+    llm.invoke.return_value.content = __import__("json").dumps(invalid_payload)
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        per_question_evaluations=build_question_evaluations(),
+        interview_type="technical",
+        role="backend engineer",
+    )
+
+    # Should fallback after retries
+    assert result.confidence == 0.3
+    assert result.improvement_suggestions == ["Manual review recommended"]
+
+
+def test_retry_when_extra_field_in_dimension():
+
+    llm = Mock()
+
+    invalid_payload = {
+        "overall_score": 7.0,
+        "performance_dimensions": [
+            {
+                "name": "Technical Depth",
+                "score": 7,
+                "justification": "Solid",
+                "extra": "invalid",  # <-- extra
+            },
+            {"name": "Communication", "score": 7, "justification": "Clear"},
+            {"name": "Problem Solving", "score": 7, "justification": "Good"},
+            {"name": "System Design", "score": 7, "justification": "Good"},
+        ],
+        "hiring_probability": 70,
+        "per_question_assessment": [],
+        "improvement_suggestions": [],
+        "confidence": 0.9,
+    }
+
+    llm.invoke.return_value.content = __import__("json").dumps(invalid_payload)
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        per_question_evaluations=build_question_evaluations(),
+        interview_type="technical",
+        role="backend engineer",
+    )
+
+    assert result.confidence == 0.3
+
+
+def test_retry_when_required_field_missing():
+
+    llm = Mock()
+
+    invalid_payload = {
+        # missing overall_score
+        "performance_dimensions": [
+            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
+            {"name": "Communication", "score": 7, "justification": "Clear"},
+            {"name": "Problem Solving", "score": 7, "justification": "Good"},
+            {"name": "System Design", "score": 7, "justification": "Good"},
+        ],
+        "hiring_probability": 70,
+        "per_question_assessment": [],
+        "improvement_suggestions": [],
+        "confidence": 0.9,
+    }
+
+    llm.invoke.return_value.content = __import__("json").dumps(invalid_payload)
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        per_question_evaluations=build_question_evaluations(),
+        interview_type="technical",
+        role="backend engineer",
+    )
+
+    assert result.confidence == 0.3
+
+
+def test_invalid_dimension_count_triggers_fallback():
+
+    llm = Mock()
+
+    invalid_payload = {
+        "overall_score": 7.0,
+        "performance_dimensions": [  # only 3
+            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
+            {"name": "Communication", "score": 7, "justification": "Clear"},
+            {"name": "Problem Solving", "score": 7, "justification": "Good"},
+        ],
+        "hiring_probability": 70,
+        "per_question_assessment": [],
+        "improvement_suggestions": [],
+        "confidence": 0.8,
+    }
+
+    llm.invoke.return_value.content = json.dumps(invalid_payload)
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        build_question_evaluations(),
+        "technical",
+        "backend engineer",
+    )
+
+    assert result.confidence == 0.3
+
+
+def test_duplicate_dimension_names_triggers_fallback():
+
+    llm = Mock()
+
+    invalid_payload = {
+        "overall_score": 7.0,
+        "performance_dimensions": [
+            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
+            {"name": "Technical Depth", "score": 7, "justification": "Duplicate"},
+            {"name": "Problem Solving", "score": 7, "justification": "Good"},
+            {"name": "System Design", "score": 7, "justification": "Good"},
+        ],
+        "hiring_probability": 70,
+        "per_question_assessment": [],
+        "improvement_suggestions": [],
+        "confidence": 0.8,
+    }
+
+    llm.invoke.return_value.content = json.dumps(invalid_payload)
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        build_question_evaluations(),
+        "technical",
+        "backend engineer",
+    )
+
+    assert result.confidence == 0.3
+
+
+def test_invalid_dimension_set_triggers_fallback():
+
+    llm = Mock()
+
+    invalid_payload = {
+        "overall_score": 7.0,
+        "performance_dimensions": [
+            {"name": "Leadership", "score": 7, "justification": "Invalid"},
+            {"name": "Communication", "score": 7, "justification": "Clear"},
+            {"name": "Problem Solving", "score": 7, "justification": "Good"},
+            {"name": "System Design", "score": 7, "justification": "Good"},
+        ],
+        "hiring_probability": 70,
+        "per_question_assessment": [],
+        "improvement_suggestions": [],
+        "confidence": 0.8,
+    }
+
+    llm.invoke.return_value.content = json.dumps(invalid_payload)
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        build_question_evaluations(),
+        "technical",
+        "backend engineer",
+    )
+
+    assert result.confidence == 0.3
+
+
+def test_invalid_confidence_triggers_fallback():
+
+    llm = Mock()
+
+    invalid_payload = {
+        "overall_score": 7.0,
+        "performance_dimensions": [
+            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
+            {"name": "Communication", "score": 7, "justification": "Clear"},
+            {"name": "Problem Solving", "score": 7, "justification": "Good"},
+            {"name": "System Design", "score": 7, "justification": "Good"},
+        ],
+        "hiring_probability": 70,
+        "per_question_assessment": [],
+        "improvement_suggestions": [],
+        "confidence": 5.0,  # invalid
+    }
+
+    llm.invoke.return_value.content = json.dumps(invalid_payload)
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        build_question_evaluations(),
+        "technical",
+        "backend engineer",
+    )
+
+    assert result.confidence == 0.3
+
+
+def test_confidence_with_single_dimension():
+
+    service = InterviewEvaluationService(Mock())
+
+    dimensions = [
+        PerformanceDimension(name="Technical Depth", score=7, justification="Only one")
+    ]
+
+    confidence = service._compute_confidence(dimensions)
+
+    assert confidence == 0.5
+
+
+def test_invalid_confidence_value_branch():
+
+    llm = Mock()
+
+    valid_except_confidence = {
+        "overall_score": 7.0,
+        "performance_dimensions": [
+            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
+            {"name": "Communication", "score": 7, "justification": "Clear"},
+            {"name": "Problem Solving", "score": 7, "justification": "Good"},
+            {"name": "System Design", "score": 7, "justification": "Good"},
+        ],
+        "hiring_probability": 70,
+        "per_question_assessment": [],
+        "improvement_suggestions": [],
+        "confidence": -1.0,  # invalid but passes JSON validation
+    }
+
+    llm.invoke.return_value.content = json.dumps(valid_except_confidence)
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        build_question_evaluations(),
+        "technical",
+        "backend engineer",
+    )
+
+    assert result.confidence == 0.3
+
+
+def test_fallback_with_no_question_evaluations():
+
+    service = InterviewEvaluationService(Mock())
+
+    result = service._fallback_evaluation([])
+
+    assert result.overall_score == 5.0
+    assert result.confidence == 0.3
+
+
+def test_guard_final_fallback_branch(monkeypatch):
+
+    service = InterviewEvaluationService(Mock())
+
+    monkeypatch.setattr(
+        "services.interview_evaluation_service.MAX_RETRIES",
+        -1,
+    )
+
+    result = service.evaluate(
+        build_question_evaluations(),
+        "technical",
+        "backend engineer",
+    )
+
+    assert result.confidence == 0.3
