@@ -12,6 +12,5 @@ class InterviewProgress(str, Enum):
     SETUP = "setup"
     QUESTIONS_GENERATED = "questions_generated"
     IN_PROGRESS = "in_progress"
-    EVALUATING = "evaluating"
     COMPLETED = "completed"
     FAILED = "failed"

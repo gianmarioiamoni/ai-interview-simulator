@@ -56,7 +56,10 @@ class ExecutionResult(BaseModel):
     # Performance
     execution_time_ms: int = Field(default=0, ge=0)
 
-    model_config = {"frozen": True}
+    model_config = {
+        "frozen": True,
+        "extra": "forbid",
+    }
 
     @model_validator(mode="after")
     def validate_consistency(self) -> "ExecutionResult":
@@ -77,5 +80,10 @@ class ExecutionResult(BaseModel):
         # Test consistency
         if self.passed_tests > self.total_tests:
             raise ValueError("passed_tests cannot exceed total_tests")
+
+        # If total_tests > 0, execution_type must be CODING
+        if self.total_tests > 0 and self.execution_type != ExecutionType.CODING:
+            raise ValueError("Test statistics only valid for CODING execution")
+
 
         return self
