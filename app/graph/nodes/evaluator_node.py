@@ -1,19 +1,15 @@
-# app/graph/nodes/evaluator_node.py
-
 # Evaluator node
 #
-# This node is responsible for evaluating the answer of the candidate.
-# It is used to evaluate the answer of the candidate and to generate a follow-up question if needed.
-#
-# Responsability: evaluates the answer of the candidate and generates a follow-up question if needed.
+# Responsibility: evaluates written answers and optionally generates follow-up questions.
 
 from app.ports.llm_port import LLMPort
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question import QuestionType
+from domain.contracts.question import QuestionType, Question
 from services.prompt_builders.evaluation_prompt_builder import build_evaluation_prompt
 from domain.contracts.evaluation_decision import EvaluationDecision
-from domain.contracts.evaluation import EvaluationResult
-from domain.contracts.question import Question
+from domain.contracts.question_evaluation import QuestionEvaluation
+import json
+
 
 def build_evaluator_node(llm: LLMPort):
 
@@ -22,22 +18,21 @@ def build_evaluator_node(llm: LLMPort):
         if not state.answers:
             return state
 
-        # If we are waiting for an answer to the current question, do nothing
-        if state.current_question_id:
-            answered_current = any(
+        if not state.current_question_id:
+            return state
+
+        answered_current = any(
             a.question_id == state.current_question_id for a in state.answers
         )
+
         if not answered_current:
             return state
 
         last_answer = state.answers[-1]
 
-        # If the current_question_id does not match the last answer,
-        # we are waiting for a new answer -> do nothing
-        if state.current_question_id and state.current_question_id != last_answer.question_id:
+        if state.current_question_id != last_answer.question_id:
             return state
 
-        # Avoid double evaluation
         if any(ev.question_id == last_answer.question_id for ev in state.evaluations):
             return state
 
@@ -50,26 +45,34 @@ def build_evaluator_node(llm: LLMPort):
             return state
 
         if question.type != QuestionType.WRITTEN:
-            state.last_was_follow_up = False
-            state.current_question_id = None
-            state.current_question_index += 1
-            return state
+            return state.model_copy(
+                update={
+                    "last_was_follow_up": False,
+                    "current_question_id": None,
+                    "current_question_index": state.current_question_index + 1,
+                }
+            )
 
         prompt = build_evaluation_prompt(question, last_answer)
         response = llm.invoke(prompt)
 
-        decision = EvaluationDecision.model_validate_json(response.content)
+        try:
+            decision = EvaluationDecision.model_validate_json(response.content)
+        except Exception:
+            # Hard failure fallback
+            return state
 
-        evaluation = EvaluationResult(
+        evaluation = QuestionEvaluation(
             question_id=question.id,
             score=decision.score,
             max_score=100,
             passed=decision.score >= 60,
             feedback=decision.feedback,
+            strengths=decision.strengths,
+            weaknesses=decision.weaknesses,
         )
 
-        state.evaluations.append(evaluation)
-        state.awaiting_user_input = False
+        new_evaluations = state.evaluations + [evaluation]
 
         can_generate_followup = (
             decision.clarification_needed
@@ -88,28 +91,32 @@ def build_evaluator_node(llm: LLMPort):
                 difficulty=question.difficulty,
             )
 
-            insert_index = state.current_question_index + 1
-
-            state.questions.insert(
-                state.current_question_index + 1,
-                followup_question,
+            new_questions = (
+                state.questions[: state.current_question_index + 1]
+                + [followup_question]
+                + state.questions[state.current_question_index + 1 :]
             )
 
-            state.current_question_index = insert_index
-            state.current_question_id = followup_question.id
-            state.follow_up_count += 1
-            state.last_was_follow_up = True
+            return state.model_copy(
+                update={
+                    "evaluations": new_evaluations,
+                    "questions": new_questions,
+                    "current_question_index": state.current_question_index + 1,
+                    "current_question_id": followup_question.id,
+                    "follow_up_count": state.follow_up_count + 1,
+                    "last_was_follow_up": True,
+                    "awaiting_user_input": False,
+                }
+            )
 
-            return state
-
-        state.last_was_follow_up = False
-        state.current_question_id = None
-
-        state.current_question_index += 1
-
-        if state.current_question_index >= len(state.questions):
-            state.current_question_id = None
-
-        return state
+        return state.model_copy(
+            update={
+                "evaluations": new_evaluations,
+                "last_was_follow_up": False,
+                "current_question_id": None,
+                "current_question_index": state.current_question_index + 1,
+                "awaiting_user_input": False,
+            }
+        )
 
     return evaluator_node
