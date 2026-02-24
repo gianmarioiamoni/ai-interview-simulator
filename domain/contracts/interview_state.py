@@ -24,6 +24,7 @@ from domain.contracts.answer import Answer
 from domain.contracts.evaluation import EvaluationResult
 from domain.contracts.confidence import Confidence
 from domain.contracts.interview_progress import InterviewProgress
+from domain.contracts.execution_result import ExecutionResult
 
 class InterviewState(BaseModel):
 
@@ -46,7 +47,7 @@ class InterviewState(BaseModel):
     follow_up_count: int = Field(default=0, ge=0, le=2)
 
     # execution engines
-    execution_results: list[str] = Field(default_factory=list)
+    execution_results: list[ExecutionResult] = Field(default_factory=list)
 
     # aggregated scoring
     total_score: float = Field(default=0.0, ge=0.0, le=100.0)
@@ -54,6 +55,10 @@ class InterviewState(BaseModel):
     confidence: Optional[Confidence] = None
 
     model_config = {"arbitrary_types_allowed": False}
+
+    # runtime orchestration state fir LangGraph
+    current_question_index: int = Field(default=0, ge=0)
+    last_was_follow_up: bool = Field(default=False)
 
     @model_validator(mode="after")
     def validate_progress_consistency(self) -> "InterviewState":
