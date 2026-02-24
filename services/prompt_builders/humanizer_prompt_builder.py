@@ -32,5 +32,5 @@ Previous conversation context:
 {history_snippet}
 
 Original question:
-{question.content}
+{question.prompt}
 """.strip()

@@ -40,6 +40,9 @@ class InterviewState(BaseModel):
     answers: list[Answer] = Field(default_factory=list)
     evaluations: list[EvaluationResult] = Field(default_factory=list)
 
+    # conversational memory for humanizer
+    chat_history: list[str] = Field(default_factory=list)
+
     # pointer to the current question
     current_question_id: Optional[str] = None
 
@@ -50,7 +53,12 @@ class InterviewState(BaseModel):
     execution_results: list[ExecutionResult] = Field(default_factory=list)
 
     # aggregated scoring
-    total_score: float = Field(default=0.0, ge=0.0, le=100.0)
+    total_score: float = Field(default=0.0, ge=0.0)
+    @property
+    def computed_total_score(self) -> float:
+        if not self.evaluations:
+            return 0.0
+        return sum(ev.score for ev in self.evaluations) / len(self.evaluations)
 
     confidence: Optional[Confidence] = None
 
@@ -62,6 +70,8 @@ class InterviewState(BaseModel):
 
     # option to enable huminizer
     enable_humanizer: bool = True
+
+    awaiting_user_input: bool = False
 
     @model_validator(mode="after")
     def validate_progress_consistency(self) -> "InterviewState":

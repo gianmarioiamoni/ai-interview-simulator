@@ -14,7 +14,7 @@ You are a senior technical interviewer.
 Evaluate the candidate answer.
 
 Question:
-{question.content}
+{question.prompt}
 
 Answer:
 {answer.content}
