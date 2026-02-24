@@ -12,13 +12,17 @@
 # - provides deterministic fallback strategy
 
 from typing import List
+
 import json
 import statistics
+import logging
 
 from app.ports.llm_port import LLMPort
 from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.performance_dimension import PerformanceDimension
 from domain.contracts.question_evaluation import QuestionEvaluation
+
+logger = logging.getLogger(__name__)
 
 
 MAX_RETRIES = 2
@@ -53,6 +57,15 @@ class InterviewEvaluationService:
 
         for attempt in range(MAX_RETRIES + 1):
 
+            logger.info(
+                "evaluation_attempt",
+                extra={
+                    "attempt": attempt,
+                    "interview_type": interview_type,
+                    "role": role,
+                },
+            )
+
             response = self._llm.invoke(prompt)
 
             try:
@@ -63,10 +76,33 @@ class InterviewEvaluationService:
                 self._enforce_schema_rules(evaluation)
                 self._verify_consistency(evaluation)
 
+                logger.info(
+                    "evaluation_success",
+                    extra={
+                        "attempt": attempt,
+                        "normalized_score": evaluation.overall_score,
+                        "confidence": evaluation.confidence,
+                    },
+                )
+
                 return self._normalize(evaluation)
 
             except Exception:
+                logger.warning(
+                    "evaluation_retry",
+                    extra={
+                        "attempt": attempt,
+                        "error_type": type(e).__name__,
+                    },
+                )
+
                 if attempt == MAX_RETRIES:
+                    logger.error(
+                        "evaluation_fallback_triggered",
+                        extra={
+                            "reason": type(e).__name__,
+                        },
+                    )
                     return self._fallback_evaluation(per_question_evaluations)
 
         # Should never be reached
@@ -248,8 +284,11 @@ Constraints:
         end = text.rfind("}")
 
         if start == -1 or end == -1 or end <= start:
+            logger.warning("json_extraction_failed")
             raise ValueError("No JSON object found in response")
 
         candidate = text[start : end + 1]
+        
+        logger.info("json_extraction_used")
 
         return json.loads(candidate)
