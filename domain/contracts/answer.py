@@ -20,4 +20,7 @@ class Answer(BaseModel):
     # useful for follow-up tracking
     attempt: int = Field(..., ge=1)
 
-    model_config = {"frozen": True} # makes the model immutable
+    model_config = {
+        "frozen": True,
+        "extra": "forbid",
+    }
