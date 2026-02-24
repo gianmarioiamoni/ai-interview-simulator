@@ -112,8 +112,7 @@ def test_followup_generated_once():
 
     state.answers.append(Answer(question_id="q1", content="REST is ...", attempt=1))
 
-    result_dict = graph.invoke(state)
-    result = InterviewState(**result_dict)
+    result = graph.invoke(state)
 
     # Now answer follow-up
     followup_question = result.questions[1]
@@ -122,8 +121,7 @@ def test_followup_generated_once():
         Answer(question_id=followup_question.id, content="HTTP methods are...", attempt=1)
     )
 
-    final_dict = graph.invoke(result)
-    final_state = InterviewState(**final_dict)
+    final_state = graph.invoke(result)
 
     assert final_state.follow_up_count == 1
     # total_score is the average of all evaluations: (60 + 75) / 2 = 67.5
