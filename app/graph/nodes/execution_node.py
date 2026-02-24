@@ -1,24 +1,33 @@
 # app/graph/nodes/execution_node.py
 
-# Responsibility:
-# Execute code
-# Timeout
-# Structured ExecutionResult
-
 from domain.contracts.interview_state import InterviewState
+from services.coding_engine.coding_executor import CodingExecutor
+from services.sql_engine.sql_executor import SQLExecutor
 
 
 def execution_node(state: InterviewState) -> InterviewState:
-    # Only execute if question type requires it
-    if not state.current_question:
+    # No answers yet
+    if not state.answers:
         return state
 
-    if state.current_question.type not in ["coding", "sql"]:
+    last_answer = state.answers[-1]
+
+    question = next(
+        (q for q in state.questions if q.id == last_answer.question_id), None
+    )
+
+    if question is None:
         return state
 
-    # Call appropriate engine
-    result = run_engine(question=state.current_question, answer=state.current_answer)
+    # Only execute for coding or sql
+    if question.type == "coding":
+        executor = CodingExecutor()
+        result = executor.execute(question, last_answer)
+        state.execution_results.append(result)
 
-    state.execution_result = result
+    elif question.type == "sql":
+        executor = SQLExecutor()
+        result = executor.execute(question, last_answer)
+        state.execution_results.append(result)
 
     return state
