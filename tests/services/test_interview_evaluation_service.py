@@ -496,3 +496,68 @@ def test_guard_final_fallback_branch(monkeypatch):
     )
 
     assert result.confidence == 0.3
+
+
+def test_json_with_prefix_text():
+
+    llm = Mock()
+
+    payload = valid_llm_payload()
+
+    dirty_response = f"""
+    Sure! Here is your evaluation:
+
+    {json.dumps(payload)}
+
+    Let me know if you need more details.
+    """
+
+    llm.invoke.return_value.content = dirty_response
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        build_question_evaluations(),
+        "technical",
+        "backend engineer",
+    )
+
+    assert result.overall_score == 7.0
+
+
+def test_json_with_suffix_text():
+
+    llm = Mock()
+
+    payload = valid_llm_payload()
+
+    dirty_response = json.dumps(payload) + "\n\nThanks!"
+
+    llm.invoke.return_value.content = dirty_response
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        build_question_evaluations(),
+        "technical",
+        "backend engineer",
+    )
+
+    assert result.overall_score == 7.0
+
+
+def test_no_json_triggers_fallback():
+
+    llm = Mock()
+    llm.invoke.return_value.content = "Completely invalid output"
+
+    service = InterviewEvaluationService(llm)
+
+    result = service.evaluate(
+        build_question_evaluations(),
+        "technical",
+        "backend engineer",
+    )
+
+    assert result.confidence == 0.3
+
