@@ -1,3 +1,5 @@
+# domain/contracts/interview_evaluation.py
+
 # Interview-level evaluation contract
 #
 # Represents the final structured evaluation of the whole interview.
@@ -15,6 +17,11 @@ class PerformanceDimension(BaseModel):
     score: float = Field(..., ge=1.0, le=10.0)
     justification: str = Field(..., min_length=1)
 
+    model_config = {
+        "frozen": True,
+        "extra": "forbid",
+    }
+
 
 class InterviewEvaluation(BaseModel):
     overall_score: float = Field(..., ge=1.0, le=10.0)
@@ -29,4 +36,7 @@ class InterviewEvaluation(BaseModel):
 
     confidence: float = Field(..., ge=0.0, le=1.0)
 
-    model_config = {"frozen": True}
+    model_config = {
+        "frozen": True,
+        "extra": "forbid",
+    }
