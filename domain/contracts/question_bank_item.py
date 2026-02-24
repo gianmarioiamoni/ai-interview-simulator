@@ -1,26 +1,28 @@
-# app/domain/contracts/question_bank_item.py
-
-# QuestionBankItem contract
-#
-# Represents a curated question stored in the semantic question bank.
-# This is NOT the runtime interview question.
-# It includes metadata required for RAG filtering and retrieval.
-
-from __future__ import annotations
-
-from typing import Literal
 from pydantic import BaseModel, Field
+from enum import Enum
+
+from domain.contracts.interview_area import InterviewArea, InterviewType
+from domain.contracts.role import Role
+
+
+class SeniorityLevel(str, Enum):
+    JUNIOR = "junior"
+    MID = "mid"
+    SENIOR = "senior"
 
 
 class QuestionBankItem(BaseModel):
     id: str = Field(..., min_length=1)
     text: str = Field(..., min_length=1)
 
-    interview_type: Literal["hr", "technical"]
-    role: str = Field(..., min_length=1)
-    area: str = Field(..., min_length=1)
+    interview_type: InterviewType
+    role: Role
+    area: InterviewArea
 
-    level: Literal["junior", "mid", "senior"]
+    level: SeniorityLevel
     difficulty: int = Field(..., ge=1, le=5)
 
-    model_config = {"frozen": True}
+    model_config = {
+        "frozen": True,
+        "extra": "forbid",
+    }
