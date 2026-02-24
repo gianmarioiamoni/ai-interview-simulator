@@ -55,4 +55,24 @@ def build_interview_graph(llm):
         ),
     )
 
-    return graph.compile()
+    compiled = graph.compile()
+
+    # Save original invoke to avoid recursion
+    original_invoke = compiled.invoke
+
+    def invoke_with_model(state: InterviewState | dict) -> InterviewState:
+        # Normalize input
+        if isinstance(state, dict):
+            state = InterviewState.model_validate(state)
+
+        result = original_invoke(state)
+
+        # Normalize output
+        if isinstance(result, dict):
+            return InterviewState.model_validate(result)
+
+        return result
+
+    compiled.invoke = invoke_with_model
+
+    return compiled
