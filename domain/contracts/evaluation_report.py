@@ -17,7 +17,7 @@
 
 from pydantic import BaseModel, Field, model_validator
 
-from domain.contracts.evaluation import EvaluationResult
+from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.confidence import Confidence
 
 
@@ -26,7 +26,7 @@ class EvaluationReport(BaseModel):
     total_score: float = Field(..., ge=0.0, le=100.0)
     passed: bool
     feedback: str = Field(..., min_length=1)
-    evaluations: list[EvaluationResult] = Field(default_factory=list)
+    evaluations: list[QuestionEvaluation] = Field(default_factory=list)
     confidence: Confidence
 
     @model_validator(mode="after")

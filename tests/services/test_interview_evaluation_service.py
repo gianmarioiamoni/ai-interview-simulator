@@ -1,3 +1,5 @@
+# tests/services/test_interview_evaluation_service.py
+
 # Tests for InterviewEvaluationService
 #
 # Responsibility:
@@ -164,7 +166,8 @@ def test_fail_after_max_retries():
         role="backend engineer",
     )
     # Should fallback after retries
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
     assert result.improvement_suggestions == ["Manual review recommended"]
 
 
@@ -197,7 +200,8 @@ def test_fail_after_inconsistent_score_retries():
     )
 
     # Should fallback after retries
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
     assert result.improvement_suggestions == ["Manual review recommended"]
     assert llm.invoke.call_count == 3
 
@@ -232,7 +236,8 @@ def test_retry_when_extra_field_in_root():
     )
 
     # Should fallback after retries
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
     assert result.improvement_suggestions == ["Manual review recommended"]
 
 
@@ -269,7 +274,8 @@ def test_retry_when_extra_field_in_dimension():
         role="backend engineer",
     )
 
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 
 
 def test_retry_when_required_field_missing():
@@ -300,7 +306,8 @@ def test_retry_when_required_field_missing():
         role="backend engineer",
     )
 
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 
 
 def test_invalid_dimension_count_triggers_fallback():
@@ -330,7 +337,8 @@ def test_invalid_dimension_count_triggers_fallback():
         "backend engineer",
     )
 
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 
 
 def test_duplicate_dimension_names_triggers_fallback():
@@ -361,7 +369,8 @@ def test_duplicate_dimension_names_triggers_fallback():
         "backend engineer",
     )
 
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 
 
 def test_invalid_dimension_set_triggers_fallback():
@@ -392,7 +401,8 @@ def test_invalid_dimension_set_triggers_fallback():
         "backend engineer",
     )
 
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 
 
 def test_invalid_confidence_triggers_fallback():
@@ -423,7 +433,8 @@ def test_invalid_confidence_triggers_fallback():
         "backend engineer",
     )
 
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 
 
 def test_confidence_with_single_dimension():
@@ -467,7 +478,8 @@ def test_invalid_confidence_value_branch():
         "backend engineer",
     )
 
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 
 
 def test_fallback_with_no_question_evaluations():
@@ -477,7 +489,8 @@ def test_fallback_with_no_question_evaluations():
     result = service._fallback_evaluation([])
 
     assert result.overall_score == 5.0
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 
 
 def test_guard_final_fallback_branch(monkeypatch):
@@ -495,7 +508,8 @@ def test_guard_final_fallback_branch(monkeypatch):
         "backend engineer",
     )
 
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 
 
 def test_json_with_prefix_text():
@@ -559,5 +573,6 @@ def test_no_json_triggers_fallback():
         "backend engineer",
     )
 
-    assert result.confidence == 0.3
+    assert result.confidence.base == 0.3
+    assert result.confidence.final == 0.3
 

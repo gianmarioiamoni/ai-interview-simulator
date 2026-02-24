@@ -6,7 +6,7 @@
 # It is used to store the interview state in the database and to retrieve it when needed.
 #
 # The interview state is associated with an interview and contains the interview state.
-# The interview state also contains the questions, answers, evaluations, and confidence.
+# The interview state also contains the questions, answers, evaluations.
 # It must be:
 # - complete when called standalone
 # - no optional critical fields
@@ -21,8 +21,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from domain.contracts.question import Question
 from domain.contracts.answer import Answer
-from domain.contracts.evaluation import EvaluationResult
-from domain.contracts.confidence import Confidence
+from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.execution_result import ExecutionResult
 
@@ -38,7 +37,7 @@ class InterviewState(BaseModel):
     progress: InterviewProgress = Field(default=InterviewProgress.SETUP)
     questions: list[Question] = Field(default_factory=list)
     answers: list[Answer] = Field(default_factory=list)
-    evaluations: list[EvaluationResult] = Field(default_factory=list)
+    evaluations: list[QuestionEvaluation] = Field(default_factory=list)
 
     # conversational memory for humanizer
     chat_history: list[str] = Field(default_factory=list)
@@ -52,17 +51,10 @@ class InterviewState(BaseModel):
     # execution engines
     execution_results: list[ExecutionResult] = Field(default_factory=list)
 
-    # aggregated scoring
-    total_score: float = Field(default=0.0, ge=0.0)
-    @property
-    def computed_total_score(self) -> float:
-        if not self.evaluations:
-            return 0.0
-        return sum(ev.score for ev in self.evaluations) / len(self.evaluations)
-
-    confidence: Optional[Confidence] = None
-
-    model_config = {"arbitrary_types_allowed": False}
+    model_config = {
+        "arbitrary_types_allowed": False,
+        "extra": "forbid",
+    }
 
     # runtime orchestration state fir LangGraph
     current_question_index: int = Field(default=0, ge=0)

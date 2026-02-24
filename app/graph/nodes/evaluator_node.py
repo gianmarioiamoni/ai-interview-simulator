@@ -1,3 +1,5 @@
+# app/graph/nodes/evaluator_node.py
+
 # Evaluator node
 #
 # Responsibility: evaluates written answers and optionally generates follow-up questions.

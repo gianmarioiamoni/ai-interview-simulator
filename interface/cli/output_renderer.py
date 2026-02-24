@@ -8,7 +8,7 @@
 # - Return raw data
 
 from domain.contracts.question import Question
-from domain.contracts.evaluation import EvaluationResult
+from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
 
 
@@ -18,7 +18,7 @@ class CLIOutputRenderer:
     def render_question(self, question: Question) -> None:
         print("\n----------------------------------------")
         print(f"Question ({question.type.upper()}):")
-        print(question.content)
+        print(question.prompt)
         print("----------------------------------------")
 
     def render_execution_result(self, result: ExecutionResult) -> None:
@@ -26,7 +26,7 @@ class CLIOutputRenderer:
         print(f"Status: {result.status}")
         print(f"Details: {result.details}")
 
-    def render_evaluation(self, evaluation: EvaluationResult) -> None:
+    def render_evaluation(self, evaluation: QuestionEvaluation) -> None:
         print("\nEvaluation:")
         print(f"Score: {evaluation.score}")
         print(f"Feedback: {evaluation.feedback}")

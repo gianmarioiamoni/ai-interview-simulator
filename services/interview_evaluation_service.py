@@ -21,6 +21,7 @@ from app.ports.llm_port import LLMPort
 from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.performance_dimension import PerformanceDimension
 from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.confidence import Confidence
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +193,8 @@ Constraints:
 
         overall = self._compute_overall_score(evaluation.performance_dimensions)
         hiring_probability = self._compute_hiring_probability(overall)
-        confidence = self._compute_confidence(evaluation.performance_dimensions)
+        confidence_value = self._compute_confidence(evaluation.performance_dimensions)
+        confidence = Confidence(base=confidence_value, final=confidence_value)
 
         return evaluation.model_copy(
             update={
@@ -267,7 +269,7 @@ Constraints:
             hiring_probability=self._compute_hiring_probability(overall),
             per_question_assessment=per_question_evaluations,
             improvement_suggestions=["Manual review recommended"],
-            confidence=0.3,
+            confidence=Confidence(base=0.3, final=0.3),
         )
 
     # ---------------------------------------------------------
