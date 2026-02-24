@@ -76,18 +76,19 @@ class InterviewEvaluationService:
                 self._enforce_schema_rules(evaluation)
                 self._verify_consistency(evaluation)
 
+                normalized = self._normalize(evaluation)
                 logger.info(
                     "evaluation_success",
                     extra={
                         "attempt": attempt,
-                        "normalized_score": evaluation.overall_score,
+                        "normalized_score": normalized.overall_score,
                         "confidence": evaluation.confidence,
                     },
                 )
 
-                return self._normalize(evaluation)
+                return normalized
 
-            except Exception:
+            except Exception as e:
                 logger.warning(
                     "evaluation_retry",
                     extra={
@@ -288,7 +289,7 @@ Constraints:
             raise ValueError("No JSON object found in response")
 
         candidate = text[start : end + 1]
-        
+
         logger.info("json_extraction_used")
 
         return json.loads(candidate)

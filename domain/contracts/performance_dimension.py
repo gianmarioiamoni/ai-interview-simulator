@@ -1,3 +1,5 @@
+# domain/contracts/performance_dimension.py
+
 # Performance dimension contract
 #
 # Represents a single evaluation dimension of the interview.
