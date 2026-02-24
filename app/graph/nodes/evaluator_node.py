@@ -68,8 +68,8 @@ def build_evaluator_node(llm: LLMPort):
             max_score=100,
             passed=decision.score >= 60,
             feedback=decision.feedback,
-            strengths=decision.strengths,
-            weaknesses=decision.weaknesses,
+            strengths=getattr(decision, "strengths", []),
+            weaknesses=getattr(decision, "weaknesses", []),
         )
 
         new_evaluations = state.evaluations + [evaluation]

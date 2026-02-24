@@ -54,9 +54,8 @@ class InterviewEvaluationService:
             except Exception:
                 if attempt == MAX_RETRIES:
                     raise
-
-        raise RuntimeError("Evaluation failed after retries")
-
+        
+        
     # ---------------------------------------------------------
 
     def _build_prompt(
