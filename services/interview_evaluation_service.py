@@ -56,7 +56,7 @@ class InterviewEvaluationService:
             response = self._llm.invoke(prompt)
 
             try:
-                parsed = json.loads(response.content)
+                parsed = self._extract_json_object(response.content)
 
                 evaluation = InterviewEvaluation.model_validate(parsed)
 
@@ -232,3 +232,24 @@ Constraints:
             improvement_suggestions=["Manual review recommended"],
             confidence=0.3,
         )
+
+    # ---------------------------------------------------------
+
+    def _extract_json_object(self, text: str) -> dict:
+
+        # First try direct parsing
+        try:
+            return json.loads(text)
+        except Exception:
+            pass
+
+        # Try to extract first JSON object from text
+        start = text.find("{")
+        end = text.rfind("}")
+
+        if start == -1 or end == -1 or end <= start:
+            raise ValueError("No JSON object found in response")
+
+        candidate = text[start : end + 1]
+
+        return json.loads(candidate)
