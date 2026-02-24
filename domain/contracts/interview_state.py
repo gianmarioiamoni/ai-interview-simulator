@@ -60,6 +60,9 @@ class InterviewState(BaseModel):
     current_question_index: int = Field(default=0, ge=0)
     last_was_follow_up: bool = Field(default=False)
 
+    # option to enable huminizer
+    enable_humanizer: bool = True
+
     @model_validator(mode="after")
     def validate_progress_consistency(self) -> "InterviewState":
 

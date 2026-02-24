@@ -4,15 +4,19 @@ from langgraph.graph import StateGraph, END
 from domain.contracts.interview_state import InterviewState
 
 from app.graph.nodes.ask_question_node import ask_question_node
-from app.graph.nodes.humanizer_node import humanizer_node
 from app.graph.nodes.execution_node import execution_node
-from app.graph.nodes.evaluator_node import evaluator_node
 from app.graph.nodes.scoring_node import scoring_node
 from app.graph.nodes.termination_node import termination_node
+from app.graph.nodes.evaluator_node import build_evaluator_node
+from app.graph.nodes.humanizer_node import build_humanizer_node
 
 
-def build_interview_graph():
+def build_interview_graph(llm):
+
     graph = StateGraph(InterviewState)
+
+    evaluator_node = build_evaluator_node(llm)
+    humanizer_node = build_humanizer_node(llm)
 
     graph.add_node("ask_question", ask_question_node)
     graph.add_node("humanizer", humanizer_node)
@@ -29,19 +33,22 @@ def build_interview_graph():
         "humanizer",
         lambda state: (
             "execution"
-            if state.current_question
-            and state.current_question.type in ["coding", "sql"]
+            if state.current_question_id
+            and next(
+                q for q in state.questions if q.id == state.current_question_id
+            ).type
+            in ["coding", "sql"]
             else "evaluator"
         ),
     )
 
     graph.add_edge("execution", "scoring")
     graph.add_edge("evaluator", "scoring")
-
     graph.add_edge("scoring", "termination")
 
     graph.add_conditional_edges(
-        "termination", lambda state: "ask_question" if not state.finished else END
+        "termination",
+        lambda state: ("ask_question" if state.progress.name != "COMPLETED" else END),
     )
 
     return graph.compile()
