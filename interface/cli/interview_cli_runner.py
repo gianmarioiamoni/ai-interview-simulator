@@ -15,6 +15,7 @@ from domain.contracts.answer import Answer
 
 from interface.cli.input_adapter import CLIInputAdapter
 from interface.cli.output_renderer import CLIOutputRenderer
+from infrastructure.llm.llm_adapter import DefaultLLMAdapter
 
 
 class CLIRunner:
