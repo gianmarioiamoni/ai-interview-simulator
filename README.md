@@ -1,3 +1,14 @@
+---
+title: AI Interview Simulator
+emoji: 🤖
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: 4.44.1
+app_file: gradio_app.py
+pinned: false
+---
+
 # GenAI Project Template
 
 Enterprise-grade template for Python Generative AI projects.
