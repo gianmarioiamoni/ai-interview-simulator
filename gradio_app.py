@@ -1,6 +1,10 @@
 # gradio_app.py
 
+import os
 from app.ui.app_real import build_app
+
+if not os.getenv("OPENAI_API_KEY"):
+    print("WARNING: OPENAI_API_KEY not set")
 
 app = build_app()
 
