@@ -52,38 +52,16 @@ def start_interview():
 
 def submit_answer(state: InterviewState, user_answer: str):
 
-    # Stub graph does not store answers, but we simulate flow
-    session_or_report = controller.submit_answer(state)
+    feedback = controller.submit_answer(state, user_answer)
 
-    if hasattr(session_or_report, "overall_score"):
-        # Final report
-        report = session_or_report
-
-        report_text = f"""
-        Overall Score: {report.overall_score}
-        Hiring Probability: {report.hiring_probability}%
-        """
-
-        return (
-            state,
-            "",
-            "",
-            "",
-            gr.update(visible=False),
-            gr.update(value=report_text, visible=True),
-        )
-
-    else:
-        session = session_or_report
-
-        return (
-            state,
-            session.current_question.text,
-            f"Question {session.current_question.index}/{session.current_question.total}",
-            "",
-            gr.update(visible=True),
-            gr.update(visible=False),
-        )
+    return (
+        state,
+        feedback,
+        "",
+        "",
+        gr.update(visible=False),
+        gr.update(visible=False),
+    )
 
 
 # ---------------------------------------------------------
