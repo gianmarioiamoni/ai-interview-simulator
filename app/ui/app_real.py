@@ -1,4 +1,4 @@
-# gradio_app.py
+# app/ui/app_real.py
 
 import gradio as gr
 
@@ -90,7 +90,7 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI
 # ---------------------------------------------------------
 
-def create_app():
+def build_app():
     with gr.Blocks() as demo:
 
         gr.Markdown("# AI Interview Simulator (Stub Mode)")
@@ -136,5 +136,5 @@ def create_app():
 
 
 if __name__ == "__main__":
-    app = create_app()
+    app = build_app()
     app.launch()
