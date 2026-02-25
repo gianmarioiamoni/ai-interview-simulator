@@ -6,6 +6,7 @@ from domain.contracts.interview_state import InterviewState
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
+from app.core.logger import get_logger
 
 
 class InterviewController:
@@ -25,6 +26,10 @@ class InterviewController:
         # Starts the interview by invoking the graph with initial state.
 
         updated_state: InterviewState = self._graph.invoke(initial_state)
+
+        logger = get_logger(__name__)
+        logger.info("Interview started")
+
 
         return self._mapper.to_session_dto(updated_state)
 
