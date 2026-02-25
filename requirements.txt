@@ -1,8 +1,10 @@
-pydantic==2.7.4
 gradio==4.44.1
-langchain
-langgraph
-openai
-tiktoken
 huggingface_hub==0.23.5
+pydantic==2.7.4
+langchain==1.2.10
+langgraph==1.0.9
+openai==2.24.0
+tiktoken==0.12.0
+
+
 
