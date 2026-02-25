@@ -9,7 +9,7 @@
 # - It must be immutable
 
 from enum import Enum
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, model_validator
 
 
 # predefined roles

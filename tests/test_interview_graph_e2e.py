@@ -6,6 +6,9 @@ from domain.contracts.question import Question
 from domain.contracts.interview_progress import InterviewProgress
 
 from tests.fakes.fake_llm import FakeLLM
+from domain.contracts.interview_area import InterviewArea
+from domain.contracts.role import Role
+from domain.contracts.role import RoleType
 
 
 def test_interview_graph_single_written_question():
@@ -32,7 +35,7 @@ def test_interview_graph_single_written_question():
 
     question = Question(
         id="q1",
-        area="backend",
+        area=InterviewArea.TECH_BACKGROUND,
         type=QuestionType.WRITTEN,
         prompt="Explain what a REST API is.",
         difficulty=3,
@@ -40,7 +43,7 @@ def test_interview_graph_single_written_question():
 
     state = InterviewState(
         interview_id="int_1",
-        role="Backend Engineer",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
         company="TestCorp",
         questions=[question],
         current_question_id="q1",
@@ -94,7 +97,7 @@ def test_followup_generated_once():
 
     question = Question(
         id="q1",
-        area="backend",
+        area=InterviewArea.TECH_BACKGROUND,
         type=QuestionType.WRITTEN,
         prompt="Explain REST.",
         difficulty=3,
@@ -102,7 +105,7 @@ def test_followup_generated_once():
 
     state = InterviewState(
         interview_id="int_2",
-        role="Backend Engineer",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
         company="TestCorp",
         questions=[question],
         current_question_id="q1",

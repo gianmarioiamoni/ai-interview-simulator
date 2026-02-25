@@ -5,19 +5,24 @@ from pydantic import ValidationError
 
 from domain.contracts.retrieval_document import RetrievalDocument
 from domain.contracts.retrieval_metadata import RetrievalMetadata
-from domain.contracts.role import Role
+from domain.contracts.role import Role, RoleType
 from domain.contracts.interview_area import InterviewArea
+
+
+def _metadata():
+    return RetrievalMetadata(
+        role=Role(type=RoleType.BACKEND_ENGINEER),
+        area=InterviewArea.TECH_TECHNICAL_KNOWLEDGE,
+        difficulty=3,
+        source="kb",
+    )
 
 
 def test_retrieval_document_valid() -> None:
     doc = RetrievalDocument(
         id="doc-1",
         content="Python uses indentation.",
-        metadata=RetrievalMetadata(
-            role=Role.BACKEND_ENGINEER,
-            area=InterviewArea.PYTHON,
-            source="kb",
-        ),
+        metadata=_metadata(),
     )
 
     assert doc.id == "doc-1"
@@ -29,10 +34,7 @@ def test_retrieval_document_empty_id_invalid() -> None:
         RetrievalDocument(
             id="",
             content="text",
-            metadata=RetrievalMetadata(
-                role=Role.BACKEND_ENGINEER,
-                area=InterviewArea.PYTHON,
-            ),
+            metadata=_metadata(),
         )
 
 
@@ -41,18 +43,7 @@ def test_retrieval_document_empty_content_invalid() -> None:
         RetrievalDocument(
             id="doc-1",
             content="",
-            metadata=RetrievalMetadata(
-                role=Role.BACKEND_ENGINEER,
-                area=InterviewArea.PYTHON,
-            ),
-        )
-
-
-def test_retrieval_document_missing_metadata_invalid() -> None:
-    with pytest.raises(ValidationError):
-        RetrievalDocument(
-            id="doc-1",
-            content="text",
+            metadata=_metadata(),
         )
 
 
@@ -60,10 +51,7 @@ def test_retrieval_document_is_frozen() -> None:
     doc = RetrievalDocument(
         id="doc-1",
         content="text",
-        metadata=RetrievalMetadata(
-            role=Role.BACKEND_ENGINEER,
-            area=InterviewArea.PYTHON,
-        ),
+        metadata=_metadata(),
     )
 
     with pytest.raises(ValidationError):

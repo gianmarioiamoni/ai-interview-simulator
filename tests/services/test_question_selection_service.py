@@ -7,6 +7,9 @@ from domain.contracts.question_bank_item import QuestionBankItem
 from services.question_intelligence.question_selection_service import (
     QuestionSelectionService,
 )
+from domain.contracts.role import Role
+from domain.contracts.role import RoleType
+from domain.contracts.interview_area import InterviewArea
 
 
 def test_build_area_questions_combines_retrieved_and_generated():
@@ -19,8 +22,8 @@ def test_build_area_questions_combines_retrieved_and_generated():
             id="b1",
             text="Explain ACID properties.",
             interview_type="technical",
-            role="backend",
-            area="databases",
+            role=Role(type=RoleType.BACKEND_ENGINEER),
+            area=InterviewArea.TECH_DATABASE,
             level="mid",
             difficulty=3,
         ),
@@ -28,8 +31,8 @@ def test_build_area_questions_combines_retrieved_and_generated():
             id="b2",
             text="What is normalization?",
             interview_type="technical",
-            role="backend",
-            area="databases",
+            role=Role(type=RoleType.BACKEND_ENGINEER),
+            area=InterviewArea.TECH_DATABASE,
             level="mid",
             difficulty=2,
         ),
@@ -52,12 +55,12 @@ def test_build_area_questions_combines_retrieved_and_generated():
     )
 
     result = service.build_area_questions(
-        role="backend",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
         level="mid",
         interview_type="technical",
-        area="databases",
+        area=InterviewArea.TECH_DATABASE,
     )
 
     assert len(result) == 4
-    assert result[0].area == "databases"
+    assert result[0].area == InterviewArea.TECH_DATABASE
     assert result[2].prompt == "Describe two-phase commit."

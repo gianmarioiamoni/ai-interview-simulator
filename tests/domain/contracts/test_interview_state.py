@@ -6,12 +6,13 @@ import pytest
 from pydantic import ValidationError
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.role import Role, RoleType
 
 
 def _base_state() -> dict:
     return {
         "interview_id": "int-1",
-        "role": "backend engineer",
+        "role": Role(type=RoleType.BACKEND_ENGINEER),
         "company": "Generic IT",
         "language": "en",
     }
@@ -32,7 +33,7 @@ def test_interview_state_minimal_instantiation() -> None:
     
     state = InterviewState(
         interview_id="int-1",
-        role="backend engineer",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
         company="Generic IT",
         language="en",
     )
@@ -47,9 +48,9 @@ def test_interview_state_minimal_instantiation() -> None:
 def test_computed_total_score_with_no_evaluations() -> None:
     state = InterviewState(
         interview_id="int-1",
-        role="backend engineer",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
         company="Generic IT",
         language="en",
     )
-    
+
     assert state.computed_total_score == 0.0

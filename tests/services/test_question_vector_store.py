@@ -8,6 +8,9 @@ from domain.contracts.question_bank_item import QuestionBankItem
 from services.question_intelligence.question_vector_store import (
     QuestionVectorStore,
 )
+from domain.contracts.role import Role
+from domain.contracts.role import RoleType
+from domain.contracts.interview_area import InterviewArea
 
 
 def create_sample_item() -> QuestionBankItem:
@@ -15,8 +18,8 @@ def create_sample_item() -> QuestionBankItem:
         id="q1",
         text="Explain ACID properties.",
         interview_type="technical",
-        role="backend",
-        area="databases",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
+        area=InterviewArea.TECH_DATABASE,
         level="mid",
         difficulty=3,
     )
@@ -37,7 +40,7 @@ def test_add_items_converts_to_documents():
 
     assert isinstance(documents[0], Document)
     assert documents[0].page_content == "Explain ACID properties."
-    assert documents[0].metadata["role"] == "backend"
+    assert documents[0].metadata["role"] == Role(type=RoleType.BACKEND_ENGINEER)
 
 
 def test_similarity_search_passes_parameters():
@@ -49,11 +52,11 @@ def test_similarity_search_passes_parameters():
     adapter.similarity_search(
         query="database consistency",
         k=5,
-        metadata_filter={"role": "backend"},
+        metadata_filter={"role": Role(type=RoleType.BACKEND_ENGINEER)},
     )
 
     mock_store.similarity_search.assert_called_with(
         query="database consistency",
         k=5,
-        filter={"role": "backend"},
+        filter={"role": Role(type=RoleType.BACKEND_ENGINEER)},
     )
