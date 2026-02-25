@@ -8,7 +8,7 @@ from domain.contracts.question import Question, QuestionType
 
 
 def load_sample_questions() -> List[Question]:
-    file_path = Path("data/sample_questions.json")
+    file_path = Path(__file__).resolve().parents[2] / "data/sample_questions.json"
 
     with open(file_path, "r") as f:
         raw_questions = json.load(f)
