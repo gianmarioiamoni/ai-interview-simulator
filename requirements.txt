@@ -1,2 +1,4 @@
 gradio==4.44.1
 pydantic==2.7.4
+sdk_version==4.44.1
+
