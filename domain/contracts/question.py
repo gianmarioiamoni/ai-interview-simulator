@@ -1,4 +1,4 @@
-# app/domain/contracts/question.py
+# domain/contracts/question.py
 
 # Question contract
 #

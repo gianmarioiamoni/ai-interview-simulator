@@ -112,9 +112,9 @@ class InterviewStateMapper:
     ) -> QuestionDTO:
 
         return QuestionDTO(
-            question_id=question.question_id,
-            text=question.text,
-            question_type=question.question_type,
+            question_id=question.id,
+            text=question.prompt,
+            question_type=question.type.value,
             area=question.area,
             index=index,
             total=total,
@@ -127,7 +127,7 @@ class InterviewStateMapper:
     ) -> List[DimensionScoreDTO]:
 
         # Map question_id -> area
-        question_area_map: Dict[str, str] = {q.question_id: q.area for q in questions}
+        question_area_map: Dict[str, str] = {q.id: q.area for q in questions}
 
         dimension_map: Dict[str, List[float]] = {}
 
