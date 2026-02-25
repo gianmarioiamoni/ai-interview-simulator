@@ -52,15 +52,40 @@ def start_interview():
 
 def submit_answer(state: InterviewState, user_answer: str):
 
-    feedback = controller.submit_answer(state, user_answer)
+    result, feedback = controller.submit_answer(state, user_answer)
+
+    # Final report case
+    if hasattr(result, "overall_score"):
+
+        report = result
+
+        report_text = f"""
+## Final Report
+
+**Overall Score:** {report.overall_score}  
+**Hiring Probability:** {report.hiring_probability}%
+
+"""
+
+        return (
+            state,
+            "",
+            "",
+            "",
+            gr.update(visible=False),
+            gr.update(value=report_text, visible=True),
+        )
+
+    # Otherwise still in progress
+    session = result
 
     return (
         state,
-        feedback,
+        session.current_question.text,
+        f"Question {session.current_question.index}/{session.current_question.total}",
         "",
-        "",
-        gr.update(visible=False),
-        gr.update(visible=False),
+        gr.update(visible=True),
+        gr.update(value=f"### Feedback\n\n{feedback}", visible=True),
     )
 
 
