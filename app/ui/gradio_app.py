@@ -90,47 +90,51 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI
 # ---------------------------------------------------------
 
-with gr.Blocks() as demo:
+def create_app():
+    with gr.Blocks() as demo:
 
-    gr.Markdown("# AI Interview Simulator (Stub Mode)")
+        gr.Markdown("# AI Interview Simulator (Stub Mode)")
 
-    state = gr.State()
+        state = gr.State()
 
-    start_button = gr.Button("Start Interview")
+        start_button = gr.Button("Start Interview")
 
-    question_counter = gr.Markdown("")
-    question_text = gr.Markdown("")
-    answer_box = gr.Textbox(label="Your Answer", lines=5)
+        question_counter = gr.Markdown("")
+        question_text = gr.Markdown("")
+        answer_box = gr.Textbox(label="Your Answer", lines=5)
 
-    submit_button = gr.Button("Submit Answer", visible=False)
+        submit_button = gr.Button("Submit Answer", visible=False)
 
-    report_output = gr.Markdown(visible=False)
+        report_output = gr.Markdown(visible=False)
 
-    start_button.click(
-        start_interview,
-        outputs=[
-            state,
-            question_text,
-            question_counter,
-            answer_box,
-            submit_button,
-            report_output,
-        ],
-    )
+        start_button.click(
+            start_interview,
+            outputs=[
+                state,
+                question_text,
+                question_counter,
+                answer_box,
+                submit_button,
+                report_output,
+            ],
+        )
 
-    submit_button.click(
-        submit_answer,
-        inputs=[state, answer_box],
-        outputs=[
-            state,
-            question_text,
-            question_counter,
-            answer_box,
-            submit_button,
-            report_output,
-        ],
-    )
+        submit_button.click(
+            submit_answer,
+            inputs=[state, answer_box],
+            outputs=[
+                state,
+                question_text,
+                question_counter,
+                answer_box,
+                submit_button,
+                report_output,
+            ],
+        )
+
+    return demo
 
 
 if __name__ == "__main__":
-    demo.launch()
+    app = create_app()
+    app.launch()
