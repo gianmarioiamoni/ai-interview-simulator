@@ -8,6 +8,9 @@ from domain.contracts.interview_progress import InterviewProgress
 
 from interface.cli.interview_cli_runner import CLIRunner
 from tests.fakes.fake_llm import FakeLLM
+from domain.contracts.role import Role
+from domain.contracts.role import RoleType
+from domain.contracts.interview_area import InterviewArea
 
 
 # ---------------------------------------------------
@@ -37,7 +40,7 @@ class DummyOutputRenderer:
 def build_minimal_state() -> InterviewState:
     question = Question(
         id="q1",
-        area="backend",
+        area=InterviewArea.TECH_BACKGROUND,
         type=QuestionType.WRITTEN,
         prompt="Explain REST",
         difficulty=3,
@@ -45,7 +48,7 @@ def build_minimal_state() -> InterviewState:
 
     return InterviewState(
         interview_id="test_1",
-        role="Backend Engineer",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
         company="TestCorp",
         questions=[question],
         current_question_id="q1",

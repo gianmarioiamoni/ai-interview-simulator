@@ -5,6 +5,9 @@ from unittest.mock import MagicMock, patch
 from services.question_intelligence.question_generator import (
     QuestionGenerator,
 )
+from domain.contracts.role import Role
+from domain.contracts.role import RoleType
+from domain.contracts.interview_area import InterviewArea
 
 
 def test_generate_parses_and_validates_output():
@@ -24,10 +27,10 @@ def test_generate_parses_and_validates_output():
         generator = QuestionGenerator()
 
         results = generator.generate(
-            role="backend",
+            role=Role(type=RoleType.BACKEND_ENGINEER),
             level="mid",
             interview_type="technical",
-            area="distributed systems",
+            area=InterviewArea.TECH_CASE_STUDY,
             n=2,
         )
 

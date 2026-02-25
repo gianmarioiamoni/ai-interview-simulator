@@ -7,6 +7,9 @@ from langchain_core.documents import Document
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
 )
+from domain.contracts.role import Role
+from domain.contracts.role import RoleType
+from domain.contracts.interview_area import InterviewArea
 
 
 def create_mock_document():
@@ -15,8 +18,8 @@ def create_mock_document():
         metadata={
             "id": "q1",
             "interview_type": "technical",
-            "role": "backend",
-            "area": "databases",
+            "role": Role(type=RoleType.BACKEND_ENGINEER),
+            "area": InterviewArea.TECH_DATABASE,
             "level": "mid",
             "difficulty": 3,
         },
@@ -32,18 +35,18 @@ def test_retrieve_builds_filter_and_returns_domain_objects():
     results = service.retrieve(
         query="database consistency",
         k=5,
-        role="backend",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
         level="mid",
         interview_type="technical",
-        area="databases",
+        area=InterviewArea.TECH_DATABASE,
     )
 
     mock_vector_store.similarity_search.assert_called_once()
 
     assert len(results) == 1
     assert results[0].id == "q1"
-    assert results[0].role == "backend"
-    assert results[0].area == "databases"
+    assert results[0].role == Role(type=RoleType.BACKEND_ENGINEER)
+    assert results[0].area == InterviewArea.TECH_DATABASE
 
 
 def test_retrieve_without_filters_passes_none():

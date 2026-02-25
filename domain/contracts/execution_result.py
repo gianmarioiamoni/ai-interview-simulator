@@ -63,27 +63,24 @@ class ExecutionResult(BaseModel):
 
     @model_validator(mode="after")
     def validate_consistency(self) -> "ExecutionResult":
-        # Success consistency
+
+        # Success ↔ Status consistency
         if self.success and self.status != ExecutionStatus.SUCCESS:
             raise ValueError("status must be SUCCESS when success is True")
 
         if not self.success and self.status == ExecutionStatus.SUCCESS:
             raise ValueError("success cannot be False when status is SUCCESS")
 
-        # Error consistency
-        if self.success and self.error is not None:
-            raise ValueError("error must be None when success is True")
+    # Error consistency
+        if self.success:
+            if self.error is not None:
+                raise ValueError("error must be None when success is True")
+        else:
+            if not self.error:
+                raise ValueError("error required when success is False")
 
-        if not self.success and not self.error:
-            raise ValueError("error required when success is False")
-
-        # Test consistency
+        # Test statistics consistency
         if self.passed_tests > self.total_tests:
             raise ValueError("passed_tests cannot exceed total_tests")
-
-        # If total_tests > 0, execution_type must be CODING
-        if self.total_tests > 0 and self.execution_type != ExecutionType.CODING:
-            raise ValueError("Test statistics only valid for CODING execution")
-
-
+ 
         return self

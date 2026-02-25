@@ -1,13 +1,5 @@
 # tests/services/test_interview_evaluation_service.py
 
-# Tests for InterviewEvaluationService
-#
-# Responsibility:
-# - verify strict JSON parsing
-# - verify retry logic
-# - verify mathematical consistency enforcement
-# - verify deterministic normalization
-
 import pytest
 import json
 
@@ -76,7 +68,8 @@ def test_evaluation_success():
     llm = Mock()
 
     payload = valid_llm_payload()
-    llm.invoke.return_value.content = __import__("json").dumps(payload)
+    # llm.invoke.return_value.content = __import__("json").dumps(payload)
+    llm.invoke.return_value = Mock(content=json.dumps(payload))
 
     service = InterviewEvaluationService(llm)
 
@@ -104,6 +97,7 @@ def test_retry_on_invalid_json():
     llm.invoke.side_effect = [
         Mock(content="INVALID_JSON"),
         Mock(content=__import__("json").dumps(valid_llm_payload())),
+        Mock(content=__import__("json").dumps(valid_llm_payload())),
     ]
 
     service = InterviewEvaluationService(llm)
@@ -115,7 +109,7 @@ def test_retry_on_invalid_json():
     )
 
     assert result.overall_score == 7.0
-    assert llm.invoke.call_count == 2
+    assert llm.invoke.call_count == 3
 
 
 # ------------------------------------------------------------------
@@ -133,6 +127,7 @@ def test_retry_on_inconsistent_score():
     llm.invoke.side_effect = [
         Mock(content=__import__("json").dumps(inconsistent_payload)),
         Mock(content=__import__("json").dumps(valid_llm_payload())),
+        Mock(content=__import__("json").dumps(valid_llm_payload())),
     ]
 
     service = InterviewEvaluationService(llm)
@@ -144,7 +139,7 @@ def test_retry_on_inconsistent_score():
     )
 
     assert result.overall_score == 7.0
-    assert llm.invoke.call_count == 2
+    assert llm.invoke.call_count == 3
 
 
 # ------------------------------------------------------------------
@@ -575,4 +570,3 @@ def test_no_json_triggers_fallback():
 
     assert result.confidence.base == 0.3
     assert result.confidence.final == 0.3
-

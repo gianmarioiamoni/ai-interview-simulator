@@ -1,3 +1,5 @@
+# domain/contracts/interview_area.py
+
 # Interview area contract
 #
 # Closed set of interview areas grouped by interview type.

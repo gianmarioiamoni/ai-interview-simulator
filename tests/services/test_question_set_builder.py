@@ -6,6 +6,8 @@ from domain.contracts.question import Question, QuestionType
 from services.question_intelligence.question_set_builder import (
     QuestionSetBuilder,
 )
+from domain.contracts.role import Role
+from domain.contracts.role import RoleType
 
 
 def create_fake_questions(area: str):
@@ -53,7 +55,7 @@ def test_build_creates_20_questions():
     builder = QuestionSetBuilder(mock_selection)
 
     result = builder.build(
-        role="backend",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
         level="mid",
         interview_type="technical",
         areas=areas,
@@ -81,7 +83,7 @@ def test_duplicate_detection_raises():
 
     with pytest.raises(ValueError, match="Duplicate questions detected"):
         builder.build(
-            role="backend",
+            role=Role(type=RoleType.BACKEND_ENGINEER),
             level="mid",
             interview_type="technical",
             areas=["a1", "a2", "a3", "a4", "a5"],
@@ -102,7 +104,7 @@ def test_area_with_wrong_question_count_raises():
 
     with pytest.raises(ValueError, match="did not produce exactly 4 questions"):
         builder.build(
-            role="backend",
+            role=Role(type=RoleType.BACKEND_ENGINEER),
             level="mid",
             interview_type="technical",
             areas=["a1"],
@@ -125,7 +127,7 @@ def test_total_not_20_questions_raises():
 
     with pytest.raises(ValueError, match="Expected 20 questions"):
         builder.build(
-            role="backend",
+            role=Role(type=RoleType.BACKEND_ENGINEER),
             level="mid",
             interview_type="technical",
             areas=areas,

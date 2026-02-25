@@ -1,14 +1,8 @@
 from pydantic import BaseModel, Field
-from enum import Enum
 
 from domain.contracts.interview_area import InterviewArea, InterviewType
 from domain.contracts.role import Role
-
-
-class SeniorityLevel(str, Enum):
-    JUNIOR = "junior"
-    MID = "mid"
-    SENIOR = "senior"
+from domain.contracts.seniority_level import SeniorityLevel
 
 
 class QuestionBankItem(BaseModel):

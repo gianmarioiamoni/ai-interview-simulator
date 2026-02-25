@@ -4,6 +4,9 @@ from unittest.mock import MagicMock
 
 from domain.contracts.question_bank_item import QuestionBankItem
 from services.question_bank_loader import QuestionBankLoader
+from domain.contracts.role import Role, RoleType
+from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview_area import InterviewType
 
 
 def test_load_converts_dict_to_question_bank_item() -> None:
@@ -29,9 +32,9 @@ def test_load_converts_dict_to_question_bank_item() -> None:
 
     assert isinstance(saved_item, QuestionBankItem)
     assert saved_item.text == "Explain ACID properties."
-    assert saved_item.interview_type == "technical"
-    assert saved_item.role == "backend"
-    assert saved_item.area == "databases"
+    assert saved_item.interview_type == InterviewType.TECHNICAL
+    assert saved_item.role == Role(type=RoleType.BACKEND_ENGINEER)
+    assert saved_item.area == InterviewArea.TECH_DATABASE
     assert saved_item.level == "mid"
     assert saved_item.difficulty == 3
 
