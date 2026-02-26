@@ -140,11 +140,11 @@ Per-question evaluations:
 Return STRICT JSON with this structure:
 
 {{
-  "overall_score": float (1-10),
+  "overall_score": float (0-100),
   "performance_dimensions": [
     {{
       "name": one of allowed dimensions,
-      "score": float (1-10),
+      "score": float (0-100),
       "justification": string
     }}
   ],
@@ -192,14 +192,12 @@ Constraints:
     def _normalize(self, evaluation: InterviewEvaluation) -> InterviewEvaluation:
 
         overall = self._compute_overall_score(evaluation.performance_dimensions)
-        hiring_probability = self._compute_hiring_probability(overall)
         confidence_value = self._compute_confidence(evaluation.performance_dimensions)
         confidence = Confidence(base=confidence_value, final=confidence_value)
 
         return evaluation.model_copy(
             update={
                 "overall_score": overall,
-                "hiring_probability": hiring_probability,
                 "confidence": confidence,
             }
         )
@@ -212,13 +210,8 @@ Constraints:
     ) -> float:
 
         raw_avg = sum(d.score for d in dimensions) / len(dimensions)
-        bounded = max(1.0, min(10.0, raw_avg))
+        bounded = max(0.0, min(100.0, raw_avg))
         return round(bounded, 1)
-
-    # ---------------------------------------------------------
-
-    def _compute_hiring_probability(self, overall_score: float) -> float:
-        return round((overall_score / 10.0) * 100, 1)
 
     # ---------------------------------------------------------
 
@@ -235,7 +228,7 @@ Constraints:
         variance = statistics.pvariance(scores)
 
         # Higher variance -> lower confidence
-        confidence = max(0.0, 1.0 - (variance / 25.0))
+        confidence = max(0.0, 1.0 - (variance / 2500.0))
 
         return round(confidence, 2)
 
@@ -247,12 +240,12 @@ Constraints:
     ) -> InterviewEvaluation:
 
         if not per_question_evaluations:
-            overall = 5.0
+            overall = 50.0
         else:
             avg_score = sum(q.score for q in per_question_evaluations) / len(
                 per_question_evaluations
             )
-            overall = round((avg_score / 100.0) * 10.0, 1)
+            overall = round(avg_score, 1)
 
         dimensions = [
             {
@@ -266,7 +259,6 @@ Constraints:
         return InterviewEvaluation(
             overall_score=overall,
             performance_dimensions=dimensions,
-            hiring_probability=self._compute_hiring_probability(overall),
             per_question_assessment=per_question_evaluations,
             improvement_suggestions=["Manual review recommended"],
             confidence=Confidence(base=0.3, final=0.3),
