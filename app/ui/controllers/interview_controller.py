@@ -9,6 +9,7 @@ from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from services.simple_llm_feedback_service import SimpleLLMFeedbackService
+from services.question_evaluation_service import QuestionEvaluationService
 from app.core.logger import get_logger
 
 
@@ -22,6 +23,7 @@ class InterviewController:
         self._mapper = mapper
         self._feedback_service = SimpleLLMFeedbackService()
         self._logger = get_logger(__name__)
+        self._question_eval_service = QuestionEvaluationService()
 
     # ---------------------------------------------------------
     # Start Interview
@@ -82,6 +84,9 @@ class InterviewController:
             question,
             user_answer,
         )
+
+        evaluation = self._question_eval_service.evaluate(question, user_answer)
+        feedback = evaluation.feedback
 
         # 6️⃣ Advance graph (move to next question or complete)
 
