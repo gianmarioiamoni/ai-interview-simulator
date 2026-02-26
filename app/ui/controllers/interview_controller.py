@@ -73,11 +73,15 @@ class InterviewController:
         # 5️⃣ If last question → complete interview
         state.progress = InterviewProgress.COMPLETED
 
-        final_eval = self._interview_eval_service.evaluate(state.evaluations)
+        final_eval = self._evaluation_service.evaluate(
+            per_question_evaluations=state.evaluations,
+            interview_type="TECHNICAL",
+            role=state.role.type.value,
+        )
+
         state.final_evaluation = final_eval
         state.progress = InterviewProgress.COMPLETED
 
         final_report = self._mapper.to_final_report_dto(state)
 
         return final_report, question_eval.feedback
-
