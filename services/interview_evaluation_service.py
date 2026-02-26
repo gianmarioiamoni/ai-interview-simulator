@@ -259,6 +259,7 @@ Constraints:
         return InterviewEvaluation(
             overall_score=overall,
             performance_dimensions=dimensions,
+            hiring_probability=self._compute_hiring_probability(overall),
             per_question_assessment=per_question_evaluations,
             improvement_suggestions=["Manual review recommended"],
             confidence=Confidence(base=0.3, final=0.3),
