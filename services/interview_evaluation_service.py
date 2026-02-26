@@ -179,7 +179,7 @@ Here are evaluated answers:
 {[e.model_dump() for e in evaluations]}
 
 Dimension scores (already computed deterministically):
-{[{d.name: d.score} for d in dimension_scores]}
+{dimension_scores}
 
 Provide:
 
