@@ -11,6 +11,7 @@ from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.role import Role
+from domain.contracts.interview_evaluation import InterviewEvaluation
 
 
 class InterviewState(BaseModel):
@@ -26,6 +27,7 @@ class InterviewState(BaseModel):
     questions: list[Question] = Field(default_factory=list)
     answers: list[Answer] = Field(default_factory=list)
     evaluations: list[QuestionEvaluation] = Field(default_factory=list)
+    final_evaluation: Optional[InterviewEvaluation] = None
 
     # conversational memory for humanizer
     chat_history: list[str] = Field(default_factory=list)
