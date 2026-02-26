@@ -76,7 +76,7 @@ class InterviewController:
 
         final_eval = self._evaluation_service.evaluate(
             per_question_evaluations=state.evaluations,
-            interview_type=state.interview_type,
+            interview_type=state.interview_type.value,
             role=state.role.type.value,
         )
 

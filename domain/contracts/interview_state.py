@@ -9,9 +9,10 @@ from domain.contracts.question import Question
 from domain.contracts.answer import Answer
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.interview_progress import InterviewProgress
+from domain.contracts.interview_area import InterviewType
+from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.role import Role
-from domain.contracts.interview_evaluation import InterviewEvaluation
 
 
 class InterviewState(BaseModel):
@@ -21,6 +22,7 @@ class InterviewState(BaseModel):
     role: Role
     company: str = Field(..., min_length=1)
     language: str = Field(default="en")
+    interview_type: InterviewType = Field(default=InterviewType.TECHNICAL)
 
     # progress tracking
     progress: InterviewProgress = Field(default=InterviewProgress.SETUP)
