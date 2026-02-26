@@ -123,12 +123,31 @@ class InterviewEvaluationService:
             "hr_analytical": "Problem Solving",
         }
 
+        # dimension -> list of scores
+        dimension_map: Dict[str, List[float]] = {}
+
+        for ev in evaluations:
+
+            area = question_area_map.get(ev.question_id)
+            if not area:
+                continue
+
+            dimension = AREA_TO_DIMENSION.get(area)
+            if not dimension:
+                continue
+
+            dimension_map.setdefault(dimension, []).append(ev.score)
+
         # Ensure all dimensions exist
         result: Dict[str, float] = {}
+
         for dimension in ALLOWED_DIMENSIONS:
-            scores = evaluations.get(dimension, [])
+
+            scores = dimension_map.get(dimension, [])
+
             if scores:
-                result[dimension] = round(sum(scores) / len(scores), 1)
+                avg = sum(scores) / len(scores)
+                result[dimension] = round(avg, 1)
             else:
                 result[dimension] = 0.0
 
