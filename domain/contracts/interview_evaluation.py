@@ -16,7 +16,7 @@ from domain.contracts.confidence import Confidence
 
 
 class InterviewEvaluation(BaseModel):
-    overall_score: float = Field(..., ge=1.0, le=10.0)
+    overall_score: float = Field(..., ge=0.0, le=100.0)
     performance_dimensions: List[PerformanceDimension]
     hiring_probability: float = Field(..., ge=0.0, le=100.0)
     per_question_assessment: List[QuestionEvaluation]

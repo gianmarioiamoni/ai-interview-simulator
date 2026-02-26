@@ -4,12 +4,17 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.answer import Answer
 
+from infrastructure.llm.llm_factory import get_llm
+
+from app.ui.dto import final_report_dto
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
-from services.question_evaluation_service import QuestionEvaluationService
 from app.core.logger import get_logger
+
+from services.question_evaluation_service import QuestionEvaluationService
+from services.interview_evaluation_service import InterviewEvaluationService
 
 
 class InterviewController:
@@ -36,58 +41,39 @@ class InterviewController:
     # Submit Answer
     # ---------------------------------------------------------
 
-    def submit_answer(
-        self,
-        current_state: InterviewState,
-        user_answer: str,
-    ):
+    def submit_answer(self, state: InterviewState, user_answer: str):
 
-        if not current_state.questions:
-            return self._mapper.to_session_dto(current_state), "No question available."
+        # 1️⃣ Retrieve current question
+        current_question = state.questions[state.current_question_index]
 
-        index = current_state.current_question_index
-
-        if index >= len(current_state.questions):
-            index = len(current_state.questions) - 1
-
-        question = current_state.questions[index]
-
-        # Compute attempt number
-        attempt_count = (
-            sum(1 for a in current_state.answers if a.question_id == question.id) + 1
-        )
-
+        # 2️⃣ Save answer
         answer = Answer(
-            question_id=question.id,
-            content=user_answer.strip(),
-            attempt=attempt_count,
+            question_id=current_question.id,
+            content=user_answer,
+            attempt=1,
         )
+        state.answers.append(answer)
 
-        current_state.answers.append(answer)
-
-        # Generate structured evaluation
-        evaluation = self._question_eval_service.evaluate(
-            question,
-            user_answer,
+        # 3️⃣ Generate QuestionEvaluation
+        question_eval = self._question_eval_service.evaluate(
+            question=current_question,
+            answer=answer,
         )
+        state.evaluations.append(question_eval)
 
-        current_state.evaluations.append(evaluation)
+        # 4️⃣ If not last question → advance to next question
+        if state.current_question_index < len(state.questions) - 1:
 
-        feedback = evaluation.feedback
+            state.current_question_index += 1
 
-        # Advance graph
-        updated_state: InterviewState = self._graph.invoke(current_state)
+            session_dto = self._mapper.to_session_dto(state)
 
-        # If interview completed → final report
-        if updated_state.progress == InterviewProgress.COMPLETED:
+            return session_dto, question_eval.feedback
 
-            self._logger.info("Interview completed")
+        # 5️⃣ If last question → complete interview
+        state.progress = InterviewProgress.COMPLETED
 
-            report: FinalReportDTO = self._mapper.to_final_report_dto(updated_state)
+        final_report = self._mapper.to_final_report_dto(state)
 
-            return report, feedback
+        return final_report, question_eval.feedback
 
-        # Otherwise → next question
-        session_dto: InterviewSessionDTO = self._mapper.to_session_dto(updated_state)
-
-        return session_dto, feedback
