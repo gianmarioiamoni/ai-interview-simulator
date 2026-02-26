@@ -73,7 +73,10 @@ def submit_answer(state: InterviewState, user_answer: str):
             "",
             "",
             gr.update(visible=False),
-            gr.update(value=report_text, visible=True),
+            gr.update(
+                value=f"{report_text}\n\n---\n\n### Last Feedback\n\n{feedback}",
+                visible=True,
+            ),
         )
 
     # Otherwise still in progress
