@@ -170,14 +170,16 @@ class InterviewEvaluationService:
 
         if score < 50:
             return 0.0
-        elif score < 65:
+        elif score < 60:
             return 30.0
-        elif score < 75:
-            return 55.0
-        elif score < 85:
-            return 75.0
+        elif score < 70:
+            return 50.0
+        elif score < 80:
+            return 70.0
+        elif score < 90:
+            return 85.0
         else:
-            return 90.0
+            return 95.0
 
     # ---------------------------------------------------------
 
