@@ -20,6 +20,7 @@ from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.performance_dimension import PerformanceDimension
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.confidence import Confidence
+from domain.contracts.question import Question
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class InterviewEvaluationService:
 
     def evaluate(
         self,
+        questions: List[Question],
         per_question_evaluations: List[QuestionEvaluation],
         interview_type: str,
         role: str,
@@ -51,7 +53,11 @@ class InterviewEvaluationService:
             raise ValueError("Cannot evaluate interview without question evaluations")
 
         # 1️⃣ Deterministic numeric engine
-        dimension_scores = self._compute_dimension_scores(per_question_evaluations)
+        dimension_scores = self._compute_dimension_scores(
+            questions,
+            per_question_evaluations,
+        )
+
         overall_score = self._compute_overall_score(per_question_evaluations)
         hiring_probability = self._compute_hiring_probability(overall_score)
         confidence = self._compute_confidence(per_question_evaluations)
@@ -96,16 +102,37 @@ class InterviewEvaluationService:
 
     def _compute_dimension_scores(
         self,
+        questions: List[Question],
         evaluations: List[QuestionEvaluation],
     ) -> Dict[str, float]:
 
-        overall_score = self._compute_overall_score(evaluations)
+        # Build question_id → area map
+        question_area_map = {q.id: q.area for q in questions}
 
-        # Temporary uniform distribution (can be refined later)
-        return {
-            name: overall_score
-            for name in ALLOWED_DIMENSIONS
+        # Area → dimension mapping
+        AREA_TO_DIMENSION = {
+            "technical_background": "Technical Depth",
+            "technical_technical_knowledge": "Technical Depth",
+            "technical_database": "Technical Depth",
+            "technical_coding": "Problem Solving",
+            "technical_case_study": "System Design",
+            "hr_background": "Communication",
+            "hr_technical_knowledge": "Technical Depth",
+            "hr_situational": "Communication",
+            "hr_brain_teaser": "Problem Solving",
+            "hr_analytical": "Problem Solving",
         }
+
+        # Ensure all dimensions exist
+        result: Dict[str, float] = {}
+        for dimension in ALLOWED_DIMENSIONS:
+            scores = evaluations.get(dimension, [])
+            if scores:
+                result[dimension] = round(sum(scores) / len(scores), 1)
+            else:
+                result[dimension] = 0.0
+
+        return result
 
     # ---------------------------------------------------------
 
