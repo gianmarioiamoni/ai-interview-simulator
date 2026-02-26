@@ -23,6 +23,7 @@ class InterviewController:
         self._graph = graph
         self._mapper = mapper
         self._question_eval_service = QuestionEvaluationService()
+        self._evaluation_service = InterviewEvaluationService(get_llm())
         self._logger = get_logger(__name__)
 
     # ---------------------------------------------------------
@@ -75,7 +76,7 @@ class InterviewController:
 
         final_eval = self._evaluation_service.evaluate(
             per_question_evaluations=state.evaluations,
-            interview_type="TECHNICAL",
+            interview_type=state.interview_type,
             role=state.role.type.value,
         )
 
@@ -85,3 +86,4 @@ class InterviewController:
         final_report = self._mapper.to_final_report_dto(state)
 
         return final_report, question_eval.feedback
+
