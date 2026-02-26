@@ -15,8 +15,6 @@ from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
 
 
 class InterviewStateMapper:
-    # Maps InterviewState (domain layer) into UI-safe DTOs.
-    # Contains no business logic.
 
     # ---------------------------------------------------------
     # DTO session
@@ -58,7 +56,7 @@ class InterviewStateMapper:
         )
 
     # ---------------------------------------------------------
-    # Final repor
+    # Final report
     # ---------------------------------------------------------
 
     def to_final_report_dto(self, state: InterviewState) -> FinalReportDTO:
@@ -126,9 +124,7 @@ class InterviewStateMapper:
         evaluations: List[QuestionEvaluation],
     ) -> List[DimensionScoreDTO]:
 
-        # Map question_id -> area
         question_area_map: Dict[str, str] = {q.id: q.area for q in questions}
-
         dimension_map: Dict[str, List[float]] = {}
 
         for ev in evaluations:
@@ -164,10 +160,12 @@ class InterviewStateMapper:
 
         # Remove duplicates while preserving order
         seen = set()
-        unique_weaknesses = []
+        unique = []
+
         for w in weaknesses:
             if w not in seen:
                 seen.add(w)
-                unique_weaknesses.append(w)
+                unique.append(w)
 
-        return unique_weaknesses
+        # Return max 3 suggestions
+        return unique[:3]
