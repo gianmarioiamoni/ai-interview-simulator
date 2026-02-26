@@ -2,20 +2,18 @@
 
 # Interview evaluation service
 #
+# Enterprise deterministic core version.
+#
 # Responsibility:
-# - orchestrates LLM evaluation
-# - validates strict JSON
-# - enforces mathematical consistency
-# - enforces schema governance
-# - applies deterministic normalization
-# - applies deterministic confidence computation
-# - provides deterministic fallback strategy
+# - deterministic scoring engine
+# - deterministic hiring probability
+# - deterministic confidence
+# - LLM only for qualitative justification
 
-from typing import List
-
-import json
+from typing import List, Dict
 import statistics
 import logging
+import json
 
 from app.ports.llm_port import LLMPort
 from domain.contracts.interview_evaluation import InterviewEvaluation
@@ -25,15 +23,12 @@ from domain.contracts.confidence import Confidence
 
 logger = logging.getLogger(__name__)
 
-
-MAX_RETRIES = 2
-
-ALLOWED_DIMENSIONS = {
+ALLOWED_DIMENSIONS = [
     "Technical Depth",
     "Communication",
     "Problem Solving",
     "System Design",
-}
+]
 
 
 class InterviewEvaluationService:
@@ -41,6 +36,8 @@ class InterviewEvaluationService:
     def __init__(self, llm: LLMPort) -> None:
         self._llm = llm
 
+    # ---------------------------------------------------------
+    # PUBLIC API
     # ---------------------------------------------------------
 
     def evaluate(
@@ -50,251 +47,88 @@ class InterviewEvaluationService:
         role: str,
     ) -> InterviewEvaluation:
 
-        prompt = self._build_prompt(
+        if not per_question_evaluations:
+            raise ValueError("Cannot evaluate interview without question evaluations")
+
+        # 1️⃣ Deterministic numeric engine
+        dimension_scores = self._compute_dimension_scores(per_question_evaluations)
+        overall_score = self._compute_overall_score(per_question_evaluations)
+        hiring_probability = self._compute_hiring_probability(overall_score)
+        confidence = self._compute_confidence(per_question_evaluations)
+
+        # 2️⃣ LLM narrative generation
+        narrative = self._generate_narrative(
             per_question_evaluations,
+            dimension_scores,
             interview_type,
             role,
         )
 
-        for attempt in range(MAX_RETRIES + 1):
-
-            logger.info(
-                "evaluation_attempt",
-                extra={
-                    "attempt": attempt,
-                    "interview_type": interview_type,
-                    "role": role,
-                },
+        # 3️⃣ Inject justifications into dimension objects
+        performance_dimensions = []
+        for dimension in dimension_scores:
+            justification = narrative["dimension_justifications"].get(
+                dimension.name,
+                "No justification provided.",
             )
 
-            response = self._llm.invoke(prompt)
-
-            try:
-                parsed = self._extract_json_object(response.content)
-
-                evaluation = InterviewEvaluation.model_validate(parsed)
-
-                self._enforce_schema_rules(evaluation)
-                self._verify_consistency(evaluation)
-
-                normalized = self._normalize(evaluation)
-                logger.info(
-                    "evaluation_success",
-                    extra={
-                        "attempt": attempt,
-                        "normalized_score": normalized.overall_score,
-                        "confidence": evaluation.confidence,
-                    },
+            performance_dimensions.append(
+                PerformanceDimension(
+                    name=dimension.name,
+                    score=dimension.score,
+                    justification=justification,
                 )
+            )
 
-                return normalized
-
-            except Exception as e:
-                logger.warning(
-                    "evaluation_retry",
-                    extra={
-                        "attempt": attempt,
-                        "error_type": type(e).__name__,
-                    },
-                )
-
-                if attempt == MAX_RETRIES:
-                    logger.error(
-                        "evaluation_fallback_triggered",
-                        extra={
-                            "reason": type(e).__name__,
-                        },
-                    )
-                    return self._fallback_evaluation(per_question_evaluations)
-
-        # Should never be reached
-        return self._fallback_evaluation(per_question_evaluations)
-
-    # ---------------------------------------------------------
-
-    def _build_prompt(
-        self,
-        per_question_evaluations: List[QuestionEvaluation],
-        interview_type: str,
-        role: str,
-    ) -> str:
-
-        return f"""
-You are a strict and deterministic technical interviewer.
-
-Role: {role}
-Interview type: {interview_type}
-
-You MUST return valid JSON only.
-Do not include explanations or text outside JSON.
-
-Allowed performance dimensions (exactly these 4):
-- Technical Depth
-- Communication
-- Problem Solving
-- System Design
-
-Per-question evaluations:
-{[e.model_dump() for e in per_question_evaluations]}
-
-Return STRICT JSON with this structure:
-
-{{
-  "overall_score": float (0-100),
-  "performance_dimensions": [
-    {{
-      "name": one of allowed dimensions,
-      "score": float (0-100),
-      "justification": string
-    }}
-  ],
-  "hiring_probability": float (0-100),
-  "per_question_assessment": list,
-  "improvement_suggestions": list of strings,
-}}
-
-Constraints:
-- Must include exactly 4 performance dimensions
-- No extra fields
-- No missing fields
-"""
-
-    # ---------------------------------------------------------
-
-    def _enforce_schema_rules(self, evaluation: InterviewEvaluation) -> None:
-
-        # Exactly 4 dimensions
-        if len(evaluation.performance_dimensions) != 4:
-            raise ValueError("Must contain exactly 4 performance dimensions")
-
-        names = [d.name for d in evaluation.performance_dimensions]
-
-        # Unique names
-        if len(set(names)) != 4:
-            raise ValueError("Duplicate performance dimension names")
-
-        # Must match allowed set exactly
-        if set(names) != ALLOWED_DIMENSIONS:
-            raise ValueError("Invalid performance dimension set")
-
-    # ---------------------------------------------------------
-
-    def _verify_consistency(self, evaluation: InterviewEvaluation) -> None:
-
-        computed = self._compute_overall_score(evaluation.performance_dimensions)
-
-        if abs(computed - evaluation.overall_score) > 0.5:
-            raise ValueError("Inconsistent overall score")
-
-    # ---------------------------------------------------------
-
-    def _normalize(self, evaluation: InterviewEvaluation) -> InterviewEvaluation:
-
-        overall = self._compute_overall_score(evaluation.performance_dimensions)
-        confidence_value = self._compute_confidence(evaluation.performance_dimensions)
-        confidence = Confidence(base=confidence_value, final=confidence_value)
-        hiring_probability = self._compute_hiring_probability(overall)
-
-        return evaluation.model_copy(
-            update={
-                "overall_score": overall,
-                "confidence": confidence,
-                "hiring_probability": hiring_probability,
-            }
+        return InterviewEvaluation(
+            overall_score=overall_score,
+            performance_dimensions=performance_dimensions,
+            hiring_probability=hiring_probability,
+            per_question_assessment=per_question_evaluations,
+            improvement_suggestions=narrative["improvement_suggestions"],
+            confidence=confidence,
         )
+
+    # ---------------------------------------------------------
+    # DETERMINISTIC CORE
+    # ---------------------------------------------------------
+
+    def _compute_dimension_scores(
+        self,
+        evaluations: List[QuestionEvaluation],
+    ) -> List[PerformanceDimension]:
+
+        # For now we evenly distribute global average across all dimensions.
+        # You can later map question → dimension explicitly if desired.
+
+        avg_score = self._compute_overall_score(evaluations)
+
+        dimensions = []
+        for name in ALLOWED_DIMENSIONS:
+            dimensions.append(
+                PerformanceDimension(
+                    name=name,
+                    score=avg_score,
+                    justification="",  # filled later by LLM
+                )
+            )
+
+        return dimensions
 
     # ---------------------------------------------------------
 
     def _compute_overall_score(
         self,
-        dimensions: List[PerformanceDimension],
+        evaluations: List[QuestionEvaluation],
     ) -> float:
 
-        raw_avg = sum(d.score for d in dimensions) / len(dimensions)
-        bounded = max(0.0, min(100.0, raw_avg))
+        avg = sum(q.score for q in evaluations) / len(evaluations)
+        bounded = max(0.0, min(100.0, avg))
         return round(bounded, 1)
 
     # ---------------------------------------------------------
 
-    def _compute_confidence(
-        self,
-        dimensions: List[PerformanceDimension],
-    ) -> float:
-
-        scores = [d.score for d in dimensions]
-
-        if len(scores) < 2:
-            return 0.5
-
-        variance = statistics.pvariance(scores)
-
-        # Higher variance -> lower confidence
-        confidence = max(0.0, 1.0 - (variance / 2500.0))
-
-        return round(confidence, 2)
-
-    # ---------------------------------------------------------
-
-    def _fallback_evaluation(
-        self,
-        per_question_evaluations: List[QuestionEvaluation],
-    ) -> InterviewEvaluation:
-
-        if not per_question_evaluations:
-            overall = 50.0
-        else:
-            avg_score = sum(q.score for q in per_question_evaluations) / len(
-                per_question_evaluations
-            )
-            overall = round(avg_score, 1)
-
-        dimensions = [
-            {
-                "name": name,
-                "score": overall,
-                "justification": "Deterministic fallback evaluation",
-            }
-            for name in ALLOWED_DIMENSIONS
-        ]
-
-        return InterviewEvaluation(
-            overall_score=overall,
-            performance_dimensions=dimensions,
-            hiring_probability=self._compute_hiring_probability(overall),
-            per_question_assessment=per_question_evaluations,
-            improvement_suggestions=["Manual review recommended"],
-            confidence=Confidence(base=0.3, final=0.3),
-        )
-
-    # ---------------------------------------------------------
-
-    def _extract_json_object(self, text: str) -> dict:
-
-        # First try direct parsing
-        try:
-            return json.loads(text)
-        except Exception:
-            pass
-
-        # Try to extract first JSON object from text
-        start = text.find("{")
-        end = text.rfind("}")
-
-        if start == -1 or end == -1 or end <= start:
-            logger.warning("json_extraction_failed")
-            raise ValueError("No JSON object found in response")
-
-        candidate = text[start : end + 1]
-
-        logger.info("json_extraction_used")
-
-        return json.loads(candidate)
-
-    # ---------------------------------------------------------
-
     def _compute_hiring_probability(self, score: float) -> float:
-        # Piecewise enterprise-style hiring probability mapping.
-        # Score expected in range 0-100.
 
         if score < 50:
             return 0.0
@@ -306,3 +140,105 @@ Constraints:
             return 75.0
         else:
             return 90.0
+
+    # ---------------------------------------------------------
+
+    def _compute_confidence(
+        self,
+        evaluations: List[QuestionEvaluation],
+    ) -> Confidence:
+
+        scores = [q.score for q in evaluations]
+
+        if len(scores) < 2:
+            return Confidence(base=0.5, final=0.5)
+
+        variance = statistics.pvariance(scores)
+
+        # normalize variance for 0–100 scale
+        confidence_value = max(0.0, 1.0 - (variance / 2500.0))
+
+        confidence_value = round(confidence_value, 2)
+
+        return Confidence(
+            base=confidence_value,
+            final=confidence_value,
+        )
+
+    # ---------------------------------------------------------
+    # LLM NARRATIVE GENERATION
+    # ---------------------------------------------------------
+
+    def _generate_narrative(
+        self,
+        evaluations: List[QuestionEvaluation],
+        dimension_scores: List[PerformanceDimension],
+        interview_type: str,
+        role: str,
+    ) -> Dict:
+
+        prompt = f"""
+You are a senior technical interviewer.
+
+Role: {role}
+Interview type: {interview_type}
+
+Here are evaluated answers:
+{[e.model_dump() for e in evaluations]}
+
+Dimension scores (already computed deterministically):
+{[{d.name: d.score} for d in dimension_scores]}
+
+Provide:
+
+1. A short justification (2-3 sentences) for EACH of these dimensions:
+- Technical Depth
+- Communication
+- Problem Solving
+- System Design
+
+2. 3 concise improvement suggestions.
+
+Return STRICT JSON only in this format:
+
+{{
+  "dimension_justifications": {{
+    "Technical Depth": "...",
+    "Communication": "...",
+    "Problem Solving": "...",
+    "System Design": "..."
+  }},
+  "improvement_suggestions": ["...", "...", "..."]
+}}
+"""
+
+        response = self._llm.invoke(prompt)
+
+        try:
+            return self._extract_json(response.content)
+        except Exception:
+            logger.warning("narrative_json_parsing_failed")
+
+            return {
+                "dimension_justifications": {
+                    name: "Justification unavailable." for name in ALLOWED_DIMENSIONS
+                },
+                "improvement_suggestions": [
+                    "Further technical depth improvement recommended.",
+                ],
+            }
+
+    # ---------------------------------------------------------
+
+    def _extract_json(self, text: str) -> Dict:
+
+        try:
+            return json.loads(text)
+        except Exception:
+            start = text.find("{")
+            end = text.rfind("}")
+
+            if start == -1 or end == -1:
+                raise ValueError("No JSON object found")
+
+            return json.loads(text[start : end + 1])
