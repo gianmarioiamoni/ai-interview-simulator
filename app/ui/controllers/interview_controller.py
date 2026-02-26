@@ -57,7 +57,7 @@ class InterviewController:
         # 3️⃣ Generate QuestionEvaluation
         question_eval = self._question_eval_service.evaluate(
             question=current_question,
-            answer=answer,
+            answer_text=user_answer,
         )
         state.evaluations.append(question_eval)
 
