@@ -83,7 +83,7 @@ class InterviewStateMapper:
 
         return FinalReportDTO(
             overall_score=overall_score,
-            hiring_probability=self._compute_hiring_probability(overall_score),
+            hiring_probability=state.final_evaluation.hiring_probability,
             dimension_scores=dimension_scores,
             question_assessments=question_assessments,
             improvement_suggestions=improvement_suggestions,
@@ -171,18 +171,3 @@ class InterviewStateMapper:
                 unique_weaknesses.append(w)
 
         return unique_weaknesses
-
-    def _compute_hiring_probability(self, score: float) -> float:
-        # Piecewise enterprise-style hiring probability mapping.
-        # Score expected in range 0-100.
-
-        if score < 50:
-            return 0.0
-        elif score < 65:
-            return 30.0
-        elif score < 75:
-            return 55.0
-        elif score < 85:
-            return 75.0
-        else:
-            return 90.0

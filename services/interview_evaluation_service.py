@@ -151,7 +151,6 @@ Return STRICT JSON with this structure:
   "hiring_probability": float (0-100),
   "per_question_assessment": list,
   "improvement_suggestions": list of strings,
-  "confidence": float (0-1)
 }}
 
 Constraints:
@@ -194,11 +193,13 @@ Constraints:
         overall = self._compute_overall_score(evaluation.performance_dimensions)
         confidence_value = self._compute_confidence(evaluation.performance_dimensions)
         confidence = Confidence(base=confidence_value, final=confidence_value)
+        hiring_probability = self._compute_hiring_probability(overall)
 
         return evaluation.model_copy(
             update={
                 "overall_score": overall,
                 "confidence": confidence,
+                "hiring_probability": hiring_probability,
             }
         )
 
@@ -288,3 +289,20 @@ Constraints:
         logger.info("json_extraction_used")
 
         return json.loads(candidate)
+
+    # ---------------------------------------------------------
+
+    def _compute_hiring_probability(self, score: float) -> float:
+        # Piecewise enterprise-style hiring probability mapping.
+        # Score expected in range 0-100.
+
+        if score < 50:
+            return 0.0
+        elif score < 65:
+            return 30.0
+        elif score < 75:
+            return 55.0
+        elif score < 85:
+            return 75.0
+        else:
+            return 90.0
