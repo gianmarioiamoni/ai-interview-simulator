@@ -24,7 +24,11 @@ class QuestionEvaluationService:
 
     # ---------------------------------------------------------
 
-    def evaluate(self, question: Question, answer_text: str) -> QuestionEvaluation:
+    def evaluate(
+        self,
+        question: Question,
+        answer_text: str,
+    ) -> QuestionEvaluation:
 
         prompt = f"""
 You are a strict technical interviewer.
@@ -53,6 +57,7 @@ Rules:
 - score must be between 0 and 100
 - max_score must be 100
 - no extra fields
+- no explanations outside JSON
 """
 
         for attempt in range(MAX_RETRIES + 1):
@@ -72,7 +77,7 @@ Rules:
                 return evaluation
 
             except Exception as e:
-                logger.warning(f"Question evaluation retry {attempt}: {e}")
+                logger.warning(f"question_evaluation_retry_{attempt}: {e}")
 
                 if attempt == MAX_RETRIES:
                     return self._fallback(question)
@@ -82,13 +87,16 @@ Rules:
     # ---------------------------------------------------------
 
     def _extract_json(self, text: str) -> dict:
+
         try:
             return json.loads(text)
         except Exception:
             start = text.find("{")
             end = text.rfind("}")
+
             if start == -1 or end == -1:
-                raise ValueError("No JSON found")
+                raise ValueError("No JSON object found")
+
             return json.loads(text[start : end + 1])
 
     # ---------------------------------------------------------
