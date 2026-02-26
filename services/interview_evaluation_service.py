@@ -66,16 +66,17 @@ class InterviewEvaluationService:
 
         # 3️⃣ Inject justifications into dimension objects
         performance_dimensions = []
-        for dimension in dimension_scores:
+        for name, score in dimension_scores.items():
+
             justification = narrative["dimension_justifications"].get(
-                dimension.name,
-                "No justification provided.",
+                name,
+                "Justification unavailable.",
             )
 
             performance_dimensions.append(
                 PerformanceDimension(
-                    name=dimension.name,
-                    score=dimension.score,
+                    name=name,
+                    score=score,
                     justification=justification,
                 )
             )
@@ -96,24 +97,15 @@ class InterviewEvaluationService:
     def _compute_dimension_scores(
         self,
         evaluations: List[QuestionEvaluation],
-    ) -> List[PerformanceDimension]:
+    ) -> Dict[str, float]:
 
-        # For now we evenly distribute global average across all dimensions.
-        # You can later map question → dimension explicitly if desired.
+        overall_score = self._compute_overall_score(evaluations)
 
-        avg_score = self._compute_overall_score(evaluations)
-
-        dimensions = []
-        for name in ALLOWED_DIMENSIONS:
-            dimensions.append(
-                PerformanceDimension(
-                    name=name,
-                    score=avg_score,
-                    justification="",  # filled later by LLM
-                )
-            )
-
-        return dimensions
+        # Temporary uniform distribution (can be refined later)
+        return {
+            name: overall_score
+            for name in ALLOWED_DIMENSIONS
+        }
 
     # ---------------------------------------------------------
 
