@@ -79,11 +79,10 @@ class InterviewController:
             interview_type=state.interview_type.value,
             role=state.role.type.value,
         )
-
+        print("FINAL EVAL:", final_eval)
         state.final_evaluation = final_eval
         state.progress = InterviewProgress.COMPLETED
 
         final_report = self._mapper.to_final_report_dto(state)
 
         return final_report, question_eval.feedback
-
