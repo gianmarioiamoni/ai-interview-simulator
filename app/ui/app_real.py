@@ -61,6 +61,17 @@ def submit_answer(state: InterviewState, user_answer: str):
     if hasattr(result, "overall_score"):
 
         report = result
+        confidence_value = state.final_evaluation.confidence.final
+
+        confidence_legend = """
+Confidence scale (0–1):
+
+- 0.80 – 1.00 → Highly consistent performance
+- 0.60 – 0.79 → Moderately consistent
+- 0.40 – 0.59 → Noticeable variability
+- 0.20 – 0.39 → Highly inconsistent performance
+- 0.00 – 0.19 → Extreme volatility in results
+"""
 
         # Performance breakdown
         dimension_block = ""
@@ -119,7 +130,9 @@ The candidate demonstrated a structured performance across evaluated areas.
 
 ## 🔎 Evaluation Confidence
 
-Model confidence in scoring consistency: {state.final_evaluation.confidence.final}
+Stability Index: {confidence_value}
+
+{confidence_legend}
 
 ---
 

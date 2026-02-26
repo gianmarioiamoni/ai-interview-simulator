@@ -87,6 +87,11 @@ class InterviewEvaluationService:
                 )
             )
 
+        executive_summary = self._generate_executive_summary(
+            overall_score,
+            dimension_scores,
+        )
+
         return InterviewEvaluation(
             overall_score=overall_score,
             performance_dimensions=performance_dimensions,
@@ -191,13 +196,14 @@ class InterviewEvaluationService:
         scores = [q.score for q in evaluations]
 
         if len(scores) < 2:
-            return Confidence(base=0.5, final=0.5)
+            return Confidence(base=0.7, final=0.7)
 
         variance = statistics.pvariance(scores)
 
-        # normalize variance for 0–100 scale
-        confidence_value = max(0.0, 1.0 - (variance / 2500.0))
-
+        # smoother stability mapping
+        # reduces extreme swings in confidence
+        # higher variance -> lower confidence
+        confidence_value = 1 / (1 + variance / 1000.0)
         confidence_value = round(confidence_value, 2)
 
         return Confidence(
@@ -282,3 +288,34 @@ Return STRICT JSON only in this format:
                 raise ValueError("No JSON object found")
 
             return json.loads(text[start : end + 1])
+
+
+    # ---------------------------------------------------------
+
+    def _generate_executive_summary(
+        self,
+        overall_score: float,
+        dimension_scores: Dict[str, float],
+    ) -> str:
+
+        max_score = max(dimension_scores.values())
+        min_score = min(dimension_scores.values())
+        spread = max_score - min_score
+
+        if overall_score >= 80:
+            base = "The candidate demonstrated strong overall technical performance."
+        elif overall_score >= 65:
+            base = "The candidate demonstrated solid performance with room for improvement."
+        elif overall_score >= 50:
+            base = "The candidate demonstrated mixed performance across evaluated areas."
+        else:
+            base = "The candidate demonstrated significant gaps in key competency areas."
+
+        if spread > 60:
+            stability = "Performance was highly inconsistent across dimensions."
+        elif spread > 30:
+            stability = "Some variability across dimensions was observed."
+        else:
+            stability = "Performance was relatively consistent across areas."
+
+        return f"{base} {stability}"
