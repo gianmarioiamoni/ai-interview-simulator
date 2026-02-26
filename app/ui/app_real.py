@@ -54,17 +54,76 @@ def submit_answer(state: InterviewState, user_answer: str):
 
     result, feedback = controller.submit_answer(state, user_answer)
 
+    # ---------------------------------------------------------
     # Final report case
+    # ---------------------------------------------------------
+
     if hasattr(result, "overall_score"):
 
         report = result
 
+        # Performance breakdown
+        dimension_block = ""
+        for dim in report.dimension_scores:
+            dimension_block += f"- **{dim.name}**: {round(dim.score,1)}/100\n"
+
+        # Question-level assessment
+        question_block = ""
+        for q in report.question_assessments:
+            question_block += (
+                f"\n### Question {q.question_id}\n"
+                f"- Score: {round(q.score,1)}/100\n"
+                f"- Feedback: {q.feedback}\n"
+            )
+
+        # Improvements
+        improvement_block = ""
+        for imp in report.improvement_suggestions:
+            improvement_block += f"- {imp}\n"
+
         report_text = f"""
-## Final Report
+# 🧠 AI Interview Final Evaluation
 
-**Overall Score:** {report.overall_score}  
-**Hiring Probability:** {report.hiring_probability}%
+---
 
+## 📊 Executive Summary
+
+The candidate demonstrated a structured performance across evaluated areas.
+
+---
+
+## 🎯 Overall Metrics
+
+- **Overall Score:** {report.overall_score}/100  
+- **Hiring Probability:** {report.hiring_probability}%  
+
+---
+
+## 📈 Performance Breakdown
+
+{dimension_block}
+
+---
+
+## 📝 Question-Level Assessment
+
+{question_block}
+
+---
+
+## 🚀 Improvement Roadmap
+
+{improvement_block}
+
+---
+
+## 🔎 Evaluation Confidence
+
+Model confidence in scoring consistency: {state.final_evaluation.confidence.final}
+
+---
+
+*This evaluation combines deterministic scoring with structured AI narrative analysis.*
 """
 
         return (
@@ -74,12 +133,15 @@ def submit_answer(state: InterviewState, user_answer: str):
             "",
             gr.update(visible=False),
             gr.update(
-                value=f"{report_text}\n\n---\n\n### Last Feedback\n\n{feedback}",
+                value=report_text,
                 visible=True,
             ),
         )
 
-    # Otherwise still in progress
+    # ---------------------------------------------------------
+    # In-progress case
+    # ---------------------------------------------------------
+
     session = result
 
     return (
@@ -96,10 +158,11 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI
 # ---------------------------------------------------------
 
+
 def build_app():
     with gr.Blocks() as demo:
 
-        gr.Markdown("# AI Interview Simulator (Stub Mode)")
+        gr.Markdown("# AI Interview Simulator")
 
         state = gr.State()
 
