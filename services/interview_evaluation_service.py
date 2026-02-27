@@ -139,6 +139,7 @@ class InterviewEvaluationService:
     # DETERMINISTIC CORE
     # =========================================================
 
+
     def _compute_dimension_scores(
         self,
         questions: List[Question],
@@ -150,6 +151,7 @@ class InterviewEvaluationService:
         dimension_map: Dict[str, List[float]] = {}
 
         for ev in evaluations:
+
             area = question_area_map.get(ev.question_id)
             if not area:
                 continue
@@ -163,11 +165,18 @@ class InterviewEvaluationService:
         result: Dict[str, float] = {}
 
         for dimension in ALLOWED_DIMENSIONS:
+
             scores = dimension_map.get(dimension, [])
-            result[dimension] = round(sum(scores) / len(scores), 1) if scores else 0.0
+
+            if scores:
+                avg = sum(scores) / len(scores)
+                result[dimension] = round(avg, 1)
+            else:
+                result[dimension] = 0.0
 
         return result
 
+    
     def _compute_weighted_overall(
         self,
         dimension_scores: Dict[str, float],
