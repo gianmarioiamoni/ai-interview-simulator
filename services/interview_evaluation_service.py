@@ -285,13 +285,21 @@ class InterviewEvaluationService:
         scores = [q.score for q in evaluations]
 
         if len(scores) < 2:
-            return Confidence(base=0.7, final=0.7)
+            return Confidence(base=0.75, final=0.75)
 
         variance = statistics.pvariance(scores)
-        confidence_value = 1 / (1 + variance / 1000.0)
-        confidence_value = round(confidence_value, 2)
 
-        return Confidence(base=confidence_value, final=confidence_value)
+        # Max theoretical variance for 0-100 scale
+        max_variance = 2500.0
+
+        normalized_variance = min(variance / max_variance, 1.0)
+        stability_index = 1.0 - normalized_variance
+        stability_index = round(max(0.0, stability_index), 2)
+
+        return Confidence(
+            base=stability_index,
+            final=stability_index,
+        )
 
     # =========================================================
     # Narrative
