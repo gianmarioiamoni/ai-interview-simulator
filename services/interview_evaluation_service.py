@@ -1,15 +1,5 @@
 # services/interview_evaluation_service.py
 
-# Interview evaluation service
-#
-# Enterprise deterministic core version.
-#
-# Responsibility:
-# - deterministic scoring engine
-# - deterministic hiring probability
-# - deterministic confidence
-# - LLM only for qualitative justification
-
 from typing import List, Dict
 import statistics
 import logging
@@ -22,8 +12,14 @@ from domain.contracts.performance_dimension import PerformanceDimension
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.confidence import Confidence
 from domain.contracts.question import Question
+from domain.contracts.interview_area import InterviewArea
 
 logger = logging.getLogger(__name__)
+
+
+# -----------------------------------------
+# Canonical Performance Dimensions
+# -----------------------------------------
 
 ALLOWED_DIMENSIONS = [
     "Technical Depth",
@@ -31,6 +27,27 @@ ALLOWED_DIMENSIONS = [
     "Problem Solving",
     "System Design",
 ]
+
+# -----------------------------------------
+# InterviewArea → Performance Dimension
+# -----------------------------------------
+
+AREA_TO_DIMENSION = {
+    InterviewArea.TECH_TECHNICAL_KNOWLEDGE: "Technical Depth",
+    InterviewArea.TECH_DATABASE: "Technical Depth",
+    InterviewArea.TECH_BACKGROUND: "Technical Depth",
+    InterviewArea.TECH_CODING: "Problem Solving",
+    InterviewArea.TECH_CASE_STUDY: "System Design",
+    InterviewArea.HR_BACKGROUND: "Communication",
+    InterviewArea.HR_SITUATIONAL: "Communication",
+    InterviewArea.HR_ANALYTICAL: "Problem Solving",
+    InterviewArea.HR_BRAIN_TEASER: "Problem Solving",
+    InterviewArea.HR_TECHNICAL_KNOWLEDGE: "Technical Depth",
+}
+
+# -----------------------------------------
+# Role weights
+# -----------------------------------------
 
 ROLE_WEIGHTS = {
     "backend_engineer": {
@@ -53,9 +70,9 @@ class InterviewEvaluationService:
     def __init__(self, llm: LLMPort) -> None:
         self._llm = llm
 
-    # ---------------------------------------------------------
+    # =========================================================
     # PUBLIC API
-    # ---------------------------------------------------------
+    # =========================================================
 
     def evaluate(
         self,
@@ -65,30 +82,29 @@ class InterviewEvaluationService:
         role: str,
     ) -> InterviewEvaluation:
 
-        if not per_question_evaluations:
-            raise ValueError("Cannot evaluate interview without question evaluations")
-
-        # 1️⃣ Deterministic numeric engine
         dimension_scores = self._compute_dimension_scores(
             questions,
             per_question_evaluations,
         )
 
-        overall_score = self._compute_overall_score(dimension_scores, role)
+        overall_score = self._compute_weighted_overall(
+            dimension_scores,
+            role,
+        )
 
-        # If any critical dimension score is 0, set hiring probability to 0
-        if self._apply_gating_rule(dimension_scores, role):
-            hiring_probability = 0.0
-        else:
-            hiring_probability = self._compute_hiring_probability(overall_score)
+        hiring_probability = (
+            0.0
+            if self._apply_gating_rule(dimension_scores, role)
+            else self._compute_hiring_probability(overall_score)
+        )
 
         executive_summary = self._generate_executive_summary(
             overall_score,
             dimension_scores,
         )
+
         confidence = self._compute_confidence(per_question_evaluations)
 
-        # 2️⃣ LLM narrative generation
         narrative = self._generate_narrative(
             per_question_evaluations,
             dimension_scores,
@@ -96,22 +112,17 @@ class InterviewEvaluationService:
             role,
         )
 
-        # 3️⃣ Inject justifications into dimension objects
-        performance_dimensions = []
-        for name, score in dimension_scores.items():
-
-            justification = narrative["dimension_justifications"].get(
-                name,
-                "Justification unavailable.",
+        performance_dimensions = [
+            PerformanceDimension(
+                name=name,
+                score=score,
+                justification=narrative["dimension_justifications"].get(
+                    name,
+                    "Justification unavailable.",
+                ),
             )
-
-            performance_dimensions.append(
-                PerformanceDimension(
-                    name=name,
-                    score=score,
-                    justification=justification,
-                )
-            )
+            for name, score in dimension_scores.items()
+        ]
 
         return InterviewEvaluation(
             overall_score=overall_score,
@@ -124,53 +135,21 @@ class InterviewEvaluationService:
             confidence=confidence,
         )
 
-    # ---------------------------------------------------------
+    # =========================================================
     # DETERMINISTIC CORE
-    # ---------------------------------------------------------
-
+    # =========================================================
 
     def _compute_dimension_scores(
         self,
         questions: List[Question],
         evaluations: List[QuestionEvaluation],
-        ) -> Dict[str, float]:
+    ) -> Dict[str, float]:
 
-        # ---------------------------------------------------------
-        # 1️⃣ Build question_id → area map (normalized to string)
-        # ---------------------------------------------------------
-
-        question_area_map: Dict[str, str] = {}
-
-        for q in questions:
-            # If area is Enum → use .value
-            area_value = q.area.value if hasattr(q.area, "value") else q.area
-            question_area_map[q.id] = area_value
-
-        # ---------------------------------------------------------
-        # 2️⃣ Area → Dimension mapping
-        # ---------------------------------------------------------
-
-        AREA_TO_DIMENSION = {
-            "technical_background": "Technical Depth",
-            "technical_technical_knowledge": "Technical Depth",
-            "technical_database": "Technical Depth",
-            "technical_coding": "Problem Solving",
-            "technical_case_study": "System Design",
-            "hr_background": "Communication",
-            "hr_technical_knowledge": "Technical Depth",
-            "hr_situational": "Communication",
-            "hr_brain_teaser": "Problem Solving",
-            "hr_analytical": "Problem Solving",
-        }
-
-        # ---------------------------------------------------------
-        # 3️⃣ Aggregate scores per dimension
-        # ---------------------------------------------------------
+        question_area_map = {q.id: q.area for q in questions}
 
         dimension_map: Dict[str, List[float]] = {}
 
         for ev in evaluations:
-
             area = question_area_map.get(ev.question_id)
             if not area:
                 continue
@@ -181,70 +160,45 @@ class InterviewEvaluationService:
 
             dimension_map.setdefault(dimension, []).append(ev.score)
 
-        # ---------------------------------------------------------
-        # 4️⃣ Ensure ALL allowed dimensions exist
-        # ---------------------------------------------------------
-
         result: Dict[str, float] = {}
 
         for dimension in ALLOWED_DIMENSIONS:
-
             scores = dimension_map.get(dimension, [])
-
-            if scores:
-                avg = sum(scores) / len(scores)
-                result[dimension] = round(avg, 1)
-            else:
-                result[dimension] = 0.0
+            result[dimension] = round(sum(scores) / len(scores), 1) if scores else 0.0
 
         return result
 
-    # ---------------------------------------------------------
-
-    def _compute_percentile(self, score: float) -> float:
-        # Assume mean 60, std 15
-        mean = 60
-        std = 15
-
-        z = (score - mean) / std
-
-        percentile = 0.5 * (1 + math.erf(z / math.sqrt(2)))
-
-        return round(percentile * 100, 1)
-
-    def _apply_gating_rule(
-        self,
-        dimension_scores: Dict[str, float],
-        role: str
-    ) -> bool:
-
-        critical_dimensions = {
-            "backend_engineer": ["System Design"],
-        }
-        critical = critical_dimensions.get(role, [])
-
-        return any(dimension_scores[d] == 0 for d in critical)
-
-    def _compute_overall_score(
+    def _compute_weighted_overall(
         self,
         dimension_scores: Dict[str, float],
         role: str,
     ) -> float:
 
         weights = ROLE_WEIGHTS.get(role)
+
         if not weights:
-            # simple fallback: average scores
             avg = sum(dimension_scores.values()) / len(dimension_scores)
             return round(avg, 1)
 
-        weighted_sum = 0.0
-        for dim, score in dimension_scores.items():
-            weight = weights.get(dim, 0)
-            weighted_sum += score * weight
+        weighted = sum(
+            dimension_scores[dim] * weights.get(dim, 0) for dim in dimension_scores
+        )
 
-        return round(weighted_sum, 1)
+        return round(weighted, 1)
 
-    # ---------------------------------------------------------
+    def _apply_gating_rule(
+        self,
+        dimension_scores: Dict[str, float],
+        role: str,
+    ) -> bool:
+
+        critical_dimensions = {
+            "backend_engineer": ["System Design"],
+        }
+
+        critical = critical_dimensions.get(role, [])
+
+        return any(dimension_scores[d] == 0 for d in critical)
 
     def _compute_hiring_probability(self, score: float) -> float:
 
@@ -261,7 +215,12 @@ class InterviewEvaluationService:
         else:
             return 95.0
 
-    # ---------------------------------------------------------
+    def _compute_percentile(self, score: float) -> float:
+        mean = 60
+        std = 15
+        z = (score - mean) / std
+        percentile = 0.5 * (1 + math.erf(z / math.sqrt(2)))
+        return round(percentile * 100, 1)
 
     def _compute_confidence(
         self,
@@ -274,26 +233,19 @@ class InterviewEvaluationService:
             return Confidence(base=0.7, final=0.7)
 
         variance = statistics.pvariance(scores)
-
-        # smoother stability mapping
-        # reduces extreme swings in confidence
-        # higher variance -> lower confidence
         confidence_value = 1 / (1 + variance / 1000.0)
         confidence_value = round(confidence_value, 2)
 
-        return Confidence(
-            base=confidence_value,
-            final=confidence_value,
-        )
+        return Confidence(base=confidence_value, final=confidence_value)
 
-    # ---------------------------------------------------------
-    # LLM NARRATIVE GENERATION
-    # ---------------------------------------------------------
+    # =========================================================
+    # Narrative
+    # =========================================================
 
     def _generate_narrative(
         self,
         evaluations: List[QuestionEvaluation],
-        dimension_scores: List[PerformanceDimension],
+        dimension_scores: Dict[str, float],
         interview_type: str,
         role: str,
     ) -> Dict:
@@ -304,24 +256,13 @@ You are a senior technical interviewer.
 Role: {role}
 Interview type: {interview_type}
 
-Here are evaluated answers:
+Evaluations:
 {[e.model_dump() for e in evaluations]}
 
-Dimension scores (already computed deterministically):
+Dimension scores:
 {dimension_scores}
 
-Provide:
-
-1. A short justification (2-3 sentences) for EACH of these dimensions:
-- Technical Depth
-- Communication
-- Problem Solving
-- System Design
-
-2. 3 concise improvement suggestions.
-
-Return STRICT JSON only in this format:
-
+Return STRICT JSON:
 {{
   "dimension_justifications": {{
     "Technical Depth": "...",
@@ -338,33 +279,22 @@ Return STRICT JSON only in this format:
         try:
             return self._extract_json(response.content)
         except Exception:
-            logger.warning("narrative_json_parsing_failed")
-
             return {
                 "dimension_justifications": {
-                    name: "Justification unavailable." for name in ALLOWED_DIMENSIONS
+                    d: "Justification unavailable." for d in ALLOWED_DIMENSIONS
                 },
                 "improvement_suggestions": [
-                    "Further technical depth improvement recommended.",
+                    "Further structured technical preparation recommended."
                 ],
             }
 
-    # ---------------------------------------------------------
-
     def _extract_json(self, text: str) -> Dict:
-
         try:
             return json.loads(text)
         except Exception:
             start = text.find("{")
             end = text.rfind("}")
-
-            if start == -1 or end == -1:
-                raise ValueError("No JSON object found")
-
             return json.loads(text[start : end + 1])
-
-    # ---------------------------------------------------------
 
     def _generate_executive_summary(
         self,
@@ -372,18 +302,20 @@ Return STRICT JSON only in this format:
         dimension_scores: Dict[str, float],
     ) -> str:
 
-        max_score = max(dimension_scores.values())
-        min_score = min(dimension_scores.values())
-        spread = max_score - min_score
+        spread = max(dimension_scores.values()) - min(dimension_scores.values())
 
         if overall_score >= 80:
             base = "The candidate demonstrated strong overall technical performance."
         elif overall_score >= 65:
             base = "The candidate demonstrated solid performance with room for improvement."
         elif overall_score >= 50:
-            base = "The candidate demonstrated mixed performance across evaluated areas."
+            base = (
+                "The candidate demonstrated mixed performance across evaluated areas."
+            )
         else:
-            base = "The candidate demonstrated significant gaps in key competency areas."
+            base = (
+                "The candidate demonstrated significant gaps in key competency areas."
+            )
 
         if spread > 60:
             stability = "Performance was highly inconsistent across dimensions."
