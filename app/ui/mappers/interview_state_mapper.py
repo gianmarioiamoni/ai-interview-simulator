@@ -86,6 +86,8 @@ class InterviewStateMapper:
         return FinalReportDTO(
             overall_score=overall_score,
             hiring_probability=state.final_evaluation.hiring_probability,
+            percentile_rank=state.final_evaluation.percentile_rank,
+            executive_summary=state.final_evaluation.executive_summary,
             dimension_scores=dimension_scores,
             question_assessments=question_assessments,
             improvement_suggestions=improvement_suggestions,
