@@ -109,7 +109,7 @@ class InterviewEvaluationService:
             dimension_scores,
         )
 
-        percentile = self._compute_percentile(overall_score)
+        percentile = self._compute_percentile(overall_score, role)
         percentile_explanation = (
             "Percentile computed via Monte Carlo simulation "
             "using role-specific synthetic score distribution."
@@ -269,6 +269,7 @@ class InterviewEvaluationService:
             return 95.0
 
     def _compute_percentile(self, score: float, role: str) -> float:
+        rng = random.Random(42)
 
         role_distribution = {
             "backend_engineer": (65, 12),
@@ -280,7 +281,7 @@ class InterviewEvaluationService:
         sample_size = 10000
 
         simulated_scores = [
-            random.gauss(mean, std) 
+            rng.gauss(mean, std) 
             for _ in range(sample_size)
         ]
 
