@@ -107,6 +107,21 @@ Confidence scale (0–1):
 
 - **Overall Score:** {report.overall_score}/100  
 - **Hiring Probability:** {report.hiring_probability}%  
+- **Percentile Rank:** {report.percentile_rank}%  
+
+---
+
+## ⚖️ Decision Logic
+
+### Weighted Contribution
+
+{chr(10).join([f"- {k}: {v}" for k,v in report.weighted_breakdown.items()])}
+
+### Gating Analysis
+
+{"🚨 Gating triggered." if report.gating_triggered else "✅ No gating applied."}
+
+{report.gating_reason if report.gating_reason else ""}
 
 ---
 
@@ -128,15 +143,30 @@ Confidence scale (0–1):
 
 ---
 
-## 🔎 Evaluation Confidence
+## 🔎 Technical Appendix
+
+### Confidence Model
 
 Stability Index: {confidence_value}
 
-{confidence_legend}
+Confidence derived from variance across dimension scores.
+Higher variance → lower stability → lower confidence.
+
+Confidence scale (0–1):
+
+- 0.80 – 1.00 → Highly consistent performance  
+- 0.60 – 0.79 → Moderately consistent  
+- 0.40 – 0.59 → Noticeable variability  
+- 0.20 – 0.39 → Highly inconsistent performance  
+- 0.00 – 0.19 → Extreme volatility in results  
+
+### Percentile Methodology
+
+{report.percentile_explanation}
 
 ---
 
-*This evaluation combines deterministic scoring with structured AI narrative analysis.*
+*This evaluation combines deterministic scoring, weighted role-based modeling, gating governance rules, and AI-generated qualitative justification.*
 """
 
         return (
