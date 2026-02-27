@@ -99,7 +99,7 @@ Confidence scale (0–1):
 
 ## 📊 Executive Summary
 
-The candidate demonstrated a structured performance across evaluated areas.
+{report.executive_summary}
 
 ---
 

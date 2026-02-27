@@ -70,10 +70,14 @@ class InterviewStateMapper:
             for ev in state.evaluations
         ]
 
-        dimension_scores = self._aggregate_dimension_scores(
-            state.questions,
-            state.evaluations,
-        )
+        dimension_scores = [
+            DimensionScoreDTO(
+                name=dim.name,
+                score=dim.score,
+                max_score=100.0,
+            )
+            for dim in state.final_evaluation.performance_dimensions
+        ]
 
         improvement_suggestions = self._aggregate_weaknesses(state.evaluations)
 
@@ -117,36 +121,6 @@ class InterviewStateMapper:
             index=index,
             total=total,
         )
-
-    def _aggregate_dimension_scores(
-        self,
-        questions: List[Question],
-        evaluations: List[QuestionEvaluation],
-    ) -> List[DimensionScoreDTO]:
-
-        question_area_map: Dict[str, str] = {q.id: q.area for q in questions}
-        dimension_map: Dict[str, List[float]] = {}
-
-        for ev in evaluations:
-            area = question_area_map.get(ev.question_id)
-            if area is None:
-                continue
-
-            dimension_map.setdefault(area, []).append(ev.score)
-
-        result: List[DimensionScoreDTO] = []
-
-        for area, scores in dimension_map.items():
-            average = sum(scores) / len(scores)
-            result.append(
-                DimensionScoreDTO(
-                    name=area,
-                    score=average,
-                    max_score=100.0,
-                )
-            )
-
-        return result
 
     def _aggregate_weaknesses(
         self,
