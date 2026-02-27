@@ -151,15 +151,22 @@ Stability Index: {confidence_value}
 
 Confidence derived from variance across dimension scores.
 Higher variance → lower stability → lower confidence.
+Formula:
+Confidence = 1 − (Variance / 2500)
 
-Confidence scale (0–1):
+where 2500 represents the maximum theoretical variance 
+on a 0–100 scoring scale.
 
-- 0.80 – 1.00 → Highly consistent performance  
-- 0.60 – 0.79 → Moderately consistent  
+### Confidence Interpretation Guide
+
+Confidence ranges between 0 and 1 and reflects score stability 
+based on normalized variance.
+
+- 0.80 – 1.00 → Highly consistent performance across dimensions  
+- 0.60 – 0.79 → Moderately consistent performance  
 - 0.40 – 0.59 → Noticeable variability  
 - 0.20 – 0.39 → Highly inconsistent performance  
 - 0.00 – 0.19 → Extreme volatility in results  
-
 ### Percentile Methodology
 
 {report.percentile_explanation}
