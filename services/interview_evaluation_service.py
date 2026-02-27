@@ -59,6 +59,10 @@ class InterviewEvaluationService:
         )
 
         overall_score = self._compute_overall_score(per_question_evaluations)
+        executive_summary = self._generate_executive_summary(
+            overall_score,
+            dimension_scores,
+        )
         hiring_probability = self._compute_hiring_probability(overall_score)
         confidence = self._compute_confidence(per_question_evaluations)
 
@@ -87,13 +91,10 @@ class InterviewEvaluationService:
                 )
             )
 
-        executive_summary = self._generate_executive_summary(
-            overall_score,
-            dimension_scores,
-        )
 
         return InterviewEvaluation(
             overall_score=overall_score,
+            executive_summary=executive_summary,
             performance_dimensions=performance_dimensions,
             hiring_probability=hiring_probability,
             per_question_assessment=per_question_evaluations,
@@ -288,7 +289,6 @@ Return STRICT JSON only in this format:
                 raise ValueError("No JSON object found")
 
             return json.loads(text[start : end + 1])
-
 
     # ---------------------------------------------------------
 

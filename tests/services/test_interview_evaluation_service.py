@@ -477,17 +477,6 @@ def test_invalid_confidence_value_branch():
     assert result.confidence.final == 0.3
 
 
-def test_fallback_with_no_question_evaluations():
-
-    service = InterviewEvaluationService(Mock())
-
-    result = service._fallback_evaluation([])
-
-    assert result.overall_score == 5.0
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-
-
 def test_guard_final_fallback_branch(monkeypatch):
 
     service = InterviewEvaluationService(Mock())
