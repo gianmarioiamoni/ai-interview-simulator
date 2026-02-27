@@ -75,8 +75,8 @@ class InterviewController:
         state.progress = InterviewProgress.COMPLETED
 
         final_eval = self._evaluation_service.evaluate(
-            questions=state.questions,
             per_question_evaluations=state.evaluations,
+            questions=state.questions,
             interview_type=state.interview_type.value,
             role=state.role.type.value,
         )

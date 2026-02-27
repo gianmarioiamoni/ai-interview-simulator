@@ -59,8 +59,8 @@ class InterviewEvaluationService:
 
     def evaluate(
         self,
-        questions: List[Question],
         per_question_evaluations: List[QuestionEvaluation],
+        questions: List[Question],
         interview_type: str,
         role: str,
     ) -> InterviewEvaluation:
@@ -128,16 +128,28 @@ class InterviewEvaluationService:
     # DETERMINISTIC CORE
     # ---------------------------------------------------------
 
+
     def _compute_dimension_scores(
         self,
         questions: List[Question],
         evaluations: List[QuestionEvaluation],
-    ) -> Dict[str, float]:
+        ) -> Dict[str, float]:
 
-        # Build question_id → area map
-        question_area_map = {q.id: q.area for q in questions}
+        # ---------------------------------------------------------
+        # 1️⃣ Build question_id → area map (normalized to string)
+        # ---------------------------------------------------------
 
-        # Area → dimension mapping
+        question_area_map: Dict[str, str] = {}
+
+        for q in questions:
+            # If area is Enum → use .value
+            area_value = q.area.value if hasattr(q.area, "value") else q.area
+            question_area_map[q.id] = area_value
+
+        # ---------------------------------------------------------
+        # 2️⃣ Area → Dimension mapping
+        # ---------------------------------------------------------
+
         AREA_TO_DIMENSION = {
             "technical_background": "Technical Depth",
             "technical_technical_knowledge": "Technical Depth",
@@ -151,7 +163,10 @@ class InterviewEvaluationService:
             "hr_analytical": "Problem Solving",
         }
 
-        # dimension -> list of scores
+        # ---------------------------------------------------------
+        # 3️⃣ Aggregate scores per dimension
+        # ---------------------------------------------------------
+
         dimension_map: Dict[str, List[float]] = {}
 
         for ev in evaluations:
@@ -166,7 +181,10 @@ class InterviewEvaluationService:
 
             dimension_map.setdefault(dimension, []).append(ev.score)
 
-        # Ensure all dimensions exist
+        # ---------------------------------------------------------
+        # 4️⃣ Ensure ALL allowed dimensions exist
+        # ---------------------------------------------------------
+
         result: Dict[str, float] = {}
 
         for dimension in ALLOWED_DIMENSIONS:
@@ -183,9 +201,6 @@ class InterviewEvaluationService:
 
     # ---------------------------------------------------------
 
-    import math
-
-
     def _compute_percentile(self, score: float) -> float:
         # Assume mean 60, std 15
         mean = 60
@@ -196,7 +211,6 @@ class InterviewEvaluationService:
         percentile = 0.5 * (1 + math.erf(z / math.sqrt(2)))
 
         return round(percentile * 100, 1)
-
 
     def _apply_gating_rule(
         self,
