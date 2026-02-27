@@ -14,6 +14,7 @@ from typing import List, Dict
 import statistics
 import logging
 import json
+import math
 
 from app.ports.llm_port import LLMPort
 from domain.contracts.interview_evaluation import InterviewEvaluation
@@ -30,6 +31,21 @@ ALLOWED_DIMENSIONS = [
     "Problem Solving",
     "System Design",
 ]
+
+ROLE_WEIGHTS = {
+    "backend_engineer": {
+        "Technical Depth": 0.35,
+        "System Design": 0.30,
+        "Problem Solving": 0.20,
+        "Communication": 0.15,
+    },
+    "frontend_engineer": {
+        "Technical Depth": 0.30,
+        "System Design": 0.20,
+        "Problem Solving": 0.25,
+        "Communication": 0.25,
+    },
+}
 
 
 class InterviewEvaluationService:
@@ -58,12 +74,18 @@ class InterviewEvaluationService:
             per_question_evaluations,
         )
 
-        overall_score = self._compute_overall_score(per_question_evaluations)
+        overall_score = self._compute_overall_score(dimension_scores, role)
+
+        # If any critical dimension score is 0, set hiring probability to 0
+        if self._apply_gating_rule(dimension_scores, role):
+            hiring_probability = 0.0
+        else:
+            hiring_probability = self._compute_hiring_probability(overall_score)
+
         executive_summary = self._generate_executive_summary(
             overall_score,
             dimension_scores,
         )
-        hiring_probability = self._compute_hiring_probability(overall_score)
         confidence = self._compute_confidence(per_question_evaluations)
 
         # 2️⃣ LLM narrative generation
@@ -91,12 +113,12 @@ class InterviewEvaluationService:
                 )
             )
 
-
         return InterviewEvaluation(
             overall_score=overall_score,
             executive_summary=executive_summary,
             performance_dimensions=performance_dimensions,
             hiring_probability=hiring_probability,
+            percentile_rank=self._compute_percentile(overall_score),
             per_question_assessment=per_question_evaluations,
             improvement_suggestions=narrative["improvement_suggestions"],
             confidence=confidence,
@@ -161,14 +183,52 @@ class InterviewEvaluationService:
 
     # ---------------------------------------------------------
 
+    import math
+
+
+    def _compute_percentile(self, score: float) -> float:
+        # Assume mean 60, std 15
+        mean = 60
+        std = 15
+
+        z = (score - mean) / std
+
+        percentile = 0.5 * (1 + math.erf(z / math.sqrt(2)))
+
+        return round(percentile * 100, 1)
+
+
+    def _apply_gating_rule(
+        self,
+        dimension_scores: Dict[str, float],
+        role: str
+    ) -> bool:
+
+        critical_dimensions = {
+            "backend_engineer": ["System Design"],
+        }
+        critical = critical_dimensions.get(role, [])
+
+        return any(dimension_scores[d] == 0 for d in critical)
+
     def _compute_overall_score(
         self,
-        evaluations: List[QuestionEvaluation],
+        dimension_scores: Dict[str, float],
+        role: str,
     ) -> float:
 
-        avg = sum(q.score for q in evaluations) / len(evaluations)
-        bounded = max(0.0, min(100.0, avg))
-        return round(bounded, 1)
+        weights = ROLE_WEIGHTS.get(role)
+        if not weights:
+            # simple fallback: average scores
+            avg = sum(dimension_scores.values()) / len(dimension_scores)
+            return round(avg, 1)
+
+        weighted_sum = 0.0
+        for dim, score in dimension_scores.items():
+            weight = weights.get(dim, 0)
+            weighted_sum += score * weight
+
+        return round(weighted_sum, 1)
 
     # ---------------------------------------------------------
 

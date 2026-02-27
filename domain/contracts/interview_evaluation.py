@@ -20,6 +20,7 @@ class InterviewEvaluation(BaseModel):
     executive_summary: str = Field(..., min_length=1)
     performance_dimensions: List[PerformanceDimension]
     hiring_probability: float = Field(..., ge=0.0, le=100.0)
+    percentile_rank: float
     per_question_assessment: List[QuestionEvaluation]
     improvement_suggestions: List[str]
     confidence: Confidence
