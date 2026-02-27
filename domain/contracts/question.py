@@ -1,10 +1,8 @@
-# domain/contracts/question.py
-
 from __future__ import annotations
 
-from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
+from enum import Enum
 
 from domain.contracts.interview_area import InterviewArea
 
@@ -20,7 +18,6 @@ class Question(BaseModel):
     area: InterviewArea
     type: QuestionType
     prompt: str = Field(..., min_length=1)
-
     reference_solution: Optional[str] = None
     difficulty: int = Field(..., ge=1, le=5)
     humanized: bool = False
