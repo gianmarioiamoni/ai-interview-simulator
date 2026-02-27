@@ -84,11 +84,22 @@ class InterviewStateMapper:
         overall_score = state.final_evaluation.overall_score
 
         return FinalReportDTO(
-            overall_score=overall_score,
+            overall_score=state.final_evaluation.overall_score,
             hiring_probability=state.final_evaluation.hiring_probability,
             percentile_rank=state.final_evaluation.percentile_rank,
             executive_summary=state.final_evaluation.executive_summary,
-            dimension_scores=dimension_scores,
+            gating_triggered=state.final_evaluation.gating_triggered,
+            gating_reason=state.final_evaluation.gating_reason,
+            weighted_breakdown=state.final_evaluation.weighted_breakdown,
+            percentile_explanation=state.final_evaluation.percentile_explanation,
+            dimension_scores=[
+                DimensionScoreDTO(
+                    name=d.name,
+                    score=d.score,
+                    max_score=100.0,
+                )
+                for d in state.final_evaluation.performance_dimensions
+            ],
             question_assessments=question_assessments,
             improvement_suggestions=improvement_suggestions,
             total_tokens_used=0,

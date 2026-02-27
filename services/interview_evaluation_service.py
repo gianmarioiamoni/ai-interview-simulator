@@ -87,21 +87,33 @@ class InterviewEvaluationService:
             per_question_evaluations,
         )
 
-        overall_score = self._compute_weighted_overall(
+        weighted_breakdown = self._compute_weighted_breakdown(
             dimension_scores,
             role,
         )
 
-        hiring_probability = (
-            0.0
-            if self._apply_gating_rule(dimension_scores, role)
-            else self._compute_hiring_probability(overall_score)
+        overall_score = round(sum(weighted_breakdown.values()), 1)
+
+        gating_triggered, gating_reason = self._apply_gating_rule(
+            dimension_scores,
+            role,
         )
+
+        if gating_triggered:
+            hiring_probability = 0.0
+        else:
+            hiring_probability = self._compute_hiring_probability(overall_score)
 
         executive_summary = self._generate_executive_summary(
             overall_score,
             dimension_scores,
         )
+
+        percentile = self._compute_percentile(overall_score)
+        percentile_explanation = (
+            "Percentile computed assuming normal distribution "
+            "(mean=60, std=15) across candidate population."
+            )
 
         confidence = self._compute_confidence(per_question_evaluations)
 
@@ -111,6 +123,13 @@ class InterviewEvaluationService:
             interview_type,
             role,
         )
+
+        executive_summary = self._generate_executive_summary(
+            overall_score,
+            dimension_scores,
+        )
+
+        confidence = self._compute_confidence(per_question_evaluations)
 
         performance_dimensions = [
             PerformanceDimension(
@@ -138,7 +157,6 @@ class InterviewEvaluationService:
     # =========================================================
     # DETERMINISTIC CORE
     # =========================================================
-
 
     def _compute_dimension_scores(
         self,
@@ -176,7 +194,6 @@ class InterviewEvaluationService:
 
         return result
 
-    
     def _compute_weighted_overall(
         self,
         dimension_scores: Dict[str, float],
@@ -195,11 +212,32 @@ class InterviewEvaluationService:
 
         return round(weighted, 1)
 
+    def _compute_weighted_breakdown(
+        self,
+        dimension_scores: Dict[str, float],
+        role: str,
+    ) -> Dict[str, float]:
+
+        weights = ROLE_WEIGHTS.get(role)
+
+        if not weights:
+            avg = sum(dimension_scores.values()) / len(dimension_scores)
+            return {"average": round(avg, 1)}
+
+        breakdown: Dict[str, float] = {}
+
+        for dim, score in dimension_scores.items():
+            weight = weights.get(dim, 0.0)
+            breakdown[dim] = round(score * weight, 2)
+
+        return breakdown
+
+    
     def _apply_gating_rule(
         self,
         dimension_scores: Dict[str, float],
         role: str,
-    ) -> bool:
+    ) -> tuple[bool, str | None]:
 
         critical_dimensions = {
             "backend_engineer": ["System Design"],
@@ -207,7 +245,15 @@ class InterviewEvaluationService:
 
         critical = critical_dimensions.get(role, [])
 
-        return any(dimension_scores[d] == 0 for d in critical)
+        for dimension in critical:
+            if dimension_scores.get(dimension, 0.0) == 0.0:
+                return True, (
+                    f"Gating triggered: critical dimension '{dimension}' "
+                    f"scored 0.0 for role '{role}'."
+                )
+
+        return False, None
+
 
     def _compute_hiring_probability(self, score: float) -> float:
 
