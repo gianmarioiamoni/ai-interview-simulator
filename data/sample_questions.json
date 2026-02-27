@@ -1,21 +1,21 @@
 [
     {
         "id": "q1",
-        "area": "Algorithms",
+        "area": "technical_technical_knowledge",
         "type": "written",
         "prompt": "Explain the time complexity of binary search.",
         "difficulty": 2
     },
     {
         "id": "q2",
-        "area": "System Design",
+        "area": "technical_case_study",
         "type": "written",
         "prompt": "How would you design a URL shortening service?",
         "difficulty": 3
     },
     {
         "id": "q3",
-        "area": "Databases",
+        "area": "technical_database",
         "type": "written",
         "prompt": "What is the difference between OLTP and OLAP?",
         "difficulty": 2

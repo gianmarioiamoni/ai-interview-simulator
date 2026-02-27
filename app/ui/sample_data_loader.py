@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List
 
 from domain.contracts.question import Question, QuestionType
+from domain.contracts.interview_area import InterviewArea
 
 
 def load_sample_questions() -> List[Question]:
@@ -19,7 +20,7 @@ def load_sample_questions() -> List[Question]:
         questions.append(
             Question(
                 id=q["id"],
-                area=q["area"],
+                area=InterviewArea(q["area"]),
                 type=QuestionType(q["type"]),
                 prompt=q["prompt"],
                 difficulty=q["difficulty"],
