@@ -4,7 +4,7 @@ from typing import List, Dict
 import statistics
 import logging
 import json
-import random
+import math
 
 from app.ports.llm_port import LLMPort
 from domain.contracts.interview_evaluation import InterviewEvaluation
@@ -13,6 +13,7 @@ from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.confidence import Confidence
 from domain.contracts.question import Question
 from domain.contracts.interview_area import InterviewArea
+from domain.contracts.role import RoleType, ROLE_DISTRIBUTION
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +110,7 @@ class InterviewEvaluationService:
             dimension_scores,
         )
 
-        percentile = self._compute_percentile(overall_score, role)
+        percentile = self._compute_percentile(overall_score, RoleType(role))
         percentile_explanation = (
             "Percentile computed via Monte Carlo simulation "
             "using role-specific synthetic score distribution."
@@ -272,34 +273,21 @@ class InterviewEvaluationService:
         else:
             return 95.0
 
-    def _compute_percentile(self, score: float, role: str) -> float:
-        rng = random.Random(42)
+    def _compute_percentile(
+        self, 
+        score: float, 
+        role: RoleType,
+    ) -> float:
 
-        role_distribution = {
-            "backend_engineer": (65, 12),
-            "frontend_engineer": (63, 13),
-        }
+        params = ROLE_DISTRIBUTION[role]
+        mean = params["mean"]
+        std = params["std"]
 
-        mean, std = role_distribution.get(role, (60, 15))
+        z = (score - mean) / std
+        percentile = 0.5 * (1 + math.erf(z / math.sqrt(2)))
+        
+        return round(percentile * 100, 1)
 
-        sample_size = 10000
-
-        simulated_scores = [
-            rng.gauss(mean, std) 
-            for _ in range(sample_size)
-        ]
-
-        # Clamp simulated scores to 0–100
-        simulated_scores = [
-            max(0.0, min(100.0, s)) 
-            for s in simulated_scores
-        ]
-
-        below = sum(1 for s in simulated_scores if s <= score)
-
-        percentile = (below / sample_size) * 100
-
-        return round(percentile, 1)
 
     def _compute_confidence(
         self,
