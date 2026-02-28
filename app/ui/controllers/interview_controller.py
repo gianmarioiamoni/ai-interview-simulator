@@ -6,9 +6,7 @@ from domain.contracts.answer import Answer
 
 from infrastructure.llm.llm_factory import get_llm
 
-from app.ui.dto import final_report_dto
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
-from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from app.core.logger import get_logger
@@ -62,7 +60,7 @@ class InterviewController:
         )
         state.evaluations.append(question_eval)
 
-        # 4️⃣ If not last question → advance to next question
+        # 4️⃣ If not last question → advance
         if state.current_question_index < len(state.questions) - 1:
 
             state.current_question_index += 1
@@ -71,16 +69,16 @@ class InterviewController:
 
             return session_dto, question_eval.feedback
 
-        # 5️⃣ If last question → complete interview
+        # 5️⃣ Last question → complete interview
         state.progress = InterviewProgress.COMPLETED
 
         final_eval = self._evaluation_service.evaluate(
             per_question_evaluations=state.evaluations,
             questions=state.questions,
-            interview_type=state.interview_type.value,
-            role=state.role.type.value,
+            interview_type=state.interview_type,  # pass Enum, not .value
+            role=state.role.type,  # pass RoleType Enum
         )
-        
+
         state.final_evaluation = final_eval
         state.progress = InterviewProgress.COMPLETED
 
