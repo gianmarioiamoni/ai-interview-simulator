@@ -8,6 +8,7 @@
 # - It must be type-safe
 # - It must be immutable
 
+from typing import Dict
 from enum import Enum
 from pydantic import BaseModel, model_validator
 
@@ -41,12 +42,69 @@ if _missing:
     raise ValueError(f"Missing percentile distribution for roles: {_missing}")
 
 
+ALLOWED_DIMENSIONS = [
+    "Technical Depth",
+    "Communication",
+    "Problem Solving",
+    "System Design",
+]
+
+ROLE_WEIGHTS: Dict[RoleType, Dict[str, float]] = {
+    RoleType.BACKEND_ENGINEER: {
+        "Technical Depth": 0.35,
+        "System Design": 0.30,
+        "Problem Solving": 0.20,
+        "Communication": 0.15,
+    },
+    RoleType.FRONTEND_ENGINEER: {
+        "Technical Depth": 0.30,
+        "System Design": 0.20,
+        "Problem Solving": 0.25,
+        "Communication": 0.25,
+    },
+    RoleType.FULLSTACK_ENGINEER: {
+        "Technical Depth": 0.30,
+        "System Design": 0.25,
+        "Problem Solving": 0.25,
+        "Communication": 0.20,
+    },
+    RoleType.DEVOPS_ENGINEER: {
+        "Technical Depth": 0.30,
+        "System Design": 0.30,
+        "Problem Solving": 0.20,
+        "Communication": 0.20,
+    },
+    RoleType.DATA_ENGINEER: {
+        "Technical Depth": 0.35,
+        "System Design": 0.25,
+        "Problem Solving": 0.25,
+        "Communication": 0.15,
+    },
+    RoleType.ML_ENGINEER: {
+        "Technical Depth": 0.40,
+        "System Design": 0.20,
+        "Problem Solving": 0.25,
+        "Communication": 0.15,
+    },
+    RoleType.QA_ENGINEER: {
+        "Technical Depth": 0.25,
+        "System Design": 0.15,
+        "Problem Solving": 0.30,
+        "Communication": 0.30,
+    },
+    RoleType.OTHER: {
+        "Technical Depth": 0.25,
+        "System Design": 0.25,
+        "Problem Solving": 0.25,
+        "Communication": 0.25,
+    },
+}
+
+
 class Role(BaseModel):
     type: RoleType
     custom_name: str | None = None
-
-
-
+    
     model_config = {"frozen": True}
 
     @model_validator(mode="after")
