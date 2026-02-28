@@ -23,10 +23,29 @@ class RoleType(str, Enum):
     QA_ENGINEER = "qa_engineer"
     OTHER = "other"
 
+# role-specific statistical baseline for percentile modeling
+ROLE_DISTRIBUTION: dict[RoleType, dict[str, float]] = {
+    RoleType.BACKEND_ENGINEER: {"mean": 60.0, "std": 15.0},
+    RoleType.FRONTEND_ENGINEER: {"mean": 62.0, "std": 14.0},
+    RoleType.FULLSTACK_ENGINEER: {"mean": 63.0, "std": 14.0},
+    RoleType.DEVOPS_ENGINEER: {"mean": 65.0, "std": 13.0},
+    RoleType.DATA_ENGINEER: {"mean": 64.0, "std": 14.0},
+    RoleType.ML_ENGINEER: {"mean": 68.0, "std": 12.0},
+    RoleType.QA_ENGINEER: {"mean": 58.0, "std": 16.0},
+    RoleType.OTHER: {"mean": 60.0, "std": 15.0},
+}
+
+# Ensure statistical model completeness
+_missing = set(RoleType) - set(ROLE_DISTRIBUTION.keys())
+if _missing:
+    raise ValueError(f"Missing percentile distribution for roles: {_missing}")
+
 
 class Role(BaseModel):
     type: RoleType
     custom_name: str | None = None
+
+
 
     model_config = {"frozen": True}
 
