@@ -17,12 +17,11 @@ class InterviewEvaluation(BaseModel):
 
     hiring_probability: float = Field(..., ge=0.0, le=100.0)
     percentile_rank: float = Field(..., ge=0.0, le=100.0)
+    percentile_explanation: str
 
-    # NEW
     gating_triggered: bool
     gating_reason: Optional[str] = None
     weighted_breakdown: Dict[str, float]
-    percentile_explanation: str
 
     per_question_assessment: List[QuestionEvaluation]
     improvement_suggestions: List[str]
