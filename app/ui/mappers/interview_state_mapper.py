@@ -81,8 +81,7 @@ class InterviewStateMapper:
 
         improvement_suggestions = self._aggregate_weaknesses(state.evaluations)
 
-        overall_score = state.final_evaluation.overall_score
-
+        
         return FinalReportDTO(
             overall_score=state.final_evaluation.overall_score,
             hiring_probability=state.final_evaluation.hiring_probability,

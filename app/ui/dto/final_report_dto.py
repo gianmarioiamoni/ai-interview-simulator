@@ -12,6 +12,7 @@ class FinalReportDTO(BaseModel):
     overall_score: float
     hiring_probability: float
     percentile_rank: float
+    percentile_explanation: str
 
     executive_summary: str
 
@@ -19,7 +20,6 @@ class FinalReportDTO(BaseModel):
     gating_reason: Optional[str]
 
     weighted_breakdown: Dict[str, float]
-    percentile_explanation: str
 
     dimension_scores: List[DimensionScoreDTO]
     question_assessments: List[QuestionAssessmentDTO]
