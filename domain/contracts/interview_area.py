@@ -1,9 +1,6 @@
+# domain/contracts/interview_area.py
+
 from enum import Enum
-
-
-class InterviewType(str, Enum):
-    HR = "hr"
-    TECHNICAL = "technical"
 
 
 class InterviewArea(str, Enum):

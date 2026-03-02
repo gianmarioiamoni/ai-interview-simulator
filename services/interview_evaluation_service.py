@@ -21,12 +21,12 @@ import math
 from app.ports.llm_port import LLMPort
 
 from domain.contracts.interview_evaluation import InterviewEvaluation
+from domain.contracts.interview_type import InterviewType
 from domain.contracts.performance_dimension import PerformanceDimension
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.confidence import Confidence
 from domain.contracts.question import Question
 from domain.contracts.role import RoleType, ROLE_DISTRIBUTION, ALLOWED_DIMENSIONS, ROLE_WEIGHTS
-from domain.contracts.interview_area import InterviewType
 
 
 logger = logging.getLogger(__name__)
