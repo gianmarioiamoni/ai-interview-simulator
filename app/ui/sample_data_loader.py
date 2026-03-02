@@ -3,7 +3,8 @@
 from typing import List
 
 from domain.contracts.interview_type import InterviewType
-from domain.contracts.question import Question
+from domain.contracts.question import Question, QuestionType
+from domain.contracts.interview_area import InterviewArea
 
 
 # =========================================================
@@ -12,10 +13,9 @@ from domain.contracts.question import Question
 
 
 def load_sample_questions(interview_type: InterviewType) -> List[Question]:
-   
-    # Temporary sample question loader.
-    # NOTE: This is a UI-level bootstrap utility.
-    # In production, question generation must be handled by the graph layer.
+    
+    # Temporary bootstrap question loader.
+    # NOTE: In the final architecture, question generation must be delegated to the graph layer.
 
     if interview_type == InterviewType.TECHNICAL:
         return _load_technical_questions()
@@ -35,16 +35,25 @@ def _load_technical_questions() -> List[Question]:
 
     return [
         Question(
-            question_id="T1",
-            text="Explain the difference between REST and GraphQL.",
+            id="T1",
+            area=InterviewArea.TECH_BACKGROUND,
+            type=QuestionType.WRITTEN,
+            prompt="Describe your experience with backend architectures.",
+            difficulty=2,
         ),
         Question(
-            question_id="T2",
-            text="What is the difference between synchronous and asynchronous programming?",
+            id="T2",
+            area=InterviewArea.TECH_TECHNICAL_KNOWLEDGE,
+            type=QuestionType.WRITTEN,
+            prompt="Explain the difference between synchronous and asynchronous systems.",
+            difficulty=2,
         ),
         Question(
-            question_id="T3",
-            text="How would you design a scalable microservices architecture?",
+            id="T3",
+            area=InterviewArea.TECH_CASE_STUDY,
+            type=QuestionType.WRITTEN,
+            prompt="How would you design a scalable microservices architecture?",
+            difficulty=3,
         ),
     ]
 
@@ -58,15 +67,24 @@ def _load_hr_questions() -> List[Question]:
 
     return [
         Question(
-            question_id="HR1",
-            text="Tell me about a challenging situation you handled at work.",
+            id="HR1",
+            area=InterviewArea.HR_BACKGROUND,
+            type=QuestionType.WRITTEN,
+            prompt="Tell me about your professional background.",
+            difficulty=1,
         ),
         Question(
-            question_id="HR2",
-            text="How do you deal with conflict in a team?",
+            id="HR2",
+            area=InterviewArea.HR_SITUATIONAL,
+            type=QuestionType.WRITTEN,
+            prompt="Describe a challenging situation you handled at work.",
+            difficulty=1,
         ),
         Question(
-            question_id="HR3",
-            text="Where do you see yourself in five years?",
+            id="HR3",
+            area=InterviewArea.HR_ANALYTICAL,
+            type=QuestionType.WRITTEN,
+            prompt="How do you approach complex decision-making problems?",
+            difficulty=1,
         ),
     ]
