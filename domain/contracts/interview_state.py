@@ -96,6 +96,7 @@ class InterviewState(BaseModel):
     def create_initial(
         cls,
         role_type: RoleType,
+        interview_type: InterviewType,
         company: str,
         language: str,
         questions: list[Question],
@@ -108,6 +109,7 @@ class InterviewState(BaseModel):
         return cls(
             interview_id=interview_id,
             role=Role(type=role_type),
+            interview_type=interview_type,
             company=company.strip(),
             language=language,
             questions=questions,
