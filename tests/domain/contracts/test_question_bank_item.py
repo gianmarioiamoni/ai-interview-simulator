@@ -6,7 +6,7 @@ from domain.contracts.role import Role
 from domain.contracts.role import RoleType
 from domain.contracts.question_bank_item import QuestionBankItem
 from domain.contracts.interview_area import InterviewArea
-from domain.contracts.interview_area import InterviewType
+from domain.contracts.interview_type import InterviewType
 from domain.contracts.seniority_level import SeniorityLevel
 
 
