@@ -12,7 +12,7 @@ from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.interview_area import InterviewType
 from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.execution_result import ExecutionResult
-from domain.contracts.role import Role
+from domain.contracts.role import Role, RoleType
 
 
 class InterviewState(BaseModel):
@@ -87,3 +87,29 @@ class InterviewState(BaseModel):
                 raise ValueError("Cannot be in progress without questions")
 
         return self
+
+    # ---------------------------------------------------------
+    # Factory
+    # ---------------------------------------------------------
+
+    @classmethod
+    def create_initial(
+        cls,
+        role_type: RoleType,
+        company: str,
+        language: str,
+        questions: list[Question],
+        interview_id: str,
+    ) -> "InterviewState":
+
+        if not questions:
+            raise ValueError("Cannot create interview without questions")
+
+        return cls(
+            interview_id=interview_id,
+            role=Role(type=role_type),
+            company=company.strip(),
+            language=language,
+            questions=questions,
+            progress=InterviewProgress.SETUP,
+        )
