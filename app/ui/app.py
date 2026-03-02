@@ -3,11 +3,17 @@
 import gradio as gr
 
 from domain.contracts.role import RoleType
+from domain.contracts.interview_area import InterviewType
 
 from app.graph.builder import build_graph
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from app.ui.controllers.interview_controller import InterviewController
-from app.ui.state_handlers import start_interview, submit_answer
+from app.ui.state_handlers import (
+    start_interview,
+    submit_answer,
+    view_report,
+    reset_interview,
+)
 
 
 def build_app():
@@ -22,9 +28,9 @@ def build_app():
 
         state = gr.State()
 
-        # ---------------------------------------------------------
-        # Setup Section
-        # ---------------------------------------------------------
+        # =========================================================
+        # SETUP SECTION
+        # =========================================================
 
         with gr.Column(visible=True) as setup_section:
 
@@ -35,6 +41,11 @@ def build_app():
                 label="Role",
             )
 
+            interview_type_radio = gr.Radio(
+                choices=[t.name for t in InterviewType],
+                label="Interview Type",
+            )
+
             company_input = gr.Textbox(
                 label="Company", placeholder="e.g. Google, Startup, FinTech..."
             )
@@ -43,11 +54,14 @@ def build_app():
                 choices=["en", "it"], value="en", label="Language"
             )
 
-            start_button = gr.Button("Start Interview", interactive=False)
+            start_button = gr.Button(
+                "Start Interview",
+                interactive=False,
+            )
 
-        # ---------------------------------------------------------
-        # Interview Section
-        # ---------------------------------------------------------
+        # =========================================================
+        # INTERVIEW SECTION
+        # =========================================================
 
         with gr.Column(visible=False) as interview_section:
 
@@ -55,65 +69,84 @@ def build_app():
             question_text = gr.Markdown("")
             answer_box = gr.Textbox(label="Your Answer", lines=5)
             submit_button = gr.Button("Submit Answer")
+            feedback_output = gr.Markdown("")
 
-        # ---------------------------------------------------------
-        # Report Section
-        # ---------------------------------------------------------
+        # =========================================================
+        # COMPLETION SECTION (NEW)
+        # =========================================================
+
+        with gr.Column(visible=False) as completion_section:
+
+            gr.Markdown("## Interview Completed")
+            view_report_button = gr.Button("View Final Report")
+
+        # =========================================================
+        # REPORT SECTION
+        # =========================================================
 
         with gr.Column(visible=False) as report_section:
 
             report_output = gr.Markdown()
+            new_interview_button = gr.Button("Start New Interview")
 
-        # ---------------------------------------------------------
-        # Input Validation
-        # ---------------------------------------------------------
+        # =========================================================
+        # INPUT VALIDATION
+        # =========================================================
 
-        def validate_inputs(role, company, language):
-            valid = bool(role and company and language)
+        def validate_inputs(role, interview_type, company, language):
+            valid = bool(role and interview_type and company and language)
             return gr.update(interactive=valid)
 
-        role_dropdown.change(
-            validate_inputs,
-            inputs=[role_dropdown, company_input, language_dropdown],
-            outputs=start_button,
-        )
+        for component in [
+            role_dropdown,
+            interview_type_radio,
+            company_input,
+            language_dropdown,
+        ]:
+            component.change(
+                validate_inputs,
+                inputs=[
+                    role_dropdown,
+                    interview_type_radio,
+                    company_input,
+                    language_dropdown,
+                ],
+                outputs=start_button,
+            )
 
-        company_input.change(
-            validate_inputs,
-            inputs=[role_dropdown, company_input, language_dropdown],
-            outputs=start_button,
-        )
-
-        language_dropdown.change(
-            validate_inputs,
-            inputs=[role_dropdown, company_input, language_dropdown],
-            outputs=start_button,
-        )
-
-        # ---------------------------------------------------------
-        # Start Interview
-        # ---------------------------------------------------------
+        # =========================================================
+        # START INTERVIEW
+        # =========================================================
 
         start_button.click(
-            lambda role, company, language: start_interview(
+            lambda role, interview_type, company, language: start_interview(
                 controller,
                 role,
+                interview_type,
                 company,
                 language,
             ),
-            inputs=[role_dropdown, company_input, language_dropdown],
+            inputs=[
+                role_dropdown,
+                interview_type_radio,
+                company_input,
+                language_dropdown,
+            ],
             outputs=[
                 state,
                 question_text,
                 question_counter,
+                feedback_output,
                 setup_section,
                 interview_section,
+                completion_section,
+                report_section,
             ],
         )
 
-        # ---------------------------------------------------------
-        # Submit Answer
-        # ---------------------------------------------------------
+        # =========================================================
+        # SUBMIT ANSWER
+        # =========================================================
 
         submit_button.click(
             lambda s, a: submit_answer(controller, s, a),
@@ -123,9 +156,39 @@ def build_app():
                 question_text,
                 question_counter,
                 answer_box,
+                feedback_output,
                 interview_section,
+                completion_section,
+            ],
+        )
+
+        # =========================================================
+        # VIEW REPORT
+        # =========================================================
+
+        view_report_button.click(
+            view_report,
+            inputs=[state],
+            outputs=[
+                interview_section,
+                completion_section,
                 report_section,
                 report_output,
+            ],
+        )
+
+        # =========================================================
+        # RESET
+        # =========================================================
+
+        new_interview_button.click(
+            reset_interview,
+            outputs=[
+                state,
+                setup_section,
+                interview_section,
+                completion_section,
+                report_section,
             ],
         )
 
