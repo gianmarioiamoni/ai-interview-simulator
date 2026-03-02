@@ -1,30 +1,72 @@
 # app/ui/sample_data_loader.py
 
-import json
-from pathlib import Path
 from typing import List
 
-from domain.contracts.question import Question, QuestionType
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview_type import InterviewType
+from domain.contracts.question import Question
 
 
-def load_sample_questions() -> List[Question]:
-    file_path = Path(__file__).resolve().parents[2] / "data/sample_questions.json"
+# =========================================================
+# Public API
+# =========================================================
 
-    with open(file_path, "r") as f:
-        raw_questions = json.load(f)
 
-    questions: List[Question] = []
+def load_sample_questions(interview_type: InterviewType) -> List[Question]:
+   
+    # Temporary sample question loader.
+    # NOTE: This is a UI-level bootstrap utility.
+    # In production, question generation must be handled by the graph layer.
 
-    for q in raw_questions:
-        questions.append(
-            Question(
-                id=q["id"],
-                area=InterviewArea(q["area"]),
-                type=QuestionType(q["type"]),
-                prompt=q["prompt"],
-                difficulty=q["difficulty"],
-            )
-        )
+    if interview_type == InterviewType.TECHNICAL:
+        return _load_technical_questions()
 
-    return questions
+    if interview_type == InterviewType.HR:
+        return _load_hr_questions()
+
+    raise ValueError(f"Unsupported interview type: {interview_type}")
+
+
+# =========================================================
+# Technical Interview Questions
+# =========================================================
+
+
+def _load_technical_questions() -> List[Question]:
+
+    return [
+        Question(
+            question_id="T1",
+            text="Explain the difference between REST and GraphQL.",
+        ),
+        Question(
+            question_id="T2",
+            text="What is the difference between synchronous and asynchronous programming?",
+        ),
+        Question(
+            question_id="T3",
+            text="How would you design a scalable microservices architecture?",
+        ),
+    ]
+
+
+# =========================================================
+# HR Interview Questions
+# =========================================================
+
+
+def _load_hr_questions() -> List[Question]:
+
+    return [
+        Question(
+            question_id="HR1",
+            text="Tell me about a challenging situation you handled at work.",
+        ),
+        Question(
+            question_id="HR2",
+            text="How do you deal with conflict in a team?",
+        ),
+        Question(
+            question_id="HR3",
+            text="Where do you see yourself in five years?",
+        ),
+    ]
