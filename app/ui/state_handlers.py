@@ -5,28 +5,33 @@ import gradio as gr
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.role import RoleType
+from domain.contracts.interview_area import InterviewType
 
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.views.report_view import build_report_markdown
 
 
-# ---------------------------------------------------------
-# Start Interview
-# ---------------------------------------------------------
+# =========================================================
+# START INTERVIEW
+# =========================================================
+
 
 def start_interview(
     controller,
     role_name: str,
+    interview_type_name: str,
     company: str,
     language: str,
 ) -> Tuple[Any, ...]:
 
     role_type = RoleType[role_name]
+    interview_type = InterviewType[interview_type_name]
 
-    questions = load_sample_questions()
+    questions = load_sample_questions(interview_type)
 
     state = InterviewState.create_initial(
         role_type=role_type,
+        interview_type=interview_type,
         company=company,
         language=language,
         questions=questions,
@@ -39,14 +44,17 @@ def start_interview(
         state,
         session_dto.current_question.text,
         f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
-        gr.update(visible=False),  # hide setup section
-        gr.update(visible=True),  # show interview section
+        "",  # feedback reset
+        gr.update(visible=False),  # hide setup
+        gr.update(visible=True),  # show interview
+        gr.update(visible=False),  # completion hidden
+        gr.update(visible=False),  # report hidden
     )
 
 
-# ---------------------------------------------------------
-# Submit Answer
-# ---------------------------------------------------------
+# =========================================================
+# SUBMIT ANSWER
+# =========================================================
 
 
 def submit_answer(
@@ -57,37 +65,62 @@ def submit_answer(
 
     result, feedback = controller.submit_answer(state, user_answer)
 
-    # ---------------------------------------------------------
-    # Final report case
-    # ---------------------------------------------------------
-
+    # Final report case → DO NOT show report yet
     if hasattr(result, "overall_score"):
-
-        report = result
-        report_text = build_report_markdown(report, state)
 
         return (
             state,
+            "",  # no new question
             "",
-            "",
-            "",
-            gr.update(visible=False),  # hide interview section
-            gr.update(visible=True),  # show report section
-            report_text,
+            "",  # clear answer
+            f"### Feedback\n\n{feedback}",
+            gr.update(visible=True),  # interview still visible
+            gr.update(visible=True),  # completion visible
         )
 
-    # ---------------------------------------------------------
-    # In-progress case
-    # ---------------------------------------------------------
-
+    # Normal question
     session = result
 
     return (
         state,
         session.current_question.text,
         f"Question {session.current_question.index}/{session.current_question.total}",
-        "",  # clear answer box
-        gr.update(visible=True),  # keep interview visible
-        gr.update(visible=False),  # keep report hidden
-        gr.update(value=f"### Feedback\n\n{feedback}", visible=True),
+        "",  # clear answer
+        f"### Feedback\n\n{feedback}",
+        gr.update(visible=True),
+        gr.update(visible=False),
+    )
+
+
+# =========================================================
+# VIEW REPORT
+# =========================================================
+
+
+def view_report(state: InterviewState):
+
+    report = state.final_evaluation
+    report_text = build_report_markdown(report, state)
+
+    return (
+        gr.update(visible=False),  # hide interview
+        gr.update(visible=False),  # hide completion
+        gr.update(visible=True),  # show report
+        report_text,
+    )
+
+
+# =========================================================
+# RESET INTERVIEW
+# =========================================================
+
+
+def reset_interview():
+
+    return (
+        None,  # reset state
+        gr.update(visible=True),  # show setup
+        gr.update(visible=False),  # hide interview
+        gr.update(visible=False),  # hide completion
+        gr.update(visible=False),  # hide report
     )
