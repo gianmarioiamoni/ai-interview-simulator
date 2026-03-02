@@ -4,8 +4,8 @@ from typing import Tuple, Any
 import gradio as gr
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
-from domain.contracts.interview_area import InterviewType
 
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.views.report_view import build_report_markdown
