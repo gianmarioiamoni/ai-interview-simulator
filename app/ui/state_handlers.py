@@ -10,6 +10,7 @@ from domain.contracts.evaluation_report import EvaluationReport
 
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.views.report_view import build_report_markdown
+from app.ui.controllers.interview_controller import InterviewController
 
 
 # =========================================================
@@ -59,40 +60,47 @@ def start_interview(
 
 
 def submit_answer(
-    controller,
+    controller : InterviewController,
     state: InterviewState,
     user_answer: str,
 ) -> Tuple[Any, ...]:
 
     result, feedback = controller.submit_answer(state, user_answer)
 
-    # Final report case → DO NOT show report yet
+   # ------------------------------------------------------------
+   # Final report case
+   # ------------------------------------------------------------
+
     if isinstance(result, EvaluationReport):
-        report = result
 
         return (
             state,
             "",  # no new question
-            "",
+            "",  # no counter
             "",  # clear answer
             f"### Feedback\n\n{feedback}",
             gr.update(visible=True),  # interview section is still visible
             gr.update(visible=True),  # completion section is visible
             gr.update(interactive=False),  # submit button is disabled
-            report,
+            result,
         )
 
-    # Normal question
+    # ------------------------------------------------------------
+    # In-progress interview case
+    # ------------------------------------------------------------
+
     session = result
 
     return (
         state,
-        session.current_question.text,
+        session.current_question.prompt,
         f"Question {session.current_question.index}/{session.current_question.total}",
         "",  # clear answer
         f"### Feedback\n\n{feedback}",
         gr.update(visible=True),
         gr.update(visible=False),
+        gr.update(interactive=True),  # submit button is enabled
+        None,  # no report
     )
 
 
@@ -109,6 +117,7 @@ def view_report(report: EvaluationReport):
         gr.update(visible=False),  # hide interview
         gr.update(visible=False),  # hide completion
         gr.update(visible=True),  # show report
+        gr.update(interactive=False),  # submit button is disabled
         report_text,
     )
 
