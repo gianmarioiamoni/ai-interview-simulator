@@ -18,7 +18,6 @@ from app.ui.controllers.interview_controller import InterviewController
 # START INTERVIEW
 # =========================================================
 
-
 def start_interview(
     controller: InterviewController,
     role_name: str,
@@ -26,7 +25,7 @@ def start_interview(
     company: str,
     language: str,
 ) -> tuple:
-
+    print("START CALLED")
     role_type = RoleType[role_name]
     interview_type = InterviewType[interview_type_name]
 
@@ -48,17 +47,16 @@ def start_interview(
         session_dto.current_question.text,
         f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
         "",
-        gr.update(visible=False),
-        gr.update(visible=True),
-        gr.update(visible=False),
-        gr.update(visible=False),
+        gr.update(visible=False),  # hide setup section
+        gr.update(visible=True),   # show interview section
+        gr.update(visible=False),  # hide completion section
+        gr.update(visible=False),  # hide report section
     )
 
 
 # =========================================================
 # SUBMIT ANSWER
 # =========================================================
-
 
 def submit_answer(
     controller: InterviewController,
@@ -130,7 +128,6 @@ def view_report(
 # =========================================================
 # RESET INTERVIEW
 # =========================================================
-
 
 def reset_interview():
 
