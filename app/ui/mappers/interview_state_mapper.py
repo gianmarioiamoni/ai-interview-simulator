@@ -95,6 +95,7 @@ class InterviewStateMapper:
             question_assessments=question_assessments,
             improvement_suggestions=improvement_suggestions,
             total_tokens_used=0,
+            confidence=state.final_evaluation.confidence,
         )
 
     # ---------------------------------------------------------
