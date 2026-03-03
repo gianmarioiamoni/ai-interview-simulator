@@ -166,7 +166,7 @@ def build_app():
 
         view_report_button.click(
             show_report_loading,
-            output=[
+            outputs=[
                 interview_section,
                 completion_section,
                 report_section,
