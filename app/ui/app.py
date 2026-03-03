@@ -52,11 +52,14 @@ def build_app():
             )
 
             company_input = gr.Textbox(
-                label="Company", placeholder="e.g. Google, Startup, FinTech..."
+                label="Company",
+                placeholder="e.g. Google, Startup, FinTech...",
             )
 
             language_dropdown = gr.Dropdown(
-                choices=["en", "it"], value="en", label="Language"
+                choices=["en", "it"],
+                value="en",
+                label="Language",
             )
 
             start_button = gr.Button("Start Interview", interactive=False)
@@ -92,6 +95,10 @@ def build_app():
 
             pdf_button = gr.Button("Download PDF")
             json_button = gr.Button("Download JSON")
+
+            # FILE COMPONENTS (hidden until export)
+            pdf_file = gr.File(visible=False)
+            json_file = gr.File(visible=False)
 
             new_interview_button = gr.Button("Start New Interview")
 
@@ -166,23 +173,20 @@ def build_app():
         )
 
         # =========================================================
-        # VIEW REPORT (FIXED)
+        # VIEW REPORT (GENERATOR SAFE)
         # =========================================================
 
         def view_report_handler(state_value):
 
-            print("VIEW REPORT CALLED")
-            print("STATE:", state_value)
-
-            # Step 1: show loading
+            # Step 1 → show loading
             yield (
-                gr.update(visible=False),  # interview
-                gr.update(visible=False),  # completion
-                gr.update(visible=True),  # report
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=True),
                 "⏳ Generating final report...",
             )
 
-            # Step 2: generate report
+            # Step 2 → generate report
             report = controller.generate_final_report(state_value)
             report_text = build_report_markdown(report)
 
@@ -202,23 +206,46 @@ def build_app():
                 report_section,
                 report_output,
             ],
-        )
-
-        # =========================================================
-        # EXPORTS
-        # =========================================================
-
-        pdf_button.click(
-            lambda s: export_pdf(controller, s),
-            inputs=[state],
-            outputs=gr.File(),
             show_progress=True,
         )
 
-        json_button.click(
-            lambda s: export_json(controller, s),
+        # =========================================================
+        # EXPORT PDF
+        # =========================================================
+
+        def export_pdf_handler(state_value):
+
+            file_path = export_pdf(controller, state_value)
+
+            return (
+                file_path,
+                gr.update(visible=True),
+            )
+
+        pdf_button.click(
+            export_pdf_handler,
             inputs=[state],
-            outputs=gr.File(),
+            outputs=[pdf_file, pdf_file],
+            show_progress=True,
+        )
+
+        # =========================================================
+        # EXPORT JSON
+        # =========================================================
+
+        def export_json_handler(state_value):
+
+            file_path = export_json(controller, state_value)
+
+            return (
+                file_path,
+                gr.update(visible=True),
+            )
+
+        json_button.click(
+            export_json_handler,
+            inputs=[state],
+            outputs=[json_file, json_file],
             show_progress=True,
         )
 
