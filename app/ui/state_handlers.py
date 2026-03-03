@@ -6,11 +6,11 @@ import gradio as gr
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
-from domain.contracts.evaluation_report import EvaluationReport
+from app.ui.dto.interview_session_dto import InterviewSessionDTO
 
 from app.ui.sample_data_loader import load_sample_questions
-from app.ui.views.report_view import build_report_markdown
 from app.ui.controllers.interview_controller import InterviewController
+from app.ui.dto.final_report_dto import FinalReportDTO
 
 
 # =========================================================
@@ -48,7 +48,7 @@ def start_interview(
         f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
         "",  # feedback reset
         gr.update(visible=False),  # hide setup
-        gr.update(visible=True),  # show interview
+        gr.update(visible=True),   # show interview
         gr.update(visible=False),  # completion hidden
         gr.update(visible=False),  # report hidden
     )
@@ -71,7 +71,7 @@ def submit_answer(
    # Final report case
    # ------------------------------------------------------------
 
-    if isinstance(result, EvaluationReport):
+    if isinstance(result, FinalReportDTO):
 
         return (
             state,
@@ -89,38 +89,26 @@ def submit_answer(
     # In-progress interview case
     # ------------------------------------------------------------
 
-    session = result
+    if isinstance(result, InterviewSessionDTO):
+        session_dto = result
 
-    return (
-        state,
-        session.current_question.text,
-        f"Question {session.current_question.index}/{session.current_question.total}",
-        "",  # clear answer
-        f"### Feedback\n\n{feedback}",
-        gr.update(visible=True),
-        gr.update(visible=False),
-        gr.update(interactive=True),  # submit button is enabled
-        None,  # no report
-    )
+        return (
+            state,
+            session_dto.current_question.text,
+            f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
+            "",  # clear answer
+            f"### Feedback\n\n{feedback}",
+            gr.update(visible=True),  # interview section is still visible
+            gr.update(visible=False),  # completion section is hidden
+            gr.update(interactive=True),  # submit button is enabled
+            None,  # no report
+        )
 
+    # ------------------------------------------------------------
+    # Unknown result case
+    # ------------------------------------------------------------
 
-# =========================================================
-# VIEW REPORT
-# =========================================================
-
-
-def view_report(report: EvaluationReport):
-
-    report_text = build_report_markdown(report, None)
-
-    return (
-        gr.update(visible=False),  # hide interview
-        gr.update(visible=False),  # hide completion
-        gr.update(visible=True),  # show report
-        gr.update(interactive=False),  # submit button is disabled
-        report_text,
-    )
-
+    raise TypeError(f"Unknown result type: {type(result)}")
 
 # =========================================================
 # RESET INTERVIEW
