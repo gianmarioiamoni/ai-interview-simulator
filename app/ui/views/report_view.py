@@ -1,31 +1,102 @@
 # app/ui/views/report_view.py
 
-from app.ui.dto.final_report_dto import FinalReportDTO
+
+def _score_badge(score: float) -> str:
+    if score >= 80:
+        color = "#16a34a"  # green
+    elif score >= 60:
+        color = "#ca8a04"  # amber
+    else:
+        color = "#dc2626"  # red
+
+    return f"""
+<span style="
+    background-color:{color};
+    color:white;
+    padding:6px 12px;
+    border-radius:8px;
+    font-weight:bold;
+    font-size:16px;
+">
+{score}/100
+</span>
+"""
 
 
-def build_report_markdown(report: FinalReportDTO) -> str:
+def _percentile_bar(percentile: float) -> str:
+    return f"""
+<div style="margin-top:8px;">
+    <div style="background:#e5e7eb;border-radius:6px;height:16px;">
+        <div style="
+            width:{percentile}%;
+            background:#2563eb;
+            height:16px;
+            border-radius:6px;
+        "></div>
+    </div>
+    <div style="margin-top:4px;font-size:14px;">
+        {percentile}% percentile
+    </div>
+</div>
+"""
 
-    confidence_value = report.confidence.final
+
+def _dimension_bar(name: str, score: float) -> str:
+
+    if score >= 75:
+        color = "#16a34a"
+    elif score >= 50:
+        color = "#ca8a04"
+    else:
+        color = "#dc2626"
+
+    return f"""
+<div style="margin-bottom:14px;">
+    <strong>{name}</strong>
+    <div style="background:#e5e7eb;border-radius:6px;height:14px;margin-top:4px;">
+        <div style="
+            width:{score}%;
+            background:{color};
+            height:14px;
+            border-radius:6px;
+        "></div>
+    </div>
+    <div style="font-size:13px;margin-top:2px;">
+        {score}/100
+    </div>
+</div>
+"""
+
+
+# =========================================================
+# PUBLIC REPORT RENDER
+# =========================================================
+
+
+def build_report_markdown(report) -> str:
 
     # ---------------------------------------------------------
-    # Performance breakdown
+    # Dimension Breakdown
     # ---------------------------------------------------------
 
     dimension_block = ""
     for dim in report.dimension_scores:
-        dimension_block += f"- **{dim.name}**: {round(dim.score,1)}/100\n"
+        dimension_block += _dimension_bar(dim.name, dim.score)
 
     # ---------------------------------------------------------
-    # Question-level assessment
+    # Question Assessment
     # ---------------------------------------------------------
 
     question_block = ""
     for q in report.question_assessments:
-        question_block += (
-            f"\n### Question {q.question_id}\n"
-            f"- Score: {round(q.score,1)}/100\n"
-            f"- Feedback: {q.feedback}\n"
-        )
+        question_block += f"""
+### Question {q.question_id}
+
+**Score:** {_score_badge(q.score)}
+
+**Feedback:**  
+{q.feedback}
+"""
 
     # ---------------------------------------------------------
     # Improvements
@@ -39,7 +110,7 @@ def build_report_markdown(report: FinalReportDTO) -> str:
     # Final Markdown
     # ---------------------------------------------------------
 
-    report_text = f"""
+    return f"""
 # 🧠 AI Interview Final Evaluation
 
 ---
@@ -50,29 +121,27 @@ def build_report_markdown(report: FinalReportDTO) -> str:
 
 ---
 
-## 🎯 Overall Metrics
+## 🎯 Overall Performance
 
-- **Overall Score:** {report.overall_score}/100  
-- **Hiring Probability:** {report.hiring_probability}%  
-- **Percentile Rank:** {report.percentile_rank}%  
+**Overall Score:** {_score_badge(report.overall_score)}
 
----
+**Hiring Probability:** {report.hiring_probability}%  
 
-## ⚖️ Decision Logic
+## 📈 Percentile Ranking
 
-### Weighted Contribution
+{_percentile_bar(report.percentile_rank)}
 
-{chr(10).join([f"- {k}: {v}" for k,v in report.weighted_breakdown.items()])}
-
-### Gating Analysis
-
-{"🚨 Gating triggered." if report.gating_triggered else "✅ No gating applied."}
-
-{report.gating_reason if report.gating_reason else ""}
+{report.percentile_explanation}
 
 ---
 
-## 📈 Performance Breakdown
+## ⚖️ Weighted Contribution
+
+{"".join([f"<div>{k}: {v}</div>" for k, v in report.weighted_breakdown.items()])}
+
+---
+
+## 📊 Performance Breakdown
 
 {dimension_block}
 
@@ -92,36 +161,11 @@ def build_report_markdown(report: FinalReportDTO) -> str:
 
 ## 🔎 Technical Appendix
 
-### Confidence Model
+**Total Tokens Used:** {report.total_tokens_used}
 
-Stability Index: {confidence_value}
-
-Confidence derived from variance across dimension scores.
-Higher variance → lower stability → lower confidence.
-Formula:
-Confidence = 1 − (Variance / 2500)
-
-where 2500 represents the maximum theoretical variance 
-on a 0–100 scoring scale.
-
-### Confidence Interpretation Guide
-
-Confidence ranges between 0 and 1 and reflects score stability 
-based on normalized variance.
-
-- 0.80 – 1.00 → Highly consistent performance across dimensions  
-- 0.60 – 0.79 → Moderately consistent performance  
-- 0.40 – 0.59 → Noticeable variability  
-- 0.20 – 0.39 → Highly inconsistent performance  
-- 0.00 – 0.19 → Extreme volatility in results  
-
-### Percentile Methodology
-
-{report.percentile_explanation}
+Confidence (Final): {report.confidence.final}
 
 ---
 
-*This evaluation combines deterministic scoring, weighted role-based modeling, gating governance rules, and AI-generated qualitative justification.*
+*This evaluation combines deterministic scoring, weighted modeling, gating governance rules, and AI-generated qualitative justification.*
 """
-
-    return report_text
