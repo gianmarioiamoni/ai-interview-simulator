@@ -37,7 +37,7 @@ def build_app():
             gr.Markdown("## Configure Your Interview")
 
             role_dropdown = gr.Dropdown(
-                choices=[r.name for r in RoleType],
+                choices=[r.name.replace("_", " ") for r in RoleType],
                 label="Role",
             )
 
@@ -86,7 +86,7 @@ def build_app():
 
         with gr.Column(visible=False) as report_section:
 
-            report_output = gr.Markdown()
+            report_output = gr.Markdown("Generating final report...")
             new_interview_button = gr.Button("Start New Interview")
 
         # =========================================================
@@ -164,7 +164,7 @@ def build_app():
         # =========================================================
 
         view_report_button.click(
-            lambda s: view_report(controller, s),
+            lambda s: view_report(controller, s),  
             inputs=[state],
             outputs=[
                 interview_section,
@@ -172,6 +172,7 @@ def build_app():
                 report_section,
                 report_output,
             ],
+            show_progress=True,
         )
 
         # =========================================================
