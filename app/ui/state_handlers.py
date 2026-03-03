@@ -93,7 +93,7 @@ def submit_answer(
 
     return (
         state,
-        session.current_question.prompt,
+        session.current_question.text,
         f"Question {session.current_question.index}/{session.current_question.total}",
         "",  # clear answer
         f"### Feedback\n\n{feedback}",
