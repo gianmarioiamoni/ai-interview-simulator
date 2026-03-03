@@ -2,6 +2,7 @@
 
 import os
 import gradio as gr
+from datetime import datetime
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_type import InterviewType
@@ -119,19 +120,21 @@ def view_report(
     )
 
 
-
 # =========================================================
 # EXPORT PDF
 # =========================================================
 
-def export_pdf(controller: InterviewController, state: InterviewState):
+
+def export_pdf(controller: InterviewController, state: InterviewState) -> str:
 
     print("EXPORT PDF CALLED")
 
     report = controller.generate_final_report(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
-    file_path = "/mnt/data/interview_report.pdf"
+
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    file_path = f"/mnt/data/{state.interview_id}_{timestamp}.pdf"
 
     export_service.export_pdf(report, file_path)
 
@@ -142,14 +145,16 @@ def export_pdf(controller: InterviewController, state: InterviewState):
 # EXPORT JSON
 # =========================================================
 
-def export_json(controller: InterviewController, state: InterviewState):
+def export_json(controller: InterviewController, state: InterviewState) -> str:
 
     print("EXPORT JSON CALLED")
 
     report = controller.generate_final_report(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
-    file_path = "/mnt/data/interview_report.json"
+
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    file_path = f"/mnt/data/{state.interview_id}_{timestamp}.json"
 
     export_service.export_json(report, file_path)
 
