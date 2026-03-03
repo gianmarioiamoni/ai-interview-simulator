@@ -38,7 +38,7 @@ class InterviewController:
         return self._mapper.to_session_dto(updated_state)
 
     # ---------------------------------------------------------
-    # Submit Answer (NO final report generation here)
+    # Submit Answer (NO report generation here)
     # ---------------------------------------------------------
 
     def submit_answer(
@@ -68,7 +68,7 @@ class InterviewController:
         )
         state.evaluations.append(question_eval)
 
-        # If not last question
+        # Not last question
         if state.current_question_index < len(state.questions) - 1:
 
             state.current_question_index += 1
@@ -83,7 +83,7 @@ class InterviewController:
         return None, question_eval.feedback, True
 
     # ---------------------------------------------------------
-    # Generate Final Report (called only when user clicks)
+    # Generate Final Report (only when user clicks)
     # ---------------------------------------------------------
 
     def generate_final_report(self, state: InterviewState) -> FinalReportDTO:
