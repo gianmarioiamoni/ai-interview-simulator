@@ -6,6 +6,8 @@ from pydantic import BaseModel
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
 from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
 
+from domain.contracts.confidence import Confidence
+
 
 class FinalReportDTO(BaseModel):
 
@@ -26,3 +28,5 @@ class FinalReportDTO(BaseModel):
     improvement_suggestions: List[str]
 
     total_tokens_used: int
+
+    confidence: Confidence

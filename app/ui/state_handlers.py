@@ -6,11 +6,12 @@ import gradio as gr
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
-from app.ui.dto.interview_session_dto import InterviewSessionDTO
 
+from app.ui.dto.interview_session_dto import InterviewSessionDTO
+from app.ui.dto.final_report_dto import FinalReportDTO
+from app.ui.views.report_view import build_report_markdown
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.controllers.interview_controller import InterviewController
-from app.ui.dto.final_report_dto import FinalReportDTO
 
 
 # =========================================================
@@ -123,4 +124,19 @@ def reset_interview():
         gr.update(visible=False),  # hide interview
         gr.update(visible=False),  # hide completion
         gr.update(visible=False),  # hide report
+    )
+
+# =========================================================
+# VIEW REPORT
+# =========================================================
+
+def view_report(report: FinalReportDTO):
+
+    report_text = build_report_markdown(report, None)
+
+    return (
+        gr.update(visible=False),  # hide interview
+        gr.update(visible=False),  # hide completion
+        gr.update(visible=True),  # show report
+        report_text,
     )
