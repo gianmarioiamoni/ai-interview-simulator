@@ -1,6 +1,11 @@
 # app/ui/views/report_view.py
 
 
+# =========================================================
+# UI HELPERS
+# =========================================================
+
+
 def _score_badge(score: float) -> str:
     if score >= 80:
         color = "#16a34a"  # green
@@ -13,12 +18,33 @@ def _score_badge(score: float) -> str:
 <span style="
     background-color:{color};
     color:white;
-    padding:6px 12px;
+    padding:6px 14px;
     border-radius:8px;
     font-weight:bold;
     font-size:16px;
 ">
 {score}/100
+</span>
+"""
+
+
+def _probability_badge(prob: float) -> str:
+    if prob >= 70:
+        color = "#16a34a"
+    elif prob >= 40:
+        color = "#ca8a04"
+    else:
+        color = "#dc2626"
+
+    return f"""
+<span style="
+    background-color:{color};
+    color:white;
+    padding:6px 14px;
+    border-radius:8px;
+    font-weight:bold;
+">
+{prob}%
 </span>
 """
 
@@ -34,8 +60,35 @@ def _percentile_bar(percentile: float) -> str:
             border-radius:6px;
         "></div>
     </div>
-    <div style="margin-top:4px;font-size:14px;">
+    <div style="margin-top:6px;font-size:14px;">
         {percentile}% percentile
+    </div>
+</div>
+"""
+
+
+def _confidence_bar(confidence: float) -> str:
+    percent = round(confidence * 100, 1)
+
+    if percent >= 80:
+        color = "#16a34a"
+    elif percent >= 60:
+        color = "#ca8a04"
+    else:
+        color = "#dc2626"
+
+    return f"""
+<div style="margin-top:6px;">
+    <div style="background:#e5e7eb;border-radius:6px;height:12px;">
+        <div style="
+            width:{percent}%;
+            background:{color};
+            height:12px;
+            border-radius:6px;
+        "></div>
+    </div>
+    <div style="margin-top:4px;font-size:13px;">
+        Confidence: {percent}%
     </div>
 </div>
 """
@@ -51,7 +104,7 @@ def _dimension_bar(name: str, score: float) -> str:
         color = "#dc2626"
 
     return f"""
-<div style="margin-bottom:14px;">
+<div style="margin-bottom:16px;">
     <strong>{name}</strong>
     <div style="background:#e5e7eb;border-radius:6px;height:14px;margin-top:4px;">
         <div style="
@@ -61,9 +114,38 @@ def _dimension_bar(name: str, score: float) -> str:
             border-radius:6px;
         "></div>
     </div>
-    <div style="font-size:13px;margin-top:2px;">
+    <div style="font-size:13px;margin-top:4px;">
         {score}/100
     </div>
+</div>
+"""
+
+
+def _gating_block(triggered: bool, reason: str | None) -> str:
+
+    if triggered:
+        return f"""
+<div style="
+    background:#fee2e2;
+    border:1px solid #dc2626;
+    padding:12px;
+    border-radius:8px;
+    margin-top:12px;
+">
+<strong style="color:#dc2626;">🚨 Gating Triggered</strong><br>
+{reason}
+</div>
+"""
+    else:
+        return """
+<div style="
+    background:#dcfce7;
+    border:1px solid #16a34a;
+    padding:12px;
+    border-radius:8px;
+    margin-top:12px;
+">
+<strong style="color:#16a34a;">✅ No Gating Applied</strong>
 </div>
 """
 
@@ -123,9 +205,11 @@ def build_report_markdown(report) -> str:
 
 ## 🎯 Overall Performance
 
-**Overall Score:** {_score_badge(report.overall_score)}
+**Overall Score:** {_score_badge(report.overall_score)}  
 
-**Hiring Probability:** {report.hiring_probability}%  
+**Hiring Probability:** {_probability_badge(report.hiring_probability)}
+
+---
 
 ## 📈 Percentile Ranking
 
@@ -135,9 +219,9 @@ def build_report_markdown(report) -> str:
 
 ---
 
-## ⚖️ Weighted Contribution
+## ⚖️ Gating Analysis
 
-{"".join([f"<div>{k}: {v}</div>" for k, v in report.weighted_breakdown.items()])}
+{_gating_block(report.gating_triggered, report.gating_reason)}
 
 ---
 
@@ -161,9 +245,9 @@ def build_report_markdown(report) -> str:
 
 ## 🔎 Technical Appendix
 
-**Total Tokens Used:** {report.total_tokens_used}
+**Total Tokens Used:** {report.total_tokens_used}  
 
-Confidence (Final): {report.confidence.final}
+{_confidence_bar(report.confidence.final)}
 
 ---
 
