@@ -93,9 +93,6 @@ def build_app():
             pdf_button = gr.Button("Download PDF")
             json_button = gr.Button("Download JSON")
 
-            pdf_file = gr.File(visible=False, interactive=False, label="PDF File")
-            json_file = gr.File(visible=False, interactive=False, label="JSON File")
-
             new_interview_button = gr.Button("Start New Interview")
 
         # =========================================================
@@ -211,24 +208,18 @@ def build_app():
         # EXPORTS
         # =========================================================
 
-        def export_pdf_ui(state_value):
-            file_path = export_pdf(controller, state_value)
-            return file_path, gr.update(visible=True)
-
-        def export_json_ui(state_value):
-            file_path = export_json(controller, state_value)
-            return file_path, gr.update(visible=True)
-
         pdf_button.click(
-            export_pdf_ui,
+            lambda s: export_pdf(controller, s),
             inputs=[state],
-            outputs=[pdf_file, pdf_file],
+            outputs=gr.File(),
+            show_progress=True,
         )
 
         json_button.click(
-            export_json_ui,
+            lambda s: export_json(controller, s),
             inputs=[state],
-            outputs=[json_file, json_file],
+            outputs=gr.File(),
+            show_progress=True,
         )
 
         # =========================================================
