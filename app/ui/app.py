@@ -37,7 +37,7 @@ def build_app():
             gr.Markdown("## Configure Your Interview")
 
             role_dropdown = gr.Dropdown(
-                choices=[r.name.replace("_", " ") for r in RoleType],
+                choices=[(r.name.replace("_", " "), r.name) for r in RoleType],
                 label="Role",
             )
 
