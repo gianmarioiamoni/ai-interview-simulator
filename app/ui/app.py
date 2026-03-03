@@ -27,7 +27,6 @@ def build_app():
         gr.Markdown("# AI Interview Simulator")
 
         state = gr.State()
-        report_state = gr.State()  # ← fondamentale
 
         # =========================================================
         # SETUP SECTION
@@ -157,7 +156,6 @@ def build_app():
                 interview_section,
                 completion_section,
                 submit_button,
-                report_state,  # ← salva qui il report
             ],
         )
 
@@ -166,8 +164,8 @@ def build_app():
         # =========================================================
 
         view_report_button.click(
-            view_report,
-            inputs=[report_state],
+            lambda: s: view_report(controller, s),
+            inputs=[state],
             outputs=[
                 interview_section,
                 completion_section,
