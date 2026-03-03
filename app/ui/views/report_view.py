@@ -1,9 +1,11 @@
 # app/ui/views/report_view.py
 
+from app.ui.dto.final_report_dto import FinalReportDTO
 
-def build_report_markdown(report, state) -> str:
 
-    confidence_value = state.final_evaluation.confidence.final
+def build_report_markdown(report: FinalReportDTO) -> str:
+
+    confidence_value = report.confidence.final
 
     # ---------------------------------------------------------
     # Performance breakdown

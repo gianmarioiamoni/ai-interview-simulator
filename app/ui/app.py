@@ -27,6 +27,7 @@ def build_app():
         gr.Markdown("# AI Interview Simulator")
 
         state = gr.State()
+        report_state = gr.State()  # ← fondamentale
 
         # =========================================================
         # SETUP SECTION
@@ -72,7 +73,7 @@ def build_app():
             feedback_output = gr.Markdown("")
 
         # =========================================================
-        # COMPLETION SECTION (NEW)
+        # COMPLETION SECTION
         # =========================================================
 
         with gr.Column(visible=False) as completion_section:
@@ -120,11 +121,7 @@ def build_app():
 
         start_button.click(
             lambda role, interview_type, company, language: start_interview(
-                controller,
-                role,
-                interview_type,
-                company,
-                language,
+                controller, role, interview_type, company, language
             ),
             inputs=[
                 role_dropdown,
@@ -159,6 +156,8 @@ def build_app():
                 feedback_output,
                 interview_section,
                 completion_section,
+                submit_button,
+                report_state,  # ← salva qui il report
             ],
         )
 
@@ -168,7 +167,7 @@ def build_app():
 
         view_report_button.click(
             view_report,
-            inputs=[state],
+            inputs=[report_state],
             outputs=[
                 interview_section,
                 completion_section,
