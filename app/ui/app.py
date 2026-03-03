@@ -13,6 +13,7 @@ from app.ui.state_handlers import (
     submit_answer,
     view_report,
     reset_interview,
+    show_report_loading,
 )
 
 
@@ -164,6 +165,15 @@ def build_app():
         # =========================================================
 
         view_report_button.click(
+            show_report_loading,
+            output=[
+                interview_section,
+                completion_section,
+                report_section,
+                report_output,
+            ],
+
+        ).then(
             lambda s: view_report(controller, s),  
             inputs=[state],
             outputs=[
