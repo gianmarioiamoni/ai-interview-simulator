@@ -6,6 +6,7 @@ import gradio as gr
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
+from domain.contracts.evaluation_report import EvaluationReport
 
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.views.report_view import build_report_markdown
@@ -66,7 +67,8 @@ def submit_answer(
     result, feedback = controller.submit_answer(state, user_answer)
 
     # Final report case → DO NOT show report yet
-    if hasattr(result, "overall_score"):
+    if isinstance(result, EvaluationReport):
+        report = result
 
         return (
             state,
@@ -74,8 +76,10 @@ def submit_answer(
             "",
             "",  # clear answer
             f"### Feedback\n\n{feedback}",
-            gr.update(visible=True),  # interview still visible
-            gr.update(visible=True),  # completion visible
+            gr.update(visible=True),  # interview section is still visible
+            gr.update(visible=True),  # completion section is visible
+            gr.update(interactive=False),  # submit button is disabled
+            report,
         )
 
     # Normal question
@@ -97,10 +101,9 @@ def submit_answer(
 # =========================================================
 
 
-def view_report(state: InterviewState):
+def view_report(report: EvaluationReport):
 
-    report = state.final_evaluation
-    report_text = build_report_markdown(report, state)
+    report_text = build_report_markdown(report, None)
 
     return (
         gr.update(visible=False),  # hide interview
