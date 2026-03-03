@@ -164,7 +164,7 @@ def build_app():
         # =========================================================
 
         view_report_button.click(
-            lambda: s: view_report(controller, s),
+            lambda s: view_report(controller, s),
             inputs=[state],
             outputs=[
                 interview_section,
