@@ -99,7 +99,8 @@ def view_report(
     controller: InterviewController,
     state: InterviewState,
 ):
-
+    print("VIEW REPORT CALLED")
+    print("STATE:", state)
     # Step 1 → Show loading immediately
     yield (
         gr.update(visible=False),  # interview

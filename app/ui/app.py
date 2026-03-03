@@ -181,7 +181,7 @@ def build_app():
                 report_section,
                 report_output,
             ],
-            show_progress=True,
+            ##show_progress=True,
         )
 
         pdf_button.click(
