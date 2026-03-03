@@ -126,6 +126,15 @@ def view_report(
     )
 
 
+def show_report_loading():
+    return (
+        gr.update(visible=False),  # hide interview
+        gr.update(visible=False),  # hide completion
+        gr.update(visible=True),  # show report section
+        "## ⏳ Generating final report...\n\nPlease wait...",
+    )
+
+
 # =========================================================
 # RESET
 # =========================================================
