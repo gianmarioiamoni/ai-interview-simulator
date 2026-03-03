@@ -132,7 +132,7 @@ def reset_interview():
 
 def view_report(report: FinalReportDTO):
 
-    report_text = build_report_markdown(report, None)
+    report_text = build_report_markdown(report)
 
     return (
         gr.update(visible=False),  # hide interview
