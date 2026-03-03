@@ -11,11 +11,12 @@ from app.ui.controllers.interview_controller import InterviewController
 from app.ui.state_handlers import (
     start_interview,
     submit_answer,
-    view_report,
     reset_interview,
     export_pdf,
     export_json,
 )
+
+from app.ui.views.report_view import build_report_markdown
 
 
 def build_app():
@@ -23,6 +24,8 @@ def build_app():
     graph = build_graph()
     mapper = InterviewStateMapper()
     controller = InterviewController(graph, mapper)
+
+    print("BUILD APP STARTED")
 
     with gr.Blocks() as demo:
 
@@ -56,10 +59,7 @@ def build_app():
                 choices=["en", "it"], value="en", label="Language"
             )
 
-            start_button = gr.Button(
-                "Start Interview",
-                interactive=False,
-            )
+            start_button = gr.Button("Start Interview", interactive=False)
 
         # =========================================================
         # INTERVIEW SECTION
@@ -88,7 +88,7 @@ def build_app():
 
         with gr.Column(visible=False) as report_section:
 
-            report_output = gr.Markdown("Generating final report...")
+            report_output = gr.Markdown("")
 
             pdf_button = gr.Button("Download PDF")
             json_button = gr.Button("Download JSON")
@@ -169,11 +169,35 @@ def build_app():
         )
 
         # =========================================================
-        # VIEW REPORT
+        # VIEW REPORT (FIXED)
         # =========================================================
 
+        def view_report_handler(state_value):
+
+            print("VIEW REPORT CALLED")
+            print("STATE:", state_value)
+
+            # Step 1: show loading
+            yield (
+                gr.update(visible=False),  # interview
+                gr.update(visible=False),  # completion
+                gr.update(visible=True),  # report
+                "⏳ Generating final report...",
+            )
+
+            # Step 2: generate report
+            report = controller.generate_final_report(state_value)
+            report_text = build_report_markdown(report)
+
+            yield (
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=True),
+                report_text,
+            )
+
         view_report_button.click(
-            lambda s: view_report(controller, s),  
+            view_report_handler,
             inputs=[state],
             outputs=[
                 interview_section,
@@ -181,8 +205,11 @@ def build_app():
                 report_section,
                 report_output,
             ],
-            ##show_progress=True,
         )
+
+        # =========================================================
+        # EXPORTS
+        # =========================================================
 
         pdf_button.click(
             lambda s: export_pdf(controller, s),
