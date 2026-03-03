@@ -2,6 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_progress import InterviewProgress
+from domain.contracts.evaluation_report import EvaluationReport
 from domain.contracts.answer import Answer
 
 from infrastructure.llm.llm_factory import get_llm
@@ -14,6 +15,7 @@ from app.core.logger import get_logger
 from services.question_evaluation_service import QuestionEvaluationService
 from services.interview_evaluation_service import InterviewEvaluationService
 
+SubmitAnswerResult = InterviewSessionDTO | EvaluationReport
 
 class InterviewController:
 
@@ -40,8 +42,11 @@ class InterviewController:
     # Submit Answer
     # ---------------------------------------------------------
 
-    def submit_answer(self, state: InterviewState, user_answer: str):
-
+    def submit_answer(self, state: InterviewState, user_answer: str) -> tuple[SubmitAnswerResult, str]:
+            # Session DTO if interview is in progress
+            # Evaluation Report if interview is complete
+            # Feedback string
+        
         # 1️⃣ Retrieve current question
         current_question = state.questions[state.current_question_index]
 
