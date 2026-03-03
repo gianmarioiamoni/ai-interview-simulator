@@ -25,7 +25,7 @@ def start_interview(
     interview_type_name: str,
     company: str,
     language: str,
-) -> Tuple[Any, ...]:
+) -> tuple:
 
     role_type = RoleType[role_name]
     interview_type = InterviewType[interview_type_name]
@@ -64,7 +64,7 @@ def submit_answer(
     controller: InterviewController,
     state: InterviewState,
     user_answer: str,
-) -> Tuple[Any, ...]:
+) -> tuple:
 
     session_dto, feedback, completed = controller.submit_answer(state, user_answer)
 
@@ -111,20 +111,18 @@ def submit_answer(
 # VIEW REPORT
 # =========================================================
 
-
 def view_report(
     controller: InterviewController,
     state: InterviewState,
-):
+) -> tuple:
 
     report = controller.generate_final_report(state)
-
     report_text = build_report_markdown(report)
 
     return (
-        gr.update(visible=False),
-        gr.update(visible=False),
-        gr.update(visible=True),
+        gr.update(visible=False),  # hide interview
+        gr.update(visible=False),  # hide completion
+        gr.update(visible=True),  # show report section
         report_text,
     )
 
