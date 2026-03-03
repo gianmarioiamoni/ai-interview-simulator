@@ -13,7 +13,8 @@ from app.ui.state_handlers import (
     submit_answer,
     view_report,
     reset_interview,
-    show_report_loading,
+    export_pdf,
+    export_json,
 )
 
 
@@ -88,6 +89,13 @@ def build_app():
         with gr.Column(visible=False) as report_section:
 
             report_output = gr.Markdown("Generating final report...")
+
+            pdf_button = gr.Button("Download PDF")
+            json_button = gr.Button("Download JSON")
+
+            pdf_file = gr.File()
+            json_file = gr.File()
+
             new_interview_button = gr.Button("Start New Interview")
 
         # =========================================================
@@ -165,15 +173,6 @@ def build_app():
         # =========================================================
 
         view_report_button.click(
-            show_report_loading,
-            outputs=[
-                interview_section,
-                completion_section,
-                report_section,
-                report_output,
-            ],
-
-        ).then(
             lambda s: view_report(controller, s),  
             inputs=[state],
             outputs=[
@@ -183,6 +182,18 @@ def build_app():
                 report_output,
             ],
             show_progress=True,
+        )
+
+        pdf_button.click(
+            lambda s: export_pdf(controller, s),
+            inputs=[state],
+            outputs=pdf_file,
+        )
+
+        json_button.click(
+            lambda s: export_json(controller, s),
+            inputs=[state],
+            outputs=json_file,
         )
 
         # =========================================================
