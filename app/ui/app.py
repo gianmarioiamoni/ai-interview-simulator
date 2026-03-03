@@ -44,61 +44,6 @@ def build_app():
                 start_button,
             ) = setup_view.render()
 
-        # -------------------------
-        # Input validation
-        # -------------------------
-
-        def validate_inputs(role, interview_type, company, language):
-            valid = bool(role and interview_type and company and language)
-            return gr.update(interactive=valid)
-
-        for component in [
-            role_dropdown,
-            interview_type_radio,
-            company_input,
-            language_dropdown,
-        ]:
-            component.change(
-                validate_inputs,
-                inputs=[
-                    role_dropdown,
-                    interview_type_radio,
-                    company_input,
-                    language_dropdown,
-                ],
-                outputs=start_button,
-            )
-
-        # -------------------------
-        # START INTERVIEW BINDING
-        # -------------------------
-
-        start_button.click(
-            lambda role, interview_type, company, language: start_interview(
-                controller,
-                role,
-                interview_type,
-                company,
-                language,
-            ),
-            inputs=[
-                role_dropdown,
-                interview_type_radio,
-                company_input,
-                language_dropdown,
-            ],
-            outputs=[
-                state,
-                question_text,
-                question_counter,
-                feedback_output,
-                setup_section,
-                interview_section,
-                completion_section,
-                report_section,
-            ],
-        )
-
         # =========================================================
         # INTERVIEW SECTION
         # =========================================================
@@ -135,6 +80,61 @@ def build_app():
             json_file = gr.File(visible=False)
 
             new_interview_button = gr.Button("Start New Interview")
+
+        # =========================================================
+        # INPUT VALIDATION
+        # =========================================================
+
+        def validate_inputs(role, interview_type, company, language):
+            valid = bool(role and interview_type and company and language)
+            return gr.update(interactive=valid)
+
+        for component in [
+            role_dropdown,
+            interview_type_radio,
+            company_input,
+            language_dropdown,
+        ]:
+            component.change(
+                validate_inputs,
+                inputs=[
+                    role_dropdown,
+                    interview_type_radio,
+                    company_input,
+                    language_dropdown,
+                ],
+                outputs=start_button,
+            )
+
+        # =========================================================
+        # START INTERVIEW (NOW SAFE)
+        # =========================================================
+
+        start_button.click(
+            lambda role, interview_type, company, language: start_interview(
+                controller,
+                role,
+                interview_type,
+                company,
+                language,
+            ),
+            inputs=[
+                role_dropdown,
+                interview_type_radio,
+                company_input,
+                language_dropdown,
+            ],
+            outputs=[
+                state,
+                question_text,
+                question_counter,
+                feedback_output,
+                setup_section,
+                interview_section,
+                completion_section,
+                report_section,
+            ],
+        )
 
         # =========================================================
         # SUBMIT ANSWER
