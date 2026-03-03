@@ -20,7 +20,7 @@ from app.ui.controllers.interview_controller import InterviewController
 
 
 def start_interview(
-    controller,
+    controller: InterviewController,
     role_name: str,
     interview_type_name: str,
     company: str,
@@ -47,11 +47,11 @@ def start_interview(
         state,
         session_dto.current_question.text,
         f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
-        "",  # feedback reset
-        gr.update(visible=False),  # hide setup
-        gr.update(visible=True),   # show interview
-        gr.update(visible=False),  # completion hidden
-        gr.update(visible=False),  # report hidden
+        "",
+        gr.update(visible=False),
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(visible=False),
     )
 
 
@@ -61,55 +61,73 @@ def start_interview(
 
 
 def submit_answer(
-    controller : InterviewController,
+    controller: InterviewController,
     state: InterviewState,
     user_answer: str,
 ) -> Tuple[Any, ...]:
 
-    result, feedback = controller.submit_answer(state, user_answer)
+    session_dto, feedback, completed = controller.submit_answer(state, user_answer)
 
-   # ------------------------------------------------------------
-   # Final report case
-   # ------------------------------------------------------------
+    # ---------------------------------------------------------
+    # Interview completed
+    # ---------------------------------------------------------
 
-    if isinstance(result, FinalReportDTO):
+    if completed:
 
         return (
             state,
-            "",  # no new question
-            "",  # no counter
-            "",  # clear answer
+            "",
+            "",
+            "",
             f"### Feedback\n\n{feedback}",
-            gr.update(visible=True),  # interview section is still visible
-            gr.update(visible=True),  # completion section is visible
-            gr.update(interactive=False),  # submit button is disabled
-            result,
+            gr.update(visible=True),
+            gr.update(visible=True),
+            gr.update(interactive=False),
+            None,
         )
 
-    # ------------------------------------------------------------
-    # In-progress interview case
-    # ------------------------------------------------------------
+    # ---------------------------------------------------------
+    # Still in progress
+    # ---------------------------------------------------------
 
-    if isinstance(result, InterviewSessionDTO):
-        session_dto = result
+    if isinstance(session_dto, InterviewSessionDTO):
 
         return (
             state,
             session_dto.current_question.text,
             f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
-            "",  # clear answer
+            "",
             f"### Feedback\n\n{feedback}",
-            gr.update(visible=True),  # interview section is still visible
-            gr.update(visible=False),  # completion section is hidden
-            gr.update(interactive=True),  # submit button is enabled
-            None,  # no report
+            gr.update(visible=True),
+            gr.update(visible=False),
+            gr.update(interactive=True),
+            None,
         )
 
-    # ------------------------------------------------------------
-    # Unknown result case
-    # ------------------------------------------------------------
+    raise TypeError("Unexpected state in submit_answer")
 
-    raise TypeError(f"Unknown result type: {type(result)}")
+
+# =========================================================
+# VIEW REPORT
+# =========================================================
+
+
+def view_report(
+    controller: InterviewController,
+    state: InterviewState,
+):
+
+    report = controller.generate_final_report(state)
+
+    report_text = build_report_markdown(report)
+
+    return (
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=True),
+        report_text,
+    )
+
 
 # =========================================================
 # RESET INTERVIEW
@@ -119,24 +137,9 @@ def submit_answer(
 def reset_interview():
 
     return (
-        None,  # reset state
-        gr.update(visible=True),  # show setup
-        gr.update(visible=False),  # hide interview
-        gr.update(visible=False),  # hide completion
-        gr.update(visible=False),  # hide report
-    )
-
-# =========================================================
-# VIEW REPORT
-# =========================================================
-
-def view_report(report: FinalReportDTO):
-
-    report_text = build_report_markdown(report)
-
-    return (
-        gr.update(visible=False),  # hide interview
-        gr.update(visible=False),  # hide completion
-        gr.update(visible=True),  # show report
-        report_text,
+        None,
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=False),
     )

@@ -2,12 +2,12 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_progress import InterviewProgress
-from domain.contracts.evaluation_report import EvaluationReport
 from domain.contracts.answer import Answer
 
 from infrastructure.llm.llm_factory import get_llm
 
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
+from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from app.core.logger import get_logger
@@ -15,7 +15,6 @@ from app.core.logger import get_logger
 from services.question_evaluation_service import QuestionEvaluationService
 from services.interview_evaluation_service import InterviewEvaluationService
 
-SubmitAnswerResult = InterviewSessionDTO | EvaluationReport
 
 class InterviewController:
 
@@ -39,18 +38,23 @@ class InterviewController:
         return self._mapper.to_session_dto(updated_state)
 
     # ---------------------------------------------------------
-    # Submit Answer
+    # Submit Answer (NO final report generation here)
     # ---------------------------------------------------------
 
-    def submit_answer(self, state: InterviewState, user_answer: str) -> tuple[SubmitAnswerResult, str]:
-            # Session DTO if interview is in progress
-            # Evaluation Report if interview is complete
-            # Feedback string
-        
-        # 1️⃣ Retrieve current question
+    def submit_answer(
+        self,
+        state: InterviewState,
+        user_answer: str,
+    ) -> tuple[InterviewSessionDTO | None, str, bool]:
+        """
+        Returns:
+        - InterviewSessionDTO | None
+        - feedback string
+        - interview_completed flag
+        """
+
         current_question = state.questions[state.current_question_index]
 
-        # 2️⃣ Save answer
         answer = Answer(
             question_id=current_question.id,
             content=user_answer,
@@ -58,35 +62,41 @@ class InterviewController:
         )
         state.answers.append(answer)
 
-        # 3️⃣ Generate QuestionEvaluation
         question_eval = self._question_eval_service.evaluate(
             question=current_question,
             answer_text=user_answer,
         )
         state.evaluations.append(question_eval)
 
-        # 4️⃣ If not last question → advance
+        # If not last question
         if state.current_question_index < len(state.questions) - 1:
 
             state.current_question_index += 1
 
             session_dto = self._mapper.to_session_dto(state)
 
-            return session_dto, question_eval.feedback
+            return session_dto, question_eval.feedback, False
 
-        # 5️⃣ Last question → complete interview
+        # Last question → mark completed only
         state.progress = InterviewProgress.COMPLETED
 
-        final_eval = self._evaluation_service.evaluate(
-            per_question_evaluations=state.evaluations,
-            questions=state.questions,
-            interview_type=state.interview_type,  # pass Enum, not .value
-            role=state.role.type,  # pass RoleType Enum
-        )
+        return None, question_eval.feedback, True
 
-        state.final_evaluation = final_eval
-        state.progress = InterviewProgress.COMPLETED
+    # ---------------------------------------------------------
+    # Generate Final Report (called only when user clicks)
+    # ---------------------------------------------------------
 
-        final_report = self._mapper.to_final_report_dto(state)
+    def generate_final_report(self, state: InterviewState) -> FinalReportDTO:
 
-        return final_report, question_eval.feedback
+        if state.final_evaluation is None:
+
+            final_eval = self._evaluation_service.evaluate(
+                per_question_evaluations=state.evaluations,
+                questions=state.questions,
+                interview_type=state.interview_type,
+                role=state.role.type,
+            )
+
+            state.final_evaluation = final_eval
+
+        return self._mapper.to_final_report_dto(state)
