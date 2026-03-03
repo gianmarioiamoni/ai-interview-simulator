@@ -1,5 +1,6 @@
 # app/ui/state_handlers.py
 
+import os
 import gradio as gr
 
 from domain.contracts.interview_state import InterviewState
@@ -19,7 +20,6 @@ export_service = ReportExportService()
 # =========================================================
 # START INTERVIEW
 # =========================================================
-
 
 def start_interview(
     controller: InterviewController,
@@ -61,7 +61,6 @@ def start_interview(
 # SUBMIT ANSWER
 # =========================================================
 
-
 def submit_answer(controller, state, user_answer):
 
     session_dto, feedback, completed = controller.submit_answer(state, user_answer)
@@ -94,7 +93,6 @@ def submit_answer(controller, state, user_answer):
 # VIEW REPORT
 # =========================================================
 
-
 def view_report(
     controller: InterviewController,
     state: InterviewState,
@@ -121,16 +119,20 @@ def view_report(
     )
 
 
+
 # =========================================================
 # EXPORT PDF
 # =========================================================
 
-
 def export_pdf(controller: InterviewController, state: InterviewState):
+
+    print("EXPORT PDF CALLED")
 
     report = controller.generate_final_report(state)
 
+    os.makedirs("/mnt/data", exist_ok=True)
     file_path = "/mnt/data/interview_report.pdf"
+
     export_service.export_pdf(report, file_path)
 
     return file_path
@@ -140,12 +142,15 @@ def export_pdf(controller: InterviewController, state: InterviewState):
 # EXPORT JSON
 # =========================================================
 
-
 def export_json(controller: InterviewController, state: InterviewState):
+
+    print("EXPORT JSON CALLED")
 
     report = controller.generate_final_report(state)
 
+    os.makedirs("/mnt/data", exist_ok=True)
     file_path = "/mnt/data/interview_report.json"
+
     export_service.export_json(report, file_path)
 
     return file_path
@@ -154,7 +159,6 @@ def export_json(controller: InterviewController, state: InterviewState):
 # =========================================================
 # RESET
 # =========================================================
-
 
 def reset_interview():
 

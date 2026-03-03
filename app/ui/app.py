@@ -211,16 +211,22 @@ def build_app():
         # EXPORTS
         # =========================================================
 
+        def export_pdf_handler(state_value):
+            return export_pdf(controller, state_value)
+
+        def export_json_handler(state_value):
+            return export_json(controller, state_value)
+
         pdf_button.click(
-            lambda s: export_pdf(controller, s),
+            export_pdf_handler,
             inputs=[state],
-            outputs=pdf_file,
+            outputs=[pdf_file],
         )
 
         json_button.click(
-            lambda s: export_json(controller, s),
+            export_json_handler,
             inputs=[state],
-            outputs=json_file,
+            outputs=[json_file],
         )
 
         # =========================================================
