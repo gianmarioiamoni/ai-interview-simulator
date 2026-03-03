@@ -2,20 +2,16 @@
 
 import gradio as gr
 
-from domain.contracts.role import RoleType
-from domain.contracts.interview_type import InterviewType
-
 from app.graph.builder import build_graph
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from app.ui.controllers.interview_controller import InterviewController
+from app.ui.views.setup_view import SetupView
 from app.ui.state_handlers import (
-    start_interview,
     submit_answer,
     reset_interview,
     export_pdf,
     export_json,
 )
-
 from app.ui.views.report_view import build_report_markdown
 
 
@@ -24,8 +20,6 @@ def build_app():
     graph = build_graph()
     mapper = InterviewStateMapper()
     controller = InterviewController(graph, mapper)
-
-    print("BUILD APP STARTED")
 
     with gr.Blocks() as demo:
 
@@ -39,30 +33,15 @@ def build_app():
 
         with gr.Column(visible=True) as setup_section:
 
-            gr.Markdown("## Configure Your Interview")
+            setup_view = SetupView(controller)
 
-            role_dropdown = gr.Dropdown(
-                choices=[(r.name.replace("_", " "), r.name) for r in RoleType],
-                label="Role",
-            )
-
-            interview_type_radio = gr.Radio(
-                choices=[t.name for t in InterviewType],
-                label="Interview Type",
-            )
-
-            company_input = gr.Textbox(
-                label="Company",
-                placeholder="e.g. Google, Startup, FinTech...",
-            )
-
-            language_dropdown = gr.Dropdown(
-                choices=["en", "it"],
-                value="en",
-                label="Language",
-            )
-
-            start_button = gr.Button("Start Interview", interactive=False)
+            (
+                role_dropdown,
+                interview_type_radio,
+                company_input,
+                language_dropdown,
+                start_button,
+            ) = setup_view.render(state)
 
         # =========================================================
         # INTERVIEW SECTION
@@ -96,62 +75,10 @@ def build_app():
             pdf_button = gr.Button("Download PDF")
             json_button = gr.Button("Download JSON")
 
-            # FILE COMPONENTS (hidden until export)
             pdf_file = gr.File(visible=False)
             json_file = gr.File(visible=False)
 
             new_interview_button = gr.Button("Start New Interview")
-
-        # =========================================================
-        # INPUT VALIDATION
-        # =========================================================
-
-        def validate_inputs(role, interview_type, company, language):
-            valid = bool(role and interview_type and company and language)
-            return gr.update(interactive=valid)
-
-        for component in [
-            role_dropdown,
-            interview_type_radio,
-            company_input,
-            language_dropdown,
-        ]:
-            component.change(
-                validate_inputs,
-                inputs=[
-                    role_dropdown,
-                    interview_type_radio,
-                    company_input,
-                    language_dropdown,
-                ],
-                outputs=start_button,
-            )
-
-        # =========================================================
-        # START INTERVIEW
-        # =========================================================
-
-        start_button.click(
-            lambda role, interview_type, company, language: start_interview(
-                controller, role, interview_type, company, language
-            ),
-            inputs=[
-                role_dropdown,
-                interview_type_radio,
-                company_input,
-                language_dropdown,
-            ],
-            outputs=[
-                state,
-                question_text,
-                question_counter,
-                feedback_output,
-                setup_section,
-                interview_section,
-                completion_section,
-                report_section,
-            ],
-        )
 
         # =========================================================
         # SUBMIT ANSWER
@@ -173,12 +100,11 @@ def build_app():
         )
 
         # =========================================================
-        # VIEW REPORT (GENERATOR SAFE)
+        # VIEW REPORT
         # =========================================================
 
         def view_report_handler(state_value):
 
-            # Step 1 → show loading
             yield (
                 gr.update(visible=False),
                 gr.update(visible=False),
@@ -186,7 +112,6 @@ def build_app():
                 "⏳ Generating final report...",
             )
 
-            # Step 2 → generate report
             report = controller.generate_final_report(state_value)
             report_text = build_report_markdown(report)
 
@@ -210,40 +135,18 @@ def build_app():
         )
 
         # =========================================================
-        # EXPORT PDF
+        # EXPORTS
         # =========================================================
 
-        def export_pdf_handler(state_value):
-
-            file_path = export_pdf(controller, state_value)
-
-            return (
-                file_path,
-                gr.update(visible=True),
-            )
-
         pdf_button.click(
-            export_pdf_handler,
+            lambda s: (export_pdf(controller, s), gr.update(visible=True)),
             inputs=[state],
             outputs=[pdf_file, pdf_file],
             show_progress=True,
         )
 
-        # =========================================================
-        # EXPORT JSON
-        # =========================================================
-
-        def export_json_handler(state_value):
-
-            file_path = export_json(controller, state_value)
-
-            return (
-                file_path,
-                gr.update(visible=True),
-            )
-
         json_button.click(
-            export_json_handler,
+            lambda s: (export_json(controller, s), gr.update(visible=True)),
             inputs=[state],
             outputs=[json_file, json_file],
             show_progress=True,
