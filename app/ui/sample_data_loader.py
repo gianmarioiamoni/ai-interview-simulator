@@ -13,7 +13,7 @@ from domain.contracts.interview_area import InterviewArea
 
 
 def load_sample_questions(interview_type: InterviewType) -> List[Question]:
-    
+
     # Temporary bootstrap question loader.
     # NOTE: In the final architecture, question generation must be delegated to the graph layer.
 
@@ -34,26 +34,47 @@ def load_sample_questions(interview_type: InterviewType) -> List[Question]:
 def _load_technical_questions() -> List[Question]:
 
     return [
+        # WRITTEN
         Question(
             id="T1",
             area=InterviewArea.TECH_BACKGROUND,
             type=QuestionType.WRITTEN,
-            prompt="Describe your experience with backend architectures.",
+            prompt="Describe your experience designing distributed backend systems.",
             difficulty=2,
         ),
+        # CODING
         Question(
             id="T2",
-            area=InterviewArea.TECH_TECHNICAL_KNOWLEDGE,
-            type=QuestionType.WRITTEN,
-            prompt="Explain the difference between synchronous and asynchronous systems.",
-            difficulty=2,
+            area=InterviewArea.TECH_CODING,
+            type=QuestionType.CODING,
+            prompt=(
+                "Write a Python function that returns the first non-repeating "
+                "character in a string. If none exists, return None."
+            ),
+            difficulty=3,
+            reference_solution=(
+                "def first_non_repeating_char(s: str):\n"
+                "    from collections import Counter\n"
+                "    counts = Counter(s)\n"
+                "    for char in s:\n"
+                "        if counts[char] == 1:\n"
+                "            return char\n"
+                "    return None"
+            ),
         ),
+        # DATABASE
         Question(
             id="T3",
-            area=InterviewArea.TECH_CASE_STUDY,
-            type=QuestionType.WRITTEN,
-            prompt="How would you design a scalable microservices architecture?",
-            difficulty=3,
+            area=InterviewArea.TECH_DATABASE,
+            type=QuestionType.DATABASE,
+            prompt=(
+                "Given a table Users(id, name, created_at), "
+                "write a SQL query to retrieve the 5 most recently created users."
+            ),
+            difficulty=2,
+            reference_solution=(
+                "SELECT * FROM Users\n" "ORDER BY created_at DESC\n" "LIMIT 5;"
+            ),
         ),
     ]
 
