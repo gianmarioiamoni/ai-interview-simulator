@@ -117,8 +117,14 @@ def build_app():
         # =========================================================
 
         def validate_inputs(role, interview_type, company, language):
-            valid = bool(role and interview_type and company and language)
-            return gr.update(interactive=valid)
+            valid = all([
+                role is not None,
+                interview_type is not None,
+                company is not None and company.strip() != "",
+                language is not None,
+            ])
+
+            return gr.Button.update(interactive=valid)
 
         for component in [
             role_dropdown,
@@ -173,12 +179,11 @@ def build_app():
         # )
         def test_click():
             print("BUTTON CLICKED")
-            return gr.update(visible=True)
 
         start_button.click(
             test_click,
             inputs=[],
-            outputs=[setup_section],
+            outputs=[],
 )
 
         # =========================================================
