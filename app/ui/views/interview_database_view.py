@@ -5,7 +5,7 @@ import gradio as gr
 
 class InterviewDatabaseView:
 
-    # Responsible only for building database question UI
+    # Build UI components for database questions
 
     def build(self):
 

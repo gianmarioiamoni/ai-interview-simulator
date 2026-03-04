@@ -7,7 +7,9 @@ from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from app.ui.controllers.interview_controller import InterviewController
 
 from app.ui.views.setup_view import SetupView
-from app.ui.views.interview_view_factory import InterviewViewFactory
+from app.ui.views.interview_written_view import InterviewWrittenView
+from app.ui.views.interview_coding_view import InterviewCodingView
+from app.ui.views.interview_database_view import InterviewDatabaseView
 
 from app.ui.state_handlers import (
     start_interview,
@@ -21,8 +23,6 @@ from app.ui.views.report_view import build_report_markdown
 
 
 def build_app():
-
-    # Build core services
 
     graph = build_graph()
     mapper = InterviewStateMapper()
@@ -65,8 +65,28 @@ def build_app():
             question_counter = gr.Markdown("")
             feedback_output = gr.Markdown("")
 
-            # Dynamic container where question views will render
-            dynamic_question_container = gr.Column()
+            # Build question views
+
+            (
+                written_container,
+                written_text,
+                written_box,
+                written_submit,
+            ) = InterviewWrittenView().build()
+
+            (
+                coding_container,
+                coding_text,
+                coding_box,
+                coding_submit,
+            ) = InterviewCodingView().build()
+
+            (
+                database_container,
+                database_text,
+                database_box,
+                database_submit,
+            ) = InterviewDatabaseView().build()
 
         # =========================================================
         # COMPLETION SECTION
@@ -102,8 +122,6 @@ def build_app():
 
         def validate_inputs(role, interview_type, company, language):
 
-            # Enable Start button only when all fields are filled
-
             valid = (
                 role is not None
                 and interview_type is not None
@@ -137,10 +155,12 @@ def build_app():
 
         def start_handler(role, interview_type, company, language):
 
-            if role is None or interview_type is None:
-                raise ValueError("Role and interview type must be selected")
-
-            state_value, question_dto = start_interview(
+            (
+                state_value,
+                question_text,
+                counter,
+                question_type,
+            ) = start_interview(
                 controller,
                 role,
                 interview_type,
@@ -148,29 +168,20 @@ def build_app():
                 language,
             )
 
-            question_counter_update = (
-                f"Question {question_dto.index}/{question_dto.total}"
-            )
-
-            # Clear dynamic container before rendering next question
-            dynamic_question_container.children = []
-
-            with dynamic_question_container:
-
-                view = InterviewViewFactory.create(
-                    question=question_dto,
-                    on_submit=lambda answer: submit_answer(
-                        controller,
-                        state_value,
-                        answer,
-                    ),
-                )
-
-                view.render()
+            written_visible = question_type == "written"
+            coding_visible = question_type == "coding"
+            database_visible = question_type == "database"
 
             return (
                 state_value,
-                question_counter_update,
+                counter,
+                "",
+                question_text,
+                question_text,
+                question_text,
+                gr.update(visible=written_visible),
+                gr.update(visible=coding_visible),
+                gr.update(visible=database_visible),
                 gr.update(visible=False),
                 gr.update(visible=True),
             )
@@ -186,13 +197,57 @@ def build_app():
             outputs=[
                 state,
                 question_counter,
+                feedback_output,
+                written_text,
+                coding_text,
+                database_text,
+                written_container,
+                coding_container,
+                database_container,
                 setup_section,
                 interview_section,
             ],
         )
 
         # =========================================================
-        # VIEW REPORT
+        # SUBMIT ANSWERS
+        # =========================================================
+
+        outputs = [
+            state,
+            question_counter,
+            feedback_output,
+            written_text,
+            coding_text,
+            database_text,
+            written_container,
+            coding_container,
+            database_container,
+            interview_section,
+            completion_section,
+            final_feedback,
+        ]
+
+        written_submit.click(
+            lambda s, a: submit_answer(controller, s, a),
+            inputs=[state, written_box],
+            outputs=outputs,
+        )
+
+        coding_submit.click(
+            lambda s, a: submit_answer(controller, s, a),
+            inputs=[state, coding_box],
+            outputs=outputs,
+        )
+
+        database_submit.click(
+            lambda s, a: submit_answer(controller, s, a),
+            inputs=[state, database_box],
+            outputs=outputs,
+        )
+
+        # =========================================================
+        # REPORT
         # =========================================================
 
         def view_report_handler(state_value):

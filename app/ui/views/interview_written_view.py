@@ -5,7 +5,7 @@ import gradio as gr
 
 class InterviewWrittenView:
 
-    # Responsible only for building written question UI
+    # Build UI components for written questions
 
     def build(self):
 
