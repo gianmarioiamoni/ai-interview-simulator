@@ -22,14 +22,13 @@ export_service = ReportExportService()
 # START INTERVIEW
 # =========================================================
 
-
 def start_interview(
     controller: InterviewController,
     role_name: str,
     interview_type_name: str,
     company: str,
     language: str,
-) -> tuple:
+):
 
     role_type = RoleType[role_name.replace(" ", "_")]
     interview_type = InterviewType[interview_type_name]
@@ -47,12 +46,25 @@ def start_interview(
 
     session_dto = controller.start_interview(state)
 
+    question = session_dto.current_question
+    question_type = question.type.value
+
+    written_visible = question_type == "written"
+    coding_visible = question_type == "coding"
+    database_visible = question_type == "database"
+
     return (
-        state,  # gr.State
-        f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
+        state,
+        f"Question {question.index}/{question.total}",
         "",  # feedback
+        question.prompt,  # written_question_text
+        question.prompt,  # coding_question_text
+        question.prompt,  # database_question_text
+        gr.update(visible=written_visible),
+        gr.update(visible=coding_visible),
+        gr.update(visible=database_visible),
         gr.update(visible=False),  # setup_section
-        gr.update(visible=True),   # interview_section
+        gr.update(visible=True),  # interview_section
         gr.update(visible=False),  # completion_section
         gr.update(visible=False),  # report_section
     )
@@ -61,7 +73,6 @@ def start_interview(
 # =========================================================
 # SUBMIT ANSWER
 # =========================================================
-
 
 def submit_answer(
     controller: InterviewController,
@@ -80,6 +91,9 @@ def submit_answer(
             state,
             "",  # question counter
             f"### Feedback\n\n{feedback}",
+            "",  # written_question_text
+            "",  # coding_question_text
+            "",  # database_question_text
             gr.update(visible=False),  # written_container
             gr.update(visible=False),  # coding_container
             gr.update(visible=False),  # database_container
@@ -98,6 +112,9 @@ def submit_answer(
         state,
         f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
         f"### Feedback\n\n{feedback}",
+        question.prompt,  # written_question_text
+        question.prompt,  # coding_question_text
+        question.prompt,  # database_question_text
         gr.update(visible=written_visible),
         gr.update(visible=coding_visible),
         gr.update(visible=database_visible),
@@ -109,7 +126,6 @@ def submit_answer(
 # =========================================================
 # VIEW REPORT
 # =========================================================
-
 
 def view_report(
     controller: InterviewController,
@@ -140,7 +156,6 @@ def view_report(
 # EXPORT PDF
 # =========================================================
 
-
 def export_pdf(
     controller: InterviewController,
     state: InterviewState,
@@ -162,7 +177,6 @@ def export_pdf(
 # EXPORT JSON
 # =========================================================
 
-
 def export_json(
     controller: InterviewController,
     state: InterviewState,
@@ -183,7 +197,6 @@ def export_json(
 # =========================================================
 # RESET
 # =========================================================
-
 
 def reset_interview():
 
