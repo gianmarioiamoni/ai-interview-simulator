@@ -22,6 +22,8 @@ from app.ui.views.report_view import build_report_markdown
 
 def build_app():
 
+    # Build core services
+
     graph = build_graph()
     mapper = InterviewStateMapper()
     controller = InterviewController(graph, mapper)
@@ -63,7 +65,7 @@ def build_app():
             question_counter = gr.Markdown("")
             feedback_output = gr.Markdown("")
 
-            # Container where views will render
+            # Container where question views will be rendered
             dynamic_question_container = gr.Column()
 
         # =========================================================
@@ -95,10 +97,52 @@ def build_app():
             new_interview_button = gr.Button("Start New Interview")
 
         # =========================================================
+        # INPUT VALIDATION
+        # =========================================================
+
+        def validate_inputs(role, interview_type, company, language):
+
+            # Enable Start button only when all fields are filled
+
+            valid = (
+                role is not None
+                and interview_type is not None
+                and company is not None
+                and company.strip() != ""
+                and language is not None
+            )
+
+            return gr.update(interactive=valid)
+
+        # Attach validation to all setup inputs
+
+        for component in [
+            role_dropdown,
+            interview_type_radio,
+            company_input,
+            language_dropdown,
+        ]:
+            component.change(
+                validate_inputs,
+                inputs=[
+                    role_dropdown,
+                    interview_type_radio,
+                    company_input,
+                    language_dropdown,
+                ],
+                outputs=start_button,
+            )
+
+        # =========================================================
         # START INTERVIEW
         # =========================================================
 
         def start_handler(role, interview_type, company, language):
+
+            # Defensive validation
+
+            if role is None or interview_type is None:
+                raise ValueError("Role and interview type must be selected")
 
             state_value, question_dto = start_interview(
                 controller,
@@ -112,9 +156,12 @@ def build_app():
                 f"Question {question_dto.index}/{question_dto.total}"
             )
 
-            with dynamic_question_container:
+            # Clear previous content
+            dynamic_question_container.clear()
 
-                dynamic_question_container.clear()
+            # Render correct view using factory
+
+            with dynamic_question_container:
 
                 view = InterviewViewFactory.create(
                     question=question_dto,
