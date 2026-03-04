@@ -40,4 +40,4 @@ class InterviewDatabaseView:
 
     def _handle_submit(self, sql: str) -> None:
 
-        self._on_submit(sql)
+        self._on_submit(sql) 
