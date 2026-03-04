@@ -52,7 +52,7 @@ def start_interview(
         f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
         "",  # feedback
         gr.update(visible=False),  # setup_section
-        gr.update(visible=True),  # interview_section
+        gr.update(visible=True),   # interview_section
         gr.update(visible=False),  # completion_section
         gr.update(visible=False),  # report_section
     )
@@ -78,17 +78,30 @@ def submit_answer(
 
         return (
             state,
-            "",  # question counter cleared
+            "",  # question counter
             f"### Feedback\n\n{feedback}",
+            gr.update(visible=False),  # written_container
+            gr.update(visible=False),  # coding_container
+            gr.update(visible=False),  # database_container
             gr.update(visible=False),  # interview_section
-            gr.update(visible=True),  # completion_section
+            gr.update(visible=True),   # completion_section
         )
+
+    question = session_dto.current_question
+    question_type = question.type.value
+
+    written_visible = question_type == "written"
+    coding_visible = question_type == "coding"
+    database_visible = question_type == "database"
 
     return (
         state,
         f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
         f"### Feedback\n\n{feedback}",
-        gr.update(visible=True),  # interview_section
+        gr.update(visible=written_visible),
+        gr.update(visible=coding_visible),
+        gr.update(visible=database_visible),
+        gr.update(visible=True),   # interview_section
         gr.update(visible=False),  # completion_section
     )
 
@@ -107,7 +120,7 @@ def view_report(
     yield (
         gr.update(visible=False),  # interview_section
         gr.update(visible=False),  # completion_section
-        gr.update(visible=True),  # report_section
+        gr.update(visible=True),   # report_section
         "⏳ Generating final report... please wait.",
     )
 

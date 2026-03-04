@@ -6,7 +6,6 @@ from app.graph.builder import build_graph
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from app.ui.controllers.interview_controller import InterviewController
 from app.ui.views.setup_view import SetupView
-from app.ui.views.interview_view_factory import InterviewViewFactory
 from app.ui.state_handlers import (
     start_interview,
     submit_answer,
@@ -60,9 +59,34 @@ def build_app():
             question_counter = gr.Markdown("")
             feedback_output = gr.Markdown("")
 
-            # Dynamic container where the specific view will render
-            with gr.Column() as dynamic_question_container:
-                pass
+            # ---------------- WRITTEN ----------------
+
+            with gr.Column(visible=False) as written_container:
+                written_question_text = gr.Markdown("")
+                written_answer_box = gr.Textbox(label="Your Answer", lines=5)
+                written_submit_button = gr.Button("Submit Answer")
+
+            # ---------------- CODING ----------------
+
+            with gr.Column(visible=False) as coding_container:
+                coding_question_text = gr.Markdown("")
+                coding_answer_box = gr.Textbox(
+                    label="Your Code",
+                    lines=20,
+                    elem_id="code-editor",
+                )
+                coding_submit_button = gr.Button("Submit Code")
+
+            # ---------------- DATABASE ----------------
+
+            with gr.Column(visible=False) as database_container:
+                database_question_text = gr.Markdown("")
+                database_answer_box = gr.Textbox(
+                    label="Your SQL",
+                    lines=10,
+                    elem_id="code-editor",
+                )
+                database_submit_button = gr.Button("Submit SQL")
 
         # =========================================================
         # COMPLETION SECTION
@@ -80,7 +104,6 @@ def build_app():
         with gr.Column(visible=False) as report_section:
 
             report_output = gr.Markdown("")
-
             pdf_button = gr.Button("Download PDF")
             json_button = gr.Button("Download JSON")
 
@@ -115,29 +138,6 @@ def build_app():
             )
 
         # =========================================================
-        # RENDER QUESTION (FACTORY DRIVEN)
-        # =========================================================
-
-        def render_question(session_dto):
-
-            question = session_dto.current_question
-
-            with dynamic_question_container:
-                gr.Markdown(f"### Question {session_dto.current_index + 1}")
-                gr.Markdown(question.prompt)
-
-                view = InterviewViewFactory.create(
-                    question=question,
-                    on_submit=lambda answer: submit_answer(
-                        controller,
-                        session_dto.state,
-                        answer,
-                    ),
-                )
-
-                view.render()
-
-        # =========================================================
         # START INTERVIEW
         # =========================================================
 
@@ -167,7 +167,56 @@ def build_app():
         )
 
         # =========================================================
-        # VIEW REPORT
+        # SUBMIT HANDLERS
+        # =========================================================
+
+        written_submit_button.click(
+            lambda s, a: submit_answer(controller, s, a),
+            inputs=[state, written_answer_box],
+            outputs=[
+                state,
+                question_counter,
+                feedback_output,
+                written_container,
+                coding_container,
+                database_container,
+                interview_section,
+                completion_section,
+            ],
+        )
+
+        coding_submit_button.click(
+            lambda s, a: submit_answer(controller, s, a),
+            inputs=[state, coding_answer_box],
+            outputs=[
+                state,
+                question_counter,
+                feedback_output,
+                written_container,
+                coding_container,
+                database_container,
+                interview_section,
+                completion_section,
+            ],
+        )
+
+        database_submit_button.click(
+            lambda s, a: submit_answer(controller, s, a),
+            inputs=[state, database_answer_box],
+            outputs=[
+                state,
+                question_counter,
+                feedback_output,
+                written_container,
+                coding_container,
+                database_container,
+                interview_section,
+                completion_section,
+            ],
+        )
+
+        # =========================================================
+        # REPORT
         # =========================================================
 
         def view_report_handler(state_value):
