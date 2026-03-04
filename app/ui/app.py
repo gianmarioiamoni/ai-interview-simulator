@@ -65,7 +65,7 @@ def build_app():
             question_counter = gr.Markdown("")
             feedback_output = gr.Markdown("")
 
-            # Container where question views will be rendered
+            # Dynamic container where question views will render
             dynamic_question_container = gr.Column()
 
         # =========================================================
@@ -114,8 +114,6 @@ def build_app():
 
             return gr.update(interactive=valid)
 
-        # Attach validation to all setup inputs
-
         for component in [
             role_dropdown,
             interview_type_radio,
@@ -139,8 +137,6 @@ def build_app():
 
         def start_handler(role, interview_type, company, language):
 
-            # Defensive validation
-
             if role is None or interview_type is None:
                 raise ValueError("Role and interview type must be selected")
 
@@ -152,14 +148,12 @@ def build_app():
                 language,
             )
 
-            question_counter.value = (
+            question_counter_update = (
                 f"Question {question_dto.index}/{question_dto.total}"
             )
 
-            # Clear previous content
-            dynamic_question_container.clear()
-
-            # Render correct view using factory
+            # Clear dynamic container before rendering next question
+            dynamic_question_container.children = []
 
             with dynamic_question_container:
 
@@ -176,6 +170,7 @@ def build_app():
 
             return (
                 state_value,
+                question_counter_update,
                 gr.update(visible=False),
                 gr.update(visible=True),
             )
@@ -190,6 +185,7 @@ def build_app():
             ],
             outputs=[
                 state,
+                question_counter,
                 setup_section,
                 interview_section,
             ],
