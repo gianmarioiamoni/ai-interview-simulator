@@ -2,7 +2,7 @@
 
 from typing import Callable
 import gradio as gr
-from domain.contracts import Question
+from domain.contracts.question import Question
 
 
 class InterviewCodingView:

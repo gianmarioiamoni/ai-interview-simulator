@@ -1,7 +1,7 @@
 # app/ui/views/interview_database_view.py
 
 from typing import Callable
-from domain.contracts import Question
+from domain.contracts.question import Question
 import gradio as gr
 
 
