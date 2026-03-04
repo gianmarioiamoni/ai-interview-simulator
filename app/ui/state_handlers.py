@@ -3,6 +3,8 @@
 import os
 from datetime import datetime
 
+import gradio as gr
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
@@ -67,7 +69,7 @@ def start_interview(
 
 def submit_answer(
     controller: InterviewController,
-    state: InterviewState,
+    state,
     user_answer: str,
 ):
 
@@ -76,26 +78,54 @@ def submit_answer(
         user_answer,
     )
 
+    # ---------------------------------------------------------
+    # Interview completed
+    # ---------------------------------------------------------
+
     if completed:
 
         return (
             state,
-            None,
-            "",
-            f"### Final Question Feedback\n\n{feedback}",
-            False,
-            True,
+            "",  # question_counter
+            "",  # feedback_output
+            "",  # written_text
+            "",  # coding_text
+            "",  # database_text
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),  # interview_section
+            gr.update(visible=True),  # completion_section
+            f"### Final Feedback\n\n{feedback}",
         )
 
-    question_dto = session_dto.current_question
+    # ---------------------------------------------------------
+    # Next question
+    # ---------------------------------------------------------
+
+    question = session_dto.current_question
+
+    question_text = question.text
+    question_type = question.question_type
+    counter = f"Question {question.index}/{question.total}"
+
+    written_visible = question_type == "written"
+    coding_visible = question_type == "coding"
+    database_visible = question_type == "database"
 
     return (
         state,
-        question_dto,
+        counter,
         f"### Feedback\n\n{feedback}",
-        "",
-        True,
-        False,
+        question_text,
+        question_text,
+        question_text,
+        gr.update(visible=written_visible),
+        gr.update(visible=coding_visible),
+        gr.update(visible=database_visible),
+        gr.update(visible=True),  # interview_section
+        gr.update(visible=False),  # completion_section
+        "",  # final_feedback
     )
 
 
