@@ -30,16 +30,10 @@ def start_interview(
     language: str,
 ):
 
-    # Convert UI values to domain enums
-
     role_type = RoleType[role_name.replace(" ", "_")]
     interview_type = InterviewType[interview_type_name]
 
-    # Temporary question loader (until graph generates questions)
-
     questions = load_sample_questions(interview_type)
-
-    # Create interview state
 
     state = InterviewState.create_initial(
         role_type=role_type,
@@ -50,13 +44,20 @@ def start_interview(
         interview_id="session-1",
     )
 
-    # Start interview via controller
-
     session_dto = controller.start_interview(state)
 
-    # Return state and first question DTO
+    question = session_dto.current_question
 
-    return state, session_dto.current_question
+    question_text = question.text
+    question_type = question.question_type
+    counter = f"Question {question.index}/{question.total}"
+
+    return (
+        state,
+        question_text,
+        counter,
+        question_type,
+    )
 
 
 # =========================================================
