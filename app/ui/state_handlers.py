@@ -30,7 +30,7 @@ def start_interview(
     company: str,
     language: str,
 ):
-    print("================= START INTERVIEW CALLED =====================")
+
     role_type = RoleType[role_name.replace(" ", "_")]
     interview_type = InterviewType[interview_type_name]
 
@@ -48,7 +48,7 @@ def start_interview(
     session_dto = controller.start_interview(state)
 
     question = session_dto.current_question
-    question_type = question.type.value
+    question_type = question.question_type
 
     written_visible = question_type == "written"
     coding_visible = question_type == "coding"
@@ -57,23 +57,24 @@ def start_interview(
     return (
         state,
         f"Question {question.index}/{question.total}",
-        "",  # feedback_output
-        question.prompt,  # written_question_text
-        question.prompt,  # coding_question_text
-        question.prompt,  # database_question_text
+        "",
+        question.prompt,
+        question.prompt,
+        question.prompt,
         gr.update(visible=written_visible),
         gr.update(visible=coding_visible),
         gr.update(visible=database_visible),
-        gr.update(visible=False),  # setup_section
-        gr.update(visible=True),  # interview_section
-        gr.update(visible=False),  # completion_section
-        gr.update(visible=False),  # report_section
+        gr.update(visible=False),
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(visible=False),
     )
 
 
 # =========================================================
 # SUBMIT ANSWER
 # =========================================================
+
 
 def submit_answer(
     controller: InterviewController,
@@ -90,20 +91,20 @@ def submit_answer(
 
         return (
             state,
-            "",  # question counter
+            "",
             f"### Feedback\n\n{feedback}",
-            "",  # written_question_text
-            "",  # coding_question_text
-            "",  # database_question_text
-            gr.update(visible=False),  # written_container
-            gr.update(visible=False),  # coding_container
-            gr.update(visible=False),  # database_container
-            gr.update(visible=False),  # interview_section
-            gr.update(visible=True),   # completion_section
+            "",
+            "",
+            "",
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=True),
         )
 
     question = session_dto.current_question
-    question_type = question.type.value
+    question_type = question.question_type
 
     written_visible = question_type == "written"
     coding_visible = question_type == "coding"
@@ -111,16 +112,16 @@ def submit_answer(
 
     return (
         state,
-        f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
+        f"Question {question.index}/{question.total}",
         f"### Feedback\n\n{feedback}",
-        question.prompt,  # written_question_text
-        question.prompt,  # coding_question_text
-        question.prompt,  # database_question_text
+        question.prompt,
+        question.prompt,
+        question.prompt,
         gr.update(visible=written_visible),
         gr.update(visible=coding_visible),
         gr.update(visible=database_visible),
-        gr.update(visible=True),   # interview_section
-        gr.update(visible=False),  # completion_section
+        gr.update(visible=True),
+        gr.update(visible=False),
     )
 
 
@@ -128,23 +129,22 @@ def submit_answer(
 # VIEW REPORT
 # =========================================================
 
+
 def view_report(
     controller: InterviewController,
     state: InterviewState,
 ):
 
-    # Step 1 → Immediate UI update
     yield (
-        gr.update(visible=False),  # interview_section
-        gr.update(visible=False),  # completion_section
-        gr.update(visible=True),   # report_section
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=True),
         "⏳ Generating final report... please wait.",
     )
 
     report = controller.generate_final_report(state)
     report_text = build_report_markdown(report)
 
-    # Step 2 → Final report
     yield (
         gr.update(visible=False),
         gr.update(visible=False),
@@ -156,6 +156,7 @@ def view_report(
 # =========================================================
 # EXPORT PDF
 # =========================================================
+
 
 def export_pdf(
     controller: InterviewController,
@@ -178,6 +179,7 @@ def export_pdf(
 # EXPORT JSON
 # =========================================================
 
+
 def export_json(
     controller: InterviewController,
     state: InterviewState,
@@ -199,12 +201,13 @@ def export_json(
 # RESET
 # =========================================================
 
+
 def reset_interview():
 
     return (
-        None,  # state
-        gr.update(visible=True),   # setup_section
-        gr.update(visible=False),  # interview_section
-        gr.update(visible=False),  # completion_section
-        gr.update(visible=False),  # report_section
+        None,
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=False),
     )
