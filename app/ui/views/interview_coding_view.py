@@ -2,7 +2,8 @@
 
 from typing import Callable
 import gradio as gr
-from domain.contracts.question import Question
+
+from app.ui.dto.question_dto import QuestionDTO
 
 
 class InterviewCodingView:
@@ -10,7 +11,7 @@ class InterviewCodingView:
 
     def __init__(
         self,
-        question: Question,
+        question: QuestionDTO,
         on_submit: Callable[[str], None],
     ) -> None:
 
@@ -21,14 +22,13 @@ class InterviewCodingView:
 
         gr.Markdown("### Coding Question")
 
-        gr.Markdown(self._question.prompt)
+        gr.Markdown(self._question.text)
 
         code_input = gr.Textbox(
             elem_id="code-editor",
             label="Your Code",
             lines=20,
             max_lines=30,
-            show_label=True,
             interactive=True,
         )
 
@@ -42,5 +42,4 @@ class InterviewCodingView:
 
     def _handle_submit(self, code: str) -> None:
 
-        # Forward answer to controller
         self._on_submit(code)
