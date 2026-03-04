@@ -141,36 +141,45 @@ def build_app():
         # START INTERVIEW
         # =========================================================
 
+        # start_button.click(
+        #     lambda role, interview_type, company, language: start_interview(
+        #         controller,
+        #         role,
+        #         interview_type,
+        #         company,
+        #         language,
+        #     ),
+        #     inputs=[
+        #         role_dropdown,
+        #         interview_type_radio,
+        #         company_input,
+        #         language_dropdown,
+        #     ],
+        #     outputs=[
+        #         state,
+        #         question_counter,
+        #         feedback_output,
+        #         written_question_text,
+        #         coding_question_text,
+        #         database_question_text,
+        #         written_container,
+        #         coding_container,
+        #         database_container,
+        #         setup_section,
+        #         interview_section,
+        #         completion_section,
+        #         report_section,
+        #     ],
+        # )
+        def test_click():
+            print("BUTTON CLICKED")
+            return gr.update(visible=True)
+
         start_button.click(
-            lambda role, interview_type, company, language: start_interview(
-                controller,
-                role,
-                interview_type,
-                company,
-                language,
-            ),
-            inputs=[
-                role_dropdown,
-                interview_type_radio,
-                company_input,
-                language_dropdown,
-            ],
-            outputs=[
-                state,
-                question_counter,
-                feedback_output,
-                written_question_text,
-                coding_question_text,
-                database_question_text,
-                written_container,
-                coding_container,
-                database_container,
-                setup_section,
-                interview_section,
-                completion_section,
-                report_section,
-            ],
-        )
+            test_click,
+            inputs=[],
+            outputs=[setup_section],
+)
 
         # =========================================================
         # SUBMIT HANDLERS
