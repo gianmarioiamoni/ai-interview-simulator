@@ -5,7 +5,7 @@ import gradio as gr
 
 class InterviewCodingView:
 
-    # Responsible only for building coding question UI
+    # Build UI components for coding questions
 
     def build(self):
 
