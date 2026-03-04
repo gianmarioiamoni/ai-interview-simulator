@@ -1,7 +1,6 @@
 # app/ui/state_handlers.py
 
 import os
-import gradio as gr
 from datetime import datetime
 
 from domain.contracts.interview_state import InterviewState
@@ -31,10 +30,16 @@ def start_interview(
     language: str,
 ):
 
+    # Convert UI values to domain enums
+
     role_type = RoleType[role_name.replace(" ", "_")]
     interview_type = InterviewType[interview_type_name]
 
+    # Temporary question loader (until graph generates questions)
+
     questions = load_sample_questions(interview_type)
+
+    # Create interview state
 
     state = InterviewState.create_initial(
         role_type=role_type,
@@ -45,18 +50,13 @@ def start_interview(
         interview_id="session-1",
     )
 
+    # Start interview via controller
+
     session_dto = controller.start_interview(state)
 
-    question = session_dto.current_question
+    # Return state and first question DTO
 
-    return (
-        state,
-        question.text,
-        f"Question {question.index}/{question.total}",
-        question.question_type,
-        gr.update(visible=False),  # setup_section
-        gr.update(visible=True),  # interview_section
-    )
+    return state, session_dto.current_question
 
 
 # =========================================================
@@ -79,24 +79,22 @@ def submit_answer(
 
         return (
             state,
+            None,
             "",
-            "",
-            "",
-            f"### Feedback\n\n{feedback}",
-            gr.update(visible=False),  # interview_section
-            gr.update(visible=True),  # completion_section
+            f"### Final Question Feedback\n\n{feedback}",
+            False,
+            True,
         )
 
-    question = session_dto.current_question
+    question_dto = session_dto.current_question
 
     return (
         state,
-        question.text,
-        f"Question {question.index}/{question.total}",
-        question.question_type,
+        question_dto,
         f"### Feedback\n\n{feedback}",
-        gr.update(visible=True),
-        gr.update(visible=False),
+        "",
+        True,
+        False,
     )
 
 
@@ -105,13 +103,17 @@ def submit_answer(
 # =========================================================
 
 
-def export_pdf(controller: InterviewController, state: InterviewState) -> str:
+def export_pdf(
+    controller: InterviewController,
+    state: InterviewState,
+) -> str:
 
     report = controller.generate_final_report(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
 
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
     file_path = f"/mnt/data/{state.interview_id}_{timestamp}.pdf"
 
     export_service.export_pdf(report, file_path)
@@ -124,13 +126,17 @@ def export_pdf(controller: InterviewController, state: InterviewState) -> str:
 # =========================================================
 
 
-def export_json(controller: InterviewController, state: InterviewState) -> str:
+def export_json(
+    controller: InterviewController,
+    state: InterviewState,
+) -> str:
 
     report = controller.generate_final_report(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
 
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
     file_path = f"/mnt/data/{state.interview_id}_{timestamp}.json"
 
     export_service.export_json(report, file_path)
@@ -147,8 +153,8 @@ def reset_interview():
 
     return (
         None,
-        gr.update(visible=True),  # setup_section
-        gr.update(visible=False),  # interview_section
-        gr.update(visible=False),  # completion_section
-        gr.update(visible=False),  # report_section
+        True,
+        False,
+        False,
+        False,
     )
