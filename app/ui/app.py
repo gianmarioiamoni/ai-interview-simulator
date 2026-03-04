@@ -117,14 +117,17 @@ def build_app():
         # =========================================================
 
         def validate_inputs(role, interview_type, company, language):
-            valid = all([
-                role is not None,
-                interview_type is not None,
-                company is not None and company.strip() != "",
-                language is not None,
-            ])
+
+            valid = (
+                role is not None
+                and interview_type is not None
+                and company is not None
+                and company.strip() != ""
+                and language is not None
+            )
 
             return gr.Button.update(interactive=valid)
+
 
         for component in [
             role_dropdown,
@@ -132,7 +135,7 @@ def build_app():
             company_input,
             language_dropdown,
         ]:
-            component.change(
+            component.input(
                 validate_inputs,
                 inputs=[
                     role_dropdown,
@@ -147,44 +150,36 @@ def build_app():
         # START INTERVIEW
         # =========================================================
 
-        # start_button.click(
-        #     lambda role, interview_type, company, language: start_interview(
-        #         controller,
-        #         role,
-        #         interview_type,
-        #         company,
-        #         language,
-        #     ),
-        #     inputs=[
-        #         role_dropdown,
-        #         interview_type_radio,
-        #         company_input,
-        #         language_dropdown,
-        #     ],
-        #     outputs=[
-        #         state,
-        #         question_counter,
-        #         feedback_output,
-        #         written_question_text,
-        #         coding_question_text,
-        #         database_question_text,
-        #         written_container,
-        #         coding_container,
-        #         database_container,
-        #         setup_section,
-        #         interview_section,
-        #         completion_section,
-        #         report_section,
-        #     ],
-        # )
-        def test_click():
-            print("BUTTON CLICKED")
-
         start_button.click(
-            test_click,
-            inputs=[],
-            outputs=[],
-)
+            lambda role, interview_type, company, language: start_interview(
+                controller,
+                role,
+                interview_type,
+                company,
+                language,
+            ),
+            inputs=[
+                role_dropdown,
+                interview_type_radio,
+                company_input,
+                language_dropdown,
+            ],
+            outputs=[
+                state,
+                question_counter,
+                feedback_output,
+                written_question_text,
+                coding_question_text,
+                database_question_text,
+                written_container,
+                coding_container,
+                database_container,
+                setup_section,
+                interview_section,
+                completion_section,
+                report_section,
+            ],
+        )
 
         # =========================================================
         # SUBMIT HANDLERS

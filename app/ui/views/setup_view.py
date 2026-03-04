@@ -7,15 +7,14 @@ from domain.contracts.interview_type import InterviewType
 
 
 class SetupView:
-    """
-    Responsible ONLY for rendering setup UI.
-    No controller logic here.
-    """
+    # Responsible ONLY for rendering setup UI.
+    # No controller logic here.
 
     def render(self):
 
         gr.Markdown("## Configure Your Interview")
 
+        # Role dropdown
         role_dropdown = gr.Dropdown(
             choices=[(r.name.replace("_", " "), r.name) for r in RoleType],
             label="Role",
