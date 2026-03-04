@@ -1,45 +1,24 @@
 # app/ui/views/interview_coding_view.py
 
-from typing import Callable
 import gradio as gr
-
-from app.ui.dto.question_dto import QuestionDTO
 
 
 class InterviewCodingView:
-    # View responsible only for rendering coding questions
 
-    def __init__(
-        self,
-        question: QuestionDTO,
-        on_submit: Callable[[str], None],
-    ) -> None:
+    # Responsible only for building coding question UI
 
-        self._question = question
-        self._on_submit = on_submit
+    def build(self):
 
-    def render(self) -> None:
+        with gr.Column(visible=False) as container:
 
-        gr.Markdown("### Coding Question")
+            question_text = gr.Markdown("")
 
-        gr.Markdown(self._question.text)
+            code_box = gr.Textbox(
+                label="Your Code",
+                elem_id="code-editor",
+                lines=20,
+            )
 
-        code_input = gr.Textbox(
-            elem_id="code-editor",
-            label="Your Code",
-            lines=20,
-            max_lines=30,
-            interactive=True,
-        )
+            submit_button = gr.Button("Submit Code")
 
-        submit_button = gr.Button("Submit Code")
-
-        submit_button.click(
-            fn=self._handle_submit,
-            inputs=[code_input],
-            outputs=[],
-        )
-
-    def _handle_submit(self, code: str) -> None:
-
-        self._on_submit(code)
+        return container, question_text, code_box, submit_button
