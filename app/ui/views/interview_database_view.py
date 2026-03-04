@@ -2,7 +2,8 @@
 
 from typing import Callable
 import gradio as gr
-from domain.contracts.question import Question
+
+from app.ui.dto.question_dto import QuestionDTO
 
 
 class InterviewDatabaseView:
@@ -10,7 +11,7 @@ class InterviewDatabaseView:
 
     def __init__(
         self,
-        question: Question,
+        question: QuestionDTO,
         on_submit: Callable[[str], None],
     ) -> None:
 
@@ -21,7 +22,7 @@ class InterviewDatabaseView:
 
         gr.Markdown("### Database Question")
 
-        gr.Markdown(self._question.prompt)
+        gr.Markdown(self._question.text)
 
         sql_box = gr.Textbox(
             elem_id="code-editor",
