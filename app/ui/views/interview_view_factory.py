@@ -1,6 +1,6 @@
 # app/ui/views/interview_view_factory.py
 
-from domain.contracts import Question, QuestionType
+from domain.contracts.question import Question, QuestionType
 from app.ui.views.interview_written_view import InterviewWrittenView
 from app.ui.views.interview_coding_view import InterviewCodingView
 from app.ui.views.interview_database_view import InterviewDatabaseView
