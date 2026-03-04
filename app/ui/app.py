@@ -5,7 +5,10 @@ import gradio as gr
 from app.graph.builder import build_graph
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from app.ui.controllers.interview_controller import InterviewController
+
 from app.ui.views.setup_view import SetupView
+from app.ui.views.interview_view_factory import InterviewViewFactory
+
 from app.ui.state_handlers import (
     start_interview,
     submit_answer,
@@ -13,16 +16,8 @@ from app.ui.state_handlers import (
     export_pdf,
     export_json,
 )
+
 from app.ui.views.report_view import build_report_markdown
-
-
-def switch_question_view(question_type):
-
-    return (
-        gr.update(visible=question_type == "written"),
-        gr.update(visible=question_type == "coding"),
-        gr.update(visible=question_type == "database"),
-    )
 
 
 def build_app():
@@ -42,7 +37,6 @@ def build_app():
         gr.Markdown("# AI Interview Simulator")
 
         state = gr.State()
-        question_type = gr.State()
 
         # =========================================================
         # SETUP SECTION
@@ -66,41 +60,11 @@ def build_app():
 
         with gr.Column(visible=False) as interview_section:
 
-            question_text = gr.Markdown("")
             question_counter = gr.Markdown("")
             feedback_output = gr.Markdown("")
 
-            # WRITTEN
-
-            with gr.Column(visible=False) as written_container:
-
-                written_answer_box = gr.Textbox(label="Your Answer", lines=5)
-
-                written_submit_button = gr.Button("Submit Answer")
-
-            # CODING
-
-            with gr.Column(visible=False) as coding_container:
-
-                coding_answer_box = gr.Textbox(
-                    label="Your Code",
-                    lines=20,
-                    elem_id="code-editor",
-                )
-
-                coding_submit_button = gr.Button("Submit Code")
-
-            # DATABASE
-
-            with gr.Column(visible=False) as database_container:
-
-                database_answer_box = gr.Textbox(
-                    label="Your SQL",
-                    lines=10,
-                    elem_id="code-editor",
-                )
-
-                database_submit_button = gr.Button("Submit SQL")
+            # Container where views will render
+            dynamic_question_container = gr.Column()
 
         # =========================================================
         # COMPLETION SECTION
@@ -109,6 +73,8 @@ def build_app():
         with gr.Column(visible=False) as completion_section:
 
             gr.Markdown("## Interview Completed")
+
+            final_feedback = gr.Markdown("")
 
             view_report_button = gr.Button("View Final Report")
 
@@ -129,50 +95,46 @@ def build_app():
             new_interview_button = gr.Button("Start New Interview")
 
         # =========================================================
-        # INPUT VALIDATION
-        # =========================================================
-
-        def validate_inputs(role, interview_type, company, language):
-
-            valid = (
-                role is not None
-                and interview_type is not None
-                and company is not None
-                and company.strip() != ""
-                and language is not None
-            )
-
-            return gr.update(interactive=valid)
-
-        for component in [
-            role_dropdown,
-            interview_type_radio,
-            company_input,
-            language_dropdown,
-        ]:
-            component.input(
-                validate_inputs,
-                inputs=[
-                    role_dropdown,
-                    interview_type_radio,
-                    company_input,
-                    language_dropdown,
-                ],
-                outputs=start_button,
-            )
-
-        # =========================================================
         # START INTERVIEW
         # =========================================================
 
-        start_button.click(
-            lambda role, interview_type, company, language: start_interview(
+        def start_handler(role, interview_type, company, language):
+
+            state_value, question_dto = start_interview(
                 controller,
                 role,
                 interview_type,
                 company,
                 language,
-            ),
+            )
+
+            question_counter.value = (
+                f"Question {question_dto.index}/{question_dto.total}"
+            )
+
+            with dynamic_question_container:
+
+                dynamic_question_container.clear()
+
+                view = InterviewViewFactory.create(
+                    question=question_dto,
+                    on_submit=lambda answer: submit_answer(
+                        controller,
+                        state_value,
+                        answer,
+                    ),
+                )
+
+                view.render()
+
+            return (
+                state_value,
+                gr.update(visible=False),
+                gr.update(visible=True),
+            )
+
+        start_button.click(
+            start_handler,
             inputs=[
                 role_dropdown,
                 interview_type_radio,
@@ -181,58 +143,9 @@ def build_app():
             ],
             outputs=[
                 state,
-                question_text,
-                question_counter,
-                question_type,
                 setup_section,
                 interview_section,
             ],
-        )
-
-        question_type.change(
-            switch_question_view,
-            inputs=[question_type],
-            outputs=[
-                written_container,
-                coding_container,
-                database_container,
-            ],
-        )
-
-        # =========================================================
-        # SUBMIT ANSWERS
-        # =========================================================
-
-        def submit_handler(state_value, answer):
-
-            return submit_answer(controller, state_value, answer)
-
-        outputs = [
-            state,
-            question_text,
-            question_counter,
-            question_type,
-            feedback_output,
-            interview_section,
-            completion_section,
-        ]
-
-        written_submit_button.click(
-            submit_handler,
-            inputs=[state, written_answer_box],
-            outputs=outputs,
-        )
-
-        coding_submit_button.click(
-            submit_handler,
-            inputs=[state, coding_answer_box],
-            outputs=outputs,
-        )
-
-        database_submit_button.click(
-            submit_handler,
-            inputs=[state, database_answer_box],
-            outputs=outputs,
         )
 
         # =========================================================
@@ -278,14 +191,12 @@ def build_app():
             lambda s: (export_pdf(controller, s), gr.update(visible=True)),
             inputs=[state],
             outputs=[pdf_file, pdf_file],
-            show_progress=True,
         )
 
         json_button.click(
             lambda s: (export_json(controller, s), gr.update(visible=True)),
             inputs=[state],
             outputs=[json_file, json_file],
-            show_progress=True,
         )
 
         # =========================================================
@@ -307,5 +218,6 @@ def build_app():
 
 
 if __name__ == "__main__":
+
     app = build_app()
     app.launch()
