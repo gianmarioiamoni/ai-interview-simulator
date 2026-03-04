@@ -1,9 +1,9 @@
-# app/ui/views/interview_view.py
+# app/ui/views/interview_written_view.py
 
 import gradio as gr
 
 
-class InterviewView:
+class InterviewWrittenView:
 
     def render(self):
 

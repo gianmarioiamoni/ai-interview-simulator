@@ -6,6 +6,7 @@ from app.graph.builder import build_graph
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from app.ui.controllers.interview_controller import InterviewController
 from app.ui.views.setup_view import SetupView
+from app.ui.views.interview_view_factory import InterviewViewFactory
 from app.ui.state_handlers import (
     start_interview,
     submit_answer,
@@ -22,7 +23,13 @@ def build_app():
     mapper = InterviewStateMapper()
     controller = InterviewController(graph, mapper)
 
-    with gr.Blocks() as demo:
+    with gr.Blocks(
+        css="""
+        #code-editor textarea {
+            font-family: monospace;
+        }
+        """
+    ) as demo:
 
         gr.Markdown("# AI Interview Simulator")
 
@@ -51,10 +58,11 @@ def build_app():
         with gr.Column(visible=False) as interview_section:
 
             question_counter = gr.Markdown("")
-            question_text = gr.Markdown("")
-            answer_box = gr.Textbox(label="Your Answer", lines=5)
-            submit_button = gr.Button("Submit Answer")
             feedback_output = gr.Markdown("")
+
+            # Dynamic container where the specific view will render
+            with gr.Column() as dynamic_question_container:
+                pass
 
         # =========================================================
         # COMPLETION SECTION
@@ -107,7 +115,30 @@ def build_app():
             )
 
         # =========================================================
-        # START INTERVIEW (NOW SAFE)
+        # RENDER QUESTION (FACTORY DRIVEN)
+        # =========================================================
+
+        def render_question(session_dto):
+
+            question = session_dto.current_question
+
+            with dynamic_question_container:
+                gr.Markdown(f"### Question {session_dto.current_index + 1}")
+                gr.Markdown(question.prompt)
+
+                view = InterviewViewFactory.create(
+                    question=question,
+                    on_submit=lambda answer: submit_answer(
+                        controller,
+                        session_dto.state,
+                        answer,
+                    ),
+                )
+
+                view.render()
+
+        # =========================================================
+        # START INTERVIEW
         # =========================================================
 
         start_button.click(
@@ -126,32 +157,12 @@ def build_app():
             ],
             outputs=[
                 state,
-                question_text,
                 question_counter,
                 feedback_output,
                 setup_section,
                 interview_section,
                 completion_section,
                 report_section,
-            ],
-        )
-
-        # =========================================================
-        # SUBMIT ANSWER
-        # =========================================================
-
-        submit_button.click(
-            lambda s, a: submit_answer(controller, s, a),
-            inputs=[state, answer_box],
-            outputs=[
-                state,
-                question_text,
-                question_counter,
-                answer_box,
-                feedback_output,
-                interview_section,
-                completion_section,
-                submit_button,
             ],
         )
 
