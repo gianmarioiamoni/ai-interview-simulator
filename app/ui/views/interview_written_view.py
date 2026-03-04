@@ -1,42 +1,23 @@
 # app/ui/views/interview_written_view.py
 
-from typing import Callable
 import gradio as gr
-
-from app.ui.dto.question_dto import QuestionDTO
 
 
 class InterviewWrittenView:
-    # View responsible for rendering written questions
 
-    def __init__(
-        self,
-        question: QuestionDTO,
-        on_submit: Callable[[str], None],
-    ) -> None:
+    # Responsible only for building written question UI
 
-        self._question = question
-        self._on_submit = on_submit
+    def build(self):
 
-    def render(self) -> None:
+        with gr.Column(visible=False) as container:
 
-        gr.Markdown("### Written Question")
+            question_text = gr.Markdown("")
 
-        gr.Markdown(self._question.text)
+            answer_box = gr.Textbox(
+                label="Your Answer",
+                lines=5,
+            )
 
-        answer_box = gr.Textbox(
-            label="Your Answer",
-            lines=5,
-        )
+            submit_button = gr.Button("Submit Answer")
 
-        submit_button = gr.Button("Submit Answer")
-
-        submit_button.click(
-            fn=self._handle_submit,
-            inputs=[answer_box],
-            outputs=[],
-        )
-
-    def _handle_submit(self, answer: str) -> None:
-
-        self._on_submit(answer)
+        return container, question_text, answer_box, submit_button
