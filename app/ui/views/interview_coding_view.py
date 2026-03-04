@@ -13,13 +13,14 @@ class InterviewCodingView:
         question: Question,
         on_submit: Callable[[str], None],
     ) -> None:
+
         self._question = question
         self._on_submit = on_submit
 
     def render(self) -> None:
-        # Render coding question UI
 
-        gr.Markdown(f"### Coding Question")
+        gr.Markdown("### Coding Question")
+
         gr.Markdown(self._question.prompt)
 
         code_input = gr.Textbox(
@@ -29,10 +30,9 @@ class InterviewCodingView:
             max_lines=30,
             show_label=True,
             interactive=True,
-            elem_classes=["monospace"],
         )
 
-        submit_button = gr.Button("Submit")
+        submit_button = gr.Button("Submit Code")
 
         submit_button.click(
             fn=self._handle_submit,
@@ -41,5 +41,6 @@ class InterviewCodingView:
         )
 
     def _handle_submit(self, code: str) -> None:
+
         # Forward answer to controller
         self._on_submit(code)

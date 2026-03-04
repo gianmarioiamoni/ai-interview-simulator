@@ -81,7 +81,10 @@ class InterviewStateMapper:
 
         improvement_suggestions = self._aggregate_weaknesses(state.evaluations)
 
-        
+        total_tokens_used = sum(
+            ev.tokens_used for ev in state.evaluations if hasattr(ev, "tokens_used")
+        )
+
         return FinalReportDTO(
             overall_score=state.final_evaluation.overall_score,
             hiring_probability=state.final_evaluation.hiring_probability,
@@ -94,7 +97,7 @@ class InterviewStateMapper:
             dimension_scores=dimension_scores,
             question_assessments=question_assessments,
             improvement_suggestions=improvement_suggestions,
-            total_tokens_used=0,
+            total_tokens_used=total_tokens_used,
             confidence=state.final_evaluation.confidence,
         )
 
