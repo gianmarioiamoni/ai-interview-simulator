@@ -30,7 +30,7 @@ def start_interview(
     company: str,
     language: str,
 ):
-
+    print("================= START INTERVIEW CALLED =====================")
     role_type = RoleType[role_name.replace(" ", "_")]
     interview_type = InterviewType[interview_type_name]
 
