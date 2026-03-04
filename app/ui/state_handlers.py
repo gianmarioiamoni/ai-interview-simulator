@@ -22,6 +22,7 @@ export_service = ReportExportService()
 # START INTERVIEW
 # =========================================================
 
+
 def start_interview(
     controller: InterviewController,
     role_name: str,
@@ -47,14 +48,13 @@ def start_interview(
     session_dto = controller.start_interview(state)
 
     return (
-        state,
-        session_dto.current_question.text,
+        state,  # gr.State
         f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
-        "",
-        gr.update(visible=False),
-        gr.update(visible=True),
-        gr.update(visible=False),
-        gr.update(visible=False),
+        "",  # feedback
+        gr.update(visible=False),  # setup_section
+        gr.update(visible=True),  # interview_section
+        gr.update(visible=False),  # completion_section
+        gr.update(visible=False),  # report_section
     )
 
 
@@ -62,31 +62,34 @@ def start_interview(
 # SUBMIT ANSWER
 # =========================================================
 
-def submit_answer(controller, state, user_answer):
 
-    session_dto, feedback, completed = controller.submit_answer(state, user_answer)
+def submit_answer(
+    controller: InterviewController,
+    state: InterviewState,
+    user_answer: str,
+):
+
+    session_dto, feedback, completed = controller.submit_answer(
+        state,
+        user_answer,
+    )
 
     if completed:
+
         return (
             state,
-            "",
-            "",
-            "",
+            "",  # question counter cleared
             f"### Feedback\n\n{feedback}",
-            gr.update(visible=True),
-            gr.update(visible=True),
-            gr.update(interactive=False),
+            gr.update(visible=False),  # interview_section
+            gr.update(visible=True),  # completion_section
         )
 
     return (
         state,
-        session_dto.current_question.text,
         f"Question {session_dto.current_question.index}/{session_dto.current_question.total}",
-        "",
         f"### Feedback\n\n{feedback}",
-        gr.update(visible=True),
-        gr.update(visible=False),
-        gr.update(interactive=True),
+        gr.update(visible=True),  # interview_section
+        gr.update(visible=False),  # completion_section
     )
 
 
@@ -94,24 +97,24 @@ def submit_answer(controller, state, user_answer):
 # VIEW REPORT
 # =========================================================
 
+
 def view_report(
     controller: InterviewController,
     state: InterviewState,
 ):
-    print("VIEW REPORT CALLED")
-    print("STATE:", state)
-    # Step 1 → Show loading immediately
+
+    # Step 1 → Immediate UI update
     yield (
-        gr.update(visible=False),  # interview
-        gr.update(visible=False),  # completion
-        gr.update(visible=True),   # report section
+        gr.update(visible=False),  # interview_section
+        gr.update(visible=False),  # completion_section
+        gr.update(visible=True),  # report_section
         "⏳ Generating final report... please wait.",
     )
 
-    # Step 2 → Generate report
     report = controller.generate_final_report(state)
     report_text = build_report_markdown(report)
 
+    # Step 2 → Final report
     yield (
         gr.update(visible=False),
         gr.update(visible=False),
@@ -125,9 +128,10 @@ def view_report(
 # =========================================================
 
 
-def export_pdf(controller: InterviewController, state: InterviewState) -> str:
-
-    print("EXPORT PDF CALLED")
+def export_pdf(
+    controller: InterviewController,
+    state: InterviewState,
+) -> str:
 
     report = controller.generate_final_report(state)
 
@@ -145,9 +149,11 @@ def export_pdf(controller: InterviewController, state: InterviewState) -> str:
 # EXPORT JSON
 # =========================================================
 
-def export_json(controller: InterviewController, state: InterviewState) -> str:
 
-    print("EXPORT JSON CALLED")
+def export_json(
+    controller: InterviewController,
+    state: InterviewState,
+) -> str:
 
     report = controller.generate_final_report(state)
 
@@ -165,12 +171,13 @@ def export_json(controller: InterviewController, state: InterviewState) -> str:
 # RESET
 # =========================================================
 
+
 def reset_interview():
 
     return (
-        None,
-        gr.update(visible=True),
-        gr.update(visible=False),
-        gr.update(visible=False),
-        gr.update(visible=False),
+        None,  # state
+        gr.update(visible=True),   # setup_section
+        gr.update(visible=False),  # interview_section
+        gr.update(visible=False),  # completion_section
+        gr.update(visible=False),  # report_section
     )
