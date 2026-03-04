@@ -57,17 +57,17 @@ def start_interview(
     return (
         state,
         f"Question {question.index}/{question.total}",
-        "",
-        question.prompt,
-        question.prompt,
-        question.prompt,
+        "",  # feedback_output
+        question.text,
+        question.text,
+        question.text,
         gr.update(visible=written_visible),
         gr.update(visible=coding_visible),
         gr.update(visible=database_visible),
-        gr.update(visible=False),
-        gr.update(visible=True),
-        gr.update(visible=False),
-        gr.update(visible=False),
+        gr.update(visible=False),  # setup_section
+        gr.update(visible=True),  # interview_section
+        gr.update(visible=False),  # completion_section
+        gr.update(visible=False),  # report_section
     )
 
 
@@ -91,16 +91,16 @@ def submit_answer(
 
         return (
             state,
-            "",
+            "",  # question_counter
             f"### Feedback\n\n{feedback}",
             "",
             "",
             "",
+            gr.update(visible=False),  # written_container
             gr.update(visible=False),
             gr.update(visible=False),
-            gr.update(visible=False),
-            gr.update(visible=False),
-            gr.update(visible=True),
+            gr.update(visible=False),  # interview_section
+            gr.update(visible=True),  # completion_section
         )
 
     question = session_dto.current_question
@@ -114,14 +114,14 @@ def submit_answer(
         state,
         f"Question {question.index}/{question.total}",
         f"### Feedback\n\n{feedback}",
-        question.prompt,
-        question.prompt,
-        question.prompt,
+        question.text,
+        question.text,
+        question.text,
         gr.update(visible=written_visible),
         gr.update(visible=coding_visible),
         gr.update(visible=database_visible),
-        gr.update(visible=True),
-        gr.update(visible=False),
+        gr.update(visible=True),  # interview_section
+        gr.update(visible=False),  # completion_section
     )
 
 
