@@ -126,7 +126,7 @@ def build_app():
                 and language is not None
             )
 
-            return gr.Button.update(interactive=valid)
+            return gr.update(interactive=valid)
 
 
         for component in [
