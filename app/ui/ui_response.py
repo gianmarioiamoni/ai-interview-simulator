@@ -22,6 +22,7 @@ class UIResponse:
         coding_visible: bool = False,
         database_visible: bool = False,
         ui_state: UIState = UIState.SETUP,
+        final_feedback: str = "",
     ):
         self.state = state
         self.question_counter = question_counter
@@ -33,7 +34,8 @@ class UIResponse:
         self.coding_visible = coding_visible
         self.database_visible = database_visible
         self.ui_state = ui_state
-
+        self.final_feedback = final_feedback
+    
     def to_gradio_outputs(self) -> List[Any]:
         # Build the exact output list expected by app.py
 
@@ -55,4 +57,5 @@ class UIResponse:
             interview_update,
             completion_update,
             report_update,
+            self.final_feedback,
         ]

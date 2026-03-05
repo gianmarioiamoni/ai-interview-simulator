@@ -99,6 +99,7 @@ def submit_answer(
             coding_visible=False,
             database_visible=False,
             ui_state=UIState.COMPLETION,
+            final_feedback=f"### Feedback\n\n{feedback}",
         )
 
     # ---------------------------------------------------------

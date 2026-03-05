@@ -179,6 +179,7 @@ def build_app():
             interview_section,
             completion_section,
             report_section,
+            final_feedback,
         ]
 
         start_button.click(
