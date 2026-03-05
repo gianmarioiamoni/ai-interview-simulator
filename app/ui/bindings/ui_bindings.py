@@ -1,5 +1,7 @@
 # app/ui/bindings/ui_bindings.py
 
+import gradio as gr
+
 from app.ui.handlers.start_handler import start_handler
 from app.ui.handlers.submit_handler import submit_handler
 from app.ui.handlers.report_handler import view_report_handler
@@ -8,78 +10,104 @@ from app.ui.state_handlers import export_pdf, export_json
 
 
 def bind_events(controller, components):
-    # Bind events to handlers
+    # Bind UI events to handlers
 
-    state = components["state"]
+    c = components
 
-    start_button = components["start_button"]
+    state = c.state
 
-    role_dropdown = components["role_dropdown"]
-    interview_type_radio = components["interview_type_radio"]
-    company_input = components["company_input"]
-    language_dropdown = components["language_dropdown"]
+    role_dropdown = c.role_dropdown
+    interview_type_radio = c.interview_type_radio
+    company_input = c.company_input
+    language_dropdown = c.language_dropdown
+    start_button = c.start_button
 
     outputs = [
-        components["state"],
-        components["question_counter"],
-        components["feedback_output"],
-        components["written_text"],
-        components["coding_text"],
-        components["database_text"],
-        components["written_container"],
-        components["coding_container"],
-        components["database_container"],
-        components["setup_section"],
-        components["interview_section"],
-        components["completion_section"],
-        components["report_section"],
-        components["final_feedback"],
+        c.state,
+        c.question_counter,
+        c.feedback_output,
+        c.written_text,
+        c.coding_text,
+        c.database_text,
+        c.written_container,
+        c.coding_container,
+        c.database_container,
+        c.setup_section,
+        c.interview_section,
+        c.completion_section,
+        c.report_section,
+        c.final_feedback,
     ]
+
+    # =========================================================
+    # START INTERVIEW
+    # =========================================================
 
     start_button.click(
         lambda r, i, c, l: start_handler(controller, r, i, c, l),
-        inputs=[role_dropdown, interview_type_radio, company_input, language_dropdown],
+        inputs=[
+            role_dropdown,
+            interview_type_radio,
+            company_input,
+            language_dropdown,
+        ],
         outputs=outputs,
     )
 
-    components["written_submit"].click(
+    # =========================================================
+    # SUBMIT ANSWERS
+    # =========================================================
+
+    c.written_submit.click(
         lambda s, a: submit_handler(controller, s, a),
-        inputs=[state, components["written_box"]],
+        inputs=[state, c.written_box],
         outputs=outputs,
     )
 
-    components["coding_submit"].click(
+    c.coding_submit.click(
         lambda s, a: submit_handler(controller, s, a),
-        inputs=[state, components["coding_box"]],
+        inputs=[state, c.coding_box],
         outputs=outputs,
     )
 
-    components["database_submit"].click(
+    c.database_submit.click(
         lambda s, a: submit_handler(controller, s, a),
-        inputs=[state, components["database_box"]],
+        inputs=[state, c.database_box],
         outputs=outputs,
     )
 
-    components.view_report_button.click(
+    # =========================================================
+    # VIEW REPORT
+    # =========================================================
+
+    c.view_report_button.click(
         lambda s: view_report_handler(controller, s),
         inputs=[state],
         outputs=[
-            components.setup_section,
-            components.interview_section,
-            components.completion_section,
-            components.report_section,
-            components.report_output,
+            c.setup_section,
+            c.interview_section,
+            c.completion_section,
+            c.report_section,
+            c.report_output,
         ],
     )
 
-    components.pdf_button.click(
+    # =========================================================
+    # EXPORT PDF
+    # =========================================================
+
+    c.pdf_button.click(
         lambda s: (export_pdf(controller, s), gr.update(visible=True)),
         inputs=[state],
-        outputs=[components.pdf_file, components.pdf_file],
+        outputs=[c.pdf_file, c.pdf_file],
     )
 
-    components.json_button.click(
+    # =========================================================
+    # EXPORT JSON
+    # =========================================================
+
+    c.json_button.click(
         lambda s: (export_json(controller, s), gr.update(visible=True)),
         inputs=[state],
-        outputs=[components.json_file, components.json_file],
+        outputs=[c.json_file, c.json_file],
     )
