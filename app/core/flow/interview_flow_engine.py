@@ -82,17 +82,17 @@ class InterviewFlowEngine:
         session_dto,
     ):
 
-        question = session_dto.current_question
+        question_dto = session_dto.current_question
 
         # ---------------------------------------------------------
         # Retrieve domain question from state
         # ---------------------------------------------------------
         question = next(
-            (q for q in state.questions if q.id == question.id),
+            (q for q in state.questions if q.id == question_dto.question_id),
             None,
         )
         if not question:
-            raise RuntimeError(f"Question not found: {question.id}")
+            raise RuntimeError(f"Question not found: {question_dto.question_id}")
 
         answer = state.answers[-1].content
 
