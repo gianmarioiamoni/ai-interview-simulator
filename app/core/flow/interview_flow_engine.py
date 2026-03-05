@@ -1,32 +1,37 @@
 # app/core/flow/interview_flow_engine.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.interview_progress import InterviewProgress
 
 from app.ui.controllers.interview_controller import InterviewController
 
+from app.core.flow.interview_flow_state import InterviewFlowState
+
 
 class InterviewFlowEngine:
-    # Orchestrates the interview flow above the graph and controller.
-    # Responsible for high-level interview lifecycle management.
+    # High level orchestration engine managing the interview lifecycle.
+    # Implements an explicit state machine controlling the flow
+    # above the LangGraph execution layer.
 
     def __init__(self, controller: InterviewController):
 
         self._controller = controller
 
-    # ---------------------------------------------------------
-    # Start interview
-    # ---------------------------------------------------------
+    # =========================================================
+    # START INTERVIEW
+    # =========================================================
 
-    def start(self, initial_state: InterviewState):
+    def start(self, state: InterviewState):
 
-        session_dto = self._controller.start_interview(initial_state)
+        session_dto = self._controller.start_interview(state)
 
-        return session_dto
+        return {
+            "flow_state": InterviewFlowState.QUESTION,
+            "session": session_dto,
+        }
 
-    # ---------------------------------------------------------
-    # Handle answer
-    # ---------------------------------------------------------
+    # =========================================================
+    # HANDLE ANSWER
+    # =========================================================
 
     def handle_answer(
         self,
@@ -40,22 +45,22 @@ class InterviewFlowEngine:
         )
 
         if completed:
+
             return {
-                "type": "completion",
+                "flow_state": InterviewFlowState.COMPLETION,
                 "feedback": feedback,
-                "state": state,
+                "session": session_dto,
             }
 
         return {
-            "type": "question",
+            "flow_state": InterviewFlowState.QUESTION,
             "feedback": feedback,
             "session": session_dto,
-            "state": state,
         }
 
-    # ---------------------------------------------------------
-    # Generate report
-    # ---------------------------------------------------------
+    # =========================================================
+    # GENERATE REPORT
+    # =========================================================
 
     def generate_report(self, state: InterviewState):
 

@@ -12,6 +12,7 @@ from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
 
 from app.core.flow.interview_flow_engine import InterviewFlowEngine
+from app.core.flow.interview_flow_state import InterviewFlowState
 
 from services.report_export_service import ReportExportService
 
@@ -45,7 +46,9 @@ def start_interview(
         interview_id="session-1",
     )
 
-    session_dto = flow_engine.start(state)
+    result = flow_engine.start(state)
+
+    session_dto = result["session"]
 
     question = session_dto.current_question
     question_type = question.question_type
@@ -79,11 +82,13 @@ def submit_answer(
         user_answer,
     )
 
+    flow_state = result["flow_state"]
+
     # ---------------------------------------------------------
     # Interview completed
     # ---------------------------------------------------------
 
-    if result["type"] == "completion":
+    if flow_state == InterviewFlowState.COMPLETION:
 
         feedback = result["feedback"]
 
