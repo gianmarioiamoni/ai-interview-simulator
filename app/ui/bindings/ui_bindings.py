@@ -117,8 +117,8 @@ def bind_events(flow_engine: InterviewFlowEngine, components):
     # =========================================================
 
     def report_handler(state_value):
-        # Delegate to streaming handler
         yield from view_report_handler(flow_engine, state_value)
+
 
     c.view_report_button.click(
         report_handler,
