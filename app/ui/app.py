@@ -14,7 +14,6 @@ from app.ui.views.interview_database_view import InterviewDatabaseView
 from app.ui.state_handlers import (
     start_interview,
     submit_answer,
-    reset_interview,
     export_pdf,
     export_json,
 )

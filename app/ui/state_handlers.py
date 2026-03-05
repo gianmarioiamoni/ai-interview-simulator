@@ -173,19 +173,3 @@ def export_json(
     export_service.export_json(report, file_path)
 
     return file_path
-
-
-# =========================================================
-# RESET
-# =========================================================
-
-
-def reset_interview():
-
-    return (
-        None,
-        True,
-        False,
-        False,
-        False,
-    )
