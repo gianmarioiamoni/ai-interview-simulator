@@ -21,12 +21,12 @@ class ExecutionRouter:
         answer: str,
     ) -> ExecutionResult:
 
-        if question.question_type == QuestionType.CODING:
+        if question.type == QuestionType.CODING:
             return self._python_executor.execute(question, answer)
 
-        if question.question_type == QuestionType.DATABASE:
+        if question.type == QuestionType.DATABASE:
             return self._sql_executor.execute(question, answer)
 
         raise ValueError(
-            f"ExecutionRouter cannot execute question type: {question.question_type}"
+            f"ExecutionRouter cannot execute question type: {question.type}"
         )
