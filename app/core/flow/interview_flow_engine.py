@@ -94,6 +94,7 @@ class InterviewFlowEngine:
     ):
 
         question = session_dto.current_question
+
         answer = state.answers[-1].content
 
         result = self._execution_router.execute(
@@ -101,8 +102,21 @@ class InterviewFlowEngine:
             answer,
         )
 
-        state.execution_result.append(result)
-        
+        # Persist execution result in state
+        state.execution_results.append(result)
+
+        if not result["success"]:
+
+            return {
+                "flow_state": InterviewFlowState.QUESTION,
+                "session": session_dto,
+                "execution_error": result["error"],
+            }
+
+        # -----------------------------
+        # Execution success 
+        # -----------------------------
+
         return {
             "flow_state": InterviewFlowState.QUESTION,
             "session": session_dto,

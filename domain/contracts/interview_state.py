@@ -114,4 +114,5 @@ class InterviewState(BaseModel):
             language=language,
             questions=questions,
             progress=InterviewProgress.SETUP,
+            execution_results=[],
         )
