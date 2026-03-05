@@ -71,6 +71,7 @@ def start_interview(
 # SUBMIT ANSWER
 # =========================================================
 
+
 def submit_answer(
     flow_engine: InterviewFlowEngine,
     state: InterviewState,
@@ -104,6 +105,39 @@ def submit_answer(
             database_visible=False,
             ui_state=UIState.COMPLETION,
             final_feedback=f"### Feedback\n\n{feedback}",
+        )
+
+    # ---------------------------------------------------------
+    # Execution state (coding / database)
+    # ---------------------------------------------------------
+
+    if flow_state == InterviewFlowState.EXECUTION:
+
+        session_dto = result["session"]
+
+        execution_result = flow_engine.execute(
+            state,
+            session_dto,
+        )
+
+        session_dto = execution_result["session"]
+
+        question = session_dto.current_question
+        question_type = question.question_type
+
+        counter = f"Question {question.index}/{question.total}"
+
+        return UIResponse(
+            state=state,
+            question_counter=counter,
+            feedback=f"### Feedback\n\n{result['feedback']}",
+            written_text=question.text,
+            coding_text=question.text,
+            database_text=question.text,
+            written_visible=question_type == "written",
+            coding_visible=question_type == "coding",
+            database_visible=question_type == "database",
+            ui_state=UIState.QUESTION,
         )
 
     # ---------------------------------------------------------
