@@ -7,6 +7,8 @@ from app.ui.controllers.interview_controller import InterviewController
 
 from app.core.flow.interview_flow_state import InterviewFlowState
 
+from app.execution.execution_router import ExecutionRouter
+
 
 class InterviewFlowEngine:
     # High level orchestration engine implementing
@@ -16,6 +18,7 @@ class InterviewFlowEngine:
     def __init__(self, controller: InterviewController):
 
         self._controller = controller
+        self._execution_router = ExecutionRouter()
 
     # =========================================================
     # START INTERVIEW
@@ -91,10 +94,15 @@ class InterviewFlowEngine:
     ):
 
         question = session_dto.current_question
+        answer = state.answers[-1].content
 
-        # Execution engines are already used inside controller
-        # so here we only signal the transition
+        result = self._execution_router.execute(
+            question.question_type,
+            answer,
+        )
 
+        state.execution_result.append(result)
+        
         return {
             "flow_state": InterviewFlowState.QUESTION,
             "session": session_dto,
