@@ -118,8 +118,11 @@ def bind_events(controller, components):
     # VIEW REPORT
     # =========================================================
 
+    def report_handler(state_value):
+        yield from view_report_handler(controller, state_value)
+    
     c.view_report_button.click(
-        lambda s: view_report_handler(controller, s),
+        report_handler,
         inputs=[state],
         outputs=[
             c.setup_section,
