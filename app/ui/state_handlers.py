@@ -11,7 +11,8 @@ from domain.contracts.role import RoleType
 
 from app.ui.controllers.interview_controller import InterviewController
 from app.ui.sample_data_loader import load_sample_questions
-from app.ui.views.report_view import build_report_markdown
+from app.ui.ui_state import UIState
+from app.ui.ui_response import UIResponse
 
 from services.report_export_service import ReportExportService
 
@@ -22,6 +23,7 @@ export_service = ReportExportService()
 # =========================================================
 # START INTERVIEW
 # =========================================================
+
 
 def start_interview(
     controller: InterviewController,
@@ -49,15 +51,19 @@ def start_interview(
 
     question = session_dto.current_question
 
-    question_text = question.text
     question_type = question.question_type
-    counter = f"Question {question.index}/{question.total}"
 
-    return (
-        state,
-        question_text,
-        counter,
-        question_type,
+    return UIResponse(
+        state=state,
+        question_counter=f"Question {question.index}/{question.total}",
+        feedback="",
+        written_text=question.text,
+        coding_text=question.text,
+        database_text=question.text,
+        written_visible=question_type == "written",
+        coding_visible=question_type == "coding",
+        database_visible=question_type == "database",
+        ui_state=UIState.QUESTION,
     )
 
 
@@ -82,20 +88,17 @@ def submit_answer(
 
     if completed:
 
-        return (
-            state,
-            "",  # question_counter
-            "",  # feedback_output
-            "",  # written_text
-            "",  # coding_text
-            "",  # database_text
-            gr.update(visible=False),
-            gr.update(visible=False),
-            gr.update(visible=False),
-            gr.update(visible=False),  # setup_section
-            gr.update(visible=False),  # interview_section
-            gr.update(visible=True),   # completion_section
-            gr.update(visible=False),  # report_section
+        return UIResponse(
+            state=state,
+            question_counter="",
+            feedback="",
+            written_text="",
+            coding_text="",
+            database_text="",
+            written_visible=False,
+            coding_visible=False,
+            database_visible=False,
+            ui_state=UIState.COMPLETION,
         )
 
     # ---------------------------------------------------------
@@ -112,20 +115,17 @@ def submit_answer(
     coding_visible = question_type == "coding"
     database_visible = question_type == "database"
 
-    return (
-        state,
-        counter,
-        f"### Feedback\n\n{feedback}",
-        question_text,
-        question_text,
-        question_text,
-        gr.update(visible=written_visible),
-        gr.update(visible=coding_visible),
-        gr.update(visible=database_visible),
-        gr.update(visible=False),  # setup_section
-        gr.update(visible=True),   # interview_section
-        gr.update(visible=False),  # completion_section
-        gr.update(visible=False),  # report_section
+    return UIResponse(
+        state=state,
+        question_counter=counter,
+        feedback=f"### Feedback\n\n{feedback}",
+        written_text=question_text,
+        coding_text=question_text,
+        database_text=question_text,
+        written_visible=written_visible,
+        coding_visible=coding_visible,
+        database_visible=database_visible,
+        ui_state=UIState.QUESTION,
     )
 
 

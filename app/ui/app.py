@@ -26,8 +26,6 @@ from app.ui.ui_state import UIState
 
 def build_app():
 
-    # Build core services
-
     graph = build_graph()
     mapper = InterviewStateMapper()
     controller = InterviewController(graph, mapper)
@@ -43,7 +41,6 @@ def build_app():
         gr.Markdown("# AI Interview Simulator")
 
         state = gr.State()
-        ui_state = gr.State(UIState.SETUP)
 
         # =========================================================
         # SETUP SECTION
@@ -158,12 +155,7 @@ def build_app():
 
         def start_handler(role, interview_type, company, language):
 
-            (
-                state_value,
-                question_text,
-                counter,
-                question_type,
-            ) = start_interview(
+            response = start_interview(
                 controller,
                 role,
                 interview_type,
@@ -171,51 +163,7 @@ def build_app():
                 language,
             )
 
-            written_visible = question_type == "written"
-            coding_visible = question_type == "coding"
-            database_visible = question_type == "database"
-
-            return (
-                state_value,
-                counter,
-                "",
-                question_text,
-                question_text,
-                question_text,
-                gr.update(visible=written_visible),
-                gr.update(visible=coding_visible),
-                gr.update(visible=database_visible),
-                *route_ui(UIState.QUESTION),
-            )
-
-        start_button.click(
-            start_handler,
-            inputs=[
-                role_dropdown,
-                interview_type_radio,
-                company_input,
-                language_dropdown,
-            ],
-            outputs=[
-                state,
-                question_counter,
-                feedback_output,
-                written_text,
-                coding_text,
-                database_text,
-                written_container,
-                coding_container,
-                database_container,
-                setup_section,
-                interview_section,
-                completion_section,
-                report_section,
-            ],
-        )
-
-        # =========================================================
-        # SUBMIT ANSWERS
-        # =========================================================
+            return response.to_gradio_outputs()
 
         outputs = [
             state,
@@ -233,20 +181,45 @@ def build_app():
             report_section,
         ]
 
+        start_button.click(
+            start_handler,
+            inputs=[
+                role_dropdown,
+                interview_type_radio,
+                company_input,
+                language_dropdown,
+            ],
+            outputs=outputs,
+        )
+
+        # =========================================================
+        # SUBMIT ANSWERS
+        # =========================================================
+
+        def submit_handler(state_value, answer):
+
+            response = submit_answer(
+                controller,
+                state_value,
+                answer,
+            )
+
+            return response.to_gradio_outputs()
+
         written_submit.click(
-            lambda s, a: submit_answer(controller, s, a),
+            submit_handler,
             inputs=[state, written_box],
             outputs=outputs,
         )
 
         coding_submit.click(
-            lambda s, a: submit_answer(controller, s, a),
+            submit_handler,
             inputs=[state, coding_box],
             outputs=outputs,
         )
 
         database_submit.click(
-            lambda s, a: submit_answer(controller, s, a),
+            submit_handler,
             inputs=[state, database_box],
             outputs=outputs,
         )
