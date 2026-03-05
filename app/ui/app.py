@@ -21,8 +21,13 @@ from app.ui.state_handlers import (
 
 from app.ui.views.report_view import build_report_markdown
 
+from app.ui.ui_router import route_ui
+from app.ui.ui_state import UIState
+
 
 def build_app():
+
+    # Build core services
 
     graph = build_graph()
     mapper = InterviewStateMapper()
@@ -39,6 +44,7 @@ def build_app():
         gr.Markdown("# AI Interview Simulator")
 
         state = gr.State()
+        ui_state = gr.State(UIState.SETUP)
 
         # =========================================================
         # SETUP SECTION
@@ -64,8 +70,6 @@ def build_app():
 
             question_counter = gr.Markdown("")
             feedback_output = gr.Markdown("")
-
-            # Build question views
 
             (
                 written_container,
@@ -182,8 +186,7 @@ def build_app():
                 gr.update(visible=written_visible),
                 gr.update(visible=coding_visible),
                 gr.update(visible=database_visible),
-                gr.update(visible=False),
-                gr.update(visible=True),
+                *route_ui(UIState.QUESTION),
             )
 
         start_button.click(
@@ -206,6 +209,8 @@ def build_app():
                 database_container,
                 setup_section,
                 interview_section,
+                completion_section,
+                report_section,
             ],
         )
 
@@ -223,9 +228,10 @@ def build_app():
             written_container,
             coding_container,
             database_container,
+            setup_section,
             interview_section,
             completion_section,
-            final_feedback,
+            report_section,
         ]
 
         written_submit.click(
@@ -253,9 +259,7 @@ def build_app():
         def view_report_handler(state_value):
 
             yield (
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=True),
+                *route_ui(UIState.REPORT),
                 "⏳ Generating final report...",
             )
 
@@ -263,9 +267,7 @@ def build_app():
             report_text = build_report_markdown(report)
 
             yield (
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=True),
+                *route_ui(UIState.REPORT),
                 report_text,
             )
 
@@ -273,12 +275,12 @@ def build_app():
             view_report_handler,
             inputs=[state],
             outputs=[
+                setup_section,
                 interview_section,
                 completion_section,
                 report_section,
                 report_output,
             ],
-            show_progress=True,
         )
 
         # =========================================================
@@ -301,8 +303,15 @@ def build_app():
         # RESET
         # =========================================================
 
+        def reset_handler():
+
+            return (
+                None,
+                *route_ui(UIState.SETUP),
+            )
+
         new_interview_button.click(
-            reset_interview,
+            reset_handler,
             outputs=[
                 state,
                 setup_section,
