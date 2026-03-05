@@ -3,16 +3,15 @@
 import os
 from datetime import datetime
 
-import gradio as gr
-
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
 
-from app.ui.controllers.interview_controller import InterviewController
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
+
+from app.core.flow.interview_flow_engine import InterviewFlowEngine
 
 from services.report_export_service import ReportExportService
 
@@ -24,9 +23,8 @@ export_service = ReportExportService()
 # START INTERVIEW
 # =========================================================
 
-
 def start_interview(
-    controller: InterviewController,
+    flow_engine: InterviewFlowEngine,
     role_name: str,
     interview_type_name: str,
     company: str,
@@ -47,10 +45,9 @@ def start_interview(
         interview_id="session-1",
     )
 
-    session_dto = controller.start_interview(state)
+    session_dto = flow_engine.start(state)
 
     question = session_dto.current_question
-
     question_type = question.question_type
 
     return UIResponse(
@@ -72,12 +69,12 @@ def start_interview(
 # =========================================================
 
 def submit_answer(
-    controller: InterviewController,
-    state,
+    flow_engine: InterviewFlowEngine,
+    state: InterviewState,
     user_answer: str,
 ):
 
-    session_dto, feedback, completed = controller.submit_answer(
+    result = flow_engine.handle_answer(
         state,
         user_answer,
     )
@@ -86,7 +83,9 @@ def submit_answer(
     # Interview completed
     # ---------------------------------------------------------
 
-    if completed:
+    if result["type"] == "completion":
+
+        feedback = result["feedback"]
 
         return UIResponse(
             state=state,
@@ -106,26 +105,24 @@ def submit_answer(
     # Next question
     # ---------------------------------------------------------
 
+    session_dto = result["session"]
+    feedback = result["feedback"]
+
     question = session_dto.current_question
-
-    question_text = question.text
     question_type = question.question_type
-    counter = f"Question {question.index}/{question.total}"
 
-    written_visible = question_type == "written"
-    coding_visible = question_type == "coding"
-    database_visible = question_type == "database"
+    counter = f"Question {question.index}/{question.total}"
 
     return UIResponse(
         state=state,
         question_counter=counter,
         feedback=f"### Feedback\n\n{feedback}",
-        written_text=question_text,
-        coding_text=question_text,
-        database_text=question_text,
-        written_visible=written_visible,
-        coding_visible=coding_visible,
-        database_visible=database_visible,
+        written_text=question.text,
+        coding_text=question.text,
+        database_text=question.text,
+        written_visible=question_type == "written",
+        coding_visible=question_type == "coding",
+        database_visible=question_type == "database",
         ui_state=UIState.QUESTION,
     )
 
@@ -135,11 +132,11 @@ def submit_answer(
 # =========================================================
 
 def export_pdf(
-    controller: InterviewController,
+    flow_engine: InterviewFlowEngine,
     state: InterviewState,
 ) -> str:
 
-    report = controller.generate_final_report(state)
+    report = flow_engine.generate_report(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
 
@@ -157,11 +154,11 @@ def export_pdf(
 # =========================================================
 
 def export_json(
-    controller: InterviewController,
+    flow_engine: InterviewFlowEngine,
     state: InterviewState,
 ) -> str:
 
-    report = controller.generate_final_report(state)
+    report = flow_engine.generate_report(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
 
