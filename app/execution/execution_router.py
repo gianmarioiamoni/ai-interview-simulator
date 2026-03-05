@@ -1,6 +1,7 @@
 # app/execution/execution_router.py
 
-from domain.contracts.question import QuestionType
+from domain.contracts.question import Question, QuestionType
+from domain.contracts.execution_result import ExecutionResult
 
 from app.execution.python_executor import PythonExecutor
 from app.execution.sql_executor import SQLExecutor
@@ -11,17 +12,21 @@ class ExecutionRouter:
 
     def __init__(self):
 
-        self.python_executor = PythonExecutor()
-        self.sql_executor = SQLExecutor()
+        self._python_executor = PythonExecutor()
+        self._sql_executor = SQLExecutor()
 
-    def execute(self, question_type, answer):
+    def execute(
+        self,
+        question: Question,
+        answer: str,
+    ) -> ExecutionResult:
 
-        if question_type == QuestionType.CODING:
+        if question.question_type == QuestionType.CODING:
+            return self._python_executor.execute(question, answer)
 
-            return self.python_executor.execute(answer)
+        if question.question_type == QuestionType.DATABASE:
+            return self._sql_executor.execute(question, answer)
 
-        if question_type == QuestionType.DATABASE:
-
-            return self.sql_executor.execute(answer)
-
-        raise ValueError(f"Unsupported execution type: {question_type}")
+        raise ValueError(
+            f"ExecutionRouter cannot execute question type: {question.question_type}"
+        )
