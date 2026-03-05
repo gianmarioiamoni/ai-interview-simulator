@@ -23,7 +23,6 @@ export_service = ReportExportService()
 # START INTERVIEW
 # =========================================================
 
-
 def start_interview(
     controller: InterviewController,
     role_name: str,
@@ -66,7 +65,6 @@ def start_interview(
 # SUBMIT ANSWER
 # =========================================================
 
-
 def submit_answer(
     controller: InterviewController,
     state,
@@ -94,9 +92,10 @@ def submit_answer(
             gr.update(visible=False),
             gr.update(visible=False),
             gr.update(visible=False),
+            gr.update(visible=False),  # setup_section
             gr.update(visible=False),  # interview_section
-            gr.update(visible=True),  # completion_section
-            f"### Final Feedback\n\n{feedback}",
+            gr.update(visible=True),   # completion_section
+            gr.update(visible=False),  # report_section
         )
 
     # ---------------------------------------------------------
@@ -123,16 +122,16 @@ def submit_answer(
         gr.update(visible=written_visible),
         gr.update(visible=coding_visible),
         gr.update(visible=database_visible),
-        gr.update(visible=True),  # interview_section
+        gr.update(visible=False),  # setup_section
+        gr.update(visible=True),   # interview_section
         gr.update(visible=False),  # completion_section
-        "",  # final_feedback
+        gr.update(visible=False),  # report_section
     )
 
 
 # =========================================================
 # EXPORT PDF
 # =========================================================
-
 
 def export_pdf(
     controller: InterviewController,
@@ -155,7 +154,6 @@ def export_pdf(
 # =========================================================
 # EXPORT JSON
 # =========================================================
-
 
 def export_json(
     controller: InterviewController,
