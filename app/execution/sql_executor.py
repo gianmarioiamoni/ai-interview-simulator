@@ -1,33 +1,51 @@
 # app/execution/sql_executor.py
 
 import sqlite3
+import time
+import traceback
+
+from domain.contracts.question import Question
+from domain.contracts.execution_result import (
+    ExecutionResult,
+    ExecutionType,
+    ExecutionStatus,
+)
 
 
 class SQLExecutor:
-    # Executes SQL queries against a temporary SQLite database.
 
-    def __init__(self):
+    def execute(self, question: Question, query: str) -> ExecutionResult:
 
-        self.conn = sqlite3.connect(":memory:")
-
-    def execute(self, query: str):
+        start = time.time()
 
         try:
 
-            cursor = self.conn.cursor()
+            conn = sqlite3.connect(":memory:")
+            cursor = conn.cursor()
 
             cursor.execute(query)
 
             rows = cursor.fetchall()
 
-            return {
-                "success": True,
-                "rows": rows,
-            }
+            conn.close()
 
-        except Exception as e:
+            duration = int((time.time() - start) * 1000)
 
-            return {
-                "success": False,
-                "error": str(e),
-            }
+            return ExecutionResult(
+                question_id=question.id,
+                execution_type=ExecutionType.DATABASE,
+                status=ExecutionStatus.SUCCESS,
+                success=True,
+                output=str(rows),
+                execution_time_ms=duration,
+            )
+
+        except Exception:
+
+            return ExecutionResult(
+                question_id=question.id,
+                execution_type=ExecutionType.DATABASE,
+                status=ExecutionStatus.RUNTIME_ERROR,
+                success=False,
+                error=traceback.format_exc(),
+            )

@@ -11,9 +11,6 @@ from app.execution.execution_router import ExecutionRouter
 
 
 class InterviewFlowEngine:
-    # High level orchestration engine implementing
-    # the interview state machine.
-    # Responsible for controlling the lifecycle of the interview above LangGraph.
 
     def __init__(self, controller: InterviewController):
 
@@ -58,10 +55,6 @@ class InterviewFlowEngine:
 
         question = session_dto.current_question
 
-        # ---------------------------------------------------------
-        # EXECUTION branch
-        # ---------------------------------------------------------
-
         if question.question_type in [
             QuestionType.CODING,
             QuestionType.DATABASE,
@@ -72,10 +65,6 @@ class InterviewFlowEngine:
                 "feedback": feedback,
                 "session": session_dto,
             }
-
-        # ---------------------------------------------------------
-        # Standard question
-        # ---------------------------------------------------------
 
         return {
             "flow_state": InterviewFlowState.QUESTION,
@@ -98,29 +87,32 @@ class InterviewFlowEngine:
         answer = state.answers[-1].content
 
         result = self._execution_router.execute(
-            question.question_type,
+            question,
             answer,
         )
 
-        # Persist execution result in state
         state.execution_results.append(result)
 
-        if not result["success"]:
+        if not result.success:
 
             return {
                 "flow_state": InterviewFlowState.QUESTION,
                 "session": session_dto,
-                "execution_error": result["error"],
+                "execution_error": result.error if result.error else "Unknown error",
             }
-
-        # -----------------------------
-        # Execution success 
-        # -----------------------------
 
         return {
             "flow_state": InterviewFlowState.QUESTION,
             "session": session_dto,
         }
+
+    # =========================================================
+    # GENERATE REPORT
+    # =========================================================
+
+    def generate_report(self, state: InterviewState):
+
+        return self._controller.generate_final_report(state)
 
     # =========================================================
     # GENERATE REPORT
