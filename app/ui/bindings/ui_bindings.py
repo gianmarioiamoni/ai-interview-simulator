@@ -1,5 +1,3 @@
-# app/ui/bindings/ui_bindings.py
-
 import gradio as gr
 
 from app.ui.handlers.start_handler import start_handler
@@ -11,11 +9,10 @@ from app.ui.state_handlers import export_pdf, export_json
 from app.core.flow.interview_flow_engine import InterviewFlowEngine
 
 
-def bind_events(flow_engine, components):
+def bind_events(flow_engine: InterviewFlowEngine, components):
     # Bind UI events to handlers
 
     c = components
-
     state = c.state
 
     role_dropdown = c.role_dropdown
@@ -24,9 +21,8 @@ def bind_events(flow_engine, components):
     language_dropdown = c.language_dropdown
     start_button = c.start_button
 
-
     # =========================================================
-    # INPUTS VALIDATION
+    # INPUT VALIDATION
     # =========================================================
 
     def validate_inputs(role, interview_type, company, language):
@@ -84,7 +80,7 @@ def bind_events(flow_engine, components):
     # =========================================================
 
     start_button.click(
-        lambda r, i, c, l: start_handler(flow_engine, r, i, c, l),
+        lambda r, i, comp, l: start_handler(flow_engine, r, i, comp, l),
         inputs=[
             role_dropdown,
             interview_type_radio,
@@ -121,10 +117,11 @@ def bind_events(flow_engine, components):
     # =========================================================
 
     def report_handler(state_value):
+        # Delegate to streaming handler
         yield from view_report_handler(flow_engine, state_value)
-    
+
     c.view_report_button.click(
-        lambda s: view_report_handler(flow_engine, s),
+        report_handler,
         inputs=[state],
         outputs=[
             c.setup_section,
@@ -133,6 +130,7 @@ def bind_events(flow_engine, components):
             c.report_section,
             c.report_output,
         ],
+        show_progress=True,
     )
 
     # =========================================================
