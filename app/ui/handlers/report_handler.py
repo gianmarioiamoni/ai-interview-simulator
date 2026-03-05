@@ -3,9 +3,10 @@
 from app.ui.views.report_view import build_report_markdown
 from app.ui.ui_router import route_ui
 from app.ui.ui_state import UIState
+from app.core.flow.interview_flow_engine import InterviewFlowEngine
 
 
-def view_report_handler(controller, state_value):
+def view_report_handler(flow_engine: InterviewFlowEngine, state_value):
     # Generates the final report and switches the UI to the report section
 
     yield (
@@ -13,7 +14,7 @@ def view_report_handler(controller, state_value):
         "⏳ Generating final report...",
     )
 
-    report = controller.generate_final_report(state_value)
+    report = flow_engine.generate_report(state_value)
 
     report_text = build_report_markdown(report)
 
