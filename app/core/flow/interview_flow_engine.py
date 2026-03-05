@@ -6,6 +6,7 @@ from domain.contracts.interview_state import InterviewState
 from app.ui.controllers.interview_controller import InterviewController
 
 from app.core.flow.interview_flow_state import InterviewFlowState
+from app.core.evaluation.execution_score_policy import ExecutionScorePolicy
 
 from app.execution.execution_router import ExecutionRouter
 
@@ -16,6 +17,7 @@ class InterviewFlowEngine:
 
         self._controller = controller
         self._execution_router = ExecutionRouter()
+        self._execution_score_policy = ExecutionScorePolicy()
 
     # =========================================================
     # START INTERVIEW
@@ -102,6 +104,17 @@ class InterviewFlowEngine:
         )
 
         state.execution_results.append(result)
+
+        # ---------------------------------------------------------
+        # Adjust evaluation using execution result
+        # ---------------------------------------------------------
+        if state.evaluations:
+            evaluation = state.evaluations[-1]
+            evaluation = self._execution_score_policy.apply(
+                evaluation,
+                result,
+            )
+            state.evaluations[-1] = evaluation
 
         if not result.success:
 
