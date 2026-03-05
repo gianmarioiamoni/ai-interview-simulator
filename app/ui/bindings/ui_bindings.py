@@ -22,6 +22,44 @@ def bind_events(controller, components):
     language_dropdown = c.language_dropdown
     start_button = c.start_button
 
+
+    # =========================================================
+    # INPUTS VALIDATION
+    # =========================================================
+
+    def validate_inputs(role, interview_type, company, language):
+
+        valid = (
+            role is not None
+            and interview_type is not None
+            and company is not None
+            and company.strip() != ""
+            and language is not None
+        )
+
+        return gr.update(interactive=valid)
+
+    for component in [
+        role_dropdown,
+        interview_type_radio,
+        company_input,
+        language_dropdown,
+    ]:
+        component.change(
+            validate_inputs,
+            inputs=[
+                role_dropdown,
+                interview_type_radio,
+                company_input,
+                language_dropdown,
+            ],
+            outputs=start_button,
+        )
+
+    # =========================================================
+    # OUTPUTS
+    # =========================================================
+
     outputs = [
         c.state,
         c.question_counter,
