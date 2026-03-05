@@ -1,5 +1,6 @@
 # app/core/flow/interview_flow_engine.py
 
+from domain.contracts.question import QuestionType
 from domain.contracts.interview_state import InterviewState
 
 from app.ui.controllers.interview_controller import InterviewController
@@ -8,9 +9,9 @@ from app.core.flow.interview_flow_state import InterviewFlowState
 
 
 class InterviewFlowEngine:
-    # High level orchestration engine managing the interview lifecycle.
-    # Implements an explicit state machine controlling the flow
-    # above the LangGraph execution layer.
+    # High level orchestration engine implementing
+    # the interview state machine.
+    # Responsible for controlling the lifecycle of the interview above LangGraph.
 
     def __init__(self, controller: InterviewController):
 
@@ -52,9 +53,50 @@ class InterviewFlowEngine:
                 "session": session_dto,
             }
 
+        question = session_dto.current_question
+
+        # ---------------------------------------------------------
+        # EXECUTION branch
+        # ---------------------------------------------------------
+
+        if question.question_type in [
+            QuestionType.CODING,
+            QuestionType.DATABASE,
+        ]:
+
+            return {
+                "flow_state": InterviewFlowState.EXECUTION,
+                "feedback": feedback,
+                "session": session_dto,
+            }
+
+        # ---------------------------------------------------------
+        # Standard question
+        # ---------------------------------------------------------
+
         return {
             "flow_state": InterviewFlowState.QUESTION,
             "feedback": feedback,
+            "session": session_dto,
+        }
+
+    # =========================================================
+    # EXECUTE QUESTION
+    # =========================================================
+
+    def execute(
+        self,
+        state: InterviewState,
+        session_dto,
+    ):
+
+        question = session_dto.current_question
+
+        # Execution engines are already used inside controller
+        # so here we only signal the transition
+
+        return {
+            "flow_state": InterviewFlowState.QUESTION,
             "session": session_dto,
         }
 
@@ -64,6 +106,4 @@ class InterviewFlowEngine:
 
     def generate_report(self, state: InterviewState):
 
-        report = self._controller.generate_final_report(state)
-
-        return report
+        return self._controller.generate_final_report(state)
