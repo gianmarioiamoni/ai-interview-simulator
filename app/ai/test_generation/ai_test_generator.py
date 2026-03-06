@@ -1,8 +1,9 @@
 # app/ai/test_generation/ai_test_generator.py
 
-import json
 import re
 from typing import List
+from json_repair import repair_json
+import json
 
 from domain.contracts.test_case import TestCase
 from domain.contracts.question import Question
@@ -15,6 +16,7 @@ from app.ai.test_generation.test_diversity_filter import TestDiversityFilter
 
 class AITestGenerator:
     # Generates hidden edge-case tests using an LLM.
+    #
     # Pipeline:
     # Question
     #   ↓
@@ -116,22 +118,44 @@ Format:
         response = self._llm.invoke(prompt)
 
         content = response.content.strip()
+
         # ---------------------------------------------------------
         # Remove markdown code blocks if present
         # ---------------------------------------------------------
 
-        if content.startswith("```"):
-            content = content.split("```")[1]
-            content = content.replace("json", "").strip()
+        content = re.sub(r"```json", "", content)
+        content = re.sub(r"```", "", content)
 
         # ---------------------------------------------------------
-        # Parse JSON
+        # Extract JSON array
         # ---------------------------------------------------------
+
+        match = re.search(r"\[.*\]", content, re.DOTALL)
+
+        if not match:
+            print("Error parsing JSON: no JSON array found in LLM output")
+            return []
+
+        json_str = match.group(0)
+
+        # ---------------------------------------------------------
+        # Repair JSON
+        # ---------------------------------------------------------
+
         try:
-            tests_json = _safe_parse_tests(content)
+
+            repaired = repair_json(json_str)
+
+            tests_json = json.loads(repaired)
+
         except Exception as e:
+
             print(f"Error parsing JSON: {e}")
             return []
+
+        # ---------------------------------------------------------
+        # Convert to TestCase objects
+        # ---------------------------------------------------------
 
         tests: List[TestCase] = []
 
@@ -151,26 +175,3 @@ Format:
             )
 
         return tests
-
-
-def _safe_parse_tests(content: str):
-
-    content = content.strip()
-
-    # remove markdown blocks
-    if content.startswith("```"):
-        content = re.sub(r"```.*?\n", "", content)
-        content = content.replace("```", "")
-
-    # extract JSON array
-    match = re.search(r"\[.*\]", content, re.DOTALL)
-
-    if not match:
-        raise ValueError("No JSON array found in LLM output")
-
-    json_str = match.group(0)
-
-    try:
-        return json.loads(json_str)
-    except Exception as e:
-        raise ValueError(f"Invalid JSON from LLM: {e}")
