@@ -3,9 +3,10 @@
 import time
 import traceback
 import ast
+import inspect
 import logging
 
-from typing import Optional, List, Dict, Tuple, Any
+from typing import Any
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from domain.contracts.question import Question
@@ -39,12 +40,6 @@ class PythonExecutor:
         "sum": sum,
         "abs": abs,
         "enumerate": enumerate,
-        "__import__": __import__,
-        # typing support
-        "Optional": Optional,
-        "List": List,
-        "Dict": Dict,
-        "Tuple": Tuple,
     }
 
     ALLOWED_MODULES = {
@@ -60,18 +55,7 @@ class PythonExecutor:
         "time",
         "calendar",
         "json",
-        "csv",
-        "sqlite3",
-        "os",
-        "sys",
         "re",
-        "subprocess",
-        "threading",
-        "multiprocessing",
-        "typing",
-        "typing_extensions",
-        "typing_inspect",
-        "typing_inspect",
     }
 
     # =========================================================
@@ -83,6 +67,7 @@ class PythonExecutor:
         start = time.time()
 
         logger.info(f"Executing coding question: {question.id}")
+        logger.info(f"Candidate code:\n{code}")
 
         try:
 
@@ -93,21 +78,12 @@ class PythonExecutor:
 
             safe_globals = {"__builtins__": safe_builtins}
 
-            # ---------------------------------------------------------
-            # Execute candidate code
-            # ---------------------------------------------------------
-            logger.info(f"Candidate code:\n{code}")
-
             if "def " not in code:
-                logger.error("Submitted code does not contain a function definition")
                 raise SyntaxError("No Python function detected")
+
             exec(code, safe_globals, local_env)
 
             logger.debug(f"Local env keys: {list(local_env.keys())}")
-
-            # ---------------------------------------------------------
-            # Run tests with timeout protection
-            # ---------------------------------------------------------
 
             with ThreadPoolExecutor(max_workers=1) as executor:
 
@@ -146,6 +122,11 @@ class PythonExecutor:
                 f"Hidden tests: {hidden_passed}/{hidden_total}"
             )
 
+            error = None
+
+            if not success:
+                error = f"{passed_tests}/{total_tests} tests passed"
+
             logger.info(output)
 
             return ExecutionResult(
@@ -154,6 +135,7 @@ class PythonExecutor:
                 status=status,
                 success=success,
                 output=output,
+                error=error,
                 passed_tests=passed_tests,
                 total_tests=total_tests,
                 execution_time_ms=duration,
@@ -184,7 +166,7 @@ class PythonExecutor:
             )
 
     # =========================================================
-    # SAFE IMPORT MODULES
+    # SAFE IMPORT
     # =========================================================
 
     def safe_import(self, name, globals=None, locals=None, fromlist=(), level=0):
@@ -197,7 +179,7 @@ class PythonExecutor:
         return __import__(name, globals, locals, fromlist, level)
 
     # =========================================================
-    # TEST EXECUTION
+    # RUN ALL TESTS
     # =========================================================
 
     def _run_all_tests(self, question: Question, local_env: dict[str, Any]):
@@ -235,14 +217,10 @@ class PythonExecutor:
         passed = 0
         total = len(test_cases)
 
-        functions = [
-            v for v in local_env.values() if callable(v) and hasattr(v, "__name__")
-        ]
+        functions = [v for v in local_env.values() if inspect.isfunction(v)]
 
         if not functions:
-
             logger.error("No candidate function found")
-
             return 0, total
 
         candidate_function = functions[0]
@@ -253,12 +231,16 @@ class PythonExecutor:
 
             try:
 
-                parsed_input = ast.literal_eval(test.input)
+                parsed_input = self.parse_input(test.input)
+
+                logger.debug(f"Test input: {parsed_input}")
 
                 if isinstance(parsed_input, tuple):
                     result = candidate_function(*parsed_input)
                 else:
                     result = candidate_function(parsed_input)
+
+                logger.debug(f"Result: {result}")
 
                 if str(result) == test.expected_output:
                     passed += 1
@@ -270,3 +252,14 @@ class PythonExecutor:
                 )
 
         return passed, total
+
+    # =========================================================
+    # INPUT PARSER
+    # =========================================================
+
+    def parse_input(self, value: str):
+
+        try:
+            return ast.literal_eval(value)
+        except Exception:
+            return value
