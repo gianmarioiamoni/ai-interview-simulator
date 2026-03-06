@@ -3,6 +3,8 @@
 import time
 import traceback
 import signal
+import ast
+import logging
 from typing import Any
 
 from domain.contracts.question import Question
@@ -14,6 +16,9 @@ from domain.contracts.execution_result import (
 from domain.contracts.test_case import TestCase
 
 
+logger = logging.getLogger(__name__)
+
+
 class TimeoutException(Exception):
     pass
 
@@ -23,8 +28,6 @@ def timeout_handler(signum, frame):
 
 
 class PythonExecutor:
-    # Executes Python code in a restricted sandbox with timeout 
-    # and deterministic test execution.
 
     TIMEOUT_SECONDS = 2
 
@@ -53,34 +56,22 @@ class PythonExecutor:
 
         start = time.time()
 
-        try:
+        logger.info(f"Executing coding question: {question.id}")
 
-            # ---------------------------------------------------------
-            # Restricted execution environment
-            # ---------------------------------------------------------
+        try:
 
             local_env: dict[str, Any] = {}
 
             safe_globals = {"__builtins__": self.SAFE_BUILTINS}
 
-            # ---------------------------------------------------------
-            # Timeout guard
-            # ---------------------------------------------------------
-
             signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(self.TIMEOUT_SECONDS)
-
-            # ---------------------------------------------------------
-            # Execute candidate code
-            # ---------------------------------------------------------
 
             exec(code, safe_globals, local_env)
 
             signal.alarm(0)
 
-            # ---------------------------------------------------------
-            # Run visible + hidden tests
-            # ---------------------------------------------------------
+            logger.debug(f"Local env keys: {list(local_env.keys())}")
 
             visible_passed = 0
             visible_total = 0
@@ -88,13 +79,13 @@ class PythonExecutor:
             hidden_passed = 0
             hidden_total = 0
 
-            if getattr(question, "visible_tests", None):
+            if question.visible_tests:
                 visible_passed, visible_total = self.run_tests(
                     local_env,
                     question.visible_tests,
                 )
 
-            if getattr(question, "hidden_tests", None):
+            if question.hidden_tests:
                 hidden_passed, hidden_total = self.run_tests(
                     local_env,
                     question.hidden_tests,
@@ -116,6 +107,8 @@ class PythonExecutor:
                 f"Hidden tests: {hidden_passed}/{hidden_total}"
             )
 
+            logger.info(output)
+
             return ExecutionResult(
                 question_id=question.id,
                 execution_type=ExecutionType.CODING,
@@ -129,6 +122,8 @@ class PythonExecutor:
 
         except TimeoutException:
 
+            logger.error("Execution timeout")
+
             return ExecutionResult(
                 question_id=question.id,
                 execution_type=ExecutionType.CODING,
@@ -139,6 +134,8 @@ class PythonExecutor:
 
         except SyntaxError as e:
 
+            logger.error(f"Syntax error: {e}")
+
             return ExecutionResult(
                 question_id=question.id,
                 execution_type=ExecutionType.CODING,
@@ -147,7 +144,9 @@ class PythonExecutor:
                 error=str(e),
             )
 
-        except Exception:
+        except Exception as e:
+
+            logger.error(traceback.format_exc())
 
             return ExecutionResult(
                 question_id=question.id,
@@ -166,42 +165,42 @@ class PythonExecutor:
         local_env: dict[str, Any],
         test_cases: list[TestCase],
     ) -> tuple[int, int]:
-        """
-        Executes deterministic test cases against the candidate function.
-        Returns (passed_tests, total_tests).
-        """
 
         passed = 0
         total = len(test_cases)
 
-        # ---------------------------------------------------------
-        # Retrieve candidate function
-        # ---------------------------------------------------------
-
-        functions = [v for v in local_env.values() if callable(v)]
+        functions = [
+            v for v in local_env.values() if callable(v) and hasattr(v, "__name__")
+        ]
 
         if not functions:
+
+            logger.error("No candidate function found")
+
             return 0, total
 
         candidate_function = functions[0]
 
-        # ---------------------------------------------------------
-        # Execute tests
-        # ---------------------------------------------------------
+        logger.info(f"Testing function: {candidate_function.__name__}")
 
         for test in test_cases:
 
             try:
 
-                result = candidate_function(test.input)
+                parsed_input = ast.literal_eval(test.input)
+
+                if isinstance(parsed_input, tuple):
+                    result = candidate_function(*parsed_input)
+                else:
+                    result = candidate_function(parsed_input)
 
                 if str(result) == test.expected_output:
                     passed += 1
 
-            except Exception as e:
-                error=traceback.format_exc()
-                print(f"Error executing test: {error}")
-                raise e
-                #continue
+            except Exception:
+
+                logger.error(
+                    f"Test failed for input {test.input}\n{traceback.format_exc()}"
+                )
 
         return passed, total

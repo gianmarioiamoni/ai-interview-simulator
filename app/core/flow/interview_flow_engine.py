@@ -1,4 +1,5 @@
 # app/core/flow/interview_flow_engine.py
+import logging 
 
 from domain.contracts.question import QuestionType
 from domain.contracts.interview_state import InterviewState
@@ -9,6 +10,8 @@ from app.core.flow.interview_flow_state import InterviewFlowState
 from app.core.evaluation.execution_score_policy import ExecutionScorePolicy
 
 from app.execution.execution_router import ExecutionRouter
+
+logger = logging.getLogger(__name__)
 
 
 class InterviewFlowEngine:
@@ -83,6 +86,8 @@ class InterviewFlowEngine:
         state: InterviewState,
         session_dto,
     ):
+
+        logger.info(f"Executing question {session_dto.current_question.id}")
 
         question_dto = session_dto.current_question
 

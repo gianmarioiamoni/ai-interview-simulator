@@ -1,5 +1,7 @@
 # app/execution/execution_router.py
 
+import logging
+
 from domain.contracts.question import Question, QuestionType
 from domain.contracts.execution_result import ExecutionResult
 
@@ -7,8 +9,10 @@ from app.execution.python_executor import PythonExecutor
 from app.execution.sql_executor import SQLExecutor
 
 
+logger = logging.getLogger(__name__)
+
+
 class ExecutionRouter:
-    # Routes execution requests to the correct execution engine.
 
     def __init__(self):
 
@@ -20,6 +24,8 @@ class ExecutionRouter:
         question: Question,
         answer: str,
     ) -> ExecutionResult:
+
+        logger.info(f"Routing execution for question {question.id}")
 
         if question.type == QuestionType.CODING:
             return self._python_executor.execute(question, answer)
