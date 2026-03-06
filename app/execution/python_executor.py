@@ -23,7 +23,8 @@ def timeout_handler(signum, frame):
 
 
 class PythonExecutor:
-    # Executes Python code in a restricted sandbox with timeout and test runner.
+    # Executes Python code in a restricted sandbox with timeout 
+    # and deterministic test execution.
 
     TIMEOUT_SECONDS = 2
 
@@ -44,6 +45,10 @@ class PythonExecutor:
         "enumerate": enumerate,
     }
 
+    # =========================================================
+    # MAIN EXECUTION
+    # =========================================================
+
     def execute(self, question: Question, code: str) -> ExecutionResult:
 
         start = time.time()
@@ -51,7 +56,7 @@ class PythonExecutor:
         try:
 
             # ---------------------------------------------------------
-            # Prepare restricted environment
+            # Restricted execution environment
             # ---------------------------------------------------------
 
             local_env: dict[str, Any] = {}
@@ -74,18 +79,29 @@ class PythonExecutor:
             signal.alarm(0)
 
             # ---------------------------------------------------------
-            # Run test cases
+            # Run visible + hidden tests
             # ---------------------------------------------------------
 
-            passed_tests = 0
-            total_tests = 0
+            visible_passed = 0
+            visible_total = 0
 
-            if question.test_cases:
+            hidden_passed = 0
+            hidden_total = 0
 
-                passed_tests, total_tests = self.run_tests(
+            if getattr(question, "visible_tests", None):
+                visible_passed, visible_total = self.run_tests(
                     local_env,
-                    question.test_cases,
+                    question.visible_tests,
                 )
+
+            if getattr(question, "hidden_tests", None):
+                hidden_passed, hidden_total = self.run_tests(
+                    local_env,
+                    question.hidden_tests,
+                )
+
+            passed_tests = visible_passed + hidden_passed
+            total_tests = visible_total + hidden_total
 
             duration = int((time.time() - start) * 1000)
 
@@ -95,12 +111,17 @@ class PythonExecutor:
                 ExecutionStatus.SUCCESS if success else ExecutionStatus.FAILED_TESTS
             )
 
+            output = (
+                f"Visible tests: {visible_passed}/{visible_total}\n"
+                f"Hidden tests: {hidden_passed}/{hidden_total}"
+            )
+
             return ExecutionResult(
                 question_id=question.id,
                 execution_type=ExecutionType.CODING,
                 status=status,
                 success=success,
-                output=f"{passed_tests}/{total_tests} tests passed",
+                output=output,
                 passed_tests=passed_tests,
                 total_tests=total_tests,
                 execution_time_ms=duration,
@@ -145,9 +166,17 @@ class PythonExecutor:
         local_env: dict[str, Any],
         test_cases: list[TestCase],
     ) -> tuple[int, int]:
+        """
+        Executes deterministic test cases against the candidate function.
+        Returns (passed_tests, total_tests).
+        """
 
         passed = 0
         total = len(test_cases)
+
+        # ---------------------------------------------------------
+        # Retrieve candidate function
+        # ---------------------------------------------------------
 
         functions = [v for v in local_env.values() if callable(v)]
 
@@ -155,6 +184,10 @@ class PythonExecutor:
             return 0, total
 
         candidate_function = functions[0]
+
+        # ---------------------------------------------------------
+        # Execute tests
+        # ---------------------------------------------------------
 
         for test in test_cases:
 

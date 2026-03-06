@@ -25,6 +25,8 @@ class Question(BaseModel):
     difficulty: int = Field(..., ge=1, le=5)
     humanized: bool = False
     test_cases: list[TestCase] = Field(default_factory=list)
+    visible_tests: list[TestCase] = Field(default_factory=list)
+    hidden_tests: list[TestCase] = Field(default_factory=list)
 
     model_config = {
         "frozen": True,
