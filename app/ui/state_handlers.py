@@ -41,8 +41,7 @@ def start_interview(
 
     for q in questions:
         if q.type == QuestionType.CODING:
-            hidden_tests = test_generator.generate_tests(q, num_tests=3)
-            q.hidden_tests = hidden_tests
+            q.hidden_tests = test_generator.generate_tests(q, num_tests=3)
 
     state = InterviewState.create_initial(
         role_type=role_type,
