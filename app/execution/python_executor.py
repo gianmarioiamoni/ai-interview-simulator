@@ -2,10 +2,10 @@
 
 import time
 import traceback
-import signal
 import ast
 import logging
 from typing import Any
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from domain.contracts.question import Question
 from domain.contracts.execution_result import (
@@ -17,14 +17,6 @@ from domain.contracts.test_case import TestCase
 
 
 logger = logging.getLogger(__name__)
-
-
-class TimeoutException(Exception):
-    pass
-
-
-def timeout_handler(signum, frame):
-    raise TimeoutException("Execution timed out")
 
 
 class PythonExecutor:
@@ -64,32 +56,38 @@ class PythonExecutor:
 
             safe_globals = {"__builtins__": self.SAFE_BUILTINS}
 
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(self.TIMEOUT_SECONDS)
+            # ---------------------------------------------------------
+            # Execute candidate code
+            # ---------------------------------------------------------
 
             exec(code, safe_globals, local_env)
 
-            signal.alarm(0)
-
             logger.debug(f"Local env keys: {list(local_env.keys())}")
 
-            visible_passed = 0
-            visible_total = 0
+            # ---------------------------------------------------------
+            # Run tests with timeout protection
+            # ---------------------------------------------------------
 
-            hidden_passed = 0
-            hidden_total = 0
+            with ThreadPoolExecutor(max_workers=1) as executor:
 
-            if question.visible_tests:
-                visible_passed, visible_total = self.run_tests(
-                    local_env,
-                    question.visible_tests,
-                )
+                future = executor.submit(self._run_all_tests, question, local_env)
 
-            if question.hidden_tests:
-                hidden_passed, hidden_total = self.run_tests(
-                    local_env,
-                    question.hidden_tests,
-                )
+                try:
+                    visible_passed, visible_total, hidden_passed, hidden_total = (
+                        future.result(timeout=self.TIMEOUT_SECONDS)
+                    )
+
+                except TimeoutError:
+
+                    logger.error("Execution timeout")
+
+                    return ExecutionResult(
+                        question_id=question.id,
+                        execution_type=ExecutionType.CODING,
+                        status=ExecutionStatus.TIMEOUT,
+                        success=False,
+                        error="Execution exceeded time limit",
+                    )
 
             passed_tests = visible_passed + hidden_passed
             total_tests = visible_total + hidden_total
@@ -120,18 +118,6 @@ class PythonExecutor:
                 execution_time_ms=duration,
             )
 
-        except TimeoutException:
-
-            logger.error("Execution timeout")
-
-            return ExecutionResult(
-                question_id=question.id,
-                execution_type=ExecutionType.CODING,
-                status=ExecutionStatus.TIMEOUT,
-                success=False,
-                error="Execution exceeded time limit",
-            )
-
         except SyntaxError as e:
 
             logger.error(f"Syntax error: {e}")
@@ -144,7 +130,7 @@ class PythonExecutor:
                 error=str(e),
             )
 
-        except Exception as e:
+        except Exception:
 
             logger.error(traceback.format_exc())
 
@@ -155,6 +141,32 @@ class PythonExecutor:
                 success=False,
                 error=traceback.format_exc(),
             )
+
+    # =========================================================
+    # TEST EXECUTION
+    # =========================================================
+
+    def _run_all_tests(self, question: Question, local_env: dict[str, Any]):
+
+        visible_passed = 0
+        visible_total = 0
+
+        hidden_passed = 0
+        hidden_total = 0
+
+        if question.visible_tests:
+            visible_passed, visible_total = self.run_tests(
+                local_env,
+                question.visible_tests,
+            )
+
+        if question.hidden_tests:
+            hidden_passed, hidden_total = self.run_tests(
+                local_env,
+                question.hidden_tests,
+            )
+
+        return visible_passed, visible_total, hidden_passed, hidden_total
 
     # =========================================================
     # TEST RUNNER
