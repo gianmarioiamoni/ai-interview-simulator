@@ -143,9 +143,9 @@ class InterviewFlowEngine:
         return self._controller.generate_final_report(state)
 
     # =========================================================
-    # GENERATE REPORT
+    # EXECUTION ROUTER
     # =========================================================
+    @property
+    def execution_router(self):
+        return self._execution_router
 
-    def generate_report(self, state: InterviewState):
-
-        return self._controller.generate_final_report(state)
