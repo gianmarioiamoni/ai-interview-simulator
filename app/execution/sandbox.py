@@ -43,6 +43,20 @@ class PythonSandbox:
         "sum": sum,
         "abs": abs,
         "enumerate": enumerate,
+        "__import__": __import__,
+        "any": Any,
+        "tuple": tuple,
+        "set": set,
+        "frozenset": frozenset,
+        "bool": bool,
+        "int": int,
+        "complex": complex,
+        "bytes": bytes,
+        "bytearray": bytearray,
+        "memoryview": memoryview,
+        "range": range,
+        "len": len,
+        "print": print,
     }
 
     # =========================================================
@@ -50,10 +64,8 @@ class PythonSandbox:
     # =========================================================
 
     def execute(self, code: str) -> dict[str, Any]:
-        """
-        Executes user code inside a controlled environment.
-        Returns the execution locals.
-        """
+        # Executes user code inside a controlled environment.
+        # Returns the execution locals.
 
         logger.debug("Validating AST security")
 
@@ -61,7 +73,10 @@ class PythonSandbox:
 
         local_env: dict[str, Any] = {}
 
-        safe_globals = {"__builtins__": self.SAFE_BUILTINS}
+        safe_builtins = dict(self.SAFE_BUILTINS)
+        safe_builtins["__import__"] = self._safe_import
+
+        safe_globals = {"__builtins__": safe_builtins}
 
         exec(code, safe_globals, local_env)
 
@@ -107,3 +122,16 @@ class PythonSandbox:
 
                     if node.func.id in self.FORBIDDEN_FUNCTIONS:
                         raise RuntimeError(f"Use of '{node.func.id}' is not allowed")
+
+
+    # =========================================================
+    # SAFE IMPORT
+    # =========================================================
+    def _safe_import(self, name, globals=None, locals=None, fromlist=(), level=0):
+
+        root_module = name.split(".")[0]
+
+        if root_module in self.FORBIDDEN_MODULES:
+            raise ImportError(f"Import of module '{root_module}' is not allowed")
+
+        return __import__(name, globals, locals, fromlist, level)
