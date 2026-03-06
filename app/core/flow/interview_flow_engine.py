@@ -87,7 +87,7 @@ class InterviewFlowEngine:
         session_dto,
     ):
 
-        logger.info(f"Executing question {session_dto.current_question.id}")
+        logger.info(f"Executing question {session_dto.current_question.question_id}")
 
         question_dto = session_dto.current_question
 
