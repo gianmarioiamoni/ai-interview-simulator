@@ -18,6 +18,7 @@ from domain.contracts.execution_result import (
 from domain.contracts.test_case import TestCase
 
 from app.execution.sandbox import PythonSandbox
+from app.execution.test_runner import TestRunner
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ class PythonExecutor:
     def __init__(self):
 
         self._sandbox = PythonSandbox()
+        self._test_runner = TestRunner()
 
     # =========================================================
     # MAIN EXECUTION
@@ -64,9 +66,12 @@ class PythonExecutor:
                 future = executor.submit(self._run_all_tests, question, local_env)
 
                 try:
+                    visible_passed, visible_total = self._test_runner.run_tests(
+                        local_env, question.visible_tests
+                    )
 
-                    visible_passed, visible_total, hidden_passed, hidden_total = (
-                        future.result(timeout=self.TIMEOUT_SECONDS)
+                    hidden_passed, hidden_total = future.result(
+                        timeout=self.TIMEOUT_SECONDS
                     )
 
                 except TimeoutError:
