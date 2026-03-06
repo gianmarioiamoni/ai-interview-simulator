@@ -2,6 +2,7 @@
 
 import time
 import traceback
+import signal
 from typing import Any
 
 from domain.contracts.question import Question
@@ -13,9 +14,35 @@ from domain.contracts.execution_result import (
 from domain.contracts.test_case import TestCase
 
 
+class TimeoutException(Exception):
+    pass
+
+
+def timeout_handler(signum, frame):
+    raise TimeoutException("Execution timed out")
+
+
 class PythonExecutor:
-    # Executes Python coding questions inside a controlled sandbox
-    # and optionally evaluates deterministic test cases.
+    # Executes Python code in a restricted sandbox with timeout and test runner.
+
+    TIMEOUT_SECONDS = 2
+
+    SAFE_BUILTINS = {
+        "range": range,
+        "len": len,
+        "print": print,
+        "str": str,
+        "int": int,
+        "float": float,
+        "list": list,
+        "dict": dict,
+        "set": set,
+        "min": min,
+        "max": max,
+        "sum": sum,
+        "abs": abs,
+        "enumerate": enumerate,
+    }
 
     def execute(self, question: Question, code: str) -> ExecutionResult:
 
@@ -23,16 +50,31 @@ class PythonExecutor:
 
         try:
 
+            # ---------------------------------------------------------
+            # Prepare restricted environment
+            # ---------------------------------------------------------
+
             local_env: dict[str, Any] = {}
+
+            safe_globals = {"__builtins__": self.SAFE_BUILTINS}
+
+            # ---------------------------------------------------------
+            # Timeout guard
+            # ---------------------------------------------------------
+
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(self.TIMEOUT_SECONDS)
 
             # ---------------------------------------------------------
             # Execute candidate code
             # ---------------------------------------------------------
 
-            exec(code, {}, local_env)
+            exec(code, safe_globals, local_env)
+
+            signal.alarm(0)
 
             # ---------------------------------------------------------
-            # Run test cases if available
+            # Run test cases
             # ---------------------------------------------------------
 
             passed_tests = 0
@@ -64,6 +106,16 @@ class PythonExecutor:
                 execution_time_ms=duration,
             )
 
+        except TimeoutException:
+
+            return ExecutionResult(
+                question_id=question.id,
+                execution_type=ExecutionType.CODING,
+                status=ExecutionStatus.TIMEOUT,
+                success=False,
+                error="Execution exceeded time limit",
+            )
+
         except SyntaxError as e:
 
             return ExecutionResult(
@@ -93,15 +145,9 @@ class PythonExecutor:
         local_env: dict[str, Any],
         test_cases: list[TestCase],
     ) -> tuple[int, int]:
-        # Executes deterministic test cases against the candidate function.
-        # Returns (passed_tests, total_tests).
 
         passed = 0
         total = len(test_cases)
-
-        # ---------------------------------------------------------
-        # Retrieve candidate function
-        # ---------------------------------------------------------
 
         functions = [v for v in local_env.values() if callable(v)]
 
@@ -109,10 +155,6 @@ class PythonExecutor:
             return 0, total
 
         candidate_function = functions[0]
-
-        # ---------------------------------------------------------
-        # Execute tests
-        # ---------------------------------------------------------
 
         for test in test_cases:
 
@@ -124,7 +166,6 @@ class PythonExecutor:
                     passed += 1
 
             except Exception:
-                # Test considered failed
                 continue
 
         return passed, total
