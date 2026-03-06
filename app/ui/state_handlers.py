@@ -109,6 +109,34 @@ def submit_answer(
     user_answer: str,
 ):
 
+    # ---------------------------------------------------------
+    # Determine current question BEFORE advancing interview
+    # ---------------------------------------------------------
+
+    current_question = state.questions[state.current_question_index]
+
+    execution_error = None
+
+    # ---------------------------------------------------------
+    # Execute coding/database BEFORE controller moves index
+    # ---------------------------------------------------------
+
+    if current_question.type in [QuestionType.CODING, QuestionType.DATABASE]:
+
+        execution_result = flow_engine.execution_router.execute(
+            current_question,
+            user_answer,
+        )
+
+        state.execution_results.append(execution_result)
+
+        if not execution_result.success:
+            execution_error = execution_result.error
+
+    # ---------------------------------------------------------
+    # Now advance interview normally
+    # ---------------------------------------------------------
+
     result = flow_engine.handle_answer(
         state,
         user_answer,
@@ -139,40 +167,6 @@ def submit_answer(
         )
 
     # ---------------------------------------------------------
-    # Execution state (coding / database)
-    # ---------------------------------------------------------
-
-    if flow_state == InterviewFlowState.EXECUTION:
-
-        session_dto = result["session"]
-
-        execution_result = flow_engine.execute(
-            state,
-            session_dto,
-            user_answer,
-        )
-
-        session_dto = execution_result["session"]
-
-        question = session_dto.current_question
-        question_type = question.question_type
-
-        counter = f"Question {question.index}/{question.total}"
-
-        return UIResponse(
-            state=state,
-            question_counter=counter,
-            feedback=f"### Feedback\n\n{result['feedback']}",
-            written_text=question.text,
-            coding_text=question.text,
-            database_text=question.text,
-            written_visible=question_type == "written",
-            coding_visible=question_type == "coding",
-            database_visible=question_type == "database",
-            ui_state=UIState.QUESTION,
-        )
-
-    # ---------------------------------------------------------
     # Next question
     # ---------------------------------------------------------
 
@@ -183,6 +177,9 @@ def submit_answer(
     question_type = question.question_type
 
     counter = f"Question {question.index}/{question.total}"
+
+    if execution_error:
+        feedback = f"{feedback}\n\n⚠ Execution error: {execution_error}"
 
     return UIResponse(
         state=state,
