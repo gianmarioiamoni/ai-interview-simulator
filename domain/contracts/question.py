@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 
 from domain.contracts.interview_area import InterviewArea
+from domain.contracts.test_case import TestCase
 
 
 class QuestionType(str, Enum):
@@ -23,6 +24,7 @@ class Question(BaseModel):
     reference_solution: Optional[str] = None
     difficulty: int = Field(..., ge=1, le=5)
     humanized: bool = False
+    test_cases: list[TestCase] = Field(default_factory=list)
 
     model_config = {
         "frozen": True,
