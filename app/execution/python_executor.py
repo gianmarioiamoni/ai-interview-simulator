@@ -17,6 +17,8 @@ from domain.contracts.execution_result import (
 )
 from domain.contracts.test_case import TestCase
 
+from app.execution.sandbox import PythonSandbox
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,38 +27,9 @@ class PythonExecutor:
 
     TIMEOUT_SECONDS = 2
 
-    SAFE_BUILTINS = {
-        "range": range,
-        "len": len,
-        "print": print,
-        "str": str,
-        "int": int,
-        "float": float,
-        "list": list,
-        "dict": dict,
-        "set": set,
-        "min": min,
-        "max": max,
-        "sum": sum,
-        "abs": abs,
-        "enumerate": enumerate,
-    }
+    def __init__(self):
 
-    ALLOWED_MODULES = {
-        "collections",
-        "math",
-        "itertools",
-        "functools",
-        "statistics",
-        "heapq",
-        "random",
-        "string",
-        "datetime",
-        "time",
-        "calendar",
-        "json",
-        "re",
-    }
+        self._sandbox = PythonSandbox()
 
     # =========================================================
     # MAIN EXECUTION
@@ -71,25 +44,27 @@ class PythonExecutor:
 
         try:
 
-            local_env: dict[str, Any] = {}
-
-            safe_builtins = dict(self.SAFE_BUILTINS)
-            safe_builtins["__import__"] = self.safe_import
-
-            safe_globals = {"__builtins__": safe_builtins}
-
             if "def " not in code:
                 raise SyntaxError("No Python function detected")
 
-            exec(code, safe_globals, local_env)
+            # ---------------------------------------------------------
+            # Sandbox execution
+            # ---------------------------------------------------------
+
+            local_env = self._sandbox.execute(code)
 
             logger.debug(f"Local env keys: {list(local_env.keys())}")
+
+            # ---------------------------------------------------------
+            # Run tests with timeout protection
+            # ---------------------------------------------------------
 
             with ThreadPoolExecutor(max_workers=1) as executor:
 
                 future = executor.submit(self._run_all_tests, question, local_env)
 
                 try:
+
                     visible_passed, visible_total, hidden_passed, hidden_total = (
                         future.result(timeout=self.TIMEOUT_SECONDS)
                     )
@@ -166,19 +141,6 @@ class PythonExecutor:
             )
 
     # =========================================================
-    # SAFE IMPORT
-    # =========================================================
-
-    def safe_import(self, name, globals=None, locals=None, fromlist=(), level=0):
-
-        root_module = name.split(".")[0]
-
-        if root_module not in self.ALLOWED_MODULES:
-            raise ImportError(f"Import of module '{root_module}' is not allowed")
-
-        return __import__(name, globals, locals, fromlist, level)
-
-    # =========================================================
     # RUN ALL TESTS
     # =========================================================
 
@@ -231,16 +193,12 @@ class PythonExecutor:
 
             try:
 
-                parsed_input = self.parse_input(test.input)
-
-                logger.debug(f"Test input: {parsed_input}")
+                parsed_input = self._parse_input(test.input)
 
                 if isinstance(parsed_input, tuple):
                     result = candidate_function(*parsed_input)
                 else:
                     result = candidate_function(parsed_input)
-
-                logger.debug(f"Result: {result}")
 
                 if str(result) == test.expected_output:
                     passed += 1
@@ -257,7 +215,7 @@ class PythonExecutor:
     # INPUT PARSER
     # =========================================================
 
-    def parse_input(self, value: str):
+    def _parse_input(self, value: str):
 
         try:
             return ast.literal_eval(value)
