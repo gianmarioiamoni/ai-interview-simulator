@@ -38,6 +38,30 @@ class PythonExecutor:
         "sum": sum,
         "abs": abs,
         "enumerate": enumerate,
+        "__import__": __import__,
+    }
+
+    ALLOWED_MODULES = {
+        "collections",
+        "math",
+        "itertools",
+        "functools",
+        "statistics",
+        "heapq",
+        "random",
+        "string",
+        "datetime",
+        "time",
+        "calendar",
+        "json",
+        "csv",
+        "sqlite3",
+        "os",
+        "sys",
+        "re",
+        "subprocess",
+        "threading",
+        "multiprocessing",
     }
 
     # =========================================================
@@ -54,7 +78,10 @@ class PythonExecutor:
 
             local_env: dict[str, Any] = {}
 
-            safe_globals = {"__builtins__": self.SAFE_BUILTINS}
+            safe_builtins = dict(self.SAFE_BUILTINS)
+            safe_builtins["__import__"] = self.safe_import
+
+            safe_globals = {"__builtins__": safe_builtins}
 
             # ---------------------------------------------------------
             # Execute candidate code
@@ -146,6 +173,20 @@ class PythonExecutor:
                 error=traceback.format_exc(),
             )
 
+    
+    # =========================================================
+    # SAFE IMPORT MODULES
+    # =========================================================
+
+    def safe_import(self, name, globals=None, locals=None, fromlist=(), level=0):
+
+        root_module = name.split(".")[0]
+
+        if root_module not in self.ALLOWED_MODULES:
+            raise ImportError(f"Import of module '{root_module}' is not allowed")
+
+        return __import__(name, globals, locals, fromlist, level)
+    
     # =========================================================
     # TEST EXECUTION
     # =========================================================
