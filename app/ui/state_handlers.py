@@ -19,12 +19,15 @@ from app.ai.test_generation.ai_test_generator import AITestGenerator
 
 from services.report_export_service import ReportExportService
 
+
 export_service = ReportExportService()
 test_generator = AITestGenerator()
+
 
 # =========================================================
 # START INTERVIEW
 # =========================================================
+
 
 def start_interview(
     flow_engine: InterviewFlowEngine,
@@ -39,9 +42,31 @@ def start_interview(
 
     questions = load_sample_questions(interview_type)
 
+    # ---------------------------------------------------------
+    # Enrich coding questions with hidden tests
+    # (Question contract is immutable → use model_copy)
+    # ---------------------------------------------------------
+
+    enriched_questions = []
+
     for q in questions:
+
         if q.type == QuestionType.CODING:
-            q.hidden_tests = test_generator.generate_tests(q, num_tests=3)
+
+            hidden_tests = test_generator.generate_tests(
+                q,
+                num_tests=3,
+            )
+
+            q = q.model_copy(update={"hidden_tests": hidden_tests})
+
+        enriched_questions.append(q)
+
+    questions = enriched_questions
+
+    # ---------------------------------------------------------
+    # Create interview state
+    # ---------------------------------------------------------
 
     state = InterviewState.create_initial(
         role_type=role_type,
@@ -176,6 +201,7 @@ def submit_answer(
 # EXPORT PDF
 # =========================================================
 
+
 def export_pdf(
     flow_engine: InterviewFlowEngine,
     state: InterviewState,
@@ -197,6 +223,7 @@ def export_pdf(
 # =========================================================
 # EXPORT JSON
 # =========================================================
+
 
 def export_json(
     flow_engine: InterviewFlowEngine,
