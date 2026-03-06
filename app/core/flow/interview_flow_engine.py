@@ -3,6 +3,7 @@ import logging
 
 from domain.contracts.question import QuestionType
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.answer import Answer
 
 from app.ui.controllers.interview_controller import InterviewController
 
@@ -85,6 +86,7 @@ class InterviewFlowEngine:
         self,
         state: InterviewState,
         session_dto,
+        answer: Answer,
     ):
 
         logger.info(f"Executing question {session_dto.current_question.question_id}")
@@ -100,8 +102,6 @@ class InterviewFlowEngine:
         )
         if not question:
             raise RuntimeError(f"Question not found: {question_dto.question_id}")
-
-        answer = state.answers[-1].content
 
         result = self._execution_router.execute(
             question,
