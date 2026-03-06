@@ -4,7 +4,8 @@ import time
 import traceback
 import ast
 import logging
-from typing import Any
+
+from typing import Optional, List, Dict, Tuple, Any
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from domain.contracts.question import Question
@@ -39,6 +40,11 @@ class PythonExecutor:
         "abs": abs,
         "enumerate": enumerate,
         "__import__": __import__,
+        # typing support
+        "Optional": Optional,
+        "List": List,
+        "Dict": Dict,
+        "Tuple": Tuple,
     }
 
     ALLOWED_MODULES = {
@@ -62,6 +68,10 @@ class PythonExecutor:
         "subprocess",
         "threading",
         "multiprocessing",
+        "typing",
+        "typing_extensions",
+        "typing_inspect",
+        "typing_inspect",
     }
 
     # =========================================================
@@ -173,7 +183,6 @@ class PythonExecutor:
                 error=traceback.format_exc(),
             )
 
-    
     # =========================================================
     # SAFE IMPORT MODULES
     # =========================================================
@@ -186,7 +195,7 @@ class PythonExecutor:
             raise ImportError(f"Import of module '{root_module}' is not allowed")
 
         return __import__(name, globals, locals, fromlist, level)
-    
+
     # =========================================================
     # TEST EXECUTION
     # =========================================================
