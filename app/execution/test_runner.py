@@ -8,7 +8,11 @@ from domain.contracts.test_case import TestCase
 
 class TestRunner:
 
-    def run_tests(self, local_env: dict[str, Any], test_cases: list[TestCase]) -> tuple[int, int]:
+    def run_tests(
+        self, 
+        local_env: dict[str, Any], 
+        test_cases: list[TestCase]
+    ) -> tuple[int, int]:
 
         passed = 0
         total = len(test_cases)

@@ -44,7 +44,7 @@ class PythonSandbox:
         "abs": abs,
         "enumerate": enumerate,
         "__import__": __import__,
-        "any": Any,
+        "any": any,
         "tuple": tuple,
         "set": set,
         "frozenset": frozenset,
@@ -54,9 +54,6 @@ class PythonSandbox:
         "bytes": bytes,
         "bytearray": bytearray,
         "memoryview": memoryview,
-        "range": range,
-        "len": len,
-        "print": print,
     }
 
     # =========================================================
@@ -71,16 +68,14 @@ class PythonSandbox:
 
         self._validate_ast(code)
 
-        local_env: dict[str, Any] = {}
-
         safe_builtins = dict(self.SAFE_BUILTINS)
         safe_builtins["__import__"] = self._safe_import
 
-        safe_globals = {"__builtins__": safe_builtins}
+        execution_env = {"__builtins__": safe_builtins}
 
-        exec(code, safe_globals, local_env)
+        exec(code, execution_env, execution_env)
 
-        return local_env
+        return execution_env
 
     # =========================================================
     # AST SECURITY
