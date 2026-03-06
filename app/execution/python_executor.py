@@ -59,7 +59,11 @@ class PythonExecutor:
             # ---------------------------------------------------------
             # Execute candidate code
             # ---------------------------------------------------------
+            logger.info(f"Candidate code:\n{code}")
 
+            if "def " not in code:
+                logger.error("Submitted code does not contain a function definition")
+                raise SyntaxError("No Python function detected")
             exec(code, safe_globals, local_env)
 
             logger.debug(f"Local env keys: {list(local_env.keys())}")
