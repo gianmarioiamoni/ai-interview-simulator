@@ -149,6 +149,7 @@ def submit_answer(
         execution_result = flow_engine.execute(
             state,
             session_dto,
+            user_answer,
         )
 
         session_dto = execution_result["session"]
