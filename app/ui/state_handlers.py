@@ -6,6 +6,7 @@ from datetime import datetime
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
+from domain.contracts.question import QuestionType
 
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.ui_state import UIState
@@ -14,11 +15,12 @@ from app.ui.ui_response import UIResponse
 from app.core.flow.interview_flow_engine import InterviewFlowEngine
 from app.core.flow.interview_flow_state import InterviewFlowState
 
+from app.ai.test_generation.ai_test_generator import AITestGenerator
+
 from services.report_export_service import ReportExportService
 
-
 export_service = ReportExportService()
-
+test_generator = AITestGenerator()
 
 # =========================================================
 # START INTERVIEW
@@ -36,6 +38,11 @@ def start_interview(
     interview_type = InterviewType[interview_type_name]
 
     questions = load_sample_questions(interview_type)
+
+    for q in questions:
+        if q.type == QuestionType.CODING:
+            hidden_tests = test_generator.generate_tests(q, num_tests=3)
+            q.hidden_tests = hidden_tests
 
     state = InterviewState.create_initial(
         role_type=role_type,
