@@ -1,8 +1,5 @@
 # app/ai/test_generation/ai_test_generator.py
 
-import json
-import hashlib
-from pathlib import Path
 from typing import List
 
 from domain.contracts.test_case import TestCase
@@ -10,17 +7,28 @@ from domain.contracts.question import Question
 
 from infrastructure.llm.llm_factory import get_llm
 
+from app.ai.test_generation.test_cache_service import TestCacheService
+from app.ai.test_generation.test_diversity_filter import TestDiversityFilter
+
 
 class AITestGenerator:
     # Generates hidden edge-case tests using an LLM.
-    # Results are cached to avoid repeated LLM calls.
-
-    CACHE_FILE = Path("data/ai_test_cache.json")
+    # Pipeline:
+    # Question
+    #   ↓
+    # Cache lookup
+    #   ↓
+    # LLM generation
+    #   ↓
+    # Diversity filter
+    #   ↓
+    # Cache store
 
     def __init__(self):
 
         self._llm = get_llm()
-        self._cache = self._load_cache()
+        self._cache = TestCacheService()
+        self._diversity_filter = TestDiversityFilter()
 
     # =========================================================
     # PUBLIC API
@@ -32,40 +40,39 @@ class AITestGenerator:
         num_tests: int = 3,
     ) -> List[TestCase]:
 
-        cache_key = self._build_cache_key(question, num_tests)
-
         # ---------------------------------------------------------
-        # Cache hit
+        # Cache lookup
         # ---------------------------------------------------------
 
-        if cache_key in self._cache:
+        cached = self._cache.get_tests(question, num_tests)
 
-            cached = self._cache[cache_key]
-
-            return [
-                TestCase(
-                    input=t["input"],
-                    expected_output=t["expected_output"],
-                )
-                for t in cached
-            ]
+        if cached:
+            return cached
 
         # ---------------------------------------------------------
-        # Cache miss → call LLM
+        # LLM generation
         # ---------------------------------------------------------
 
-        tests = self._generate_with_llm(question, num_tests)
+        tests = self._generate_with_llm(question, num_tests * 2)
 
-        # store cache
-        self._cache[cache_key] = [
-            {
-                "input": t.input,
-                "expected_output": t.expected_output,
-            }
-            for t in tests
-        ]
+        # ---------------------------------------------------------
+        # Diversity filter
+        # ---------------------------------------------------------
 
-        self._save_cache()
+        tests = self._diversity_filter.filter(
+            tests,
+            num_tests,
+        )
+
+        # ---------------------------------------------------------
+        # Store cache
+        # ---------------------------------------------------------
+
+        self._cache.store_tests(
+            question,
+            num_tests,
+            tests,
+        )
 
         return tests
 
@@ -80,10 +87,19 @@ class AITestGenerator:
     ) -> List[TestCase]:
 
         prompt = f"""
-Generate {num_tests} edge-case test cases for this coding problem.
+Generate {num_tests} diverse edge-case test cases for this coding problem.
 
 Problem:
 {question.prompt}
+
+Focus on edge cases such as:
+
+- empty input
+- single element
+- repeated values
+- unusual characters
+- boundary values
+- very large input
 
 Return JSON array only:
 
@@ -103,37 +119,3 @@ Return JSON array only:
             )
             for t in tests_json
         ]
-
-    # =========================================================
-    # CACHE MANAGEMENT
-    # =========================================================
-
-    def _build_cache_key(
-        self,
-        question: Question,
-        num_tests: int,
-    ) -> str:
-
-        payload = f"{question.id}:{question.prompt}:{num_tests}"
-
-        return hashlib.sha256(payload.encode()).hexdigest()
-
-    def _load_cache(self) -> dict:
-
-        if not self.CACHE_FILE.exists():
-            return {}
-
-        try:
-
-            with open(self.CACHE_FILE, "r") as f:
-                return json.load(f)
-
-        except Exception:
-            return {}
-
-    def _save_cache(self) -> None:
-
-        self.CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(self.CACHE_FILE, "w") as f:
-            json.dump(self._cache, f, indent=2)
