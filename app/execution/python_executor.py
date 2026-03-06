@@ -198,7 +198,10 @@ class PythonExecutor:
                 if str(result) == test.expected_output:
                     passed += 1
 
-            except Exception:
-                continue
+            except Exception as e:
+                error=traceback.format_exc()
+                print(f"Error executing test: {error}")
+                raise e
+                #continue
 
         return passed, total
