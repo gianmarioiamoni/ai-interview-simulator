@@ -1,6 +1,7 @@
 # app/ai/test_generation/ai_test_generator.py
 
 import json
+import re
 from typing import List
 
 from domain.contracts.test_case import TestCase
@@ -102,8 +103,11 @@ Focus on edge cases such as:
 - boundary values
 - very large input
 
-Return JSON array only:
+You MUST return valid JSON only.
+No explanations.
+No markdown.
 
+Format:
 [
   {{"input": "...", "expected_output": "..."}}
 ]
@@ -124,14 +128,20 @@ Return JSON array only:
         # Parse JSON
         # ---------------------------------------------------------
         try:
-            tests_json = json.loads(content)
+            tests_json = _safe_parse_tests(content)
         except Exception as e:
             print(f"Error parsing JSON: {e}")
             return []
-        
+
         tests: List[TestCase] = []
 
         for t in tests_json:
+
+            if not isinstance(t, dict):
+                continue
+
+            if "input" not in t or "expected_output" not in t:
+                continue
 
             tests.append(
                 TestCase(
@@ -142,3 +152,25 @@ Return JSON array only:
 
         return tests
 
+
+def _safe_parse_tests(content: str):
+
+    content = content.strip()
+
+    # remove markdown blocks
+    if content.startswith("```"):
+        content = re.sub(r"```.*?\n", "", content)
+        content = content.replace("```", "")
+
+    # extract JSON array
+    match = re.search(r"\[.*\]", content, re.DOTALL)
+
+    if not match:
+        raise ValueError("No JSON array found in LLM output")
+
+    json_str = match.group(0)
+
+    try:
+        return json.loads(json_str)
+    except Exception as e:
+        raise ValueError(f"Invalid JSON from LLM: {e}")
