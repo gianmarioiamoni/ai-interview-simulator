@@ -1,5 +1,6 @@
 # app/ai/test_generation/ai_test_generator.py
 
+import json
 from typing import List
 
 from domain.contracts.test_case import TestCase
@@ -110,12 +111,34 @@ Return JSON array only:
 
         response = self._llm.invoke(prompt)
 
-        tests_json = response.json()
+        content = response.content.strip()
+        # ---------------------------------------------------------
+        # Remove markdown code blocks if present
+        # ---------------------------------------------------------
 
-        return [
-            TestCase(
-                input=t["input"],
-                expected_output=t["expected_output"],
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            content = content.replace("json", "").strip()
+
+        # ---------------------------------------------------------
+        # Parse JSON
+        # ---------------------------------------------------------
+        try:
+            tests_json = json.loads(content)
+        except Exception as e:
+            print(f"Error parsing JSON: {e}")
+            return []
+        
+        tests: List[TestCase] = []
+
+        for t in tests_json:
+
+            tests.append(
+                TestCase(
+                    input=str(t["input"]),
+                    expected_output=str(t["expected_output"]),
+                )
             )
-            for t in tests_json
-        ]
+
+        return tests
+
