@@ -1,11 +1,11 @@
+# app/core/evaluation/execution_score_policy.py
+
 from domain.contracts.execution_result import ExecutionResult, ExecutionStatus
 from domain.contracts.question_evaluation import QuestionEvaluation
 
 
 class ExecutionScorePolicy:
-    """
-    Adjusts LLM evaluation score based on execution results.
-    """
+    # Adjusts LLM evaluation score based on execution results.
 
     def apply(
         self,
@@ -17,7 +17,7 @@ class ExecutionScorePolicy:
             return evaluation
 
         # ---------------------------------------------------------
-        # Hard failures
+        # Hard failures (syntax, runtime, timeout, internal error)
         # ---------------------------------------------------------
 
         if execution_result.status in [
@@ -32,8 +32,9 @@ class ExecutionScorePolicy:
             return evaluation.model_copy(
                 update={
                     "score": capped_score,
-                    "feedback": evaluation.feedback
-                    + "\n\n⚠ Execution failed during runtime.",
+                    "feedback": (
+                        evaluation.feedback + "\n\n⚠ Execution failed during runtime."
+                    ),
                 }
             )
 
@@ -53,13 +54,30 @@ class ExecutionScorePolicy:
                 return evaluation.model_copy(
                     update={
                         "score": capped_score,
-                        "feedback": evaluation.feedback
-                        + f"\n\nTests passed: {execution_result.passed_tests}/{execution_result.total_tests}",
+                        "feedback": (
+                            evaluation.feedback
+                            + "\n\n🧪 Test Results\n"
+                            + execution_result.output
+                        ),
                     }
                 )
 
         # ---------------------------------------------------------
         # Successful execution
         # ---------------------------------------------------------
+
+        if execution_result.status == ExecutionStatus.SUCCESS:
+
+            # Always include test results in feedback for transparency
+
+            return evaluation.model_copy(
+                update={
+                    "feedback": (
+                        evaluation.feedback
+                        + "\n\n🧪 Test Results\n"
+                        + execution_result.output
+                    )
+                }
+            )
 
         return evaluation
