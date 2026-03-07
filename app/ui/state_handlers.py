@@ -134,7 +134,7 @@ def submit_answer(
     # Execute coding / database questions
     # ---------------------------------------------------------
 
-    if current_question.type in [QuestionType.CODING, QuestionType.DATABASE]:
+    if current_question.type in [QuestionType.CODING]:
 
         execution_response = flow_engine.execute(
             state,

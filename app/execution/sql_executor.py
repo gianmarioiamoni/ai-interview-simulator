@@ -3,6 +3,7 @@
 import sqlite3
 import time
 import traceback
+import logging
 
 from domain.contracts.question import Question
 from domain.contracts.execution_result import (
@@ -11,10 +12,14 @@ from domain.contracts.execution_result import (
     ExecutionStatus,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class SQLExecutor:
 
     def execute(self, question: Question, query: str) -> ExecutionResult:
+
+        logger.info(f"SQL query received:\n{query}")
 
         start = time.time()
 
