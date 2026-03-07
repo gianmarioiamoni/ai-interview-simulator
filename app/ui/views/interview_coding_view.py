@@ -1,5 +1,3 @@
-# app/ui/views/interview_coding_view.py
-
 import gradio as gr
 
 
@@ -13,10 +11,16 @@ class InterviewCodingView:
 
             question_text = gr.Markdown("")
 
-            code_box = gr.Textbox(
+            # ---------------------------------------------------------
+            # Code editor
+            # ---------------------------------------------------------
+
+            code_box = gr.Code(
                 label="Your Code",
+                language="python",
                 elem_id="code-editor",
                 lines=20,
+                interactive=True,
             )
 
             submit_button = gr.Button("Submit Code")
