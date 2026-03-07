@@ -1,3 +1,5 @@
+# app/ui/state_handlers.py
+
 import os
 from datetime import datetime
 
@@ -107,20 +109,36 @@ def submit_answer(
     user_answer: str,
 ):
 
-    # ---------------------------------------------------------
-    # Store Answer
-    # ---------------------------------------------------------
-
     current_question = state.questions[state.current_question_index]
 
-    answer = Answer(
-        question_id=current_question.id,
-        content=user_answer,
-        attempt=1,
-    )
+    execution_error = None
 
     # ---------------------------------------------------------
-    # Advance interview through controller
+    # Execute coding BEFORE advancing the interview
+    # ---------------------------------------------------------
+
+    if current_question.type == QuestionType.CODING and user_answer.strip():
+
+        answer = Answer(
+            question_id=current_question.id,
+            content=user_answer,
+            attempt=1,
+        )
+
+        # session DTO based on current state
+        session_dto = flow_engine._controller._mapper.to_session_dto(state)
+
+        execution_response = flow_engine.execute(
+            state,
+            session_dto,
+            answer,
+        )
+
+        if "execution_error" in execution_response:
+            execution_error = execution_response["execution_error"]
+
+    # ---------------------------------------------------------
+    # Advance interview normally
     # ---------------------------------------------------------
 
     result = flow_engine.handle_answer(
@@ -129,30 +147,6 @@ def submit_answer(
     )
 
     flow_state = result["flow_state"]
-
-    # ---------------------------------------------------------
-    # Execute coding / database questions
-    # ---------------------------------------------------------
-
-    if current_question.type in [QuestionType.CODING]:
-
-        execution_response = flow_engine.execute(
-            state,
-            result["session"],
-            answer,
-        )
-
-        if "execution_error" in execution_response:
-
-            execution_error = execution_response["execution_error"]
-
-        else:
-
-            execution_error = None
-
-    else:
-
-        execution_error = None
 
     # ---------------------------------------------------------
     # Interview completed
@@ -188,7 +182,7 @@ def submit_answer(
     counter = f"Question {question.index}/{question.total}"
 
     # ---------------------------------------------------------
-    # Retrieve updated evaluation (with execution results)
+    # Retrieve evaluation with execution results
     # ---------------------------------------------------------
 
     evaluation = next(
