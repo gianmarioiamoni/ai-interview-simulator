@@ -1,5 +1,6 @@
 # app/core/flow/interview_flow_engine.py
-import logging 
+
+import logging
 
 from domain.contracts.question import QuestionType
 from domain.contracts.interview_state import InterviewState
@@ -11,6 +12,7 @@ from app.core.flow.interview_flow_state import InterviewFlowState
 from app.core.evaluation.execution_score_policy import ExecutionScorePolicy
 
 from app.execution.execution_router import ExecutionRouter
+
 
 logger = logging.getLogger(__name__)
 
@@ -96,16 +98,22 @@ class InterviewFlowEngine:
         # ---------------------------------------------------------
         # Retrieve domain question from state
         # ---------------------------------------------------------
+
         question = next(
             (q for q in state.questions if q.id == question_dto.question_id),
             None,
         )
+
         if not question:
             raise RuntimeError(f"Question not found: {question_dto.question_id}")
 
+        # ---------------------------------------------------------
+        # Execute candidate code / SQL
+        # ---------------------------------------------------------
+
         result = self._execution_router.execute(
             question,
-            answer,
+            answer.content,
         )
 
         state.execution_results.append(result)
@@ -113,20 +121,35 @@ class InterviewFlowEngine:
         # ---------------------------------------------------------
         # Adjust evaluation using execution result
         # ---------------------------------------------------------
-        if state.evaluations:
-            evaluation = state.evaluations[-1]
-            evaluation = self._execution_score_policy.apply(
-                evaluation,
-                result,
-            )
-            state.evaluations[-1] = evaluation
+
+        for i, evaluation in enumerate(state.evaluations):
+
+            if evaluation.question_id == result.question_id:
+
+                updated = self._execution_score_policy.apply(
+                    evaluation,
+                    result,
+                )
+
+                state.evaluations[i] = updated
+
+                logger.info(
+                    f"Execution policy applied: "
+                    f"{result.passed_tests}/{result.total_tests}"
+                )
+
+                break
+
+        # ---------------------------------------------------------
+        # Execution failure handling
+        # ---------------------------------------------------------
 
         if not result.success:
 
             return {
                 "flow_state": InterviewFlowState.QUESTION,
                 "session": session_dto,
-                "execution_error": result.error if result.error else "Unknown error",
+                "execution_error": (result.error if result.error else "Unknown error"),
             }
 
         return {
@@ -145,7 +168,7 @@ class InterviewFlowEngine:
     # =========================================================
     # EXECUTION ROUTER
     # =========================================================
+
     @property
     def execution_router(self):
         return self._execution_router
-
