@@ -8,6 +8,7 @@
 # Responsibility: immutable per-question evaluation result.
 
 from pydantic import BaseModel, Field
+from typing import Optional
 
 
 class QuestionEvaluation(BaseModel):
@@ -22,5 +23,10 @@ class QuestionEvaluation(BaseModel):
     weaknesses: list[str] = Field(default_factory=list)
 
     passed: bool
+
+    # execution metadata
+    passed_tests: Optional[int] = None
+    total_tests: Optional[int] = None
+    execution_status: Optional[str] = None
 
     model_config = {"frozen": True}

@@ -35,6 +35,9 @@ class ExecutionScorePolicy:
                     "feedback": (
                         evaluation.feedback + "\n\n⚠ Execution failed during runtime."
                     ),
+                    "passed_tests": execution_result.passed_tests,
+                    "total_tests": execution_result.total_tests,
+                    "execution_status": execution_result.status,
                 }
             )
 
@@ -68,6 +71,9 @@ class ExecutionScorePolicy:
                             + "\n\n🧪 Test Results\n"
                             + execution_result.output
                         ),
+                        "passed_tests": execution_result.passed_tests,
+                        "total_tests": execution_result.total_tests,
+                        "execution_status": execution_result.status,
                     }
                 )
 
@@ -90,7 +96,10 @@ class ExecutionScorePolicy:
                         evaluation.feedback
                         + "\n\n🧪 Test Results\n"
                         + execution_result.output
-                    )
+                    ),
+                    "passed_tests": execution_result.passed_tests,
+                    "total_tests": execution_result.total_tests,
+                    "execution_status": execution_result.status,
                 }
             )
 
