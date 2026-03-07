@@ -44,7 +44,16 @@ class ExecutionScorePolicy:
 
         if execution_result.status == ExecutionStatus.FAILED_TESTS:
 
+            print(
+                f"Execution policy applied: FAILED_TESTS"
+                f"{execution_result.passed_tests}/{execution_result.total_tests}"
+            )
+
             if execution_result.total_tests > 0:
+
+                print(
+                    f"Test results: {execution_result.output}"
+                )
 
                 ratio = execution_result.passed_tests / execution_result.total_tests
                 cap = ratio * 100
@@ -67,6 +76,11 @@ class ExecutionScorePolicy:
         # ---------------------------------------------------------
 
         if execution_result.status == ExecutionStatus.SUCCESS:
+
+            print(
+                f"Execution policy applied: SUCCESS"
+                f"{execution_result.passed_tests}/{execution_result.total_tests}"
+            )
 
             # Always include test results in feedback for transparency
 
