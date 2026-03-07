@@ -43,10 +43,6 @@ def start_interview(
 
     questions = load_sample_questions(interview_type)
 
-    # ---------------------------------------------------------
-    # Enrich coding questions with hidden tests
-    # ---------------------------------------------------------
-
     enriched_questions = []
 
     for q in questions:
@@ -63,10 +59,6 @@ def start_interview(
         enriched_questions.append(q)
 
     questions = enriched_questions
-
-    # ---------------------------------------------------------
-    # Create interview state
-    # ---------------------------------------------------------
 
     state = InterviewState.create_initial(
         role_type=role_type,
@@ -140,11 +132,8 @@ def submit_coding_answer(
             attempt=1,
         )
 
-        session_dto = flow_engine._controller._mapper.to_session_dto(state)
-
         execution_response = flow_engine.execute(
             state,
-            session_dto,
             answer,
         )
 
@@ -182,11 +171,8 @@ def submit_database_answer(
             attempt=1,
         )
 
-        session_dto = flow_engine._controller._mapper.to_session_dto(state)
-
         execution_response = flow_engine.execute(
             state,
-            session_dto,
             answer,
         )
 
@@ -240,12 +226,7 @@ def _build_ui_response(state, result, execution_error=None):
         None,
     )
 
-    feedback_text = ""
-
-    if evaluation:
-        feedback_text = evaluation.feedback
-    else:
-        feedback_text = result["feedback"]
+    feedback_text = evaluation.feedback if evaluation else result["feedback"]
 
     if execution_error:
         feedback_text += f"\n\n⚠ Execution error: {execution_error}"
