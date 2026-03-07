@@ -1,5 +1,3 @@
-# app/ui/state_handlers.py
-
 import os
 from datetime import datetime
 
@@ -7,6 +5,7 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
 from domain.contracts.question import QuestionType
+from domain.contracts.answer import Answer
 
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.ui_state import UIState
@@ -44,7 +43,6 @@ def start_interview(
 
     # ---------------------------------------------------------
     # Enrich coding questions with hidden tests
-    # (Question contract is immutable → use model_copy)
     # ---------------------------------------------------------
 
     enriched_questions = []
@@ -110,31 +108,19 @@ def submit_answer(
 ):
 
     # ---------------------------------------------------------
-    # Determine current question BEFORE advancing interview
+    # Store Answer
     # ---------------------------------------------------------
 
     current_question = state.questions[state.current_question_index]
 
-    execution_error = None
+    answer = Answer(
+        question_id=current_question.id,
+        content=user_answer,
+        attempt=1,
+    )
 
     # ---------------------------------------------------------
-    # Execute coding/database BEFORE controller moves index
-    # ---------------------------------------------------------
-
-    if current_question.type in [QuestionType.CODING, QuestionType.DATABASE]:
-
-        execution_result = flow_engine.execution_router.execute(
-            current_question,
-            user_answer,
-        )
-
-        state.execution_results.append(execution_result)
-
-        if not execution_result.success:
-            execution_error = execution_result.error
-
-    # ---------------------------------------------------------
-    # Now advance interview normally
+    # Advance interview through controller
     # ---------------------------------------------------------
 
     result = flow_engine.handle_answer(
@@ -143,6 +129,30 @@ def submit_answer(
     )
 
     flow_state = result["flow_state"]
+
+    # ---------------------------------------------------------
+    # Execute coding / database questions
+    # ---------------------------------------------------------
+
+    if current_question.type in [QuestionType.CODING, QuestionType.DATABASE]:
+
+        execution_response = flow_engine.execute(
+            state,
+            result["session"],
+            answer,
+        )
+
+        if "execution_error" in execution_response:
+
+            execution_error = execution_response["execution_error"]
+
+        else:
+
+            execution_error = None
+
+    else:
+
+        execution_error = None
 
     # ---------------------------------------------------------
     # Interview completed
@@ -171,20 +181,35 @@ def submit_answer(
     # ---------------------------------------------------------
 
     session_dto = result["session"]
-    feedback = result["feedback"]
 
     question = session_dto.current_question
     question_type = question.question_type
 
     counter = f"Question {question.index}/{question.total}"
 
+    # ---------------------------------------------------------
+    # Retrieve updated evaluation (with execution results)
+    # ---------------------------------------------------------
+
+    evaluation = next(
+        (e for e in state.evaluations if e.question_id == current_question.id),
+        None,
+    )
+
+    feedback_text = ""
+
+    if evaluation:
+        feedback_text = evaluation.feedback
+    else:
+        feedback_text = result["feedback"]
+
     if execution_error:
-        feedback = f"{feedback}\n\n⚠ Execution error: {execution_error}"
+        feedback_text += f"\n\n⚠ Execution error: {execution_error}"
 
     return UIResponse(
         state=state,
         question_counter=counter,
-        feedback=f"### Feedback\n\n{feedback}",
+        feedback=f"### Feedback\n\n{feedback_text}",
         written_text=question.text,
         coding_text=question.text,
         database_text=question.text,
