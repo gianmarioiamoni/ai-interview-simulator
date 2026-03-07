@@ -99,11 +99,30 @@ def start_interview(
 
 
 # =========================================================
-# SUBMIT ANSWER
+# SUBMIT WRITTEN ANSWER
 # =========================================================
 
 
-def submit_answer(
+def submit_written_answer(
+    flow_engine: InterviewFlowEngine,
+    state: InterviewState,
+    user_answer: str,
+):
+
+    result = flow_engine.handle_answer(
+        state,
+        user_answer,
+    )
+
+    return _build_ui_response(state, result)
+
+
+# =========================================================
+# SUBMIT CODING ANSWER
+# =========================================================
+
+
+def submit_coding_answer(
     flow_engine: InterviewFlowEngine,
     state: InterviewState,
     user_answer: str,
@@ -113,11 +132,7 @@ def submit_answer(
 
     execution_error = None
 
-    # ---------------------------------------------------------
-    # Execute coding BEFORE advancing the interview
-    # ---------------------------------------------------------
-
-    if current_question.type == QuestionType.CODING and user_answer.strip():
+    if user_answer.strip():
 
         answer = Answer(
             question_id=current_question.id,
@@ -125,7 +140,6 @@ def submit_answer(
             attempt=1,
         )
 
-        # session DTO based on current state
         session_dto = flow_engine._controller._mapper.to_session_dto(state)
 
         execution_response = flow_engine.execute(
@@ -137,20 +151,64 @@ def submit_answer(
         if "execution_error" in execution_response:
             execution_error = execution_response["execution_error"]
 
-    # ---------------------------------------------------------
-    # Advance interview normally
-    # ---------------------------------------------------------
+    result = flow_engine.handle_answer(
+        state,
+        user_answer,
+    )
+
+    return _build_ui_response(state, result, execution_error)
+
+
+# =========================================================
+# SUBMIT DATABASE ANSWER
+# =========================================================
+
+
+def submit_database_answer(
+    flow_engine: InterviewFlowEngine,
+    state: InterviewState,
+    user_answer: str,
+):
+
+    current_question = state.questions[state.current_question_index]
+
+    execution_error = None
+
+    if user_answer.strip():
+
+        answer = Answer(
+            question_id=current_question.id,
+            content=user_answer,
+            attempt=1,
+        )
+
+        session_dto = flow_engine._controller._mapper.to_session_dto(state)
+
+        execution_response = flow_engine.execute(
+            state,
+            session_dto,
+            answer,
+        )
+
+        if "execution_error" in execution_response:
+            execution_error = execution_response["execution_error"]
 
     result = flow_engine.handle_answer(
         state,
         user_answer,
     )
 
-    flow_state = result["flow_state"]
+    return _build_ui_response(state, result, execution_error)
 
-    # ---------------------------------------------------------
-    # Interview completed
-    # ---------------------------------------------------------
+
+# =========================================================
+# BUILD UI RESPONSE
+# =========================================================
+
+
+def _build_ui_response(state, result, execution_error=None):
+
+    flow_state = result["flow_state"]
 
     if flow_state == InterviewFlowState.COMPLETION:
 
@@ -170,10 +228,6 @@ def submit_answer(
             final_feedback=f"### Feedback\n\n{feedback}",
         )
 
-    # ---------------------------------------------------------
-    # Next question
-    # ---------------------------------------------------------
-
     session_dto = result["session"]
 
     question = session_dto.current_question
@@ -181,12 +235,8 @@ def submit_answer(
 
     counter = f"Question {question.index}/{question.total}"
 
-    # ---------------------------------------------------------
-    # Retrieve evaluation with execution results
-    # ---------------------------------------------------------
-
     evaluation = next(
-        (e for e in state.evaluations if e.question_id == current_question.id),
+        (e for e in state.evaluations if e.question_id == question.question_id),
         None,
     )
 
