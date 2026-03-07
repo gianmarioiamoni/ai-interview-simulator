@@ -87,16 +87,21 @@ class InterviewFlowEngine:
     def execute(
         self,
         state: InterviewState,
-        session_dto,
         answer: Answer,
     ):
 
-        logger.info(f"Executing question {session_dto.current_question.question_id}")
+        # ---------------------------------------------------------
+        # Build session DTO internally
+        # ---------------------------------------------------------
+
+        session_dto = self._controller._mapper.to_session_dto(state)
 
         question_dto = session_dto.current_question
 
+        logger.info(f"Executing question {question_dto.question_id}")
+
         # ---------------------------------------------------------
-        # Retrieve domain question from state
+        # Retrieve domain question
         # ---------------------------------------------------------
 
         question = next(
@@ -108,7 +113,7 @@ class InterviewFlowEngine:
             raise RuntimeError(f"Question not found: {question_dto.question_id}")
 
         # ---------------------------------------------------------
-        # Execute candidate code / SQL
+        # Execute code / SQL
         # ---------------------------------------------------------
 
         result = self._execution_router.execute(
@@ -119,7 +124,7 @@ class InterviewFlowEngine:
         state.execution_results.append(result)
 
         # ---------------------------------------------------------
-        # Adjust evaluation using execution result
+        # Apply execution score policy
         # ---------------------------------------------------------
 
         for i, evaluation in enumerate(state.evaluations):
@@ -134,28 +139,22 @@ class InterviewFlowEngine:
                 state.evaluations[i] = updated
 
                 logger.info(
-                    f"Execution policy applied: "
-                    f"{result.passed_tests}/{result.total_tests}"
+                    f"Execution policy applied: {result.passed_tests}/{result.total_tests}"
                 )
 
                 break
 
         # ---------------------------------------------------------
-        # Execution failure handling
+        # Failure handling
         # ---------------------------------------------------------
 
         if not result.success:
 
             return {
-                "flow_state": InterviewFlowState.QUESTION,
-                "session": session_dto,
-                "execution_error": (result.error if result.error else "Unknown error"),
+                "execution_error": result.error if result.error else "Unknown error",
             }
 
-        return {
-            "flow_state": InterviewFlowState.QUESTION,
-            "session": session_dto,
-        }
+        return {}
 
     # =========================================================
     # GENERATE REPORT
