@@ -66,8 +66,8 @@ class TestRunner:
 
         functions = [
             v
-            for v in local_env.values()
-            if inspect.isfunction(v) and v.__module__ == "__main__"
+            for k, v in local_env.items()
+            if inspect.isfunction(v) and not k.startswith("_")
         ]
 
         if not functions:
