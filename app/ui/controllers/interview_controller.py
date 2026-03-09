@@ -19,10 +19,13 @@ from services.interview_evaluation_service import InterviewEvaluationService
 class InterviewController:
 
     def __init__(self, graph, mapper: InterviewStateMapper):
+
         self._graph = graph
         self._mapper = mapper
+
         self._question_eval_service = QuestionEvaluationService()
         self._evaluation_service = InterviewEvaluationService(get_llm())
+
         self._logger = get_logger(__name__)
 
     # ---------------------------------------------------------
@@ -38,7 +41,7 @@ class InterviewController:
         return self._mapper.to_session_dto(updated_state)
 
     # ---------------------------------------------------------
-    # Submit Answer (NO report generation here)
+    # Submit Answer
     # ---------------------------------------------------------
 
     def submit_answer(
@@ -46,12 +49,6 @@ class InterviewController:
         state: InterviewState,
         user_answer: str,
     ) -> tuple[InterviewSessionDTO | None, str, bool]:
-        """
-        Returns:
-        - InterviewSessionDTO | None
-        - feedback string
-        - interview_completed flag
-        """
 
         current_question = state.questions[state.current_question_index]
 
@@ -60,12 +57,15 @@ class InterviewController:
             content=user_answer,
             attempt=1,
         )
+
         state.answers.append(answer)
 
+        # LLM evaluation
         question_eval = self._question_eval_service.evaluate(
             question=current_question,
             answer_text=user_answer,
         )
+
         state.evaluations.append(question_eval)
 
         # Not last question
@@ -77,13 +77,13 @@ class InterviewController:
 
             return session_dto, question_eval.feedback, False
 
-        # Last question → mark completed only
+        # Last question
         state.progress = InterviewProgress.COMPLETED
 
         return None, question_eval.feedback, True
 
     # ---------------------------------------------------------
-    # Generate Final Report (only when user clicks)
+    # Generate Final Report
     # ---------------------------------------------------------
 
     def generate_final_report(self, state: InterviewState) -> FinalReportDTO:

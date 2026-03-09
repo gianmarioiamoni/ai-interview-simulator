@@ -90,20 +90,13 @@ class InterviewFlowEngine:
         answer: Answer,
     ):
 
-        # ---------------------------------------------------------
-        # Build session DTO internally
-        # ---------------------------------------------------------
-
         session_dto = self._controller._mapper.to_session_dto(state)
 
         question_dto = session_dto.current_question
 
         logger.info(f"Executing question {question_dto.question_id}")
 
-        # ---------------------------------------------------------
         # Retrieve domain question
-        # ---------------------------------------------------------
-
         question = next(
             (q for q in state.questions if q.id == question_dto.question_id),
             None,
@@ -124,25 +117,26 @@ class InterviewFlowEngine:
         state.execution_results.append(result)
 
         # ---------------------------------------------------------
-        # Apply execution score policy
+        # Apply execution score policy to LAST evaluation
         # ---------------------------------------------------------
 
-        for i, evaluation in enumerate(state.evaluations):
+        if state.evaluations:
 
-            if evaluation.question_id == result.question_id:
+            last_eval = state.evaluations[-1]
+
+            if last_eval.question_id == result.question_id:
 
                 updated = self._execution_score_policy.apply(
-                    evaluation,
+                    last_eval,
                     result,
                 )
 
-                state.evaluations[i] = updated
+                state.evaluations[-1] = updated
 
                 logger.info(
-                    f"Execution policy applied: {result.passed_tests}/{result.total_tests}"
+                    f"Execution policy applied: "
+                    f"{result.passed_tests}/{result.total_tests}"
                 )
-
-                break
 
         # ---------------------------------------------------------
         # Failure handling
