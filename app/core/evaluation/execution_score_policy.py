@@ -16,6 +16,13 @@ class ExecutionScorePolicy:
         if execution_result is None:
             return evaluation
 
+        # Metadata propagated to QuestionEvaluation
+        execution_metadata = {
+            "passed_tests": execution_result.passed_tests,
+            "total_tests": execution_result.total_tests,
+            "execution_status": execution_result.status.value,
+        }
+
         # ---------------------------------------------------------
         # Hard failures (syntax, runtime, timeout, internal error)
         # ---------------------------------------------------------
@@ -31,13 +38,11 @@ class ExecutionScorePolicy:
 
             return evaluation.model_copy(
                 update={
+                    **execution_metadata,
                     "score": capped_score,
                     "feedback": (
                         evaluation.feedback + "\n\n⚠ Execution failed during runtime."
                     ),
-                    "passed_tests": execution_result.passed_tests,
-                    "total_tests": execution_result.total_tests,
-                    "execution_status": execution_result.status,
                 }
             )
 
@@ -48,34 +53,31 @@ class ExecutionScorePolicy:
         if execution_result.status == ExecutionStatus.FAILED_TESTS:
 
             print(
-                f"Execution policy applied: FAILED_TESTS"
+                f"Execution policy applied: FAILED_TESTS "
                 f"{execution_result.passed_tests}/{execution_result.total_tests}"
             )
 
+            ratio = 0.0
+
             if execution_result.total_tests > 0:
-
-                print(
-                    f"Test results: {execution_result.output}"
-                )
-
                 ratio = execution_result.passed_tests / execution_result.total_tests
-                cap = ratio * 100
 
-                capped_score = min(evaluation.score, cap)
+            cap = ratio * 100
+            capped_score = min(evaluation.score, cap)
 
-                return evaluation.model_copy(
-                    update={
-                        "score": capped_score,
-                        "feedback": (
-                            evaluation.feedback
-                            + "\n\n🧪 Test Results\n"
-                            + execution_result.output
-                        ),
-                        "passed_tests": execution_result.passed_tests,
-                        "total_tests": execution_result.total_tests,
-                        "execution_status": execution_result.status,
-                    }
-                )
+            print(f"Test results: {execution_result.output}")
+
+            return evaluation.model_copy(
+                update={
+                    **execution_metadata,
+                    "score": capped_score,
+                    "feedback": (
+                        evaluation.feedback
+                        + "\n\n🧪 Test Results\n"
+                        + execution_result.output
+                    ),
+                }
+            )
 
         # ---------------------------------------------------------
         # Successful execution
@@ -84,22 +86,18 @@ class ExecutionScorePolicy:
         if execution_result.status == ExecutionStatus.SUCCESS:
 
             print(
-                f"Execution policy applied: SUCCESS"
+                f"Execution policy applied: SUCCESS "
                 f"{execution_result.passed_tests}/{execution_result.total_tests}"
             )
 
-            # Always include test results in feedback for transparency
-
             return evaluation.model_copy(
                 update={
+                    **execution_metadata,
                     "feedback": (
                         evaluation.feedback
                         + "\n\n🧪 Test Results\n"
                         + execution_result.output
                     ),
-                    "passed_tests": execution_result.passed_tests,
-                    "total_tests": execution_result.total_tests,
-                    "execution_status": execution_result.status,
                 }
             )
 
