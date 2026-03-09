@@ -60,12 +60,17 @@ class InterviewStateMapper:
     # ---------------------------------------------------------
 
     def to_final_report_dto(self, state: InterviewState) -> FinalReportDTO:
-
+        for ev in state.evaluations:
+            print(ev.model_dump())
+        
         question_assessments = [
             QuestionAssessmentDTO(
                 question_id=ev.question_id,
                 score=ev.score,
                 feedback=ev.feedback,
+                passed_tests=ev.passed_tests,
+                total_tests=ev.total_tests,
+                execution_status=ev.execution_status,
             )
             for ev in state.evaluations
         ]
