@@ -28,8 +28,5 @@ def ask_question_node(state: InterviewState) -> InterviewState:
         if not has_answer:
             return state
 
-    # Set the current question based on index
-    question = state.questions[state.current_question_index]
-    state.current_question_id = question.id
 
     return state

@@ -17,40 +17,62 @@ from domain.contracts.role import Role, RoleType
 
 class InterviewState(BaseModel):
 
-    # minimal setup already validated in Phase 1
+    # ---------------------------------------------------------
+    # Basic interview configuration
+    # ---------------------------------------------------------
+
     interview_id: str = Field(..., min_length=1)
     role: Role
     company: str = Field(..., min_length=1)
     language: str = Field(default="en")
     interview_type: InterviewType = Field(default=InterviewType.TECHNICAL)
 
-    # progress tracking
+    # ---------------------------------------------------------
+    # Progress tracking
+    # ---------------------------------------------------------
+
     progress: InterviewProgress = Field(default=InterviewProgress.SETUP)
+
     questions: list[Question] = Field(default_factory=list)
     answers: list[Answer] = Field(default_factory=list)
     evaluations: list[QuestionEvaluation] = Field(default_factory=list)
+
     final_evaluation: Optional[InterviewEvaluation] = None
 
-    # conversational memory for humanizer
+    # ---------------------------------------------------------
+    # Conversational memory (humanizer)
+    # ---------------------------------------------------------
+
     chat_history: list[str] = Field(default_factory=list)
 
-    # pointer to the current question
-    current_question_id: Optional[str] = None
+    # ---------------------------------------------------------
+    # Execution engines
+    # ---------------------------------------------------------
 
-    # governance follow-up
-    follow_up_count: int = Field(default=0, ge=0, le=2)
-
-    # execution engines
     execution_results: list[ExecutionResult] = Field(default_factory=list)
 
-    # runtime orchestration state for LangGraph
+    # ---------------------------------------------------------
+    # LangGraph orchestration
+    # ---------------------------------------------------------
+
     current_question_index: int = Field(default=0, ge=0)
+
+    follow_up_count: int = Field(default=0, ge=0, le=2)
     last_was_follow_up: bool = Field(default=False)
 
-    # option to enable humanizer
+    awaiting_user_input: bool = False
+
+    # ---------------------------------------------------------
+    # Feature flags
+    # ---------------------------------------------------------
+
     enable_humanizer: bool = True
 
-    awaiting_user_input: bool = False
+    # ---------------------------------------------------------
+    # Derived scoring
+    # ---------------------------------------------------------
+
+    total_score: float = Field(default=0.0, ge=0.0, le=100.0)
 
     model_config = {
         "arbitrary_types_allowed": False,
@@ -58,23 +80,46 @@ class InterviewState(BaseModel):
     }
 
     # ---------------------------------------------------------
-    # Derived scoring (read-only)
+    # Computed properties
     # ---------------------------------------------------------
 
-    total_score: float = Field(default=0.0, ge=0.0, le=100.0)
     @property
     def computed_total_score(self) -> float:
+
         if not self.evaluations:
             return 0.0
-        average = sum(ev.score for ev in self.evaluations) / len(self.evaluations)
 
-        # defensive bounding
-        return max(0.0, min(100.0, average))
+        avg = sum(ev.score for ev in self.evaluations) / len(self.evaluations)
 
+        return max(0.0, min(100.0, avg))
 
     # ---------------------------------------------------------
-    # Last answer and current question
+
+    @property
+    def current_question(self) -> Optional[Question]:
+
+        if not self.questions:
+            return None
+
+        if self.current_question_index >= len(self.questions):
+            return None
+
+        return self.questions[self.current_question_index]
+
     # ---------------------------------------------------------
+
+    @property
+    def current_question_id(self) -> Optional[str]:
+
+        question = self.current_question
+
+        if question is None:
+            return None
+
+        return question.id
+
+    # ---------------------------------------------------------
+
     @property
     def last_answer(self) -> Optional[Answer]:
 
@@ -83,14 +128,26 @@ class InterviewState(BaseModel):
 
         return self.answers[-1]
 
+    # ---------------------------------------------------------
 
     @property
-    def current_question(self) -> Optional[Question]:
+    def last_evaluation(self) -> Optional[QuestionEvaluation]:
 
-        if self.current_question_index >= len(self.questions):
+        if not self.evaluations:
             return None
 
-        return self.questions[self.current_question_index]
+        return self.evaluations[-1]
+
+    # ---------------------------------------------------------
+
+    @property
+    def last_execution(self) -> Optional[ExecutionResult]:
+
+        if not self.execution_results:
+            return None
+
+        return self.execution_results[-1]
+
     # ---------------------------------------------------------
     # Progress consistency
     # ---------------------------------------------------------
@@ -134,5 +191,4 @@ class InterviewState(BaseModel):
             language=language,
             questions=questions,
             progress=InterviewProgress.SETUP,
-            execution_results=[],
         )
