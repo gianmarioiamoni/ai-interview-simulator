@@ -13,16 +13,20 @@ from app.ui.sample_data_loader import load_sample_questions
 from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
 
-from app.core.flow.interview_flow_engine import InterviewFlowEngine
-from app.core.flow.interview_flow_state import InterviewFlowState
+from app.graph.interview_graph import build_interview_graph
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
 from services.report_export_service import ReportExportService
+from services.interview_evaluation_service import InterviewEvaluationService
+
+from infrastructure.llm.llm_factory import get_llm
+from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 
 export_service = ReportExportService()
 test_generator = AITestGenerator()
+mapper = InterviewStateMapper()
 
 
 # =========================================================
@@ -31,7 +35,6 @@ test_generator = AITestGenerator()
 
 
 def start_interview(
-    flow_engine: InterviewFlowEngine,
     role_name: str,
     interview_type_name: str,
     company: str,
@@ -69,9 +72,11 @@ def start_interview(
         interview_id="session-1",
     )
 
-    result = flow_engine.start(state)
+    graph = build_interview_graph(get_llm())
 
-    session_dto = result["session"]
+    state = graph.invoke(state)
+
+    session_dto = mapper.to_session_dto(state)
 
     question = session_dto.current_question
     question_type = question.question_type
@@ -91,74 +96,75 @@ def start_interview(
 
 
 # =========================================================
-# GENERIC ANSWER SUBMIT 
+# GENERIC ANSWER SUBMIT
 # =========================================================
 
+
 def submit_written_answer(
-    flow_engine: InterviewFlowEngine,
     state: InterviewState,
     user_answer: str,
 ):
 
-    result = flow_engine.process_answer(
-        state,
-        user_answer,
-    )
-
-    return _build_ui_response(
-        state,
-        result,
-        result.get("execution_error"),
-    )
+    return _submit_answer(state, user_answer)
 
 
 def submit_coding_answer(
-    flow_engine: InterviewFlowEngine,
     state: InterviewState,
     user_answer: str,
 ):
 
-    result = flow_engine.process_answer(
-        state,
-        user_answer,
-    )
-
-    return _build_ui_response(
-        state,
-        result,
-        result.get("execution_error"),
-    )
+    return _submit_answer(state, user_answer)
 
 
 def submit_database_answer(
-    flow_engine: InterviewFlowEngine,
     state: InterviewState,
     user_answer: str,
 ):
 
-    result = flow_engine.process_answer(
-        state,
-        user_answer,
-    )
-
-    return _build_ui_response(
-        state,
-        result,
-        result.get("execution_error"),
-    )
+    return _submit_answer(state, user_answer)
 
 
 # =========================================================
-# BUILD UI RESPONSE
+# INTERNAL ANSWER HANDLER
 # =========================================================
 
-def _build_ui_response(state, result, execution_error=None):
 
-    flow_state = result["flow_state"]
+def _submit_answer(state: InterviewState, user_answer: str):
 
-    if flow_state == InterviewFlowState.COMPLETION:
+    question = state.current_question
 
-        feedback = result["feedback"]
+    if question is None:
+        raise RuntimeError("No current question available")
+
+    answer = Answer(
+        question_id=question.id,
+        content=user_answer,
+        attempt=1,
+    )
+
+    state.answers.append(answer)
+
+    graph = build_interview_graph(get_llm())
+
+    state = graph.invoke(state)
+
+    session_dto = mapper.to_session_dto(state)
+
+    execution_error = None
+
+    feedback = ""
+
+    if state.evaluations:
+        feedback = state.evaluations[-1].feedback
+
+    if state.execution_results:
+        last_execution = state.execution_results[-1]
+        if not last_execution.success:
+            execution_error = last_execution.error
+
+    completed = state.progress.name == "COMPLETED"
+
+    if completed:
 
         return UIResponse(
             state=state,
@@ -174,27 +180,15 @@ def _build_ui_response(state, result, execution_error=None):
             final_feedback=f"### Feedback\n\n{feedback}",
         )
 
-    session_dto = result["session"]
-
     question = session_dto.current_question
     question_type = question.question_type
 
     counter = f"Question {question.index}/{question.total}"
 
-    evaluation = next(
-        (e for e in state.evaluations if e.question_id == question.question_id),
-        None,
-    )
-
-    feedback_text = evaluation.feedback if evaluation else result["feedback"]
-
-    if execution_error:
-        feedback_text += f"\n\n⚠ Execution error: {execution_error}"
-
     return UIResponse(
         state=state,
         question_counter=counter,
-        feedback=f"### Feedback\n\n{feedback_text}",
+        feedback=f"### Feedback\n\n{feedback}",
         written_text=question.text,
         coding_text=question.text,
         database_text=question.text,
@@ -209,12 +203,25 @@ def _build_ui_response(state, result, execution_error=None):
 # EXPORT PDF
 # =========================================================
 
+
 def export_pdf(
-    flow_engine: InterviewFlowEngine,
     state: InterviewState,
 ) -> str:
 
-    report = flow_engine.generate_report(state)
+    evaluation_service = InterviewEvaluationService(get_llm())
+
+    if state.final_evaluation is None:
+
+        final_eval = evaluation_service.evaluate(
+            per_question_evaluations=state.evaluations,
+            questions=state.questions,
+            interview_type=state.interview_type,
+            role=state.role.type,
+        )
+
+        state.final_evaluation = final_eval
+
+    report = mapper.to_final_report_dto(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
 
@@ -233,11 +240,23 @@ def export_pdf(
 
 
 def export_json(
-    flow_engine: InterviewFlowEngine,
     state: InterviewState,
 ) -> str:
 
-    report = flow_engine.generate_report(state)
+    evaluation_service = InterviewEvaluationService(get_llm())
+
+    if state.final_evaluation is None:
+
+        final_eval = evaluation_service.evaluate(
+            per_question_evaluations=state.evaluations,
+            questions=state.questions,
+            interview_type=state.interview_type,
+            role=state.role.type,
+        )
+
+        state.final_evaluation = final_eval
+
+    report = mapper.to_final_report_dto(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
 
