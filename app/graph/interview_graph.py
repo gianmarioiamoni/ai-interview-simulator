@@ -34,10 +34,7 @@ def build_interview_graph(llm):
         lambda state: (
             "execution"
             if state.current_question_id
-            and next(
-                q for q in state.questions if q.id == state.current_question_id
-            ).type
-            in ["coding", "sql"]
+            and state.current_question.type in ["coding", "sql"]
             else "evaluator"
         ),
     )
