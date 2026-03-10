@@ -12,6 +12,8 @@ from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from app.core.logger import get_logger
 
+from services.evaluation_engine import EvaluationEngine
+
 from services.question_evaluation_service import QuestionEvaluationService
 from services.interview_evaluation_service import InterviewEvaluationService
 
@@ -23,7 +25,7 @@ class InterviewController:
         self._graph = graph
         self._mapper = mapper
 
-        self._question_eval_service = QuestionEvaluationService()
+        self._evaluation_engine = EvaluationEngine()
         self._evaluation_service = InterviewEvaluationService(get_llm())
 
         self._logger = get_logger(__name__)
@@ -61,7 +63,7 @@ class InterviewController:
         state.answers.append(answer)
 
         # LLM evaluation
-        question_eval = self._question_eval_service.evaluate(
+        question_eval = self._evaluation_engine.evaluate(
             question=current_question,
             answer_text=user_answer,
         )
