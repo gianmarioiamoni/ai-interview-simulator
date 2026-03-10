@@ -71,6 +71,26 @@ class InterviewState(BaseModel):
         # defensive bounding
         return max(0.0, min(100.0, average))
 
+
+    # ---------------------------------------------------------
+    # Last answer and current question
+    # ---------------------------------------------------------
+    @property
+    def last_answer(self) -> Optional[Answer]:
+
+        if not self.answers:
+            return None
+
+        return self.answers[-1]
+
+
+    @property
+    def current_question(self) -> Optional[Question]:
+
+        if self.current_question_index >= len(self.questions):
+            return None
+
+        return self.questions[self.current_question_index]
     # ---------------------------------------------------------
     # Progress consistency
     # ---------------------------------------------------------
