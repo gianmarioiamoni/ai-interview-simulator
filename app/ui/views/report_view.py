@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 # Utility: Matplotlib → Base64
 # =========================================================
 
+
 def _fig_to_base64(fig) -> str:
     buf = io.BytesIO()
     fig.savefig(buf, format="png", bbox_inches="tight")
@@ -83,7 +84,6 @@ def _badge(value: str, color: str) -> str:
 </span>
 """
 
-
 def _score_badge(score: float) -> str:
     if score >= 80:
         return _badge(f"{score}/100", "#16a34a")
@@ -117,6 +117,31 @@ def _confidence_bar(conf: float) -> str:
 
 
 # =========================================================
+# Test Progress Bar (NEW)
+# =========================================================
+
+def _test_progress_bar(passed: int, total: int) -> str:
+
+    if total == 0:
+        percent = 0
+    else:
+        percent = (passed / total) * 100
+
+    color = "#16a34a" if passed == total else "#ca8a04"
+
+    return f"""
+<div style="margin-top:6px;">
+    <div style="background:#e5e7eb;height:12px;border-radius:6px;">
+        <div style="width:{percent}%;background:{color};height:12px;border-radius:6px;"></div>
+    </div>
+    <div style="margin-top:4px;font-size:13px;">
+        {passed} / {total} tests passed
+    </div>
+</div>
+"""
+
+
+# =========================================================
 # MAIN RENDER
 # =========================================================
 
@@ -143,17 +168,16 @@ def build_report_markdown(report) -> str:
 
         execution_block = ""
 
-        # Structured test results
         if q.passed_tests is not None and q.total_tests is not None:
 
             execution_block += f"""
 <br>
 
-<strong>Test Results:</strong><br>
-Passed: {_badge(f"{q.passed_tests} / {q.total_tests}", "#2563eb")}
+<strong>Test Results</strong>
+
+{_test_progress_bar(q.passed_tests, q.total_tests)}
 """
 
-        # Execution status
         if q.execution_status:
 
             status_color = "#16a34a" if q.execution_status == "success" else "#dc2626"
