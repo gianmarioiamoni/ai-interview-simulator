@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 # Utility: Matplotlib → Base64
 # =========================================================
 
-
 def _fig_to_base64(fig) -> str:
     buf = io.BytesIO()
     fig.savefig(buf, format="png", bbox_inches="tight")
@@ -24,7 +23,6 @@ def _fig_to_base64(fig) -> str:
 # =========================================================
 # Radar Chart
 # =========================================================
-
 
 def _radar_chart(dimensions: list[str], scores: list[float]) -> str:
 
@@ -49,7 +47,6 @@ def _radar_chart(dimensions: list[str], scores: list[float]) -> str:
 # Percentile Gaussian Curve
 # =========================================================
 
-
 def _percentile_distribution(
     score: float, percentile: float, mean: float = 63, std: float = 14
 ) -> str:
@@ -72,7 +69,6 @@ def _percentile_distribution(
 # =========================================================
 # Score Badges
 # =========================================================
-
 
 def _badge(value: str, color: str) -> str:
     return f"""
@@ -100,7 +96,6 @@ def _score_badge(score: float) -> str:
 # Confidence Bar
 # =========================================================
 
-
 def _confidence_bar(conf: float) -> str:
     percent = round(conf * 100, 1)
 
@@ -125,7 +120,6 @@ def _confidence_bar(conf: float) -> str:
 # MAIN RENDER
 # =========================================================
 
-
 def build_report_markdown(report) -> str:
 
     dimensions = [d.name for d in report.dimension_scores]
@@ -139,14 +133,44 @@ def build_report_markdown(report) -> str:
         report.overall_score, report.percentile_rank
     )
 
+    # =========================================================
+    # Question Blocks
+    # =========================================================
+
     question_block = ""
+
     for q in report.question_assessments:
+
+        execution_block = ""
+
+        # Structured test results
+        if q.passed_tests is not None and q.total_tests is not None:
+
+            execution_block += f"""
+<br>
+
+<strong>Test Results:</strong><br>
+Passed: {_badge(f"{q.passed_tests} / {q.total_tests}", "#2563eb")}
+"""
+
+        # Execution status
+        if q.execution_status:
+
+            status_color = "#16a34a" if q.execution_status == "success" else "#dc2626"
+
+            execution_block += f"""
+<br>
+<strong>Execution Status:</strong> {_badge(q.execution_status.upper(), status_color)}
+"""
+
         question_block += f"""
 ### Question {q.question_id}
 
 Score: {_score_badge(q.score)}
 
 {q.feedback}
+
+{execution_block}
 """
 
     improvements = "\n".join([f"- {i}" for i in report.improvement_suggestions])
