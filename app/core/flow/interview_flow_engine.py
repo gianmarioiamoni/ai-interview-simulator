@@ -74,7 +74,7 @@ class InterviewFlowEngine:
                 attempt=1,
             )
 
-            result = self._execution_router.execute(
+            result = self._execution_engine.execute(
                 current_question,
                 user_answer,
             )
@@ -154,5 +154,5 @@ class InterviewFlowEngine:
     # =========================================================
 
     @property
-    def execution_router(self):
-        return self._execution_router
+    def execution_engine(self):
+        return self._execution_engine
