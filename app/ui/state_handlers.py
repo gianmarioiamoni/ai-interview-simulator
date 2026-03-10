@@ -91,9 +91,8 @@ def start_interview(
 
 
 # =========================================================
-# SUBMIT WRITTEN ANSWER
+# GENERIC ANSWER SUBMIT 
 # =========================================================
-
 
 def submit_written_answer(
     flow_engine: InterviewFlowEngine,
@@ -101,17 +100,17 @@ def submit_written_answer(
     user_answer: str,
 ):
 
-    result = flow_engine.handle_answer(
+    result = flow_engine.process_answer(
         state,
         user_answer,
     )
 
-    return _build_ui_response(state, result)
+    return _build_ui_response(
+        state,
+        result,
+        result.get("execution_error"),
+    )
 
-
-# =========================================================
-# SUBMIT CODING ANSWER
-# =========================================================
 
 def submit_coding_answer(
     flow_engine: InterviewFlowEngine,
@@ -119,39 +118,16 @@ def submit_coding_answer(
     user_answer: str,
 ):
 
-    # Save current question BEFORE handle_answer moves the index
-    current_question = state.questions[state.current_question_index]
-
-    execution_error = None
-
-    # STEP 1 — create evaluation
-    result = flow_engine.handle_answer(
+    result = flow_engine.process_answer(
         state,
         user_answer,
     )
 
-    # STEP 2 — run execution using saved question
-    if user_answer.strip():
-
-        answer = Answer(
-            question_id=current_question.id,
-            content=user_answer,
-            attempt=1,
-        )
-
-        execution_response = flow_engine.execute(
-            state,
-            answer,
-        )
-
-        if "execution_error" in execution_response:
-            execution_error = execution_response["execution_error"]
-
-    return _build_ui_response(state, result, execution_error)
-
-# =========================================================
-# SUBMIT DATABASE ANSWER
-# =========================================================
+    return _build_ui_response(
+        state,
+        result,
+        result.get("execution_error"),
+    )
 
 
 def submit_database_answer(
@@ -160,38 +136,21 @@ def submit_database_answer(
     user_answer: str,
 ):
 
-    current_question = state.questions[state.current_question_index]
-
-    execution_error = None
-
-    result = flow_engine.handle_answer(
+    result = flow_engine.process_answer(
         state,
         user_answer,
     )
 
-    if user_answer.strip():
-
-        answer = Answer(
-            question_id=current_question.id,
-            content=user_answer,
-            attempt=1,
-        )
-
-        execution_response = flow_engine.execute(
-            state,
-            answer,
-        )
-
-        if "execution_error" in execution_response:
-            execution_error = execution_response["execution_error"]
-
-    return _build_ui_response(state, result, execution_error)
+    return _build_ui_response(
+        state,
+        result,
+        result.get("execution_error"),
+    )
 
 
 # =========================================================
 # BUILD UI RESPONSE
 # =========================================================
-
 
 def _build_ui_response(state, result, execution_error=None):
 
@@ -249,7 +208,6 @@ def _build_ui_response(state, result, execution_error=None):
 # =========================================================
 # EXPORT PDF
 # =========================================================
-
 
 def export_pdf(
     flow_engine: InterviewFlowEngine,

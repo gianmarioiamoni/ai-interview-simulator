@@ -7,10 +7,8 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.answer import Answer
 
 from app.ui.controllers.interview_controller import InterviewController
-
 from app.core.flow.interview_flow_state import InterviewFlowState
 from app.core.evaluation.execution_score_policy import ExecutionScorePolicy
-
 from app.execution.execution_router import ExecutionRouter
 
 
@@ -39,19 +37,79 @@ class InterviewFlowEngine:
         }
 
     # =========================================================
-    # HANDLE ANSWER
+    # PROCESS ANSWER (NEW CENTRAL PIPELINE)
     # =========================================================
 
-    def handle_answer(
+    def process_answer(
         self,
         state: InterviewState,
-        answer: str,
+        user_answer: str,
     ):
+
+        current_question = state.questions[state.current_question_index]
+
+        # ---------------------------------------------
+        # Step 1 — Evaluate answer (LLM)
+        # ---------------------------------------------
 
         session_dto, feedback, completed = self._controller.submit_answer(
             state,
-            answer,
+            user_answer,
         )
+
+        # ---------------------------------------------
+        # Step 2 — Execute if coding/database question
+        # ---------------------------------------------
+
+        execution_error = None
+
+        if current_question.type in [
+            QuestionType.CODING,
+            QuestionType.DATABASE,
+        ]:
+
+            answer = Answer(
+                question_id=current_question.id,
+                content=user_answer,
+                attempt=1,
+            )
+
+            result = self._execution_router.execute(
+                current_question,
+                user_answer,
+            )
+
+            state.execution_results.append(result)
+
+            # -----------------------------------------
+            # Step 3 — Apply execution score policy
+            # -----------------------------------------
+
+            if state.evaluations:
+
+                last_eval = state.evaluations[-1]
+
+                if last_eval.question_id == result.question_id:
+
+                    updated = self._execution_score_policy.apply(
+                        last_eval,
+                        result,
+                    )
+
+                    state.evaluations[-1] = updated
+
+                    logger.info(
+                        f"Execution policy applied: "
+                        f"{result.passed_tests}/{result.total_tests}"
+                    )
+
+            if not result.success:
+
+                execution_error = result.error if result.error else "Unknown error"
+
+        # ---------------------------------------------
+        # Step 4 — Flow state
+        # ---------------------------------------------
 
         if completed:
 
@@ -59,6 +117,7 @@ class InterviewFlowEngine:
                 "flow_state": InterviewFlowState.COMPLETION,
                 "feedback": feedback,
                 "session": session_dto,
+                "execution_error": execution_error,
             }
 
         question = session_dto.current_question
@@ -72,82 +131,18 @@ class InterviewFlowEngine:
                 "flow_state": InterviewFlowState.EXECUTION,
                 "feedback": feedback,
                 "session": session_dto,
+                "execution_error": execution_error,
             }
 
         return {
             "flow_state": InterviewFlowState.QUESTION,
             "feedback": feedback,
             "session": session_dto,
+            "execution_error": execution_error,
         }
 
     # =========================================================
-    # EXECUTE QUESTION
-    # =========================================================
-
-    def execute(
-        self,
-        state: InterviewState,
-        answer: Answer,
-    ):
-
-        logger.info(f"Executing question {answer.question_id}")
-
-        # Retrieve domain question
-        question = next(
-            (q for q in state.questions if q.id == answer.question_id),
-            None,
-        )
-
-        if not question:
-            raise RuntimeError(f"Question not found: {answer.question_id}")
-
-        # ---------------------------------------------------------
-        # Execute code / SQL
-        # ---------------------------------------------------------
-
-        result = self._execution_router.execute(
-            question,
-            answer.content,
-        )
-
-        state.execution_results.append(result)
-
-        # ---------------------------------------------------------
-        # Apply execution score policy to LAST evaluation
-        # ---------------------------------------------------------
-
-        if state.evaluations:
-
-            last_eval = state.evaluations[-1]
-
-            if last_eval.question_id == result.question_id:
-
-                updated = self._execution_score_policy.apply(
-                    last_eval,
-                    result,
-                )
-
-                state.evaluations[-1] = updated
-
-                logger.info(
-                    f"Execution policy applied: "
-                    f"{result.passed_tests}/{result.total_tests}"
-                )
-
-        # ---------------------------------------------------------
-        # Failure handling
-        # ---------------------------------------------------------
-
-        if not result.success:
-
-            return {
-                "execution_error": result.error if result.error else "Unknown error",
-            }
-
-        return {}
-
-    # =========================================================
-    # GENERATE REPORT
+    # REPORT
     # =========================================================
 
     def generate_report(self, state: InterviewState):
@@ -155,7 +150,7 @@ class InterviewFlowEngine:
         return self._controller.generate_final_report(state)
 
     # =========================================================
-    # EXECUTION ROUTER
+    # ROUTER ACCESS
     # =========================================================
 
     @property
