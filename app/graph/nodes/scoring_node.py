@@ -34,7 +34,4 @@ def scoring_node(state: InterviewState) -> InterviewState:
             else:
                 state.total_score = state.computed_total_score
 
-    # Note: current_question_index is managed by evaluator_node
-    # to handle both regular questions and follow-ups correctly
-
     return state
