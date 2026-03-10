@@ -9,7 +9,7 @@ from domain.contracts.answer import Answer
 from app.ui.controllers.interview_controller import InterviewController
 from app.core.flow.interview_flow_state import InterviewFlowState
 from app.core.evaluation.execution_score_policy import ExecutionScorePolicy
-from app.execution.execution_router import ExecutionRouter
+from services.execution_engine import ExecutionEngine
 
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class InterviewFlowEngine:
     def __init__(self, controller: InterviewController):
 
         self._controller = controller
-        self._execution_router = ExecutionRouter()
+        self._execution_engine = ExecutionEngine()
         self._execution_score_policy = ExecutionScorePolicy()
 
     # =========================================================
