@@ -1,4 +1,4 @@
-# app/execution/execution_router.py
+# services/execution_engine.py
 
 import logging
 
@@ -12,7 +12,8 @@ from app.execution.sql_executor import SQLExecutor
 logger = logging.getLogger(__name__)
 
 
-class ExecutionRouter:
+class ExecutionEngine:
+    # Routes execution of coding and SQL answers.
 
     def __init__(self):
 
@@ -25,7 +26,7 @@ class ExecutionRouter:
         answer: str,
     ) -> ExecutionResult:
 
-        logger.info(f"Routing execution for question {question.id}")
+        logger.info(f"ExecutionEngine routing execution for question {question.id}")
 
         if question.type == QuestionType.CODING:
             return self._python_executor.execute(question, answer)
@@ -34,5 +35,5 @@ class ExecutionRouter:
             return self._sql_executor.execute(question, answer)
 
         raise ValueError(
-            f"ExecutionRouter cannot execute question type: {question.type}"
+            f"ExecutionEngine cannot execute question type: {question.type}"
         )
