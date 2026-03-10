@@ -119,17 +119,18 @@ def submit_coding_answer(
     user_answer: str,
 ):
 
+    # Save current question BEFORE handle_answer moves the index
     current_question = state.questions[state.current_question_index]
 
     execution_error = None
 
-    # STEP 1 — create evaluation first
+    # STEP 1 — create evaluation
     result = flow_engine.handle_answer(
         state,
         user_answer,
     )
 
-    # STEP 2 — run execution AFTER evaluation exists
+    # STEP 2 — run execution using saved question
     if user_answer.strip():
 
         answer = Answer(
@@ -148,10 +149,10 @@ def submit_coding_answer(
 
     return _build_ui_response(state, result, execution_error)
 
-
 # =========================================================
 # SUBMIT DATABASE ANSWER
 # =========================================================
+
 
 def submit_database_answer(
     flow_engine: InterviewFlowEngine,
