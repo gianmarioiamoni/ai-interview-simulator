@@ -90,20 +90,16 @@ class InterviewFlowEngine:
         answer: Answer,
     ):
 
-        session_dto = self._controller._mapper.to_session_dto(state)
-
-        question_dto = session_dto.current_question
-
-        logger.info(f"Executing question {question_dto.question_id}")
+        logger.info(f"Executing question {answer.question_id}")
 
         # Retrieve domain question
         question = next(
-            (q for q in state.questions if q.id == question_dto.question_id),
+            (q for q in state.questions if q.id == answer.question_id),
             None,
         )
 
         if not question:
-            raise RuntimeError(f"Question not found: {question_dto.question_id}")
+            raise RuntimeError(f"Question not found: {answer.question_id}")
 
         # ---------------------------------------------------------
         # Execute code / SQL
