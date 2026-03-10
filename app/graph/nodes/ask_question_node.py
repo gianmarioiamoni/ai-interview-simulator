@@ -1,32 +1,32 @@
 # app/graph/nodes/ask_question_node.py
 
-# AskQuestionNode
-#
-# Responsibility:
-# Set current question pointer
-# Do not touch followup_count
-
 from domain.contracts.interview_state import InterviewState
 
 
 def ask_question_node(state: InterviewState) -> InterviewState:
-    # If interview has no questions
+
+    # No questions
     if not state.questions:
         return state
 
-    # Guard if already finished
+    # Interview finished
     if state.current_question_index >= len(state.questions):
         return state
 
-    # If we already have a current_question_id set and no answer for it,
-    # we're waiting for the user response - don't change anything
-    if state.current_question_id:
-        has_answer = any(
-            a.question_id == state.current_question_id for a in state.answers
-        )
-        state.awaiting_user_input = True
-        if not has_answer:
-            return state
+    question = state.current_question
 
+    if question is None:
+        return state
+
+    # Check if we already have an answer for the current question
+    has_answer = any(a.question_id == question.id for a in state.answers)
+
+    # If no answer yet → wait for user input
+    if not has_answer:
+        state.awaiting_user_input = True
+        return state
+
+    # If answer already exists → allow pipeline to continue
+    state.awaiting_user_input = False
 
     return state
