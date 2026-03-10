@@ -7,7 +7,8 @@ from app.graph.nodes.ask_question_node import ask_question_node
 from app.graph.nodes.execution_node import execution_node
 from app.graph.nodes.scoring_node import scoring_node
 from app.graph.nodes.termination_node import termination_node
-from app.graph.nodes.evaluator_node import build_evaluator_node
+from app.graph.nodes.evaluate_node import build_evaluate_node
+from app.graph.nodes.progression_node import build_progression_node
 from app.graph.nodes.humanizer_node import build_humanizer_node
 
 
@@ -15,14 +16,16 @@ def build_interview_graph(llm):
 
     graph = StateGraph(InterviewState)
 
-    evaluator_node = build_evaluator_node(llm)
+    evaluate_node = build_evaluate_node(llm)
     humanizer_node = build_humanizer_node(llm)
+    progression_node = build_progression_node()
 
     graph.add_node("ask_question", ask_question_node)
     graph.add_node("humanizer", humanizer_node)
     graph.add_node("execution", execution_node)
-    graph.add_node("evaluator", evaluator_node)
+    graph.add_node("evaluate", evaluate_node)
     graph.add_node("scoring", scoring_node)
+    graph.add_node("progression", progression_node)
     graph.add_node("termination", termination_node)
 
     graph.set_entry_point("ask_question")
@@ -33,15 +36,17 @@ def build_interview_graph(llm):
         "humanizer",
         lambda state: (
             "execution"
-            if state.current_question_id
-            and state.current_question.type in ["coding", "sql"]
-            else "evaluator"
+            if state.current_question
+            and state.current_question.type.value in ["coding", "database"]
+            else "evaluate"
         ),
     )
 
     graph.add_edge("execution", "scoring")
-    graph.add_edge("evaluator", "scoring")
-    graph.add_edge("scoring", "termination")
+    graph.add_edge("evaluate", "scoring")
+
+    graph.add_edge("scoring", "progression")
+    graph.add_edge("progression", "termination")
 
     graph.add_conditional_edges(
         "termination",
@@ -52,24 +57,4 @@ def build_interview_graph(llm):
         ),
     )
 
-    compiled = graph.compile()
-
-    # Save original invoke to avoid recursion
-    original_invoke = compiled.invoke
-
-    def invoke_with_model(state: InterviewState | dict) -> InterviewState:
-        # Normalize input
-        if isinstance(state, dict):
-            state = InterviewState.model_validate(state)
-
-        result = original_invoke(state)
-
-        # Normalize output
-        if isinstance(result, dict):
-            return InterviewState.model_validate(result)
-
-        return result
-
-    compiled.invoke = invoke_with_model
-
-    return compiled
+    return graph.compile()
