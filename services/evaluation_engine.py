@@ -7,12 +7,9 @@ from services.question_evaluation_service import QuestionEvaluationService
 
 
 class EvaluationEngine:
-    """
-    Application-level engine responsible for evaluating answers.
-
-    Wraps QuestionEvaluationService so the evaluation logic
-    can later be reused inside LangGraph nodes.
-    """
+    # Application-level engine responsible for evaluating answers.
+    # Wraps QuestionEvaluationService so the evaluation logic
+    # can later be reused inside LangGraph nodes.
 
     def __init__(self, service: QuestionEvaluationService | None = None):
 
