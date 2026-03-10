@@ -113,7 +113,6 @@ def submit_written_answer(
 # SUBMIT CODING ANSWER
 # =========================================================
 
-
 def submit_coding_answer(
     flow_engine: InterviewFlowEngine,
     state: InterviewState,
@@ -124,6 +123,13 @@ def submit_coding_answer(
 
     execution_error = None
 
+    # STEP 1 — create evaluation first
+    result = flow_engine.handle_answer(
+        state,
+        user_answer,
+    )
+
+    # STEP 2 — run execution AFTER evaluation exists
     if user_answer.strip():
 
         answer = Answer(
@@ -140,18 +146,12 @@ def submit_coding_answer(
         if "execution_error" in execution_response:
             execution_error = execution_response["execution_error"]
 
-    result = flow_engine.handle_answer(
-        state,
-        user_answer,
-    )
-
     return _build_ui_response(state, result, execution_error)
 
 
 # =========================================================
 # SUBMIT DATABASE ANSWER
 # =========================================================
-
 
 def submit_database_answer(
     flow_engine: InterviewFlowEngine,
@@ -163,6 +163,11 @@ def submit_database_answer(
 
     execution_error = None
 
+    result = flow_engine.handle_answer(
+        state,
+        user_answer,
+    )
+
     if user_answer.strip():
 
         answer = Answer(
@@ -178,11 +183,6 @@ def submit_database_answer(
 
         if "execution_error" in execution_response:
             execution_error = execution_response["execution_error"]
-
-    result = flow_engine.handle_answer(
-        state,
-        user_answer,
-    )
 
     return _build_ui_response(state, result, execution_error)
 
