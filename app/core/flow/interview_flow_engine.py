@@ -37,7 +37,7 @@ class InterviewFlowEngine:
         }
 
     # =========================================================
-    # PROCESS ANSWER (NEW CENTRAL PIPELINE)
+    # PROCESS ANSWER
     # =========================================================
 
     def process_answer(
@@ -46,20 +46,44 @@ class InterviewFlowEngine:
         user_answer: str,
     ):
 
-        current_question = state.questions[state.current_question_index]
+        current_question = state.current_question
+        if not current_question:
+            raise RuntimeError("No current question available in InterviewState")
 
-        # ---------------------------------------------
-        # Step 1 — Evaluate answer (LLM)
-        # ---------------------------------------------
+        # -----------------------------------------------------
+        # Step 1 — Register answer in state
+        # -----------------------------------------------------
 
-        session_dto, feedback, completed = self._controller.submit_answer(
-            state,
-            user_answer,
+        answer = Answer(
+            question_id=current_question.id,
+            content=user_answer,
+            attempt=1,
         )
 
-        # ---------------------------------------------
-        # Step 2 — Execute if coding/database question
-        # ---------------------------------------------
+        state.answers.append(answer)
+
+        # -----------------------------------------------------
+        # Step 2 — Run LangGraph pipeline
+        # -----------------------------------------------------
+
+        updated_state = self._controller._graph.invoke(state)
+
+        # LangGraph works in-place but we keep explicit reference
+        state = updated_state
+
+        session_dto = self._controller._mapper.to_session_dto(state)
+
+        feedback = ""
+
+        if state.evaluations:
+            last_eval = state.evaluations[-1]
+            feedback = last_eval.feedback
+
+        completed = state.progress.value == "COMPLETED"
+
+        # -----------------------------------------------------
+        # Step 3 — Execute if coding/database question
+        # -----------------------------------------------------
 
         execution_error = None
 
@@ -68,12 +92,6 @@ class InterviewFlowEngine:
             QuestionType.DATABASE,
         ]:
 
-            answer = Answer(
-                question_id=current_question.id,
-                content=user_answer,
-                attempt=1,
-            )
-
             result = self._execution_engine.execute(
                 current_question,
                 user_answer,
@@ -81,9 +99,9 @@ class InterviewFlowEngine:
 
             state.execution_results.append(result)
 
-            # -----------------------------------------
-            # Step 3 — Apply execution score policy
-            # -----------------------------------------
+            # ---------------------------------------------
+            # Apply execution score policy
+            # ---------------------------------------------
 
             if state.evaluations:
 
@@ -104,12 +122,11 @@ class InterviewFlowEngine:
                     )
 
             if not result.success:
-
                 execution_error = result.error if result.error else "Unknown error"
 
-        # ---------------------------------------------
-        # Step 4 — Flow state
-        # ---------------------------------------------
+        # -----------------------------------------------------
+        # Step 4 — Flow state routing
+        # -----------------------------------------------------
 
         if completed:
 
