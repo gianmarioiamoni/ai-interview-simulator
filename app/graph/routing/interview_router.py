@@ -1,14 +1,14 @@
 # app/graph/routing/interview_router.py
 
-from langgraph.graph import END
 from domain.contracts.interview_state import InterviewState
 
 
 def route_next_step(state: InterviewState):
 
-    state.advance_question()
+    if not state.has_questions:
+        return "end"
 
-    if state.is_completed:
-        return END
+    if state.is_last_question:
+        return "end"
 
-    return "question"
+    return "advance"
