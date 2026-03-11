@@ -10,19 +10,15 @@ from domain.contracts.question import QuestionType
 from domain.contracts.answer import Answer
 
 from services.report_export_service import ReportExportService
-from services.interview_evaluation_service import InterviewEvaluationService
-
-from infrastructure.llm.llm_factory import get_llm
 
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
-from app.graph.interview_graph import build_interview_graph
-
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
+from app.runtime.interview_runtime import get_runtime_graph, get_runtime_evaluation_service
 
 export_service = ReportExportService()
 test_generator = AITestGenerator()
@@ -71,8 +67,7 @@ def start_interview(
         interview_id="session-1",
     )
 
-    graph = build_interview_graph(get_llm())
-
+    graph = get_runtime_graph()
     state = graph.invoke(state)
 
     return build_ui_response_from_state(state)
@@ -100,8 +95,7 @@ def submit_answer(
 
     state.answers.append(answer)
 
-    graph = build_interview_graph(get_llm())
-
+    graph = get_runtime_graph()
     state = graph.invoke(state)
 
     return build_ui_response_from_state(state)
@@ -177,7 +171,7 @@ def export_pdf(
     state: InterviewState,
 ) -> str:
 
-    evaluation_service = InterviewEvaluationService(get_llm())
+    evaluation_service = get_runtime_evaluation_service()
 
     if state.final_evaluation is None:
 
@@ -211,7 +205,7 @@ def export_json(
     state: InterviewState,
 ) -> str:
 
-    evaluation_service = InterviewEvaluationService(get_llm())
+    evaluation_service = get_runtime_evaluation_service()
 
     if state.final_evaluation is None:
 
