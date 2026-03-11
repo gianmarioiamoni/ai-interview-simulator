@@ -65,7 +65,7 @@ class TestCaseRunner:
             harness_lines.append(f"        assert str(result) == {expected_repr}")
             harness_lines.append("        passed += 1")
             harness_lines.append("    except Exception as e:")
-            harness_lines.append(f'        print("TEST_FAILED:{idx}", str(e))')
+            harness_lines.append(f'        print(f"TEST_FAILED:{idx}:{{e}}")')
 
         # ---------------------------------------------------------
         # Result marker
