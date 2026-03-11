@@ -1,60 +1,48 @@
 # app/graph/interview_graph.py
 
 from langgraph.graph import StateGraph, END
+
 from domain.contracts.interview_state import InterviewState
 
-from app.graph.nodes.ask_question_node import ask_question_node
-from app.graph.nodes.execution_node import execution_node
-from app.graph.nodes.scoring_node import scoring_node
-from app.graph.nodes.termination_node import termination_node
-from app.graph.nodes.evaluate_node import build_evaluate_node
-from app.graph.nodes.progression_node import build_progression_node
-from app.graph.nodes.humanizer_node import build_humanizer_node
+from app.graph.nodes.question_node import question_node
+from app.graph.nodes.answer_processing_node import answer_processing_node
+from app.graph.nodes.evaluation_node import evaluation_node
+from app.graph.nodes.flow_node import flow_node
 
 
-def build_interview_graph(llm):
+def build_interview_graph():
 
     graph = StateGraph(InterviewState)
 
-    evaluate_node = build_evaluate_node(llm)
-    humanizer_node = build_humanizer_node(llm)
-    progression_node = build_progression_node()
+    graph.add_node("question", question_node)
+    graph.add_node("process", answer_processing_node)
+    graph.add_node("evaluate", evaluation_node)
+    graph.add_node("flow", flow_node)
 
-    graph.add_node("ask_question", ask_question_node)
-    graph.add_node("humanizer", humanizer_node)
-    graph.add_node("execution", execution_node)
-    graph.add_node("evaluate", evaluate_node)
-    graph.add_node("scoring", scoring_node)
-    graph.add_node("progression", progression_node)
-    graph.add_node("termination", termination_node)
+    graph.set_entry_point("question")
 
-    graph.set_entry_point("ask_question")
+    graph.add_edge("process", "evaluate")
+    graph.add_edge("evaluate", "flow")
+    graph.add_edge("flow", "question")
 
-    graph.add_edge("ask_question", "humanizer")
+    graph.add_edge("question", END)
 
-    graph.add_conditional_edges(
-        "humanizer",
-        lambda state: (
-            "execution"
-            if state.current_question
-            and state.current_question.type.value in ["coding", "database"]
-            else "evaluate"
-        ),
-    )
+    compiled = graph.compile()
 
-    graph.add_edge("execution", "scoring")
-    graph.add_edge("evaluate", "scoring")
+    original_invoke = compiled.invoke
 
-    graph.add_edge("scoring", "progression")
-    graph.add_edge("progression", "termination")
+    def invoke_with_model(state):
 
-    graph.add_conditional_edges(
-        "termination",
-        lambda state: (
-            END
-            if state.awaiting_user_input
-            else (END if state.progress.name == "COMPLETED" else "ask_question")
-        ),
-    )
+        if isinstance(state, dict):
+            state = InterviewState.model_validate(state)
 
-    return graph.compile()
+        result = original_invoke(state)
+
+        if isinstance(result, dict):
+            return InterviewState.model_validate(result)
+
+        return result
+
+    compiled.invoke = invoke_with_model
+
+    return compiled
