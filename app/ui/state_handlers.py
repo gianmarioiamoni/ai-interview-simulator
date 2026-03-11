@@ -36,7 +36,7 @@ def start_interview(
     language: str,
 ):
 
-    questions = load_sample_questions(interview_type)
+    questions = load_sample_questions(interview_type.value)
 
     enriched_questions = []
 
