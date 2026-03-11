@@ -30,13 +30,15 @@ mapper = InterviewStateMapper()
 # =========================================================
 
 def start_interview(
-    role: RoleType,
-    interview_type: InterviewType,
+    role: str,
+    interview_type: str,
     company: str,
     language: str,
 ):
+    role_type = RoleType[role.replace(" ", "_")]
+    interview_type_enum = InterviewType[interview_type]
 
-    questions = load_sample_questions(interview_type.value)
+    questions = load_sample_questions(interview_type_enum.value)
 
     enriched_questions = []
 
@@ -56,8 +58,8 @@ def start_interview(
     questions = enriched_questions
 
     state = InterviewState.create_initial(
-        role_type=role,
-        interview_type=interview_type,
+        role_type=role_type,
+        interview_type=interview_type_enum,
         company=company,
         language=language,
         questions=questions,
