@@ -1,7 +1,11 @@
 # services/coding_engine/coding_executor.py
 
 from domain.contracts.question import Question
-from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.execution_result import (
+    ExecutionResult,
+    ExecutionType,
+    ExecutionStatus,
+)
 
 from services.coding_engine.execution_sandbox import ExecutionSandbox
 from services.coding_engine.test_case_runner import TestCaseRunner
@@ -21,11 +25,19 @@ class CodingExecutor:
         self._runner = runner or TestCaseRunner()
         self._parser = parser or HarnessOutputParser()
 
+    # ---------------------------------------------------------
+    # Execute coding question
+    # ---------------------------------------------------------
+
     def execute(
         self,
         question: Question,
         user_code: str,
     ) -> ExecutionResult:
+
+        # -----------------------------------------------------
+        # Build harness
+        # -----------------------------------------------------
 
         harness = self._runner.build_harness(
             user_code=user_code,
@@ -33,30 +45,46 @@ class CodingExecutor:
             hidden_tests=question.hidden_tests,
         )
 
+        # -----------------------------------------------------
+        # Execute in sandbox
+        # -----------------------------------------------------
+
         raw = self._sandbox.execute(harness)
 
-        # timeout
+        # -----------------------------------------------------
+        # Timeout
+        # -----------------------------------------------------
+
         if raw.timeout:
 
             return ExecutionResult(
                 question_id=question.id,
-                execution_type="coding",
-                status="timeout",
+                execution_type=ExecutionType.CODING,
+                status=ExecutionStatus.TIMEOUT,
                 success=False,
                 error="Execution timed out",
+                output=raw.stdout,
+                execution_time_ms=raw.execution_time_ms,
             )
 
-        # syntax error
-        if raw.returncode != 0 and "__RESULT__" not in raw.stdout:
+        # -----------------------------------------------------
+        # Syntax / runtime error before tests
+        # -----------------------------------------------------
+
+        if raw.returncode != 0 and "__RESULT__" not in (raw.stdout or ""):
 
             return ExecutionResult(
                 question_id=question.id,
-                execution_type="coding",
-                status="runtime_error",
+                execution_type=ExecutionType.CODING,
+                status=ExecutionStatus.RUNTIME_ERROR,
                 success=False,
+                error=raw.stderr or "Runtime error",
                 output=raw.stdout,
-                error=raw.stderr,
+                execution_time_ms=raw.execution_time_ms,
             )
 
-        # parse harness output
+        # -----------------------------------------------------
+        # Parse harness output
+        # -----------------------------------------------------
+
         return self._parser.parse(question.id, raw)
