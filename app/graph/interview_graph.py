@@ -22,7 +22,6 @@ def build_interview_graph(llm):
     # start interview
     graph.set_entry_point("question")
 
-    graph.add_edge("question", "process_answer")
     graph.add_edge("process_answer", "evaluate")
     graph.add_edge("evaluate", "advance")
 
