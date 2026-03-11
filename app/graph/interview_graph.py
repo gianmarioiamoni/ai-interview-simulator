@@ -38,11 +38,8 @@ def build_interview_graph(llm):
         "evaluate",
         route_next_step,
         {
+            "question": "question",
             "advance": "advance",
             "end": "__end__",
         },
     )
-
-    graph.add_edge("advance", "question")
-
-    return graph.compile()
