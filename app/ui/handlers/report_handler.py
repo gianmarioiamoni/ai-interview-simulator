@@ -1,16 +1,12 @@
 # app/ui/handlers/report_handler.py
 
-from services.interview_evaluation_service import InterviewEvaluationService
-
-from infrastructure.llm.llm_factory import get_llm
-
 from app.ui.views.report_view import build_report_markdown
 from app.ui.ui_router import route_ui
 from app.ui.ui_state import UIState
-from app.graph.interview_graph import InterviewGraph
+from app.runtime.interview_runtime import get_runtime_evaluation_service
 
 
-def view_report_handler(graph: InterviewGraph, state_value):
+def view_report_handler(state_value):
     # Generates the final report and switches the UI to the report section
 
     yield (
@@ -18,7 +14,7 @@ def view_report_handler(graph: InterviewGraph, state_value):
         "⏳ Generating final report...",
     )
 
-    evaluation_service = InterviewEvaluationService(get_llm())
+    evaluation_service = get_runtime_evaluation_service()
 
     report = evaluation_service.evaluate(
         per_question_evaluations=state_value.evaluations,
