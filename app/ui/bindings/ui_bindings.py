@@ -5,7 +5,7 @@ import gradio as gr
 from app.ui.handlers.start_handler import start_handler
 from app.ui.handlers.report_handler import view_report_handler
 
-from app.ui.state_handlers import export_pdf, export_json, submit_answer_handler
+from app.ui.state_handlers import export_pdf, export_json, submit_answer
 
 from app.graph.interview_graph import InterviewGraph
 
@@ -96,19 +96,19 @@ def bind_events(graph: InterviewGraph, components):
     # =========================================================
 
     c.written_submit.click(
-        lambda s, a: submit_answer_handler(s, a),
+        lambda s, a: submit_answer(s, a),
         inputs=[state, c.written_box],
         outputs=outputs,
     )
 
     c.coding_submit.click(
-        lambda s, a: submit_answer_handler(s, a),
+        lambda s, a: submit_answer(s, a),
         inputs=[state, c.coding_box],
         outputs=outputs,
     )
 
     c.database_submit.click(
-        lambda s, a: submit_answer_handler(s, a),
+        lambda s, a: submit_answer(s, a),
         inputs=[state, c.database_box],
         outputs=outputs,
     )
