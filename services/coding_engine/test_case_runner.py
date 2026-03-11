@@ -24,13 +24,43 @@ class TestCaseRunner:
 
         harness_lines = []
 
+        # ---------------------------------------------------------
+        # User code
+        # ---------------------------------------------------------
+
         harness_lines.append(user_code)
         harness_lines.append("")
+        harness_lines.append("import inspect")
+
+        # ---------------------------------------------------------
+        # Detect candidate function
+        # ---------------------------------------------------------
+
+        harness_lines.append("def __get_candidate_function():")
+        harness_lines.append("    funcs = []")
+        harness_lines.append("    for name, obj in globals().items():")
+        harness_lines.append(
+            "        if inspect.isfunction(obj) and not name.startswith('__'):"
+        )
+        harness_lines.append("            funcs.append(obj)")
+        harness_lines.append("    if not funcs:")
+        harness_lines.append(
+            "        raise RuntimeError('No callable function found in submission')"
+        )
+        harness_lines.append("    return funcs[0]")
+        harness_lines.append("")
+
+        # ---------------------------------------------------------
+        # Test runner
+        # ---------------------------------------------------------
+
         harness_lines.append("def __run_tests():")
         harness_lines.append("    passed = 0")
         harness_lines.append(f"    total = {total_tests}")
+        harness_lines.append("    func = __get_candidate_function()")
 
         for idx, test in enumerate(test_cases, start=1):
+
             args_repr = ", ".join([json.dumps(arg) for arg in test.args])
 
             kwargs_repr = ", ".join(
@@ -44,15 +74,26 @@ class TestCaseRunner:
             expected_repr = json.dumps(test.expected)
 
             harness_lines.append("    try:")
-            harness_lines.append(f"        result = {test.function_name}({call_signature})")
+
+            if call_signature:
+                harness_lines.append(f"        result = func({call_signature})")
+            else:
+                harness_lines.append("        result = func()")
+
             harness_lines.append(f"        assert result == {expected_repr}")
             harness_lines.append("        passed += 1")
+
             harness_lines.append("    except Exception as e:")
             harness_lines.append(f'        print("TEST_FAILED:{idx}", str(e))')
+
+        # ---------------------------------------------------------
+        # Result marker
+        # ---------------------------------------------------------
 
         harness_lines.append(
             f'    print("{self.RESULT_MARKER}:" + str(passed) + ":" + str(total))'
         )
+
         harness_lines.append("")
         harness_lines.append("__run_tests()")
 
