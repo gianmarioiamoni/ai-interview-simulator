@@ -94,19 +94,19 @@ def bind_events(components):
     # =========================================================
 
     c.written_submit.click(
-        lambda s, a: submit_answer(s, a),
+        lambda s, a: submit_answer(s, a).to_gradio_outputs(),
         inputs=[state, c.written_box],
         outputs=outputs,
     )
 
     c.coding_submit.click(
-        lambda s, a: submit_answer(s, a),
+        lambda s, a: submit_answer(s, a).to_gradio_outputs(),
         inputs=[state, c.coding_box],
         outputs=outputs,
     )
 
     c.database_submit.click(
-        lambda s, a: submit_answer(s, a),
+        lambda s, a: submit_answer(s, a).to_gradio_outputs(),
         inputs=[state, c.database_box],
         outputs=outputs,
     )
