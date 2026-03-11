@@ -16,18 +16,45 @@ def question_node(state: InterviewState) -> InterviewState:
     if question is None:
         return state
 
-    # Humanize written questions
-    if state.enable_humanizer and question.type == QuestionType.WRITTEN:
+    # ---------------------------------------------------------
+    # Humanizer disabled
+    # ---------------------------------------------------------
 
-        prompt = build_humanizer_prompt(
-            question=question,
-            language=state.language,
-            chat_history=state.chat_history,
-        )
+    if not state.enable_humanizer:
+        state.awaiting_user_input = True
+        return state
 
-        response = llm.invoke(prompt)
+    # ---------------------------------------------------------
+    # Prevent double humanization
+    # ---------------------------------------------------------
 
-        state.chat_history.append(response.content.strip())
+    if state.current_question_index < len(state.chat_history):
+        state.awaiting_user_input = True
+        return state
+
+    # ---------------------------------------------------------
+    # Only written questions are humanized
+    # ---------------------------------------------------------
+
+    if question.type != QuestionType.WRITTEN:
+
+        state.chat_history.append(question.prompt)
+        state.awaiting_user_input = True
+        return state
+
+    # ---------------------------------------------------------
+    # Build humanizer prompt
+    # ---------------------------------------------------------
+
+    prompt = build_humanizer_prompt(
+        question=question,
+        language=state.language,
+        chat_history=state.chat_history,
+    )
+
+    response = llm.invoke(prompt)
+
+    state.chat_history.append(response.content.strip())
 
     state.awaiting_user_input = True
 
