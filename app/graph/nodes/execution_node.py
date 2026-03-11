@@ -9,7 +9,6 @@ from services.sql_engine.sql_executor import SQLExecutor
 
 def execution_node(state: InterviewState) -> InterviewState:
 
-    # No answers yet
     if not state.answers:
         return state
 
@@ -24,7 +23,7 @@ def execution_node(state: InterviewState) -> InterviewState:
         return state
 
     # ---------------------------------------------------------
-    # CODING EXECUTION
+    # CODING
     # ---------------------------------------------------------
 
     if question.type == QuestionType.CODING:
@@ -32,10 +31,8 @@ def execution_node(state: InterviewState) -> InterviewState:
         executor = CodingExecutor()
 
         result = executor.execute(
-            question_id=question.id,
-            user_code=last_answer.content,
-            function_name=question.function_name,
-            test_cases=question.hidden_tests or [],
+            question,
+            last_answer.content,
         )
 
         new_results = state.execution_results + [result]
@@ -43,7 +40,7 @@ def execution_node(state: InterviewState) -> InterviewState:
         return state.model_copy(update={"execution_results": new_results})
 
     # ---------------------------------------------------------
-    # SQL EXECUTION
+    # DATABASE
     # ---------------------------------------------------------
 
     if question.type == QuestionType.DATABASE:
