@@ -76,23 +76,7 @@ def start_interview(
 
     state = graph.invoke(state)
 
-    session_dto = mapper.to_session_dto(state)
-
-    question = session_dto.current_question
-    question_type = question.question_type
-
-    return UIResponse(
-        state=state,
-        question_counter=f"Question {question.index}/{question.total}",
-        feedback="",
-        written_text=question.text,
-        coding_text=question.text,
-        database_text=question.text,
-        written_visible=question_type == "written",
-        coding_visible=question_type == "coding",
-        database_visible=question_type == "database",
-        ui_state=UIState.QUESTION,
-    )
+    return build_ui_response_from_state(state)
 
 
 # =========================================================
@@ -148,14 +132,24 @@ def _submit_answer(state: InterviewState, user_answer: str):
 
     state = graph.invoke(state)
 
-    session_dto = mapper.to_session_dto(state)
+    return build_ui_response_from_state(state)
 
-    execution_error = None
+
+# =========================================================
+# UI RESPONSE BUILDER (PUBLIC)
+# =========================================================
+
+
+def build_ui_response_from_state(state: InterviewState) -> UIResponse:
+
+    session_dto = mapper.to_session_dto(state)
 
     feedback = ""
 
     if state.evaluations:
         feedback = state.evaluations[-1].feedback
+
+    execution_error = None
 
     if state.execution_results:
         last_execution = state.execution_results[-1]
@@ -185,10 +179,15 @@ def _submit_answer(state: InterviewState, user_answer: str):
 
     counter = f"Question {question.index}/{question.total}"
 
+    feedback_text = feedback
+
+    if execution_error:
+        feedback_text += f"\n\n⚠ Execution error: {execution_error}"
+
     return UIResponse(
         state=state,
         question_counter=counter,
-        feedback=f"### Feedback\n\n{feedback}",
+        feedback=f"### Feedback\n\n{feedback_text}",
         written_text=question.text,
         coding_text=question.text,
         database_text=question.text,
