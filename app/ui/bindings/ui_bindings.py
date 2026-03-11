@@ -7,10 +7,8 @@ from app.ui.handlers.report_handler import view_report_handler
 
 from app.ui.state_handlers import export_pdf, export_json, submit_answer
 
-from app.graph.interview_graph import InterviewGraph
 
-
-def bind_events(graph: InterviewGraph, components):
+def bind_events(components):
     # Bind UI events to handlers
 
     c = components
@@ -118,7 +116,7 @@ def bind_events(graph: InterviewGraph, components):
     # =========================================================
 
     def report_handler(state_value):
-        yield from view_report_handler(graph, state_value)
+        yield from view_report_handler(state_value)
 
     c.view_report_button.click(
         report_handler,
