@@ -40,7 +40,7 @@ class InterviewState(BaseModel):
     final_evaluation: Optional[InterviewEvaluation] = None
 
     # ---------------------------------------------------------
-    # Conversational memory (humanizer)
+    # Conversational memory
     # ---------------------------------------------------------
 
     chat_history: list[str] = Field(default_factory=list)
@@ -79,9 +79,9 @@ class InterviewState(BaseModel):
         "extra": "forbid",
     }
 
-    # ---------------------------------------------------------
-    # Computed properties
-    # ---------------------------------------------------------
+    # =========================================================
+    # COMPUTED PROPERTIES
+    # =========================================================
 
     @property
     def computed_total_score(self) -> float:
@@ -92,6 +92,28 @@ class InterviewState(BaseModel):
         avg = sum(ev.score for ev in self.evaluations) / len(self.evaluations)
 
         return max(0.0, min(100.0, avg))
+
+    # ---------------------------------------------------------
+
+    @property
+    def has_questions(self) -> bool:
+        return bool(self.questions)
+
+    # ---------------------------------------------------------
+
+    @property
+    def is_completed(self) -> bool:
+        return self.progress == InterviewProgress.COMPLETED
+
+    # ---------------------------------------------------------
+
+    @property
+    def is_last_question(self) -> bool:
+
+        if not self.questions:
+            return False
+
+        return self.current_question_index >= len(self.questions) - 1
 
     # ---------------------------------------------------------
 
@@ -149,8 +171,48 @@ class InterviewState(BaseModel):
         return self.execution_results[-1]
 
     # ---------------------------------------------------------
-    # Progress consistency
+
+    @property
+    def has_pending_answer(self) -> bool:
+
+        question = self.current_question
+
+        if question is None:
+            return False
+
+        return not any(a.question_id == question.id for a in self.answers)
+
+    # =========================================================
+    # DOMAIN METHODS
+    # =========================================================
+
+    def register_answer(self, answer: Answer) -> None:
+        self.answers.append(answer)
+
     # ---------------------------------------------------------
+
+    def register_execution(self, result: ExecutionResult) -> None:
+        self.execution_results.append(result)
+
+    # ---------------------------------------------------------
+
+    def register_evaluation(self, evaluation: QuestionEvaluation) -> None:
+        self.evaluations.append(evaluation)
+
+    # ---------------------------------------------------------
+
+    def advance_question(self) -> None:
+
+        if self.is_last_question:
+            self.progress = InterviewProgress.COMPLETED
+            return
+
+        self.current_question_index += 1
+        self.progress = InterviewProgress.IN_PROGRESS
+
+    # =========================================================
+    # STATE VALIDATION
+    # =========================================================
 
     @model_validator(mode="after")
     def validate_progress_consistency(self) -> "InterviewState":
@@ -165,9 +227,9 @@ class InterviewState(BaseModel):
 
         return self
 
-    # ---------------------------------------------------------
-    # Factory
-    # ---------------------------------------------------------
+    # =========================================================
+    # FACTORY
+    # =========================================================
 
     @classmethod
     def create_initial(

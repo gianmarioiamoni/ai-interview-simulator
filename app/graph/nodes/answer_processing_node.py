@@ -10,9 +10,6 @@ engine = ExecutionEngine()
 
 def answer_processing_node(state: InterviewState) -> InterviewState:
 
-    if not state.answers:
-        return state
-
     question = state.current_question
     answer = state.last_answer
 
@@ -29,6 +26,6 @@ def answer_processing_node(state: InterviewState) -> InterviewState:
             answer.content,
         )
 
-        state.execution_results.append(result)
+        state.register_execution(result)
 
     return state
