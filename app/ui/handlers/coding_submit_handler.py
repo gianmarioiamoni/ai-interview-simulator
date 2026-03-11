@@ -3,10 +3,9 @@
 from app.ui.state_handlers import submit_coding_answer
 
 
-def coding_submit_handler(controller, state, answer):
+def coding_submit_handler(state, answer):
 
     response = submit_coding_answer(
-        controller,
         state,
         answer,
     )

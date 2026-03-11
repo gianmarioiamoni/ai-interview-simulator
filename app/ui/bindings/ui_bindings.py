@@ -10,10 +10,10 @@ from app.ui.handlers.report_handler import view_report_handler
 
 from app.ui.state_handlers import export_pdf, export_json
 
-from app.core.flow.interview_flow_engine import InterviewFlowEngine
+from app.graph.interview_graph import InterviewGraph
 
 
-def bind_events(flow_engine: InterviewFlowEngine, components):
+def bind_events(graph: InterviewGraph, components):
     # Bind UI events to handlers
 
     c = components
@@ -84,7 +84,7 @@ def bind_events(flow_engine: InterviewFlowEngine, components):
     # =========================================================
 
     start_button.click(
-        lambda r, i, comp, l: start_handler(flow_engine, r, i, comp, l),
+        lambda r, i, comp, l: start_handler(r, i, comp, l),
         inputs=[
             role_dropdown,
             interview_type_radio,
@@ -99,19 +99,19 @@ def bind_events(flow_engine: InterviewFlowEngine, components):
     # =========================================================
 
     c.written_submit.click(
-        lambda s, a: written_submit_handler(flow_engine, s, a),
+        lambda s, a: written_submit_handler(s, a),
         inputs=[state, c.written_box],
         outputs=outputs,
     )
 
     c.coding_submit.click(
-        lambda s, a: coding_submit_handler(flow_engine, s, a),
+        lambda s, a: coding_submit_handler(s, a),
         inputs=[state, c.coding_box],
         outputs=outputs,
     )
 
     c.database_submit.click(
-        lambda s, a: database_submit_handler(flow_engine, s, a),
+        lambda s, a: database_submit_handler(s, a),
         inputs=[state, c.database_box],
         outputs=outputs,
     )
@@ -121,8 +121,7 @@ def bind_events(flow_engine: InterviewFlowEngine, components):
     # =========================================================
 
     def report_handler(state_value):
-        yield from view_report_handler(flow_engine, state_value)
-
+        yield from view_report_handler(graph, state_value)
 
     c.view_report_button.click(
         report_handler,
@@ -142,7 +141,7 @@ def bind_events(flow_engine: InterviewFlowEngine, components):
     # =========================================================
 
     c.pdf_button.click(
-        lambda s: (export_pdf(flow_engine, s), gr.update(visible=True)),
+        lambda s: (export_pdf(s), gr.update(visible=True)),
         inputs=[state],
         outputs=[c.pdf_file, c.pdf_file],
     )
@@ -152,7 +151,7 @@ def bind_events(flow_engine: InterviewFlowEngine, components):
     # =========================================================
 
     c.json_button.click(
-        lambda s: (export_json(flow_engine, s), gr.update(visible=True)),
+        lambda s: (export_json(s), gr.update(visible=True)),
         inputs=[state],
         outputs=[c.json_file, c.json_file],
     )
