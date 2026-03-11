@@ -10,6 +10,9 @@ from domain.contracts.question import Question
 from services.coding_engine.execution_sandbox import ExecutionSandbox
 from services.coding_engine.test_case_runner import TestCaseRunner
 
+import logging
+
+
 
 class CodingExecutor:
     def __init__(
@@ -26,6 +29,8 @@ class CodingExecutor:
         user_code: str,
     ) -> ExecutionResult:
 
+        logger = logging.getLogger(__name__)
+
         test_cases = question.visible_tests + question.hidden_tests
 
         harness = self._runner.build_harness(
@@ -34,6 +39,12 @@ class CodingExecutor:
         )
 
         raw = self._sandbox.execute(harness)
+        
+        logger.info("=== SANDBOX STDOUT ===")
+        logger.info(raw.stdout)
+
+        logger.info("=== SANDBOX STDERR ===")
+        logger.info(raw.stderr)
 
         # ---------------------------------------------------------
         # Timeout
@@ -126,7 +137,7 @@ class CodingExecutor:
             status=ExecutionStatus.FAILED_TESTS,
             success=False,
             output=raw.stdout,
-            error="Some tests failed",
+            error=raw.stdout,
             passed_tests=passed,
             total_tests=total,
             execution_time_ms=raw.execution_time_ms,
