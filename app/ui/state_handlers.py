@@ -24,7 +24,6 @@ from app.graph.interview_graph import build_interview_graph
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
 
-
 export_service = ReportExportService()
 test_generator = AITestGenerator()
 mapper = InterviewStateMapper()
@@ -33,7 +32,6 @@ mapper = InterviewStateMapper()
 # =========================================================
 # START INTERVIEW
 # =========================================================
-
 
 def start_interview(
     role_name: str,
@@ -84,7 +82,6 @@ def start_interview(
 # GENERIC ANSWER SUBMIT
 # =========================================================
 
-
 def submit_answer(
     state: InterviewState,
     user_answer: str,
@@ -113,7 +110,6 @@ def submit_answer(
 # =========================================================
 # UI RESPONSE BUILDER
 # =========================================================
-
 
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
@@ -177,7 +173,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 # EXPORT PDF
 # =========================================================
 
-
 def export_pdf(
     state: InterviewState,
 ) -> str:
@@ -211,7 +206,6 @@ def export_pdf(
 # =========================================================
 # EXPORT JSON
 # =========================================================
-
 
 def export_json(
     state: InterviewState,
