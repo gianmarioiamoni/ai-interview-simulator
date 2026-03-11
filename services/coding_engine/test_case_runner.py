@@ -55,8 +55,8 @@ class TestCaseRunner:
 
         for idx, test in enumerate(test_cases, start=1):
 
-            input_repr = json.dumps(test.input)
-            expected_repr = json.dumps(test.expected_output)
+            input_repr = repr(test.input)
+            expected_repr = repr(test.expected_output)
 
             lines.append("    try:")
 
