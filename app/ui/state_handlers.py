@@ -9,19 +9,20 @@ from domain.contracts.role import RoleType
 from domain.contracts.question import QuestionType
 from domain.contracts.answer import Answer
 
+from services.report_export_service import ReportExportService
+from services.interview_evaluation_service import InterviewEvaluationService
+
+from infrastructure.llm.llm_factory import get_llm
+
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
+from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from app.graph.interview_graph import build_interview_graph
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
-from services.report_export_service import ReportExportService
-from services.interview_evaluation_service import InterviewEvaluationService
-
-from infrastructure.llm.llm_factory import get_llm
-from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 
 export_service = ReportExportService()
@@ -84,36 +85,10 @@ def start_interview(
 # =========================================================
 
 
-def submit_written_answer(
+def submit_answer(
     state: InterviewState,
     user_answer: str,
 ):
-
-    return _submit_answer(state, user_answer)
-
-
-def submit_coding_answer(
-    state: InterviewState,
-    user_answer: str,
-):
-
-    return _submit_answer(state, user_answer)
-
-
-def submit_database_answer(
-    state: InterviewState,
-    user_answer: str,
-):
-
-    return _submit_answer(state, user_answer)
-
-
-# =========================================================
-# INTERNAL ANSWER HANDLER
-# =========================================================
-
-
-def _submit_answer(state: InterviewState, user_answer: str):
 
     question = state.current_question
 
@@ -136,7 +111,7 @@ def _submit_answer(state: InterviewState, user_answer: str):
 
 
 # =========================================================
-# UI RESPONSE BUILDER (PUBLIC)
+# UI RESPONSE BUILDER
 # =========================================================
 
 
