@@ -1,7 +1,5 @@
 # services/coding_engine/test_case_runner.py
 
-# TestCaseRunner
-#
 # Responsibility:
 # Generates a Python test harness for user-submitted code.
 # Does not execute code.
@@ -10,7 +8,7 @@
 import json
 from typing import List
 
-from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.test_case import TestCase
 
 
 class TestCaseRunner:
@@ -19,8 +17,7 @@ class TestCaseRunner:
     def build_harness(
         self,
         user_code: str,
-        function_name: str,
-        test_cases: List[CodingTestCase],
+        test_cases: List[TestCase],
     ) -> str:
 
         total_tests = len(test_cases)
@@ -47,7 +44,7 @@ class TestCaseRunner:
             expected_repr = json.dumps(test.expected)
 
             harness_lines.append("    try:")
-            harness_lines.append(f"        result = {function_name}({call_signature})")
+            harness_lines.append(f"        result = {test.function_name}({call_signature})")
             harness_lines.append(f"        assert result == {expected_repr}")
             harness_lines.append("        passed += 1")
             harness_lines.append("    except Exception as e:")
