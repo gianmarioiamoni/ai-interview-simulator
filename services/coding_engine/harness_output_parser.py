@@ -20,44 +20,60 @@ class HarnessOutputParser:
         hidden_passed = 0
         hidden_total = 0
 
-        for line in raw.stdout.splitlines():
+        stdout = raw.stdout or ""
+
+        for line in stdout.splitlines():
 
             if line.startswith(self.VISIBLE_MARKER):
 
-                _, passed, total = line.split(":")
-                visible_passed = int(passed)
-                visible_total = int(total)
+                try:
+                    _, passed, total = line.split(":")
+                    visible_passed = int(passed)
+                    visible_total = int(total)
+                except Exception:
+                    pass
 
             elif line.startswith(self.HIDDEN_MARKER):
 
-                _, passed, total = line.split(":")
-                hidden_passed = int(passed)
-                hidden_total = int(total)
+                try:
+                    _, passed, total = line.split(":")
+                    hidden_passed = int(passed)
+                    hidden_total = int(total)
+                except Exception:
+                    pass
 
         total_passed = visible_passed + hidden_passed
         total_tests = visible_total + hidden_total
 
-        if total_passed == total_tests:
+        # -----------------------------------------------------
+        # Determine execution status
+        # -----------------------------------------------------
+
+        if total_tests == 0:
+
+            status = ExecutionStatus.INTERNAL_ERROR
+            success = False
+            error = "No tests detected in harness output"
+
+        elif total_passed == total_tests:
 
             status = ExecutionStatus.SUCCESS
             success = True
-
-        elif total_passed > 0:
-
-            status = ExecutionStatus.FAILED_TESTS
-            success = False
+            error = None
 
         else:
 
             status = ExecutionStatus.FAILED_TESTS
             success = False
+            error = "Some tests failed"
 
         return ExecutionResult(
             question_id=question_id,
             execution_type=ExecutionType.CODING,
             status=status,
             success=success,
-            output=raw.stdout,
+            output=stdout,
+            error=error,
             passed_tests=total_passed,
             total_tests=total_tests,
             execution_time_ms=raw.execution_time_ms,
