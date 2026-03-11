@@ -1,9 +1,10 @@
 # app/runtime/interview_runtime.py
 
-from app.graph.interview_graph import build_interview_graph
 from infrastructure.llm.llm_factory import get_llm
 from services.interview_evaluation_service import InterviewEvaluationService
+from domain.contracts.interview_state import InterviewState
 
+from app.graph.interview_graph import build_interview_graph
 
 _graph = None
 _llm = None
@@ -28,6 +29,7 @@ def get_runtime_llm():
 # Graph
 # ---------------------------------------------------------
 
+
 def get_runtime_graph():
 
     global _graph
@@ -36,7 +38,25 @@ def get_runtime_graph():
 
         llm = get_runtime_llm()
 
-        _graph = build_interview_graph(llm)
+        compiled = build_interview_graph(llm)
+
+        original_invoke = compiled.invoke
+
+        def invoke_with_model(state):
+
+            if isinstance(state, dict):
+                state = InterviewState.model_validate(state)
+
+            result = original_invoke(state)
+
+            if isinstance(result, dict):
+                return InterviewState.model_validate(result)
+
+            return result
+
+        compiled.invoke = invoke_with_model
+
+        _graph = compiled
 
     return _graph
 

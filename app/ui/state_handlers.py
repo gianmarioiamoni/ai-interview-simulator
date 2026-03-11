@@ -69,6 +69,7 @@ def start_interview(
     graph = get_runtime_graph()
     state = graph.invoke(state)
 
+
     return build_ui_response_from_state(state)
 
 
@@ -96,6 +97,7 @@ def submit_answer(
 
     graph = get_runtime_graph()
     state = graph.invoke(state)
+
 
     return build_ui_response_from_state(state)
 
