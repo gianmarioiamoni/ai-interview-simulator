@@ -1,11 +1,5 @@
 # services/coding_engine/coding_executor.py
 
-# CodingExecutor
-#
-# Responsibility:
-# Orchestrates test harness generation and sandbox execution.
-# Interprets raw execution output and builds structured ExecutionResult.
-
 from domain.contracts.execution_result import (
     ExecutionResult,
     ExecutionType,
@@ -30,18 +24,21 @@ class CodingExecutor:
         self,
         question: Question,
         user_code: str,
-        function_name: str,
     ) -> ExecutionResult:
+
+        test_cases = question.visible_tests + question.hidden_tests
 
         harness = self._runner.build_harness(
             user_code=user_code,
-            function_name=function_name,
-            test_cases=question.visible_tests + question.hidden_tests,
+            test_cases=test_cases,
         )
 
         raw = self._sandbox.execute(harness)
 
+        # ---------------------------------------------------------
         # Timeout
+        # ---------------------------------------------------------
+
         if raw.timeout:
             return ExecutionResult(
                 question_id=question.id,
@@ -53,13 +50,18 @@ class CodingExecutor:
                 execution_time_ms=raw.execution_time_ms,
             )
 
-        # Syntax error (Python exit before tests)
+        # ---------------------------------------------------------
+        # Syntax or runtime error before tests
+        # ---------------------------------------------------------
+
         if raw.returncode != 0 and TestCaseRunner.RESULT_MARKER not in raw.stdout:
+
             error_status = (
-                ExecutionStatus.SYNTAX_ERROR 
-                if "SyntaxError" in raw.stderr 
+                ExecutionStatus.SYNTAX_ERROR
+                if "SyntaxError" in raw.stderr
                 else ExecutionStatus.RUNTIME_ERROR
             )
+
             return ExecutionResult(
                 question_id=question.id,
                 execution_type=ExecutionType.CODING,
@@ -70,14 +72,19 @@ class CodingExecutor:
                 execution_time_ms=raw.execution_time_ms,
             )
 
-        # Parse result marker
+        # ---------------------------------------------------------
+        # Parse test results
+        # ---------------------------------------------------------
+
         marker_line = None
+
         for line in raw.stdout.splitlines():
             if line.startswith(TestCaseRunner.RESULT_MARKER):
                 marker_line = line
                 break
 
         if not marker_line:
+
             return ExecutionResult(
                 question_id=question.id,
                 execution_type=ExecutionType.CODING,
@@ -92,7 +99,12 @@ class CodingExecutor:
         passed = int(passed_str)
         total = int(total_str)
 
+        # ---------------------------------------------------------
+        # Success
+        # ---------------------------------------------------------
+
         if passed == total:
+
             return ExecutionResult(
                 question_id=question.id,
                 execution_type=ExecutionType.CODING,
@@ -103,6 +115,10 @@ class CodingExecutor:
                 total_tests=total,
                 execution_time_ms=raw.execution_time_ms,
             )
+
+        # ---------------------------------------------------------
+        # Failed tests
+        # ---------------------------------------------------------
 
         return ExecutionResult(
             question_id=question.id,
