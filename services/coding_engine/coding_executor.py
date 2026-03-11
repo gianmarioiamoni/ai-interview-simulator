@@ -11,7 +11,7 @@ from domain.contracts.execution_result import (
     ExecutionType,
     ExecutionStatus,
 )
-from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.question import Question
 
 from services.coding_engine.execution_sandbox import ExecutionSandbox
 from services.coding_engine.test_case_runner import TestCaseRunner
@@ -28,16 +28,15 @@ class CodingExecutor:
 
     def execute(
         self,
-        question_id: str,
+        question: Question,
         user_code: str,
         function_name: str,
-        test_cases: list[CodingTestCase],
     ) -> ExecutionResult:
 
         harness = self._runner.build_harness(
             user_code=user_code,
             function_name=function_name,
-            test_cases=test_cases,
+            test_cases=question.visible_tests + question.hidden_tests,
         )
 
         raw = self._sandbox.execute(harness)
@@ -45,7 +44,7 @@ class CodingExecutor:
         # Timeout
         if raw.timeout:
             return ExecutionResult(
-                question_id=question_id,
+                question_id=question.id,
                 execution_type=ExecutionType.CODING,
                 status=ExecutionStatus.TIMEOUT,
                 success=False,
@@ -62,7 +61,7 @@ class CodingExecutor:
                 else ExecutionStatus.RUNTIME_ERROR
             )
             return ExecutionResult(
-                question_id=question_id,
+                question_id=question.id,
                 execution_type=ExecutionType.CODING,
                 status=error_status,
                 success=False,
@@ -80,7 +79,7 @@ class CodingExecutor:
 
         if not marker_line:
             return ExecutionResult(
-                question_id=question_id,
+                question_id=question.id,
                 execution_type=ExecutionType.CODING,
                 status=ExecutionStatus.INTERNAL_ERROR,
                 success=False,
@@ -95,7 +94,7 @@ class CodingExecutor:
 
         if passed == total:
             return ExecutionResult(
-                question_id=question_id,
+                question_id=question.id,
                 execution_type=ExecutionType.CODING,
                 status=ExecutionStatus.SUCCESS,
                 success=True,
@@ -106,7 +105,7 @@ class CodingExecutor:
             )
 
         return ExecutionResult(
-            question_id=question_id,
+            question_id=question.id,
             execution_type=ExecutionType.CODING,
             status=ExecutionStatus.FAILED_TESTS,
             success=False,
