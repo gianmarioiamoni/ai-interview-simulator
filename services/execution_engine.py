@@ -1,39 +1,38 @@
 # services/execution_engine.py
 
-import logging
-
-from domain.contracts.question import Question, QuestionType
+from domain.contracts.question import QuestionType
+from domain.contracts.question import Question
 from domain.contracts.execution_result import ExecutionResult
 
-from app.execution.python_executor import PythonExecutor
-from app.execution.sql_executor import SQLExecutor
-
-
-logger = logging.getLogger(__name__)
+from services.coding_engine.coding_executor import CodingExecutor
+from services.sql_engine.sql_executor import SQLExecutor
 
 
 class ExecutionEngine:
-    # Routes execution of coding and SQL answers.
 
     def __init__(self):
 
-        self._python_executor = PythonExecutor()
+        self._coding_executor = CodingExecutor()
         self._sql_executor = SQLExecutor()
 
     def execute(
         self,
         question: Question,
-        answer: str,
+        user_answer: str,
     ) -> ExecutionResult:
 
-        logger.info(f"ExecutionEngine routing execution for question {question.id}")
-
         if question.type == QuestionType.CODING:
-            return self._python_executor.execute(question, answer)
+
+            return self._coding_executor.execute(
+                question,
+                user_answer,
+            )
 
         if question.type == QuestionType.DATABASE:
-            return self._sql_executor.execute(question, answer)
 
-        raise ValueError(
-            f"ExecutionEngine cannot execute question type: {question.type}"
-        )
+            return self._sql_executor.execute(
+                question,
+                user_answer,
+            )
+
+        raise ValueError(f"Unsupported execution type: {question.type}")
