@@ -2,8 +2,6 @@
 
 import gradio as gr
 
-from app.graph.builder import build_graph
-
 from app.ui.layout.ui_layout import build_layout
 from app.ui.bindings.ui_bindings import bind_events
 
