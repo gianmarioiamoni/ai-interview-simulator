@@ -1,4 +1,4 @@
-from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.test_case import TestCase
 from services.coding_engine.test_case_runner import TestCaseRunner
 
 
@@ -10,15 +10,20 @@ def solution(x):
     return x * 2
 """
 
-    test_cases = [
-        CodingTestCase(args=[2], expected=4),
-        CodingTestCase(args=[3], expected=6),
+    visible_tests = [
+        TestCase(input=[2], expected_output=4),
+        TestCase(input=[3], expected_output=6),
+    ]
+
+    hidden_tests = [
+        TestCase(input=[4], expected_output=8),
+        TestCase(input=[5], expected_output=10),
     ]
 
     harness = runner.build_harness(
         user_code=user_code,
-        function_name="solution",
-        test_cases=test_cases,
+        visible_tests=visible_tests,
+        hidden_tests=hidden_tests,
     )
 
     assert "__RESULT__" in harness
