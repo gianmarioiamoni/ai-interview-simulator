@@ -4,9 +4,10 @@ from langgraph.graph import StateGraph
 
 from domain.contracts.interview_state import InterviewState
 
-from app.graph.nodes.question_node import question_node
+from app.graph.nodes.question_node import build_question_node
 from app.graph.nodes.answer_processing_node import answer_processing_node
-from app.graph.nodes.evaluation_node import evaluation_node
+from app.graph.nodes.evaluation_node import build_evaluation_node
+from app.graph.nodes.advance_node import advance_node
 
 from app.graph.routing.interview_router import route_next_step
 
@@ -19,9 +20,10 @@ def build_interview_graph(llm):
     # Nodes
     # ---------------------------------------------------------
 
-    graph.add_node("question", question_node)
+    graph.add_node("question", build_question_node(llm))
     graph.add_node("process_answer", answer_processing_node)
-    graph.add_node("evaluate", evaluation_node)
+    graph.add_node("evaluate", build_evaluation_node(llm))
+    graph.add_node("advance", advance_node)
 
     # ---------------------------------------------------------
     # Flow
@@ -36,8 +38,11 @@ def build_interview_graph(llm):
         "evaluate",
         route_next_step,
         {
-            "question": "question",
+            "advance": "advance",
+            "end": "__end__",
         },
     )
+
+    graph.add_edge("advance", "question")
 
     return graph.compile()
