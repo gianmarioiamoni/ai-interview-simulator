@@ -9,8 +9,6 @@ from app.ui.bindings.ui_bindings import bind_events
 
 def build_app():
 
-    graph = build_graph()
-
     with gr.Blocks(
         css="""
         #code-editor textarea {
@@ -21,9 +19,6 @@ def build_app():
 
         components = build_layout()
 
-        bind_events(
-            graph=graph,
-            components=components,
-        )
+        bind_events(components=components)
 
     return demo
