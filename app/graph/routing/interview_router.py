@@ -1,3 +1,5 @@
+# app/graph/routing/interview_router.py
+
 from langgraph.graph import END
 from domain.contracts.interview_state import InterviewState
 
@@ -16,7 +18,7 @@ def route_next_step(state: InterviewState):
     print("RESULT MAP:", state.results_by_question)
 
     # ---------------------------------------------------------
-    # No question → end
+    # No question → terminate
     # ---------------------------------------------------------
 
     if q is None:
@@ -30,29 +32,35 @@ def route_next_step(state: InterviewState):
         return END
 
     # ---------------------------------------------------------
-    # Ensure answer belongs to current question
+    # Ensure the answer refers to the current question
     # ---------------------------------------------------------
 
     if state.last_answer.question_id != q.id:
         return END
 
     # ---------------------------------------------------------
-    # Question not processed yet
+    # Ensure processing completed
     # ---------------------------------------------------------
 
     if not state.is_question_processed(q):
         return END
 
     # ---------------------------------------------------------
-    # Last question → interview completed
+    # LAST QUESTION → finish interview
     # ---------------------------------------------------------
 
     if state.is_last_question:
+
+        print("INTERVIEW COMPLETED")
+
         state.progress = state.progress.COMPLETED
+
         return END
 
     # ---------------------------------------------------------
-    # Move to next question
+    # Otherwise move to next question
     # ---------------------------------------------------------
+
+    print("ADVANCING QUESTION")
 
     return "advance"
