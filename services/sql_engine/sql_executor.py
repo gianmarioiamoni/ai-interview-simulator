@@ -1,3 +1,5 @@
+# services/sql_engine/sql_executor.py
+
 import sqlite3
 import time
 import traceback
@@ -17,24 +19,22 @@ class SQLExecutor:
 
     def execute(self, question: Question, query: str) -> ExecutionResult:
 
-        logger.info(f"SQL query received:\n{query}")
-
         start = time.time()
 
         try:
 
-            connection = sqlite3.connect(":memory:")
-            cursor = connection.cursor()
+            conn = sqlite3.connect(":memory:")
+            cursor = conn.cursor()
 
-            # eventual setup schema if present in the question
-            if hasattr(question, "schema_sql") and question.schema_sql:
-                cursor.executescript(question.schema_sql)
+            # create schema if provided
+            if question.db_schema:
+                cursor.executescript(question.db_schema)
 
             cursor.execute(query)
 
             rows = cursor.fetchall()
 
-            connection.close()
+            conn.close()
 
             duration = int((time.time() - start) * 1000)
 

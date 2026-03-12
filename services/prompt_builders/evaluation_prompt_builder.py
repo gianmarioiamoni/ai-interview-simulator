@@ -31,6 +31,8 @@ Rules:
 - Only suggest clarification if the answer is incomplete or ambiguous.
 - Never generate follow-up for coding or SQL questions.
 - Output JSON only.
+- If clarification_needed is true you MUST provide follow_up_question.
+- If no clarification is needed set clarification_needed=false.
 """
 
     return prompt.strip()
