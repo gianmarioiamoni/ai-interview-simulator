@@ -38,6 +38,6 @@ def build_interview_graph(llm):
         },
     )
 
-    graph.add_edge("advance", "question")
+    graph.add_edge("advance", END)
 
     return graph.compile()
