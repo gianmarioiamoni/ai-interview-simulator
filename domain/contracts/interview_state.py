@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 from domain.contracts.question import Question
 from domain.contracts.answer import Answer
 from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question_result import QuestionResult
 from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.interview_evaluation import InterviewEvaluation
@@ -51,6 +52,8 @@ class InterviewState(BaseModel):
 
     execution_results: list[ExecutionResult] = Field(default_factory=list)
 
+    results_by_question: dict[str, QuestionResult] = Field(default_factory=dict)
+
     # ---------------------------------------------------------
     # LangGraph orchestration
     # ---------------------------------------------------------
@@ -78,6 +81,46 @@ class InterviewState(BaseModel):
         "arbitrary_types_allowed": False,
         "extra": "forbid",
     }
+
+
+    # =========================================================
+    # HELPER FUNCTIONS
+    # =========================================================
+
+    def register_evaluation(self, evaluation: QuestionEvaluation):
+
+        qid = evaluation.question_id
+
+        result = self.results_by_question.get(qid)
+
+        if result is None:
+            result = QuestionResult(question_id=qid)
+
+        result.evaluation = evaluation
+
+        self.results_by_question[qid] = result
+
+    # ---------------------------------------------------------
+
+    def register_execution(self, execution: ExecutionResult):
+
+        qid = execution.question_id
+
+        result = self.results_by_question.get(qid)
+
+        if result is None:
+            result = QuestionResult(question_id=qid)
+
+        result.execution = execution
+
+        self.results_by_question[qid] = result
+
+    # ---------------------------------------------------------
+
+    def get_result_for_question(self, question_id: str) -> Optional[QuestionResult]:
+
+        return self.results_by_question.get(question_id)
+
 
     # =========================================================
     # COMPUTED PROPERTIES
