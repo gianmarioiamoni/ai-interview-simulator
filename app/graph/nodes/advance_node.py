@@ -5,16 +5,13 @@ from domain.contracts.interview_state import InterviewState
 
 def advance_node(state: InterviewState) -> InterviewState:
 
-    if not state.questions:
+    q = state.current_question
+
+    if q is None:
         return state
 
-    if state.last_answer is None:
-        return state
-
-    if state.last_answer.question_id != state.current_question.id:
-        return state
-
-    if not state.is_question_processed(state.current_question):
+    # Do not advance if the question is not processed yet
+    if not state.is_question_processed(q):
         return state
 
     if not state.is_last_question:
