@@ -14,7 +14,7 @@ def build_evaluation_node(llm):
         question = state.current_question
         answer = state.last_answer
 
-        print("EVALUATION NODE:", question.id, answer.question_id)
+        print("EVALUATION NODE:", question.id)
 
 
         if question is None or answer is None:
