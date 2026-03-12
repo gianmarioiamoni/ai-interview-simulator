@@ -27,6 +27,8 @@ class Question(BaseModel):
     test_cases: list[TestCase] = Field(default_factory=list)
     visible_tests: list[TestCase] = Field(default_factory=list)
     hidden_tests: list[TestCase] = Field(default_factory=list)
+    db_schema: Optional[str] = None
+    db_seed_data: Optional[str] = None
 
     model_config = {
         "frozen": True,
