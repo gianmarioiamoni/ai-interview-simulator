@@ -80,9 +80,12 @@ class InterviewState(BaseModel):
         if result is None:
             result = QuestionResult(question_id=qid)
 
-        result.evaluation = evaluation
+        result = result.model_copy(update={"evaluation": evaluation})
 
-        self.results_by_question[qid] = result
+        new_map = dict(self.results_by_question)
+        new_map[qid] = result
+
+        self.results_by_question = new_map
 
     # ---------------------------------------------------------
 
@@ -95,9 +98,12 @@ class InterviewState(BaseModel):
         if result is None:
             result = QuestionResult(question_id=qid)
 
-        result.execution = execution
+        result = result.model_copy(update={"execution": execution})
 
-        self.results_by_question[qid] = result
+        new_map = dict(self.results_by_question)
+        new_map[qid] = result
+
+        self.results_by_question = new_map
 
     # ---------------------------------------------------------
 
