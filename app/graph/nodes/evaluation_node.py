@@ -1,5 +1,3 @@
-# app/graph/nodes/evaluation_node.py
-
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
 from domain.contracts.question_evaluation import QuestionEvaluation
@@ -31,31 +29,42 @@ def build_evaluation_node(llm):
 
         response = llm.invoke(prompt)
 
+        # ---------------------------------------------------------
+        # Try to parse structured LLM output
+        # ---------------------------------------------------------
+
         try:
 
             decision = EvaluationDecision.model_validate_json(response.content)
+
+            evaluation = QuestionEvaluation(
+                question_id=question.id,
+                score=decision.score,
+                max_score=100,
+                passed=decision.score >= 60,
+                feedback=decision.feedback,
+                strengths=getattr(decision, "strengths", []),
+                weaknesses=getattr(decision, "weaknesses", []),
+            )
+
+        # ---------------------------------------------------------
+        # Safe fallback if parsing fails
+        # ---------------------------------------------------------
 
         except Exception as e:
 
             print("EVALUATION PARSE ERROR:", e)
             print("LLM RAW RESPONSE:", response.content)
 
-            decision = EvaluationDecision(
+            evaluation = QuestionEvaluation(
+                question_id=question.id,
                 score=0,
-                feedback="Evaluation failed due to parsing error.",
+                max_score=100,
+                passed=False,
+                feedback="Evaluation failed due to LLM parsing error.",
                 strengths=[],
                 weaknesses=["Evaluation parsing failed"],
             )
-
-        evaluation = QuestionEvaluation(
-            question_id=question.id,
-            score=decision.score,
-            max_score=100,
-            passed=decision.score >= 60,
-            feedback=decision.feedback,
-            strengths=getattr(decision, "strengths", []),
-            weaknesses=getattr(decision, "weaknesses", []),
-        )
 
         print("REGISTER EVAL:", question.id)
 
