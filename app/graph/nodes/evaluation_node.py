@@ -14,27 +14,18 @@ def build_evaluation_node(llm):
         question = state.current_question
         answer = state.last_answer
 
-        print("EVALUATION NODE:", question.id)
-
-
         if question is None or answer is None:
             return state
 
         if question.type != QuestionType.WRITTEN:
             return state
 
-        # ---------------------------------------------------------
-        # Avoid double evaluation
-        # ---------------------------------------------------------
+        print("EVALUATION NODE:", question.id)
 
         existing = state.get_result_for_question(question.id)
 
         if existing and existing.evaluation is not None:
             return state
-
-        # ---------------------------------------------------------
-        # LLM evaluation
-        # ---------------------------------------------------------
 
         prompt = build_evaluation_prompt(question, answer)
 
