@@ -6,13 +6,29 @@ from domain.contracts.interview_state import InterviewState
 
 def route_next_step(state: InterviewState):
 
-    # No answer yet → stop graph and wait for user
+    # ---------------------------------------
+    # No answer yet → wait for user
+    # ---------------------------------------
+
     if state.last_answer is None:
         return END
 
-    # Last question completed
+    # ---------------------------------------
+    # Answer submitted but not evaluated yet
+    # ---------------------------------------
+
+    if state.last_evaluation is None:
+        return END
+
+    # ---------------------------------------
+    # Interview finished
+    # ---------------------------------------
+
     if state.is_last_question:
         return END
 
-    # Next question
+    # ---------------------------------------
+    # Move to next question
+    # ---------------------------------------
+
     return "advance"
