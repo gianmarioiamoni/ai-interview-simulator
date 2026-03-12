@@ -139,14 +139,13 @@ class InterviewState(BaseModel):
         if result is None:
             return False
 
-        if question.type == QuestionType.WRITTEN:
+        if question.type.value == "written":
             return result.evaluation is not None
 
-        if question.type in (QuestionType.CODING, QuestionType.DATABASE):
+        if question.type.value in ("coding", "database"):
             return result.execution is not None
 
         return False
-
 
     # =========================================================
     # COMPUTED PROPERTIES

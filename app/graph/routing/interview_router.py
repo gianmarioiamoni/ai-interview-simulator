@@ -13,6 +13,8 @@ def route_next_step(state: InterviewState):
         state.last_answer.question_id if state.last_answer else None,
     )
 
+    print("RESULT MAP:", state.results_by_question)
+
     # ---------------------------------------------------------
     # No question → end
     # ---------------------------------------------------------
