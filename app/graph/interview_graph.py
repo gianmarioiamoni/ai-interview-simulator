@@ -1,6 +1,6 @@
 # app/graph/interview_graph.py
 
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, END
 
 from domain.contracts.interview_state import InterviewState
 
@@ -16,6 +16,7 @@ def build_interview_graph(llm):
 
     graph = StateGraph(InterviewState)
 
+
     # ---------------------------------------------------------
     # Nodes
     # ---------------------------------------------------------
@@ -25,13 +26,20 @@ def build_interview_graph(llm):
     graph.add_node("evaluate", build_evaluation_node(llm))
     graph.add_node("advance", advance_node)
 
+
     # ---------------------------------------------------------
-    # Flow
+    # Entry
     # ---------------------------------------------------------
 
     graph.set_entry_point("question")
 
+
+    # ---------------------------------------------------------
+    # Flow
+    # ---------------------------------------------------------
+
     graph.add_edge("question", "process_answer")
+
     graph.add_edge("process_answer", "evaluate")
 
     graph.add_conditional_edges(
@@ -40,6 +48,10 @@ def build_interview_graph(llm):
         {
             "question": "question",
             "advance": "advance",
-            "end": "__end__",
+            "end": END,
         },
     )
+
+    graph.add_edge("advance", "question")
+
+    return graph.compile()
