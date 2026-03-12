@@ -16,30 +16,17 @@ def build_interview_graph(llm):
 
     graph = StateGraph(InterviewState)
 
-
-    # ---------------------------------------------------------
     # Nodes
-    # ---------------------------------------------------------
-
     graph.add_node("question", build_question_node(llm))
     graph.add_node("process_answer", answer_processing_node)
     graph.add_node("evaluate", build_evaluation_node(llm))
     graph.add_node("advance", advance_node)
 
-
-    # ---------------------------------------------------------
-    # Entry
-    # ---------------------------------------------------------
-
+    # Entry point
     graph.set_entry_point("question")
 
-
-    # ---------------------------------------------------------
     # Flow
-    # ---------------------------------------------------------
-
     graph.add_edge("question", "process_answer")
-
     graph.add_edge("process_answer", "evaluate")
 
     graph.add_conditional_edges(
@@ -47,7 +34,7 @@ def build_interview_graph(llm):
         route_next_step,
         {
             "advance": "advance",
-            "end": END,
+            END: END,
         },
     )
 
