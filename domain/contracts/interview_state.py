@@ -228,3 +228,12 @@ class InterviewState(BaseModel):
             questions=questions,
             progress=InterviewProgress.SETUP,
         )
+
+
+    @property
+    def is_completed(self) -> bool:
+
+        from domain.contracts.interview_progress import InterviewProgress
+
+        return self.progress == InterviewProgress.COMPLETED
+
