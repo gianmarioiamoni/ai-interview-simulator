@@ -20,6 +20,19 @@ def build_evaluation_node(llm):
         if question.type != QuestionType.WRITTEN:
             return state
 
+        # ---------------------------------------------------------
+        # Avoid double evaluation
+        # ---------------------------------------------------------
+
+        existing = state.get_result_for_question(question.id)
+
+        if existing and existing.evaluation is not None:
+            return state
+
+        # ---------------------------------------------------------
+        # LLM evaluation
+        # ---------------------------------------------------------
+
         prompt = build_evaluation_prompt(question, answer)
 
         response = llm.invoke(prompt)

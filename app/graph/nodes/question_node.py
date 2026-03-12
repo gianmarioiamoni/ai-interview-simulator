@@ -15,18 +15,19 @@ def build_question_node(llm):
             return state
 
         # ---------------------------------------------------------
+        # Prevent double processing
+        # ---------------------------------------------------------
+
+        if state.current_question_index < len(state.chat_history):
+            return state
+
+        # ---------------------------------------------------------
         # Humanizer disabled
         # ---------------------------------------------------------
 
         if not state.enable_humanizer:
+
             state.chat_history.append(question.prompt)
-            return state
-
-        # ---------------------------------------------------------
-        # Prevent double humanization
-        # ---------------------------------------------------------
-
-        if state.current_question_index < len(state.chat_history):
             return state
 
         # ---------------------------------------------------------
@@ -34,6 +35,7 @@ def build_question_node(llm):
         # ---------------------------------------------------------
 
         if question.type != QuestionType.WRITTEN:
+
             state.chat_history.append(question.prompt)
             return state
 

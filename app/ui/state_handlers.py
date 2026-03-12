@@ -18,7 +18,10 @@ from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
-from app.runtime.interview_runtime import get_runtime_graph, get_runtime_evaluation_service
+from app.runtime.interview_runtime import (
+    get_runtime_graph,
+    get_runtime_evaluation_service,
+)
 
 export_service = ReportExportService()
 test_generator = AITestGenerator()
@@ -29,12 +32,14 @@ mapper = InterviewStateMapper()
 # START INTERVIEW
 # =========================================================
 
+
 def start_interview(
     role: str,
     interview_type: str,
     company: str,
     language: str,
 ):
+
     role_type = RoleType[role.replace(" ", "_")]
     interview_type_enum = InterviewType[interview_type]
 
@@ -69,13 +74,13 @@ def start_interview(
     graph = get_runtime_graph()
     state = graph.invoke(state)
 
-
     return build_ui_response_from_state(state)
 
 
 # =========================================================
 # GENERIC ANSWER SUBMIT
 # =========================================================
+
 
 def submit_answer(
     state: InterviewState,
@@ -98,7 +103,6 @@ def submit_answer(
     graph = get_runtime_graph()
     state = graph.invoke(state)
 
-
     return build_ui_response_from_state(state)
 
 
@@ -106,21 +110,31 @@ def submit_answer(
 # UI RESPONSE BUILDER
 # =========================================================
 
+
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     session_dto = mapper.to_session_dto(state)
 
     feedback = ""
-
-    if state.evaluations:
-        feedback = state.evaluations[-1].feedback
-
     execution_error = None
 
-    if state.execution_results:
-        last_execution = state.execution_results[-1]
-        if not last_execution.success:
-            execution_error = last_execution.error
+    # ---------------------------------------------------------
+    # Result of last answered question
+    # ---------------------------------------------------------
+
+    result = state.get_last_result()
+
+    if result:
+
+        if result.evaluation:
+            feedback = result.evaluation.feedback
+
+        if result.execution and not result.execution.success:
+            execution_error = result.execution.error
+
+    # ---------------------------------------------------------
+    # Interview completed
+    # ---------------------------------------------------------
 
     completed = state.progress.name == "COMPLETED"
 
@@ -140,6 +154,10 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             final_feedback=f"### Feedback\n\n{feedback}",
         )
 
+    # ---------------------------------------------------------
+    # Current question
+    # ---------------------------------------------------------
+
     question = session_dto.current_question
     question_type = question.question_type
 
@@ -153,7 +171,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     return UIResponse(
         state=state,
         question_counter=counter,
-        feedback=f"### Feedback\n\n{feedback_text}",
+        feedback=f"### Feedback\n\n{feedback_text}" if feedback_text else "",
         written_text=question.text,
         coding_text=question.text,
         database_text=question.text,
@@ -168,9 +186,8 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 # EXPORT PDF
 # =========================================================
 
-def export_pdf(
-    state: InterviewState,
-) -> str:
+
+def export_pdf(state: InterviewState) -> str:
 
     evaluation_service = get_runtime_evaluation_service()
 
@@ -202,9 +219,8 @@ def export_pdf(
 # EXPORT JSON
 # =========================================================
 
-def export_json(
-    state: InterviewState,
-) -> str:
+
+def export_json(state: InterviewState) -> str:
 
     evaluation_service = get_runtime_evaluation_service()
 

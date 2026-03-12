@@ -23,16 +23,34 @@ class SQLExecutor:
 
         start = time.time()
 
+        connection = None
+
         try:
 
-            conn = sqlite3.connect(":memory:")
-            cursor = conn.cursor()
+            connection = sqlite3.connect(":memory:")
+            cursor = connection.cursor()
+
+            # ---------------------------------------------------------
+            # Load schema if provided
+            # ---------------------------------------------------------
+
+            if hasattr(question, "schema_sql") and question.schema_sql:
+                cursor.executescript(question.schema_sql)
+
+            # ---------------------------------------------------------
+            # Load seed data if provided
+            # ---------------------------------------------------------
+
+            if hasattr(question, "seed_data_sql") and question.seed_data_sql:
+                cursor.executescript(question.seed_data_sql)
+
+            # ---------------------------------------------------------
+            # Execute user query
+            # ---------------------------------------------------------
 
             cursor.execute(query)
 
             rows = cursor.fetchall()
-
-            conn.close()
 
             duration = int((time.time() - start) * 1000)
 
@@ -54,3 +72,8 @@ class SQLExecutor:
                 success=False,
                 error=traceback.format_exc(),
             )
+
+        finally:
+
+            if connection:
+                connection.close()
