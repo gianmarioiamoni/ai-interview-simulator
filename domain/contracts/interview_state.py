@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Optional
 from pydantic import BaseModel, Field, model_validator
 
-from domain.contracts.question import Question
+from domain.contracts.question import Question, QuestionType
 from domain.contracts.answer import Answer
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.question_result import QuestionResult
@@ -130,6 +130,22 @@ class InterviewState(BaseModel):
 
         return self.results_by_question.get(self.last_answer.question_id)
 
+    # ---------------------------------------------------------
+
+    def is_question_processed(self, question):
+
+        result = self.results_by_question.get(question.id)
+
+        if result is None:
+            return False
+
+        if question.type == QuestionType.WRITTEN:
+            return result.evaluation is not None
+
+        if question.type in (QuestionType.CODING, QuestionType.DATABASE):
+            return result.execution is not None
+
+        return False
 
 
     # =========================================================
