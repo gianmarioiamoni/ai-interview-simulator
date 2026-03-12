@@ -4,10 +4,6 @@ from domain.contracts.interview_state import InterviewState
 
 
 def advance_node(state: InterviewState) -> InterviewState:
-
-    if state.is_last_question:
-        return state
-
-    state.advance_question()
-
+    if not state.is_last_question:
+        state.advance_question()
     return state

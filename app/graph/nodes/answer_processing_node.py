@@ -13,6 +13,8 @@ def answer_processing_node(state: InterviewState) -> InterviewState:
     question = state.current_question
     answer = state.last_answer
 
+    print("ANSWER PROC:", question.id, question.type)
+
     if question is None or answer is None:
         return state
 
