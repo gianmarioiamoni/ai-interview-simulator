@@ -1,28 +1,27 @@
 # app/graph/routing/interview_router.py
 
+from langgraph.graph import END
 from domain.contracts.interview_state import InterviewState
 
 
 def route_next_step(state: InterviewState):
 
     # ---------------------------------------------------------
-    # No answer yet → stay on question
+    # No answer yet → stop graph and wait for user
     # ---------------------------------------------------------
 
     if state.last_answer is None:
-        return "question"
-
+        return END
 
     # ---------------------------------------------------------
-    # Last question completed
+    # Interview finished
     # ---------------------------------------------------------
 
     if state.is_last_question:
-        return "end"
-
+        return END
 
     # ---------------------------------------------------------
-    # Go to next question
+    # Next question
     # ---------------------------------------------------------
 
     return "advance"
