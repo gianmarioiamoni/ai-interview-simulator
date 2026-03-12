@@ -39,6 +39,7 @@ def get_runtime_graph():
         llm = get_runtime_llm()
 
         compiled = build_interview_graph(llm)
+        print("compiled:", compiled)
 
         original_invoke = compiled.invoke
 
