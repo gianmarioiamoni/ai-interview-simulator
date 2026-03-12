@@ -1,69 +1,58 @@
-# services/sql_engine/sql_executor.py
-
-# SQLExecutor
-#
-# Responsibility:
-# Executes SQL queries against a provided SQLite connection.
-# Handles SQL syntax/runtime errors.
-# Does not perform result validation.
-
 import sqlite3
-from typing import Any
+import time
+import traceback
+import logging
 
+from domain.contracts.question import Question
+from domain.contracts.execution_result import (
+    ExecutionResult,
+    ExecutionType,
+    ExecutionStatus,
+)
 
-class SQLExecutionOutput:
-    def __init__(
-        self,
-        success: bool,
-        rows: list[tuple[Any, ...]] | None = None,
-        columns: list[str] | None = None,
-        error: str | None = None,
-    ) -> None:
-        self.success = success
-        self.rows = rows or []
-        self.columns = columns or []
-        self.error = error
+logger = logging.getLogger(__name__)
 
 
 class SQLExecutor:
 
-    def _get_cursor(self, connection: sqlite3.Connection):
-        return connection.cursor()
+    def execute(self, question: Question, query: str) -> ExecutionResult:
 
-    def execute(
-        self,
-        connection: sqlite3.Connection,
-        query: str,
-    ) -> SQLExecutionOutput:
+        logger.info(f"SQL query received:\n{query}")
 
-        cursor = self._get_cursor(connection)
+        start = time.time()
 
         try:
+
+            connection = sqlite3.connect(":memory:")
+            cursor = connection.cursor()
+
+            # eventual setup schema if present in the question
+            if hasattr(question, "schema_sql") and question.schema_sql:
+                cursor.executescript(question.schema_sql)
+
             cursor.execute(query)
 
-            # Fetch only if SELECT-like
-            if query.strip().lower().startswith("select"):
-                rows = cursor.fetchall()
-                columns = [desc[0] for desc in cursor.description]
-            else:
-                connection.commit()
-                rows = []
-                columns = []
+            rows = cursor.fetchall()
 
-            return SQLExecutionOutput(
+            connection.close()
+
+            duration = int((time.time() - start) * 1000)
+
+            return ExecutionResult(
+                question_id=question.id,
+                execution_type=ExecutionType.DATABASE,
+                status=ExecutionStatus.SUCCESS,
                 success=True,
-                rows=rows,
-                columns=columns,
+                output=str(rows),
+                execution_time_ms=duration,
             )
 
-        except sqlite3.OperationalError as e:
-            return SQLExecutionOutput(
-                success=False,
-                error=str(e),
-            )
+        except Exception:
 
-        except Exception as e:
-            return SQLExecutionOutput(
+            return ExecutionResult(
+                question_id=question.id,
+                execution_type=ExecutionType.DATABASE,
+                status=ExecutionStatus.RUNTIME_ERROR,
                 success=False,
-                error=str(e),
+                error=traceback.format_exc(),
             )
