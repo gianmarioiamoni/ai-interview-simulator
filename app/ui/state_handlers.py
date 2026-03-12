@@ -136,7 +136,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     # Interview completed
     # ---------------------------------------------------------
 
-    completed = state.progress.name == "COMPLETED"
+    completed = state.is_completed
 
     if completed:
 
