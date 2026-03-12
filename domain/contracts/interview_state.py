@@ -84,7 +84,7 @@ class InterviewState(BaseModel):
 
 
     # =========================================================
-    # HELPER FUNCTIONS
+    # RESULTS HELPER FUNCTIONS
     # =========================================================
 
     def register_evaluation(self, evaluation: QuestionEvaluation):
@@ -120,6 +120,16 @@ class InterviewState(BaseModel):
     def get_result_for_question(self, question_id: str) -> Optional[QuestionResult]:
 
         return self.results_by_question.get(question_id)
+
+    # ---------------------------------------------------------
+
+    def get_last_result(self):
+
+        if self.last_answer is None:
+            return None
+
+        return self.results_by_question.get(self.last_answer.question_id)
+
 
 
     # =========================================================
