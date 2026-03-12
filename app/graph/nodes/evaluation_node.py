@@ -32,9 +32,20 @@ def build_evaluation_node(llm):
         response = llm.invoke(prompt)
 
         try:
+
             decision = EvaluationDecision.model_validate_json(response.content)
-        except Exception:
-            return state
+
+        except Exception as e:
+
+            print("EVALUATION PARSE ERROR:", e)
+            print("LLM RAW RESPONSE:", response.content)
+
+            decision = EvaluationDecision(
+                score=0,
+                feedback="Evaluation failed due to parsing error.",
+                strengths=[],
+                weaknesses=["Evaluation parsing failed"],
+            )
 
         evaluation = QuestionEvaluation(
             question_id=question.id,
@@ -45,6 +56,8 @@ def build_evaluation_node(llm):
             strengths=getattr(decision, "strengths", []),
             weaknesses=getattr(decision, "weaknesses", []),
         )
+
+        print("REGISTER EVAL:", question.id)
 
         state.register_evaluation(evaluation)
 
