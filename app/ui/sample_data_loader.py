@@ -72,9 +72,38 @@ def _load_technical_questions() -> List[Question]:
                 "write a SQL query to retrieve the 5 most recently created users."
             ),
             difficulty=2,
-            reference_solution=(
-                "SELECT * FROM Users\n" "ORDER BY created_at DESC\n" "LIMIT 5;"
-            ),
+            # ---------------------------------------------------------
+            # Database schema for the question
+            # ---------------------------------------------------------
+            db_schema="""
+    CREATE TABLE Users(
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        created_at TEXT
+    );
+    """,
+            # ---------------------------------------------------------
+            # Dataset used for evaluation
+            # ---------------------------------------------------------
+            db_seed_data="""
+    INSERT INTO Users(name, created_at) VALUES
+    ('Alice','2024-01-01'),
+    ('Bob','2024-02-01'),
+    ('Carol','2024-03-01'),
+    ('Dave','2024-04-01'),
+    ('Eve','2024-05-01'),
+    ('Frank','2024-06-01');
+    """,
+            # ---------------------------------------------------------
+            # Reference solution used by SQL evaluator
+            # ---------------------------------------------------------
+            reference_solution="""
+    SELECT *
+    FROM Users
+    ORDER BY created_at DESC
+    LIMIT 5
+    """,
+            expected_ordered=True,
         ),
     ]
 
