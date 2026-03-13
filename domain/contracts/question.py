@@ -29,6 +29,8 @@ class Question(BaseModel):
     hidden_tests: list[TestCase] = Field(default_factory=list)
     db_schema: Optional[str] = None
     db_seed_data: Optional[str] = None
+    expected_rows: Optional[list[tuple]] = None
+    expected_ordered: bool = Field(default=True)
 
     model_config = {
         "frozen": True,
