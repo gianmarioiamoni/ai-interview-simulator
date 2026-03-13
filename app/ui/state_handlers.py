@@ -81,7 +81,6 @@ def start_interview(
 # GENERIC ANSWER SUBMIT
 # =========================================================
 
-
 def submit_answer(
     state: InterviewState,
     user_answer: str,
@@ -110,7 +109,6 @@ def submit_answer(
 # UI RESPONSE BUILDER
 # =========================================================
 
-
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     session_dto = mapper.to_session_dto(state)
@@ -119,26 +117,28 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     execution_error = None
 
     # ---------------------------------------------------------
-    # Result of last answered question
+    # Retrieve result for last answered question
     # ---------------------------------------------------------
 
-    result = state.get_last_result()
+    if state.last_answer:
 
-    if result:
+        question_id = state.last_answer.question_id
 
-        if result.evaluation:
-            feedback = result.evaluation.feedback
+        result = state.get_result_for_question(question_id)
 
-        if result.execution and not result.execution.success:
-            execution_error = result.execution.error
+        if result:
+
+            if result.evaluation:
+                feedback = result.evaluation.feedback
+
+            if result.execution and not result.execution.success:
+                execution_error = result.execution.error
 
     # ---------------------------------------------------------
     # Interview completed
     # ---------------------------------------------------------
 
-    completed = state.is_completed
-
-    if completed:
+    if state.is_completed:
 
         return UIResponse(
             state=state,
@@ -151,7 +151,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             coding_visible=False,
             database_visible=False,
             ui_state=UIState.COMPLETION,
-            final_feedback=f"### Feedback\n\n{feedback}",
+            final_feedback=f"### Final Feedback\n\n{feedback}",
         )
 
     # ---------------------------------------------------------
