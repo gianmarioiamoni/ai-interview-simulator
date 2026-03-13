@@ -12,10 +12,16 @@ from domain.contracts.execution_result import (
     ExecutionStatus,
 )
 
+from services.sql_engine.sql_evaluator import SQLEvaluator
+
 logger = logging.getLogger(__name__)
 
 
 class SQLExecutor:
+
+    def __init__(self):
+
+        self._evaluator = SQLEvaluator()
 
     def execute(self, question: Question, query: str) -> ExecutionResult:
 
@@ -26,12 +32,62 @@ class SQLExecutor:
             conn = sqlite3.connect(":memory:")
             cursor = conn.cursor()
 
-            # create schema if provided
+            # ---------------------------------------------------------
+            # Apply schema
+            # ---------------------------------------------------------
+
             if question.db_schema:
                 cursor.executescript(question.db_schema)
 
-            cursor.execute(query)
+            if question.db_seed_data:
+                cursor.executescript(question.db_seed_data)
 
+            # ---------------------------------------------------------
+            # Semantic evaluation
+            # ---------------------------------------------------------
+
+            if question.reference_solution:
+
+                success, candidate_rows, reference_rows = self._evaluator.evaluate(
+                    cursor,
+                    query,
+                    question.reference_solution,
+                    ordered=question.expected_ordered,
+                )
+
+                duration = int((time.time() - start) * 1000)
+
+                if success:
+
+                    status = ExecutionStatus.SUCCESS
+                    error = None
+
+                else:
+
+                    status = ExecutionStatus.FAILED_TESTS
+                    error = (
+                        "Query results differ from reference solution\n"
+                        f"Expected: {reference_rows}\n"
+                        f"Got: {candidate_rows}"
+                    )
+
+                conn.close()
+
+                return ExecutionResult(
+                    question_id=question.id,
+                    execution_type=ExecutionType.DATABASE,
+                    status=status,
+                    success=success,
+                    output=str(candidate_rows),
+                    error=error,
+                    execution_time_ms=duration,
+                )
+
+            # ---------------------------------------------------------
+            # If no reference query, just execute
+            # ---------------------------------------------------------
+
+            cursor.execute(query)
             rows = cursor.fetchall()
 
             conn.close()
