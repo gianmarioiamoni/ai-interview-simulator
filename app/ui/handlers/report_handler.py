@@ -10,10 +10,8 @@ from app.ui.state_handlers import mapper
 
 
 def view_report_handler(state_value):
-    """
-    Generates the final interview report and switches the UI to report view.
-    Implemented as a generator to allow progressive UI updates.
-    """
+    # Generates the final interview report and switches the UI to report view.
+    # Implemented as a generator to allow progressive UI updates.
 
     # ---------------------------------------------------------
     # Step 1 — Switch UI to report section with loading message
