@@ -60,19 +60,23 @@ class InterviewStateMapper:
     # ---------------------------------------------------------
 
     def to_final_report_dto(self, state: InterviewState) -> FinalReportDTO:
-        for ev in state.evaluations:
-            print(ev.model_dump())
-        
+
+        evaluations = []
+
+        for result in state.results_by_question.values():
+            if result.evaluation is not None:
+                evaluations.append(result.evaluation)
+
         question_assessments = [
             QuestionAssessmentDTO(
-                question_id=ev.question_id,
-                score=ev.score,
-                feedback=ev.feedback,
-                passed_tests=ev.passed_tests,
-                total_tests=ev.total_tests,
-                execution_status=ev.execution_status,
+            question_id=ev.question_id,
+            score=ev.score,
+            feedback=ev.feedback,
+            passed_tests=ev.passed_tests,
+            total_tests=ev.total_tests,
+            execution_status=ev.execution_status,
             )
-            for ev in state.evaluations
+            for ev in evaluations
         ]
 
         dimension_scores = [
@@ -84,10 +88,10 @@ class InterviewStateMapper:
             for dim in state.final_evaluation.performance_dimensions
         ]
 
-        improvement_suggestions = self._aggregate_weaknesses(state.evaluations)
+        improvement_suggestions = self._aggregate_weaknesses(evaluations)
 
         total_tokens_used = sum(
-            ev.tokens_used for ev in state.evaluations if hasattr(ev, "tokens_used")
+            ev.tokens_used for ev in evaluations if hasattr(ev, "tokens_used")
         )
 
         return FinalReportDTO(
@@ -105,6 +109,7 @@ class InterviewStateMapper:
             total_tokens_used=total_tokens_used,
             confidence=state.final_evaluation.confidence,
         )
+
 
     # ---------------------------------------------------------
     # Private helpers
