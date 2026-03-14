@@ -2,6 +2,7 @@
 
 from langgraph.graph import END
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.interview_progress import InterviewProgress
 
 
 def route_next_step(state: InterviewState):
@@ -17,50 +18,50 @@ def route_next_step(state: InterviewState):
 
     print("RESULT MAP:", state.results_by_question)
 
+
     # ---------------------------------------------------------
-    # No question → terminate
+    # No question
     # ---------------------------------------------------------
 
     if q is None:
+        state.progress = InterviewProgress.COMPLETED
         return END
 
+
     # ---------------------------------------------------------
-    # No answer yet → UI must wait
+    # Wait for answer
     # ---------------------------------------------------------
 
     if state.last_answer is None:
         return END
 
-    # ---------------------------------------------------------
-    # Ensure the answer refers to the current question
-    # ---------------------------------------------------------
-
     if state.last_answer.question_id != q.id:
         return END
 
+
     # ---------------------------------------------------------
-    # Ensure processing completed
+    # Ensure question processed
     # ---------------------------------------------------------
 
     if not state.is_question_processed(q):
         return END
 
+
     # ---------------------------------------------------------
-    # LAST QUESTION → finish interview
+    # Interview finished
     # ---------------------------------------------------------
 
     if state.is_last_question:
 
         print("INTERVIEW COMPLETED")
 
-        state.progress = state.progress.COMPLETED
+        state.progress = InterviewProgress.COMPLETED
 
         return END
 
-    # ---------------------------------------------------------
-    # Otherwise move to next question
-    # ---------------------------------------------------------
 
-    print("ADVANCING QUESTION")
+    # ---------------------------------------------------------
+    # Next question
+    # ---------------------------------------------------------
 
     return "advance"
