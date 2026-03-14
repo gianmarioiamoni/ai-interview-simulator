@@ -8,6 +8,7 @@ from app.graph.nodes.question_node import build_question_node
 from app.graph.nodes.answer_processing_node import answer_processing_node
 from app.graph.nodes.evaluation_node import build_evaluation_node
 from app.graph.nodes.advance_node import advance_node
+from app.graph.nodes.complete_node import complete_node
 
 from app.graph.routing.interview_router import route_next_step
 
@@ -24,6 +25,7 @@ def build_interview_graph(llm):
     graph.add_node("process_answer", answer_processing_node)
     graph.add_node("evaluate", build_evaluation_node(llm))
     graph.add_node("advance", advance_node)
+    graph.add_node("complete", complete_node)
 
     # ---------------------------------------------------------
     # Entry
@@ -44,8 +46,11 @@ def build_interview_graph(llm):
         route_next_step,
         {
             "question": "question",
+            "complete": "complete",
             "__end__": END,
         },
     )
+
+    graph.add_edge("complete", END)
 
     return graph.compile()
