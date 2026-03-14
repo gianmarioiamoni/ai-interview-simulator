@@ -1,98 +1,148 @@
 # app/ui/mappers/interview_state_mapper.py
 
-from typing import List, Optional, Dict
+ffrom domain.contracts.interview_state import InterviewState
+from domain.contracts.question import QuestionType
 
-from domain.contracts.interview_state import InterviewState
-from domain.contracts.interview_progress import InterviewProgress
-from domain.contracts.question import Question
-from domain.contracts.question_evaluation import QuestionEvaluation
-
-from app.ui.dto.question_dto import QuestionDTO
-from app.ui.dto.interview_session_dto import InterviewSessionDTO
-from app.ui.dto.final_report_dto import FinalReportDTO
-from app.ui.dto.dimension_score_dto import DimensionScoreDTO
-from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
+from app.ui.dto.session_dto import SessionDTO, QuestionDTO
+from app.ui.dto.final_report_dto import (
+    FinalReportDTO,
+    QuestionAssessmentDTO,
+    DimensionScoreDTO,
+)
 
 
 class InterviewStateMapper:
 
-    # ---------------------------------------------------------
-    # DTO session
-    # ---------------------------------------------------------
+    # =========================================================
+    # SESSION DTO
+    # =========================================================
 
-    def to_session_dto(self, state: InterviewState) -> InterviewSessionDTO:
+    def to_session_dto(self, state: InterviewState) -> SessionDTO:
 
-        is_completed = state.progress == InterviewProgress.COMPLETED
+        question = state.current_question
 
-        if is_completed:
-            return InterviewSessionDTO(
-                session_id=state.interview_id,
-                current_question=None,
-                is_completed=True,
-                current_area=None,
-            )
+        if question is None:
+            return SessionDTO(current_question=None)
 
-        current_question = self._extract_current_question(state)
+        index = state.current_question_index + 1
+        total = len(state.questions)
 
-        if current_question is None:
-            return InterviewSessionDTO(
-                session_id=state.interview_id,
-                current_question=None,
-                is_completed=False,
-                current_area=None,
-            )
-
-        question_dto = self._map_question(
-            question=current_question,
-            index=state.current_question_index + 1,
-            total=len(state.questions),
+        question_dto = QuestionDTO(
+            id=question.id,
+            text=question.prompt,
+            question_type=question.type.value,
+            index=index,
+            total=total,
         )
 
-        return InterviewSessionDTO(
-            session_id=state.interview_id,
-            current_question=question_dto,
-            is_completed=False,
-            current_area=current_question.area,
-        )
+        return SessionDTO(current_question=question_dto)
 
-    # ---------------------------------------------------------
-    # Final report
-    # ---------------------------------------------------------
+    # =========================================================
+    # FINAL REPORT DTO
+    # =========================================================
 
     def to_final_report_dto(self, state: InterviewState) -> FinalReportDTO:
 
-        evaluations = []
+        question_assessments = []
+
+        # ---------------------------------------------------------
+        # Build question assessments
+        # ---------------------------------------------------------
+
+        for q in state.questions:
+
+            result = state.results_by_question.get(q.id)
+
+            if result is None:
+                continue
+
+            score = 0
+            feedback = ""
+            passed_tests = None
+            total_tests = None
+            execution_status = None
+
+            # -----------------------------------------------------
+            # WRITTEN QUESTION
+            # -----------------------------------------------------
+
+            if result.evaluation is not None:
+
+                score = result.evaluation.score
+                feedback = result.evaluation.feedback
+
+            # -----------------------------------------------------
+            # CODING / DATABASE QUESTION
+            # -----------------------------------------------------
+
+            elif result.execution is not None:
+
+                exec_res = result.execution
+
+                passed_tests = exec_res.passed_tests
+                total_tests = exec_res.total_tests
+                execution_status = exec_res.status.value
+
+                if exec_res.total_tests and exec_res.total_tests > 0:
+
+                    score = (exec_res.passed_tests / exec_res.total_tests) * 100
+
+                else:
+
+                    score = 100 if exec_res.success else 0
+
+                feedback = exec_res.error or "Execution evaluated automatically."
+
+            question_assessments.append(
+                QuestionAssessmentDTO(
+                    question_id=q.id,
+                    score=score,
+                    feedback=feedback,
+                    passed_tests=passed_tests,
+                    total_tests=total_tests,
+                    execution_status=execution_status,
+                )
+            )
+
+        # ---------------------------------------------------------
+        # Dimension scores
+        # ---------------------------------------------------------
+
+        dimension_scores = []
+
+        if state.final_evaluation:
+
+            for dim in state.final_evaluation.performance_dimensions:
+
+                dimension_scores.append(
+                    DimensionScoreDTO(
+                        name=dim.name,
+                        score=dim.score,
+                        max_score=100,
+                    )
+                )
+
+        # ---------------------------------------------------------
+        # Improvement suggestions
+        # ---------------------------------------------------------
+
+        improvement_suggestions = self._aggregate_weaknesses(question_assessments)
+
+        # ---------------------------------------------------------
+        # Token usage
+        # ---------------------------------------------------------
+
+        total_tokens_used = 0
 
         for result in state.results_by_question.values():
-            if result.evaluation is not None:
-                evaluations.append(result.evaluation)
 
-        question_assessments = [
-            QuestionAssessmentDTO(
-            question_id=ev.question_id,
-            score=ev.score,
-            feedback=ev.feedback,
-            passed_tests=ev.passed_tests,
-            total_tests=ev.total_tests,
-            execution_status=ev.execution_status,
-            )
-            for ev in evaluations
-        ]
+            if result.evaluation and hasattr(result.evaluation, "tokens_used"):
 
-        dimension_scores = [
-            DimensionScoreDTO(
-                name=dim.name,
-                score=dim.score,
-                max_score=100.0,
-            )
-            for dim in state.final_evaluation.performance_dimensions
-        ]
+                total_tokens_used += result.evaluation.tokens_used
 
-        improvement_suggestions = self._aggregate_weaknesses(evaluations)
-
-        total_tokens_used = sum(
-            ev.tokens_used for ev in evaluations if hasattr(ev, "tokens_used")
-        )
+        # ---------------------------------------------------------
+        # Final DTO
+        # ---------------------------------------------------------
 
         return FinalReportDTO(
             overall_score=state.final_evaluation.overall_score,
@@ -110,55 +160,21 @@ class InterviewStateMapper:
             confidence=state.final_evaluation.confidence,
         )
 
+    
+    # =========================================================
+    # WEAKNESS AGGREGATION
+    # =========================================================
 
-    # ---------------------------------------------------------
-    # Private helpers
-    # ---------------------------------------------------------
+    def _aggregate_weaknesses(self, question_assessments):
 
-    def _extract_current_question(self, state: InterviewState) -> Optional[Question]:
+        improvements = []
 
-        if not state.questions:
-            return None
+        for q in question_assessments:
 
-        if state.current_question_index >= len(state.questions):
-            return None
+            if q.score < 60:
 
-        return state.questions[state.current_question_index]
+                improvements.append(
+                    f"Improve performance on question {q.question_id} (score {q.score:.1f}/100)."
+                )
 
-    def _map_question(
-        self,
-        question: Question,
-        index: int,
-        total: int,
-    ) -> QuestionDTO:
-
-        return QuestionDTO(
-            question_id=question.id,
-            text=question.prompt,
-            question_type=question.type.value,
-            area=question.area,
-            index=index,
-            total=total,
-        )
-
-    def _aggregate_weaknesses(
-        self,
-        evaluations: List[QuestionEvaluation],
-    ) -> List[str]:
-
-        weaknesses: List[str] = []
-
-        for ev in evaluations:
-            weaknesses.extend(ev.weaknesses)
-
-        # Remove duplicates while preserving order
-        seen = set()
-        unique = []
-
-        for w in weaknesses:
-            if w not in seen:
-                seen.add(w)
-                unique.append(w)
-
-        # Return max 3 suggestions
-        return unique[:3]
+        return improvements
