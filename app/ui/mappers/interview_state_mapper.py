@@ -28,7 +28,7 @@ class InterviewStateMapper:
         total = len(state.questions)
 
         question_dto = QuestionDTO(
-            id=question.id,
+            question_id=question.id,
             text=question.prompt,
             question_type=question.type.value,
             index=index,
