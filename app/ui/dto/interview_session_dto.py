@@ -1,3 +1,5 @@
+# app/ui/dto/interview_session_dto.py
+
 from dataclasses import dataclass
 from typing import Optional
 
