@@ -108,8 +108,9 @@ def submit_answer(
 # UI RESPONSE BUILDER
 # =========================================================
 
-
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
+
+    from app.ui.mappers.ui_state_mapper import UIStateMapper
 
     session_dto = InterviewSessionDTO.from_state(state)
 
@@ -135,10 +136,16 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
                 execution_error = result.execution.error
 
     # ---------------------------------------------------------
-    # Interview completed
+    # Determine UI state via mapper
     # ---------------------------------------------------------
 
-    if state.is_completed:
+    ui_state = UIStateMapper.map_state(state)
+
+    # ---------------------------------------------------------
+    # Completion page
+    # ---------------------------------------------------------
+
+    if ui_state == UIState.COMPLETION:
 
         return UIResponse(
             state=state,
@@ -171,19 +178,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     if execution_error:
         feedback_text += f"\n\n⚠ Execution error: {execution_error}"
 
-    # ---------------------------------------------------------
-    # Detect FEEDBACK state
-    # ---------------------------------------------------------
-
-    ui_state = UIState.QUESTION
-
-    if state.last_answer and question:
-
-        if (
-            state.last_answer.question_id == question.id
-            and state.is_question_processed(question)
-        ):
-            ui_state = UIState.FEEDBACK
+    is_feedback = ui_state == UIState.FEEDBACK
 
     return UIResponse(
         state=state,
@@ -196,9 +191,9 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         coding_visible=question_type == "coding",
         database_visible=question_type == "database",
         ui_state=ui_state,
-        show_submit=ui_state == UIState.QUESTION,
-        show_retry=ui_state == UIState.FEEDBACK,
-        show_next=ui_state == UIState.FEEDBACK,
+        show_submit=not is_feedback,
+        show_retry=is_feedback,
+        show_next=is_feedback,
     )
 
 
