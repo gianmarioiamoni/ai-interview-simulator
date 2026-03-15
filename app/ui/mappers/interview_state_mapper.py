@@ -21,22 +21,31 @@ class InterviewStateMapper:
 
         question = state.current_question
 
-        if question is None:
-            return InterviewSessionDTO(current_question=None)
+        question_dto = None
+        current_area = None
 
-        index = state.current_question_index + 1
-        total = len(state.questions)
+        if question is not None:
 
-        question_dto = QuestionDTO(
-            question_id=question.id,
-            text=question.prompt,
-            question_type=question.type.value,
-            area=question.area.value,
-            index=index,
-            total=total,
+            index = state.current_question_index + 1
+            total = len(state.questions)
+
+            question_dto = QuestionDTO(
+                question_id=question.id,
+                text=question.prompt,
+                question_type=question.type.value,
+                area=question.area.value,
+                index=index,
+                total=total,
+            )
+
+            current_area = question.area.value
+
+        return InterviewSessionDTO(
+            session_id=state.interview_id,
+            current_question=question_dto,
+            is_completed=state.progress.value == "completed",
+            current_area=current_area,
         )
-
-        return InterviewSessionDTO(current_question=question_dto)
 
     # =========================================================
     # FINAL REPORT DTO
