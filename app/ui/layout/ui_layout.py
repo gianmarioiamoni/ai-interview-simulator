@@ -14,6 +14,25 @@ def build_layout():
 
     gr.Markdown("# AI Interview Simulator")
 
+    # ---------------------------------------------------------
+    # FOCUS EDITOR ON LOAD
+    # ---------------------------------------------------------
+
+    gr.HTML(
+        """
+            <script>
+                function focusEditor() {
+                    setTimeout(() => {
+                        const editor = document.querySelector('#code-editor textarea');
+                        if (editor) {
+                            editor.focus();
+                        }
+                    }, 100);
+                }
+                window.addEventListener('load', focusEditor);
+            </script>
+        """)
+
     state = gr.State()
 
     # ---------------------------------------------------------
@@ -38,7 +57,17 @@ def build_layout():
 
     with gr.Column(visible=False) as interview_section:
 
-        question_counter = gr.Markdown("")
+        question_counter = gr.Markdown("", elem_id="question-counter")
+        gr.HTML(
+            """
+                <script>
+                    const observer = new MutationObserver(() => {
+                        focusEditor();
+                    });
+                    observer.observe(document.body, {childList: true, subtree: true});
+                </script>
+            """)
+        
         feedback_output = gr.Markdown("")
 
         # ---------------- WRITTEN ----------------
