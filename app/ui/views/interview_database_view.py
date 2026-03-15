@@ -19,6 +19,6 @@ class InterviewDatabaseView:
                 lines=10,
             )
 
-            submit_button = gr.Button("Submit SQL")
+            submit_button = gr.Button("Submit SQL", interactive=False)
 
         return container, question_text, sql_box, submit_button
