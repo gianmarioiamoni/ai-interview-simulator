@@ -1,9 +1,9 @@
 # app/ui/mappers/interview_state_mapper.py
 
-ffrom domain.contracts.interview_state import InterviewState
-from domain.contracts.question import QuestionType
+from domain.contracts.interview_state import InterviewState
 
-from app.ui.dto.session_dto import SessionDTO, QuestionDTO
+from app.ui.dto.interview_session_dto import InterviewSessionDTO
+from app.ui.dto.question_dto import QuestionDTO
 from app.ui.dto.final_report_dto import (
     FinalReportDTO,
     QuestionAssessmentDTO,
@@ -17,12 +17,12 @@ class InterviewStateMapper:
     # SESSION DTO
     # =========================================================
 
-    def to_session_dto(self, state: InterviewState) -> SessionDTO:
+    def to_session_dto(self, state: InterviewState) -> InterviewSessionDTO:
 
         question = state.current_question
 
         if question is None:
-            return SessionDTO(current_question=None)
+            return InterviewSessionDTO(current_question=None)
 
         index = state.current_question_index + 1
         total = len(state.questions)
@@ -35,7 +35,7 @@ class InterviewStateMapper:
             total=total,
         )
 
-        return SessionDTO(current_question=question_dto)
+        return InterviewSessionDTO(current_question=question_dto)
 
     # =========================================================
     # FINAL REPORT DTO
@@ -160,7 +160,6 @@ class InterviewStateMapper:
             confidence=state.final_evaluation.confidence,
         )
 
-    
     # =========================================================
     # WEAKNESS AGGREGATION
     # =========================================================
