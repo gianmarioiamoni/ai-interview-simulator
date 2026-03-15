@@ -33,7 +33,6 @@ test_generator = AITestGenerator()
 # START INTERVIEW
 # =========================================================
 
-
 def start_interview(
     role: str,
     interview_type: str,
@@ -198,9 +197,37 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
 
 # =========================================================
-# EXPORT PDF
+# RETRY ANSWER
 # =========================================================
 
+def retry_answer(state: InterviewState):
+
+    # Simply return the same question without advancing
+    # UI will switch back to QUESTION mode
+
+    response = build_ui_response_from_state(state)
+
+    response.ui_state = UIState.QUESTION
+
+    return response
+
+
+# =========================================================
+# NEXT QUESTION
+# =========================================================
+
+def next_question(state: InterviewState):
+
+    graph = get_runtime_graph()
+
+    state = graph.invoke(state)
+
+    return build_ui_response_from_state(state)
+
+
+# =========================================================
+# EXPORT PDF
+# =========================================================
 
 def export_pdf(state: InterviewState) -> str:
 
@@ -233,7 +260,6 @@ def export_pdf(state: InterviewState) -> str:
 # =========================================================
 # EXPORT JSON
 # =========================================================
-
 
 def export_json(state: InterviewState) -> str:
 
