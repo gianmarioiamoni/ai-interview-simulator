@@ -115,7 +115,10 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     session_dto = InterviewSessionDTO.from_state(state)
 
     feedback = ""
+    score = None
     execution_error = None
+    test_results_lines = []
+    execution_status = ""
 
     # ---------------------------------------------------------
     # Retrieve result for last answered question
@@ -129,11 +132,46 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
         if result:
 
+            # -------------------------
+            # Evaluation
+            # -------------------------
+
             if result.evaluation:
+
                 feedback = result.evaluation.feedback
 
-            if result.execution and not result.execution.success:
-                execution_error = result.execution.error
+                # score (if available)
+                if hasattr(result.evaluation, "score"):
+                    score = result.evaluation.score
+
+            # -------------------------
+            # Execution results
+            # -------------------------
+
+            if result.execution:
+
+                if (
+                    hasattr(result.execution, "test_results")
+                    and result.execution.test_results
+                ):
+
+                    for test in result.execution.test_results:
+
+                        name = getattr(test, "name", "test")
+
+                        passed = getattr(test, "passed", False)
+
+                        icon = "✔" if passed else "✘"
+
+                        test_results_lines.append(f"{icon} {name}")
+
+                if result.execution.success:
+                    execution_status = "PASSED"
+                else:
+                    execution_status = "FAILED TESTS"
+
+                if result.execution.error and not result.execution.success:
+                    execution_error = result.execution.error
 
     # ---------------------------------------------------------
     # Determine UI state via mapper
@@ -173,17 +211,45 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     counter = f"Question {question.index}/{question.total}"
 
-    feedback_text = feedback
+    # ---------------------------------------------------------
+    # Build evaluation panel markdown
+    # ---------------------------------------------------------
+
+    evaluation_sections = []
+
+    if score is not None:
+        evaluation_sections.append(f"**Score:** {score} / 100")
+
+    if feedback:
+        evaluation_sections.append(f"**Feedback:**\n\n{feedback}")
+
+    if test_results_lines:
+
+        tests_block = "\n".join(test_results_lines)
+
+        evaluation_sections.append(f"**Execution Results**\n\n{tests_block}")
+
+    if execution_status:
+        evaluation_sections.append(f"**Execution status:** {execution_status}")
 
     if execution_error:
-        feedback_text += f"\n\n⚠ Execution error: {execution_error}"
+        evaluation_sections.append(f"⚠ **Execution error:** {execution_error}")
+
+    feedback_markdown = ""
+
+    if evaluation_sections:
+        feedback_markdown = "### Evaluation\n\n" + "\n\n".join(evaluation_sections)
+
+    # ---------------------------------------------------------
+    # UI mode
+    # ---------------------------------------------------------
 
     is_feedback = ui_state == UIState.FEEDBACK
 
     return UIResponse(
         state=state,
         question_counter=counter,
-        feedback=f"### Feedback\n\n{feedback_text}" if feedback_text else "",
+        feedback=feedback_markdown,
         written_text=question.text,
         coding_text=question.text,
         database_text=question.text,
