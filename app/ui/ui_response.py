@@ -47,6 +47,14 @@ class UIResponse:
     def to_gradio_outputs(self) -> List[Any]:
         # Build the exact output list expected by app.py
 
+        # ---------------------------------------------------------
+        # Autofocus on the active editor
+        # ---------------------------------------------------------
+
+        written_focus = gr.update(focus=True) if self.written_visible else gr.update()
+        coding_focus = gr.update(focus=True) if self.coding_visible else gr.update()
+        database_focus = gr.update(focus=True) if self.database_visible else gr.update()
+
         setup_update, interview_update, completion_update, report_update = route_ui(
             self.ui_state
         )
@@ -58,6 +66,9 @@ class UIResponse:
             self.written_text,
             self.coding_text,
             self.database_text,
+            written_focus,
+            coding_focus,
+            database_focus,
             gr.update(visible=self.written_visible),
             gr.update(visible=self.coding_visible),
             gr.update(visible=self.database_visible),
