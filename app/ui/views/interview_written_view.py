@@ -18,6 +18,6 @@ class InterviewWrittenView:
                 lines=5,
             )
 
-            submit_button = gr.Button("Submit Answer")
+            submit_button = gr.Button("Submit Answer", interactive=False)
 
         return container, question_text, answer_box, submit_button

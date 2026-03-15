@@ -78,6 +78,9 @@ def bind_events(components):
         c.completion_section,
         c.report_section,
         c.final_feedback,
+        c.written_submit,
+        c.retry_button,
+        c.next_button,
     ]
 
     # =========================================================
@@ -118,44 +121,52 @@ def bind_events(components):
     )
 
     # =========================================================
+    # ENABLE SUBMIT WHEN ANSWER IS NOT EMPTY
+    # =========================================================
+
+    def enable_submit(text):
+
+        if text and text.strip():
+            return gr.update(interactive=True)
+
+        return gr.update(interactive=False)
+
+    # Written answer validation
+    c.written_box.change(
+        enable_submit,
+        inputs=[c.written_box],
+        outputs=c.written_submit,
+    )
+
+    # Coding answer validation
+    c.coding_box.change(
+        enable_submit,
+        inputs=[c.coding_box],
+        outputs=c.coding_submit,
+    )
+
+    # SQL answer validation
+    c.database_box.change(
+        enable_submit,
+        inputs=[c.database_box],
+        outputs=c.database_submit,
+    )
+
+    # =========================================================
     # RETRY ANSWER
     # =========================================================
 
-    c.written_retry.click(
-        lambda s: retry_answer(s).to_gradio_outputs(),
-        inputs=[state],
-        outputs=outputs,
-    )
-
-    c.coding_retry.click(
-        lambda s: retry_answer(s).to_gradio_outputs(),
-        inputs=[state],
-        outputs=outputs,
-    )
-
-    c.database_retry.click(
+    c.retry_button.click(
         lambda s: retry_answer(s).to_gradio_outputs(),
         inputs=[state],
         outputs=outputs,
     )
 
     # =========================================================
-    # NEXT QUESTION
+    # NEXT QUESTION / GENERATE REPORT
     # =========================================================
 
-    c.written_next.click(
-        lambda s: next_question(s).to_gradio_outputs(),
-        inputs=[state],
-        outputs=outputs,
-    )
-
-    c.coding_next.click(
-        lambda s: next_question(s).to_gradio_outputs(),
-        inputs=[state],
-        outputs=outputs,
-    )
-
-    c.database_next.click(
+    c.next_button.click(
         lambda s: next_question(s).to_gradio_outputs(),
         inputs=[state],
         outputs=outputs,

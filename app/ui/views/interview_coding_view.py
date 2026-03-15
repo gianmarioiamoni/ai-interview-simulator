@@ -23,6 +23,6 @@ class InterviewCodingView:
                 interactive=True,
             )
 
-            submit_button = gr.Button("Submit Code")
+            submit_button = gr.Button("Submit Code", interactive=False)
 
         return container, question_text, code_box, submit_button
