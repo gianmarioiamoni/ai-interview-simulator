@@ -31,6 +31,7 @@ class InterviewStateMapper:
             question_id=question.id,
             text=question.prompt,
             question_type=question.type.value,
+            area=question.area.value,
             index=index,
             total=total,
         )
