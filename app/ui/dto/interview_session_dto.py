@@ -14,10 +14,6 @@ class InterviewSessionDTO:
     is_completed: bool
     current_area: Optional[str]
 
-    # =========================================================
-    # Factory from domain state
-    # =========================================================
-
     @classmethod
     def from_state(cls, state):
 
