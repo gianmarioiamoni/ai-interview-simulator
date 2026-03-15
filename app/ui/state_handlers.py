@@ -209,6 +209,8 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     question = session_dto.current_question
     question_type = question.question_type
 
+    is_last_question = state.is_last_question
+
     # ---------------------------------------------------------
     # Attempts counter
     # ---------------------------------------------------------
@@ -282,6 +284,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         show_submit=not is_feedback,
         show_retry=is_feedback,
         show_next=is_feedback,
+        next_label="Generate Report" if is_last_question else "Next Question",
     )
 
 
