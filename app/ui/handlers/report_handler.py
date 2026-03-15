@@ -6,7 +6,7 @@ from app.runtime.interview_runtime import get_runtime_evaluation_service
 from app.ui.views.report_view import build_report_markdown
 from app.ui.ui_router import route_ui
 from app.ui.ui_state import UIState
-from app.ui.state_handlers import mapper
+from app.ui.dto.final_report_dto import FinalReportDTO
 
 
 def view_report_handler(state_value):
@@ -92,7 +92,7 @@ def view_report_handler(state_value):
     # Step 4 — Build report DTO
     # ---------------------------------------------------------
 
-    report = mapper.to_final_report_dto(state_value)
+    report = FinalReportDTO.from_state(state_value)
 
     # ---------------------------------------------------------
     # Step 5 — Render report markdown
