@@ -81,6 +81,9 @@ def bind_events(components):
         c.written_submit,
         c.retry_button,
         c.next_button,
+        c.written_box,
+        c.coding_box,
+        c.database_box,
     ]
 
     # =========================================================
