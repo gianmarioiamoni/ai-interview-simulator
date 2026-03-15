@@ -99,7 +99,9 @@ def submit_answer(
     state = state.apply_event(event)
 
     graph = get_runtime_graph()
-    state = graph.invoke(state)
+
+    # run graph only until evaluation
+    state = graph.invoke(state, interrupt_before=["advance_question"])
 
     return build_ui_response_from_state(state)
 
