@@ -23,7 +23,7 @@ class UIResponse:
         database_visible: bool = False,
         ui_state: UIState = UIState.SETUP,
         final_feedback: str = "",
-        show_submit: bool = False,
+        show_submit: bool = True,
         show_retry: bool = False,
         show_next: bool = False,
     ):
@@ -41,7 +41,7 @@ class UIResponse:
         self.show_submit = show_submit
         self.show_retry = show_retry
         self.show_next = show_next
-    
+
     def to_gradio_outputs(self) -> List[Any]:
         # Build the exact output list expected by app.py
 
@@ -64,4 +64,7 @@ class UIResponse:
             completion_update,
             report_update,
             self.final_feedback,
+            gr.update(visible=self.show_submit),
+            gr.update(visible=self.show_retry),
+            gr.update(visible=self.show_next),
         ]
