@@ -152,6 +152,9 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             database_visible=False,
             ui_state=UIState.COMPLETION,
             final_feedback=f"### Final Feedback\n\n{feedback}",
+            show_submit=False,
+            show_retry=False,
+            show_next=False,
         )
 
     # ---------------------------------------------------------
@@ -193,6 +196,9 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         coding_visible=question_type == "coding",
         database_visible=question_type == "database",
         ui_state=ui_state,
+        show_submit=ui_state == UIState.QUESTION,
+        show_retry=ui_state == UIState.FEEDBACK,
+        show_next=ui_state == UIState.FEEDBACK,
     )
 
 
