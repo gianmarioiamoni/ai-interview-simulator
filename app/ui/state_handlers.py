@@ -81,15 +81,10 @@ def start_interview(
 # GENERIC ANSWER SUBMIT
 # =========================================================
 
-def submit_answer(
-    state: InterviewState,
-    user_answer: str,
-):
+
+def submit_answer(state: InterviewState, user_answer: str):
 
     question = state.current_question
-
-    if question is None:
-        raise RuntimeError("No current question available")
 
     event = AnswerSubmittedEvent(
         question_id=question.id,
@@ -100,8 +95,7 @@ def submit_answer(
 
     graph = get_runtime_graph()
 
-    # run graph only until evaluation
-    state = graph.invoke(state, interrupt_before=["advance_question"])
+    state = graph.invoke(state)
 
     return build_ui_response_from_state(state)
 
@@ -317,7 +311,11 @@ def retry_answer(state: InterviewState):
 # NEXT QUESTION
 # =========================================================
 
+
 def next_question(state: InterviewState):
+
+    if not state.is_last_question:
+        state.advance_question()
 
     graph = get_runtime_graph()
 
