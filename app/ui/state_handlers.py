@@ -14,7 +14,8 @@ from services.report_export_service import ReportExportService
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
-from app.ui.mappers.interview_state_mapper import InterviewStateMapper
+from app.ui.dto.interview_session_dto import InterviewSessionDTO
+from app.ui.dto.final_report_dto import FinalReportDTO
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
@@ -25,7 +26,6 @@ from app.runtime.interview_runtime import (
 
 export_service = ReportExportService()
 test_generator = AITestGenerator()
-mapper = InterviewStateMapper()
 
 
 # =========================================================
@@ -111,7 +111,7 @@ def submit_answer(
 
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
-    session_dto = mapper.to_session_dto(state)
+    session_dto = InterviewSessionDTO.from_state(state)
 
     feedback = ""
     execution_error = None
@@ -202,7 +202,7 @@ def export_pdf(state: InterviewState) -> str:
 
         state.final_evaluation = final_eval
 
-    report = mapper.to_final_report_dto(state)
+    report = FinalReportDTO.from_state(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
 
@@ -235,7 +235,7 @@ def export_json(state: InterviewState) -> str:
 
         state.final_evaluation = final_eval
 
-    report = mapper.to_final_report_dto(state)
+    report = FinalReportDTO.from_state(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
 
