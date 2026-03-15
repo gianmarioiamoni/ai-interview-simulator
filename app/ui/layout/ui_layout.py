@@ -16,6 +16,10 @@ def build_layout():
 
     state = gr.State()
 
+    # ---------------------------------------------------------
+    # SETUP SECTION
+    # ---------------------------------------------------------
+
     with gr.Column(visible=True) as setup_section:
 
         setup_view = SetupView()
@@ -28,10 +32,16 @@ def build_layout():
             start_button,
         ) = setup_view.render()
 
+    # ---------------------------------------------------------
+    # INTERVIEW SECTION
+    # ---------------------------------------------------------
+
     with gr.Column(visible=False) as interview_section:
 
         question_counter = gr.Markdown("")
         feedback_output = gr.Markdown("")
+
+        # ---------------- WRITTEN ----------------
 
         (
             written_container,
@@ -40,12 +50,16 @@ def build_layout():
             written_submit,
         ) = InterviewWrittenView().build()
 
+        # ---------------- CODING ----------------
+
         (
             coding_container,
             coding_text,
             coding_box,
             coding_submit,
         ) = InterviewCodingView().build()
+
+        # ---------------- DATABASE ----------------
 
         (
             database_container,
@@ -54,12 +68,31 @@ def build_layout():
             database_submit,
         ) = InterviewDatabaseView().build()
 
+        # ---------------------------------------------------------
+        # ACTIONS (shared across all question types)
+        # ---------------------------------------------------------
+
+        gr.Markdown("---")
+
+        with gr.Row():
+
+            retry_button = gr.Button("Retry Answer", visible=False)
+            next_button = gr.Button("Next Question", visible=False)
+
+    # ---------------------------------------------------------
+    # COMPLETION SECTION
+    # ---------------------------------------------------------
+
     with gr.Column(visible=False) as completion_section:
 
         gr.Markdown("## Interview Completed")
 
         final_feedback = gr.Markdown("")
         view_report_button = gr.Button("View Final Report")
+
+    # ---------------------------------------------------------
+    # REPORT SECTION
+    # ---------------------------------------------------------
 
     with gr.Column(visible=False) as report_section:
 
@@ -72,6 +105,10 @@ def build_layout():
         json_file = gr.File(visible=False)
 
         new_interview_button = gr.Button("Start New Interview")
+
+    # ---------------------------------------------------------
+    # RETURN COMPONENTS
+    # ---------------------------------------------------------
 
     return UILayoutComponents(
         state=state,
@@ -94,6 +131,8 @@ def build_layout():
         database_text=database_text,
         database_box=database_box,
         database_submit=database_submit,
+        retry_button=retry_button,
+        next_button=next_button,
         setup_section=setup_section,
         interview_section=interview_section,
         completion_section=completion_section,

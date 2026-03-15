@@ -32,6 +32,9 @@ class UILayoutComponents:
     database_box: object
     database_submit: object
 
+    retry_button: object
+    next_button: object
+
     setup_section: object
     interview_section: object
     completion_section: object
