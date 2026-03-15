@@ -5,7 +5,13 @@ import gradio as gr
 from app.ui.handlers.start_handler import start_handler
 from app.ui.handlers.report_handler import view_report_handler
 
-from app.ui.state_handlers import export_pdf, export_json, submit_answer
+from app.ui.state_handlers import (
+    export_pdf,
+    export_json,
+    submit_answer,
+    retry_answer,
+    next_question,
+)
 
 
 def bind_events(components):
@@ -108,6 +114,50 @@ def bind_events(components):
     c.database_submit.click(
         lambda s, a: submit_answer(s, a).to_gradio_outputs(),
         inputs=[state, c.database_box],
+        outputs=outputs,
+    )
+
+    # =========================================================
+    # RETRY ANSWER
+    # =========================================================
+
+    c.written_retry.click(
+        lambda s: retry_answer(s).to_gradio_outputs(),
+        inputs=[state],
+        outputs=outputs,
+    )
+
+    c.coding_retry.click(
+        lambda s: retry_answer(s).to_gradio_outputs(),
+        inputs=[state],
+        outputs=outputs,
+    )
+
+    c.database_retry.click(
+        lambda s: retry_answer(s).to_gradio_outputs(),
+        inputs=[state],
+        outputs=outputs,
+    )
+
+    # =========================================================
+    # NEXT QUESTION
+    # =========================================================
+
+    c.written_next.click(
+        lambda s: next_question(s).to_gradio_outputs(),
+        inputs=[state],
+        outputs=outputs,
+    )
+
+    c.coding_next.click(
+        lambda s: next_question(s).to_gradio_outputs(),
+        inputs=[state],
+        outputs=outputs,
+    )
+
+    c.database_next.click(
+        lambda s: next_question(s).to_gradio_outputs(),
+        inputs=[state],
         outputs=outputs,
     )
 

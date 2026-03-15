@@ -23,6 +23,9 @@ class UIResponse:
         database_visible: bool = False,
         ui_state: UIState = UIState.SETUP,
         final_feedback: str = "",
+        show_submit: bool = False,
+        show_retry: bool = False,
+        show_next: bool = False,
     ):
         self.state = state
         self.question_counter = question_counter
@@ -35,6 +38,9 @@ class UIResponse:
         self.database_visible = database_visible
         self.ui_state = ui_state
         self.final_feedback = final_feedback
+        self.show_submit = show_submit
+        self.show_retry = show_retry
+        self.show_next = show_next
     
     def to_gradio_outputs(self) -> List[Any]:
         # Build the exact output list expected by app.py
