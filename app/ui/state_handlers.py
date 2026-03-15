@@ -7,7 +7,8 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
 from domain.contracts.question import QuestionType
-from domain.contracts.answer import Answer
+
+from domain.events.answer_submitted_event import AnswerSubmittedEvent
 
 from services.report_export_service import ReportExportService
 
@@ -91,13 +92,12 @@ def submit_answer(
     if question is None:
         raise RuntimeError("No current question available")
 
-    answer = Answer(
+    event = AnswerSubmittedEvent(
         question_id=question.id,
         content=user_answer,
-        attempt=1,
     )
 
-    state.answers.append(answer)
+    state = state.apply_event(event)
 
     graph = get_runtime_graph()
     state = graph.invoke(state)

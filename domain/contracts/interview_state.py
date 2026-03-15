@@ -15,6 +15,8 @@ from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.role import Role, RoleType
 
+from domain.events.answer_submitted_event import AnswerSubmittedEvent
+
 
 class InterviewState(BaseModel):
 
@@ -58,6 +60,12 @@ class InterviewState(BaseModel):
     current_question_index: int = 0
 
     enable_humanizer: bool = True
+
+    # ---------------------------------------------------------
+    # Events
+    # ---------------------------------------------------------
+
+    events: list = Field(default_factory=list)
 
     # ---------------------------------------------------------
     # Pydantic config
@@ -136,6 +144,27 @@ class InterviewState(BaseModel):
             return result.execution is not None
 
         return False
+
+    def apply_event(self, event):
+
+        new_state = self.model_copy(deep=True)
+
+        new_state.events.append(event)
+
+
+        if isinstance(event, AnswerSubmittedEvent):
+
+            from domain.contracts.answer import Answer
+
+            new_state.answers.append(
+                Answer(
+                    question_id=event.question_id,
+                    content=event.content,
+                    attempt=1,
+                )
+            )
+
+        return new_state
 
     # =========================================================
     # COMPUTED PROPERTIES
@@ -229,11 +258,9 @@ class InterviewState(BaseModel):
             progress=InterviewProgress.SETUP,
         )
 
-
     @property
     def is_completed(self) -> bool:
 
         from domain.contracts.interview_progress import InterviewProgress
 
         return self.progress == InterviewProgress.COMPLETED
-
