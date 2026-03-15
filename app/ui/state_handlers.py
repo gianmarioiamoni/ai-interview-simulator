@@ -209,7 +209,22 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     question = session_dto.current_question
     question_type = question.question_type
 
-    counter = f"Question {question.index}/{question.total}"
+    # ---------------------------------------------------------
+    # Attempts counter
+    # ---------------------------------------------------------
+
+    attempts = state.attempts_by_question.get(question.question_id, 0)
+
+    # ---------------------------------------------------------
+    # Interview progress panel
+    # ---------------------------------------------------------
+
+    counter = (
+        f"### Interview Progress\n\n"
+        f"Question {question.index} / {question.total}\n\n"
+        f"Area: {question.area}\n\n"
+        f"Attempts: {attempts} / 3"
+    )
 
     # ---------------------------------------------------------
     # Build evaluation panel markdown
@@ -225,9 +240,16 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     if test_results_lines:
 
+        passed = sum(1 for t in test_results_lines if "✔" in t)
+        total = len(test_results_lines)
+
         tests_block = "\n".join(test_results_lines)
 
-        evaluation_sections.append(f"**Execution Results**\n\n{tests_block}")
+        evaluation_sections.append(
+            f"**Execution Results**\n\n"
+            f"Tests passed: {passed} / {total}\n\n"
+            f"{tests_block}"
+        )
 
     if execution_status:
         evaluation_sections.append(f"**Execution status:** {execution_status}")
@@ -269,8 +291,15 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
 def retry_answer(state: InterviewState):
 
-    # Simply return the same question without advancing
-    # UI will switch back to QUESTION mode
+    question = state.current_question
+
+    if question:
+
+        qid = question.id
+
+        current = state.attempts_by_question.get(qid, 0)
+
+        state.attempts_by_question[qid] = current + 1
 
     response = build_ui_response_from_state(state)
 

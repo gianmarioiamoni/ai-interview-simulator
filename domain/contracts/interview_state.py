@@ -68,6 +68,12 @@ class InterviewState(BaseModel):
     events: list = Field(default_factory=list)
 
     # ---------------------------------------------------------
+    # Attempts
+    # ---------------------------------------------------------
+
+    attempts_by_question: dict[str, int] = Field(default_factory=dict)
+
+    # ---------------------------------------------------------
     # Pydantic config
     # ---------------------------------------------------------
 
@@ -150,7 +156,6 @@ class InterviewState(BaseModel):
         new_state = self.model_copy(deep=True)
 
         new_state.events.append(event)
-
 
         if isinstance(event, AnswerSubmittedEvent):
 
