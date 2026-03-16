@@ -81,7 +81,6 @@ def start_interview(
 # GENERIC ANSWER SUBMIT
 # =========================================================
 
-
 def submit_answer(state: InterviewState, user_answer: str):
 
     question = state.current_question
@@ -93,9 +92,18 @@ def submit_answer(state: InterviewState, user_answer: str):
 
     state = state.apply_event(event)
 
-    graph = get_runtime_graph()
+    # ---------------------------------------------------------
+    # Run only answer evaluation (NOT the full graph)
+    # ---------------------------------------------------------
 
-    state = graph.invoke(state)
+    from app.graph.nodes.answer_handler_node import build_answer_handler_node
+    from infrastructure.llm.llm_factory import get_llm
+
+    llm = get_llm()
+
+    answer_handler = build_answer_handler_node(llm)
+
+    state = answer_handler(state)
 
     return build_ui_response_from_state(state)
 
