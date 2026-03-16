@@ -1,3 +1,5 @@
+# app/graph/nodes/answer_handler_node.py
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
 
@@ -28,6 +30,7 @@ def build_answer_handler_node(llm):
 
             result = state.get_result_for_question(question.id)
 
+            # Avoid double evaluation
             if result and result.evaluation:
                 return state
 
@@ -71,6 +74,7 @@ def build_answer_handler_node(llm):
 
             result = state.get_result_for_question(question.id)
 
+            # Avoid double execution
             if result and result.execution:
                 return state
 
@@ -82,16 +86,10 @@ def build_answer_handler_node(llm):
             state.register_execution(execution)
 
         # ---------------------------------------------------------
-        # Advance question
+        # IMPORTANT
+        # Do NOT advance the question here.
+        # The UI will decide when to move to the next question.
         # ---------------------------------------------------------
-
-        if not state.is_last_question:
-
-            state.advance_question()
-
-        else:
-
-            state.progress = state.progress.COMPLETED
 
         return state
 
