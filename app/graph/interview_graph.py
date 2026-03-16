@@ -3,9 +3,7 @@
 from langgraph.graph import StateGraph, END
 
 from domain.contracts.interview_state import InterviewState
-
 from app.graph.nodes.question_node import build_question_node
-from app.graph.nodes.complete_node import complete_node
 
 
 def build_interview_graph(llm):
@@ -21,11 +19,6 @@ def build_interview_graph(llm):
         build_question_node(llm),
     )
 
-    graph.add_node(
-        "complete",
-        complete_node,
-    )
-
     # ---------------------------------------------------------
     # Entry
     # ---------------------------------------------------------
@@ -37,7 +30,5 @@ def build_interview_graph(llm):
     # ---------------------------------------------------------
 
     graph.add_edge("question", END)
-
-    graph.add_edge("complete", END)
 
     return graph.compile()
