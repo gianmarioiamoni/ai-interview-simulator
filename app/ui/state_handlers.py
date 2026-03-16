@@ -112,6 +112,7 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI RESPONSE BUILDER
 # =========================================================
 
+
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     from app.ui.mappers.ui_state_mapper import UIStateMapper
@@ -125,14 +126,15 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     execution_status = ""
 
     # ---------------------------------------------------------
-    # Retrieve result for last answered question
+    # Retrieve result for the current question (only if processed)
     # ---------------------------------------------------------
 
-    if state.last_answer:
+    result = None
+    current_q = state.current_question
 
-        question_id = state.last_answer.question_id
+    if current_q and state.is_question_processed(current_q):
 
-        result = state.get_result_for_question(question_id)
+        result = state.get_result_for_question(current_q.id)
 
         if result:
 
@@ -144,7 +146,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
                 feedback = result.evaluation.feedback
 
-                # score (if available)
                 if hasattr(result.evaluation, "score"):
                     score = result.evaluation.score
 
@@ -162,7 +163,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
                     for test in result.execution.test_results:
 
                         name = getattr(test, "name", "test")
-
                         passed = getattr(test, "passed", False)
 
                         icon = "✔" if passed else "✘"
@@ -175,10 +175,11 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
                     execution_status = "FAILED TESTS"
 
                 if result.execution.error and not result.execution.success:
+
                     execution_error = result.execution.error
 
     # ---------------------------------------------------------
-    # Determine UI state via mapper
+    # Determine UI state
     # ---------------------------------------------------------
 
     ui_state = UIStateMapper.map_state(state)
@@ -211,6 +212,10 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     # ---------------------------------------------------------
 
     question = session_dto.current_question
+
+    if question is None:
+        raise RuntimeError("UI attempted to render question but none exists")
+
     question_type = question.question_type
 
     is_last_question = state.is_last_question
