@@ -41,11 +41,14 @@ def build_interview_graph(llm):
     graph.set_entry_point("question")
 
     # ---------------------------------------------------------
-    # Flow
+    # Question node stops by default
     # ---------------------------------------------------------
-    # IMPORTANT:
-    # We do NOT automatically go from question → answer_handler.
-    # The UI explicitly invokes the graph when the user submits an answer.
+
+    graph.add_edge("question", END)
+
+    # ---------------------------------------------------------
+    # Answer handler routing
+    # ---------------------------------------------------------
 
     graph.add_conditional_edges(
         "answer_handler",

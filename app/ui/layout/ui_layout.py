@@ -9,10 +9,14 @@ from app.ui.views.interview_database_view import InterviewDatabaseView
 
 from app.ui.layout.ui_components import UILayoutComponents
 
+from app.core.build_info import BuildInfo
+
 
 def build_layout():
 
     gr.Markdown("# AI Interview Simulator")
+
+    gr.Markdown(BuildInfo.get_info())
 
     # ---------------------------------------------------------
     # FOCUS EDITOR ON LOAD
