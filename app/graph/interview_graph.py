@@ -1,4 +1,4 @@
-# aps/graph/interview_graph.py
+# app/graph/interview_graph.py
 
 from langgraph.graph import StateGraph, END
 
@@ -19,14 +19,20 @@ def build_interview_graph(llm):
     # Nodes
     # ---------------------------------------------------------
 
-    graph.add_node("question", build_question_node(llm))
+    graph.add_node(
+        "question",
+        build_question_node(llm),
+    )
 
     graph.add_node(
         "answer_handler",
         build_answer_handler_node(llm),
     )
 
-    graph.add_node("complete", complete_node)
+    graph.add_node(
+        "complete",
+        complete_node,
+    )
 
     # ---------------------------------------------------------
     # Entry
@@ -37,14 +43,14 @@ def build_interview_graph(llm):
     # ---------------------------------------------------------
     # Flow
     # ---------------------------------------------------------
-
-    graph.add_edge("question", "answer_handler")
+    # IMPORTANT:
+    # We do NOT automatically go from question → answer_handler.
+    # The UI explicitly invokes the graph when the user submits an answer.
 
     graph.add_conditional_edges(
         "answer_handler",
         route_next_step,
         {
-            "question": "question",
             "complete": "complete",
             "__end__": END,
         },
