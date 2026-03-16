@@ -316,6 +316,8 @@ def next_question(state: InterviewState):
 
     if not state.is_last_question:
         state.advance_question()
+    else:
+        state.progress = state.progress.COMPLETED
 
     graph = get_runtime_graph()
 
