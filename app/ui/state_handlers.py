@@ -18,6 +18,7 @@ from app.ui.ui_response import UIResponse
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.handlers.report_handler import view_report_handler
+from app.ui.handlers.report_handler import render_report_markdown
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
@@ -97,9 +98,12 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI RESPONSE BUILDER
 # =========================================================
 
+
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     from app.ui.mappers.ui_state_mapper import UIStateMapper
+    from app.ui.dto.final_report_dto import FinalReportDTO
+    from app.ui.utils.report_renderer import render_report_markdown
 
     session_dto = InterviewSessionDTO.from_state(state)
 
@@ -118,9 +122,17 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
         if result:
 
+            # -------------------------
+            # Evaluation
+            # -------------------------
+
             if result.evaluation:
                 feedback = result.evaluation.feedback
                 score = getattr(result.evaluation, "score", None)
+
+            # -------------------------
+            # Execution
+            # -------------------------
 
             if result.execution:
 
@@ -137,7 +149,42 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
                 if result.execution.error and not result.execution.success:
                     execution_error = result.execution.error
 
+    # ---------------------------------------------------------
+    # UI STATE
+    # ---------------------------------------------------------
+
     ui_state = UIStateMapper.map_state(state)
+
+    # =========================================================
+    # REPORT STATE (🔥 QUESTO MANCAVA)
+    # =========================================================
+
+    if ui_state == UIState.REPORT:
+
+        report = FinalReportDTO.from_state(state)
+        report_md = render_report_markdown(report)
+
+        return UIResponse(
+            state=state,
+            question_counter="",
+            feedback="",
+            written_text="",
+            coding_text="",
+            database_text="",
+            written_visible=False,
+            coding_visible=False,
+            database_visible=False,
+            ui_state=UIState.REPORT,
+            final_feedback="",  # non usato qui
+            report_output=report_md,
+            show_submit=False,
+            show_retry=False,
+            show_next=False,
+        )
+
+    # =========================================================
+    # COMPLETION STATE
+    # =========================================================
 
     if ui_state == UIState.COMPLETION:
 
@@ -158,6 +205,10 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             show_next=False,
         )
 
+    # =========================================================
+    # QUESTION / FEEDBACK STATE
+    # =========================================================
+
     question = session_dto.current_question
 
     if question is None:
@@ -173,6 +224,10 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         f"Attempts: {attempts} / {MAX_ATTEMPTS}"
     )
 
+    # ---------------------------------------------------------
+    # Evaluation panel
+    # ---------------------------------------------------------
+
     evaluation_sections = []
 
     if score is not None:
@@ -182,11 +237,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         evaluation_sections.append(f"**Feedback:**\n\n{feedback}")
 
     if test_results_lines:
-        passed = sum(1 for t in test_results_lines if "✔" in t)
-        total = len(test_results_lines)
-        evaluation_sections.append(
-            f"**Execution Results**\n\n{test_results_lines[0]}\n\n"
-        )
+        evaluation_sections.append(f"**Execution Results**\n\n{test_results_lines[0]}")
 
     if execution_status:
         evaluation_sections.append(f"**Execution status:** {execution_status}")
