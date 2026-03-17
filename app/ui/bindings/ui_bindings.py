@@ -72,10 +72,6 @@ def bind_events(components):
         c.written_display,
         c.coding_display,
         c.database_display,
-        # ---------------- EDITOR TEXT (legacy)
-        c.written_text,
-        c.coding_text,
-        c.database_text,
         # ---------------- CONTAINERS
         c.written_container,
         c.coding_container,

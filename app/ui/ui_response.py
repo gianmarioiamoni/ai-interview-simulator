@@ -85,10 +85,6 @@ class UIResponse:
             self.written_display,
             self.coding_display,
             self.database_display,
-            # ---------------- LEGACY TEXT
-            self.written_text,
-            self.coding_text,
-            self.database_text,
             # ---------------- CONTAINERS VISIBILITY
             gr.update(visible=self.written_visible),
             gr.update(visible=self.coding_visible),
