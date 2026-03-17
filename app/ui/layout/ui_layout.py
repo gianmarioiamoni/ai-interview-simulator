@@ -93,7 +93,7 @@ def build_layout():
 
         (
             written_container,
-            written_text,
+            written_display,
             written_box,
             written_submit,
         ) = InterviewWrittenView().build()
@@ -102,7 +102,7 @@ def build_layout():
 
         (
             coding_container,
-            coding_text,
+            coding_display,
             coding_box,
             coding_submit,
         ) = InterviewCodingView().build()
@@ -111,7 +111,7 @@ def build_layout():
 
         (
             database_container,
-            database_text,
+            database_display,
             database_box,
             database_submit,
         ) = InterviewDatabaseView().build()
@@ -168,15 +168,15 @@ def build_layout():
         question_counter=question_counter,
         feedback_output=feedback_output,
         written_container=written_container,
-        written_text=written_text,
+        written_display=written_display,
         written_box=written_box,
         written_submit=written_submit,
         coding_container=coding_container,
-        coding_text=coding_text,
+        coding_display=coding_display,
         coding_box=coding_box,
         coding_submit=coding_submit,
         database_container=database_container,
-        database_text=database_text,
+        database_display=database_display,
         database_box=database_box,
         database_submit=database_submit,
         retry_button=retry_button,
