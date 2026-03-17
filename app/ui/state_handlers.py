@@ -261,6 +261,13 @@ def run_report_handler(state):
 
 def next_question(state: InterviewState):
 
+    from app.ui.state_handlers import build_ui_response_from_state
+    from app.ui.ui_state import UIState
+
+    # ---------------------------------------------------------
+    # LAST QUESTION → GENERATE REPORT
+    # ---------------------------------------------------------
+
     if state.is_last_question:
 
         evaluation_service = get_runtime_evaluation_service()
@@ -276,7 +283,15 @@ def next_question(state: InterviewState):
 
             state.final_evaluation = final_eval
 
-        return run_report_handler(state)
+        # 👉 USA UIResponse (NON handler)
+        response = build_ui_response_from_state(state)
+        response.ui_state = UIState.REPORT
+
+        return response.to_gradio_outputs()
+
+    # ---------------------------------------------------------
+    # NORMAL FLOW
+    # ---------------------------------------------------------
 
     state.advance_question()
 
@@ -289,7 +304,6 @@ def next_question(state: InterviewState):
 # =========================================================
 # NEW INTERVIEW
 # =========================================================
-
 
 def new_interview():
 
