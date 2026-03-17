@@ -287,11 +287,11 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         state=state,
         question_counter=counter,
         feedback=feedback_markdown,
-        # DISPLAY (sempre visibile)
+        # DISPLAY (ALWAYS VISIBLE)
         written_display=display_text,
         coding_display=display_text,
         database_display=display_text,
-        # EDITOR (solo QUESTION)
+        # EDITOR (QUESTION)
         written_visible=question.question_type == "written" and show_editor,
         coding_visible=question.question_type == "coding" and show_editor,
         database_visible=question.question_type == "database" and show_editor,
@@ -302,6 +302,85 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         show_next=is_feedback,
         next_label="Generate Report" if state.is_last_question else "Next Question",
     )
+
+
+# =========================================================
+# RETRY
+# =========================================================
+
+def retry_answer(state: InterviewState):
+
+    new_state = state.model_copy(deep=True)
+
+    q = new_state.current_question
+
+    if q:
+        current = new_state.attempts_by_question.get(q.id, 0)
+        new_state.attempts_by_question[q.id] = current + 1
+        new_state.reset_current_question()
+
+    response = build_ui_response_from_state(new_state)
+    response.ui_state = UIState.QUESTION
+
+    return response
+
+
+# =========================================================
+# REPORT HELPER
+# =========================================================
+
+def run_report_handler(state):
+    generator = view_report_handler(state)
+    last = None
+    for output in generator:
+        last = output
+    return last
+
+
+# =========================================================
+# NEXT QUESTION
+# =========================================================
+
+def next_question(state: InterviewState):
+
+    from app.ui.state_handlers import build_ui_response_from_state
+    from app.ui.ui_state import UIState
+
+    # ---------------------------------------------------------
+    # LAST QUESTION → GENERATE REPORT
+    # ---------------------------------------------------------
+
+    if state.is_last_question:
+
+        evaluation_service = get_runtime_evaluation_service()
+
+        if state.final_evaluation is None:
+
+            final_eval = evaluation_service.evaluate(
+                per_question_evaluations=state.evaluations_list,
+                questions=state.questions,
+                interview_type=state.interview_type,
+                role=state.role.type,
+            )
+
+            state.final_evaluation = final_eval
+
+        # 👉 USA UIResponse (NON handler)
+        response = build_ui_response_from_state(state)
+        response.ui_state = UIState.REPORT
+
+        return response.to_gradio_outputs()
+
+    # ---------------------------------------------------------
+    # NORMAL FLOW
+    # ---------------------------------------------------------
+
+    state.advance_question()
+
+    graph = get_runtime_graph()
+    state = graph.invoke(state)
+
+    return build_ui_response_from_state(state).to_gradio_outputs()
 
 
 # =========================================================
