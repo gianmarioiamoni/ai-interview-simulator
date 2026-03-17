@@ -11,13 +11,22 @@ class InterviewWrittenView:
 
         with gr.Column(visible=False) as container:
 
-            question_text = gr.Markdown("")
+            # ---------------------------------------------------------
+            # Display (question OR user answer)
+            # ---------------------------------------------------------
+
+            question_display = gr.Markdown("")
+
+            # ---------------------------------------------------------
+            # Input editor (only in QUESTION state)
+            # ---------------------------------------------------------
 
             answer_box = gr.Textbox(
                 label="Your Answer",
                 lines=5,
+                visible=True,
             )
 
             submit_button = gr.Button("Submit Answer", interactive=False)
 
-        return container, question_text, answer_box, submit_button
+        return container, question_display, answer_box, submit_button
