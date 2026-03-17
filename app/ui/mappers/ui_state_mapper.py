@@ -11,6 +11,9 @@ class UIStateMapper:
     @staticmethod
     def map_state(state: InterviewState) -> UIState:
 
+        if (getattr(state, "show_report", False)):
+            return UIState.REPORT
+
         if state.is_completed:
             return UIState.COMPLETION
 

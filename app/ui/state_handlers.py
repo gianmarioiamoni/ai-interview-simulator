@@ -98,7 +98,6 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI RESPONSE BUILDER
 # =========================================================
 
-
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     from app.ui.mappers.ui_state_mapper import UIStateMapper
@@ -336,6 +335,7 @@ def next_question(state: InterviewState):
         # 👉 USA UIResponse (NON handler)
         response = build_ui_response_from_state(state)
         response.ui_state = UIState.REPORT
+        state.show_report = True
 
         return response.to_gradio_outputs()
 
