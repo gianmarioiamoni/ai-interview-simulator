@@ -79,6 +79,7 @@ def bind_events(components):
         c.completion_section,
         c.report_section,
         c.final_feedback,
+        c.report_output,
         c.written_submit,
         c.retry_button,
         c.next_button,

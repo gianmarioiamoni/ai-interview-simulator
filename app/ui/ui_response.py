@@ -28,6 +28,7 @@ class UIResponse:
         show_next: bool = False,
         next_label: str = "Next Question",
         show_submit_interactive: bool = False,
+        report_output: str = "",
     ):
         self.state = state
         self.question_counter = question_counter
@@ -45,7 +46,7 @@ class UIResponse:
         self.show_next = show_next
         self.next_label = next_label
         self.show_submit_interactive = show_submit_interactive
-
+        self.report_output = report_output
     def to_gradio_outputs(self) -> List[Any]:
         # Build the exact output list expected by app.py
 
@@ -68,6 +69,7 @@ class UIResponse:
             completion_update,
             report_update,
             self.final_feedback,
+            self.report_output,
             gr.update(visible=self.show_submit, interactive=self.show_submit_interactive),
             gr.update(visible=self.show_retry),
             gr.update(visible=self.show_next, value=self.next_label),
