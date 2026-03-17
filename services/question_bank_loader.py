@@ -1,4 +1,4 @@
-# app/application/services/question_bank_loader.py
+# services/question_bank_loader.py
 
 import uuid
 from typing import List

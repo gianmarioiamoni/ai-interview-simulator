@@ -20,6 +20,8 @@ from app.ui.dto.final_report_dto import FinalReportDTO
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
+from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
+
 from app.runtime.interview_runtime import (
     get_runtime_graph,
     get_runtime_evaluation_service,
@@ -97,14 +99,13 @@ def submit_answer(state: InterviewState, user_answer: str):
     # Run only answer evaluation (NOT the full graph)
     # ---------------------------------------------------------
 
-    from app.graph.nodes.answer_handler_node import build_answer_handler_node
     from infrastructure.llm.llm_factory import get_llm
 
     llm = get_llm()
+    use_case = EvaluateAnswerUseCase(llm)
 
-    answer_handler = build_answer_handler_node(llm)
+    state = use_case.execute(state)
 
-    state = answer_handler(state)
 
     return build_ui_response_from_state(state)
 
