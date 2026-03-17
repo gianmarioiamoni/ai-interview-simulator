@@ -14,7 +14,6 @@ from services.report_export_service import ReportExportService
 
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.ui_state import UIState
-from app.ui.state_handlers import build_ui_response_from_state
 from app.ui.ui_response import UIResponse
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
