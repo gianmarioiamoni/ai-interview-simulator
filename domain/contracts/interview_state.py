@@ -171,6 +171,27 @@ class InterviewState(BaseModel):
 
         return new_state
 
+
+    def reset_current_question(self):
+
+        q = self.current_question
+
+        if q is None:
+            return
+
+        qid = q.id
+
+        # remove result
+        if qid in self.results_by_question:
+            new_map = dict(self.results_by_question)
+            del new_map[qid]
+            self.results_by_question = new_map
+
+        # remove last answer ONLY if it belongs to this question
+        if self.last_answer and self.last_answer.question_id == qid:
+            self.answers = self.answers[:-1]
+
+
     # =========================================================
     # COMPUTED PROPERTIES
     # =========================================================
