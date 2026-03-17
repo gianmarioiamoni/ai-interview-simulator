@@ -5,13 +5,12 @@ from domain.contracts.interview_state import InterviewState
 
 
 class UIStateMapper:
-    # Maps InterviewState (domain) to UIState (presentation).
-    # Keeps UI decision logic isolated from UI handlers.
 
     @staticmethod
     def map_state(state: InterviewState) -> UIState:
 
-        if (getattr(state, "show_report", False)):
+        # PRIORITY: REPORT
+        if state.final_evaluation is not None:
             return UIState.REPORT
 
         if state.is_completed:

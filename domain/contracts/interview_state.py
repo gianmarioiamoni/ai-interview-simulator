@@ -54,12 +54,6 @@ class InterviewState(BaseModel):
     results_by_question: dict[str, QuestionResult] = Field(default_factory=dict)
 
     # ---------------------------------------------------------
-    # Report
-    # ---------------------------------------------------------
-
-    show_report: bool = False
-
-    # ---------------------------------------------------------
     # Graph state
     # ---------------------------------------------------------
 
