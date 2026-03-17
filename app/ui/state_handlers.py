@@ -28,6 +28,7 @@ from app.runtime.interview_runtime import (
 export_service = ReportExportService()
 test_generator = AITestGenerator()
 
+MAX_ATTEMPTS = 3
 
 # =========================================================
 # START INTERVIEW
@@ -111,7 +112,6 @@ def submit_answer(state: InterviewState, user_answer: str):
 # =========================================================
 # UI RESPONSE BUILDER
 # =========================================================
-
 
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
@@ -225,6 +225,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     # ---------------------------------------------------------
 
     attempts = state.attempts_by_question.get(question.question_id, 0)
+    can_retry = attempts < MAX_ATTEMPTS
 
     # ---------------------------------------------------------
     # Interview progress panel
@@ -234,7 +235,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         f"### Interview Progress\n\n"
         f"Question {question.index} / {question.total}\n\n"
         f"Area: {question.area}\n\n"
-        f"Attempts: {attempts} / 3"
+        f"Attempts: {attempts} / {MAX_ATTEMPTS}"
     )
 
     # ---------------------------------------------------------
@@ -268,6 +269,19 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     if execution_error:
         evaluation_sections.append(f"⚠ **Execution error:** {execution_error}")
 
+    # ---------------------------------------------------------
+    # Max attempts warning
+    # ---------------------------------------------------------
+
+    if not can_retry:
+        evaluation_sections.append(
+            "⚠ **Maximum attempts reached. Please proceed to the next question.**"
+        )
+
+    # ---------------------------------------------------------
+    # Build feedback markdown
+    # ---------------------------------------------------------
+
     feedback_markdown = ""
 
     if evaluation_sections:
@@ -291,7 +305,8 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         database_visible=question_type == "database",
         ui_state=ui_state,
         show_submit=not is_feedback,
-        show_retry=is_feedback,
+        show_submit_interactive=not is_feedback,
+        show_retry=is_feedback and can_retry,
         show_next=is_feedback,
         next_label="Generate Report" if is_last_question else "Next Question",
     )
@@ -303,18 +318,24 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
 def retry_answer(state: InterviewState):
 
-    question = state.current_question
+    new_state = state.model_copy(deep=True)
+
+    question = new_state.current_question
 
     if question:
 
         qid = question.id
 
-        current = state.attempts_by_question.get(qid, 0)
+        # increment attempts
+        current = new_state.attempts_by_question.get(qid, 0)
+        new_state.attempts_by_question[qid] = current + 1
 
-        state.attempts_by_question[qid] = current + 1
+        # reset question state
+        new_state.reset_current_question()
 
-    response = build_ui_response_from_state(state)
+    response = build_ui_response_from_state(new_state)
 
+    # force QUESTION mode
     response.ui_state = UIState.QUESTION
 
     return response
@@ -323,7 +344,6 @@ def retry_answer(state: InterviewState):
 # =========================================================
 # NEXT QUESTION
 # =========================================================
-
 
 def next_question(state: InterviewState):
 
