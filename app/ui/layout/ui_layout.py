@@ -37,6 +37,21 @@ def build_layout():
             </script>
         """)
 
+    gr.HTML(
+        """
+            <script>
+                function scrollToTop() {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+
+                const observerScroll = new MutationObserver(() => {
+                    scrollToTop();
+                });
+
+                observerScroll.observe(document.body, { childList: true, subtree: true });
+            </script>
+        """)
+
     state = gr.State()
 
     # ---------------------------------------------------------
@@ -71,7 +86,7 @@ def build_layout():
                     observer.observe(document.body, {childList: true, subtree: true});
                 </script>
             """)
-        
+
         feedback_output = gr.Markdown("")
 
         # ---------------- WRITTEN ----------------

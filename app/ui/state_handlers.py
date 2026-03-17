@@ -346,15 +346,45 @@ def retry_answer(state: InterviewState):
 # NEXT QUESTION
 # =========================================================
 
+
 def next_question(state: InterviewState):
 
-    if not state.is_last_question:
-        state.advance_question()
-    else:
-        state.progress = state.progress.COMPLETED
+    from app.ui.ui_response import UIResponse
+    from app.ui.ui_state import UIState
+    from app.runtime.interview_runtime import get_runtime_evaluation_service
+
+    # ---------------------------------------------------------
+    # LAST QUESTION → GENERATE REPORT DIRECTLY
+    # ---------------------------------------------------------
+
+    if state.is_last_question:
+
+        evaluation_service = get_runtime_evaluation_service()
+
+        if state.final_evaluation is None:
+
+            final_eval = evaluation_service.evaluate(
+                per_question_evaluations=state.evaluations,
+                questions=state.questions,
+                interview_type=state.interview_type,
+                role=state.role.type,
+            )
+
+            state.final_evaluation = final_eval
+
+        # directly generate report
+        response = build_ui_response_from_state(state)
+        response.ui_state = UIState.REPORT
+
+        return response
+
+    # ---------------------------------------------------------
+    # NORMAL FLOW
+    # ---------------------------------------------------------
+
+    state.advance_question()
 
     graph = get_runtime_graph()
-
     state = graph.invoke(state)
 
     return build_ui_response_from_state(state)
