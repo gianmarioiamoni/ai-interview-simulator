@@ -17,6 +17,7 @@ from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
+from app.ui.handlers.report_handler import view_report_handler
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
@@ -346,12 +347,16 @@ def retry_answer(state: InterviewState):
 # NEXT QUESTION
 # =========================================================
 
+# Helper
+def run_report_handler(state):
+    generator = view_report_handler(state)
+    last = None
+    for output in generator:
+        last = output
+    return last
+
 
 def next_question(state: InterviewState):
-
-    from app.ui.ui_response import UIResponse
-    from app.ui.ui_state import UIState
-    from app.runtime.interview_runtime import get_runtime_evaluation_service
 
     # ---------------------------------------------------------
     # LAST QUESTION → GENERATE REPORT DIRECTLY
@@ -361,8 +366,12 @@ def next_question(state: InterviewState):
 
         evaluation_service = get_runtime_evaluation_service()
 
+        # ---------------------------------------------------------
+        # Generate final evaluation
+        # ---------------------------------------------------------
+
         if state.final_evaluation is None:
-                
+
             final_eval = evaluation_service.evaluate(
                 per_question_evaluations=state.evaluations_list,
                 questions=state.questions,
@@ -372,17 +381,19 @@ def next_question(state: InterviewState):
 
             state.final_evaluation = final_eval
 
-        # directly generate report
-        response = build_ui_response_from_state(state)
-        response.ui_state = UIState.REPORT
+        # ---------------------------------------------------------
+        # Generate report UI
+        # ---------------------------------------------------------
 
-        return response
+        return run_report_handler(state)
 
     # ---------------------------------------------------------
     # NORMAL FLOW
     # ---------------------------------------------------------
 
     state.advance_question()
+
+    from app.runtime.interview_runtime import get_runtime_graph
 
     graph = get_runtime_graph()
     state = graph.invoke(state)
