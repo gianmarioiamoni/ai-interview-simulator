@@ -124,11 +124,11 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
             if result.execution:
 
-                if result.execution.test_results:
-                    for test in result.execution.test_results:
-                        icon = "✔" if getattr(test, "passed", False) else "✘"
-                        name = getattr(test, "name", "test")
-                        test_results_lines.append(f"{icon} {name}")
+                passed = result.execution.passed_tests
+                total = result.execution.total_tests
+
+                if passed is not None and total is not None:
+                    test_results_lines.append(f"✔ Passed: {passed} / {total}")
 
                 execution_status = (
                     "PASSED" if result.execution.success else "FAILED TESTS"
@@ -185,8 +185,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         passed = sum(1 for t in test_results_lines if "✔" in t)
         total = len(test_results_lines)
         evaluation_sections.append(
-            f"**Execution Results**\n\nTests passed: {passed} / {total}\n\n"
-            + "\n".join(test_results_lines)
+            f"**Execution Results**\n\n{'\n'.join(test_results_lines[0])}\n\n"
         )
 
     if execution_status:
