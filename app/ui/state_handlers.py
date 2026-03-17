@@ -360,6 +360,33 @@ def next_question(state: InterviewState):
 
 
 # =========================================================
+# NEW INTERVIEW
+# =========================================================
+
+def new_interview():
+
+    from app.ui.ui_response import UIResponse
+    from app.ui.ui_state import UIState
+
+    return UIResponse(
+        state=None,
+        question_counter="",
+        feedback="",
+        written_text="",
+        coding_text="",
+        database_text="",
+        written_visible=False,
+        coding_visible=False,
+        database_visible=False,
+        ui_state=UIState.SETUP,
+        final_feedback="",
+        show_submit=False,
+        show_retry=False,
+        show_next=False,
+    )
+
+
+# =========================================================
 # EXPORT PDF
 # =========================================================
 
