@@ -1,3 +1,5 @@
+# app/ui/views/interview_coding_view.py
+
 import gradio as gr
 
 
@@ -9,10 +11,14 @@ class InterviewCodingView:
 
         with gr.Column(visible=False) as container:
 
-            question_text = gr.Markdown("")
+            # ---------------------------------------------------------
+            # Display (question OR user answer)
+            # ---------------------------------------------------------
+
+            question_display = gr.Markdown("")
 
             # ---------------------------------------------------------
-            # Code editor
+            # Code editor (only in QUESTION state)
             # ---------------------------------------------------------
 
             code_box = gr.Code(
@@ -21,8 +27,9 @@ class InterviewCodingView:
                 elem_id="code-editor",
                 lines=20,
                 interactive=True,
+                visible=True,
             )
 
             submit_button = gr.Button("Submit Code", interactive=False)
 
-        return container, question_text, code_box, submit_button
+        return container, question_display, code_box, submit_button

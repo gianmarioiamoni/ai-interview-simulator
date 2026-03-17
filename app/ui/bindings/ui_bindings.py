@@ -61,28 +61,38 @@ def bind_events(components):
         )
 
     # =========================================================
-    # OUTPUTS
+    # OUTPUTS (CRITICAL ORDER)
     # =========================================================
 
     outputs = [
         c.state,
         c.question_counter,
         c.feedback_output,
+        # ---------------- DISPLAY (NEW)
+        c.written_display,
+        c.coding_display,
+        c.database_display,
+        # ---------------- EDITOR TEXT (legacy)
         c.written_text,
         c.coding_text,
         c.database_text,
+        # ---------------- CONTAINERS
         c.written_container,
         c.coding_container,
         c.database_container,
+        # ---------------- SECTIONS
         c.setup_section,
         c.interview_section,
         c.completion_section,
         c.report_section,
+        # ---------------- COMPLETION / REPORT
         c.final_feedback,
         c.report_output,
+        # ---------------- BUTTONS
         c.written_submit,
         c.retry_button,
         c.next_button,
+        # ---------------- INPUT RESET
         c.written_box,
         c.coding_box,
         c.database_box,
@@ -131,26 +141,23 @@ def bind_events(components):
 
     def enable_submit(text):
 
-        if text and text.strip():
+        if text and str(text).strip():
             return gr.update(interactive=True)
 
         return gr.update(interactive=False)
 
-    # Written answer validation
     c.written_box.change(
         enable_submit,
         inputs=[c.written_box],
         outputs=c.written_submit,
     )
 
-    # Coding answer validation
     c.coding_box.change(
         enable_submit,
         inputs=[c.coding_box],
         outputs=c.coding_submit,
     )
 
-    # SQL answer validation
     c.database_box.change(
         enable_submit,
         inputs=[c.database_box],
@@ -188,7 +195,7 @@ def bind_events(components):
     )
 
     # =========================================================
-    # VIEW REPORT
+    # VIEW REPORT (streaming)
     # =========================================================
 
     def report_handler(state_value):
