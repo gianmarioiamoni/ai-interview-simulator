@@ -18,7 +18,6 @@ from app.ui.ui_response import UIResponse
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.handlers.report_handler import view_report_handler
-from app.ui.handlers.report_handler import render_report_markdown
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
