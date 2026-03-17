@@ -11,6 +11,7 @@ from app.ui.state_handlers import (
     submit_answer,
     retry_answer,
     next_question,
+    new_interview,
 )
 
 
@@ -81,6 +82,9 @@ def bind_events(components):
         c.written_submit,
         c.retry_button,
         c.next_button,
+        c.written_box,
+        c.coding_box,
+        c.database_box,
     ]
 
     # =========================================================
@@ -169,6 +173,16 @@ def bind_events(components):
     c.next_button.click(
         lambda s: next_question(s).to_gradio_outputs(),
         inputs=[state],
+        outputs=outputs,
+    )
+
+    # =========================================================
+    # NEW INTERVIEW
+    # =========================================================
+
+    c.new_interview_button.click(
+        lambda: new_interview().to_gradio_outputs(),
+        inputs=[],
         outputs=outputs,
     )
 

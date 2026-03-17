@@ -71,4 +71,7 @@ class UIResponse:
             gr.update(visible=self.show_submit, interactive=self.show_submit_interactive),
             gr.update(visible=self.show_retry),
             gr.update(visible=self.show_next, value=self.next_label),
+            "", # written box
+            "", # coding box
+            "", # database box
         ]
