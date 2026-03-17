@@ -14,6 +14,7 @@ from services.report_export_service import ReportExportService
 
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.ui_state import UIState
+from app.ui.state_handlers import build_ui_response_from_state
 from app.ui.ui_response import UIResponse
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
@@ -347,7 +348,7 @@ def retry_answer(state: InterviewState):
 # NEXT QUESTION
 # =========================================================
 
-# Helper
+# Helper
 def run_report_handler(state):
     generator = view_report_handler(state)
     last = None
@@ -355,8 +356,8 @@ def run_report_handler(state):
         last = output
     return last
 
-
 def next_question(state: InterviewState):
+
 
     # ---------------------------------------------------------
     # LAST QUESTION → GENERATE REPORT DIRECTLY
@@ -365,10 +366,6 @@ def next_question(state: InterviewState):
     if state.is_last_question:
 
         evaluation_service = get_runtime_evaluation_service()
-
-        # ---------------------------------------------------------
-        # Generate final evaluation
-        # ---------------------------------------------------------
 
         if state.final_evaluation is None:
 
@@ -381,11 +378,14 @@ def next_question(state: InterviewState):
 
             state.final_evaluation = final_eval
 
-        # ---------------------------------------------------------
-        # Generate report UI
-        # ---------------------------------------------------------
+        # 👉 ritorna direttamente output gradio (tuple)
+        generator = view_report_handler(state)
 
-        return run_report_handler(state)
+        last_output = None
+        for output in generator:
+            last_output = output
+
+        return last_output
 
     # ---------------------------------------------------------
     # NORMAL FLOW
@@ -393,12 +393,11 @@ def next_question(state: InterviewState):
 
     state.advance_question()
 
-    from app.runtime.interview_runtime import get_runtime_graph
-
     graph = get_runtime_graph()
     state = graph.invoke(state)
 
-    return build_ui_response_from_state(state)
+    # 👉 qui invece converti tu
+    return build_ui_response_from_state(state).to_gradio_outputs()
 
 
 # =========================================================
