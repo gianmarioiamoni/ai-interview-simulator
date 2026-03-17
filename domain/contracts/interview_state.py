@@ -290,3 +290,12 @@ class InterviewState(BaseModel):
         from domain.contracts.interview_progress import InterviewProgress
 
         return self.progress == InterviewProgress.COMPLETED
+
+    @property
+    def evaluations_list(self):
+
+        return [
+            r.evaluation 
+            for r in self.results_by_question.values() 
+            if r.evaluation is not None
+        ]

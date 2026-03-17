@@ -362,9 +362,9 @@ def next_question(state: InterviewState):
         evaluation_service = get_runtime_evaluation_service()
 
         if state.final_evaluation is None:
-
+                
             final_eval = evaluation_service.evaluate(
-                per_question_evaluations=state.evaluations,
+                per_question_evaluations=state.evaluations_list,
                 questions=state.questions,
                 interview_type=state.interview_type,
                 role=state.role.type,
