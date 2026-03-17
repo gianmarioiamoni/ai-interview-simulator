@@ -98,6 +98,7 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI RESPONSE BUILDER
 # =========================================================
 
+
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     from app.ui.mappers.ui_state_mapper import UIStateMapper
@@ -173,7 +174,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             coding_visible=False,
             database_visible=False,
             ui_state=UIState.REPORT,
-            final_feedback="",  # non usato qui
+            final_feedback="",
             report_output=report_md,
             show_submit=False,
             show_retry=False,
@@ -250,15 +251,30 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     if evaluation_sections:
         feedback_markdown = "### Evaluation\n\n" + "\n\n".join(evaluation_sections)
 
+    # ---------------------------------------------------------
+    # FEEDBACK MODE LOGIC
+    # ---------------------------------------------------------
+
     is_feedback = ui_state == UIState.FEEDBACK
+
+    last_answer = state.last_answer
+    answer_content = last_answer.content if last_answer else ""
+
+    # 👉 testo mostrato (domanda vs risposta)
+    display_text = answer_content if is_feedback else question.text
+
+    # 👉 label dinamica (BONUS UX)
+    label_prefix = "### Your Answer\n\n" if is_feedback else ""
+
+    display_text = label_prefix + display_text
 
     return UIResponse(
         state=state,
         question_counter=counter,
         feedback=feedback_markdown,
-        written_text=question.text,
-        coding_text=question.text,
-        database_text=question.text,
+        written_text=display_text,
+        coding_text=display_text,
+        database_text=display_text,
         written_visible=question.question_type == "written" and not is_feedback,
         coding_visible=question.question_type == "coding" and not is_feedback,
         database_visible=question.question_type == "database" and not is_feedback,
