@@ -48,10 +48,16 @@ class InterviewState(BaseModel):
     chat_history: list[str] = Field(default_factory=list)
 
     # ---------------------------------------------------------
-    # Results (NEW ARCHITECTURE)
+    # Results
     # ---------------------------------------------------------
 
     results_by_question: dict[str, QuestionResult] = Field(default_factory=dict)
+
+    # ---------------------------------------------------------
+    # Report
+    # ---------------------------------------------------------
+
+    show_report: bool = False
 
     # ---------------------------------------------------------
     # Graph state
@@ -171,7 +177,6 @@ class InterviewState(BaseModel):
 
         return new_state
 
-
     def reset_current_question(self):
 
         q = self.current_question
@@ -190,7 +195,6 @@ class InterviewState(BaseModel):
         # remove last answer ONLY if it belongs to this question
         if self.last_answer and self.last_answer.question_id == qid:
             self.answers = self.answers[:-1]
-
 
     # =========================================================
     # COMPUTED PROPERTIES
