@@ -20,7 +20,6 @@ from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.handlers.report_handler import view_report_handler
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
-
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 
 from app.runtime.interview_runtime import (
@@ -33,16 +32,12 @@ test_generator = AITestGenerator()
 
 MAX_ATTEMPTS = 3
 
+
 # =========================================================
 # START INTERVIEW
 # =========================================================
 
-def start_interview(
-    role: str,
-    interview_type: str,
-    company: str,
-    language: str,
-):
+def start_interview(role: str, interview_type: str, company: str, language: str):
 
     role_type = RoleType[role.replace(" ", "_")]
     interview_type_enum = InterviewType[interview_type]
@@ -52,26 +47,18 @@ def start_interview(
     enriched_questions = []
 
     for q in questions:
-
         if q.type == QuestionType.CODING:
-
-            hidden_tests = test_generator.generate_tests(
-                q,
-                num_tests=3,
-            )
-
+            hidden_tests = test_generator.generate_tests(q, num_tests=3)
             q = q.model_copy(update={"hidden_tests": hidden_tests})
 
         enriched_questions.append(q)
-
-    questions = enriched_questions
 
     state = InterviewState.create_initial(
         role_type=role_type,
         interview_type=interview_type_enum,
         company=company,
         language=language,
-        questions=questions,
+        questions=enriched_questions,
         interview_id="session-1",
     )
 
@@ -82,7 +69,7 @@ def start_interview(
 
 
 # =========================================================
-# GENERIC ANSWER SUBMIT
+# SUBMIT ANSWER
 # =========================================================
 
 def submit_answer(state: InterviewState, user_answer: str):
@@ -96,17 +83,12 @@ def submit_answer(state: InterviewState, user_answer: str):
 
     state = state.apply_event(event)
 
-    # ---------------------------------------------------------
-    # Run only answer evaluation (NOT the full graph)
-    # ---------------------------------------------------------
-
     from infrastructure.llm.llm_factory import get_llm
 
     llm = get_llm()
     use_case = EvaluateAnswerUseCase(llm)
 
     state = use_case.execute(state)
-
 
     return build_ui_response_from_state(state)
 
@@ -127,10 +109,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     test_results_lines = []
     execution_status = ""
 
-    # ---------------------------------------------------------
-    # Retrieve result for the current question (only if processed)
-    # ---------------------------------------------------------
-
     result = None
     current_q = state.current_question
 
@@ -140,55 +118,26 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
         if result:
 
-            # -------------------------
-            # Evaluation
-            # -------------------------
-
             if result.evaluation:
-
                 feedback = result.evaluation.feedback
-
-                if hasattr(result.evaluation, "score"):
-                    score = result.evaluation.score
-
-            # -------------------------
-            # Execution results
-            # -------------------------
+                score = getattr(result.evaluation, "score", None)
 
             if result.execution:
 
-                if (
-                    hasattr(result.execution, "test_results")
-                    and result.execution.test_results
-                ):
-
+                if result.execution.test_results:
                     for test in result.execution.test_results:
-
+                        icon = "✔" if getattr(test, "passed", False) else "✘"
                         name = getattr(test, "name", "test")
-                        passed = getattr(test, "passed", False)
-
-                        icon = "✔" if passed else "✘"
-
                         test_results_lines.append(f"{icon} {name}")
 
-                if result.execution.success:
-                    execution_status = "PASSED"
-                else:
-                    execution_status = "FAILED TESTS"
+                execution_status = (
+                    "PASSED" if result.execution.success else "FAILED TESTS"
+                )
 
                 if result.execution.error and not result.execution.success:
-
                     execution_error = result.execution.error
 
-    # ---------------------------------------------------------
-    # Determine UI state
-    # ---------------------------------------------------------
-
     ui_state = UIStateMapper.map_state(state)
-
-    # ---------------------------------------------------------
-    # Completion page
-    # ---------------------------------------------------------
 
     if ui_state == UIState.COMPLETION:
 
@@ -203,35 +152,19 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             coding_visible=False,
             database_visible=False,
             ui_state=UIState.COMPLETION,
-            final_feedback=f"### Final Feedback\n\n{feedback}",
+            final_feedback="",
             show_submit=False,
             show_retry=False,
             show_next=False,
         )
-
-    # ---------------------------------------------------------
-    # Current question
-    # ---------------------------------------------------------
 
     question = session_dto.current_question
 
     if question is None:
         raise RuntimeError("UI attempted to render question but none exists")
 
-    question_type = question.question_type
-
-    is_last_question = state.is_last_question
-
-    # ---------------------------------------------------------
-    # Attempts counter
-    # ---------------------------------------------------------
-
     attempts = state.attempts_by_question.get(question.question_id, 0)
     can_retry = attempts < MAX_ATTEMPTS
-
-    # ---------------------------------------------------------
-    # Interview progress panel
-    # ---------------------------------------------------------
 
     counter = (
         f"### Interview Progress\n\n"
@@ -239,10 +172,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         f"Area: {question.area}\n\n"
         f"Attempts: {attempts} / {MAX_ATTEMPTS}"
     )
-
-    # ---------------------------------------------------------
-    # Build evaluation panel markdown
-    # ---------------------------------------------------------
 
     evaluation_sections = []
 
@@ -253,16 +182,11 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         evaluation_sections.append(f"**Feedback:**\n\n{feedback}")
 
     if test_results_lines:
-
         passed = sum(1 for t in test_results_lines if "✔" in t)
         total = len(test_results_lines)
-
-        tests_block = "\n".join(test_results_lines)
-
         evaluation_sections.append(
-            f"**Execution Results**\n\n"
-            f"Tests passed: {passed} / {total}\n\n"
-            f"{tests_block}"
+            f"**Execution Results**\n\nTests passed: {passed} / {total}\n\n"
+            + "\n".join(test_results_lines)
         )
 
     if execution_status:
@@ -271,27 +195,12 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     if execution_error:
         evaluation_sections.append(f"⚠ **Execution error:** {execution_error}")
 
-    # ---------------------------------------------------------
-    # Max attempts warning
-    # ---------------------------------------------------------
-
     if not can_retry:
-        evaluation_sections.append(
-            "⚠ **Maximum attempts reached. Please proceed to the next question.**"
-        )
-
-    # ---------------------------------------------------------
-    # Build feedback markdown
-    # ---------------------------------------------------------
+        evaluation_sections.append("⚠ **Maximum attempts reached.**")
 
     feedback_markdown = ""
-
     if evaluation_sections:
         feedback_markdown = "### Evaluation\n\n" + "\n\n".join(evaluation_sections)
-
-    # ---------------------------------------------------------
-    # UI mode
-    # ---------------------------------------------------------
 
     is_feedback = ui_state == UIState.FEEDBACK
 
@@ -302,52 +211,43 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         written_text=question.text,
         coding_text=question.text,
         database_text=question.text,
-        written_visible=question_type == "written",
-        coding_visible=question_type == "coding",
-        database_visible=question_type == "database",
+        written_visible=question.question_type == "written",
+        coding_visible=question.question_type == "coding",
+        database_visible=question.question_type == "database",
         ui_state=ui_state,
         show_submit=not is_feedback,
         show_submit_interactive=not is_feedback,
         show_retry=is_feedback and can_retry,
         show_next=is_feedback,
-        next_label="Generate Report" if is_last_question else "Next Question",
+        next_label="Generate Report" if state.is_last_question else "Next Question",
     )
 
 
 # =========================================================
-# RETRY ANSWER
+# RETRY
 # =========================================================
 
 def retry_answer(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
 
-    question = new_state.current_question
+    q = new_state.current_question
 
-    if question:
-
-        qid = question.id
-
-        # increment attempts
-        current = new_state.attempts_by_question.get(qid, 0)
-        new_state.attempts_by_question[qid] = current + 1
-
-        # reset question state
+    if q:
+        current = new_state.attempts_by_question.get(q.id, 0)
+        new_state.attempts_by_question[q.id] = current + 1
         new_state.reset_current_question()
 
     response = build_ui_response_from_state(new_state)
-
-    # force QUESTION mode
     response.ui_state = UIState.QUESTION
 
     return response
 
 
 # =========================================================
-# NEXT QUESTION
+# REPORT HELPER
 # =========================================================
 
-# Helper
 def run_report_handler(state):
     generator = view_report_handler(state)
     last = None
@@ -355,12 +255,12 @@ def run_report_handler(state):
         last = output
     return last
 
+
+# =========================================================
+# NEXT QUESTION
+# =========================================================
+
 def next_question(state: InterviewState):
-
-
-    # ---------------------------------------------------------
-    # LAST QUESTION → GENERATE REPORT DIRECTLY
-    # ---------------------------------------------------------
 
     if state.is_last_question:
 
@@ -377,25 +277,13 @@ def next_question(state: InterviewState):
 
             state.final_evaluation = final_eval
 
-        # 👉 ritorna direttamente output gradio (tuple)
-        generator = view_report_handler(state)
-
-        last_output = None
-        for output in generator:
-            last_output = output
-
-        return last_output
-
-    # ---------------------------------------------------------
-    # NORMAL FLOW
-    # ---------------------------------------------------------
+        return run_report_handler(state)
 
     state.advance_question()
 
     graph = get_runtime_graph()
     state = graph.invoke(state)
 
-    # 👉 qui invece converti tu
     return build_ui_response_from_state(state).to_gradio_outputs()
 
 
@@ -403,10 +291,8 @@ def next_question(state: InterviewState):
 # NEW INTERVIEW
 # =========================================================
 
-def new_interview():
 
-    from app.ui.ui_response import UIResponse
-    from app.ui.ui_state import UIState
+def new_interview():
 
     return UIResponse(
         state=None,
@@ -427,7 +313,7 @@ def new_interview():
 
 
 # =========================================================
-# EXPORT PDF
+# EXPORT
 # =========================================================
 
 def export_pdf(state: InterviewState) -> str:
@@ -437,7 +323,7 @@ def export_pdf(state: InterviewState) -> str:
     if state.final_evaluation is None:
 
         final_eval = evaluation_service.evaluate(
-            per_question_evaluations=state.evaluations,
+            per_question_evaluations=state.evaluations_list,
             questions=state.questions,
             interview_type=state.interview_type,
             role=state.role.type,
@@ -449,18 +335,11 @@ def export_pdf(state: InterviewState) -> str:
 
     os.makedirs("/mnt/data", exist_ok=True)
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    path = f"/mnt/data/{state.interview_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.pdf"
 
-    file_path = f"/mnt/data/{state.interview_id}_{timestamp}.pdf"
+    export_service.export_pdf(report, path)
 
-    export_service.export_pdf(report, file_path)
-
-    return file_path
-
-
-# =========================================================
-# EXPORT JSON
-# =========================================================
+    return path
 
 def export_json(state: InterviewState) -> str:
 
@@ -469,7 +348,7 @@ def export_json(state: InterviewState) -> str:
     if state.final_evaluation is None:
 
         final_eval = evaluation_service.evaluate(
-            per_question_evaluations=state.evaluations,
+            per_question_evaluations=state.evaluations_list,
             questions=state.questions,
             interview_type=state.interview_type,
             role=state.role.type,
@@ -481,10 +360,8 @@ def export_json(state: InterviewState) -> str:
 
     os.makedirs("/mnt/data", exist_ok=True)
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    path = f"/mnt/data/{state.interview_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
 
-    file_path = f"/mnt/data/{state.interview_id}_{timestamp}.json"
+    export_service.export_json(report, path)
 
-    export_service.export_json(report, file_path)
-
-    return file_path
+    return path
