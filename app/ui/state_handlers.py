@@ -185,7 +185,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         passed = sum(1 for t in test_results_lines if "✔" in t)
         total = len(test_results_lines)
         evaluation_sections.append(
-            f"**Execution Results**\n\n{'\n'.join(test_results_lines[0])}\n\n"
+            f"**Execution Results**\n\n{test_results_lines[0]}\n\n"
         )
 
     if execution_status:
