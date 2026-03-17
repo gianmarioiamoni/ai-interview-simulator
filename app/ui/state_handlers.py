@@ -18,6 +18,7 @@ from app.ui.ui_response import UIResponse
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.handlers.report_handler import view_report_handler
+from app.ui.views.report_view import build_report_markdown
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
@@ -102,7 +103,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     from app.ui.mappers.ui_state_mapper import UIStateMapper
     from app.ui.dto.final_report_dto import FinalReportDTO
-    from app.ui.utils.report_renderer import render_report_markdown
 
     session_dto = InterviewSessionDTO.from_state(state)
 
@@ -155,13 +155,13 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     ui_state = UIStateMapper.map_state(state)
 
     # =========================================================
-    # REPORT STATE (🔥 QUESTO MANCAVA)
+    # REPORT STATE
     # =========================================================
 
     if ui_state == UIState.REPORT:
 
         report = FinalReportDTO.from_state(state)
-        report_md = render_report_markdown(report)
+        report_md = build_report_markdown(report)
 
         return UIResponse(
             state=state,
