@@ -171,7 +171,7 @@ def bind_events(components):
     # =========================================================
 
     c.next_button.click(
-        lambda s: next_question(s).to_gradio_outputs(),
+        lambda s: next_question(s),
         inputs=[state],
         outputs=outputs,
     )
