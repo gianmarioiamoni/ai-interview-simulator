@@ -140,17 +140,28 @@ def _build_evaluation(state: InterviewState) -> str:
 
     result = state.get_result_for_question(current_q.id)
 
-    if not result or not result.evaluation:
+    if not result:
         return ""
 
     presenter = EvaluationPresenter()
 
-    vm = presenter.present(
-        evaluation=result.evaluation,
-        execution_results=[result.execution] if result.execution else [],
-    )
+    # Written question
+    if result.evaluation:
+        vm = presenter.present(
+            evaluation=result.evaluation,
+            execution_results=[],
+        )
+        return vm.feedback_markdown
 
-    return vm.feedback_markdown
+    # Coding / Database question
+    if result.execution:
+        vm = presenter.present(
+            evaluation=None,
+            execution_results=[result.execution],
+        )
+        return vm.feedback_markdown
+
+    return ""
 
 
 def _build_display(state, question, ui_state):
