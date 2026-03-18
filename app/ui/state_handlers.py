@@ -301,9 +301,9 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         coding_display=coding_display,
         database_display=database_display,
         # EDITOR (QUESTION)
-        written_visible=question.question_type == "written",
-        coding_visible=question.question_type == "coding",
-        database_visible=question.question_type == "database",
+        written_visible=question.question_type == "written" and not is_feedback,
+        coding_visible=question.question_type == "coding" and not is_feedback,
+        database_visible=question.question_type == "database" and not is_feedback,
         ui_state=ui_state,
         show_submit=not is_feedback,
         show_submit_interactive=not is_feedback,

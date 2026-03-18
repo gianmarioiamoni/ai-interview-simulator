@@ -105,7 +105,7 @@ class UIResponse:
             gr.update(visible=self.show_retry),
             gr.update(visible=self.show_next, value=self.next_label),
             # ---------------- RESET INPUT BOXES + VISIBILITY
-            gr.update(visible=self.show_submit, value=""),
+            gr.update(visible=self.written_visible, value=""),
             gr.update(visible=self.coding_visible, value=""),
             gr.update(visible=self.database_visible, value=""),
         ]
