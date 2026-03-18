@@ -3,13 +3,9 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
-from domain.contracts.evaluation_decision import EvaluationDecision
+from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
 
-
-# =========================
-# View Models (UI layer)
-# =========================
 
 @dataclass
 class ExecutionResultView:
@@ -28,48 +24,35 @@ class EvaluationViewModel:
     feedback_markdown: str
     execution_results: List[ExecutionResultView]
     errors: List[str]
-    clarification_needed: bool
-    follow_up_question: Optional[str]
+    passed: bool
 
-
-# =========================
-# Presenter
-# =========================
 
 class EvaluationPresenter:
-  
-    # Transform:
-    # - EvaluationDecision (LLM)
-    # - ExecutionResult (engine)
-    # into a ViewModel UI-ready.
-    # No dependency on Gradio.
 
     def present(
         self,
-        decision: EvaluationDecision,
+        evaluation: QuestionEvaluation,
         execution_results: Optional[List[ExecutionResult]] = None,
     ) -> EvaluationViewModel:
 
         execution_vm = self._map_execution_results(execution_results or [])
         errors = self._extract_errors(execution_vm)
+
         feedback_md = self._build_feedback_markdown(
-            decision,
+            evaluation,
             execution_vm,
             errors,
         )
 
         return EvaluationViewModel(
-            score=decision.score,
+            score=evaluation.score,
             feedback_markdown=feedback_md,
             execution_results=execution_vm,
             errors=errors,
-            clarification_needed=decision.clarification_needed,
-            follow_up_question=decision.follow_up_question,
+            passed=evaluation.passed,
         )
 
-    # =========================
-    # Mapping
-    # =========================
+    # ---------------- MAPPING ----------------
 
     def _map_execution_results(
         self,
@@ -94,21 +77,13 @@ class EvaluationPresenter:
         execution_results: List[ExecutionResultView],
     ) -> List[str]:
 
-        errors: List[str] = []
+        return [r.error for r in execution_results if r.error]
 
-        for r in execution_results:
-            if r.error:
-                errors.append(r.error)
-
-        return errors
-
-    # =========================
-    # Markdown builder
-    # =========================
+    # ---------------- MARKDOWN ----------------
 
     def _build_feedback_markdown(
         self,
-        decision: EvaluationDecision,
+        evaluation: QuestionEvaluation,
         execution_results: List[ExecutionResultView],
         errors: List[str],
     ) -> str:
@@ -116,45 +91,48 @@ class EvaluationPresenter:
         lines: List[str] = []
 
         # Score
-        lines.append(f"## Score: {decision.score:.1f}/100")
+        lines.append(f"## Score: {evaluation.score:.1f}/100")
         lines.append("")
 
-        # Feedback LLM
+        # Feedback
         lines.append("### Feedback")
-        lines.append(decision.feedback)
+        lines.append(evaluation.feedback)
         lines.append("")
 
-        # Execution results
+        # Strengths / Weaknesses (hai questi → sfruttali!)
+        if evaluation.strengths:
+            lines.append("### Strengths")
+            for s in evaluation.strengths:
+                lines.append(f"- {s}")
+            lines.append("")
+
+        if evaluation.weaknesses:
+            lines.append("### Weaknesses")
+            for w in evaluation.weaknesses:
+                lines.append(f"- {w}")
+            lines.append("")
+
+        # Execution
         if execution_results:
             lines.append("### Execution Results")
 
             for idx, r in enumerate(execution_results, start=1):
-                status_icon = "✅" if r.success else "❌"
-                lines.append(f"**Test {idx}: {status_icon} {r.status}**")
+                icon = "✅" if r.success else "❌"
+                lines.append(f"**Test {idx}: {icon} {r.status}**")
 
                 if r.total_tests > 0:
-                    lines.append(f"- Tests: {r.passed_tests}/{r.total_tests} passed")
-
-                if r.output:
-                    lines.append(f"- Output: `{r.output}`")
+                    lines.append(f"- Tests: {r.passed_tests}/{r.total_tests}")
 
                 if r.error:
                     lines.append(f"- Error: `{r.error}`")
 
-                lines.append(f"- Time: {r.execution_time_ms} ms")
                 lines.append("")
 
-        # Aggregated errors
+        # Errors
         if errors:
             lines.append("### Errors")
             for e in errors:
                 lines.append(f"- {e}")
-            lines.append("")
-
-        # Follow-up (important for UX)
-        if decision.clarification_needed and decision.follow_up_question:
-            lines.append("### Follow-up Question")
-            lines.append(decision.follow_up_question)
             lines.append("")
 
         return "\n".join(lines)

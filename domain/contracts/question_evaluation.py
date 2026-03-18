@@ -1,12 +1,5 @@
 # domain/contracts/question_evaluation.py
 
-# Question-level evaluation contract
-#
-# Represents the evaluation of a single written answer.
-# Produced by the evaluator node during the interview flow.
-#
-# Responsibility: immutable per-question evaluation result.
-
 from pydantic import BaseModel, Field
 from typing import Optional
 

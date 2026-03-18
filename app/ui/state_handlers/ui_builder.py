@@ -11,6 +11,7 @@ from app.ui.ui_state import UIState
 
 MAX_ATTEMPTS = 3
 
+
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     session_dto = InterviewSessionDTO.from_state(state)
@@ -84,7 +85,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     # ---------------- EVALUATION ----------------
 
     feedback_markdown = ""
-    clarification_needed = False
 
     current_q = state.current_question
 
@@ -97,12 +97,11 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             presenter = EvaluationPresenter()
 
             vm = presenter.present(
-                decision=result.evaluation,
+                evaluation=result.evaluation,
                 execution_results=[result.execution] if result.execution else [],
             )
 
             feedback_markdown = vm.feedback_markdown
-            clarification_needed = vm.clarification_needed
 
     # ---------------- DISPLAY ----------------
 
@@ -112,6 +111,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     answer_content = last_answer.content if last_answer else ""
 
     display_text = answer_content if is_feedback else question.text
+
     label_prefix = "### Your Answer\n\n" if is_feedback else "### Question\n\n"
     display_text = label_prefix + display_text
 
@@ -138,6 +138,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         show_submit=not is_feedback,
         show_submit_interactive=not is_feedback,
         show_retry=is_feedback and can_retry,
-        show_next=is_feedback and not clarification_needed,
+        show_next=is_feedback,
         next_label="Generate Report" if state.is_last_question else "Next Question",
     )
