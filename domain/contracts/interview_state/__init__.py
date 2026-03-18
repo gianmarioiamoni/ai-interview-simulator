@@ -19,3 +19,6 @@ class InterviewState(
     InterviewStateFactoryMixin,
 ):
     pass
+
+
+__all__ = ["InterviewState"]
