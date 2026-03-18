@@ -297,3 +297,14 @@ class InterviewState(BaseModel):
             for r in self.results_by_question.values() 
             if r.evaluation is not None
         ]
+
+    @classmethod
+    def empty(cls) -> "InterviewState":
+        return cls(
+            role_type=None,
+            interview_type=None,
+            company="",
+            language="",
+            questions=[],
+            interview_id="",
+        )

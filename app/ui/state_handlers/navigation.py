@@ -1,11 +1,13 @@
 # app/ui/state_handlers/navigation.py
 
 from domain.contracts.interview_state import InterviewState
-from app.ui.ui_state import UIState
 
-from app.runtime.interview_runtime import get_runtime_graph
+from app.ui.ui_state import UIState
+from app.ui.ui_response import UIResponse
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.state_handlers.helpers import ensure_final_evaluation
+
+from app.runtime.interview_runtime import get_runtime_graph
 
 MAX_ATTEMPTS = 3
 
@@ -49,20 +51,25 @@ def next_question(state: InterviewState):
 
 def new_interview():
 
-    from app.ui.ui_response import UIResponse
+
+    empty_state = InterviewState.empty()
 
     return UIResponse(
-        state=None,
+        state=empty_state,
         question_counter="",
         feedback="",
-        written_text="",
-        coding_text="",
-        database_text="",
+        written_display="",
+        coding_display="",
+        database_display="",
         written_visible=False,
         coding_visible=False,
         database_visible=False,
+        written_editor_visible=False,
+        coding_editor_visible=False,
+        database_editor_visible=False,
         ui_state=UIState.SETUP,
         final_feedback="",
+        report_output="",
         show_submit=False,
         show_retry=False,
         show_next=False,
