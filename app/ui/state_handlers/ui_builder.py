@@ -2,12 +2,13 @@
 
 from domain.contracts.interview_state import InterviewState
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
-from app.ui.mappers.ui_state_mapper import UIStateMapper
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.views.report_view import build_report_markdown
 from app.ui.presenters.evaluation_presenter import EvaluationPresenter
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
+from app.ui.state_machine.ui_state_machine import UIStateMachine
+
 
 MAX_ATTEMPTS = 3
 
@@ -15,7 +16,7 @@ MAX_ATTEMPTS = 3
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     session_dto = InterviewSessionDTO.from_state(state)
-    ui_state = UIStateMapper.map_state(state)
+    ui_state = UIStateMachine.resolve(state)
 
     # ---------------- REPORT ----------------
     if ui_state == UIState.REPORT:

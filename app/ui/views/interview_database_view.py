@@ -25,11 +25,12 @@ class InterviewDatabaseView:
             # Input editor (only in QUESTION state)
             # ---------------------------------------------------------
 
-            sql_box = gr.Textbox(
+            sql_box = gr.Code(
                 label="Your SQL",
+                language="sql",
+                interactive=True,
                 elem_id="code-editor",
                 lines=10,
-                visible=True,
             )
 
             submit_button = gr.Button("Submit SQL", interactive=False)
