@@ -51,11 +51,8 @@ def next_question(state: InterviewState):
 
 def new_interview():
 
-
-    empty_state = InterviewState.empty()
-
     return UIResponse(
-        state=empty_state,
+        state=None,
         question_counter="",
         feedback="",
         written_display="",
@@ -71,6 +68,7 @@ def new_interview():
         final_feedback="",
         report_output="",
         show_submit=False,
+        show_submit_interactive=False,
         show_retry=False,
         show_next=False,
     )
