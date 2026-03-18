@@ -11,10 +11,15 @@ class InterviewDatabaseView:
         with gr.Column(visible=False) as container:
 
             # ---------------------------------------------------------
-            # Display (question OR user answer)
+            # Display (read-only SQL)
             # ---------------------------------------------------------
 
-            question_display = gr.Markdown("")
+            sql_display = gr.Code(
+                label="",
+                language="sql",
+                interactive=False,
+                visible=True,
+            )
 
             # ---------------------------------------------------------
             # Input editor (only in QUESTION state)
@@ -29,4 +34,4 @@ class InterviewDatabaseView:
 
             submit_button = gr.Button("Submit SQL", interactive=False)
 
-        return container, question_display, sql_box, submit_button
+        return container, sql_display, sql_box, submit_button
