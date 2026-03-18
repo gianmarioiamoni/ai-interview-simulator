@@ -98,7 +98,6 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI RESPONSE BUILDER
 # =========================================================
 
-
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     from app.ui.mappers.ui_state_mapper import UIStateMapper
@@ -282,6 +281,14 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     show_editor = not is_feedback
 
     # ---------------------------------------------------------
+    # DISPLAY TEXT
+    # ---------------------------------------------------------
+
+    written_display = display_text if question.question_type == "written" else ""
+    coding_display = display_text if question.question_type == "coding" else ""
+    database_display = display_text if question.question_type == "database" else ""
+
+    # ---------------------------------------------------------
     # RETURN
     # ---------------------------------------------------------
 
@@ -290,13 +297,13 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         question_counter=counter,
         feedback=feedback_markdown,
         # DISPLAY (ALWAYS VISIBLE)
-        written_display=display_text,
-        coding_display=display_text,
-        database_display=display_text,
+        written_display=written_display,
+        coding_display=coding_display,
+        database_display=database_display,
         # EDITOR (QUESTION)
-        written_visible=question.question_type == "written" and show_editor,
-        coding_visible=question.question_type == "coding" and show_editor,
-        database_visible=question.question_type == "database" and show_editor,
+        written_visible=question.question_type == "written",
+        coding_visible=question.question_type == "coding",
+        database_visible=question.question_type == "database",
         ui_state=ui_state,
         show_submit=not is_feedback,
         show_submit_interactive=not is_feedback,
