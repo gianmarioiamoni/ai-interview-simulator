@@ -40,9 +40,18 @@ class InterviewStateComputedMixin:
 
         return self.current_question_index >= len(self.questions) - 1
 
-    
     # ---------------------------------------------------------
 
     @property
     def is_completed(self) -> bool:
         return self.progress == InterviewProgress.COMPLETED
+
+    # ---------------------------------------------------------
+
+    @property
+    def evaluations_list(self):
+        return [
+            r.evaluation
+            for r in self.results_by_question.values()
+            if r.evaluation is not None
+        ]
