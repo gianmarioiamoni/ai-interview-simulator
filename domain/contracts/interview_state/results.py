@@ -64,6 +64,7 @@ class InterviewStateResultsMixin:
 
     # ---------------------------------------------------------
 
+
     def is_question_processed(self, question: Question) -> bool:
 
         result = self.results_by_question.get(question.id)
