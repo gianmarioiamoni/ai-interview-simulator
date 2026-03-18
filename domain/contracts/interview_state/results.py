@@ -2,10 +2,10 @@
 
 from typing import Optional
 
+from domain.contracts.question import Question, QuestionType
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.question_result import QuestionResult
-
 
 
 class InterviewStateResultsMixin:
@@ -61,3 +61,20 @@ class InterviewStateResultsMixin:
             return None
 
         return self.results_by_question.get(self.last_answer.question_id)
+
+    # ---------------------------------------------------------
+
+    def is_question_processed(self, question: Question) -> bool:
+
+        result = self.results_by_question.get(question.id)
+
+        if result is None:
+            return False
+
+        if question.type == QuestionType.WRITTEN:
+            return result.evaluation is not None
+
+        if question.type in (QuestionType.CODING, QuestionType.DATABASE):
+            return result.execution is not None
+
+        return False
