@@ -185,7 +185,7 @@ def bind_events(components):
     # =========================================================
 
     c.new_interview_button.click(
-        lambda: new_interview().to_gradio_outputs(),
+        lambda _: new_interview().to_gradio_outputs(),
         inputs=[state],
         outputs=outputs,
     )
