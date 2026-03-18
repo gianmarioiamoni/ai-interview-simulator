@@ -7,6 +7,10 @@ from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
 
 
+# =========================================================
+# VIEW MODELS
+# =========================================================
+
 @dataclass
 class ExecutionResultView:
     status: str
@@ -27,11 +31,15 @@ class EvaluationViewModel:
     passed: bool
 
 
+# =========================================================
+# PRESENTER
+# =========================================================
+
 class EvaluationPresenter:
 
     def present(
         self,
-        evaluation: QuestionEvaluation,
+        evaluation: Optional[QuestionEvaluation],
         execution_results: Optional[List[ExecutionResult]] = None,
     ) -> EvaluationViewModel:
 
@@ -44,15 +52,22 @@ class EvaluationPresenter:
             errors,
         )
 
+        score = evaluation.score if evaluation else 0.0
+        passed = (
+            evaluation.passed if evaluation else all(r.success for r in execution_vm)
+        )
+
         return EvaluationViewModel(
-            score=evaluation.score,
+            score=score,
             feedback_markdown=feedback_md,
             execution_results=execution_vm,
             errors=errors,
-            passed=evaluation.passed,
+            passed=passed,
         )
 
-    # ---------------- MAPPING ----------------
+    # =========================================================
+    # MAPPING
+    # =========================================================
 
     def _map_execution_results(
         self,
@@ -79,41 +94,44 @@ class EvaluationPresenter:
 
         return [r.error for r in execution_results if r.error]
 
-    # ---------------- MARKDOWN ----------------
+    # =========================================================
+    # MARKDOWN
+    # =========================================================
 
     def _build_feedback_markdown(
         self,
-        evaluation: QuestionEvaluation,
+        evaluation: Optional[QuestionEvaluation],
         execution_results: List[ExecutionResultView],
         errors: List[str],
     ) -> str:
 
         lines: List[str] = []
 
-        # Score
-        lines.append(f"## Score: {evaluation.score:.1f}/100")
-        lines.append("")
+        # ---------------- EVALUATION ----------------
+        if evaluation:
 
-        # Feedback
-        lines.append("### Feedback")
-        lines.append(evaluation.feedback)
-        lines.append("")
-
-        # Strengths / Weaknesses (hai questi → sfruttali!)
-        if evaluation.strengths:
-            lines.append("### Strengths")
-            for s in evaluation.strengths:
-                lines.append(f"- {s}")
+            lines.append(f"## Score: {evaluation.score:.1f}/100")
             lines.append("")
 
-        if evaluation.weaknesses:
-            lines.append("### Weaknesses")
-            for w in evaluation.weaknesses:
-                lines.append(f"- {w}")
+            lines.append("### Feedback")
+            lines.append(evaluation.feedback)
             lines.append("")
 
-        # Execution
+            if evaluation.strengths:
+                lines.append("### Strengths")
+                for s in evaluation.strengths:
+                    lines.append(f"- {s}")
+                lines.append("")
+
+            if evaluation.weaknesses:
+                lines.append("### Weaknesses")
+                for w in evaluation.weaknesses:
+                    lines.append(f"- {w}")
+                lines.append("")
+
+        # ---------------- EXECUTION ----------------
         if execution_results:
+
             lines.append("### Execution Results")
 
             for idx, r in enumerate(execution_results, start=1):
@@ -128,7 +146,7 @@ class EvaluationPresenter:
 
                 lines.append("")
 
-        # Errors
+        # ---------------- ERRORS ----------------
         if errors:
             lines.append("### Errors")
             for e in errors:
