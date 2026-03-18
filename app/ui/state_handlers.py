@@ -17,8 +17,9 @@ from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
-from app.ui.handlers.report_handler import view_report_handler
 from app.ui.views.report_view import build_report_markdown
+from app.ui.mappers.ui_state_mapper import UIStateMapper
+from app.ui.presenters.evaluation_presenter import EvaluationPresenter
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
@@ -35,8 +36,32 @@ MAX_ATTEMPTS = 3
 
 
 # =========================================================
+# INTERNAL HELPERS
+# =========================================================
+
+
+def _ensure_final_evaluation(state: InterviewState) -> InterviewState:
+    # Ensure final_evaluation is populated.
+    # Avoid duplication between next_question/export.
+
+    if state.final_evaluation is None:
+
+        evaluation_service = get_runtime_evaluation_service()
+
+        state.final_evaluation = evaluation_service.evaluate(
+            per_question_evaluations=state.evaluations_list,
+            questions=state.questions,
+            interview_type=state.interview_type,
+            role=state.role.type,
+        )
+
+    return state
+
+
+# =========================================================
 # START INTERVIEW
 # =========================================================
+
 
 def start_interview(role: str, interview_type: str, company: str, language: str):
 
@@ -98,63 +123,12 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI RESPONSE BUILDER
 # =========================================================
 
-
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
-    from app.ui.mappers.ui_state_mapper import UIStateMapper
-    from app.ui.dto.final_report_dto import FinalReportDTO
-    from app.ui.views.report_view import build_report_markdown
-
     session_dto = InterviewSessionDTO.from_state(state)
-
-    feedback = ""
-    score = None
-    execution_error = None
-    test_results_lines = []
-    execution_status = ""
-
-    # ---------------------------------------------------------
-    # RESULT (current question)
-    # ---------------------------------------------------------
-
-    result = None
-    current_q = state.current_question
-
-    if current_q and state.is_question_processed(current_q):
-
-        result = state.get_result_for_question(current_q.id)
-
-        if result:
-
-            if result.evaluation:
-                feedback = result.evaluation.feedback
-                score = getattr(result.evaluation, "score", None)
-
-            if result.execution:
-
-                passed = result.execution.passed_tests
-                total = result.execution.total_tests
-
-                if passed is not None and total is not None:
-                    test_results_lines.append(f"✔ Passed: {passed} / {total}")
-
-                execution_status = (
-                    "PASSED" if result.execution.success else "FAILED TESTS"
-                )
-
-                if result.execution.error and not result.execution.success:
-                    execution_error = result.execution.error
-
-    # ---------------------------------------------------------
-    # UI STATE
-    # ---------------------------------------------------------
-
     ui_state = UIStateMapper.map_state(state)
 
-    # =========================================================
-    # REPORT STATE
-    # =========================================================
-
+    # ---------------- REPORT ----------------
     if ui_state == UIState.REPORT:
 
         report = FinalReportDTO.from_state(state)
@@ -180,10 +154,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             show_next=False,
         )
 
-    # =========================================================
-    # COMPLETION STATE
-    # =========================================================
-
+    # ---------------- COMPLETION ----------------
     if ui_state == UIState.COMPLETION:
 
         return UIResponse(
@@ -205,9 +176,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             show_next=False,
         )
 
-    # =========================================================
-    # QUESTION / FEEDBACK STATE
-    # =========================================================
+    # ---------------- QUESTION ----------------
 
     question = session_dto.current_question
 
@@ -217,10 +186,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     attempts = state.attempts_by_question.get(question.question_id, 0)
     can_retry = attempts < MAX_ATTEMPTS
 
-    # ---------------------------------------------------------
-    # COUNTER
-    # ---------------------------------------------------------
-
     counter = (
         f"### Interview Progress\n\n"
         f"Question {question.index} / {question.total}\n\n"
@@ -228,37 +193,30 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         f"Attempts: {attempts} / {MAX_ATTEMPTS}"
     )
 
-    # ---------------------------------------------------------
-    # EVALUATION PANEL
-    # ---------------------------------------------------------
-
-    evaluation_sections = []
-
-    if score is not None:
-        evaluation_sections.append(f"**Score:** {score} / 100")
-
-    if feedback:
-        evaluation_sections.append(f"**Feedback:**\n\n{feedback}")
-
-    if test_results_lines:
-        evaluation_sections.append(f"**Execution Results**\n\n{test_results_lines[0]}")
-
-    if execution_status:
-        evaluation_sections.append(f"**Execution status:** {execution_status}")
-
-    if execution_error:
-        evaluation_sections.append(f"⚠ **Execution error:** {execution_error}")
-
-    if not can_retry:
-        evaluation_sections.append("⚠ **Maximum attempts reached.**")
+    # ---------------- EVALUATION ----------------
 
     feedback_markdown = ""
-    if evaluation_sections:
-        feedback_markdown = "### Evaluation\n\n" + "\n\n".join(evaluation_sections)
+    clarification_needed = False
 
-    # ---------------------------------------------------------
-    # DISPLAY LOGIC (CORRETTA E UNIFICATA)
-    # ---------------------------------------------------------
+    current_q = state.current_question
+
+    if current_q and state.is_question_processed(current_q):
+
+        result = state.get_result_for_question(current_q.id)
+
+        if result and result.evaluation:
+
+            presenter = EvaluationPresenter()
+
+            vm = presenter.present(
+                decision=result.evaluation,
+                execution_results=[result.execution] if result.execution else [],
+            )
+
+            feedback_markdown = vm.feedback_markdown
+            clarification_needed = vm.clarification_needed
+
+    # ---------------- DISPLAY ----------------
 
     is_feedback = ui_state == UIState.FEEDBACK
 
@@ -266,41 +224,25 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     answer_content = last_answer.content if last_answer else ""
 
     display_text = answer_content if is_feedback else question.text
-
     label_prefix = "### Your Answer\n\n" if is_feedback else "### Question\n\n"
     display_text = label_prefix + display_text
 
-    # ---------------------------------------------------------
-    # EDITOR VISIBILITY
-    # ---------------------------------------------------------
-
     show_editor = not is_feedback
-
-    # ---------------------------------------------------------
-    # DISPLAY PER TYPE
-    # ---------------------------------------------------------
 
     written_display = display_text if question.question_type == "written" else ""
     coding_display = display_text if question.question_type == "coding" else ""
     database_display = display_text if question.question_type == "database" else ""
 
-    # ---------------------------------------------------------
-    # RETURN
-    # ---------------------------------------------------------
-
     return UIResponse(
         state=state,
         question_counter=counter,
         feedback=feedback_markdown,
-        # DISPLAY (sempre visibile nel container)
         written_display=written_display,
         coding_display=coding_display,
         database_display=database_display,
-        # CONTAINER (sempre visibile per tipo domanda)
         written_visible=question.question_type == "written",
         coding_visible=question.question_type == "coding",
         database_visible=question.question_type == "database",
-        # EDITOR (solo QUESTION)
         written_editor_visible=question.question_type == "written" and show_editor,
         coding_editor_visible=question.question_type == "coding" and show_editor,
         database_editor_visible=question.question_type == "database" and show_editor,
@@ -308,7 +250,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         show_submit=not is_feedback,
         show_submit_interactive=not is_feedback,
         show_retry=is_feedback and can_retry,
-        show_next=is_feedback,
+        show_next=is_feedback and not clarification_needed,
         next_label="Generate Report" if state.is_last_question else "Next Question",
     )
 
@@ -324,8 +266,9 @@ def retry_answer(state: InterviewState):
     q = new_state.current_question
 
     if q:
-        current = new_state.attempts_by_question.get(q.id, 0)
-        new_state.attempts_by_question[q.id] = current + 1
+        new_state.attempts_by_question[q.id] = (
+            new_state.attempts_by_question.get(q.id, 0) + 1
+        )
         new_state.reset_current_question()
 
     response = build_ui_response_from_state(new_state)
@@ -335,54 +278,19 @@ def retry_answer(state: InterviewState):
 
 
 # =========================================================
-# REPORT HELPER
-# =========================================================
-
-def run_report_handler(state):
-    generator = view_report_handler(state)
-    last = None
-    for output in generator:
-        last = output
-    return last
-
-
-# =========================================================
 # NEXT QUESTION
 # =========================================================
 
 def next_question(state: InterviewState):
 
-    from app.ui.state_handlers import build_ui_response_from_state
-    from app.ui.ui_state import UIState
-
-    # ---------------------------------------------------------
-    # LAST QUESTION → GENERATE REPORT
-    # ---------------------------------------------------------
-
     if state.is_last_question:
 
-        evaluation_service = get_runtime_evaluation_service()
+        state = _ensure_final_evaluation(state)
 
-        if state.final_evaluation is None:
-
-            final_eval = evaluation_service.evaluate(
-                per_question_evaluations=state.evaluations_list,
-                questions=state.questions,
-                interview_type=state.interview_type,
-                role=state.role.type,
-            )
-
-            state.final_evaluation = final_eval
-
-        # 👉 USA UIResponse (NON handler)
         response = build_ui_response_from_state(state)
         response.ui_state = UIState.REPORT
 
         return response.to_gradio_outputs()
-
-    # ---------------------------------------------------------
-    # NORMAL FLOW
-    # ---------------------------------------------------------
 
     state.advance_question()
 
@@ -422,18 +330,7 @@ def new_interview():
 
 def export_pdf(state: InterviewState) -> str:
 
-    evaluation_service = get_runtime_evaluation_service()
-
-    if state.final_evaluation is None:
-
-        final_eval = evaluation_service.evaluate(
-            per_question_evaluations=state.evaluations_list,
-            questions=state.questions,
-            interview_type=state.interview_type,
-            role=state.role.type,
-        )
-
-        state.final_evaluation = final_eval
+    state = _ensure_final_evaluation(state)
 
     report = FinalReportDTO.from_state(state)
 
@@ -445,20 +342,10 @@ def export_pdf(state: InterviewState) -> str:
 
     return path
 
+
 def export_json(state: InterviewState) -> str:
 
-    evaluation_service = get_runtime_evaluation_service()
-
-    if state.final_evaluation is None:
-
-        final_eval = evaluation_service.evaluate(
-            per_question_evaluations=state.evaluations_list,
-            questions=state.questions,
-            interview_type=state.interview_type,
-            role=state.role.type,
-        )
-
-        state.final_evaluation = final_eval
+    state = _ensure_final_evaluation(state)
 
     report = FinalReportDTO.from_state(state)
 

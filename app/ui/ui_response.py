@@ -1,72 +1,51 @@
 # app/ui/ui_response.py
 
 import gradio as gr
-from typing import List, Any
+from typing import List, Any, Optional
+from dataclasses import dataclass
 
 from app.ui.ui_router import route_ui
 from app.ui.ui_state import UIState
 
 
+@dataclass
 class UIResponse:
 
-    def __init__(
-        self,
-        state,
-        question_counter: str = "",
-        feedback: str = "",
-        # ---------------- DISPLAY
-        written_display: str = "",
-        coding_display: str = "",
-        database_display: str = "",
-        # ---------------- CONTAINER VISIBILITY
-        written_visible: bool = False,
-        coding_visible: bool = False,
-        database_visible: bool = False,
-        # ---------------- EDITOR VISIBILITY (NEW)
-        written_editor_visible: bool = False,
-        coding_editor_visible: bool = False,
-        database_editor_visible: bool = False,
-        # ---------------- STATE
-        ui_state=None,
-        # ---------------- REPORT
-        final_feedback: str = "",
-        report_output: str = "",
-        # ---------------- BUTTONS
-        show_submit: bool = True,
-        show_retry: bool = False,
-        show_next: bool = False,
-        next_label: str = "Next Question",
-        show_submit_interactive: bool = False,
-    ):
-        self.state = state
-        self.question_counter = question_counter
-        self.feedback = feedback
+    state: object
 
-        # DISPLAY
-        self.written_display = written_display
-        self.coding_display = coding_display
-        self.database_display = database_display
+    # HEADER
+    question_counter: str = ""
+    feedback: str = ""
 
-        # CONTAINERS
-        self.written_visible = written_visible
-        self.coding_visible = coding_visible
-        self.database_visible = database_visible
+    # DISPLAY
+    written_display: str = ""
+    coding_display: str = ""
+    database_display: str = ""
 
-        # EDITORS ✅ (MANCAVANO)
-        self.written_editor_visible = written_editor_visible
-        self.coding_editor_visible = coding_editor_visible
-        self.database_editor_visible = database_editor_visible
+    # CONTAINERS
+    written_visible: bool = False
+    coding_visible: bool = False
+    database_visible: bool = False
 
-        self.ui_state = ui_state
+    # EDITORS
+    written_editor_visible: bool = False
+    coding_editor_visible: bool = False
+    database_editor_visible: bool = False
 
-        self.final_feedback = final_feedback
-        self.report_output = report_output
+    # STATE
+    ui_state: Optional[UIState] = None
 
-        self.show_submit = show_submit
-        self.show_retry = show_retry
-        self.show_next = show_next
-        self.next_label = next_label
-        self.show_submit_interactive = show_submit_interactive
+    # REPORT
+    final_feedback: str = ""
+    report_output: str = ""
+
+    # BUTTONS
+    show_submit: bool = True
+    show_retry: bool = False
+    show_next: bool = False
+    next_label: str = "Next Question"
+    show_submit_interactive: bool = False
+
 
     def to_gradio_outputs(self) -> List[Any]:
         # Build the exact output list expected by bindings

@@ -7,6 +7,7 @@ from app.ui.views.interview_written_view import InterviewWrittenView
 from app.ui.views.interview_coding_view import InterviewCodingView
 from app.ui.views.interview_database_view import InterviewDatabaseView
 
+from app.ui.layout.interview_layout_builder import build_interview_views
 from app.ui.layout.ui_components import UILayoutComponents
 
 from app.core.build_info import BuildInfo
@@ -118,32 +119,15 @@ def build_layout():
 
         feedback_output = gr.Markdown("")
 
-        # ---------------- WRITTEN ----------------
+        # ---------------------------------------------------------
+        # INTERVIEW VIEWS
+        # ---------------------------------------------------------
 
-        (
-            written_container,
-            written_display,
-            written_box,
-            written_submit,
-        ) = InterviewWrittenView().build()
+        views = build_interview_views()
 
-        # ---------------- CODING ----------------
-
-        (
-            coding_container,
-            coding_display,
-            coding_box,
-            coding_submit,
-        ) = InterviewCodingView().build()
-
-        # ---------------- DATABASE ----------------
-
-        (
-            database_container,
-            database_display,
-            database_box,
-            database_submit,
-        ) = InterviewDatabaseView().build()
+        written_container, written_display, written_box, written_submit = views["written"]
+        coding_container, coding_display, coding_box, coding_submit = views["coding"]
+        database_container, database_display, database_box, database_submit = views["database"]
 
         # ---------------------------------------------------------
         # ACTIONS

@@ -8,23 +8,19 @@ from app.ui.views.interview_database_view import InterviewDatabaseView
 
 
 class InterviewViewFactory:
-    # Factory responsible for selecting the correct interview view
 
     @staticmethod
-    def create(
-        question: QuestionDTO,
-        on_submit,
-    ):
+    def create(question: QuestionDTO):
 
         question_type = question.question_type
 
         if question_type == "written":
-            return InterviewWrittenView(question, on_submit)
+            return InterviewWrittenView()
 
         if question_type == "coding":
-            return InterviewCodingView(question, on_submit)
+            return InterviewCodingView()
 
         if question_type == "database":
-            return InterviewDatabaseView(question, on_submit)
+            return InterviewDatabaseView()
 
         raise ValueError(f"Unsupported QuestionType: {question_type}")
