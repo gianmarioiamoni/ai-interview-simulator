@@ -1,6 +1,7 @@
 # app/ui/state_handlers/ui_builder.py
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.question import QuestionType
 
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
@@ -15,6 +16,7 @@ from app.ui.state_machine.ui_state_machine import UIStateMachine
 
 MAX_ATTEMPTS = 3
 
+QUESTION_TYPES = list(QuestionType)
 
 # =========================================================
 # ENTRY POINT
@@ -72,6 +74,7 @@ def _build_completion_response(state: InterviewState) -> UIResponse:
 # QUESTION / FEEDBACK
 # =========================================================
 
+
 def _build_question_response(
     state: InterviewState,
     session_dto: InterviewSessionDTO,
@@ -92,25 +95,25 @@ def _build_question_response(
 
     display_text, show_editor = _build_display(state, question, ui_state)
 
+    # Dynamic mapping
+    qt = question.type
+    display_fields = _build_display_fields(qt, display_text)
+    visibility_fields = _build_visibility_fields(qt)
+    editor_fields = _build_editor_fields(qt, show_editor)
+
     return UIResponse(
         state=state,
         question_counter=counter,
         feedback=feedback_markdown,
-        written_display=display_text if question.question_type == "written" else "",
-        coding_display=display_text if question.question_type == "coding" else "",
-        database_display=display_text if question.question_type == "database" else "",
-        written_visible=question.question_type == "written",
-        coding_visible=question.question_type == "coding",
-        database_visible=question.question_type == "database",
-        written_editor_visible=question.question_type == "written" and show_editor,
-        coding_editor_visible=question.question_type == "coding" and show_editor,
-        database_editor_visible=question.question_type == "database" and show_editor,
         ui_state=ui_state,
         show_submit=not _is_feedback(ui_state),
         show_submit_interactive=not _is_feedback(ui_state),
         show_retry=_is_feedback(ui_state) and can_retry,
         show_next=_is_feedback(ui_state),
         next_label="Generate Report" if state.is_last_question else "Next Question",
+        **display_fields,
+        **visibility_fields,
+        **editor_fields,
     )
 
 
@@ -166,3 +169,27 @@ def _build_display(state, question, ui_state):
 
 def _is_feedback(ui_state: UIState) -> bool:
     return ui_state == UIState.FEEDBACK
+
+# ------------------------------------------------------------
+# DISPLAY FIELDS
+# ------------------------------------------------------------
+
+def _build_display_fields(question_type: QuestionType, display_text: str):
+
+    return {
+        f"{qt.value}_display": display_text if qt == question_type else ""
+        for qt in QUESTION_TYPES
+    }
+
+
+def _build_visibility_fields(question_type: QuestionType):
+
+    return {f"{qt.value}_visible": qt == question_type for qt in QUESTION_TYPES}
+
+
+def _build_editor_fields(question_type: QuestionType, show_editor: bool):
+
+    return {
+        f"{qt.value}_editor_visible": (qt == question_type and show_editor)
+        for qt in QUESTION_TYPES
+    }

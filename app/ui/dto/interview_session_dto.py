@@ -30,7 +30,7 @@ class InterviewSessionDTO:
             question_dto = QuestionDTO(
                 question_id=question.id,
                 text=question.prompt,
-                question_type=question.type.value,
+                type=question.type,
                 area=question.area.value,
                 index=index,
                 total=total,
