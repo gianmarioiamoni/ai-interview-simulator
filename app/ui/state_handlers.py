@@ -267,10 +267,12 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     last_answer = state.last_answer
     answer_content = last_answer.content if last_answer else ""
 
-    display_text = answer_content if is_feedback else question.text
+    if is_feedback and question.question_type == "coding":
+        display_text = f"```python\n{answer_content}\n```"
+    else:
+        display_text = answer_content if is_feedback else question.text
 
     label_prefix = "### Your Answer\n\n" if is_feedback else "### Question\n\n"
-
     display_text = label_prefix + display_text
 
     # ---------------------------------------------------------
