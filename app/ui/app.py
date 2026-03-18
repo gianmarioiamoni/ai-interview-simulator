@@ -9,9 +9,15 @@ def build_app():
 
     with gr.Blocks(
         css="""
-        #code-editor textarea {
-            font-family: monospace;
-        }
+            #code-editor textarea {
+                font-family: monospace;
+                font-size: 14px;
+            }
+
+            #code-editor .cm-content {
+                font-family: monospace;
+                font-size: 14px;
+            }
         """
     ) as demo:
 
