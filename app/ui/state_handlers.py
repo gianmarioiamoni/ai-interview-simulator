@@ -170,6 +170,9 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             written_visible=False,
             coding_visible=False,
             database_visible=False,
+            written_editor_visible=False,
+            coding_editor_visible=False,
+            database_editor_visible=False,
             ui_state=UIState.REPORT,
             report_output=report_md,
             show_submit=False,
@@ -193,6 +196,9 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
             written_visible=False,
             coding_visible=False,
             database_visible=False,
+            written_editor_visible=False,
+            coding_editor_visible=False,
+            database_editor_visible=False,
             ui_state=UIState.COMPLETION,
             show_submit=False,
             show_retry=False,
@@ -251,7 +257,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         feedback_markdown = "### Evaluation\n\n" + "\n\n".join(evaluation_sections)
 
     # ---------------------------------------------------------
-    # DISPLAY LOGIC (FIXED)
+    # DISPLAY LOGIC (CORRETTA E UNIFICATA)
     # ---------------------------------------------------------
 
     is_feedback = ui_state == UIState.FEEDBACK
@@ -259,7 +265,6 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     last_answer = state.last_answer
     answer_content = last_answer.content if last_answer else ""
 
-    # 👉 UNIFICATO per tutti i tipi
     display_text = answer_content if is_feedback else question.text
 
     label_prefix = "### Your Answer\n\n" if is_feedback else "### Question\n\n"
@@ -287,12 +292,18 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         state=state,
         question_counter=counter,
         feedback=feedback_markdown,
+        # DISPLAY (sempre visibile nel container)
         written_display=written_display,
         coding_display=coding_display,
         database_display=database_display,
-        written_visible=question.question_type == "written" and show_editor,
-        coding_visible=question.question_type == "coding" and show_editor,
-        database_visible=question.question_type == "database" and show_editor,
+        # CONTAINER (sempre visibile per tipo domanda)
+        written_visible=question.question_type == "written",
+        coding_visible=question.question_type == "coding",
+        database_visible=question.question_type == "database",
+        # EDITOR (solo QUESTION)
+        written_editor_visible=question.question_type == "written" and show_editor,
+        coding_editor_visible=question.question_type == "coding" and show_editor,
+        database_editor_visible=question.question_type == "database" and show_editor,
         ui_state=ui_state,
         show_submit=not is_feedback,
         show_submit_interactive=not is_feedback,
