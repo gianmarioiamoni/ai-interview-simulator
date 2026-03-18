@@ -98,6 +98,7 @@ def submit_answer(state: InterviewState, user_answer: str):
 # UI RESPONSE BUILDER
 # =========================================================
 
+
 def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
     from app.ui.mappers.ui_state_mapper import UIStateMapper
@@ -125,17 +126,9 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
 
         if result:
 
-            # -------------------------
-            # Evaluation
-            # -------------------------
-
             if result.evaluation:
                 feedback = result.evaluation.feedback
                 score = getattr(result.evaluation, "score", None)
-
-            # -------------------------
-            # Execution
-            # -------------------------
 
             if result.execution:
 
@@ -258,7 +251,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         feedback_markdown = "### Evaluation\n\n" + "\n\n".join(evaluation_sections)
 
     # ---------------------------------------------------------
-    # DISPLAY LOGIC (KEY STEP)
+    # DISPLAY LOGIC (FIXED)
     # ---------------------------------------------------------
 
     is_feedback = ui_state == UIState.FEEDBACK
@@ -266,10 +259,8 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     last_answer = state.last_answer
     answer_content = last_answer.content if last_answer else ""
 
-    if is_feedback and question.question_type == "coding":
-        display_text = f"```python\n{answer_content}\n```"
-    else:
-        display_text = answer_content if is_feedback else question.text
+    # 👉 UNIFICATO per tutti i tipi
+    display_text = answer_content if is_feedback else question.text
 
     label_prefix = "### Your Answer\n\n" if is_feedback else "### Question\n\n"
     display_text = label_prefix + display_text
@@ -281,7 +272,7 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
     show_editor = not is_feedback
 
     # ---------------------------------------------------------
-    # DISPLAY TEXT
+    # DISPLAY PER TYPE
     # ---------------------------------------------------------
 
     written_display = display_text if question.question_type == "written" else ""
@@ -296,14 +287,12 @@ def build_ui_response_from_state(state: InterviewState) -> UIResponse:
         state=state,
         question_counter=counter,
         feedback=feedback_markdown,
-        # DISPLAY (ALWAYS VISIBLE)
         written_display=written_display,
         coding_display=coding_display,
         database_display=database_display,
-        # EDITOR (QUESTION)
-        written_visible=question.question_type == "written" and not is_feedback,
-        coding_visible=question.question_type == "coding" and not is_feedback,
-        database_visible=question.question_type == "database" and not is_feedback,
+        written_visible=question.question_type == "written" and show_editor,
+        coding_visible=question.question_type == "coding" and show_editor,
+        database_visible=question.question_type == "database" and show_editor,
         ui_state=ui_state,
         show_submit=not is_feedback,
         show_submit_interactive=not is_feedback,
