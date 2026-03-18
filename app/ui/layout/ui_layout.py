@@ -19,6 +19,27 @@ def build_layout():
     gr.Markdown(BuildInfo.get_info())
 
     # ---------------------------------------------------------
+    # GLOBAL CSS (GitHub-like code style)
+    # ---------------------------------------------------------
+
+    gr.HTML(
+        """
+        <style>
+        pre code {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            padding: 16px;
+            border-radius: 8px;
+            display: block;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        </style>
+        """
+    )
+
+    # ---------------------------------------------------------
     # FOCUS EDITOR ON LOAD
     # ---------------------------------------------------------
 
@@ -35,7 +56,12 @@ def build_layout():
                 }
                 window.addEventListener('load', focusEditor);
             </script>
-        """)
+        """
+    )
+
+    # ---------------------------------------------------------
+    # SCROLL TO TOP ON UI CHANGE
+    # ---------------------------------------------------------
 
     gr.HTML(
         """
@@ -50,7 +76,8 @@ def build_layout():
 
                 observerScroll.observe(document.body, { childList: true, subtree: true });
             </script>
-        """)
+        """
+    )
 
     state = gr.State()
 
@@ -77,6 +104,7 @@ def build_layout():
     with gr.Column(visible=False) as interview_section:
 
         question_counter = gr.Markdown("", elem_id="question-counter")
+
         gr.HTML(
             """
                 <script>
@@ -85,7 +113,8 @@ def build_layout():
                     });
                     observer.observe(document.body, {childList: true, subtree: true});
                 </script>
-            """)
+            """
+        )
 
         feedback_output = gr.Markdown("")
 
@@ -117,7 +146,7 @@ def build_layout():
         ) = InterviewDatabaseView().build()
 
         # ---------------------------------------------------------
-        # ACTIONS (shared across all question types)
+        # ACTIONS
         # ---------------------------------------------------------
 
         gr.Markdown("---")
