@@ -4,6 +4,7 @@ from typing import Optional
 
 from domain.contracts.question import Question
 from domain.contracts.answer import Answer
+from domain.contracts.interview_progress import InterviewProgress
 
 
 class InterviewStateComputedMixin:
@@ -38,3 +39,10 @@ class InterviewStateComputedMixin:
             return False
 
         return self.current_question_index >= len(self.questions) - 1
+
+    
+    # ---------------------------------------------------------
+
+    @property
+    def is_completed(self) -> bool:
+        return self.progress == InterviewProgress.COMPLETED
