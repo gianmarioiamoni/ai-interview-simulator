@@ -8,32 +8,27 @@ from app.ui.ui_state import UIState
 
 
 class UIResponse:
-    # Encapsulates UI updates to avoid fragile long tuples
 
     def __init__(
         self,
         state,
         question_counter: str = "",
         feedback: str = "",
-        # ---------------- DISPLAY (NEW)
+        # ---------------- DISPLAY
         written_display: str = "",
         coding_display: str = "",
         database_display: str = "",
-        # ---------------- LEGACY TEXT (can be deprecated later)
-        written_text: str = "",
-        coding_text: str = "",
-        database_text: str = "",
-        # ---------------- VISIBILITY
+        # ---------------- CONTAINER VISIBILITY
         written_visible: bool = False,
         coding_visible: bool = False,
         database_visible: bool = False,
-        # ---------------- EDITOR VISIBILITY
+        # ---------------- EDITOR VISIBILITY (NEW)
         written_editor_visible: bool = False,
         coding_editor_visible: bool = False,
         database_editor_visible: bool = False,
-        # ---------------- UI STATE
-        ui_state: UIState = UIState.SETUP,
-        # ---------------- COMPLETION / REPORT
+        # ---------------- STATE
+        ui_state=None,
+        # ---------------- REPORT
         final_feedback: str = "",
         report_output: str = "",
         # ---------------- BUTTONS
@@ -47,20 +42,20 @@ class UIResponse:
         self.question_counter = question_counter
         self.feedback = feedback
 
-        # NEW DISPLAY
+        # DISPLAY
         self.written_display = written_display
         self.coding_display = coding_display
         self.database_display = database_display
 
-        # LEGACY
-        self.written_text = written_text
-        self.coding_text = coding_text
-        self.database_text = database_text
-
-        # VISIBILITY
+        # CONTAINERS
         self.written_visible = written_visible
         self.coding_visible = coding_visible
         self.database_visible = database_visible
+
+        # EDITORS ✅ (MANCAVANO)
+        self.written_editor_visible = written_editor_visible
+        self.coding_editor_visible = coding_editor_visible
+        self.database_editor_visible = database_editor_visible
 
         self.ui_state = ui_state
 
