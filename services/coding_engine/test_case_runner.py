@@ -1,8 +1,5 @@
-## services/coding_engine/test_case_runner.py
-
 from typing import List
-
-from domain.contracts.test_case import TestCase
+from domain.contracts.coding_test_case import CodingTestCase
 
 
 class TestCaseRunner:
@@ -14,8 +11,9 @@ class TestCaseRunner:
     def build_harness(
         self,
         user_code: str,
-        visible_tests: List[TestCase],
-        hidden_tests: List[TestCase],
+        visible_tests: List[CodingTestCase],
+        hidden_tests: List[CodingTestCase],
+        function_name: str,
     ) -> str:
 
         total_visible = len(visible_tests)
@@ -23,99 +21,119 @@ class TestCaseRunner:
 
         lines: List[str] = []
 
-        # ---------------------------------------------------------
-        # User code
-        # ---------------------------------------------------------
+        # =========================================================
+        # USER CODE
+        # =========================================================
 
         lines.append(user_code)
         lines.append("")
+
+        # =========================================================
+        # FUNCTION RESOLUTION (DYNAMIC MAPPING)
+        # =========================================================
+
         lines.append("import inspect")
 
-        # ---------------------------------------------------------
-        # Detect candidate callable
-        # ---------------------------------------------------------
-
-        lines.append("def __get_callable():")
+        lines.append("def __resolve_callable():")
+        lines.append("    # 1. Exact match")
+        lines.append(f"    if '{function_name}' in globals():")
+        lines.append(f"        return globals()['{function_name}']")
+        lines.append("")
+        lines.append("    # 2. Fallback: find first valid function")
         lines.append("    candidates = []")
         lines.append("    for name, obj in globals().items():")
         lines.append(
             "        if inspect.isfunction(obj) and not name.startswith('__'):"
         )
         lines.append("            candidates.append(obj)")
+        lines.append("")
         lines.append("    if not candidates:")
         lines.append("        raise RuntimeError('No callable function found')")
+        lines.append("")
         lines.append("    return candidates[0]")
         lines.append("")
 
-        # ---------------------------------------------------------
-        # Test runner
-        # ---------------------------------------------------------
+        # =========================================================
+        # WRAPPER (ENTRY POINT)
+        # =========================================================
+
+        lines.append("def __entry_point__(*args, **kwargs):")
+        lines.append("    func = __resolve_callable()")
+        lines.append("    return func(*args, **kwargs)")
+        lines.append("")
+
+        # =========================================================
+        # COMPARATOR
+        # =========================================================
+
+        lines.append("def __compare(a, b):")
+        lines.append("    import math")
+        lines.append("")
+        lines.append("    # float tolerance")
+        lines.append("    if isinstance(a, float) and isinstance(b, float):")
+        lines.append("        return math.isclose(a, b, rel_tol=1e-6)")
+        lines.append("")
+        lines.append("    return a == b")
+        lines.append("")
+
+        # =========================================================
+        # TEST RUNNER
+        # =========================================================
 
         lines.append("def __run_tests():")
-        lines.append("    func = __get_callable()")
-
+        lines.append("    func = __entry_point__")
+        lines.append("")
         lines.append("    visible_passed = 0")
         lines.append("    hidden_passed = 0")
+        lines.append("")
 
-        # -------------------------
-        # Visible tests
-        # -------------------------
+        # ========================
+        # VISIBLE TESTS
+        # ========================
 
         for idx, test in enumerate(visible_tests, start=1):
 
-            input_repr = repr(test.input)
-            expected_repr = repr(test.expected_output)
-
             lines.append("    try:")
-            lines.append(f"        data = {input_repr}")
-            lines.append(f"        expected = {expected_repr}")
+            lines.append(f"        args = {repr(test.args)}")
+            lines.append(f"        kwargs = {repr(test.kwargs)}")
+            lines.append(f"        expected = {repr(test.expected)}")
 
-            lines.append("        if isinstance(data, (list, tuple)):")
-            lines.append("            result = func(*data)")
-            lines.append("        else:")
-            lines.append("            result = func(data)")
+            lines.append("        result = func(*args, **kwargs)")
 
-            lines.append("        if result != expected:")
+            lines.append("        if not __compare(result, expected):")
             lines.append(
-                f'            print("VISIBLE_TEST_FAILED:{idx}: expected=" + str(expected) + " actual=" + str(result) + " input=" + str(data))'
+                f'            print("VISIBLE_TEST_FAILED:{idx}: expected=" + str(expected) + " actual=" + str(result) + " args=" + str(args) + " kwargs=" + str(kwargs))'
             )
             lines.append("        else:")
             lines.append("            visible_passed += 1")
 
             lines.append("    except Exception as e:")
             lines.append(
-                f'        print("VISIBLE_TEST_FAILED:{idx}: exception=" + str(e) + " input=" + str(data))'
+                f'        print("VISIBLE_TEST_FAILED:{idx}: exception=" + str(e) + " args=" + str(args) + " kwargs=" + str(kwargs))'
             )
 
-        # -------------------------
-        # Hidden tests
-        # -------------------------
+        # ========================
+        # HIDDEN TESTS
+        # ========================
 
         for idx, test in enumerate(hidden_tests, start=1):
 
-            input_repr = repr(test.input)
-            expected_repr = repr(test.expected_output)
-
             lines.append("    try:")
-            lines.append(f"        data = {input_repr}")
-            lines.append(f"        expected = {expected_repr}")
+            lines.append(f"        args = {repr(test.args)}")
+            lines.append(f"        kwargs = {repr(test.kwargs)}")
+            lines.append(f"        expected = {repr(test.expected)}")
 
-            lines.append("        if isinstance(data, (list, tuple)):")
-            lines.append("            result = func(*data)")
-            lines.append("        else:")
-            lines.append("            result = func(data)")
+            lines.append("        result = func(*args, **kwargs)")
 
-            lines.append("        if result != expected:")
-            lines.append("            pass")
-            lines.append("        else:")
+            lines.append("        if __compare(result, expected):")
             lines.append("            hidden_passed += 1")
 
             lines.append("    except Exception:")
             lines.append("        pass")
 
-        # ---------------------------------------------------------
-        # Result markers
-        # ---------------------------------------------------------
+        # =========================================================
+        # RESULT MARKERS
+        # =========================================================
 
         lines.append(
             f'    print("{self.VISIBLE_MARKER}:" + str(visible_passed) + ":" + str({total_visible}))'
