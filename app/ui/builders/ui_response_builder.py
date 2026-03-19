@@ -33,13 +33,34 @@ class UIResponseBuilder:
         session_dto = InterviewSessionDTO.from_state(state)
         ui_state = UIStateMachine.resolve(state)
 
+        if ui_state == UIState.SETUP:
+            return self._build_setup(state)
+
         if ui_state == UIState.REPORT:
             return self._build_report(state)
 
         if ui_state == UIState.COMPLETION:
             return self._build_completion(state)
 
-        return self._build_question(state, session_dto, ui_state)
+        if ui_state == UIState.QUESTION:
+            return self._build_question(state, session_dto, ui_state)
+
+        raise RuntimeError(f"Unsupported UI state: {ui_state}")
+
+    # =========================================================
+    # SETUP
+    # =========================================================
+
+
+    def _build_setup(self, state: InterviewState) -> UIResponse:
+
+        return UIResponse(
+            state=state,
+            ui_state=UIState.SETUP,
+            show_submit=False,
+            show_retry=False,
+            show_next=False,
+    )
 
     # =========================================================
     # REPORT
