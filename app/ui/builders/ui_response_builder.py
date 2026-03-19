@@ -1,7 +1,11 @@
 # ui/builders/ui_response_builder.py
 
-from domain.contracts.interview_state import InterviewState
+from typing import TypedDict
 
+from domain.contracts.interview_state import InterviewState
+from domain.contracts.question import QuestionType
+
+from app.ui.dto.question_dto import QuestionDTO
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.views.report_view import build_report_markdown
@@ -13,8 +17,25 @@ from app.ui.state_machine.ui_state_machine import UIStateMachine
 
 MAX_ATTEMPTS = 3
 
+class DisplayFields(TypedDict):
+    written_display: str
+    coding_display: str
+    database_display: str
+
+class VisibilityFields(TypedDict):
+    written_visible: bool
+    coding_visible: bool
+    database_visible: bool
+
+class EditorVisibilityFields(TypedDict):
+    written_editor_visible: bool
+    coding_editor_visible: bool
+    database_editor_visible: bool
 
 class UIResponseBuilder:
+
+    def __init__(self) -> None:
+        self._presenter = ResultPresenter()
 
     # =========================================================
     # PUBLIC API
@@ -110,7 +131,7 @@ class UIResponseBuilder:
     # SUB BUILDERS
     # =========================================================
 
-    def _build_counter(self, question, attempts: int) -> str:
+    def _build_counter(self, question: QuestionDTO, attempts: int) -> str:
 
         return (
             f"### Interview Progress\n\n"
@@ -133,62 +154,47 @@ class UIResponseBuilder:
         if not result:
             return ""
 
-        presenter = ResultPresenter()
-        vm = presenter.present(result)
+        vm = self._presenter.present(result)
 
         return vm.feedback_markdown
 
     # ---------------------------------------------------------
 
-    def _build_display(self, state, question, ui_state):
-
+    def _build_display(self, state: InterviewState, question: QuestionDTO, ui_state: UIState) -> DisplayFields:
         is_feedback = self._is_feedback(ui_state)
-
         last_answer = state.last_answer
         answer_content = last_answer.content if last_answer else ""
-
         text = answer_content if is_feedback else question.text
         prefix = "### Your Answer\n\n" if is_feedback else "### Question\n\n"
-
         display_text = prefix + text
 
         return {
-            "written_display": (
-                display_text if question.question_type == "written" else ""
-            ),
-            "coding_display": (
-                display_text if question.question_type == "coding" else ""
-            ),
-            "database_display": (
-                display_text if question.question_type == "database" else ""
-            ),
+            "written_display": display_text if question.type == QuestionType.WRITTEN else "",
+            "coding_display": display_text if question.type == QuestionType.CODING else "",
+            "database_display": display_text if question.type == QuestionType.DATABASE else "",
         }
 
     # ---------------------------------------------------------
 
-    def _build_visibility(self, question):
+    def _build_visibility(self, question: QuestionDTO) -> VisibilityFields:
 
         return {
-            "written_visible": question.question_type == "written",
-            "coding_visible": question.question_type == "coding",
-            "database_visible": question.question_type == "database",
+            "written_visible": question.type == QuestionType.WRITTEN,
+            "coding_visible": question.type == QuestionType.CODING,
+            "database_visible": question.type == QuestionType.DATABASE,
         }
 
     # ---------------------------------------------------------
 
-    def _build_editor_visibility(self, question, ui_state):
+    def _build_editor_visibility(self, question: QuestionDTO, ui_state: UIState) -> EditorVisibilityFields:
 
         show_editor = not self._is_feedback(ui_state)
 
         return {
-            "written_editor_visible": question.question_type == "written"
-            and show_editor,
-            "coding_editor_visible": question.question_type == "coding" and show_editor,
-            "database_editor_visible": question.question_type == "database"
-            and show_editor,
+            "written_editor_visible": question.type == QuestionType.WRITTEN and show_editor,
+            "coding_editor_visible": question.type == QuestionType.CODING and show_editor,
+            "database_editor_visible": question.type == QuestionType.DATABASE and show_editor,
         }
-
-    # ---------------------------------------------------------
 
     def _is_feedback(self, ui_state: UIState) -> bool:
         return ui_state == UIState.FEEDBACK
