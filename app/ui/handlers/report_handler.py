@@ -25,53 +25,15 @@ def view_report_handler(state_value):
     evaluation_service = get_runtime_evaluation_service()
 
     # ---------------------------------------------------------
-    # Step 2 — Build evaluation list from results
+    # Step 2 — Build evaluation ordered list from results
     # ---------------------------------------------------------
 
-    per_question_evaluations = []
-
-    for q in state_value.questions:
-
-        result = state_value.results_by_question.get(q.id)
-
-        if result is None:
-            continue
-
-        # -----------------------------------------------------
-        # Written questions already have evaluation
-        # -----------------------------------------------------
-
-        if result.evaluation is not None:
-            per_question_evaluations.append(result.evaluation)
-            continue
-
-        # -----------------------------------------------------
-        # Coding / Database → derive evaluation from execution
-        # -----------------------------------------------------
-
-        if result.execution is not None:
-
-            exec_res = result.execution
-
-            if exec_res.total_tests and exec_res.total_tests > 0:
-                score = (exec_res.passed_tests / exec_res.total_tests) * 100
-            else:
-                score = 100 if exec_res.success else 0
-
-            evaluation = QuestionEvaluation(
-                question_id=q.id,
-                score=score,
-                max_score=100,
-                passed=exec_res.success,
-                feedback=exec_res.error or "Execution evaluated automatically.",
-                strengths=[],
-                weaknesses=[],
-                passed_tests=exec_res.passed_tests,
-                total_tests=exec_res.total_tests,
-                execution_status=exec_res.status.value,
-            )
-
-            per_question_evaluations.append(evaluation)
+    per_question_evaluations = [
+        state_value.results_by_question[q.id].evaluation
+        for q in state_value.questions
+        if q.id in state_value.results_by_question
+        and state_value.results_by_question[q.id].evaluation is not None
+    ]
 
     # ---------------------------------------------------------
     # Step 3 — Generate final evaluation only once

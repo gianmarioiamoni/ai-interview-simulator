@@ -145,20 +145,9 @@ def _build_evaluation(state: InterviewState) -> str:
 
     presenter = ResultPresenter()
 
-    # Written question
-    if result.evaluation:
-        vm = presenter.present(result)
-        return vm.feedback_markdown
+    vm = presenter.present(result)
 
-    # Coding / Database question
-    if result.execution:
-        vm = presenter.present(
-            evaluation=None,
-            execution_results=[result.execution],
-        )
-        return vm.feedback_markdown
-
-    return ""
+    return vm.feedback_markdown
 
 
 def _build_display(state, question, ui_state):

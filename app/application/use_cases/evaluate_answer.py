@@ -106,4 +106,24 @@ class EvaluateAnswerUseCase:
 
         state.register_execution(execution)
 
+        if execution.total_tests and execution.total_tests > 0:
+            score = (execution.passed_tests / execution.total_tests) * 100
+        else:
+            score = 100 if execution.success else 0
+
+        evaluation = QuestionEvaluation(
+            question_id=question.id,
+            score=score,
+            max_score=100,
+            passed=execution.success,
+            feedback=execution.error or "Execution evaluated automatically.",
+            strengths=[],
+            weaknesses=[],
+            passed_tests=execution.passed_tests,
+            total_tests=execution.total_tests,
+            execution_status=execution.status.value,
+        )
+
+        state.register_evaluation(evaluation)
+
         return state
