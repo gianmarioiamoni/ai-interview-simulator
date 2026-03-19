@@ -9,6 +9,7 @@ from domain.contracts.execution_result import (
 
 from services.coding_engine.execution_sandbox import ExecutionSandbox
 from services.coding_engine.test_case_runner import TestCaseRunner
+from services.coding_engine.test_case_adapter import TestCaseAdapter
 from services.coding_engine.harness_output_parser import HarnessOutputParser
 
 
@@ -39,10 +40,13 @@ class CodingExecutor:
         # Build harness
         # -----------------------------------------------------
 
+        visible_tests = self._adapter.to_coding_test_cases(question.visible_tests or [])
+        hidden_tests = self._adapter.to_coding_test_cases(question.hidden_tests or [])
+
         harness = self._runner.build_harness(
             user_code=user_code,
-            visible_tests=question.visible_tests,
-            hidden_tests=question.hidden_tests,
+            visible_tests=visible_tests,
+            hidden_tests=hidden_tests,
             function_name=question.function_name or "solution",
         )
 
