@@ -18,6 +18,9 @@
 
 from enum import Enum
 from typing import Optional
+from typing import List
+
+from domain.contracts.test_execution_result import TestExecutionResult
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -56,6 +59,9 @@ class ExecutionResult(BaseModel):
     # Performance
     execution_time_ms: int = Field(default=0, ge=0)
 
+    # Test results (primarily for coding engine)
+    test_results: List[TestExecutionResult] = []
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
@@ -71,7 +77,7 @@ class ExecutionResult(BaseModel):
         if not self.success and self.status == ExecutionStatus.SUCCESS:
             raise ValueError("success cannot be False when status is SUCCESS")
 
-    # Error consistency
+        # Error consistency
         if self.success:
             if self.error is not None:
                 raise ValueError("error must be None when success is True")
@@ -82,5 +88,5 @@ class ExecutionResult(BaseModel):
         # Test statistics consistency
         if self.passed_tests > self.total_tests:
             raise ValueError("passed_tests cannot exceed total_tests")
- 
+
         return self
