@@ -180,9 +180,11 @@ class ResultPresenter:
 
                     # HEADER
                     if test.status == TestStatus.ERROR:
-                        lines.append(f"**⚠️ {label} {test.id} — ERROR**")
+                        lines.append(f"**⚠️ {label} {test.id} — RUNTIME ERROR**")
+                    elif test.status == TestStatus.FAILED:
+                        lines.append(f"**❌ {label} {test.id} — LOGIC ERROR**")
                     else:
-                        lines.append(f"**❌ {label} {test.id} — FAILED**")
+                        lines.append(f"**❌ {label} {test.id} — TEST FAILED**")
 
                     # INPUT
                     input_str = self._format_input(test.args, test.kwargs)
@@ -195,12 +197,12 @@ class ResultPresenter:
                         continue
 
                     # EXPECTED / ACTUAL
-                    lines.append(f"- Expected: `{test.expected}`")
-                    lines.append(f"- Actual: `{test.actual}`")
+                    lines.append(f"- Expected: `{repr(test.expected)}`")
+                    lines.append(f"- Actual: `{repr(test.actual)}`")
                     lines.append("")
 
         # ---------------- ERRORS ----------------
-        if errors:
+        if errors and not (execution and execution.test_results):
             lines.append("### Errors")
             for e in errors:
                 lines.append(f"- {e}")
