@@ -5,6 +5,7 @@ from typing import List
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.question import Question, QuestionType
 from domain.contracts.interview_area import InterviewArea
+from domain.contracts.coding_test_case import CodingTestCase
 
 
 # =========================================================
@@ -52,6 +53,17 @@ def _load_technical_questions() -> List[Question]:
                 "character in a string. If none exists, return None."
             ),
             difficulty=3,
+            function_name="first_non_repeating_char",
+            visible_tests=[
+                CodingTestCase(
+                    args=["leetcode"],
+                    expected="l",
+                ),
+                CodingTestCase(
+                    args=["aabbcc"],
+                    expected=None,
+                ),
+            ],
             reference_solution=(
                 "def first_non_repeating_char(s: str):\n"
                 "    from collections import Counter\n"
