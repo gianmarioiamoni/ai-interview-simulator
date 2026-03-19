@@ -6,11 +6,13 @@ from typing import List, Optional
 from domain.contracts.question_result import QuestionResult
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.test_execution_result import TestStatus, TestType
 
 
 # =========================================================
 # VIEW MODELS
 # =========================================================
+
 
 @dataclass
 class ExecutionResultView:
@@ -36,6 +38,7 @@ class ResultViewModel:
 # PRESENTER
 # =========================================================
 
+
 class ResultPresenter:
 
     def present(self, result: QuestionResult) -> ResultViewModel:
@@ -49,12 +52,13 @@ class ResultPresenter:
 
         feedback_md = self._build_feedback_markdown(
             evaluation,
+            execution,
             execution_vm,
             errors,
         )
 
-        score = evaluation.score
-        passed = evaluation.passed
+        score = evaluation.score if evaluation else 0
+        passed = evaluation.passed if evaluation else False
 
         return ResultViewModel(
             score=score,
@@ -100,6 +104,7 @@ class ResultPresenter:
     def _build_feedback_markdown(
         self,
         evaluation: Optional[QuestionEvaluation],
+        execution: Optional[ExecutionResult],
         execution_results: List[ExecutionResultView],
         errors: List[str],
     ) -> str:
@@ -128,7 +133,7 @@ class ResultPresenter:
                     lines.append(f"- {w}")
                 lines.append("")
 
-        # ---------------- EXECUTION ----------------
+        # ---------------- EXECUTION SUMMARY ----------------
         if execution_results:
 
             if not evaluation:
@@ -139,7 +144,7 @@ class ResultPresenter:
 
             for idx, r in enumerate(execution_results, start=1):
                 icon = "✅" if r.success else "❌"
-                lines.append(f"**Test {idx}: {icon} {r.status}**")
+                lines.append(f"**Run {idx}: {icon} {r.status}**")
 
                 if r.total_tests > 0:
                     lines.append(f"- Tests: {r.passed_tests}/{r.total_tests}")
@@ -149,6 +154,46 @@ class ResultPresenter:
 
                 lines.append("")
 
+        # =========================================================
+        # 🔥 NEW: DETAILED TEST FEEDBACK
+        # =========================================================
+
+        if execution and execution.test_results:
+
+            failed_tests = [
+                t
+                for t in execution.test_results
+                if t.type == TestType.VISIBLE and t.status != TestStatus.PASSED
+            ]
+
+            if failed_tests:
+
+                lines.append("### Failed Tests Details")
+
+                for test in failed_tests:
+
+                    # HEADER
+                    if test.status == TestStatus.ERROR:
+                        lines.append(f"**⚠️ Test {test.id} — ERROR**")
+                    else:
+                        lines.append(f"**❌ Test {test.id} — FAILED**")
+
+                    # INPUT
+                    input_str = self._format_input(test.args, test.kwargs)
+                    lines.append(f"- Input: `{input_str}`")
+
+                    # ERROR CASE
+                    if test.status == TestStatus.ERROR:
+                        lines.append(f"- Error: `{test.error}`")
+                        lines.append("")
+                        continue
+
+                    # EXPECTED / ACTUAL
+                    lines.append(f"- Expected: `{test.expected}`")
+                    lines.append(f"- Actual: `{test.actual}`")
+
+                    lines.append("")
+
         # ---------------- ERRORS ----------------
         if errors:
             lines.append("### Errors")
@@ -157,3 +202,20 @@ class ResultPresenter:
             lines.append("")
 
         return "\n".join(lines)
+
+    # =========================================================
+    # HELPERS
+    # =========================================================
+
+    def _format_input(self, args, kwargs) -> str:
+
+        if args and kwargs:
+            return f"args={args}, kwargs={kwargs}"
+
+        if args:
+            return str(args)
+
+        if kwargs:
+            return str(kwargs)
+
+        return "None"
