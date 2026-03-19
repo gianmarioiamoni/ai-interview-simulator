@@ -114,12 +114,10 @@ class ResultPresenter:
         # ---------------- EVALUATION ----------------
         if evaluation:
 
-            lines.append(f"## Score: {evaluation.score:.1f}/100")
-            lines.append("")
+            lines.append(f"## Score: {evaluation.score:.1f}/100\n")
 
             lines.append("### Feedback")
-            lines.append(evaluation.feedback)
-            lines.append("")
+            lines.append(evaluation.feedback + "\n")
 
             if evaluation.strengths:
                 lines.append("### Strengths")
@@ -137,8 +135,7 @@ class ResultPresenter:
         if execution_results:
 
             if not evaluation:
-                lines.append("## Execution Summary")
-                lines.append("")
+                lines.append("## Execution Summary\n")
 
             lines.append("### Execution Results")
 
@@ -155,7 +152,7 @@ class ResultPresenter:
                 lines.append("")
 
         # =========================================================
-        # 🔥 NEW: DETAILED TEST FEEDBACK
+        # 🔥 DETAILED TEST FEEDBACK
         # =========================================================
 
         if execution and execution.test_results:
@@ -166,23 +163,32 @@ class ResultPresenter:
                 if t.type == TestType.VISIBLE and t.status != TestStatus.PASSED
             ]
 
+            # fallback → usa hidden se non ci sono visible
+            if not failed_tests:
+                failed_tests = [
+                    t for t in execution.test_results if t.status != TestStatus.PASSED
+                ]
+
             if failed_tests:
 
                 lines.append("### Failed Tests Details")
 
                 for test in failed_tests:
 
+                    # 🔥 LABEL
+                    label = "Hidden Test" if test.type == TestType.HIDDEN else "Test"
+
                     # HEADER
                     if test.status == TestStatus.ERROR:
-                        lines.append(f"**⚠️ Test {test.id} — ERROR**")
+                        lines.append(f"**⚠️ {label} {test.id} — ERROR**")
                     else:
-                        lines.append(f"**❌ Test {test.id} — FAILED**")
+                        lines.append(f"**❌ {label} {test.id} — FAILED**")
 
                     # INPUT
                     input_str = self._format_input(test.args, test.kwargs)
                     lines.append(f"- Input: `{input_str}`")
 
-                    # ERROR CASE
+                    # ERROR
                     if test.status == TestStatus.ERROR:
                         lines.append(f"- Error: `{test.error}`")
                         lines.append("")
@@ -191,7 +197,6 @@ class ResultPresenter:
                     # EXPECTED / ACTUAL
                     lines.append(f"- Expected: `{test.expected}`")
                     lines.append(f"- Actual: `{test.actual}`")
-
                     lines.append("")
 
         # ---------------- ERRORS ----------------
