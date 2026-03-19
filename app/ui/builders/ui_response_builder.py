@@ -42,7 +42,7 @@ class UIResponseBuilder:
         if ui_state == UIState.COMPLETION:
             return self._build_completion(state)
 
-        if ui_state == UIState.QUESTION:
+        if ui_state in [UIState.QUESTION, UIState.FEEDBACK]:
             return self._build_question(state, session_dto, ui_state)
 
         raise RuntimeError(f"Unsupported UI state: {ui_state}")
