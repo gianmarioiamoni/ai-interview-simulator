@@ -43,6 +43,7 @@ class CodingExecutor:
             user_code=user_code,
             visible_tests=question.visible_tests,
             hidden_tests=question.hidden_tests,
+            function_name=question.function_name or "solution",
         )
 
         # -----------------------------------------------------
