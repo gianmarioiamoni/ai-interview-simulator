@@ -31,6 +31,7 @@ class Question(BaseModel):
     db_seed_data: Optional[str] = None
     expected_rows: Optional[list[tuple]] = None
     expected_ordered: bool = Field(default=True)
+    function_name: str = "solution"
 
     model_config = {
         "frozen": True,
