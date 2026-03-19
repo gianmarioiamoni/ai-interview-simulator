@@ -1,3 +1,5 @@
+# services/coding_engine/test_case_runner.py
+
 from typing import List
 from domain.contracts.coding_test_case import CodingTestCase
 
@@ -7,6 +9,7 @@ class TestCaseRunner:
     RESULT_MARKER = "__RESULT__"
     VISIBLE_MARKER = "__VISIBLE__"
     HIDDEN_MARKER = "__HIDDEN__"
+    TEST_RESULT_MARKER = "__TEST_RESULT__"
 
     def build_harness(
         self,
@@ -29,17 +32,21 @@ class TestCaseRunner:
         lines.append("")
 
         # =========================================================
-        # FUNCTION RESOLUTION (DYNAMIC MAPPING)
+        # IMPORTS
         # =========================================================
 
         lines.append("import inspect")
+        lines.append("import json")
+        lines.append("")
+
+        # =========================================================
+        # FUNCTION RESOLUTION
+        # =========================================================
 
         lines.append("def __resolve_callable():")
-        lines.append("    # 1. Exact match")
         lines.append(f"    if '{function_name}' in globals():")
         lines.append(f"        return globals()['{function_name}']")
         lines.append("")
-        lines.append("    # 2. Fallback: find first valid function")
         lines.append("    candidates = []")
         lines.append("    for name, obj in globals().items():")
         lines.append(
@@ -54,7 +61,7 @@ class TestCaseRunner:
         lines.append("")
 
         # =========================================================
-        # WRAPPER (ENTRY POINT)
+        # ENTRY POINT
         # =========================================================
 
         lines.append("def __entry_point__(*args, **kwargs):")
@@ -68,11 +75,8 @@ class TestCaseRunner:
 
         lines.append("def __compare(a, b):")
         lines.append("    import math")
-        lines.append("")
-        lines.append("    # float tolerance")
         lines.append("    if isinstance(a, float) and isinstance(b, float):")
         lines.append("        return math.isclose(a, b, rel_tol=1e-6)")
-        lines.append("")
         lines.append("    return a == b")
         lines.append("")
 
@@ -97,19 +101,41 @@ class TestCaseRunner:
             lines.append(f"        args = {repr(test.args)}")
             lines.append(f"        kwargs = {repr(test.kwargs)}")
             lines.append(f"        expected = {repr(test.expected)}")
-
+            lines.append("")
             lines.append("        result = func(*args, **kwargs)")
-
+            lines.append("")
             lines.append("        if not __compare(result, expected):")
             lines.append(
-                f'            print("VISIBLE_TEST_FAILED:{idx}: expected=" + str(expected) + " actual=" + str(result) + " args=" + str(args) + " kwargs=" + str(kwargs))'
+                f"""            print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
+                "type": "visible",
+                "id": {idx},
+                "status": "failed",
+                "expected": expected,
+                "actual": result,
+                "args": args,
+                "kwargs": kwargs
+            }}))"""
             )
             lines.append("        else:")
             lines.append("            visible_passed += 1")
-
+            lines.append(
+                f"""            print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
+                "type": "visible",
+                "id": {idx},
+                "status": "passed"
+            }}))"""
+            )
+            lines.append("")
             lines.append("    except Exception as e:")
             lines.append(
-                f'        print("VISIBLE_TEST_FAILED:{idx}: exception=" + str(e) + " args=" + str(args) + " kwargs=" + str(kwargs))'
+                f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
+            "type": "visible",
+            "id": {idx},
+            "status": "error",
+            "error": str(e),
+            "args": args if 'args' in locals() else [],
+            "kwargs": kwargs if 'kwargs' in locals() else {{}}
+        }}))"""
             )
 
         # ========================
@@ -122,12 +148,12 @@ class TestCaseRunner:
             lines.append(f"        args = {repr(test.args)}")
             lines.append(f"        kwargs = {repr(test.kwargs)}")
             lines.append(f"        expected = {repr(test.expected)}")
-
+            lines.append("")
             lines.append("        result = func(*args, **kwargs)")
-
+            lines.append("")
             lines.append("        if __compare(result, expected):")
             lines.append("            hidden_passed += 1")
-
+            lines.append("")
             lines.append("    except Exception:")
             lines.append("        pass")
 
