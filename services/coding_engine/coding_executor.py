@@ -56,6 +56,9 @@ class CodingExecutor:
         # -----------------------------------------------------
 
         raw = self._sandbox.execute(harness)
+        print("=== RAW STDOUT ===")
+        print(raw.stdout)
+        print("==================")
 
         # -----------------------------------------------------
         # Timeout
