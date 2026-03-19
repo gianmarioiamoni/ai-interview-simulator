@@ -14,6 +14,13 @@ class TestCaseAdapter:
         test_cases: List[TestCase],
     ) -> List[CodingTestCase]:
 
+        if not test_cases:
+            return []
+
+        # already coding test cases
+        if isinstance(test_cases[0], CodingTestCase):
+            return test_cases
+        
         converted: List[CodingTestCase] = []
 
         for t in test_cases:

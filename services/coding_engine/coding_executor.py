@@ -41,7 +41,7 @@ class CodingExecutor:
         # Build harness
         # -----------------------------------------------------
 
-        visible_tests = self._adapter.to_coding_test_cases(question.visible_tests or [])
+        visible_tests = question.visible_tests or []
         hidden_tests = self._adapter.to_coding_test_cases(question.hidden_tests or [])
 
         harness = self._runner.build_harness(
