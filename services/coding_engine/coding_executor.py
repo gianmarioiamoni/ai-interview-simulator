@@ -25,6 +25,7 @@ class CodingExecutor:
         self._sandbox = sandbox or ExecutionSandbox()
         self._runner = runner or TestCaseRunner()
         self._parser = parser or HarnessOutputParser()
+        self._adapter = TestCaseAdapter()
 
     # ---------------------------------------------------------
     # Execute coding question
