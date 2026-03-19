@@ -53,11 +53,8 @@ class ResultPresenter:
             errors,
         )
 
-        score = evaluation.score if evaluation else 0.0
-
-        passed = (
-            evaluation.passed if evaluation else all(r.success for r in execution_vm)
-        )
+        score = evaluation.score
+        passed = evaluation.passed
 
         return ResultViewModel(
             score=score,
