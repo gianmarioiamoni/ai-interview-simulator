@@ -13,24 +13,11 @@ from app.ui.presenters.result_presenter import ResultPresenter
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
 from app.ui.state_machine.ui_state_machine import UIStateMachine
+from app.ui.types.ui_fields import DisplayFields, VisibilityFields, EditorVisibilityFields, ButtonState
 
 
 MAX_ATTEMPTS = 3
 
-class DisplayFields(TypedDict):
-    written_display: str
-    coding_display: str
-    database_display: str
-
-class VisibilityFields(TypedDict):
-    written_visible: bool
-    coding_visible: bool
-    database_visible: bool
-
-class EditorVisibilityFields(TypedDict):
-    written_editor_visible: bool
-    coding_editor_visible: bool
-    database_editor_visible: bool
 
 class UIResponseBuilder:
 
@@ -112,16 +99,14 @@ class UIResponseBuilder:
         visibility = self._build_visibility(question)
         editors = self._build_editor_visibility(question, ui_state)
 
+        buttons = self._build_buttons(state, ui_state, can_retry)
+
         return UIResponse(
             state=state,
             question_counter=counter,
             feedback=feedback,
             ui_state=ui_state,
-            show_submit=not self._is_feedback(ui_state),
-            show_submit_interactive=not self._is_feedback(ui_state),
-            show_retry=self._is_feedback(ui_state) and can_retry,
-            show_next=self._is_feedback(ui_state),
-            next_label="Generate Report" if state.is_last_question else "Next Question",
+            **buttons,
             **display,
             **visibility,
             **editors,
@@ -198,3 +183,21 @@ class UIResponseBuilder:
 
     def _is_feedback(self, ui_state: UIState) -> bool:
         return ui_state == UIState.FEEDBACK
+
+
+    def _build_buttons(
+        self,
+        state: InterviewState,
+        ui_state: UIState,
+        can_retry: bool,
+    ) -> ButtonState:
+
+        is_feedback = self._is_feedback(ui_state)
+
+        return {
+            "show_submit": not is_feedback,
+            "show_submit_interactive": not is_feedback,
+            "show_retry": is_feedback and can_retry,
+            "show_next": is_feedback,
+            "next_label": "Generate Report" if state.is_last_question else "Next Question",
+    }
