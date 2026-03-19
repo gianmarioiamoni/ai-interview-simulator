@@ -7,7 +7,7 @@ from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
 
 from app.ui.views.report_view import build_report_markdown
-from app.ui.presenters.evaluation_presenter import EvaluationPresenter
+from app.ui.presenters.result_presenter import ResultPresenter
 
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
@@ -143,14 +143,11 @@ def _build_evaluation(state: InterviewState) -> str:
     if not result:
         return ""
 
-    presenter = EvaluationPresenter()
+    presenter = ResultPresenter()
 
     # Written question
     if result.evaluation:
-        vm = presenter.present(
-            evaluation=result.evaluation,
-            execution_results=[],
-        )
+        vm = presenter.present(result)
         return vm.feedback_markdown
 
     # Coding / Database question

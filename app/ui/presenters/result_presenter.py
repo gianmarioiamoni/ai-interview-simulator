@@ -1,0 +1,162 @@
+# app/ui/presenters/result_presenter.py
+
+from dataclasses import dataclass
+from typing import List, Optional
+
+from domain.contracts.question_result import QuestionResult
+from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.execution_result import ExecutionResult
+
+
+# =========================================================
+# VIEW MODELS
+# =========================================================
+
+@dataclass
+class ExecutionResultView:
+    status: str
+    success: bool
+    output: str
+    error: Optional[str]
+    passed_tests: int
+    total_tests: int
+    execution_time_ms: int
+
+
+@dataclass
+class ResultViewModel:
+    score: float
+    feedback_markdown: str
+    execution_results: List[ExecutionResultView]
+    errors: List[str]
+    passed: bool
+
+
+# =========================================================
+# PRESENTER
+# =========================================================
+
+class ResultPresenter:
+
+    def present(self, result: QuestionResult) -> ResultViewModel:
+
+        evaluation = result.evaluation
+        execution = result.execution
+
+        execution_vm = self._map_execution_results([execution] if execution else [])
+
+        errors = self._extract_errors(execution_vm)
+
+        feedback_md = self._build_feedback_markdown(
+            evaluation,
+            execution_vm,
+            errors,
+        )
+
+        score = evaluation.score if evaluation else 0.0
+
+        passed = (
+            evaluation.passed if evaluation else all(r.success for r in execution_vm)
+        )
+
+        return ResultViewModel(
+            score=score,
+            feedback_markdown=feedback_md,
+            execution_results=execution_vm,
+            errors=errors,
+            passed=passed,
+        )
+
+    # =========================================================
+    # MAPPING
+    # =========================================================
+
+    def _map_execution_results(
+        self,
+        results: List[ExecutionResult],
+    ) -> List[ExecutionResultView]:
+
+        return [
+            ExecutionResultView(
+                status=result.status.value,
+                success=result.success,
+                output=result.output,
+                error=result.error,
+                passed_tests=result.passed_tests,
+                total_tests=result.total_tests,
+                execution_time_ms=result.execution_time_ms,
+            )
+            for result in results
+        ]
+
+    def _extract_errors(
+        self,
+        execution_results: List[ExecutionResultView],
+    ) -> List[str]:
+
+        return [r.error for r in execution_results if r.error]
+
+    # =========================================================
+    # MARKDOWN
+    # =========================================================
+
+    def _build_feedback_markdown(
+        self,
+        evaluation: Optional[QuestionEvaluation],
+        execution_results: List[ExecutionResultView],
+        errors: List[str],
+    ) -> str:
+
+        lines: List[str] = []
+
+        # ---------------- EVALUATION ----------------
+        if evaluation:
+
+            lines.append(f"## Score: {evaluation.score:.1f}/100")
+            lines.append("")
+
+            lines.append("### Feedback")
+            lines.append(evaluation.feedback)
+            lines.append("")
+
+            if evaluation.strengths:
+                lines.append("### Strengths")
+                for s in evaluation.strengths:
+                    lines.append(f"- {s}")
+                lines.append("")
+
+            if evaluation.weaknesses:
+                lines.append("### Weaknesses")
+                for w in evaluation.weaknesses:
+                    lines.append(f"- {w}")
+                lines.append("")
+
+        # ---------------- EXECUTION ----------------
+        if execution_results:
+
+            if not evaluation:
+                lines.append("## Execution Summary")
+                lines.append("")
+
+            lines.append("### Execution Results")
+
+            for idx, r in enumerate(execution_results, start=1):
+                icon = "✅" if r.success else "❌"
+                lines.append(f"**Test {idx}: {icon} {r.status}**")
+
+                if r.total_tests > 0:
+                    lines.append(f"- Tests: {r.passed_tests}/{r.total_tests}")
+
+                if r.error:
+                    lines.append(f"- Error: `{r.error}`")
+
+                lines.append("")
+
+        # ---------------- ERRORS ----------------
+        if errors:
+            lines.append("### Errors")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+
+        return "\n".join(lines)
