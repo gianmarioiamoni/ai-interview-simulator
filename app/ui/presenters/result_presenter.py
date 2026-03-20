@@ -12,6 +12,7 @@ from domain.contracts.test_execution_result import TestStatus, TestType
 from domain.contracts.ai_hint import AIHintInput
 
 from services.ai_hint_engine.ai_hint_service import AIHintService
+from services.execution_engine.execution_analyzer import ExecutionAnalyzer
 
 
 # =========================================================
@@ -46,6 +47,9 @@ class ResultViewModel:
 
 class ResultPresenter:
 
+    def __init__(self):
+        self._analyzer = ExecutionAnalyzer()
+
     def present(
         self,
         state: InterviewState,
@@ -79,35 +83,6 @@ class ResultPresenter:
         )
 
     # =========================================================
-    # MAPPING
-    # =========================================================
-
-    def _map_execution_results(
-        self,
-        results: List[ExecutionResult],
-    ) -> List[ExecutionResultView]:
-
-        return [
-            ExecutionResultView(
-                status=result.status.value,
-                success=result.success,
-                output=result.output,
-                error=result.error,
-                passed_tests=result.passed_tests,
-                total_tests=result.total_tests,
-                execution_time_ms=result.execution_time_ms,
-            )
-            for result in results
-        ]
-
-    def _extract_errors(
-        self,
-        execution_results: List[ExecutionResultView],
-    ) -> List[str]:
-
-        return [r.error for r in execution_results if r.error]
-
-    # =========================================================
     # MARKDOWN
     # =========================================================
 
@@ -123,16 +98,23 @@ class ResultPresenter:
 
         lines: List[str] = []
 
-        # 🔥 USER CODE (SOURCE OF TRUTH)
         user_code = state.last_answer.content if state.last_answer else ""
 
         # =========================================================
-        # RUNTIME ERROR
+        # ANALYSIS
         # =========================================================
 
-        if execution and execution.status == ExecutionStatus.RUNTIME_ERROR:
+        analysis = self._analyzer.analyze(execution) if execution else None
 
-            clean_error = self._extract_clean_error(execution.error)
+        # =========================================================
+        # RUNTIME ERROR (GLOBAL OR TEST LEVEL)
+        # =========================================================
+
+        if analysis and (
+            analysis.has_global_runtime_error or analysis.has_test_runtime_errors
+        ):
+
+            clean_error = self._extract_clean_error(analysis.primary_error)
             fast_hint = self._generate_runtime_hint(clean_error)
 
             ai_hint = None
@@ -144,7 +126,7 @@ class ResultPresenter:
                 )
 
             lines.append("## ⚠️ Runtime Error\n")
-            lines.append("Your code failed before running any tests.\n")
+            lines.append("Your code failed during execution.\n")
 
             lines.append("### Error")
             lines.append(f"`{clean_error}`\n")
@@ -160,39 +142,13 @@ class ResultPresenter:
                 lines.append(f"**Suggestion:** {ai_hint.suggestion}")
                 lines.append("")
 
-            return "\n".join(lines)
-
-        # =========================================================
-        # EVALUATION
-        # =========================================================
-
-        if evaluation:
-
-            lines.append(f"## Score: {evaluation.score:.1f}/100\n")
-
-            lines.append("### Feedback")
-            lines.append(evaluation.feedback + "\n")
-
-            if evaluation.strengths:
-                lines.append("### Strengths")
-                for s in evaluation.strengths:
-                    lines.append(f"- {s}")
-                lines.append("")
-
-            if evaluation.weaknesses:
-                lines.append("### Weaknesses")
-                for w in evaluation.weaknesses:
-                    lines.append(f"- {w}")
-                lines.append("")
+            # 👉 NON ritorniamo → vogliamo anche dettagli test sotto
 
         # =========================================================
         # EXECUTION SUMMARY
         # =========================================================
 
         if execution_results:
-
-            if not evaluation:
-                lines.append("## Execution Summary\n")
 
             lines.append("### Execution Results")
 
@@ -209,7 +165,7 @@ class ResultPresenter:
                 lines.append("")
 
         # =========================================================
-        # FAILED TESTS + AI HINT
+        # FAILED TEST DETAILS
         # =========================================================
 
         if execution and execution.test_results:
@@ -252,41 +208,6 @@ class ResultPresenter:
                     lines.append(f"- Actual: `{repr(test.actual)}`")
                     lines.append("")
 
-                # 🤖 AI HINT
-
-                ai_hint = None
-
-                if user_code:
-                    ai_hint = self._generate_ai_hint(
-                        error=None,
-                        user_code=user_code,
-                        failed_tests=[
-                            {
-                                "input": t.args,
-                                "expected": t.expected,
-                                "actual": t.actual,
-                            }
-                            for t in failed_tests[:2]
-                        ],
-                    )
-
-                if ai_hint:
-                    lines.append("### 🤖 AI Hint")
-                    lines.append(f"**Explanation:** {ai_hint.explanation}")
-                    lines.append("")
-                    lines.append(f"**Suggestion:** {ai_hint.suggestion}")
-                    lines.append("")
-
-        # =========================================================
-        # ERRORS
-        # =========================================================
-
-        if errors and not (execution and execution.test_results):
-            lines.append("### Errors")
-            for e in errors:
-                lines.append(f"- {self._extract_clean_error(e)}")
-            lines.append("")
-
         return "\n".join(lines)
 
     # =========================================================
@@ -309,24 +230,35 @@ class ResultPresenter:
         except Exception:
             return None
 
-    def _format_input(self, args, kwargs) -> str:
+    def _map_execution_results(self, results):
+        return [
+            ExecutionResultView(
+                status=r.status.value,
+                success=r.success,
+                output=r.output,
+                error=r.error,
+                passed_tests=r.passed_tests,
+                total_tests=r.total_tests,
+                execution_time_ms=r.execution_time_ms,
+            )
+            for r in results
+        ]
 
+    def _extract_errors(self, execution_results):
+        return [r.error for r in execution_results if r.error]
+
+    def _format_input(self, args, kwargs):
         if args and kwargs:
             return f"args={args}, kwargs={kwargs}"
-
         if args:
             return str(args)
-
         if kwargs:
             return str(kwargs)
-
         return "None"
 
     def _extract_clean_error(self, error: Optional[str]) -> str:
-
         if not error:
             return ""
-
         lines = error.strip().splitlines()
         return lines[-1] if lines else error
 
@@ -335,15 +267,15 @@ class ResultPresenter:
         match = re.search(r"NameError: name '(.+?)' is not defined", error)
         if match:
             missing = match.group(1)
-            return f"'{missing}' is not defined. You may have forgotten to import or define it."
+            return f"'{missing}' is not defined. You may have forgotten to import it."
 
         if "TypeError" in error:
-            return "Check function arguments, types, and return values."
+            return "Check function arguments and types."
 
         if "IndexError" in error:
-            return "You may be accessing an index that does not exist."
+            return "Index out of range."
 
         if "KeyError" in error:
-            return "You are accessing a key that does not exist in a dictionary."
+            return "Missing dictionary key."
 
         return ""
