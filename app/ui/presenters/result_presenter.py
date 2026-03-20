@@ -12,7 +12,7 @@ from domain.contracts.test_execution_result import TestStatus, TestType
 from domain.contracts.ai_hint import AIHintInput
 
 from services.ai_hint_engine.ai_hint_service import AIHintService
-from services.execution_engine.execution_analyzer import ExecutionAnalyzer
+from services.execution_engine.execution_analysis import ExecutionAnalysis
 
 
 # =========================================================
