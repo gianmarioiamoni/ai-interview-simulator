@@ -8,6 +8,9 @@ from domain.contracts.question_result import QuestionResult
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult, ExecutionStatus
 from domain.contracts.test_execution_result import TestStatus, TestType
+from domain.contracts.ai_hint import AIHintInput
+
+from services.ai_hint_engine.ai_hint_service import AIHintService
 
 
 # =========================================================
@@ -39,6 +42,9 @@ class ResultViewModel:
 # =========================================================
 
 class ResultPresenter:
+    def __init__(self) -> None:
+        self._presenter = ResultPresenter()
+        self._ai_hint_service = AIHintService()
 
     def present(self, result: QuestionResult) -> ResultViewModel:
 
