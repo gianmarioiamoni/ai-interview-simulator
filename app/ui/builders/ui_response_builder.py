@@ -119,7 +119,7 @@ class UIResponseBuilder:
         feedback = self._build_feedback(state)
 
         # =========================================================
-        # 🔥 INIT SAFE VARIABLES
+        # INIT SAFE VARIABLES
         # =========================================================
 
         editor_value = ""
@@ -132,12 +132,11 @@ class UIResponseBuilder:
         if state.last_answer and state.last_answer.question_id == question.question_id:
             editor_value = state.last_answer.content
 
-        # default template for coding
         if not editor_value and question.type == QuestionType.CODING:
             editor_value = "# Write your solution here"
 
         # =========================================================
-        # ERROR HINT
+        # ERROR HINT (FAST LOCAL HINT — NOT AI)
         # =========================================================
 
         result = state.get_result_for_question(question.question_id)
@@ -146,7 +145,7 @@ class UIResponseBuilder:
             error_hint = self._build_error_hint(result.execution)
 
         # =========================================================
-        # BUILD DISPLAY
+        # DISPLAY
         # =========================================================
 
         display = self._build_display(state, question, ui_state, error_hint)
@@ -164,7 +163,6 @@ class UIResponseBuilder:
             **display,
             **visibility,
             **editors,
-            # ---------------- EDITOR VALUES
             written_editor_value=(
                 editor_value if question.type == QuestionType.WRITTEN else ""
             ),
@@ -300,7 +298,14 @@ class UIResponseBuilder:
 
     def _build_error_hint(self, execution) -> str:
 
-        if not execution or not execution.test_results:
+        if not execution:
+            return ""
+
+        # PRIORITÀ: runtime error
+        if execution.status.value == "runtime_error":
+            return "⚠️ Your code failed before running tests. Check the error above."
+
+        if not execution.test_results:
             return ""
 
         failed = [
@@ -320,7 +325,7 @@ class UIResponseBuilder:
         t = failed[0]
 
         if t.status == TestStatus.ERROR:
-            return f"⚠️ Runtime error with input {t.args}: {t.error}"
+            return f"⚠️ Runtime error with input {t.args}"
 
         return (
             "⚠️ Failing test:\n"
