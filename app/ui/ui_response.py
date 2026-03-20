@@ -46,6 +46,11 @@ class UIResponse:
     next_label: str = "Next Question"
     show_submit_interactive: bool = False
 
+    # EDITOR VALUES
+    written_editor_value: str = ""
+    coding_editor_value: str = ""
+    database_editor_value: str = ""
+
 
     def to_gradio_outputs(self) -> List[Any]:
         # Build the exact output list expected by bindings
@@ -84,7 +89,13 @@ class UIResponse:
             gr.update(visible=self.show_retry),
             gr.update(visible=self.show_next, value=self.next_label),
             # ---------------- RESET INPUT BOXES + VISIBILITY
-            gr.update(visible=self.written_editor_visible, value=""),
-            gr.update(visible=self.coding_editor_visible, value=""),
-            gr.update(visible=self.database_editor_visible, value=""),
+            gr.update(
+                visible=self.written_editor_visible, 
+                value=self.written_editor_value if self.written_editor_visible else ""),
+            gr.update(
+                visible=self.coding_editor_visible, 
+                value=self.coding_editor_value if self.coding_editor_visible else ""),
+            gr.update(
+                visible=self.database_editor_visible, 
+                value=self.database_editor_value if self.database_editor_visible else ""),
         ]
