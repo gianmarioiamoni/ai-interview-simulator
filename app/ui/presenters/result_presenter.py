@@ -7,12 +7,12 @@ import re
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question_result import QuestionResult
 from domain.contracts.question_evaluation import QuestionEvaluation
-from domain.contracts.execution_result import ExecutionResult, ExecutionStatus
+from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.test_execution_result import TestStatus, TestType
 from domain.contracts.ai_hint import AIHintInput
 
 from services.ai_hint_engine.ai_hint_service import AIHintService
-from services.execution_engine.execution_analysis import ExecutionAnalysis
+from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
 
 
 # =========================================================
