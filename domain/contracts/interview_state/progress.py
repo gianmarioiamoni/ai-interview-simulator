@@ -29,6 +29,3 @@ class InterviewStateProgressMixin:
             del new_map[qid]
             self.results_by_question = new_map
 
-        # remove last answer ONLY if it belongs to this question
-        if self.last_answer and self.last_answer.question_id == qid:
-            self.answers = self.answers[:-1]

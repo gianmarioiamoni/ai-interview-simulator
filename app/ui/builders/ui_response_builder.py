@@ -4,6 +4,7 @@ from typing import TypedDict
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
+from domain.contracts.coding_test_case import TestType, TestStatus
 
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
@@ -50,7 +51,6 @@ class UIResponseBuilder:
     # =========================================================
     # SETUP
     # =========================================================
-
 
     def _build_setup(self, state: InterviewState) -> UIResponse:
 
@@ -115,12 +115,25 @@ class UIResponseBuilder:
 
         counter = self._build_counter(question, attempts)
         feedback = self._build_feedback(state)
-        display = self._build_display(state, question, ui_state)
+        display = self._build_display(state, question, ui_state, error_hint)
 
         visibility = self._build_visibility(question)
         editors = self._build_editor_visibility(question, ui_state)
 
         buttons = self._build_buttons(state, ui_state, can_retry)
+
+        # set previous question answer
+        editor_value = editor_value or ""
+
+        if state.last_answer and state.last_answer.question_id == question.question_id:
+            editor_value = state.last_answer.content
+
+        if not editor_value and question.type == QuestionType.CODING:
+            editor_value = "# Write your solution here"
+        
+        # set error hint
+        result = state.get_result_for_question(question.question_id)
+        error_hint = self._build_error_hint(result.execution if result else None)
 
         return UIResponse(
             state=state,
@@ -131,6 +144,10 @@ class UIResponseBuilder:
             **display,
             **visibility,
             **editors,
+            # ---------------- EDITOR VALUES
+            written_editor_value=editor_value if question.type == QuestionType.WRITTEN else "",
+            coding_editor_value=editor_value if question.type == QuestionType.CODING else "",
+            database_editor_value=editor_value if question.type == QuestionType.DATABASE else "",
         )
 
     # =========================================================
@@ -166,13 +183,27 @@ class UIResponseBuilder:
 
     # ---------------------------------------------------------
 
-    def _build_display(self, state: InterviewState, question: QuestionDTO, ui_state: UIState) -> DisplayFields:
+    def _build_display(
+        self,
+        state: InterviewState,
+        question: QuestionDTO,
+        ui_state: UIState,
+        error_hint: str,
+    ) -> DisplayFields:
         is_feedback = self._is_feedback(ui_state)
+
         last_answer = state.last_answer
         answer_content = last_answer.content if last_answer else ""
+
         text = answer_content if is_feedback else question.text
+
         prefix = "### Your Answer\n\n" if is_feedback else "### Question\n\n"
+
+        if error_hint:
+            prefix += f"```\n{error_hint}\n```\n\n"
+        
         display_text = prefix + text
+
 
         return {
             "written_display": display_text if question.type == QuestionType.WRITTEN else "",
@@ -205,7 +236,6 @@ class UIResponseBuilder:
     def _is_feedback(self, ui_state: UIState) -> bool:
         return ui_state == UIState.FEEDBACK
 
-
     def _build_buttons(
         self,
         state: InterviewState,
@@ -222,3 +252,35 @@ class UIResponseBuilder:
             "show_next": is_feedback,
             "next_label": "Generate Report" if state.is_last_question else "Next Question",
     }
+
+
+    def _build_error_hint(self, execution) -> str:
+        if not execution or not execution.test_results:
+            return ""
+
+        failed = [
+            t for t in execution.test_results
+            if t.type == TestType.VISIBLE and t.status != TestStatus.PASSED
+        ]
+
+        if not failed:
+            failed = [
+                t for t in execution.test_results
+                if t.status != TestStatus.PASSED
+            ]
+
+        if not failed:
+            return ""
+
+        t = failed[0]
+
+        if t.status == TestStatus.ERROR:
+            return f"**⚠️ Runtime error with input {t.args}: {t.error}**"
+
+        
+        return (
+            "⚠️ Failing test:\n"
+            f"Input: {t.args}\n"
+            f"Expected: {repr(t.expected)}\n"
+            f"Actual: {repr(t.actual)}"
+        )
