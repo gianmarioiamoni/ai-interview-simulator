@@ -8,6 +8,7 @@ class UIState(str, Enum):
     SETUP = "setup"
     QUESTION = "question"
     FEEDBACK = "feedback"
+    RETRY = "retry"
     COMPLETION = "completion"
     REPORT = "report"
 
