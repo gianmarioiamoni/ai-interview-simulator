@@ -130,8 +130,13 @@ class UIResponseBuilder:
             editor_value = "# Write your solution here"
         
         # set error hint
+        error_hint = ""
         result = state.get_result_for_question(question.question_id)
-        error_hint = self._build_error_hint(result.execution if result else None)
+        if result and result.execution:
+            error_hint = self._build_error_hint(result.execution)
+
+        # Display
+        display = self._build_display(state, question, ui_state, error_hint)
 
         return UIResponse(
             state=state,
@@ -186,7 +191,7 @@ class UIResponseBuilder:
         state: InterviewState,
         question: QuestionDTO,
         ui_state: UIState,
-        error_hint: str,
+        error_hint: str = "",
     ) -> DisplayFields:
         is_feedback = self._is_feedback(ui_state)
 
