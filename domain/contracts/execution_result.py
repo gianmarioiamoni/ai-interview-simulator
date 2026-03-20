@@ -1,21 +1,5 @@
 # domain/contracts/execution_result.py
 
-# ExecutionResult contract
-#
-# Represents the structured result of a coding or database execution.
-#
-# Requirements
-# The execution result must:
-# - be associated with a question
-# - distinguish execution type (coding / database)
-# - indicate structured status
-# - contain raw output
-# - indicate success/failure
-# - optionally contain error message
-# - support test statistics (for coding engine)
-# - be immutable
-# - not contain logic beyond validation
-
 from enum import Enum
 from typing import Optional
 from typing import List
