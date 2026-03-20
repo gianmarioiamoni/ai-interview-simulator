@@ -12,8 +12,12 @@ from app.ui.presenters.result_presenter import ResultPresenter
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
 from app.ui.state_machine.ui_state_machine import UIStateMachine
-from app.ui.types.ui_fields import DisplayFields, VisibilityFields, EditorVisibilityFields, ButtonState
-
+from app.ui.types.ui_fields import (
+    DisplayFields,
+    VisibilityFields,
+    EditorVisibilityFields,
+    ButtonState,
+)
 
 MAX_ATTEMPTS = 3
 
@@ -58,7 +62,7 @@ class UIResponseBuilder:
             show_submit=False,
             show_retry=False,
             show_next=False,
-    )
+        )
 
     # =========================================================
     # REPORT
@@ -113,30 +117,43 @@ class UIResponseBuilder:
 
         counter = self._build_counter(question, attempts)
         feedback = self._build_feedback(state)
-        display = self._build_display(state, question, ui_state, error_hint)
 
-        visibility = self._build_visibility(question)
-        editors = self._build_editor_visibility(question, ui_state)
+        # =========================================================
+        # 🔥 INIT SAFE VARIABLES
+        # =========================================================
 
-        buttons = self._build_buttons(state, ui_state, can_retry)
-
-        # set previous question answer
-        editor_value = editor_value or ""
-
+        editor_value = ""
         error_hint = ""
+
+        # =========================================================
+        # PREVIOUS ANSWER (RETRY)
+        # =========================================================
 
         if state.last_answer and state.last_answer.question_id == question.question_id:
             editor_value = state.last_answer.content
 
+        # default template for coding
         if not editor_value and question.type == QuestionType.CODING:
             editor_value = "# Write your solution here"
-        
+
+        # =========================================================
+        # ERROR HINT
+        # =========================================================
+
         result = state.get_result_for_question(question.question_id)
+
         if result and result.execution:
             error_hint = self._build_error_hint(result.execution)
 
-        # Display
+        # =========================================================
+        # BUILD DISPLAY
+        # =========================================================
+
         display = self._build_display(state, question, ui_state, error_hint)
+
+        visibility = self._build_visibility(question)
+        editors = self._build_editor_visibility(question, ui_state)
+        buttons = self._build_buttons(state, ui_state, can_retry)
 
         return UIResponse(
             state=state,
@@ -148,9 +165,15 @@ class UIResponseBuilder:
             **visibility,
             **editors,
             # ---------------- EDITOR VALUES
-            written_editor_value=editor_value if question.type == QuestionType.WRITTEN else "",
-            coding_editor_value=editor_value if question.type == QuestionType.CODING else "",
-            database_editor_value=editor_value if question.type == QuestionType.DATABASE else "",
+            written_editor_value=(
+                editor_value if question.type == QuestionType.WRITTEN else ""
+            ),
+            coding_editor_value=(
+                editor_value if question.type == QuestionType.CODING else ""
+            ),
+            database_editor_value=(
+                editor_value if question.type == QuestionType.DATABASE else ""
+            ),
         )
 
     # =========================================================
@@ -193,6 +216,7 @@ class UIResponseBuilder:
         ui_state: UIState,
         error_hint: str = "",
     ) -> DisplayFields:
+
         is_feedback = self._is_feedback(ui_state)
 
         last_answer = state.last_answer
@@ -204,14 +228,19 @@ class UIResponseBuilder:
 
         if error_hint:
             prefix += f"```\n{error_hint}\n```\n\n"
-        
+
         display_text = prefix + text
 
-
         return {
-            "written_display": display_text if question.type == QuestionType.WRITTEN else "",
-            "coding_display": display_text if question.type == QuestionType.CODING else "",
-            "database_display": display_text if question.type == QuestionType.DATABASE else "",
+            "written_display": (
+                display_text if question.type == QuestionType.WRITTEN else ""
+            ),
+            "coding_display": (
+                display_text if question.type == QuestionType.CODING else ""
+            ),
+            "database_display": (
+                display_text if question.type == QuestionType.DATABASE else ""
+            ),
         }
 
     # ---------------------------------------------------------
@@ -226,18 +255,27 @@ class UIResponseBuilder:
 
     # ---------------------------------------------------------
 
-    def _build_editor_visibility(self, question: QuestionDTO, ui_state: UIState) -> EditorVisibilityFields:
+    def _build_editor_visibility(
+        self,
+        question: QuestionDTO,
+        ui_state: UIState,
+    ) -> EditorVisibilityFields:
 
         show_editor = not self._is_feedback(ui_state)
 
         return {
-            "written_editor_visible": question.type == QuestionType.WRITTEN and show_editor,
-            "coding_editor_visible": question.type == QuestionType.CODING and show_editor,
-            "database_editor_visible": question.type == QuestionType.DATABASE and show_editor,
+            "written_editor_visible": question.type == QuestionType.WRITTEN
+            and show_editor,
+            "coding_editor_visible": question.type == QuestionType.CODING
+            and show_editor,
+            "database_editor_visible": question.type == QuestionType.DATABASE
+            and show_editor,
         }
 
     def _is_feedback(self, ui_state: UIState) -> bool:
         return ui_state == UIState.FEEDBACK
+
+    # ---------------------------------------------------------
 
     def _build_buttons(
         self,
@@ -253,23 +291,27 @@ class UIResponseBuilder:
             "show_submit_interactive": not is_feedback,
             "show_retry": is_feedback and can_retry,
             "show_next": is_feedback,
-            "next_label": "Generate Report" if state.is_last_question else "Next Question",
-    }
+            "next_label": (
+                "Generate Report" if state.is_last_question else "Next Question"
+            ),
+        }
 
+    # ---------------------------------------------------------
 
     def _build_error_hint(self, execution) -> str:
+
         if not execution or not execution.test_results:
             return ""
 
         failed = [
-            t for t in execution.test_results
+            t
+            for t in execution.test_results
             if t.type == TestType.VISIBLE and t.status != TestStatus.PASSED
         ]
 
         if not failed:
             failed = [
-                t for t in execution.test_results
-                if t.status != TestStatus.PASSED
+                t for t in execution.test_results if t.status != TestStatus.PASSED
             ]
 
         if not failed:
@@ -278,9 +320,8 @@ class UIResponseBuilder:
         t = failed[0]
 
         if t.status == TestStatus.ERROR:
-            return f"**⚠️ Runtime error with input {t.args}: {t.error}**"
+            return f"⚠️ Runtime error with input {t.args}: {t.error}"
 
-        
         return (
             "⚠️ Failing test:\n"
             f"Input: {t.args}\n"
