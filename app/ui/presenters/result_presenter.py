@@ -99,15 +99,12 @@ class ResultPresenter:
         lines: List[str] = []
 
         user_code = state.last_answer.content if state.last_answer else ""
-
-        # =========================================================
-        # ANALYSIS
-        # =========================================================
+        question_text = state.current_question.text if state.current_question else ""
 
         analysis = self._analyzer.analyze(execution) if execution else None
 
         # =========================================================
-        # RUNTIME ERROR (GLOBAL OR TEST LEVEL)
+        # 🔥 RUNTIME ERROR (GLOBAL OR TEST LEVEL)
         # =========================================================
 
         if analysis and (
@@ -115,14 +112,18 @@ class ResultPresenter:
         ):
 
             clean_error = self._extract_clean_error(analysis.primary_error)
+
+            # ---------------- QUICK HINT
             fast_hint = self._generate_runtime_hint(clean_error)
 
+            # ---------------- AI HINT
             ai_hint = None
             if user_code:
                 ai_hint = self._generate_ai_hint(
                     error=clean_error,
                     user_code=user_code,
                     failed_tests=[],
+                    question=question_text,
                 )
 
             lines.append("## ⚠️ Runtime Error\n")
@@ -132,7 +133,7 @@ class ResultPresenter:
             lines.append(f"`{clean_error}`\n")
 
             if fast_hint:
-                lines.append("### 💡 Hint")
+                lines.append("### 💡 Quick Hint")
                 lines.append(fast_hint + "\n")
 
             if ai_hint:
@@ -142,13 +143,14 @@ class ResultPresenter:
                 lines.append(f"**Suggestion:** {ai_hint.suggestion}")
                 lines.append("")
 
-            # 👉 NON ritorniamo → vogliamo anche dettagli test sotto
-
         # =========================================================
-        # EXECUTION SUMMARY
+        # EXECUTION SUMMARY (solo se NON runtime puro)
         # =========================================================
 
-        if execution_results:
+        if execution_results and not (
+            analysis
+            and (analysis.has_global_runtime_error or analysis.has_test_runtime_errors)
+        ):
 
             lines.append("### Execution Results")
 
@@ -208,13 +210,39 @@ class ResultPresenter:
                     lines.append(f"- Actual: `{repr(test.actual)}`")
                     lines.append("")
 
+                # =========================================================
+                # 🤖 AI HINT (LOGIC FAILURES)
+                # =========================================================
+
+                if user_code:
+                    ai_hint = self._generate_ai_hint(
+                        error=None,
+                        user_code=user_code,
+                        failed_tests=[
+                            {
+                                "input": t.args,
+                                "expected": t.expected,
+                                "actual": t.actual,
+                            }
+                            for t in failed_tests[:2]
+                        ],
+                        question=question_text,
+                    )
+
+                    if ai_hint:
+                        lines.append("### 🤖 AI Hint")
+                        lines.append(f"**Explanation:** {ai_hint.explanation}")
+                        lines.append("")
+                        lines.append(f"**Suggestion:** {ai_hint.suggestion}")
+                        lines.append("")
+
         return "\n".join(lines)
 
     # =========================================================
     # HELPERS
     # =========================================================
 
-    def _generate_ai_hint(self, error, user_code, failed_tests):
+    def _generate_ai_hint(self, error, user_code, failed_tests, question):
 
         try:
             service = AIHintService()
@@ -223,6 +251,7 @@ class ResultPresenter:
                 error=error,
                 user_code=user_code[:1000],
                 failed_tests=failed_tests[:2],
+                question=question,
             )
 
             return service.generate_hint(input_data)

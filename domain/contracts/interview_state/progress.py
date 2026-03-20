@@ -21,11 +21,4 @@ class InterviewStateProgressMixin:
         if q is None:
             return
 
-        qid = q.id
-
-        # remove result
-        if qid in self.results_by_question:
-            new_map = dict(self.results_by_question)
-            del new_map[qid]
-            self.results_by_question = new_map
 
