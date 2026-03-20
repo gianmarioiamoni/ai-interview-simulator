@@ -2,17 +2,17 @@
 
 from dataclasses import dataclass
 from typing import List, Optional
+import re
 
 from domain.contracts.question_result import QuestionResult
 from domain.contracts.question_evaluation import QuestionEvaluation
-from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.execution_result import ExecutionResult, ExecutionStatus
 from domain.contracts.test_execution_result import TestStatus, TestType
 
 
 # =========================================================
 # VIEW MODELS
 # =========================================================
-
 
 @dataclass
 class ExecutionResultView:
@@ -37,7 +37,6 @@ class ResultViewModel:
 # =========================================================
 # PRESENTER
 # =========================================================
-
 
 class ResultPresenter:
 
@@ -68,6 +67,7 @@ class ResultPresenter:
             passed=passed,
         )
 
+
     # =========================================================
     # MAPPING
     # =========================================================
@@ -97,6 +97,7 @@ class ResultPresenter:
 
         return [r.error for r in execution_results if r.error]
 
+
     # =========================================================
     # MARKDOWN
     # =========================================================
@@ -110,6 +111,27 @@ class ResultPresenter:
     ) -> str:
 
         lines: List[str] = []
+
+        # =========================================================
+        # 🔥 RUNTIME ERROR (BLOCKING)
+        # =========================================================
+
+        if execution and execution.status == ExecutionStatus.RUNTIME_ERROR:
+
+            clean_error = self._extract_clean_error(execution.error)
+            hint = self._generate_runtime_hint(clean_error)
+
+            lines.append("## ⚠️ Runtime Error\n")
+            lines.append("Your code failed before running any tests.\n")
+
+            lines.append("### Error")
+            lines.append(f"`{clean_error}`\n")
+
+            if hint:
+                lines.append("### 💡 Hint")
+                lines.append(hint + "\n")
+
+            return "\n".join(lines)
 
         # ---------------- EVALUATION ----------------
         if evaluation:
@@ -147,12 +169,12 @@ class ResultPresenter:
                     lines.append(f"- Tests: {r.passed_tests}/{r.total_tests}")
 
                 if r.error:
-                    lines.append(f"- Error: `{r.error}`")
+                    lines.append(f"- Error: `{self._extract_clean_error(r.error)}`")
 
                 lines.append("")
 
         # =========================================================
-        # 🔥 DETAILED TEST FEEDBACK
+        # DETAILED TEST FEEDBACK
         # =========================================================
 
         if execution and execution.test_results:
@@ -163,7 +185,6 @@ class ResultPresenter:
                 if t.type == TestType.VISIBLE and t.status != TestStatus.PASSED
             ]
 
-            # fallback → usa hidden se non ci sono visible
             if not failed_tests:
                 failed_tests = [
                     t for t in execution.test_results if t.status != TestStatus.PASSED
@@ -175,10 +196,8 @@ class ResultPresenter:
 
                 for test in failed_tests:
 
-                    # 🔥 LABEL
                     label = "Hidden Test" if test.type == TestType.HIDDEN else "Test"
 
-                    # HEADER
                     if test.status == TestStatus.ERROR:
                         lines.append(f"**⚠️ {label} {test.id} — RUNTIME ERROR**")
                     elif test.status == TestStatus.FAILED:
@@ -186,26 +205,23 @@ class ResultPresenter:
                     else:
                         lines.append(f"**❌ {label} {test.id} — TEST FAILED**")
 
-                    # INPUT
                     input_str = self._format_input(test.args, test.kwargs)
                     lines.append(f"- Input: `{input_str}`")
 
-                    # ERROR
                     if test.status == TestStatus.ERROR:
                         lines.append(f"- Error: `{test.error}`")
                         lines.append("")
                         continue
 
-                    # EXPECTED / ACTUAL
                     lines.append(f"- Expected: `{repr(test.expected)}`")
                     lines.append(f"- Actual: `{repr(test.actual)}`")
                     lines.append("")
 
-        # ---------------- ERRORS ----------------
+        # ---------------- ERRORS (fallback) ----------------
         if errors and not (execution and execution.test_results):
             lines.append("### Errors")
             for e in errors:
-                lines.append(f"- {e}")
+                lines.append(f"- {self._extract_clean_error(e)}")
             lines.append("")
 
         return "\n".join(lines)
@@ -226,3 +242,56 @@ class ResultPresenter:
             return str(kwargs)
 
         return "None"
+
+    # ---------------------------------------------------------
+
+    def _extract_clean_error(self, error: Optional[str]) -> str:
+
+        if not error:
+            return ""
+
+        lines = error.strip().splitlines()
+
+        if not lines:
+            return error
+
+        return lines[-1]
+
+    # ---------------------------------------------------------
+
+    def _generate_runtime_hint(self, error: str) -> str:
+
+        # =========================================================
+        # NAME ERROR (dynamic)
+        # =========================================================
+
+        match = re.search(r"NameError: name '(.+?)' is not defined", error)
+        if match:
+            missing = match.group(1)
+            return (
+                f"'{missing}' is not defined. "
+                f"You may have forgotten to import it or define it."
+            )
+
+        # =========================================================
+        # TYPE ERROR
+        # =========================================================
+
+        if "TypeError" in error:
+            return "Check function arguments, types, and return values."
+
+        # =========================================================
+        # INDEX ERROR
+        # =========================================================
+
+        if "IndexError" in error:
+            return "You may be accessing an index that does not exist."
+
+        # =========================================================
+        # KEY ERROR
+        # =========================================================
+
+        if "KeyError" in error:
+            return "You are accessing a key that does not exist in a dictionary."
+
+        return ""
