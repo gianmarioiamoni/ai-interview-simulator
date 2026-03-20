@@ -123,14 +123,14 @@ class UIResponseBuilder:
         # set previous question answer
         editor_value = editor_value or ""
 
+        error_hint = ""
+
         if state.last_answer and state.last_answer.question_id == question.question_id:
             editor_value = state.last_answer.content
 
         if not editor_value and question.type == QuestionType.CODING:
             editor_value = "# Write your solution here"
         
-        # set error hint
-        error_hint = ""
         result = state.get_result_for_question(question.question_id)
         if result and result.execution:
             error_hint = self._build_error_hint(result.execution)
