@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 import re
 
+from domain.contracts.interview_state import InterviewState
 from domain.contracts.question_result import QuestionResult
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult, ExecutionStatus
@@ -45,7 +46,11 @@ class ResultViewModel:
 
 class ResultPresenter:
 
-    def present(self, result: QuestionResult) -> ResultViewModel:
+    def present(
+        self,
+        state: InterviewState,
+        result: QuestionResult,
+    ) -> ResultViewModel:
 
         evaluation = result.evaluation
         execution = result.execution
@@ -54,6 +59,7 @@ class ResultPresenter:
         errors = self._extract_errors(execution_vm)
 
         feedback_md = self._build_feedback_markdown(
+            state,
             result,
             evaluation,
             execution,
@@ -107,6 +113,7 @@ class ResultPresenter:
 
     def _build_feedback_markdown(
         self,
+        state: InterviewState,
         result: QuestionResult,
         evaluation: Optional[QuestionEvaluation],
         execution: Optional[ExecutionResult],
@@ -116,8 +123,11 @@ class ResultPresenter:
 
         lines: List[str] = []
 
+        # 🔥 USER CODE (SOURCE OF TRUTH)
+        user_code = state.last_answer.content if state.last_answer else ""
+
         # =========================================================
-        # 🔥 RUNTIME ERROR
+        # RUNTIME ERROR
         # =========================================================
 
         if execution and execution.status == ExecutionStatus.RUNTIME_ERROR:
@@ -126,10 +136,10 @@ class ResultPresenter:
             fast_hint = self._generate_runtime_hint(clean_error)
 
             ai_hint = None
-            if result.answer:
+            if user_code:
                 ai_hint = self._generate_ai_hint(
                     error=clean_error,
-                    user_code=result.answer.content,
+                    user_code=user_code,
                     failed_tests=[],
                 )
 
@@ -152,7 +162,9 @@ class ResultPresenter:
 
             return "\n".join(lines)
 
-        # ---------------- EVALUATION ----------------
+        # =========================================================
+        # EVALUATION
+        # =========================================================
 
         if evaluation:
 
@@ -173,7 +185,9 @@ class ResultPresenter:
                     lines.append(f"- {w}")
                 lines.append("")
 
-        # ---------------- EXECUTION SUMMARY ----------------
+        # =========================================================
+        # EXECUTION SUMMARY
+        # =========================================================
 
         if execution_results:
 
@@ -195,7 +209,7 @@ class ResultPresenter:
                 lines.append("")
 
         # =========================================================
-        # 🔥 FAILED TESTS + AI HINT
+        # FAILED TESTS + AI HINT
         # =========================================================
 
         if execution and execution.test_results:
@@ -238,14 +252,14 @@ class ResultPresenter:
                     lines.append(f"- Actual: `{repr(test.actual)}`")
                     lines.append("")
 
-                # 🔥 AI HINT
+                # 🤖 AI HINT
 
                 ai_hint = None
 
-                if result.answer:
+                if user_code:
                     ai_hint = self._generate_ai_hint(
                         error=None,
-                        user_code=result.answer.content,
+                        user_code=user_code,
                         failed_tests=[
                             {
                                 "input": t.args,
@@ -263,7 +277,9 @@ class ResultPresenter:
                     lines.append(f"**Suggestion:** {ai_hint.suggestion}")
                     lines.append("")
 
-        # ---------------- ERRORS ----------------
+        # =========================================================
+        # ERRORS
+        # =========================================================
 
         if errors and not (execution and execution.test_results):
             lines.append("### Errors")
@@ -293,8 +309,6 @@ class ResultPresenter:
         except Exception:
             return None
 
-    # ---------------------------------------------------------
-
     def _format_input(self, args, kwargs) -> str:
 
         if args and kwargs:
@@ -308,31 +322,20 @@ class ResultPresenter:
 
         return "None"
 
-    # ---------------------------------------------------------
-
     def _extract_clean_error(self, error: Optional[str]) -> str:
 
         if not error:
             return ""
 
         lines = error.strip().splitlines()
-
-        if not lines:
-            return error
-
-        return lines[-1]
-
-    # ---------------------------------------------------------
+        return lines[-1] if lines else error
 
     def _generate_runtime_hint(self, error: str) -> str:
 
         match = re.search(r"NameError: name '(.+?)' is not defined", error)
         if match:
             missing = match.group(1)
-            return (
-                f"'{missing}' is not defined. "
-                f"You may have forgotten to import it or define it."
-            )
+            return f"'{missing}' is not defined. You may have forgotten to import or define it."
 
         if "TypeError" in error:
             return "Check function arguments, types, and return values."

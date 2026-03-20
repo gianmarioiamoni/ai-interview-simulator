@@ -1,8 +1,9 @@
-# ui/builders/ui_response_builder.py
+# app/ui/builders/ui_response_builder.py
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
 from domain.contracts.test_execution_result import TestStatus, TestType
+from domain.contracts.execution_result import ExecutionStatus
 
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
@@ -132,11 +133,12 @@ class UIResponseBuilder:
         if state.last_answer and state.last_answer.question_id == question.question_id:
             editor_value = state.last_answer.content
 
+        # default template (coding only)
         if not editor_value and question.type == QuestionType.CODING:
             editor_value = "# Write your solution here"
 
         # =========================================================
-        # ERROR HINT (FAST LOCAL HINT — NOT AI)
+        # ERROR HINT (FAST LOCAL)
         # =========================================================
 
         result = state.get_result_for_question(question.question_id)
@@ -145,11 +147,10 @@ class UIResponseBuilder:
             error_hint = self._build_error_hint(result.execution)
 
         # =========================================================
-        # DISPLAY
+        # BUILD UI
         # =========================================================
 
         display = self._build_display(state, question, ui_state, error_hint)
-
         visibility = self._build_visibility(question)
         editors = self._build_editor_visibility(question, ui_state)
         buttons = self._build_buttons(state, ui_state, can_retry)
@@ -201,7 +202,7 @@ class UIResponseBuilder:
         if not result:
             return ""
 
-        vm = self._presenter.present(result)
+        vm = self._presenter.present(state, result)
 
         return vm.feedback_markdown
 
@@ -218,7 +219,11 @@ class UIResponseBuilder:
         is_feedback = self._is_feedback(ui_state)
 
         last_answer = state.last_answer
-        answer_content = last_answer.content if last_answer else ""
+        answer_content = (
+            last_answer.content
+            if last_answer and last_answer.question_id == question.question_id
+            else ""
+        )
 
         text = answer_content if is_feedback else question.text
 
@@ -301,8 +306,8 @@ class UIResponseBuilder:
         if not execution:
             return ""
 
-        # PRIORITÀ: runtime error
-        if execution.status.value == "runtime_error":
+        # 🔥 runtime error (robusto)
+        if execution.status == ExecutionStatus.RUNTIME_ERROR:
             return "⚠️ Your code failed before running tests. Check the error above."
 
         if not execution.test_results:
