@@ -1,10 +1,8 @@
 # ui/builders/ui_response_builder.py
 
-from typing import TypedDict
-
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
-from domain.contracts.coding_test_case import TestType, TestStatus
+from domain.contracts.test_execution_result import TestStatus, TestType
 
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
