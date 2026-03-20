@@ -17,6 +17,7 @@ from services.ai_hint_engine.ai_hint_service import AIHintService
 # VIEW MODELS
 # =========================================================
 
+
 @dataclass
 class ExecutionResultView:
     status: str
@@ -41,10 +42,8 @@ class ResultViewModel:
 # PRESENTER
 # =========================================================
 
+
 class ResultPresenter:
-    def __init__(self) -> None:
-        self._presenter = ResultPresenter()
-        self._ai_hint_service = AIHintService()
 
     def present(self, result: QuestionResult) -> ResultViewModel:
 
@@ -52,10 +51,10 @@ class ResultPresenter:
         execution = result.execution
 
         execution_vm = self._map_execution_results([execution] if execution else [])
-
         errors = self._extract_errors(execution_vm)
 
         feedback_md = self._build_feedback_markdown(
+            result,
             evaluation,
             execution,
             execution_vm,
@@ -72,7 +71,6 @@ class ResultPresenter:
             errors=errors,
             passed=passed,
         )
-
 
     # =========================================================
     # MAPPING
@@ -103,13 +101,13 @@ class ResultPresenter:
 
         return [r.error for r in execution_results if r.error]
 
-
     # =========================================================
     # MARKDOWN
     # =========================================================
 
     def _build_feedback_markdown(
         self,
+        result: QuestionResult,
         evaluation: Optional[QuestionEvaluation],
         execution: Optional[ExecutionResult],
         execution_results: List[ExecutionResultView],
@@ -119,13 +117,21 @@ class ResultPresenter:
         lines: List[str] = []
 
         # =========================================================
-        # 🔥 RUNTIME ERROR (BLOCKING)
+        # 🔥 RUNTIME ERROR
         # =========================================================
 
         if execution and execution.status == ExecutionStatus.RUNTIME_ERROR:
 
             clean_error = self._extract_clean_error(execution.error)
-            hint = self._generate_runtime_hint(clean_error)
+            fast_hint = self._generate_runtime_hint(clean_error)
+
+            ai_hint = None
+            if result.answer:
+                ai_hint = self._generate_ai_hint(
+                    error=clean_error,
+                    user_code=result.answer.content,
+                    failed_tests=[],
+                )
 
             lines.append("## ⚠️ Runtime Error\n")
             lines.append("Your code failed before running any tests.\n")
@@ -133,13 +139,21 @@ class ResultPresenter:
             lines.append("### Error")
             lines.append(f"`{clean_error}`\n")
 
-            if hint:
+            if fast_hint:
                 lines.append("### 💡 Hint")
-                lines.append(hint + "\n")
+                lines.append(fast_hint + "\n")
+
+            if ai_hint:
+                lines.append("### 🤖 AI Hint")
+                lines.append(f"**Explanation:** {ai_hint.explanation}")
+                lines.append("")
+                lines.append(f"**Suggestion:** {ai_hint.suggestion}")
+                lines.append("")
 
             return "\n".join(lines)
 
         # ---------------- EVALUATION ----------------
+
         if evaluation:
 
             lines.append(f"## Score: {evaluation.score:.1f}/100\n")
@@ -160,6 +174,7 @@ class ResultPresenter:
                 lines.append("")
 
         # ---------------- EXECUTION SUMMARY ----------------
+
         if execution_results:
 
             if not evaluation:
@@ -180,7 +195,7 @@ class ResultPresenter:
                 lines.append("")
 
         # =========================================================
-        # DETAILED TEST FEEDBACK
+        # 🔥 FAILED TESTS + AI HINT
         # =========================================================
 
         if execution and execution.test_results:
@@ -223,7 +238,33 @@ class ResultPresenter:
                     lines.append(f"- Actual: `{repr(test.actual)}`")
                     lines.append("")
 
-        # ---------------- ERRORS (fallback) ----------------
+                # 🔥 AI HINT
+
+                ai_hint = None
+
+                if result.answer:
+                    ai_hint = self._generate_ai_hint(
+                        error=None,
+                        user_code=result.answer.content,
+                        failed_tests=[
+                            {
+                                "input": t.args,
+                                "expected": t.expected,
+                                "actual": t.actual,
+                            }
+                            for t in failed_tests[:2]
+                        ],
+                    )
+
+                if ai_hint:
+                    lines.append("### 🤖 AI Hint")
+                    lines.append(f"**Explanation:** {ai_hint.explanation}")
+                    lines.append("")
+                    lines.append(f"**Suggestion:** {ai_hint.suggestion}")
+                    lines.append("")
+
+        # ---------------- ERRORS ----------------
+
         if errors and not (execution and execution.test_results):
             lines.append("### Errors")
             for e in errors:
@@ -235,6 +276,24 @@ class ResultPresenter:
     # =========================================================
     # HELPERS
     # =========================================================
+
+    def _generate_ai_hint(self, error, user_code, failed_tests):
+
+        try:
+            service = AIHintService()
+
+            input_data = AIHintInput(
+                error=error,
+                user_code=user_code[:1000],
+                failed_tests=failed_tests[:2],
+            )
+
+            return service.generate_hint(input_data)
+
+        except Exception:
+            return None
+
+    # ---------------------------------------------------------
 
     def _format_input(self, args, kwargs) -> str:
 
@@ -267,10 +326,6 @@ class ResultPresenter:
 
     def _generate_runtime_hint(self, error: str) -> str:
 
-        # =========================================================
-        # NAME ERROR (dynamic)
-        # =========================================================
-
         match = re.search(r"NameError: name '(.+?)' is not defined", error)
         if match:
             missing = match.group(1)
@@ -279,23 +334,11 @@ class ResultPresenter:
                 f"You may have forgotten to import it or define it."
             )
 
-        # =========================================================
-        # TYPE ERROR
-        # =========================================================
-
         if "TypeError" in error:
             return "Check function arguments, types, and return values."
 
-        # =========================================================
-        # INDEX ERROR
-        # =========================================================
-
         if "IndexError" in error:
             return "You may be accessing an index that does not exist."
-
-        # =========================================================
-        # KEY ERROR
-        # =========================================================
 
         if "KeyError" in error:
             return "You are accessing a key that does not exist in a dictionary."
