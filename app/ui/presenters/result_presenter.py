@@ -54,6 +54,7 @@ class ResultPresenter:
         self,
         state: InterviewState,
         result: QuestionResult,
+        question_text: str
     ) -> ResultViewModel:
 
         evaluation = result.evaluation
@@ -69,6 +70,7 @@ class ResultPresenter:
             execution,
             execution_vm,
             errors,
+            question_text,
         )
 
         score = evaluation.score if evaluation else 0
@@ -94,12 +96,12 @@ class ResultPresenter:
         execution: Optional[ExecutionResult],
         execution_results: List[ExecutionResultView],
         errors: List[str],
+        question_text: str,
     ) -> str:
 
         lines: List[str] = []
 
         user_code = state.last_answer.content if state.last_answer else ""
-        question_text = state.current_question.text if state.current_question else ""
 
         analysis = self._analyzer.analyze(execution) if execution else None
 
