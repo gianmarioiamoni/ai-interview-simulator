@@ -4,7 +4,8 @@ import gradio as gr
 
 from app.ui.handlers.start_handler import start_handler
 from app.ui.handlers.report_handler import view_report_handler
-
+from app.ui.ui_response import UIResponse
+from app.ui.ui_state import UIState
 from app.ui.state_handlers import (
     export_pdf,
     export_json,
@@ -165,7 +166,10 @@ def bind_events(components):
     # =========================================================
 
     c.retry_button.click(
-        lambda s: retry_answer(s).to_gradio_outputs(),
+        lambda s: 
+            retry_answer(s).to_gradio_outputs() 
+            if s 
+            else UIResponse(state=None, ui_state=UIState.SETUP).to_gradio_outputs(),
         inputs=[state],
         outputs=outputs,
     )

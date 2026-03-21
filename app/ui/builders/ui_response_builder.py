@@ -280,14 +280,20 @@ class UIResponseBuilder:
 
         is_feedback = ui_state == UIState.FEEDBACK
 
+        has_valid_state = (
+            state is not None
+            and state.current_question is not None
+        )
+
         return {
             "show_submit": not is_feedback,
             "show_submit_interactive": not is_feedback,
-            "show_retry": is_feedback and can_retry,
+            "show_retry": is_feedback and can_retry and has_valid_state,
             "show_next": is_feedback,
             "next_label": (
                 "Generate Report" if state.is_last_question else "Next Question"
             ),
+            "retry_interactive": is_feedback and can_retry and has_valid_state,
         }
 
     def _build_error_hint(self, execution) -> str:
