@@ -19,7 +19,6 @@ from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
 # VIEW MODELS
 # =========================================================
 
-
 @dataclass
 class ExecutionResultView:
     status: str
@@ -44,7 +43,6 @@ class ResultViewModel:
 # PRESENTER
 # =========================================================
 
-
 class ResultPresenter:
 
     def __init__(self):
@@ -54,7 +52,7 @@ class ResultPresenter:
         self,
         state: InterviewState,
         result: QuestionResult,
-        question_text: str
+        question_text: str,
     ) -> ResultViewModel:
 
         evaluation = result.evaluation
@@ -106,19 +104,42 @@ class ResultPresenter:
         analysis = self._analyzer.analyze(execution) if execution else None
 
         # =========================================================
-        # 🔥 RUNTIME ERROR (GLOBAL OR TEST LEVEL)
+        # WRITTEN EVALUATION 
         # =========================================================
 
-        if analysis and (
-            analysis.has_global_runtime_error or analysis.has_test_runtime_errors
-        ):
+        if evaluation and not execution:
+
+            lines.append(f"## Score: {evaluation.score:.1f}/100\n")
+
+            lines.append("### Feedback")
+            lines.append(evaluation.feedback + "\n")
+
+            if evaluation.strengths:
+                lines.append("### Strengths")
+                for s in evaluation.strengths:
+                    lines.append(f"- {s}")
+                lines.append("")
+
+            if evaluation.weaknesses:
+                lines.append("### Weaknesses")
+                for w in evaluation.weaknesses:
+                    lines.append(f"- {w}")
+                lines.append("")
+
+            return "\n".join(lines)
+
+        # =========================================================
+        # RUNTIME ERROR
+        # =========================================================
+
+        if analysis and analysis.has_runtime_error:
 
             clean_error = self._extract_clean_error(analysis.primary_error)
 
-            # ---------------- QUICK HINT
+            # quick hint
             fast_hint = self._generate_runtime_hint(clean_error)
 
-            # ---------------- AI HINT
+            # ai hint
             ai_hint = None
             if user_code:
                 ai_hint = self._generate_ai_hint(
@@ -145,14 +166,13 @@ class ResultPresenter:
                 lines.append(f"**Suggestion:** {ai_hint.suggestion}")
                 lines.append("")
 
+            return "\n".join(lines)
+
         # =========================================================
-        # EXECUTION SUMMARY (solo se NON runtime puro)
+        # EXECUTION SUMMARY
         # =========================================================
 
-        if execution_results and not (
-            analysis
-            and (analysis.has_global_runtime_error or analysis.has_test_runtime_errors)
-        ):
+        if execution_results:
 
             lines.append("### Execution Results")
 
@@ -185,6 +205,9 @@ class ResultPresenter:
                     t for t in execution.test_results if t.status != TestStatus.PASSED
                 ]
 
+            # FILTER runtime errors (already handled above)
+            failed_tests = [t for t in failed_tests if t.status != TestStatus.ERROR]
+
             if failed_tests:
 
                 lines.append("### Failed Tests Details")
@@ -193,29 +216,16 @@ class ResultPresenter:
 
                     label = "Hidden Test" if test.type == TestType.HIDDEN else "Test"
 
-                    if test.status == TestStatus.ERROR:
-                        lines.append(f"**⚠️ {label} {test.id} — RUNTIME ERROR**")
-                    elif test.status == TestStatus.FAILED:
-                        lines.append(f"**❌ {label} {test.id} — LOGIC ERROR**")
-                    else:
-                        lines.append(f"**❌ {label} {test.id} — TEST FAILED**")
+                    lines.append(f"**❌ {label} {test.id} — LOGIC ERROR**")
 
                     input_str = self._format_input(test.args, test.kwargs)
                     lines.append(f"- Input: `{input_str}`")
-
-                    if test.status == TestStatus.ERROR:
-                        lines.append(f"- Error: `{test.error}`")
-                        lines.append("")
-                        continue
 
                     lines.append(f"- Expected: `{repr(test.expected)}`")
                     lines.append(f"- Actual: `{repr(test.actual)}`")
                     lines.append("")
 
-                # =========================================================
-                # 🤖 AI HINT (LOGIC FAILURES)
-                # =========================================================
-
+                # AI hint (only logic)
                 if user_code:
                     ai_hint = self._generate_ai_hint(
                         error=None,
@@ -239,6 +249,7 @@ class ResultPresenter:
                         lines.append("")
 
         return "\n".join(lines)
+
 
     # =========================================================
     # HELPERS
