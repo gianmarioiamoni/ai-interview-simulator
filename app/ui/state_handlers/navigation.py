@@ -14,6 +14,15 @@ MAX_ATTEMPTS = 3
 
 def retry_answer(state: InterviewState):
 
+    if state is None or state.current_question is None:
+        return UIResponse(
+            state=None,
+            ui_state=UIState.SETUP,
+            show_submit=False,
+            show_retry=False,
+            show_next=False,
+        )
+
     new_state = state.model_copy(deep=True)
 
     q = new_state.current_question

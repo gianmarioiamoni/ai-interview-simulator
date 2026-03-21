@@ -32,6 +32,8 @@ class UIResponse:
     coding_editor_visible: bool = False
     database_editor_visible: bool = False
 
+    # RETRY
+    retry_interactive: bool = True
     # STATE
     ui_state: Optional[UIState] = None
 
@@ -50,7 +52,6 @@ class UIResponse:
     written_editor_value: str = ""
     coding_editor_value: str = ""
     database_editor_value: str = ""
-
 
     def to_gradio_outputs(self) -> List[Any]:
         # Build the exact output list expected by bindings
@@ -86,7 +87,7 @@ class UIResponse:
                 visible=self.show_submit,
                 interactive=self.show_submit_interactive,
             ),
-            gr.update(visible=self.show_retry),
+            gr.update(visible=self.show_retry, interactive=self.retry_interactive),
             gr.update(visible=self.show_next, value=self.next_label),
             # ---------------- RESET INPUT BOXES + VISIBILITY
             gr.update(
