@@ -22,3 +22,9 @@ class InterviewStateProgressMixin:
             return
 
 
+    def clear_result_for_question(self, qid: str):
+
+        if qid in self.results_by_question:
+            new_map = dict(self.results_by_question)
+            del new_map[qid]
+            self.results_by_question = new_map

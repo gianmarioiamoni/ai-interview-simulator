@@ -98,12 +98,18 @@ class HarnessOutputParser:
         # =========================================================
         # STATUS DETERMINATION
         # =========================================================
+        has_runtime_errors = any(t.status == TestStatus.ERROR for t in test_results)
 
         if total_tests == 0:
 
             status = ExecutionStatus.INTERNAL_ERROR
             success = False
             error = "No tests detected in harness output"
+        
+        elif has_runtime_errors:
+            status = ExecutionStatus.RUNTIME_ERROR
+            success = False
+            error = next((t.error for t in test_results if t.error), "Runtime error")
 
         elif total_passed == total_tests:
 

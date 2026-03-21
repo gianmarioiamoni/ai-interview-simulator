@@ -31,7 +31,9 @@ def retry_answer(state: InterviewState):
         new_state.attempts_by_question[q.id] = (
             new_state.attempts_by_question.get(q.id, 0) + 1
         )
-        new_state.reset_current_question()
+        
+        new_state.clear_result_for_question(q.id)
+        new_state.last_answer = None
 
     response = build_ui_response_from_state(new_state)
     response.ui_state = UIState.QUESTION
