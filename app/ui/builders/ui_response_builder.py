@@ -243,7 +243,10 @@ class UIResponseBuilder:
         if not result:
             return ""
 
-        vm = self._presenter.present(state, result)
+        vm = self._presenter.present(
+            state, 
+            result, 
+            current_q.text)
 
         return vm.feedback_markdown
 
