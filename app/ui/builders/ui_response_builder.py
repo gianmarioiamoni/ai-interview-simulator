@@ -246,7 +246,7 @@ class UIResponseBuilder:
         vm = self._presenter.present(
             state, 
             result, 
-            current_q.text)
+            current_q.prompt)
 
         return vm.feedback_markdown
 
