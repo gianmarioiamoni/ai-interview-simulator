@@ -10,6 +10,7 @@ from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.test_execution_result import TestStatus, TestType
 from domain.contracts.ai_hint import AIHintInput
+from domain.contracts.hint_level import HintLevel
 
 from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
@@ -105,12 +106,12 @@ class ResultPresenter:
 
         user_code = state.last_answer.content if state.last_answer else ""
 
-        # 🔥 ANALYSIS → DTO (QUI È IL CAMBIO CHIAVE)
+        # ANALYSIS → DTO
         analysis_raw = self._analyzer.analyze(execution) if execution else None
         analysis = ExecutionAnalysisAdapter.to_dto(analysis_raw)
 
         # =========================================================
-        # 🟢 WRITTEN EVALUATION
+        # WRITTEN EVALUATION
         # =========================================================
 
         if evaluation and not execution:
@@ -135,7 +136,7 @@ class ResultPresenter:
             return "\n".join(lines)
 
         # =========================================================
-        # 🔥 RUNTIME ERROR (USO DTO)
+        # RUNTIME ERROR
         # =========================================================
 
         if analysis and analysis.has_runtime_error:
@@ -145,12 +146,16 @@ class ResultPresenter:
             fast_hint = self._generate_runtime_hint(clean_error)
 
             ai_hint = None
+
+            attempts = state.attempts_by_question.get(result.question_id, 0)
+            hint_level = self._resolve_hint_level(attempts)
             if user_code:
                 ai_hint = self._generate_ai_hint(
                     error=clean_error,
                     user_code=user_code,
                     failed_tests=[],
                     question=question_text,
+                    hint_level=hint_level.value,
                 )
 
             lines.append("## ⚠️ Runtime Error\n")
@@ -173,7 +178,7 @@ class ResultPresenter:
             return "\n".join(lines)
 
         # =========================================================
-        # 🟡 EXECUTION SUMMARY
+        # EXECUTION SUMMARY
         # =========================================================
 
         if execution_results:
@@ -193,7 +198,7 @@ class ResultPresenter:
                 lines.append("")
 
         # =========================================================
-        # 🔴 FAILED TEST DETAILS (LOGIC ONLY)
+        # FAILED TEST DETAILS
         # =========================================================
 
         if execution and execution.test_results:
@@ -209,7 +214,7 @@ class ResultPresenter:
                     t for t in execution.test_results if t.status != TestStatus.PASSED
                 ]
 
-            # 🔥 IMPORTANT: escludi runtime (già gestiti sopra)
+            # IMPORTANT: exclude runtime (already handled above)
             failed_tests = [t for t in failed_tests if t.status != TestStatus.ERROR]
 
             if failed_tests:
@@ -229,7 +234,7 @@ class ResultPresenter:
                     lines.append(f"- Actual: `{repr(test.actual)}`")
                     lines.append("")
 
-                # 🤖 AI HINT (solo logic)
+                # AI HINT (only logic)
                 if user_code:
                     ai_hint = self._generate_ai_hint(
                         error=None,
@@ -258,7 +263,7 @@ class ResultPresenter:
     # HELPERS
     # =========================================================
 
-    def _generate_ai_hint(self, error, user_code, failed_tests, question):
+    def _generate_ai_hint(self, error, user_code, failed_tests, question, hint_level):
 
         try:
             service = AIHintService()
@@ -268,6 +273,7 @@ class ResultPresenter:
                 user_code=user_code[:1000],
                 failed_tests=failed_tests[:2],
                 question=question,
+                hint_level=hint_level,
             )
 
             return service.generate_hint(input_data)
@@ -324,3 +330,12 @@ class ResultPresenter:
             return "Missing dictionary key."
 
         return ""
+
+
+    def _resolve_hint_level(self, attempts: int) -> HintLevel:
+
+        if attempts <= 1:
+            return HintLevel.BASIC
+        if attempts == 2:
+            return HintLevel.TARGETED
+        return HintLevel.SOLUTION

@@ -8,6 +8,11 @@ from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
 from app.ui.utils.error_formatter import simplify_execution_error
 
 from domain.contracts.confidence import Confidence
+from domain.contracts.ai_hint import AIHintInput
+from domain.contracts.hint_level import HintLevel
+from domain.contracts.test_execution_result import TestStatus
+
+from services.ai_hint_engine.ai_hint_service import AIHintService
 
 
 class FinalReportDTO(BaseModel):
@@ -39,12 +44,12 @@ class FinalReportDTO(BaseModel):
     @classmethod
     def from_state(cls, state):
 
+        ai_hint_service = AIHintService()
         question_assessments: List[QuestionAssessmentDTO] = []
 
         for q in state.questions:
 
             result = state.results_by_question.get(q.id)
-
             if result is None:
                 continue
 
@@ -54,31 +59,32 @@ class FinalReportDTO(BaseModel):
             total_tests: Optional[int] = None
             execution_status: Optional[str] = None
 
-            # ---------------------------------------------------------
-            # LLM Evaluation
-            # ---------------------------------------------------------
+            attempts = state.attempts_by_question.get(q.id, 0)
 
-            if result.evaluation:
+            ai_hint_explanation: Optional[str] = None
+            ai_hint_suggestion: Optional[str] = None
+
+            # ======================================================
+            # WRITTEN
+            # ======================================================
+
+            if result.evaluation and not result.execution:
 
                 score = result.evaluation.score
                 feedback = result.evaluation.feedback
 
-            # ---------------------------------------------------------
-            # Execution-based evaluation (coding / SQL)
-            # ---------------------------------------------------------
+            # ======================================================
+            # EXECUTION
+            # ======================================================
 
             elif result.execution:
 
                 exec_res = result.execution
-
                 execution_status = exec_res.status.value
 
-                # runtime error before tests
                 if exec_res.total_tests == 0 and not exec_res.success:
 
                     execution_status = "RUNTIME_ERROR"
-                    passed_tests = None
-                    total_tests = None
                     score = 0
 
                 else:
@@ -86,22 +92,71 @@ class FinalReportDTO(BaseModel):
                     passed_tests = exec_res.passed_tests
                     total_tests = exec_res.total_tests
 
-                    if exec_res.total_tests and exec_res.total_tests > 0:
-
+                    if exec_res.total_tests:
                         score = (exec_res.passed_tests / exec_res.total_tests) * 100
-
                     elif exec_res.success:
-
                         score = 100
-
                     else:
-
                         score = 0
 
                 feedback = (
                     simplify_execution_error(exec_res.error)
                     or "Execution evaluated automatically."
                 )
+
+                # ==================================================
+                # AI HINT (single source of truth)
+                # ==================================================
+
+                try:
+
+                    user_code = (
+                        state.last_answer.content
+                        if state.last_answer and state.last_answer.question_id == q.id
+                        else ""
+                    )
+
+                    failed_tests = []
+
+                    if exec_res.test_results:
+
+                        failed = [
+                            t
+                            for t in exec_res.test_results
+                            if t.status != TestStatus.PASSED
+                        ]
+
+                        failed_tests = [
+                            {
+                                "input": t.args,
+                                "expected": t.expected,
+                                "actual": t.actual,
+                            }
+                            for t in failed[:2]
+                        ]
+
+                    hint_level = cls._resolve_hint_level(attempts)
+
+                    hint_input = AIHintInput(
+                        error=exec_res.error,
+                        user_code=user_code[:1000],
+                        failed_tests=failed_tests,
+                        question=q.prompt,
+                        hint_level=hint_level,
+                    )
+
+                    hint = ai_hint_service.generate_hint(hint_input)
+
+                    if hint:
+                        ai_hint_explanation = hint.explanation
+                        ai_hint_suggestion = hint.suggestion
+
+                except Exception:
+                    pass
+
+            # ======================================================
+            # DTO
+            # ======================================================
 
             question_assessments.append(
                 QuestionAssessmentDTO(
@@ -111,66 +166,49 @@ class FinalReportDTO(BaseModel):
                     passed_tests=passed_tests,
                     total_tests=total_tests,
                     execution_status=execution_status,
+                    attempts=attempts,
+                    ai_hint_explanation=ai_hint_explanation,
+                    ai_hint_suggestion=ai_hint_suggestion,
                 )
             )
 
-        # ---------------------------------------------------------
-        # Dimension scores
-        # ---------------------------------------------------------
-
-        dimension_scores: List[DimensionScoreDTO] = []
+        # =========================================================
+        # DIMENSIONS
+        # =========================================================
 
         fe = state.final_evaluation
 
-        if fe:
-
-            for dim in fe.performance_dimensions:
-
-                dimension_scores.append(
-                    DimensionScoreDTO(
-                        name=dim.name,
-                        score=dim.score,
-                        max_score=100,
-                    )
-                )
-
-        # ---------------------------------------------------------
-        # Improvement suggestions
-        # ---------------------------------------------------------
-
-        improvements: List[str] = []
-
-        for q in question_assessments:
-
-            if q.score < 60:
-
-                improvements.append(
-                    f"Improve performance on question {q.question_id} (score {q.score:.1f}/100)."
-                )
-
-        # ---------------------------------------------------------
-        # Token accounting
-        # ---------------------------------------------------------
-
-        tokens = 0
-
-        for r in state.results_by_question.values():
-
-            if r.evaluation and hasattr(r.evaluation, "tokens_used"):
-
-                tokens += r.evaluation.tokens_used
-
-        # ---------------------------------------------------------
-        # Safety check
-        # ---------------------------------------------------------
-
         if fe is None:
+            raise RuntimeError("Final evaluation missing")
 
-            raise RuntimeError("Final evaluation missing when generating report")
+        dimension_scores = [
+            DimensionScoreDTO(
+                name=dim.name,
+                score=dim.score,
+                max_score=100,
+            )
+            for dim in fe.performance_dimensions
+        ]
 
-        # ---------------------------------------------------------
-        # DTO creation
-        # ---------------------------------------------------------
+        # =========================================================
+        # IMPROVEMENTS
+        # =========================================================
+
+        improvements = [
+            f"Improve performance on question {q.question_id} (score {q.score:.1f}/100)."
+            for q in question_assessments
+            if q.score < 60
+        ]
+
+        # =========================================================
+        # TOKENS
+        # =========================================================
+
+        tokens = sum(
+            getattr(r.evaluation, "tokens_used", 0)
+            for r in state.results_by_question.values()
+            if r.evaluation
+        )
 
         return cls(
             overall_score=fe.overall_score,
@@ -187,3 +225,16 @@ class FinalReportDTO(BaseModel):
             total_tokens_used=tokens,
             confidence=fe.confidence,
         )
+
+    # =========================================================
+    # LEVEL RESOLUTION
+    # =========================================================
+
+    @staticmethod
+    def _resolve_hint_level(attempts: int) -> HintLevel:
+
+        if attempts <= 1:
+            return HintLevel.BASIC
+        if attempts == 2:
+            return HintLevel.TARGETED
+        return HintLevel.SOLUTION
