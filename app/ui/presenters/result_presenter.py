@@ -14,10 +14,13 @@ from domain.contracts.ai_hint import AIHintInput
 from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
 
+from app.ui.adapters.execution_analysis_adapter import ExecutionAnalysisAdapter
+
 
 # =========================================================
 # VIEW MODELS
 # =========================================================
+
 
 @dataclass
 class ExecutionResultView:
@@ -42,6 +45,7 @@ class ResultViewModel:
 # =========================================================
 # PRESENTER
 # =========================================================
+
 
 class ResultPresenter:
 
@@ -101,10 +105,12 @@ class ResultPresenter:
 
         user_code = state.last_answer.content if state.last_answer else ""
 
-        analysis = self._analyzer.analyze(execution) if execution else None
+        # 🔥 ANALYSIS → DTO (QUI È IL CAMBIO CHIAVE)
+        analysis_raw = self._analyzer.analyze(execution) if execution else None
+        analysis = ExecutionAnalysisAdapter.to_dto(analysis_raw)
 
         # =========================================================
-        # WRITTEN EVALUATION 
+        # 🟢 WRITTEN EVALUATION
         # =========================================================
 
         if evaluation and not execution:
@@ -129,17 +135,15 @@ class ResultPresenter:
             return "\n".join(lines)
 
         # =========================================================
-        # RUNTIME ERROR
+        # 🔥 RUNTIME ERROR (USO DTO)
         # =========================================================
 
         if analysis and analysis.has_runtime_error:
 
             clean_error = self._extract_clean_error(analysis.primary_error)
 
-            # quick hint
             fast_hint = self._generate_runtime_hint(clean_error)
 
-            # ai hint
             ai_hint = None
             if user_code:
                 ai_hint = self._generate_ai_hint(
@@ -169,7 +173,7 @@ class ResultPresenter:
             return "\n".join(lines)
 
         # =========================================================
-        # EXECUTION SUMMARY
+        # 🟡 EXECUTION SUMMARY
         # =========================================================
 
         if execution_results:
@@ -189,7 +193,7 @@ class ResultPresenter:
                 lines.append("")
 
         # =========================================================
-        # FAILED TEST DETAILS
+        # 🔴 FAILED TEST DETAILS (LOGIC ONLY)
         # =========================================================
 
         if execution and execution.test_results:
@@ -205,7 +209,7 @@ class ResultPresenter:
                     t for t in execution.test_results if t.status != TestStatus.PASSED
                 ]
 
-            # FILTER runtime errors (already handled above)
+            # 🔥 IMPORTANT: escludi runtime (già gestiti sopra)
             failed_tests = [t for t in failed_tests if t.status != TestStatus.ERROR]
 
             if failed_tests:
@@ -225,7 +229,7 @@ class ResultPresenter:
                     lines.append(f"- Actual: `{repr(test.actual)}`")
                     lines.append("")
 
-                # AI hint (only logic)
+                # 🤖 AI HINT (solo logic)
                 if user_code:
                     ai_hint = self._generate_ai_hint(
                         error=None,
@@ -249,7 +253,6 @@ class ResultPresenter:
                         lines.append("")
 
         return "\n".join(lines)
-
 
     # =========================================================
     # HELPERS
