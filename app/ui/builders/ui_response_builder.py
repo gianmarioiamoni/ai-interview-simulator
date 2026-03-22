@@ -104,6 +104,7 @@ class UIResponseBuilder:
             raise RuntimeError("UI attempted to render question but none exists")
 
         attempts = state.attempts_by_question.get(question.question_id, 0)
+        has_previous_answer = attempts > 0
         can_retry = attempts < MAX_ATTEMPTS
 
         counter = self._build_counter(question, attempts)
@@ -112,41 +113,41 @@ class UIResponseBuilder:
         editor_value = ""
         error_hint = ""
 
+        last_answer = state.last_answer
+
         # =========================================================
-        # PREVIOUS ANSWER
+        # EDITOR VALUE (SAFE)
         # =========================================================
 
-        has_previous_answer = (
-            state.last_answer and state.last_answer.question_id == question.question_id
-        )
-
-        if has_previous_answer:
-            editor_value = state.last_answer.content
+        if last_answer and last_answer.question_id == question.question_id:
+            editor_value = last_answer.content
 
         if not editor_value and question.type == QuestionType.CODING:
             editor_value = "# Write your solution here"
 
         # =========================================================
-        # ERROR HINT → SOLO IN RETRY (NON FEEDBACK)
+        # ERROR HINT → SOLO RETRY (NO FEEDBACK)
         # =========================================================
 
         is_feedback = ui_state == UIState.FEEDBACK
 
         result = state.get_result_for_question(question.question_id)
 
-        if (
-            result
-            and result.execution
-            and has_previous_answer
-            and not is_feedback  # 🔥 QUESTO È IL FIX CHIAVE
-        ):
+        if result and result.execution and has_previous_answer and not is_feedback:
             error_hint = self._build_error_hint(result.execution)
 
         # =========================================================
         # BUILD UI
         # =========================================================
 
-        display = self._build_display(state, question, ui_state, error_hint)
+        display = self._build_display(
+            state,
+            question,
+            ui_state,
+            error_hint,
+            has_previous_answer,
+        )
+
         visibility = self._build_visibility(question)
         editors = self._build_editor_visibility(question, ui_state)
         buttons = self._build_buttons(state, ui_state, can_retry)
@@ -180,14 +181,11 @@ class UIResponseBuilder:
         state: InterviewState,
         question: QuestionDTO,
         ui_state: UIState,
-        error_hint: str = "",
+        error_hint: str,
+        has_previous_answer: bool,
     ) -> DisplayFields:
 
         last_answer = state.last_answer
-        has_previous_answer = (
-            last_answer and last_answer.question_id == question.question_id
-        )
-
         is_feedback = ui_state == UIState.FEEDBACK
 
         if is_feedback:
@@ -195,14 +193,14 @@ class UIResponseBuilder:
             prefix = "### Your Answer\n\n"
 
         elif has_previous_answer:
-            text = last_answer.content
+            text = last_answer.content if last_answer else ""
             prefix = "### Fix Your Previous Answer\n\n"
 
         else:
             text = question.text
             prefix = "### Question\n\n"
 
-        if error_hint:
+        if error_hint and has_previous_answer:
             prefix += f"⚠️ Fix this first:\n```\n{error_hint}\n```\n\n"
 
         display_text = prefix + text
@@ -244,9 +242,10 @@ class UIResponseBuilder:
             return ""
 
         vm = self._presenter.present(
-            state, 
-            result, 
-            current_q.prompt)
+            state,
+            result,
+            current_q.prompt,
+        )
 
         return vm.feedback_markdown
 
@@ -283,10 +282,7 @@ class UIResponseBuilder:
 
         is_feedback = ui_state == UIState.FEEDBACK
 
-        has_valid_state = (
-            state is not None
-            and state.current_question is not None
-        )
+        has_valid_state = state and state.current_question
 
         return {
             "show_submit": not is_feedback,
