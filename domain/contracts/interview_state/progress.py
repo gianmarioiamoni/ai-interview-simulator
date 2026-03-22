@@ -14,14 +14,6 @@ class InterviewStateProgressMixin:
         self.current_question_index += 1
         self.progress = InterviewProgress.IN_PROGRESS
 
-    def reset_current_question(self):
-
-        q = self.current_question
-
-        if q is None:
-            return
-
-
     def clear_result_for_question(self, qid: str):
 
         if qid in self.results_by_question:

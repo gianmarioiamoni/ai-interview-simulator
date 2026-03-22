@@ -33,7 +33,6 @@ def retry_answer(state: InterviewState):
         )
         
         new_state.clear_result_for_question(q.id)
-        new_state.last_answer = None
 
     response = build_ui_response_from_state(new_state)
     response.ui_state = UIState.QUESTION
