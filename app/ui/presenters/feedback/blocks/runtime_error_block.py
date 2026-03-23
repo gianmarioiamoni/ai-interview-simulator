@@ -1,4 +1,4 @@
-# runtime_error_block.py
+# app/ui/presenters/feedback/blocks/runtime_error_block.py
 
 from app.ui.presenters.feedback.feedback_models import (
     FeedbackBlockResult,
@@ -16,7 +16,21 @@ class RuntimeErrorBlock:
         self, state, result, evaluation, execution, analysis
     ) -> FeedbackBlockResult:
 
+        # -----------------------------------------------------
+        # Extract clean error
+        # -----------------------------------------------------
+
         clean_error = analysis.primary_error.strip().splitlines()[-1]
+
+        # -----------------------------------------------------
+        # AI Hint (if available)
+        # -----------------------------------------------------
+
+        ai_hint = result.ai_hint if result and result.ai_hint else None
+
+        # -----------------------------------------------------
+        # Signals
+        # -----------------------------------------------------
 
         signals = [
             FeedbackSignal(
@@ -25,16 +39,53 @@ class RuntimeErrorBlock:
             )
         ]
 
+        # -----------------------------------------------------
+        # Learning suggestions
+        # -----------------------------------------------------
+
         learning = [
             LearningSuggestion(
                 topic="Debugging runtime errors",
-                action="Check variable definitions and imports",
+                action="Check variable definitions, imports, and variable scope",
             )
         ]
 
+        # -----------------------------------------------------
+        # Content
+        # -----------------------------------------------------
+
+        lines = [
+            f"`{clean_error}`",
+            "",
+        ]
+
+        # AI Hint
+        if ai_hint:
+            lines.extend(
+                [
+                    "### 🤖 AI Hint",
+                    f"**Explanation:** {ai_hint.explanation}",
+                    f"**Suggestion:** {ai_hint.suggestion}",
+                ]
+            )
+        else:
+            # fallback smart hint
+            lines.extend(
+                [
+                    "### 💡 Quick Hint",
+                    "Check imports and variable definitions.",
+                ]
+            )
+
+        content = "\n".join(lines)
+
+        # -----------------------------------------------------
+        # Return block
+        # -----------------------------------------------------
+
         return FeedbackBlockResult(
             title="⚠️ Runtime Error",
-            content=f"`{clean_error}`",
+            content=content,
             severity="error",
             confidence=0.95,
             signals=signals,
