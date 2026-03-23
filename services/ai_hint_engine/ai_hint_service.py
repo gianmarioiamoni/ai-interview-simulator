@@ -21,8 +21,8 @@ class AIHintService:
         level: Optional[str] = None,  # BASIC | TARGETED | SOLUTION
     ) -> AIHint:
 
-        level = level or input_data.hint_level.value
-        prompt = self._build_prompt(input_data, level)
+        effective_level = level or input_data.hint_level.value
+        prompt = self._build_prompt(input_data, effective_level)
 
         try:
             response = self._llm.invoke(prompt)
