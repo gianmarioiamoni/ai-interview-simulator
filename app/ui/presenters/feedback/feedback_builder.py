@@ -100,15 +100,11 @@ class FeedbackBuilder:
         analysis,
     ):
 
-        collected = []
-
         for block in self._blocks:
             if block.can_handle(result, evaluation, execution, analysis):
-                collected.append(
-                    block.build(state, result, evaluation, execution, analysis)
-                )
+                return [block.build(state, result, evaluation, execution, analysis)]
 
-        return collected
+        return []
 
     def _aggregate_severity(self, blocks):
 

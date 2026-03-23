@@ -12,6 +12,8 @@ class ResultPresenter:
 
     def present(self, state, result, _question_text):
 
+        print("DEBUG AI HINT:", result.ai_hint)
+
         evaluation = result.evaluation
         execution = result.execution
 
