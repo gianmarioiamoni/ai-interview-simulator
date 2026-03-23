@@ -56,13 +56,9 @@ class UIResponse:
     def to_gradio_outputs(self) -> List[Any]:
         # Build the exact output list expected by bindings
 
-        # setup_update, interview_update, completion_update, report_update = route_ui(
-        #     self.ui_state
-        # )
-        setup_update = None
-        interview_update = None
-        completion_update = None
-        report_update = None
+        setup_update, interview_update, completion_update, report_update = route_ui(
+            self.ui_state
+        )
 
         return [
             # ---------------- STATE
