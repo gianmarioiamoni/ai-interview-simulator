@@ -138,7 +138,7 @@ class UIResponseBuilder:
 
         feedback = FeedbackSection.build(state, self._presenter)
 
-        counter = CounterSection.build(question, attempts)
+        counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
 
         # -----------------------------------------------------
         # Config
