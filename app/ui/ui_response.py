@@ -62,7 +62,8 @@ class UIResponse:
 
         return [
             # ---------------- STATE
-            self.state,
+            #self.state,
+            None,
             # ---------------- HEADER / FEEDBACK
             self.question_counter,
             self.feedback,
