@@ -103,36 +103,19 @@ class ResultPresenter:
     ) -> str:
 
         lines: List[str] = []
-
         user_code = state.last_answer.content if state.last_answer else ""
 
-        # ANALYSIS → DTO
         analysis_raw = self._analyzer.analyze(execution) if execution else None
         analysis = ExecutionAnalysisAdapter.to_dto(analysis_raw)
 
         # =========================================================
-        # WRITTEN EVALUATION
+        # WRITTEN
         # =========================================================
 
         if evaluation and not execution:
-
             lines.append(f"## Score: {evaluation.score:.1f}/100\n")
-
             lines.append("### Feedback")
             lines.append(evaluation.feedback + "\n")
-
-            if evaluation.strengths:
-                lines.append("### Strengths")
-                for s in evaluation.strengths:
-                    lines.append(f"- {s}")
-                lines.append("")
-
-            if evaluation.weaknesses:
-                lines.append("### Weaknesses")
-                for w in evaluation.weaknesses:
-                    lines.append(f"- {w}")
-                lines.append("")
-
             return "\n".join(lines)
 
         # =========================================================
@@ -142,26 +125,22 @@ class ResultPresenter:
         if analysis and analysis.has_runtime_error:
 
             clean_error = self._extract_clean_error(analysis.primary_error)
-
             fast_hint = self._generate_runtime_hint(clean_error)
-
-            ai_hint = None
 
             attempts = state.attempts_by_question.get(result.question_id, 0)
             hint_level = self._resolve_hint_level(attempts)
+
+            ai_hint = None
             if user_code:
                 ai_hint = self._generate_ai_hint(
                     error=clean_error,
                     user_code=user_code,
-                    failed_tests=[],
+                    failed_tests_str="None",
                     question=question_text,
-                    hint_level=hint_level.value,
+                    hint_level=hint_level,
                 )
 
             lines.append("## ⚠️ Runtime Error\n")
-            lines.append("Your code failed during execution.\n")
-
-            lines.append("### Error")
             lines.append(f"`{clean_error}`\n")
 
             if fast_hint:
@@ -171,34 +150,12 @@ class ResultPresenter:
             if ai_hint:
                 lines.append("### 🤖 AI Hint")
                 lines.append(f"**Explanation:** {ai_hint.explanation}")
-                lines.append("")
                 lines.append(f"**Suggestion:** {ai_hint.suggestion}")
-                lines.append("")
 
             return "\n".join(lines)
 
         # =========================================================
-        # EXECUTION SUMMARY
-        # =========================================================
-
-        if execution_results:
-
-            lines.append("### Execution Results")
-
-            for idx, r in enumerate(execution_results, start=1):
-                icon = "✅" if r.success else "❌"
-                lines.append(f"**Run {idx}: {icon} {r.status}**")
-
-                if r.total_tests > 0:
-                    lines.append(f"- Tests: {r.passed_tests}/{r.total_tests}")
-
-                if r.error:
-                    lines.append(f"- Error: `{self._extract_clean_error(r.error)}`")
-
-                lines.append("")
-
-        # =========================================================
-        # FAILED TEST DETAILS
+        # LOGIC FAILURES
         # =========================================================
 
         if execution and execution.test_results:
@@ -206,56 +163,31 @@ class ResultPresenter:
             failed_tests = [
                 t
                 for t in execution.test_results
-                if t.type == TestType.VISIBLE and t.status != TestStatus.PASSED
+                if t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
             ]
-
-            if not failed_tests:
-                failed_tests = [
-                    t for t in execution.test_results if t.status != TestStatus.PASSED
-                ]
-
-            # IMPORTANT: exclude runtime (already handled above)
-            failed_tests = [t for t in failed_tests if t.status != TestStatus.ERROR]
 
             if failed_tests:
 
-                lines.append("### Failed Tests Details")
+                failed_tests_str = self._format_failed_tests(execution)
 
-                for test in failed_tests:
+                attempts = state.attempts_by_question.get(result.question_id, 0)
+                hint_level = self._resolve_hint_level(attempts)
 
-                    label = "Hidden Test" if test.type == TestType.HIDDEN else "Test"
+                ai_hint = self._generate_ai_hint(
+                    error=None,
+                    user_code=user_code,
+                    failed_tests_str=failed_tests_str,
+                    question=question_text,
+                    hint_level=hint_level,
+                )
 
-                    lines.append(f"**❌ {label} {test.id} — LOGIC ERROR**")
+                lines.append("### Failed Tests")
+                lines.append(failed_tests_str + "\n")
 
-                    input_str = self._format_input(test.args, test.kwargs)
-                    lines.append(f"- Input: `{input_str}`")
-
-                    lines.append(f"- Expected: `{repr(test.expected)}`")
-                    lines.append(f"- Actual: `{repr(test.actual)}`")
-                    lines.append("")
-
-                # AI HINT (only logic)
-                if user_code:
-                    ai_hint = self._generate_ai_hint(
-                        error=None,
-                        user_code=user_code,
-                        failed_tests=[
-                            {
-                                "input": t.args,
-                                "expected": t.expected,
-                                "actual": t.actual,
-                            }
-                            for t in failed_tests[:2]
-                        ],
-                        question=question_text,
-                    )
-
-                    if ai_hint:
-                        lines.append("### 🤖 AI Hint")
-                        lines.append(f"**Explanation:** {ai_hint.explanation}")
-                        lines.append("")
-                        lines.append(f"**Suggestion:** {ai_hint.suggestion}")
-                        lines.append("")
+                if ai_hint:
+                    lines.append("### 🤖 AI Hint")
+                    lines.append(f"**Explanation:** {ai_hint.explanation}")
+                    lines.append(f"**Suggestion:** {ai_hint.suggestion}")
 
         return "\n".join(lines)
 
@@ -263,7 +195,9 @@ class ResultPresenter:
     # HELPERS
     # =========================================================
 
-    def _generate_ai_hint(self, error, user_code, failed_tests, question, hint_level):
+    def _generate_ai_hint(
+        self, error, user_code, failed_tests_str, question, hint_level
+    ):
 
         try:
             service = AIHintService()
@@ -271,15 +205,36 @@ class ResultPresenter:
             input_data = AIHintInput(
                 error=error,
                 user_code=user_code[:1000],
-                failed_tests=failed_tests[:2],
+                failed_tests=failed_tests_str,
                 question=question,
                 hint_level=hint_level,
             )
 
-            return service.generate_hint(input_data)
+            return service.generate_hint(input_data, level=hint_level.value)
 
         except Exception:
             return None
+
+    def _format_failed_tests(self, execution: ExecutionResult) -> str:
+
+        if not execution or not execution.test_results:
+            return "None"
+
+        failed = [
+            t
+            for t in execution.test_results
+            if t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
+        ]
+
+        if not failed:
+            return "None"
+
+        return "\n".join(
+            [
+                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
+                for t in failed[:2]
+            ]
+        )
 
     def _map_execution_results(self, results):
         return [
@@ -298,42 +253,18 @@ class ResultPresenter:
     def _extract_errors(self, execution_results):
         return [r.error for r in execution_results if r.error]
 
-    def _format_input(self, args, kwargs):
-        if args and kwargs:
-            return f"args={args}, kwargs={kwargs}"
-        if args:
-            return str(args)
-        if kwargs:
-            return str(kwargs)
-        return "None"
-
     def _extract_clean_error(self, error: Optional[str]) -> str:
         if not error:
             return ""
-        lines = error.strip().splitlines()
-        return lines[-1] if lines else error
+        return error.strip().splitlines()[-1]
 
     def _generate_runtime_hint(self, error: str) -> str:
-
         match = re.search(r"NameError: name '(.+?)' is not defined", error)
         if match:
-            missing = match.group(1)
-            return f"'{missing}' is not defined. You may have forgotten to import it."
-
-        if "TypeError" in error:
-            return "Check function arguments and types."
-
-        if "IndexError" in error:
-            return "Index out of range."
-
-        if "KeyError" in error:
-            return "Missing dictionary key."
-
+            return f"'{match.group(1)}' is not defined. Missing import."
         return ""
 
-
     def _resolve_hint_level(self, attempts: int) -> HintLevel:
-
         if attempts <= 1:
             return HintLevel.BASIC
         if attempts == 2:
