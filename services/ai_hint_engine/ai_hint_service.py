@@ -1,7 +1,7 @@
 # services/ai_hint_engine/ai_hint_service.py
 
 import json
-
+from typing import Optional
 from domain.contracts.ai_hint import AIHintInput, AIHint
 from infrastructure.llm.llm_factory import get_llm
 
@@ -18,9 +18,10 @@ class AIHintService:
     def generate_hint(
         self,
         input_data: AIHintInput,
-        level: str = "BASIC",  # BASIC | TARGETED | SOLUTION
+        level: Optional[str] = None,  # BASIC | TARGETED | SOLUTION
     ) -> AIHint:
 
+        level = level or input_data.hint_level.value
         prompt = self._build_prompt(input_data, level)
 
         try:
