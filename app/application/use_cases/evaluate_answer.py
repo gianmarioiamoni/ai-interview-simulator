@@ -5,9 +5,12 @@ from domain.contracts.question import QuestionType
 
 from services.execution_engine import ExecutionEngine
 from services.prompt_builders.evaluation_prompt_builder import build_evaluation_prompt
+from services.ai_hint_engine.ai_hint_service import AIHintService
 
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.evaluation_decision import EvaluationDecision
+from domain.contracts.ai_hint import AIHintInput
+from domain.contracts.hint_level import HintLevel
 
 
 class EvaluateAnswerUseCase:
@@ -15,6 +18,7 @@ class EvaluateAnswerUseCase:
     def __init__(self, llm):
         self.llm = llm
         self.engine = ExecutionEngine()
+        self.hint_service = AIHintService()
 
     # ---------------------------------------------------------
     # PUBLIC API
@@ -28,19 +32,65 @@ class EvaluateAnswerUseCase:
         if question is None or answer is None:
             return state
 
-        # ---------------------------------------------------------
-        # WRITTEN QUESTION
-        # ---------------------------------------------------------
-
         if question.type == QuestionType.WRITTEN:
-            return self._evaluate_written(state, question, answer)
+            state = self._evaluate_written(state, question, answer)
+
+        elif question.type in (QuestionType.CODING, QuestionType.DATABASE):
+            state = self._evaluate_execution(state, question, answer)
 
         # ---------------------------------------------------------
-        # CODING / DATABASE
+        # GENERATE AI HINT (SINGLE SOURCE OF TRUTH)
         # ---------------------------------------------------------
 
-        if question.type in (QuestionType.CODING, QuestionType.DATABASE):
-            return self._evaluate_execution(state, question, answer)
+        result = state.get_result_for_question(question.id)
+        if not result:
+            return state
+
+        attempts = state.attempts_by_question.get(question.id, 0)
+
+        hint_level = self._resolve_hint_level(attempts)
+
+        execution = result.execution
+
+        error = execution.error if execution else None
+
+        failed_tests = "None"
+        if execution and execution.test_results:
+            failed = [t for t in execution.test_results if t.status != "PASSED"]
+            if failed:
+                failed_tests = "\n".join(
+                    [
+                        f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
+                        for t in failed[:2]
+                    ]
+                )
+
+        user_code = answer.content if answer else ""
+
+        hint_input = AIHintInput(
+            error=error,
+            user_code=user_code[:1000],
+            failed_tests=failed_tests,
+            question=question.prompt,
+            hint_level=hint_level,
+        )
+
+        try:
+            ai_hint = self.hint_service.generate_hint(
+                hint_input,
+                level=hint_level.value,
+            )
+        except Exception:
+            ai_hint = None
+
+        updated = result.model_copy(
+            update={
+                "ai_hint": ai_hint,
+                "hint_level": hint_level,
+            }
+        )
+
+        state.results_by_question[question.id] = updated
 
         return state
 
@@ -52,7 +102,6 @@ class EvaluateAnswerUseCase:
 
         result = state.get_result_for_question(question.id)
 
-        # Avoid double evaluation
         if result and result.evaluation:
             return state
 
@@ -95,7 +144,6 @@ class EvaluateAnswerUseCase:
 
         result = state.get_result_for_question(question.id)
 
-        # Avoid double execution
         if result and result.execution:
             return state
 
@@ -127,3 +175,10 @@ class EvaluateAnswerUseCase:
         state.register_evaluation(evaluation)
 
         return state
+
+    def _resolve_hint_level(self, attempts: int) -> HintLevel:
+        if attempts <= 1:
+            return HintLevel.BASIC
+        if attempts == 2:
+            return HintLevel.TARGETED
+        return HintLevel.SOLUTION

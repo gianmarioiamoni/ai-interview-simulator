@@ -1,6 +1,5 @@
 # app/ui/dto/final_report_dto.py
 
-import json
 from typing import List, Dict, Optional
 from pydantic import BaseModel
 
@@ -9,12 +8,8 @@ from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
 from app.ui.utils.error_formatter import simplify_execution_error
 
 from domain.contracts.confidence import Confidence
-from domain.contracts.ai_hint import AIHintInput
-from domain.contracts.hint_level import HintLevel
 from domain.contracts.test_execution_result import TestStatus
 from domain.contracts.execution_result import ExecutionResult
-
-from services.ai_hint_engine.ai_hint_service import AIHintService
 
 
 class FinalReportDTO(BaseModel):
@@ -46,7 +41,6 @@ class FinalReportDTO(BaseModel):
     @classmethod
     def from_state(cls, state):
 
-        ai_hint_service = AIHintService()
         question_assessments: List[QuestionAssessmentDTO] = []
 
         for q in state.questions:
@@ -106,59 +100,34 @@ class FinalReportDTO(BaseModel):
                     or "Execution evaluated automatically."
                 )
 
-                # ==================================================
-                # AI HINT (single source of truth)
-                # ==================================================
+            # ======================================================
+            # AI HINT (READ ONLY)
+            # ======================================================
 
-                try:
-
-                    user_code = (
-                        state.last_answer.content
-                        if state.last_answer and state.last_answer.question_id == q.id
-                        else ""
-                    )
-
-                    failed_tests_str = cls._format_failed_tests(exec_res)
-
-                    hint_level = cls._resolve_hint_level(attempts)
-
-                    hint_input = AIHintInput(
-                        error=exec_res.error,
-                        user_code=user_code[:1000],
-                        failed_tests=failed_tests_str,
-                        question=q.prompt,
-                        hint_level=hint_level,
-                    )
-
-                    hint = ai_hint_service.generate_hint(hint_input)
-
-                    if hint:
-                        ai_hint_explanation = hint.explanation
-                        ai_hint_suggestion = hint.suggestion
-
-                except Exception:
-                    pass
+            if result.ai_hint:
+                ai_hint_explanation = result.ai_hint.explanation
+                ai_hint_suggestion = result.ai_hint.suggestion
 
             # ======================================================
             # DTO
             # ======================================================
 
             q_assessment = QuestionAssessmentDTO(
-                    question_id=q.id,
-                    score=score,
-                    feedback=feedback,
-                    passed_tests=passed_tests,
-                    total_tests=total_tests,
-                    execution_status=execution_status,
-                    attempts=attempts,
-                    ai_hint_explanation=ai_hint_explanation,
-                    ai_hint_suggestion=ai_hint_suggestion,
-                )
+                question_id=q.id,
+                score=score,
+                feedback=feedback,
+                passed_tests=passed_tests,
+                total_tests=total_tests,
+                execution_status=execution_status,
+                attempts=attempts,
+                ai_hint_explanation=ai_hint_explanation,
+                ai_hint_suggestion=ai_hint_suggestion,
+            )
 
             assert isinstance(q_assessment.feedback, str)
             assert isinstance(q_assessment.ai_hint_explanation, (str, type(None)))
-            assert isinstance(q_assessment.ai_hint_suggestion, (str, type(None))) 
-            
+            assert isinstance(q_assessment.ai_hint_suggestion, (str, type(None)))
+
             question_assessments.append(q_assessment)
 
         # =========================================================
@@ -216,38 +185,23 @@ class FinalReportDTO(BaseModel):
         )
 
     # =========================================================
-    # LEVEL RESOLUTION
-    # =========================================================
-
-    @staticmethod
-    def _resolve_hint_level(attempts: int) -> HintLevel:
-
-        if attempts <= 1:
-            return HintLevel.BASIC
-        if attempts == 2:
-            return HintLevel.TARGETED
-        return HintLevel.SOLUTION
-
-    # =========================================================
     # FAILED TESTS
     # =========================================================
 
     @staticmethod
-    def _format_failed_tests(exec_res: ExecutionResult)-> str:
+    def _format_failed_tests(exec_res: ExecutionResult) -> str:
         if not exec_res or not exec_res.test_results:
             return "None"
 
-        failed = [
-            t
-            for t in exec_res.test_results
-            if t.status != TestStatus.PASSED
-        ]
+        failed = [t for t in exec_res.test_results if t.status != TestStatus.PASSED]
 
         if not failed:
-            return "None" 
+            return "None"
 
-        return "\n".join([
-            f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
-            for t in failed[:2]
-            if t.status != TestStatus.ERROR
-        ])
+        return "\n".join(
+            [
+                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
+                for t in failed[:2]
+                if t.status != TestStatus.ERROR
+            ]
+        )
