@@ -1,6 +1,6 @@
 # app/ui/presenters/feedback/feedback_builder.py
 
-from typing import Optional, List
+from typing import Optional
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question_result import QuestionResult
