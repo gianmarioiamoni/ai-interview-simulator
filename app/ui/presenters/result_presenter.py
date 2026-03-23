@@ -1,5 +1,3 @@
-# app/ui/presenters/result_presenter.py
-
 from dataclasses import dataclass
 from typing import List, Optional
 import re
@@ -11,7 +9,6 @@ from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.test_execution_result import TestStatus
 
 from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
-
 from app.ui.adapters.execution_analysis_adapter import ExecutionAnalysisAdapter
 
 
@@ -54,7 +51,7 @@ class ResultPresenter:
         self,
         state: InterviewState,
         result: QuestionResult,
-        question_text: str,
+        _question_text: str,  # not used, for API compatibility
     ) -> ResultViewModel:
 
         evaluation = result.evaluation
@@ -68,9 +65,6 @@ class ResultPresenter:
             result,
             evaluation,
             execution,
-            execution_vm,
-            errors,
-            question_text,
         )
 
         score = evaluation.score if evaluation else 0
@@ -94,9 +88,6 @@ class ResultPresenter:
         result: QuestionResult,
         evaluation: Optional[QuestionEvaluation],
         execution: Optional[ExecutionResult],
-        execution_results: List[ExecutionResultView],
-        errors: List[str],
-        question_text: str,
     ) -> str:
 
         lines: List[str] = []
@@ -124,11 +115,7 @@ class ResultPresenter:
             clean_error = self._extract_clean_error(analysis.primary_error)
             fast_hint = self._generate_runtime_hint(clean_error)
 
-            attempts = state.attempts_by_question.get(result.question_id, 0)
-
-            ai_hint = None
-            if user_code:
-                ai_hint = self._get_ai_hint_from_result(result)
+            ai_hint = self._get_ai_hint_from_result(result)
 
             lines.append("## ⚠️ Runtime Error\n")
             lines.append(f"`{clean_error}`\n")
@@ -141,6 +128,23 @@ class ResultPresenter:
                 lines.append("### 🤖 AI Hint")
                 lines.append(f"**Explanation:** {ai_hint.explanation}")
                 lines.append(f"**Suggestion:** {ai_hint.suggestion}")
+
+            return "\n".join(lines)
+
+        # =========================================================
+        # SUCCESS (ALL TESTS PASSED)
+        # =========================================================
+
+        if execution and execution.success:
+
+            lines.append("## ✅ All tests passed\n")
+
+            if execution.total_tests:
+                lines.append(
+                    f"Passed {execution.passed_tests} / {execution.total_tests} tests\n"
+                )
+            else:
+                lines.append("Execution completed successfully\n")
 
             return "\n".join(lines)
 
@@ -159,7 +163,6 @@ class ResultPresenter:
             if failed_tests:
 
                 failed_tests_str = self._format_failed_tests(execution)
-
                 ai_hint = self._get_ai_hint_from_result(result)
 
                 lines.append("### Failed Tests")
@@ -169,6 +172,16 @@ class ResultPresenter:
                     lines.append("### 🤖 AI Hint")
                     lines.append(f"**Explanation:** {ai_hint.explanation}")
                     lines.append(f"**Suggestion:** {ai_hint.suggestion}")
+
+                return "\n".join(lines)
+
+        # =========================================================
+        # FALLBACK (SAFETY)
+        # =========================================================
+
+        lines.append(
+            "Execution completed. No issues detected but no detailed feedback available.\n"
+        )
 
         return "\n".join(lines)
 
@@ -231,4 +244,3 @@ class ResultPresenter:
         if match:
             return f"'{match.group(1)}' is not defined. Missing import."
         return ""
-
