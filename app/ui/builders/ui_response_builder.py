@@ -2,10 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
-from domain.contracts.test_execution_result import TestStatus, TestType
-from domain.contracts.execution_result import ExecutionStatus
 
-from app.ui.dto.question_dto import QuestionDTO
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.views.report_view import build_report_markdown
@@ -13,12 +10,15 @@ from app.ui.presenters.result_presenter import ResultPresenter
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
 from app.ui.state_machine.ui_state_machine import UIStateMachine
-from app.ui.types.ui_fields import (
-    DisplayFields,
-    VisibilityFields,
-    EditorVisibilityFields,
-    ButtonState,
-)
+
+from app.ui.response.sections.display_section import DisplaySection
+from app.ui.response.sections.feedback_section import FeedbackSection
+from app.ui.response.sections.counter_section import CounterSection
+from app.ui.response.sections.error_hint_builder import ErrorHintBuilder
+
+from app.ui.response.config.visibility_mapper import VisibilityMapper
+from app.ui.response.config.editor_mapper import EditorMapper
+from app.ui.response.config.button_mapper import ButtonMapper
 
 MAX_ATTEMPTS = 3
 
@@ -52,7 +52,7 @@ class UIResponseBuilder:
         raise RuntimeError(f"Unsupported UI state: {ui_state}")
 
     # =========================================================
-    # SETUP / REPORT / COMPLETION
+    # STATIC STATES
     # =========================================================
 
     def _build_setup(self, state: InterviewState) -> UIResponse:
@@ -107,17 +107,9 @@ class UIResponseBuilder:
         has_previous_answer = attempts > 0
         can_retry = attempts < MAX_ATTEMPTS
 
-        counter = self._build_counter(question, attempts)
-        feedback = self._build_feedback(state)
-
-        editor_value = ""
-        error_hint = ""
-
         last_answer = state.last_answer
 
-        # =========================================================
-        # EDITOR VALUE (SAFE)
-        # =========================================================
+        editor_value = ""
 
         if last_answer and last_answer.question_id == question.question_id:
             editor_value = last_answer.content
@@ -125,22 +117,18 @@ class UIResponseBuilder:
         if not editor_value and question.type == QuestionType.CODING:
             editor_value = "# Write your solution here"
 
-        # =========================================================
-        # ERROR HINT → SOLO RETRY (NO FEEDBACK)
-        # =========================================================
+        # -----------------------------------------------------
+        # Sections
+        # -----------------------------------------------------
 
-        is_feedback = ui_state == UIState.FEEDBACK
+        error_hint = ErrorHintBuilder.build(
+            state,
+            question,
+            has_previous_answer,
+            ui_state,
+        )
 
-        result = state.get_result_for_question(question.question_id)
-
-        if result and result.execution and has_previous_answer and not is_feedback:
-            error_hint = self._build_error_hint(result.execution)
-
-        # =========================================================
-        # BUILD UI
-        # =========================================================
-
-        display = self._build_display(
+        display = DisplaySection.build(
             state,
             question,
             ui_state,
@@ -148,9 +136,21 @@ class UIResponseBuilder:
             has_previous_answer,
         )
 
-        visibility = self._build_visibility(question)
-        editors = self._build_editor_visibility(question, ui_state)
-        buttons = self._build_buttons(state, ui_state, can_retry)
+        feedback = FeedbackSection.build(state, self._presenter)
+
+        counter = CounterSection.build(question, attempts)
+
+        # -----------------------------------------------------
+        # Config
+        # -----------------------------------------------------
+
+        visibility = VisibilityMapper.map(question)
+        editors = EditorMapper.map(question, ui_state)
+        buttons = ButtonMapper.map(state, ui_state, can_retry)
+
+        # -----------------------------------------------------
+        # Response
+        # -----------------------------------------------------
 
         return UIResponse(
             state=state,
@@ -170,164 +170,4 @@ class UIResponseBuilder:
             database_editor_value=(
                 editor_value if question.type == QuestionType.DATABASE else ""
             ),
-        )
-
-    # =========================================================
-    # DISPLAY
-    # =========================================================
-
-    def _build_display(
-        self,
-        state: InterviewState,
-        question: QuestionDTO,
-        ui_state: UIState,
-        error_hint: str,
-        has_previous_answer: bool,
-    ) -> DisplayFields:
-
-        last_answer = state.last_answer
-        is_feedback = ui_state == UIState.FEEDBACK
-
-        if is_feedback:
-            text = last_answer.content if last_answer else ""
-            prefix = "### Your Answer\n\n"
-
-        elif has_previous_answer:
-            text = last_answer.content if last_answer else ""
-            prefix = "### Fix Your Previous Answer\n\n"
-
-        else:
-            text = question.text
-            prefix = "### Question\n\n"
-
-        if error_hint and has_previous_answer:
-            prefix += f"⚠️ Fix this first:\n```\n{error_hint}\n```\n\n"
-
-        display_text = prefix + text
-
-        return {
-            "written_display": (
-                display_text if question.type == QuestionType.WRITTEN else ""
-            ),
-            "coding_display": (
-                display_text if question.type == QuestionType.CODING else ""
-            ),
-            "database_display": (
-                display_text if question.type == QuestionType.DATABASE else ""
-            ),
-        }
-
-    # =========================================================
-    # HELPERS
-    # =========================================================
-
-    def _build_counter(self, question: QuestionDTO, attempts: int) -> str:
-        return (
-            f"### Interview Progress\n\n"
-            f"Question {question.index} / {question.total}\n\n"
-            f"Area: {question.area}\n\n"
-            f"Attempts: {attempts} / {MAX_ATTEMPTS}"
-        )
-
-    def _build_feedback(self, state: InterviewState) -> str:
-
-        current_q = state.current_question
-
-        if not current_q or not state.is_question_processed(current_q):
-            return ""
-
-        result = state.get_result_for_question(current_q.id)
-
-        if not result:
-            return ""
-
-        vm = self._presenter.present(
-            state,
-            result,
-            current_q.prompt,
-        )
-
-        return vm.feedback_markdown
-
-    def _build_visibility(self, question: QuestionDTO) -> VisibilityFields:
-        return {
-            "written_visible": question.type == QuestionType.WRITTEN,
-            "coding_visible": question.type == QuestionType.CODING,
-            "database_visible": question.type == QuestionType.DATABASE,
-        }
-
-    def _build_editor_visibility(
-        self,
-        question: QuestionDTO,
-        ui_state: UIState,
-    ) -> EditorVisibilityFields:
-
-        show_editor = ui_state != UIState.FEEDBACK
-
-        return {
-            "written_editor_visible": question.type == QuestionType.WRITTEN
-            and show_editor,
-            "coding_editor_visible": question.type == QuestionType.CODING
-            and show_editor,
-            "database_editor_visible": question.type == QuestionType.DATABASE
-            and show_editor,
-        }
-
-    def _build_buttons(
-        self,
-        state: InterviewState,
-        ui_state: UIState,
-        can_retry: bool,
-    ) -> ButtonState:
-
-        is_feedback = ui_state == UIState.FEEDBACK
-
-        has_valid_state = state and state.current_question
-
-        return {
-            "show_submit": not is_feedback,
-            "show_submit_interactive": not is_feedback,
-            "show_retry": is_feedback and can_retry and has_valid_state,
-            "show_next": is_feedback,
-            "next_label": (
-                "Generate Report" if state.is_last_question else "Next Question"
-            ),
-            "retry_interactive": is_feedback and can_retry and has_valid_state,
-        }
-
-    def _build_error_hint(self, execution) -> str:
-
-        if not execution:
-            return ""
-
-        if execution.status == ExecutionStatus.RUNTIME_ERROR:
-            return execution.error or "Runtime error"
-
-        if not execution.test_results:
-            return ""
-
-        failed = [
-            t
-            for t in execution.test_results
-            if t.type == TestType.VISIBLE and t.status != TestStatus.PASSED
-        ]
-
-        if not failed:
-            failed = [
-                t for t in execution.test_results if t.status != TestStatus.PASSED
-            ]
-
-        if not failed:
-            return ""
-
-        t = failed[0]
-
-        if t.status == TestStatus.ERROR:
-            return f"Runtime error with input {t.args}"
-
-        return (
-            "Failing test:\n"
-            f"Input: {t.args}\n"
-            f"Expected: {repr(t.expected)}\n"
-            f"Actual: {repr(t.actual)}"
         )
