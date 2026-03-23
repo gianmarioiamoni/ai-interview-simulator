@@ -1,5 +1,6 @@
 # app/ui/dto/final_report_dto.py
 
+import json
 from typing import List, Dict, Optional
 from pydantic import BaseModel
 
@@ -11,6 +12,7 @@ from domain.contracts.confidence import Confidence
 from domain.contracts.ai_hint import AIHintInput
 from domain.contracts.hint_level import HintLevel
 from domain.contracts.test_execution_result import TestStatus
+from domain.contracts.execution_result import ExecutionResult
 
 from services.ai_hint_engine.ai_hint_service import AIHintService
 
@@ -116,31 +118,14 @@ class FinalReportDTO(BaseModel):
                         else ""
                     )
 
-                    failed_tests = []
-
-                    if exec_res.test_results:
-
-                        failed = [
-                            t
-                            for t in exec_res.test_results
-                            if t.status != TestStatus.PASSED
-                        ]
-
-                        failed_tests = [
-                            {
-                                "input": t.args,
-                                "expected": t.expected,
-                                "actual": t.actual,
-                            }
-                            for t in failed[:2]
-                        ]
+                    failed_tests_str = cls._format_failed_tests(exec_res)
 
                     hint_level = cls._resolve_hint_level(attempts)
 
                     hint_input = AIHintInput(
                         error=exec_res.error,
                         user_code=user_code[:1000],
-                        failed_tests=failed_tests,
+                        failed_tests=failed_tests_str,
                         question=q.prompt,
                         hint_level=hint_level,
                     )
@@ -238,3 +223,27 @@ class FinalReportDTO(BaseModel):
         if attempts == 2:
             return HintLevel.TARGETED
         return HintLevel.SOLUTION
+
+    # =========================================================
+    # FAILED TESTS
+    # =========================================================
+
+    @staticmethod
+    def _format_failed_tests(exec_res: ExecutionResult)-> str:
+        if not exec_res or not exec_res.test_results:
+            return "None"
+
+        failed = [
+            t
+            for t in exec_res.test_results
+            if t.status != TestStatus.PASSED
+        ]
+
+        if not failed:
+            return "None" 
+
+        return "\n".join([
+            f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
+            for t in failed[:2]
+            if t.status != TestStatus.ERROR
+        ])
