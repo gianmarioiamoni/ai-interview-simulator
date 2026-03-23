@@ -1,6 +1,5 @@
 # domain/contracts/interview_state/factory.py
 
-
 from typing import Self
 
 from domain.contracts.role import Role
