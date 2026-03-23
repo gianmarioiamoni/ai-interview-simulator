@@ -144,7 +144,6 @@ class FinalReportDTO(BaseModel):
             # ======================================================
 
             q_assessment = QuestionAssessmentDTO(
-                QuestionAssessmentDTO(
                     question_id=q.id,
                     score=score,
                     feedback=feedback,
@@ -155,13 +154,11 @@ class FinalReportDTO(BaseModel):
                     ai_hint_explanation=ai_hint_explanation,
                     ai_hint_suggestion=ai_hint_suggestion,
                 )
-            )
 
-            for qa in q_assessment:
-                assert isinstance(qa.feedback, str)
-                assert isinstance(qa.ai_hint_explanation, (str, type(None)))
-                assert isinstance(qa.ai_hint_suggestion, (str, type(None))) 
-
+            assert isinstance(q_assessment.feedback, str)
+            assert isinstance(q_assessment.ai_hint_explanation, (str, type(None)))
+            assert isinstance(q_assessment.ai_hint_suggestion, (str, type(None))) 
+            
             question_assessments.append(q_assessment)
 
         # =========================================================

@@ -210,7 +210,9 @@ class ResultPresenter:
                 hint_level=hint_level,
             )
 
-            return service.generate_hint(input_data, level=hint_level.value)
+            return service.generate_hint(
+                input_data, 
+                level=hint_level.value)
 
         except Exception:
             return None
