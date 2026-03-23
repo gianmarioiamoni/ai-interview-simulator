@@ -1,0 +1,248 @@
+# app/ui/presenters/result_presenter.py
+
+from dataclasses import dataclass
+from typing import List, Optional
+import re
+
+from domain.contracts.interview_state import InterviewState
+from domain.contracts.question_result import QuestionResult
+from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.test_execution_result import TestStatus
+
+from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
+from app.ui.adapters.execution_analysis_adapter import ExecutionAnalysisAdapter
+
+
+# =========================================================
+# VIEW MODELS
+# =========================================================
+
+
+@dataclass
+class ExecutionResultView:
+    status: str
+    success: bool
+    output: str
+    error: Optional[str]
+    passed_tests: int
+    total_tests: int
+    execution_time_ms: int
+
+
+@dataclass
+class ResultViewModel:
+    score: float
+    feedback_markdown: str
+    execution_results: List[ExecutionResultView]
+    errors: List[str]
+    passed: bool
+
+
+# =========================================================
+# PRESENTER
+# =========================================================
+
+
+class ResultPresenter:
+
+    def __init__(self):
+        self._analyzer = ExecutionAnalyzer()
+
+    def present(
+        self,
+        state: InterviewState,
+        result: QuestionResult,
+        _question_text: str,  # not used, for API compatibility
+    ) -> ResultViewModel:
+
+        evaluation = result.evaluation
+        execution = result.execution
+
+        execution_vm = self._map_execution_results([execution] if execution else [])
+        errors = self._extract_errors(execution_vm)
+
+        feedback_md = self._build_feedback_markdown(
+            state,
+            result,
+            evaluation,
+            execution,
+        )
+
+        score = evaluation.score if evaluation else 0
+        passed = evaluation.passed if evaluation else False
+
+        return ResultViewModel(
+            score=score,
+            feedback_markdown=feedback_md,
+            execution_results=execution_vm,
+            errors=errors,
+            passed=passed,
+        )
+
+    # =========================================================
+    # MARKDOWN
+    # =========================================================
+
+    def _build_feedback_markdown(
+        self,
+        state: InterviewState,
+        result: QuestionResult,
+        evaluation: Optional[QuestionEvaluation],
+        execution: Optional[ExecutionResult],
+    ) -> str:
+
+        lines: List[str] = []
+        user_code = state.last_answer.content if state.last_answer else ""
+
+        analysis_raw = self._analyzer.analyze(execution) if execution else None
+        analysis = ExecutionAnalysisAdapter.to_dto(analysis_raw)
+
+        # =========================================================
+        # WRITTEN
+        # =========================================================
+
+        if evaluation and not execution:
+            lines.append(f"## Score: {evaluation.score:.1f}/100\n")
+            lines.append("### Feedback")
+            lines.append(evaluation.feedback + "\n")
+            return "\n".join(lines)
+
+        # =========================================================
+        # RUNTIME ERROR
+        # =========================================================
+
+        if analysis and analysis.has_runtime_error:
+
+            clean_error = self._extract_clean_error(analysis.primary_error)
+            fast_hint = self._generate_runtime_hint(clean_error)
+
+            ai_hint = self._get_ai_hint_from_result(result)
+
+            lines.append("## ⚠️ Runtime Error\n")
+            lines.append(f"`{clean_error}`\n")
+
+            if fast_hint:
+                lines.append("### 💡 Quick Hint")
+                lines.append(fast_hint + "\n")
+
+            if ai_hint:
+                lines.append("### 🤖 AI Hint")
+                lines.append(f"**Explanation:** {ai_hint.explanation}")
+                lines.append(f"**Suggestion:** {ai_hint.suggestion}")
+
+            return "\n".join(lines)
+
+        # =========================================================
+        # SUCCESS (ALL TESTS PASSED)
+        # =========================================================
+
+        if execution and execution.success:
+
+            lines.append("## ✅ All tests passed\n")
+
+            if execution.total_tests:
+                lines.append(
+                    f"Passed {execution.passed_tests} / {execution.total_tests} tests\n"
+                )
+            else:
+                lines.append("Execution completed successfully\n")
+
+            return "\n".join(lines)
+
+        # =========================================================
+        # LOGIC FAILURES
+        # =========================================================
+
+        if execution and execution.test_results:
+
+            failed_tests = [
+                t
+                for t in execution.test_results
+                if t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
+            ]
+
+            if failed_tests:
+
+                failed_tests_str = self._format_failed_tests(execution)
+                ai_hint = self._get_ai_hint_from_result(result)
+
+                lines.append("### Failed Tests")
+                lines.append(failed_tests_str + "\n")
+
+                if ai_hint:
+                    lines.append("### 🤖 AI Hint")
+                    lines.append(f"**Explanation:** {ai_hint.explanation}")
+                    lines.append(f"**Suggestion:** {ai_hint.suggestion}")
+
+                return "\n".join(lines)
+
+        # =========================================================
+        # FALLBACK (SAFETY)
+        # =========================================================
+
+        lines.append(
+            "Execution completed. No issues detected but no detailed feedback available.\n"
+        )
+
+        return "\n".join(lines)
+
+    # =========================================================
+    # HELPERS
+    # =========================================================
+
+    def _get_ai_hint_from_result(self, result):
+
+        if not result or not result.ai_hint:
+            return None
+
+        return result.ai_hint
+
+    def _format_failed_tests(self, execution: ExecutionResult) -> str:
+
+        if not execution or not execution.test_results:
+            return "None"
+
+        failed = [
+            t
+            for t in execution.test_results
+            if t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
+        ]
+
+        if not failed:
+            return "None"
+
+        return "\n".join(
+            [
+                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
+                for t in failed[:2]
+            ]
+        )
+
+    def _map_execution_results(self, results):
+        return [
+            ExecutionResultView(
+                status=r.status.value,
+                success=r.success,
+                output=r.output,
+                error=r.error,
+                passed_tests=r.passed_tests,
+                total_tests=r.total_tests,
+                execution_time_ms=r.execution_time_ms,
+            )
+            for r in results
+        ]
+
+    def _extract_errors(self, execution_results):
+        return [r.error for r in execution_results if r.error]
+
+    def _extract_clean_error(self, error: Optional[str]) -> str:
+        if not error:
+            return ""
+        return error.strip().splitlines()[-1]
+
+    def _generate_runtime_hint(self, error: str) -> str:
+        match = re.search(r"NameError: name '(.+?)' is not defined", error)
+        if match:
+            return f"'{match.group(1)}' is not defined. Missing import."
+        return ""
