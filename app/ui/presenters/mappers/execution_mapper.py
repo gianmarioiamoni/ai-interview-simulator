@@ -2,7 +2,7 @@
 
 from typing import List
 from domain.contracts.execution_result import ExecutionResult
-from app.ui.presenters.result_presenter import ExecutionResultView
+from app.ui.view_models.execution_result_view import ExecutionResultView
 
 
 class ExecutionMapper:
