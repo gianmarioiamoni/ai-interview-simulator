@@ -2,6 +2,12 @@
 
 from domain.contracts.test_execution_result import TestStatus
 
+from app.ui.presenters.feedback.feedback_models import (
+    FeedbackBlockResult,
+    FeedbackSignal,
+    LearningSuggestion,
+)
+
 
 class FailureBlock:
 
@@ -15,7 +21,9 @@ class FailureBlock:
             for t in execution.test_results
         )
 
-    def build(self, state, result, evaluation, execution, analysis) -> str:
+    def build(
+        self, state, result, evaluation, execution, analysis
+    ) -> FeedbackBlockResult:
 
         failed = [
             t
@@ -32,11 +40,42 @@ class FailureBlock:
 
         ai_hint = result.ai_hint if result else None
 
-        lines = ["### Failed Tests", failed_str + "\n"]
+        signals = [
+            FeedbackSignal(
+                severity="error",
+                message="One or more test cases failed",
+            )
+        ]
+
+        learning = [
+            LearningSuggestion(
+                topic="Algorithm correctness",
+                action="Analyze failing cases and adjust logic accordingly",
+            )
+        ]
+
+        content_lines = [
+            "### Failed Tests",
+            failed_str,
+        ]
 
         if ai_hint:
-            lines.append("### 🤖 AI Hint")
-            lines.append(f"**Explanation:** {ai_hint.explanation}")
-            lines.append(f"**Suggestion:** {ai_hint.suggestion}")
+            content_lines.extend(
+                [
+                    "",
+                    "### 🤖 AI Hint",
+                    f"**Explanation:** {ai_hint.explanation}",
+                    f"**Suggestion:** {ai_hint.suggestion}",
+                ]
+            )
 
-        return "\n".join(lines)
+        content = "\n".join(content_lines)
+
+        return FeedbackBlockResult(
+            title="Logic Errors Detected",
+            content=content,
+            severity="error",
+            confidence=0.9,
+            signals=signals,
+            learning=learning,
+        )

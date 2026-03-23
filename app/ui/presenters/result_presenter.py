@@ -15,18 +15,36 @@ class ResultPresenter:
         evaluation = result.evaluation
         execution = result.execution
 
+        # -----------------------------------------------------
+        # Execution mapping
+        # -----------------------------------------------------
+
         execution_vm = ExecutionMapper.map([execution] if execution else [])
         errors = [r.error for r in execution_vm if r.error]
 
-        feedback_md = self._feedback_builder.build(
+        # -----------------------------------------------------
+        # AI-aware feedback pipeline
+        # -----------------------------------------------------
+
+        feedback_bundle = self._feedback_builder.build(
             state,
             result,
             evaluation,
             execution,
         )
 
+        feedback_md = feedback_bundle.markdown
+
+        # -----------------------------------------------------
+        # Evaluation
+        # -----------------------------------------------------
+
         score = evaluation.score if evaluation else 0
         passed = evaluation.passed if evaluation else False
+
+        # -----------------------------------------------------
+        # ViewModel
+        # -----------------------------------------------------
 
         return ResultViewModel(
             score=score,

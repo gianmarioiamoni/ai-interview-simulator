@@ -1,48 +1,66 @@
-# app/ui/presenters/feedback/feedback_builder.py
+# feedback_builder.py
 
-from typing import Optional
-
-from domain.contracts.interview_state import InterviewState
-from domain.contracts.question_result import QuestionResult
-from domain.contracts.question_evaluation import QuestionEvaluation
-from domain.contracts.execution_result import ExecutionResult
-
-from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
-from app.ui.adapters.execution_analysis_adapter import ExecutionAnalysisAdapter
-
-from app.ui.presenters.feedback.blocks.runtime_error_block import RuntimeErrorBlock
-from app.ui.presenters.feedback.blocks.success_block import SuccessBlock
-from app.ui.presenters.feedback.blocks.failure_block import FailureBlock
-from app.ui.presenters.feedback.blocks.written_block import WrittenBlock
-from app.ui.presenters.feedback.blocks.fallback_block import FallbackBlock
+from typing import List
+from app.ui.presenters.feedback.feedback_models import FeedbackBundle, FeedbackBlockResult
 
 
 class FeedbackBuilder:
 
-    def __init__(self) -> None:
-        self._analyzer = ExecutionAnalyzer()
+    def build(self, state, result, evaluation, execution) -> FeedbackBundle:
 
-    def build(
-        self,
-        state: InterviewState,
-        result: QuestionResult,
-        evaluation: Optional[QuestionEvaluation],
-        execution: Optional[ExecutionResult],
-    ) -> str:
+        analysis = self._analyze(execution)
 
-        analysis_raw = self._analyzer.analyze(execution) if execution else None
-        analysis = ExecutionAnalysisAdapter.to_dto(analysis_raw)
+        blocks = self._collect_blocks(
+            state, result, evaluation, execution, analysis
+        )
 
-        blocks = [
-            WrittenBlock(),
-            RuntimeErrorBlock(),
-            SuccessBlock(),
-            FailureBlock(),
-            FallbackBlock(),
-        ]
+        overall_severity = self._aggregate_severity(blocks)
+        overall_confidence = self._aggregate_confidence(blocks)
 
-        for block in blocks:
-            if block.can_handle(result, evaluation, execution, analysis):
-                return block.build(state, result, evaluation, execution, analysis)
+        markdown = self._render_markdown(blocks)
 
-        return ""
+        return FeedbackBundle(
+            blocks=blocks,
+            overall_severity=overall_severity,
+            overall_confidence=overall_confidence,
+            markdown=markdown,
+        )
+
+    # -----------------------------------------------------
+
+    def _collect_blocks(self, state, result, evaluation, execution, analysis) -> List[FeedbackBlockResult]:
+
+        collected = []
+
+        for block in self._blocks:
+            if block.can_handle(...):
+                collected.append(block.build(...))
+
+        return collected
+
+    def _aggregate_severity(self, blocks):
+
+        if any(b.severity == "error" for b in blocks):
+            return "error"
+        if any(b.severity == "warning" for b in blocks):
+            return "warning"
+        return "info"
+
+
+    def _aggregate_confidence(self, blocks):
+
+        if not blocks:
+            return 0.0
+
+        return round(sum(b.confidence for b in blocks) / len(blocks), 2)
+
+    def _render_markdown(self, blocks):
+
+        lines = []
+
+        for b in blocks:
+            lines.append(f"## {b.title}")
+            lines.append(b.content)
+            lines.append("")
+
+        return "\n".join(lines)
