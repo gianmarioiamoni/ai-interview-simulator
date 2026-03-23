@@ -2,6 +2,7 @@
 
 from app.ui.presenters.mappers.execution_mapper import ExecutionMapper
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
+from app.ui.view_models.result_view_model import ResultViewModel
 
 
 class ResultPresenter:
