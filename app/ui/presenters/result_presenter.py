@@ -8,11 +8,8 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.question_result import QuestionResult
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
-from domain.contracts.test_execution_result import TestStatus, TestType
-from domain.contracts.ai_hint import AIHintInput
-from domain.contracts.hint_level import HintLevel
+from domain.contracts.test_execution_result import TestStatus
 
-from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
 
 from app.ui.adapters.execution_analysis_adapter import ExecutionAnalysisAdapter
@@ -128,17 +125,10 @@ class ResultPresenter:
             fast_hint = self._generate_runtime_hint(clean_error)
 
             attempts = state.attempts_by_question.get(result.question_id, 0)
-            hint_level = self._resolve_hint_level(attempts)
 
             ai_hint = None
             if user_code:
-                ai_hint = self._generate_ai_hint(
-                    error=clean_error,
-                    user_code=user_code,
-                    failed_tests_str="None",
-                    question=question_text,
-                    hint_level=hint_level,
-                )
+                ai_hint = self._get_ai_hint_from_result(result)
 
             lines.append("## ⚠️ Runtime Error\n")
             lines.append(f"`{clean_error}`\n")
@@ -170,16 +160,7 @@ class ResultPresenter:
 
                 failed_tests_str = self._format_failed_tests(execution)
 
-                attempts = state.attempts_by_question.get(result.question_id, 0)
-                hint_level = self._resolve_hint_level(attempts)
-
-                ai_hint = self._generate_ai_hint(
-                    error=None,
-                    user_code=user_code,
-                    failed_tests_str=failed_tests_str,
-                    question=question_text,
-                    hint_level=hint_level,
-                )
+                ai_hint = self._get_ai_hint_from_result(result)
 
                 lines.append("### Failed Tests")
                 lines.append(failed_tests_str + "\n")
@@ -195,27 +176,12 @@ class ResultPresenter:
     # HELPERS
     # =========================================================
 
-    def _generate_ai_hint(
-        self, error, user_code, failed_tests_str, question, hint_level
-    ):
+    def _get_ai_hint_from_result(self, result):
 
-        try:
-            service = AIHintService()
-
-            input_data = AIHintInput(
-                error=error,
-                user_code=user_code[:1000],
-                failed_tests=failed_tests_str,
-                question=question,
-                hint_level=hint_level,
-            )
-
-            return service.generate_hint(
-                input_data, 
-                level=hint_level.value)
-
-        except Exception:
+        if not result or not result.ai_hint:
             return None
+
+        return result.ai_hint
 
     def _format_failed_tests(self, execution: ExecutionResult) -> str:
 
@@ -266,9 +232,3 @@ class ResultPresenter:
             return f"'{match.group(1)}' is not defined. Missing import."
         return ""
 
-    def _resolve_hint_level(self, attempts: int) -> HintLevel:
-        if attempts <= 1:
-            return HintLevel.BASIC
-        if attempts == 2:
-            return HintLevel.TARGETED
-        return HintLevel.SOLUTION
