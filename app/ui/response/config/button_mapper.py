@@ -19,12 +19,10 @@ class ButtonMapper:
         has_valid_state = bool(state and state.current_question)
 
         # -----------------------------------------------------
-        # Derive quality 
+        # QUALITY (SAFE)
         # -----------------------------------------------------
-        if not state.last_feedback_bundle:
-            return "unknown"
 
-        quality = state.last_feedback_bundle.overall_quality 
+        quality = ButtonMapper._get_quality(state)
 
         # -----------------------------------------------------
         # Adaptive rules
@@ -65,7 +63,6 @@ class ButtonMapper:
 
         return state.last_feedback_bundle.overall_quality or "unknown"
 
-
     # =========================================================
     # RULES
     # =========================================================
@@ -85,7 +82,7 @@ class ButtonMapper:
         if not is_feedback or not has_valid_state:
             return False
 
-        return quality in ["incorrect", "partial"] and can_retry 
+        return quality in ["incorrect", "partial"] and can_retry
 
     @staticmethod
     def _show_next(
@@ -110,8 +107,5 @@ class ButtonMapper:
 
         if quality == "inefficient":
             return "Next (Improve Later)"
-
-        if quality == "unknown":
-            return "Next Question"
 
         return "Next Question"
