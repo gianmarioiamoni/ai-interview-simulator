@@ -34,10 +34,6 @@ def retry_answer(state: InterviewState):
     q = new_state.current_question
 
     if q:
-        new_state.attempts_by_question[q.id] = (
-            new_state.attempts_by_question.get(q.id, 0) + 1
-        )
-
         new_state.clear_result_for_question(q.id)
 
     response = build_ui_response_from_state(new_state)

@@ -46,7 +46,7 @@ class EvaluateAnswerUseCase:
         if not result:
             return state
 
-        attempts = state.attempts_by_question.get(question.id, 0)
+        attempts = state.get_attempt_for_question(question.id)
 
         hint_level = self._resolve_hint_level(attempts)
 
