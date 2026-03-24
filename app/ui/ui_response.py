@@ -15,7 +15,10 @@ class UIResponse:
 
     # HEADER
     question_counter: str = ""
-    feedback: str = ""
+
+    # FEEDBACK 
+    feedback_markdown: str = ""
+    feedback_quality: Optional[str] = None
 
     # DISPLAY
     written_display: str = ""
@@ -34,6 +37,7 @@ class UIResponse:
 
     # RETRY
     retry_interactive: bool = True
+
     # STATE
     ui_state: Optional[UIState] = None
 
@@ -54,7 +58,6 @@ class UIResponse:
     database_editor_value: str = ""
 
     def to_gradio_outputs(self) -> List[Any]:
-        # Build the exact output list expected by bindings
 
         setup_update, interview_update, completion_update, report_update = route_ui(
             self.ui_state
@@ -65,8 +68,8 @@ class UIResponse:
             self.state,
             # ---------------- HEADER / FEEDBACK
             self.question_counter,
-            self.feedback,
-            # ---------------- DISPLAY (NEW)
+            self.feedback_markdown,  # ✅ FIX
+            # ---------------- DISPLAY
             self.written_display,
             self.coding_display,
             self.database_display,
@@ -87,16 +90,27 @@ class UIResponse:
                 visible=self.show_submit,
                 interactive=self.show_submit_interactive,
             ),
-            gr.update(visible=self.show_retry, interactive=self.retry_interactive),
-            gr.update(visible=self.show_next, value=self.next_label),
-            # ---------------- RESET INPUT BOXES + VISIBILITY
             gr.update(
-                visible=self.written_editor_visible, 
-                value=self.written_editor_value if self.written_editor_visible else ""),
+                visible=self.show_retry,
+                interactive=self.retry_interactive,
+            ),
             gr.update(
-                visible=self.coding_editor_visible, 
-                value=self.coding_editor_value if self.coding_editor_visible else ""),
+                visible=self.show_next,
+                value=self.next_label,
+            ),
+            # ---------------- EDITORS
             gr.update(
-                visible=self.database_editor_visible, 
-                value=self.database_editor_value if self.database_editor_visible else ""),
+                visible=self.written_editor_visible,
+                value=self.written_editor_value if self.written_editor_visible else "",
+            ),
+            gr.update(
+                visible=self.coding_editor_visible,
+                value=self.coding_editor_value if self.coding_editor_visible else "",
+            ),
+            gr.update(
+                visible=self.database_editor_visible,
+                value=(
+                    self.database_editor_value if self.database_editor_visible else ""
+                ),
+            ),
         ]
