@@ -7,10 +7,16 @@ from app.ui.ui_response import UIResponse
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.state_handlers.helpers import ensure_final_evaluation
 
-from app.runtime.interview_runtime import get_runtime_graph
+from app.application.flow.interview_flow_engine import InterviewFlowEngine
 
 MAX_ATTEMPTS = 3
 
+flow = InterviewFlowEngine()
+
+
+# =========================================================
+# RETRY 
+# =========================================================
 
 def retry_answer(state: InterviewState):
 
@@ -31,13 +37,18 @@ def retry_answer(state: InterviewState):
         new_state.attempts_by_question[q.id] = (
             new_state.attempts_by_question.get(q.id, 0) + 1
         )
-        
+
         new_state.clear_result_for_question(q.id)
 
     response = build_ui_response_from_state(new_state)
     response.ui_state = UIState.QUESTION
 
     return response
+
+
+# =========================================================
+# NEXT (FIXED)
+# =========================================================
 
 
 def next_question(state: InterviewState):
@@ -51,12 +62,15 @@ def next_question(state: InterviewState):
 
         return response.to_gradio_outputs()
 
-    state.advance_question()
-
-    graph = get_runtime_graph()
-    state = graph.invoke(state)
+    # use FlowEngine instead of manual logic
+    state = flow.next(state)
 
     return build_ui_response_from_state(state).to_gradio_outputs()
+
+
+# =========================================================
+# NEW INTERVIEW (FIXED)
+# =========================================================
 
 
 def new_interview():
@@ -64,7 +78,8 @@ def new_interview():
     return UIResponse(
         state=None,
         question_counter="",
-        feedback="",
+        feedback_markdown="",  
+        feedback_quality=None,
         written_display="",
         coding_display="",
         database_display="",
