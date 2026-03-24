@@ -6,6 +6,8 @@ from domain.contracts.interview_state import InterviewState
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
+from infrastructure.llm.llm_factory import get_llm
+
 
 def submit_answer(state: InterviewState, answer: str):
 
@@ -26,10 +28,15 @@ def submit_answer(state: InterviewState, answer: str):
     )
 
     # -----------------------------------------------------
-    # USE CASE (CORE LOGIC)
+    # INIT USE CASE (WITH LLM FACTORY)
     # -----------------------------------------------------
 
-    use_case = EvaluateAnswerUseCase()
+    llm = get_llm()
+    use_case = EvaluateAnswerUseCase(llm)
+
+    # -----------------------------------------------------
+    # EXECUTE
+    # -----------------------------------------------------
 
     state = use_case.execute(state, event)
 
