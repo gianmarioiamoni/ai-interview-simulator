@@ -40,7 +40,12 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
         interview_id="session-1",
     )
 
-    graph = get_runtime_graph()
-    state = graph.invoke(state)
+    # -----------------------------------------------------
+    # FIX: DO NOT RUN FULL GRAPH HERE
+    # -----------------------------------------------------
+
+    # initialize first question
+    if state.questions:
+        state.current_question = state.questions[0]
 
     return build_ui_response_from_state(state)
