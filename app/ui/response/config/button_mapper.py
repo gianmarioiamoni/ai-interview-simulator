@@ -21,8 +21,10 @@ class ButtonMapper:
         # -----------------------------------------------------
         # Derive quality 
         # -----------------------------------------------------
+        if not state.last_feedback_bundle:
+            return "unknown"
 
-        quality = ButtonMapper._get_quality(state)
+        quality = state.last_feedback_bundle.overall_quality 
 
         # -----------------------------------------------------
         # Adaptive rules

@@ -1,7 +1,7 @@
-# app/ui/presenters/feedback/feedback_models.py
+# app/contracts/feedback_bundle.py
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 
 # =========================================================
@@ -26,6 +26,17 @@ class LearningSuggestion:
 
 
 # =========================================================
+# QUALITY
+# =========================================================
+
+@dataclass
+class FeedbackQuality:
+    # "incorrect" | "partial" | "correct" | "optimal" | "inefficient"
+    level: str
+    explanation: str
+
+
+# =========================================================
 # BLOCK RESULT
 # =========================================================
 
@@ -42,8 +53,8 @@ class FeedbackBlockResult:
     signals: List[FeedbackSignal]
     learning: List[LearningSuggestion]
 
-    # quality info
-    quality: FeedbackQuality | None = None
+    # optional quality
+    quality: Optional[FeedbackQuality] = None
 
 
 # =========================================================
@@ -57,17 +68,7 @@ class FeedbackBundle:
     # aggregated values
     overall_severity: str
     overall_confidence: float
+    overall_quality: Optional[str]
 
-    # final UI rendering (backward compatibility)
+    # backward compatibility (UI)
     markdown: str
-
-
-# =========================================================
-# QUALITY
-# =========================================================
-
-@dataclass
-class FeedbackQuality:
-    # "incorrect" | "partial" | "correct" | "optimal" | "inefficient"
-    level: str
-    explanation: str
