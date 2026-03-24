@@ -11,6 +11,8 @@ from domain.contracts.interview_type import InterviewType
 from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.role import Role
 
+from app.ui.presenters.feedback.feedback_models import FeedbackBundle
+
 
 class InterviewStateBase(BaseModel):
 
@@ -38,6 +40,8 @@ class InterviewStateBase(BaseModel):
     events: list = Field(default_factory=list)
 
     attempts_by_question: dict[str, int] = Field(default_factory=dict)
+
+    last_feedback_bundle: Optional[FeedbackBundle] = None
 
     model_config = {
         "extra": "forbid",

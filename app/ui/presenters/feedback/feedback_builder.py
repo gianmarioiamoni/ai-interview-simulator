@@ -73,6 +73,7 @@ class FeedbackBuilder:
 
         overall_severity = self._aggregate_severity(blocks)
         overall_confidence = self._aggregate_confidence(blocks)
+        overall_quality = self._aggregate_quality(blocks)
 
         # -----------------------------------------------------
         # Render
@@ -84,6 +85,7 @@ class FeedbackBuilder:
             blocks=blocks,
             overall_severity=overall_severity,
             overall_confidence=overall_confidence,
+            overall_quality=overall_quality,
             markdown=markdown,
         )
 
@@ -143,12 +145,16 @@ class FeedbackBuilder:
 
     def _aggregate_quality(self, blocks):
 
-        priority = ["incorrect", "partial", "correct", "optimal"]
+        if not blocks:
+            return None
+
+        # ASC priority order
+        priority = ["incorrect", "partial", "inefficient", "correct", "optimal"]
 
         levels = [b.quality.level for b in blocks if b.quality]
 
         if not levels:
-            return None, None
+            return None
 
         # take the worst
         for level in priority:
