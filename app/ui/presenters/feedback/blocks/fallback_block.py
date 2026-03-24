@@ -4,22 +4,21 @@ from app.ui.presenters.feedback.feedback_models import (
     FeedbackBlockResult,
     FeedbackSignal,
     LearningSuggestion,
+    FeedbackQuality,
 )
 
 
 class FallbackBlock:
 
-    def can_handle(self, result, evaluation, execution, analysis) -> bool:
+    def can_handle(self, _result, _evaluation, _execution, _analysis) -> bool:
         return True  # always last
 
-    def build(
-        self, state, result, evaluation, execution, analysis
-    ) -> FeedbackBlockResult:
+    def build(self, _state, _result, _evaluation, _execution, _analysis):
 
         signals = [
             FeedbackSignal(
                 severity="info",
-                message="No detailed feedback available",
+                message="Limited feedback available",
             )
         ]
 
@@ -30,13 +29,17 @@ class FallbackBlock:
             )
         ]
 
-        content = "Execution completed. No issues detected but no detailed feedback available."
+        content = "Execution completed, but no detailed feedback could be generated."
 
         return FeedbackBlockResult(
             title="General Feedback",
             content=content,
             severity="info",
-            confidence=0.5,
+            confidence=0.4,
             signals=signals,
             learning=learning,
+            quality=FeedbackQuality(
+                level="partial",
+                explanation="System could not fully evaluate the solution.",
+            ),
         )
