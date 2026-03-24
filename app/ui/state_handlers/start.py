@@ -8,11 +8,12 @@ from app.ui.sample_data_loader import load_sample_questions
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 from domain.contracts.interview_state import InterviewState
 
-from app.runtime.interview_runtime import get_runtime_graph
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
+from app.application.flow.interview_flow_engine import InterviewFlowEngine
 
 test_generator = AITestGenerator()
+flow = InterviewFlowEngine()
 
 
 def start_interview(role: str, interview_type: str, company: str, language: str):
@@ -40,12 +41,7 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
         interview_id="session-1",
     )
 
-    # -----------------------------------------------------
-    # FIX: DO NOT RUN FULL GRAPH HERE
-    # -----------------------------------------------------
-
-    # initialize first question
-    if state.questions:
-        state.current_question = state.questions[0]
+    # ✅ FLOW ENGINE
+    state = flow.start(state)
 
     return build_ui_response_from_state(state)
