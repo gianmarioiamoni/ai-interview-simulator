@@ -10,7 +10,7 @@ from domain.contracts.execution_result import ExecutionResult
 from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
 from app.ui.adapters.execution_analysis_adapter import ExecutionAnalysisAdapter
 
-from app.ui.presenters.feedback.feedback_models import FeedbackBundle
+from app.contracts.feedback_bundle import FeedbackBundle
 from app.ui.presenters.feedback.blocks.runtime_error_block import RuntimeErrorBlock
 from app.ui.presenters.feedback.blocks.success_block import SuccessBlock
 from app.ui.presenters.feedback.blocks.failure_block import FailureBlock

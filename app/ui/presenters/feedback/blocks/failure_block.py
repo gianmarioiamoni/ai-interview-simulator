@@ -1,8 +1,7 @@
 # app/ui/presenters/feedback/blocks/failure_block.py
 
 from domain.contracts.test_execution_result import TestStatus
-
-from app.ui.presenters.feedback.feedback_models import (
+from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
     LearningSuggestion,

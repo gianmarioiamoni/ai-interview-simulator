@@ -1,7 +1,7 @@
 # domain/contracts/interview_state/base.py
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Any
 
 from domain.contracts.question import Question
 from domain.contracts.answer import Answer
@@ -10,8 +10,6 @@ from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.role import Role
-
-from app.ui.presenters.feedback.feedback_models import FeedbackBundle
 
 
 class InterviewStateBase(BaseModel):
@@ -41,7 +39,7 @@ class InterviewStateBase(BaseModel):
 
     attempts_by_question: dict[str, int] = Field(default_factory=dict)
 
-    last_feedback_bundle: Optional[FeedbackBundle] = None
+    last_feedback_bundle: Optional[Any] = None
 
     model_config = {
         "extra": "forbid",

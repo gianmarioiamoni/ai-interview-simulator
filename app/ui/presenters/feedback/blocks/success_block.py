@@ -1,6 +1,6 @@
 # app/ui/presenters/feedback/blocks/success_block.py
 
-from app.ui.presenters.feedback.feedback_models import (
+from app.contracts.feedback_bundle import (
     FeedbackQuality,
     FeedbackSignal,
     LearningSuggestion,
