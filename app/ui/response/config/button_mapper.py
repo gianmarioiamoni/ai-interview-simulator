@@ -58,7 +58,7 @@ class ButtonMapper:
     @staticmethod
     def _get_quality(state: InterviewState) -> str:
 
-        if not state or not state.last_feedback_bundle:
+        if not state or not getattr(state, "last_feedback_bundle", None):
             return "unknown"
 
         return state.last_feedback_bundle.overall_quality or "unknown"
@@ -94,7 +94,7 @@ class ButtonMapper:
         if not is_feedback:
             return False
 
-        return quality not in ["incorrect"]
+        return quality in ["partial", "correct", "optimal", "inefficient"]
 
     # =========================================================
     # LABELS
@@ -108,5 +108,8 @@ class ButtonMapper:
 
         if quality == "inefficient":
             return "Next (Improve Later)"
+
+        if quality == "unknown":
+            return "Next Question"
 
         return "Next Question"
