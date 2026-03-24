@@ -118,7 +118,14 @@ class UIResponseBuilder:
             editor_value = "# Write your solution here"
 
         # -----------------------------------------------------
-        # Sections
+        # FEEDBACK FIRST (important)
+        # -----------------------------------------------------
+
+        feedback_markdown = FeedbackSection.build(state, self._presenter)
+        feedback_bundle = getattr(state, "last_feedback_bundle", None)
+
+        # -----------------------------------------------------
+        # OTHER SECTIONS
         # -----------------------------------------------------
 
         error_hint = ErrorHintBuilder.build(
@@ -136,12 +143,10 @@ class UIResponseBuilder:
             has_previous_answer,
         )
 
-        feedback = FeedbackSection.build(state, self._presenter)
-
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
 
         # -----------------------------------------------------
-        # Config
+        # CONFIG
         # -----------------------------------------------------
 
         visibility = VisibilityMapper.map(question)
@@ -149,13 +154,16 @@ class UIResponseBuilder:
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
         # -----------------------------------------------------
-        # Response
+        # RESPONSE
         # -----------------------------------------------------
 
         return UIResponse(
             state=state,
             question_counter=counter,
-            feedback=feedback,
+            feedback_markdown=feedback_markdown,
+            feedback_quality=(
+                feedback_bundle.overall_quality if feedback_bundle else None
+            ),
             ui_state=ui_state,
             **buttons,
             **display,
