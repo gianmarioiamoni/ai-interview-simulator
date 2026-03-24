@@ -56,9 +56,14 @@ class FailureBlock:
         ]
 
         content_lines = [
-            "### Failed Tests",
+            "### ❌ Failed Tests",
+            "",
             failed_str,
         ]
+
+        if len(failed) > 2:
+            content_lines.append("")
+            content_lines.append(f"...and {len(failed) - 2} more failing test cases")
 
         if ai_hint:
             content_lines.extend(

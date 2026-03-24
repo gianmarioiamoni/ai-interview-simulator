@@ -60,6 +60,13 @@ class RuntimeErrorBlock:
             "",
         ]
 
+        if "Counter" in clean_error:
+            lines.extend([
+                "",
+                "💡 Suggested fix:",
+                "`from collections import Counter`",
+            ])
+
         # AI Hint
         if ai_hint:
             lines.extend(
