@@ -14,27 +14,25 @@ class InterviewFlowEngine:
     # =========================================================
 
     def start(self, state: InterviewState) -> InterviewState:
-        # initialize first question only
 
-        if state.questions:
-            state.current_question = state.questions[0]
+        if not state.questions:
+            return state
 
-        return state
+        # IMMUTABLE UPDATE
+        return state.with_current_question(state.questions[0], 0)
 
     # =========================================================
-    # SUBMIT ANSWER
+    # SUBMIT
     # =========================================================
 
-    def submit_answer(self, state: InterviewState) -> InterviewState:
-        # run full graph (evaluation + feedback)
-
+    def submit(self, state: InterviewState) -> InterviewState:
         return self._graph.invoke(state)
 
     # =========================================================
-    # NEXT QUESTION
+    # NEXT
     # =========================================================
 
-    def next_question(self, state: InterviewState) -> InterviewState:
+    def next(self, state: InterviewState) -> InterviewState:
 
         if not state.current_question:
             return state
@@ -53,10 +51,20 @@ class InterviewFlowEngine:
 
         next_index = current_index + 1
 
+        # -----------------------------------------------------
+        # END
+        # -----------------------------------------------------
+
         if next_index >= len(state.questions):
-            state.is_completed = True
-            return state
+            return state.model_copy(update={"is_completed": True})
 
-        state.current_question = state.questions[next_index]
+        # -----------------------------------------------------
+        # NEXT QUESTION
+        # -----------------------------------------------------
 
-        return state
+        return state.model_copy(
+            update={
+                "current_question": state.questions[next_index],
+                "current_question_index": next_index,
+            }
+        )

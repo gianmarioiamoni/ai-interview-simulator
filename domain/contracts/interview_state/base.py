@@ -41,6 +41,14 @@ class InterviewStateBase(BaseModel):
 
     last_feedback_bundle: Optional[Any] = None
 
+    def with_current_question(self, question, index):
+        return self.model_copy(
+            update={
+                "current_question": question,
+                "current_question_index": index,
+            }
+        )
+
     model_config = {
         "extra": "forbid",
     }
