@@ -6,6 +6,7 @@ from app.ui.presenters.feedback.feedback_models import (
     FeedbackBlockResult,
     FeedbackSignal,
     LearningSuggestion,
+    FeedbackQuality,
 )
 
 
@@ -71,6 +72,11 @@ class FailureBlock:
 
         content = "\n".join(content_lines)
 
+        quality = FeedbackQuality(
+            level="incorrect",
+            explanation="Solution fails on one or more test cases.",
+        )
+
         return FeedbackBlockResult(
             title="Logic Errors Detected",
             content=content,
@@ -78,4 +84,5 @@ class FailureBlock:
             confidence=0.9,
             signals=signals,
             learning=learning,
+            quality=quality,
         )

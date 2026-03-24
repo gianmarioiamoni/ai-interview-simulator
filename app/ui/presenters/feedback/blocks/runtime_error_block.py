@@ -4,6 +4,7 @@ from app.ui.presenters.feedback.feedback_models import (
     FeedbackBlockResult,
     FeedbackSignal,
     LearningSuggestion,
+    FeedbackQuality,
 )
 
 
@@ -79,6 +80,11 @@ class RuntimeErrorBlock:
 
         content = "\n".join(lines)
 
+        quality = FeedbackQuality(
+            level="incorrect",
+            explanation="Solution contains a runtime error.",
+        )
+
         # -----------------------------------------------------
         # Return block
         # -----------------------------------------------------
@@ -90,4 +96,5 @@ class RuntimeErrorBlock:
             confidence=0.95,
             signals=signals,
             learning=learning,
+            quality=quality,
         )
