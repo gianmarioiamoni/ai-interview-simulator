@@ -37,8 +37,6 @@ class InterviewStateBase(BaseModel):
 
     events: list = Field(default_factory=list)
 
-    attempts_by_question: dict[str, int] = Field(default_factory=dict)
-
     last_feedback_bundle: Optional[Any] = None
 
     def with_current_question(self, question, index):

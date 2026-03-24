@@ -11,10 +11,6 @@ from infrastructure.llm.llm_factory import get_llm
 
 def submit_answer(state: InterviewState, answer: str):
 
-    # -----------------------------------------------------
-    # VALIDATION
-    # -----------------------------------------------------
-
     if not state or not state.current_question:
         return build_ui_response_from_state(state)
 
@@ -22,14 +18,10 @@ def submit_answer(state: InterviewState, answer: str):
     question_id = question.id
 
     # -----------------------------------------------------
-    # ATTEMPT CALCULATION
+    # ATTEMPT (derived)
     # -----------------------------------------------------
 
-    attempt = state.attempts_by_question.get(question_id, 0) + 1
-
-    # -----------------------------------------------------
-    # BUILD DOMAIN ANSWER
-    # -----------------------------------------------------
+    attempt = state.get_attempt_for_question(question_id) + 1
 
     new_answer = Answer(
         question_id=question_id,
@@ -38,18 +30,10 @@ def submit_answer(state: InterviewState, answer: str):
     )
 
     # -----------------------------------------------------
-    # UPDATE STATE (IMMUTABLE)
+    # DOMAIN METHOD
     # -----------------------------------------------------
 
-    state = state.model_copy(
-        update={
-            "answers": state.answers + [new_answer],
-            "attempts_by_question": {
-                **state.attempts_by_question,
-                question_id: attempt,
-            },
-        }
-    )
+    state = state.add_answer(new_answer)
 
     # -----------------------------------------------------
     # USE CASE
