@@ -25,8 +25,13 @@ class InterviewFlowEngine:
     # SUBMIT
     # =========================================================
 
-    def submit(self, state: InterviewState) -> InterviewState:
-        return self._graph.invoke(state)
+    def submit(self, state: InterviewState, event) -> InterviewState:
+
+        # the graph should know how to handle the event
+        return self._graph.invoke({
+            "state": state,
+            "event": event,
+        })
 
     # =========================================================
     # NEXT
