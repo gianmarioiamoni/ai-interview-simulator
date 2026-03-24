@@ -103,7 +103,7 @@ class UIResponseBuilder:
         if question is None:
             raise RuntimeError("UI attempted to render question but none exists")
 
-        attempts = state.get_attempt_for_question(question.id)
+        attempts = state.get_attempt_for_question(question.question_id)
         has_previous_answer = attempts > 0
         can_retry = attempts < MAX_ATTEMPTS
 

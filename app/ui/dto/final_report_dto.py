@@ -10,6 +10,7 @@ from app.ui.utils.error_formatter import simplify_execution_error
 from domain.contracts.confidence import Confidence
 from domain.contracts.test_execution_result import TestStatus
 from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.interview_state import InterviewState
 
 
 class FinalReportDTO(BaseModel):
@@ -39,7 +40,7 @@ class FinalReportDTO(BaseModel):
     # =========================================================
 
     @classmethod
-    def from_state(cls, state):
+    def from_state(cls, state: InterviewState):
 
         question_assessments: List[QuestionAssessmentDTO] = []
 
