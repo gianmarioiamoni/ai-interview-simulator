@@ -1,54 +1,62 @@
-# domain/contracts/interview_state/base.py
+# app/ui/state_handlers/submit.py
 
-from pydantic import BaseModel, Field
-from typing import Optional, Any
-
-from domain.contracts.question import Question
+from domain.contracts.interview_state import InterviewState
 from domain.contracts.answer import Answer
-from domain.contracts.question_result import QuestionResult
-from domain.contracts.interview_progress import InterviewProgress
-from domain.contracts.interview_type import InterviewType
-from domain.contracts.interview_evaluation import InterviewEvaluation
-from domain.contracts.role import Role
+
+from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
+from app.ui.state_handlers.ui_builder import build_ui_response_from_state
+
+from infrastructure.llm.llm_factory import get_llm
 
 
-class InterviewStateBase(BaseModel):
+def submit_answer(state: InterviewState, answer: str):
 
-    interview_id: str
-    role: Role
-    company: str
-    language: str = "en"
-    interview_type: InterviewType = InterviewType.TECHNICAL
+    # -----------------------------------------------------
+    # VALIDATION
+    # -----------------------------------------------------
 
-    progress: InterviewProgress = InterviewProgress.SETUP
+    if not state or not state.current_question:
+        return build_ui_response_from_state(state)
 
-    questions: list[Question] = Field(default_factory=list)
-    answers: list[Answer] = Field(default_factory=list)
+    question_id = state.current_question.id
 
-    final_evaluation: Optional[InterviewEvaluation] = None
+    # -----------------------------------------------------
+    # ATTEMPT CALCULATION
+    # -----------------------------------------------------
 
-    chat_history: list[str] = Field(default_factory=list)
+    attempt = state.attempts_by_question.get(question_id, 0) + 1
 
-    results_by_question: dict[str, QuestionResult] = Field(default_factory=dict)
+    # -----------------------------------------------------
+    # BUILD DOMAIN ANSWER
+    # -----------------------------------------------------
 
-    current_question_index: int = 0
+    new_answer = Answer(
+        question_id=question_id,
+        content=answer,
+        attempt=attempt,
+    )
 
-    enable_humanizer: bool = True
+    # -----------------------------------------------------
+    # UPDATE STATE (IMMUTABLE)
+    # -----------------------------------------------------
 
-    events: list = Field(default_factory=list)
+    state = state.model_copy(
+        update={
+            "answers": state.answers + [new_answer],
+            "attempts_by_question": {
+                **state.attempts_by_question,
+                question_id: attempt,
+            },
+        }
+    )
 
-    attempts_by_question: dict[str, int] = Field(default_factory=dict)
+    # -----------------------------------------------------
+    # USE CASE
+    # -----------------------------------------------------
 
-    last_feedback_bundle: Optional[Any] = None
+    llm = get_llm()
+    use_case = EvaluateAnswerUseCase(llm)
 
-    def with_current_question(self, question, index):
-        return self.model_copy(
-            update={
-                "current_question": question,
-                "current_question_index": index,
-            }
-        )
+    state = use_case.execute(state)
 
-    model_config = {
-        "extra": "forbid",
-    }
+    return build_ui_response_from_state(state)

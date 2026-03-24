@@ -1,6 +1,5 @@
 # app/ui/state_handlers/submit.py
 
-from domain.events.answer_submitted_event import AnswerSubmittedEvent
 from domain.contracts.interview_state import InterviewState
 
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
@@ -19,25 +18,24 @@ def submit_answer(state: InterviewState, answer: str):
         return build_ui_response_from_state(state)
 
     # -----------------------------------------------------
-    # BUILD EVENT
+    # UPDATE STATE (IMMUTABLE)
     # -----------------------------------------------------
 
-    event = AnswerSubmittedEvent(
-        question_id=state.current_question.id,
-        content=answer,
-    )
+    # ⚠️ adattalo se Answer è un oggetto
+    new_answer = {
+        "question_id": state.current_question.id,
+        "content": answer,
+    }
+
+    state = state.model_copy(update={"answers": state.answers + [new_answer]})
 
     # -----------------------------------------------------
-    # INIT USE CASE (WITH LLM FACTORY)
+    # USE CASE
     # -----------------------------------------------------
 
     llm = get_llm()
     use_case = EvaluateAnswerUseCase(llm)
 
-    # -----------------------------------------------------
-    # EXECUTE
-    # -----------------------------------------------------
-
-    state = use_case.execute(state, event)
+    state = use_case.execute(state)
 
     return build_ui_response_from_state(state)
