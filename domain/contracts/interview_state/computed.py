@@ -4,6 +4,7 @@ from typing import Optional
 
 from domain.contracts.question import Question
 from domain.contracts.answer import Answer
+from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.interview_progress import InterviewProgress
 
 
@@ -13,6 +14,9 @@ class InterviewStateComputedMixin:
     def current_question(self) -> Optional[Question]:
 
         if not self.questions:
+            return None
+
+        if self.current_question_index < 0:
             return None
 
         if self.current_question_index >= len(self.questions):
@@ -49,7 +53,7 @@ class InterviewStateComputedMixin:
     # ---------------------------------------------------------
 
     @property
-    def evaluations_list(self):
+    def evaluations_list(self) -> list[QuestionEvaluation]:
         return [
             r.evaluation
             for r in self.results_by_question.values()
