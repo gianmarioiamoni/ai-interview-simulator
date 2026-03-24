@@ -3,11 +3,12 @@
 from dataclasses import dataclass
 from typing import List
 
+from app.ui.presenters.feedback.feedback_models import FeedbackQuality
+
 
 # =========================================================
 # BASIC SIGNALS
 # =========================================================
-
 
 @dataclass
 class FeedbackSignal:
@@ -20,7 +21,6 @@ class FeedbackSignal:
 # LEARNING SUGGESTIONS
 # =========================================================
 
-
 @dataclass
 class LearningSuggestion:
     topic: str
@@ -30,7 +30,6 @@ class LearningSuggestion:
 # =========================================================
 # BLOCK RESULT
 # =========================================================
-
 
 @dataclass
 class FeedbackBlockResult:
@@ -45,11 +44,13 @@ class FeedbackBlockResult:
     signals: List[FeedbackSignal]
     learning: List[LearningSuggestion]
 
+    # quality info
+    quality: FeedbackQuality | None = None
+
 
 # =========================================================
 # FINAL BUNDLE
 # =========================================================
-
 
 @dataclass
 class FeedbackBundle:
@@ -61,3 +62,14 @@ class FeedbackBundle:
 
     # final UI rendering (backward compatibility)
     markdown: str
+
+
+# =========================================================
+# QUALITY
+# =========================================================
+
+@dataclass
+class FeedbackQuality:
+    # "incorrect" | "partial" | "correct" | "optimal" | "inefficient"
+    level: str
+    explanation: str

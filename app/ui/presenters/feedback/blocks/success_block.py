@@ -1,48 +1,64 @@
 # app/ui/presenters/feedback/blocks/success_block.py
 
 from app.ui.presenters.feedback.feedback_models import (
-    FeedbackBlockResult,
+    FeedbackQuality,
     FeedbackSignal,
     LearningSuggestion,
+    FeedbackBlockResult,
 )
-
 
 class SuccessBlock:
 
     def can_handle(self, result, evaluation, execution, analysis) -> bool:
         return bool(execution and execution.success)
 
-    def build(
-        self, state, result, evaluation, execution, analysis
-    ) -> FeedbackBlockResult:
+    def build(self, state, result, evaluation, execution, analysis):
 
-        if execution.total_tests:
-            content = (
-                f"## ✅ All tests passed\n\n"
-                f"Passed {execution.passed_tests} / {execution.total_tests} tests"
-            )
+        # -----------------------------------------------------
+        # Quality classification
+        # -----------------------------------------------------
+
+        if execution.total_tests and execution.passed_tests == execution.total_tests:
+            quality_level = "correct"
+            explanation = "All test cases passed successfully."
+
+            # Heuristic semplice (puoi migliorare dopo)
+            if execution.execution_time_ms and execution.execution_time_ms < 50:
+                quality_level = "optimal"
+                explanation = "Solution is correct and performs efficiently."
+
         else:
-            content = "## ✅ Execution completed successfully"
+            quality_level = "partial"
+            explanation = "Solution works but may not cover all cases."
 
-        signals = [
-            FeedbackSignal(
-                severity="info",
-                message="All tests passed successfully",
-            )
-        ]
+        # -----------------------------------------------------
+        # Build
+        # -----------------------------------------------------
 
-        learning = [
-            LearningSuggestion(
-                topic="Code robustness",
-                action="Try adding edge case handling to strengthen your solution",
-            )
-        ]
+        content = (
+            f"## ✅ All tests passed\n\n"
+            f"Passed {execution.passed_tests} / {execution.total_tests} tests"
+        )
 
         return FeedbackBlockResult(
             title="Success",
             content=content,
             severity="info",
             confidence=0.95,
-            signals=signals,
-            learning=learning,
+            signals=[
+                FeedbackSignal(
+                    severity="info",
+                    message="All tests passed successfully",
+                )
+            ],
+            learning=[
+                LearningSuggestion(
+                    topic="Performance",
+                    action="Consider time/space complexity improvements",
+                )
+            ],
+            quality=FeedbackQuality(
+                level=quality_level,
+                explanation=explanation,
+            ),
         )
