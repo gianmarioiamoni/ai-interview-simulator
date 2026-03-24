@@ -35,6 +35,8 @@ class ResultPresenter:
             execution,
         )
 
+        state.last_feedback_bundle = feedback_bundle
+
         feedback_md = feedback_bundle.markdown
 
         # -----------------------------------------------------

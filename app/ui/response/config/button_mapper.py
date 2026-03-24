@@ -19,10 +19,10 @@ class ButtonMapper:
         has_valid_state = bool(state and state.current_question)
 
         # -----------------------------------------------------
-        # Derive quality (temporary heuristic)
+        # Derive quality 
         # -----------------------------------------------------
 
-        quality = ButtonMapper._derive_quality(state)
+        quality = ButtonMapper._get_quality(state)
 
         # -----------------------------------------------------
         # Adaptive rules
@@ -52,38 +52,17 @@ class ButtonMapper:
         }
 
     # =========================================================
-    # QUALITY (temporary)
+    # QUALITY
     # =========================================================
 
     @staticmethod
-    def _derive_quality(state: InterviewState) -> str:
+    def _get_quality(state: InterviewState) -> str:
 
-        if not state.current_question:
+        if not state or not state.last_feedback_bundle:
             return "unknown"
 
-        result = state.get_result_for_question(state.current_question.id)
+        return state.last_feedback_bundle.overall_quality or "unknown"
 
-        if not result:
-            return "unknown"
-
-        execution = result.execution
-
-        if not execution:
-            return "unknown"
-
-        # runtime error
-        if not execution.success:
-            return "incorrect"
-
-        # simple heuristic
-        if execution.total_tests and execution.passed_tests == execution.total_tests:
-
-            if execution.execution_time_ms and execution.execution_time_ms > 200:
-                return "inefficient"
-
-            return "correct"
-
-        return "partial"
 
     # =========================================================
     # RULES
@@ -104,16 +83,7 @@ class ButtonMapper:
         if not is_feedback or not has_valid_state:
             return False
 
-        if quality == "incorrect":
-            return can_retry
-
-        if quality == "partial":
-            return can_retry
-
-        if quality == "inefficient":
-            return can_retry  # optional retry
-
-        return False
+        return quality in ["incorrect", "partial"] and can_retry 
 
     @staticmethod
     def _show_next(
@@ -124,10 +94,7 @@ class ButtonMapper:
         if not is_feedback:
             return False
 
-        if quality == "incorrect":
-            return False
-
-        return True
+        return quality not in ["incorrect"]
 
     # =========================================================
     # LABELS
