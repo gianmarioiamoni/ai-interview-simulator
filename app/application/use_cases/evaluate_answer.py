@@ -12,6 +12,7 @@ from domain.contracts.evaluation_decision import EvaluationDecision
 from domain.contracts.ai_hint import AIHintInput
 from domain.contracts.hint_level import HintLevel
 from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.test_execution_result import TestStatus
 
 
 class EvaluateAnswerUseCase:
@@ -53,6 +54,16 @@ class EvaluateAnswerUseCase:
         quality = bundle.overall_quality if bundle else "unknown"
 
         execution = result.execution
+
+        # -----------------------------------------------------
+        # EXTRACT EXECUTION SIGNALS 
+        # -----------------------------------------------------
+
+        error, failed_tests = self._extract_execution_signals(execution)
+
+        # -----------------------------------------------------
+        # HINT LEVEL
+        # -----------------------------------------------------
 
         hint_level = self._resolve_hint_level(
             attempt,
@@ -220,3 +231,25 @@ class EvaluateAnswerUseCase:
         # -----------------------------------------------------
 
         return HintLevel.NONE
+
+    def _extract_execution_signals(self, execution: ExecutionResult) -> tuple[str, list[str]]:
+
+        if not execution:
+            return None, []
+
+        error = execution.error
+        
+        failed_tests = [
+            t for t in execution.test_results 
+            if t.status != TestStatus.PASSED
+        ]
+
+        if failed_tests:
+            failed_tests = [
+                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
+                for t in failed_tests[:2]
+            ]
+        else:
+            failed_tests = []
+
+        return error, failed_tests
