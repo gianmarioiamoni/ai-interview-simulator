@@ -58,8 +58,8 @@ class EvaluateAnswerUseCase:
         # -----------------------------------------------------
         # EXTRACT EXECUTION SIGNALS 
         # -----------------------------------------------------
-
-        error, failed_tests = self._extract_execution_signals(execution)
+        error = execution.error if execution else None
+        failed_tests = self._extract_execution_signals(execution)
 
         # -----------------------------------------------------
         # HINT LEVEL
@@ -232,24 +232,20 @@ class EvaluateAnswerUseCase:
 
         return HintLevel.NONE
 
-    def _extract_execution_signals(self, execution: ExecutionResult) -> tuple[str, list[str]]:
+    def _extract_execution_signals(self, execution: ExecutionResult) -> str:
 
-        if not execution:
-            return None, []
-
-        error = execution.error
+        if not execution or not execution.test_results:
+           return "None"
         
-        failed_tests = [
+        failed = [
             t for t in execution.test_results 
             if t.status != TestStatus.PASSED
         ]
 
-        if failed_tests:
-            failed_tests = [
-                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
-                for t in failed_tests[:2]
-            ]
-        else:
-            failed_tests = []
+        if not failed:
+            return "None"
 
-        return error, failed_tests
+        return "\n".join([
+            f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
+            for t in failed[:2]
+        ])
