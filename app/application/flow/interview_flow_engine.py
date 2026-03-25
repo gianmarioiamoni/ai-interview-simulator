@@ -18,7 +18,6 @@ class InterviewFlowEngine:
         if not state.questions:
             return state
 
-        # IMMUTABLE UPDATE
         return state.with_current_question(state.questions[0], 0)
 
     # =========================================================
@@ -27,11 +26,12 @@ class InterviewFlowEngine:
 
     def submit(self, state: InterviewState, event) -> InterviewState:
 
-        # the graph should know how to handle the event
-        return self._graph.invoke({
-            "state": state,
-            "event": event,
-        })
+        return self._graph.invoke(
+            {
+                "state": state,
+                "event": event,
+            }
+        )
 
     # =========================================================
     # NEXT
@@ -42,34 +42,59 @@ class InterviewFlowEngine:
         if not state.current_question:
             return state
 
-        current_index = next(
-            (
-                i
-                for i, q in enumerate(state.questions)
-                if q.id == state.current_question.id
-            ),
-            None,
-        )
-
-        if current_index is None:
-            return state
-
-        next_index = current_index + 1
-
         # -----------------------------------------------------
         # END
         # -----------------------------------------------------
 
+        if state.is_last_question:
+            return state.model_copy(update={"progress": "completed"})
+
+        # -----------------------------------------------------
+        # ADAPTIVE SELECTION (NEW)
+        # -----------------------------------------------------
+
+        return self._select_next_question(state)
+
+    # =========================================================
+    # ADAPTIVE DIFFICULTY
+    # =========================================================
+
+    def _select_next_question(self, state: InterviewState) -> InterviewState:
+
+        current_index = state.current_question_index
+        next_index = current_index + 1
+
         if next_index >= len(state.questions):
-            return state.model_copy(update={"is_completed": True})
+            return state
 
         # -----------------------------------------------------
-        # NEXT QUESTION
+        # PERFORMANCE
         # -----------------------------------------------------
 
-        return state.model_copy(
-            update={
-                "current_question": state.questions[next_index],
-                "current_question_index": next_index,
-            }
-        )
+        performance = getattr(state, "performance_level", "medium")
+
+        # -----------------------------------------------------
+        # SIMPLE STRATEGY
+        # -----------------------------------------------------
+        # For now we DO NOT change question selection,
+        # but we prepare the hook for future logic
+
+        next_question = state.questions[next_index]
+
+        # -----------------------------------------------------
+        # FUTURE HOOK (IMPORTANT)
+        # -----------------------------------------------------
+        # Here you will:
+        # - filter by difficulty
+        # - reorder questions
+        # - inject dynamic questions
+
+        # Example (future):
+        # if performance == "weak":
+        #     next_question = self._find_question_by_difficulty(state, "easy")
+
+        # -----------------------------------------------------
+        # IMMUTABLE UPDATE
+        # -----------------------------------------------------
+
+        return state.with_current_question(next_question, next_index)
