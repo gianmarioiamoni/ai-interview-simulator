@@ -11,6 +11,7 @@ from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.evaluation_decision import EvaluationDecision
 from domain.contracts.ai_hint import AIHintInput
 from domain.contracts.hint_level import HintLevel
+from domain.contracts.execution_result import ExecutionResult
 
 
 class EvaluateAnswerUseCase:
@@ -46,24 +47,18 @@ class EvaluateAnswerUseCase:
         if not result:
             return state
 
-        attempts = state.get_attempt_for_question(question.id)
+        attempt = state.get_attempt_for_question(question.id)
 
-        hint_level = self._resolve_hint_level(attempts)
+        bundle = getattr(state, "last_feedback_bundle", None)
+        quality = bundle.overall_quality if bundle else "unknown"
 
         execution = result.execution
 
-        error = execution.error if execution else None
-
-        failed_tests = "None"
-        if execution and execution.test_results:
-            failed = [t for t in execution.test_results if t.status != "PASSED"]
-            if failed:
-                failed_tests = "\n".join(
-                    [
-                        f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
-                        for t in failed[:2]
-                    ]
-                )
+        hint_level = self._resolve_hint_level(
+            attempt,
+            quality,
+            execution,
+        )
 
         user_code = answer.content if answer else ""
 
@@ -176,9 +171,50 @@ class EvaluateAnswerUseCase:
 
         return state
 
-    def _resolve_hint_level(self, attempts: int) -> HintLevel:
-        if attempts <= 1:
-            return HintLevel.BASIC
-        if attempts == 2:
+    def _resolve_hint_level(
+        self,
+        attempt: int,
+        quality: str,
+        execution: ExecutionResult,
+    ) -> HintLevel:
+
+        # -----------------------------------------------------
+        # RUNTIME ERROR → FAST ESCALATION
+        # -----------------------------------------------------
+
+        if execution and execution.error:
+            if attempt == 1:
+                return HintLevel.TARGETED
+            return HintLevel.SOLUTION
+
+        # -----------------------------------------------------
+        # INCORRECT (logic failure)
+        # -----------------------------------------------------
+
+        if quality == "incorrect":
+            if attempt == 1:
+                return HintLevel.BASIC
+            if attempt == 2:
+                return HintLevel.TARGETED
+            return HintLevel.SOLUTION
+        # -----------------------------------------------------
+        # PARTIAL
+        # -----------------------------------------------------
+
+        if quality == "partial":
+            if attempt == 1:
+                return HintLevel.BASIC
             return HintLevel.TARGETED
-        return HintLevel.SOLUTION
+
+        # -----------------------------------------------------
+        # INEFFICIENT
+        # -----------------------------------------------------
+
+        if quality == "inefficient":
+            return HintLevel.BASIC
+
+        # -----------------------------------------------------
+        # CORRECT / OPTIMAL
+        # -----------------------------------------------------
+
+        return HintLevel.NONE
