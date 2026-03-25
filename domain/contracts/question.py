@@ -16,13 +16,19 @@ class QuestionType(str, Enum):
     DATABASE = "database"
 
 
+class QuestionDifficulty(str, Enum):
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
+
+
 class Question(BaseModel):
     id: str = Field(..., min_length=1)
     area: InterviewArea
     type: QuestionType
     prompt: str = Field(..., min_length=1)
     reference_solution: Optional[str] = None
-    difficulty: int = Field(..., ge=1, le=5)
+    difficulty: QuestionDifficulty = Field(..., default=QuestionDifficulty.MEDIUM)
     humanized: bool = False
     visible_tests: list[CodingTestCase] = Field(default_factory=list)
     hidden_tests: list[CodingTestCase] = Field(default_factory=list)
