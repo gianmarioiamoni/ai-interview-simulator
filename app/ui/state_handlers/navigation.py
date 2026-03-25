@@ -43,9 +43,8 @@ def retry_answer(state: InterviewState):
 
 
 # =========================================================
-# NEXT (FIXED)
+# NEXT 
 # =========================================================
-
 
 def next_question(state: InterviewState):
 
