@@ -36,24 +36,30 @@ class WrittenBlock:
             severity = "info"
 
         # -----------------------------------------------------
-        # Quality classification
+        # Quality classification (FIXED + UX LABELS)
         # -----------------------------------------------------
 
         if score < 50:
             quality_level = "incorrect"
+            quality_label = "🔴 Incorrect Answer"
             quality_explanation = "Answer shows significant gaps in understanding."
+
         elif score < 75:
             quality_level = "partial"
+            quality_label = "🟡 Partial Answer"
             quality_explanation = (
                 "Answer is partially correct but lacks completeness or precision."
             )
+
         elif score < 90:
-            quality_level = "correct"
-            quality_explanation = (
-                "Answer is correct but could be improved in clarity or depth."
-            )
+            # 🔥 FIX: non è più "correct" → è "good"
+            quality_level = "good"
+            quality_label = "🟢 Good Answer"
+            quality_explanation = "Answer is correct but could be improved with more concrete examples or clarity."
+
         else:
             quality_level = "optimal"
+            quality_label = "🟢 Strong Answer"
             quality_explanation = "Answer is clear, complete, and well-structured."
 
         # -----------------------------------------------------
@@ -68,30 +74,60 @@ class WrittenBlock:
         ]
 
         # -----------------------------------------------------
-        # Learning suggestions (slightly adaptive)
+        # Learning suggestions (improved)
         # -----------------------------------------------------
 
         if score < 50:
             learning = [
                 LearningSuggestion(
                     topic="Fundamentals",
-                    action="Review the core concepts and definitions for this topic",
+                    action="Review core concepts and ensure you fully understand the basics",
                 )
             ]
+
         elif score < 75:
             learning = [
                 LearningSuggestion(
-                    topic="Concept refinement",
-                    action="Focus on missing details and improve explanation accuracy",
+                    topic="Completeness",
+                    action="Add missing details and improve explanation accuracy",
                 )
             ]
+
         else:
             learning = [
                 LearningSuggestion(
-                    topic="Communication",
-                    action="Improve clarity and structure of your explanations",
+                    topic="Answer quality",
+                    action="Add concrete examples (problem → solution → outcome) to strengthen your answer",
                 )
             ]
+
+        # -----------------------------------------------------
+        # Actionable improvement (NEW)
+        # -----------------------------------------------------
+
+        improvement_section = ""
+
+        if score >= 75 and score < 90:
+            improvement_section = "\n".join(
+                [
+                    "",
+                    "### How to Improve",
+                    "- Add a concrete real-world example",
+                    "- Describe a specific challenge you faced",
+                    "- Explain how you solved it and the impact",
+                ]
+            )
+
+        elif score < 75:
+            improvement_section = "\n".join(
+                [
+                    "",
+                    "### How to Improve",
+                    "- Clarify your reasoning",
+                    "- Cover missing aspects of the question",
+                    "- Be more precise in your explanation",
+                ]
+            )
 
         # -----------------------------------------------------
         # Content
@@ -99,18 +135,25 @@ class WrittenBlock:
 
         content = "\n".join(
             [
-                f"## Score: {score:.1f}/100",
+                f"## {quality_label}",
+                f"Score: {score:.1f}/100",
                 "",
                 "### Feedback",
                 feedback,
+                improvement_section,
             ]
         )
 
         # -----------------------------------------------------
-        # Confidence (simple heuristic)
+        # Confidence
         # -----------------------------------------------------
 
-        confidence = 0.85 if score < 75 else 0.9
+        if score < 50:
+            confidence = 0.8
+        elif score < 75:
+            confidence = 0.85
+        else:
+            confidence = 0.9
 
         # -----------------------------------------------------
         # Return
