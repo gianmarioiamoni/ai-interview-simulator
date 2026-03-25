@@ -192,6 +192,8 @@ class EvaluateAnswerUseCase:
         # -----------------------------------------------------
 
         if quality == "incorrect":
+            if attempt ==0:
+                return HintLevel.NONE
             if attempt == 1:
                 return HintLevel.BASIC
             if attempt == 2:
