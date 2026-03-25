@@ -2,6 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from app.runtime.interview_runtime import get_runtime_graph
+from domain.contracts.question import QuestionDifficulty
 
 
 class InterviewFlowEngine:
@@ -50,7 +51,7 @@ class InterviewFlowEngine:
             return state.model_copy(update={"progress": "completed"})
 
         # -----------------------------------------------------
-        # ADAPTIVE SELECTION (NEW)
+        # ADAPTIVE SELECTION
         # -----------------------------------------------------
 
         return self._select_next_question(state)
@@ -72,12 +73,13 @@ class InterviewFlowEngine:
         # -----------------------------------------------------
 
         performance = getattr(state, "performance_level", "medium")
+
         if performance == "weak":
-            target_difficulty = "easy"
+            target_difficulty = QuestionDifficulty.EASY
         elif performance == "medium":
-            target_difficulty = "medium"
+            target_difficulty = QuestionDifficulty.MEDIUM
         else:
-            target_difficulty = "hard"
+            target_difficulty = QuestionDifficulty.HARD
 
         # -----------------------------------------------------
         # ADAPTIVE SELECTION
@@ -89,43 +91,50 @@ class InterviewFlowEngine:
             next_index,
         )
 
-
         # -----------------------------------------------------
-        # FUTURE HOOK (IMPORTANT)
-        # -----------------------------------------------------
-        # Here you will:
-        # - filter by difficulty
-        # - reorder questions
-        # - inject dynamic questions
-
-        # Example (future):
-        # if performance == "weak":
-        #     next_question = self._find_question_by_difficulty(state, "easy")
-
-        # -----------------------------------------------------
-        # IMMUTABLE UPDATE
+        # IMMUTABLE UPDATE (IMPORTANT FIX)
         # -----------------------------------------------------
 
-        return state.with_current_question(next_question, next_index)
+        return state.with_current_question(next_question, resolved_index)
 
     # =========================================================
-    # FIND QUESTION BY DIFFICULTY
+    # FIND QUESTION BY DIFFICULTY (FINAL VERSION)
     # =========================================================
 
     def _find_question_by_difficulty(
         self,
         state: InterviewState,
-        target_difficulty: str,
+        target_difficulty: QuestionDifficulty,
         start_index: int,
     ):
 
-        # scan forward
-        for i in range(start_index, len(state.questions)):
+        asked_ids = set(getattr(state, "asked_question_ids", []))
 
+        # -----------------------------------------------------
+        # 1. TRY MATCH DIFFICULTY (NO REPEAT)
+        # -----------------------------------------------------
+
+        for i in range(start_index, len(state.questions)):
             q = state.questions[i]
 
-            if getattr(q, "difficulty", "medium") == target_difficulty:
+            if q.id in asked_ids:
+                continue
+
+            if getattr(q, "difficulty", None) == target_difficulty:
                 return q, i
 
-        # fallback → sequential
+        # -----------------------------------------------------
+        # 2. FALLBACK → ANY NON-ASKED QUESTION
+        # -----------------------------------------------------
+
+        for i in range(start_index, len(state.questions)):
+            q = state.questions[i]
+
+            if q.id not in asked_ids:
+                return q, i
+
+        # -----------------------------------------------------
+        # 3. FINAL FALLBACK → SEQUENTIAL (ALLOW REPEAT)
+        # -----------------------------------------------------
+
         return state.questions[start_index], start_index

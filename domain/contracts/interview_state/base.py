@@ -23,6 +23,7 @@ class InterviewStateBase(BaseModel):
     progress: InterviewProgress = InterviewProgress.SETUP
 
     questions: list[Question] = Field(default_factory=list)
+    asked_question_ids: list[str] = Field(default_factory=list)
     answers: list[Answer] = Field(default_factory=list)
 
     final_evaluation: Optional[InterviewEvaluation] = None
@@ -42,8 +43,8 @@ class InterviewStateBase(BaseModel):
     def with_current_question(self, question, index):
         return self.model_copy(
             update={
-                "current_question": question,
                 "current_question_index": index,
+                "asked_question_ids": self.asked_question_ids + [question.id],
             }
         )
 

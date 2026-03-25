@@ -3,20 +3,16 @@
 from typing import List
 
 from domain.contracts.interview_type import InterviewType
-from domain.contracts.question import Question, QuestionType
+from domain.contracts.question import (
+    Question,
+    QuestionType,
+    QuestionDifficulty,
+)
 from domain.contracts.interview_area import InterviewArea
 from domain.contracts.coding_test_case import CodingTestCase
 
 
-# =========================================================
-# Public API
-# =========================================================
-
-
 def load_sample_questions(interview_type: InterviewType) -> List[Question]:
-
-    # Temporary bootstrap question loader.
-    # NOTE: In the final architecture, question generation must be delegated to the graph layer.
 
     if interview_type == InterviewType.TECHNICAL:
         return _load_technical_questions()
@@ -28,22 +24,20 @@ def load_sample_questions(interview_type: InterviewType) -> List[Question]:
 
 
 # =========================================================
-# Technical Interview Questions
+# Technical
 # =========================================================
 
 
 def _load_technical_questions() -> List[Question]:
 
     return [
-        # WRITTEN
         Question(
             id="T1",
             area=InterviewArea.TECH_BACKGROUND,
             type=QuestionType.WRITTEN,
             prompt="Describe your experience designing distributed backend systems.",
-            difficulty=2,
+            difficulty=QuestionDifficulty.MEDIUM,
         ),
-        # CODING
         Question(
             id="T2",
             area=InterviewArea.TECH_CODING,
@@ -52,17 +46,11 @@ def _load_technical_questions() -> List[Question]:
                 "Write a Python function that returns the first non-repeating "
                 "character in a string. If none exists, return None."
             ),
-            difficulty=3,
+            difficulty=QuestionDifficulty.HARD,
             function_name="first_non_repeating_char",
             visible_tests=[
-                CodingTestCase(
-                    args=["leetcode"],
-                    expected="l",
-                ),
-                CodingTestCase(
-                    args=["aabbcc"],
-                    expected=None,
-                ),
+                CodingTestCase(args=["leetcode"], expected="l"),
+                CodingTestCase(args=["aabbcc"], expected=None),
             ],
             reference_solution=(
                 "def first_non_repeating_char(s: str):\n"
@@ -74,7 +62,6 @@ def _load_technical_questions() -> List[Question]:
                 "    return None"
             ),
         ),
-        # DATABASE
         Question(
             id="T3",
             area=InterviewArea.TECH_DATABASE,
@@ -83,10 +70,7 @@ def _load_technical_questions() -> List[Question]:
                 "Given a table Users(id, name, created_at), "
                 "write a SQL query to retrieve the 5 most recently created users."
             ),
-            difficulty=2,
-            # ---------------------------------------------------------
-            # Database schema for the question
-            # ---------------------------------------------------------
+            difficulty=QuestionDifficulty.MEDIUM,
             db_schema="""
     CREATE TABLE Users(
         id INTEGER PRIMARY KEY,
@@ -94,9 +78,6 @@ def _load_technical_questions() -> List[Question]:
         created_at TEXT
     );
     """,
-            # ---------------------------------------------------------
-            # Dataset used for evaluation
-            # ---------------------------------------------------------
             db_seed_data="""
     INSERT INTO Users(name, created_at) VALUES
     ('Alice','2024-01-01'),
@@ -106,9 +87,6 @@ def _load_technical_questions() -> List[Question]:
     ('Eve','2024-05-01'),
     ('Frank','2024-06-01');
     """,
-            # ---------------------------------------------------------
-            # Reference solution used by SQL evaluator
-            # ---------------------------------------------------------
             reference_solution="""
     SELECT *
     FROM Users
@@ -121,7 +99,7 @@ def _load_technical_questions() -> List[Question]:
 
 
 # =========================================================
-# HR Interview Questions
+# HR
 # =========================================================
 
 
@@ -133,20 +111,20 @@ def _load_hr_questions() -> List[Question]:
             area=InterviewArea.HR_BACKGROUND,
             type=QuestionType.WRITTEN,
             prompt="Tell me about your professional background.",
-            difficulty=1,
+            difficulty=QuestionDifficulty.EASY,
         ),
         Question(
             id="HR2",
             area=InterviewArea.HR_SITUATIONAL,
             type=QuestionType.WRITTEN,
             prompt="Describe a challenging situation you handled at work.",
-            difficulty=1,
+            difficulty=QuestionDifficulty.EASY,
         ),
         Question(
             id="HR3",
             area=InterviewArea.HR_ANALYTICAL,
             type=QuestionType.WRITTEN,
             prompt="How do you approach complex decision-making problems?",
-            difficulty=1,
+            difficulty=QuestionDifficulty.EASY,
         ),
     ]
