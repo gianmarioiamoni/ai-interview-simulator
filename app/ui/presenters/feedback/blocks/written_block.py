@@ -7,6 +7,8 @@ from app.contracts.feedback_bundle import (
     FeedbackQuality,
 )
 
+from services.answer_improvement.answer_improver import AnswerImprover
+
 
 class WrittenBlock:
 
@@ -23,6 +25,28 @@ class WrittenBlock:
 
         score = evaluation.score if evaluation else 0
         feedback = evaluation.feedback if evaluation else ""
+
+        # -----------------------------------------------------
+        # AI Improved Answer
+        # -----------------------------------------------------
+
+        improved_answer = ""
+
+        try:
+            if score < 90:  # only if not optimal
+                improver = AnswerImprover()
+
+                question_text = _state.current_question.prompt if _state.current_question else ""
+
+                user_answer = _state.last_answer.content if _state.last_answer else ""
+
+                improved_answer = improver.improve(
+                    question_text,
+                    user_answer,
+                    feedback,
+                )
+        except Exception:
+            improved_answer = ""
 
         # -----------------------------------------------------
         # Severity
@@ -133,16 +157,26 @@ class WrittenBlock:
         # Content
         # -----------------------------------------------------
 
-        content = "\n".join(
-            [
-                f"## {quality_label}",
-                f"Score: {score:.1f}/100",
+        content_lines = [
+            f"## {quality_label}",
+            f"Score: {score:.1f}/100",
+            "",
+            "### Feedback",
+            feedback,
+        ]
+        # improvement tips
+        if improvement_section:
+            content_lines.append(improvement_section)
+        
+        # AI improved answer
+        if improved_answer:
+            content_lines.extend([
                 "",
-                "### Feedback",
-                feedback,
-                improvement_section,
-            ]
-        )
+                "### ✨ Suggested Improved Answer",
+                improved_answer,
+            ])
+
+        content = "\n".join(content_lines)
 
         # -----------------------------------------------------
         # Confidence
