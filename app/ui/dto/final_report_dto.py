@@ -56,7 +56,7 @@ class FinalReportDTO(BaseModel):
             total_tests: Optional[int] = None
             execution_status: Optional[str] = None
 
-            attempts = state.attempts_by_question.get(q.id, 0)
+            attempts = state.get_attempt_for_question(q.id)
 
             ai_hint_explanation: Optional[str] = None
             ai_hint_suggestion: Optional[str] = None
