@@ -118,6 +118,17 @@ class InterviewFlowEngine:
 
         asked_ids = set(getattr(state, "asked_question_ids", []))
 
+        # -----------------------------------------------------
+        # TRY SEQUENTIAL FIRST
+        # -----------------------------------------------------
+
+        if start_index < len(state.questions):
+            candidate = state.questions[start_index]
+
+            if candidate.id not in asked_ids:
+                return candidate, start_index
+
+
         # -----------------------------------------------------
         # 1. TRY MATCH DIFFICULTY (NO REPEAT)
         # -----------------------------------------------------
