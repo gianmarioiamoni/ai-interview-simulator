@@ -72,14 +72,23 @@ class InterviewFlowEngine:
         # -----------------------------------------------------
 
         performance = getattr(state, "performance_level", "medium")
+        if performance == "weak":
+            target_difficulty = "easy"
+        elif performance == "medium":
+            target_difficulty = "medium"
+        else:
+            target_difficulty = "hard"
 
         # -----------------------------------------------------
-        # SIMPLE STRATEGY
+        # ADAPTIVE SELECTION
         # -----------------------------------------------------
-        # For now we DO NOT change question selection,
-        # but we prepare the hook for future logic
 
-        next_question = state.questions[next_index]
+        next_question, resolved_index = self._find_question_by_difficulty(
+            state,
+            target_difficulty,
+            next_index,
+        )
+
 
         # -----------------------------------------------------
         # FUTURE HOOK (IMPORTANT)
@@ -98,3 +107,25 @@ class InterviewFlowEngine:
         # -----------------------------------------------------
 
         return state.with_current_question(next_question, next_index)
+
+    # =========================================================
+    # FIND QUESTION BY DIFFICULTY
+    # =========================================================
+
+    def _find_question_by_difficulty(
+        self,
+        state: InterviewState,
+        target_difficulty: str,
+        start_index: int,
+    ):
+
+        # scan forward
+        for i in range(start_index, len(state.questions)):
+
+            q = state.questions[i]
+
+            if getattr(q, "difficulty", "medium") == target_difficulty:
+                return q, i
+
+        # fallback → sequential
+        return state.questions[start_index], start_index
