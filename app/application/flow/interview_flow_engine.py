@@ -51,10 +51,18 @@ class InterviewFlowEngine:
             return state.model_copy(update={"progress": "completed"})
 
         # -----------------------------------------------------
-        # ADAPTIVE SELECTION
+        # ADVANCE QUESTION
         # -----------------------------------------------------
 
-        return self._select_next_question(state)
+        new_state = self._select_next_question(state)
+        
+        state = state.advance_question()
+
+        # -----------------------------------------------------
+        # RUN GRAPH
+        # -----------------------------------------------------
+
+        return self._graph.invoke(new_state)
 
     # =========================================================
     # ADAPTIVE DIFFICULTY
