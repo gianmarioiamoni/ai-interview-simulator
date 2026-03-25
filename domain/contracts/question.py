@@ -28,7 +28,7 @@ class Question(BaseModel):
     type: QuestionType
     prompt: str = Field(..., min_length=1)
     reference_solution: Optional[str] = None
-    difficulty: QuestionDifficulty = Field(..., default=QuestionDifficulty.MEDIUM)
+    difficulty: QuestionDifficulty = Field(default=QuestionDifficulty.MEDIUM)
     humanized: bool = False
     visible_tests: list[CodingTestCase] = Field(default_factory=list)
     hidden_tests: list[CodingTestCase] = Field(default_factory=list)
