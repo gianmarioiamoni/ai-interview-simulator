@@ -33,6 +33,8 @@ class InterviewStateBase(BaseModel):
     results_by_question: dict[str, QuestionResult] = Field(default_factory=dict)
 
     current_question_index: int = 0
+    
+    awaiting_user_input: bool = False
 
     enable_humanizer: bool = True
 

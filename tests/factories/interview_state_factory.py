@@ -8,6 +8,7 @@ from domain.contracts.execution_result import ExecutionResult, ExecutionStatus, 
 from domain.contracts.question import Question, QuestionType, QuestionDifficulty
 from domain.contracts.interview_area import InterviewArea
 from domain.contracts.question_result import QuestionResult
+from domain.contracts.question_evaluation import QuestionEvaluation
 
 # ---------------------------------------------------------
 # QUESTION FACTORY (INLINE → 🔥 avoids import issues)
@@ -101,6 +102,19 @@ def build_state_with_execution(
         test_results=[],
     )
 
+    evaluation = QuestionEvaluation(
+        question_id=question.id,
+        score=(passed_tests / total_tests * 100) if total_tests else 0,
+        max_score=100,
+        feedback="auto",
+        passed=(total_tests > 0 and passed_tests == total_tests),
+        strengths=[],
+        weaknesses=[],
+        passed_tests=passed_tests,
+        total_tests=total_tests,
+        execution_status=status.value,
+    )
+
     result = state.get_result_for_question(question.id)
 
     new_results = dict(state.results_by_question)
@@ -109,7 +123,7 @@ def build_state_with_execution(
         new_results[question.id] = QuestionResult(
             question_id=question.id,
             execution=execution,
-            evaluation=None,
+            evaluation=evaluation,
             ai_hint=None,
             hint_level=None,
         )
