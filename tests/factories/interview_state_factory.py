@@ -1,29 +1,22 @@
 from typing import List
-from unittest.mock import Mock
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question import Question
 from domain.contracts.answer import Answer
 from domain.contracts.role import Role, RoleType
 from domain.contracts.interview_type import InterviewType
 
+from tests.factories.question_factory import build_question
+
 
 def build_interview_state(
     *,
-    questions: List[Question] | None = None,
-    answers: List[Answer] | None = None,
+    questions=None,
+    answers=None,
     current_question_index: int = 0,
 ) -> InterviewState:
-    """
-    Factory realistica per InterviewState.
-
-    # Garantisce:
-    # - stato valido Pydantic
-    # - compatibile con computed properties
-    """
 
     if questions is None:
-        questions = [Mock(id="q1", type="coding")]
+        questions = [build_question()]
 
     if answers is None:
         answers = [
@@ -36,7 +29,7 @@ def build_interview_state(
 
     return InterviewState(
         interview_id="test-id",
-        role=Role(type=RoleType.SOFTWARE_ENGINEER),
+        role=Role(type=RoleType.BACKEND_ENGINEER),
         company="TestCorp",
         interview_type=InterviewType.TECHNICAL,
         language="en",

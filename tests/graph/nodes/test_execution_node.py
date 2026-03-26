@@ -1,11 +1,13 @@
 # tests/graph/nodes/test_execution_node.py
 
-import pytest
 from unittest.mock import Mock
 
 from app.graph.nodes.execution_node import ExecutionNode
 from tests.factories.interview_state_factory import build_interview_state
+from tests.factories.question_factory import build_question
+
 from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.question import QuestionType
 
 
 def test_execution_node_success() -> None:
@@ -34,6 +36,7 @@ def test_execution_node_success() -> None:
 
 
 def test_execution_node_failure() -> None:
+    # Arrange
     mock_engine = Mock()
 
     mock_result = Mock(spec=ExecutionResult)
@@ -46,8 +49,10 @@ def test_execution_node_failure() -> None:
 
     state = build_interview_state()
 
+    # Act
     new_state = node(state)
 
+    # Assert
     result = new_state.get_result_for_question("q1")
 
     assert result is not None
@@ -56,6 +61,7 @@ def test_execution_node_failure() -> None:
 
 
 def test_execution_node_runtime_error() -> None:
+    # Arrange
     mock_engine = Mock()
     mock_engine.execute.side_effect = Exception("boom")
 
@@ -63,8 +69,10 @@ def test_execution_node_runtime_error() -> None:
 
     state = build_interview_state()
 
+    # Act
     new_state = node(state)
 
+    # Assert
     result = new_state.get_result_for_question("q1")
 
     # execution NON deve essere registrata
@@ -72,14 +80,19 @@ def test_execution_node_runtime_error() -> None:
 
 
 def test_execution_node_non_executable_question() -> None:
+    # Arrange
     mock_engine = Mock()
 
     node = ExecutionNode(mock_engine)
 
-    state = build_interview_state(questions=[Mock(id="q1", type="hr")])
+    state = build_interview_state(
+        questions=[build_question(qtype=QuestionType.WRITTEN)]
+    )
 
+    # Act
     new_state = node(state)
 
+    # Assert
     result = new_state.get_result_for_question("q1")
 
     assert result is None
@@ -87,6 +100,7 @@ def test_execution_node_non_executable_question() -> None:
 
 
 def test_execution_node_state_immutability() -> None:
+    # Arrange
     mock_engine = Mock()
 
     mock_result = Mock(spec=ExecutionResult)
@@ -99,9 +113,11 @@ def test_execution_node_state_immutability() -> None:
 
     state = build_interview_state()
 
+    # Act
     new_state = node(state)
 
-    # stato nuovo
+    # Assert
+    # nuovo stato
     assert new_state is not state
 
     # stato originale NON modificato
