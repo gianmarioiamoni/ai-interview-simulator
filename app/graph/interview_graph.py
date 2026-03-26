@@ -9,6 +9,7 @@ from app.graph.nodes.execution_node import ExecutionNode
 from app.graph.nodes.evaluation_node import EvaluationNode
 from app.graph.nodes.hint_node import HintNode
 from app.graph.nodes.written_evaluation_node import WrittenEvaluationNode
+from app.graph.nodes.decision_node import DecisionNode
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
@@ -62,7 +63,7 @@ def build_interview_graph(
     graph.add_node("evaluation", EvaluationNode())
     graph.add_node("hint", HintNode(hint_service))
     graph.add_node("written", WrittenEvaluationNode(llm))
-
+    graph.add_node("decision", DecisionNode())
     # Entry
     graph.set_entry_point("router")
 
@@ -78,9 +79,12 @@ def build_interview_graph(
     # Execution path
     graph.add_edge("execution", "evaluation")
     graph.add_edge("evaluation", "hint")
-    graph.add_edge("hint", END)
+    graph.add_edge("hint", "decision")
+    graph.add_edge("decision", END)
 
     # Written path
     graph.add_edge("written", "hint")
+    graph.add_edge("hint", "decision")
+    graph.add_edge("decision", END)
 
     return graph.compile()
