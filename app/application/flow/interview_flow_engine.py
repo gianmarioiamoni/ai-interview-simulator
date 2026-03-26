@@ -7,8 +7,9 @@ from domain.contracts.question import QuestionDifficulty
 
 class InterviewFlowEngine:
 
-    def __init__(self):
-        self._graph = get_runtime_graph()
+    def __init__(self, llm=None):
+        # 🔥 FIX: pass llm
+        self._graph = get_runtime_graph(llm=llm)
 
     # =========================================================
     # START
@@ -25,14 +26,10 @@ class InterviewFlowEngine:
     # SUBMIT
     # =========================================================
 
-    def submit(self, state: InterviewState, event) -> InterviewState:
+    def submit(self, state: InterviewState, event=None) -> InterviewState:
 
-        return self._graph.invoke(
-            {
-                "state": state,
-                "event": event,
-            }
-        )
+        # 🔥 FIX: graph expects InterviewState, not dict
+        return self._graph.invoke(state)
 
     # =========================================================
     # NEXT
@@ -51,12 +48,10 @@ class InterviewFlowEngine:
             return state.model_copy(update={"progress": "completed"})
 
         # -----------------------------------------------------
-        # ADVANCE QUESTION
+        # ADVANCE QUESTION (correct)
         # -----------------------------------------------------
 
         new_state = self._select_next_question(state)
-        
-        state = state.advance_question()
 
         # -----------------------------------------------------
         # RUN GRAPH
@@ -76,10 +71,6 @@ class InterviewFlowEngine:
         if next_index >= len(state.questions):
             return state
 
-        # -----------------------------------------------------
-        # PERFORMANCE
-        # -----------------------------------------------------
-
         performance = getattr(state, "performance_level", "medium")
 
         if performance == "weak":
@@ -89,24 +80,14 @@ class InterviewFlowEngine:
         else:
             target_difficulty = QuestionDifficulty.HARD
 
-        # -----------------------------------------------------
-        # ADAPTIVE SELECTION
-        # -----------------------------------------------------
-
         next_question, resolved_index = self._find_question_by_difficulty(
             state,
             target_difficulty,
             next_index,
         )
 
-        # -----------------------------------------------------
-        # IMMUTABLE UPDATE (IMPORTANT FIX)
-        # -----------------------------------------------------
-
         return state.with_current_question(next_question, resolved_index)
 
-    # =========================================================
-    # FIND QUESTION BY DIFFICULTY (FINAL VERSION)
     # =========================================================
 
     def _find_question_by_difficulty(
@@ -118,20 +99,11 @@ class InterviewFlowEngine:
 
         asked_ids = set(getattr(state, "asked_question_ids", []))
 
-        # -----------------------------------------------------
-        # TRY SEQUENTIAL FIRST
-        # -----------------------------------------------------
-
         if start_index < len(state.questions):
             candidate = state.questions[start_index]
 
             if candidate.id not in asked_ids:
                 return candidate, start_index
-
-
-        # -----------------------------------------------------
-        # 1. TRY MATCH DIFFICULTY (NO REPEAT)
-        # -----------------------------------------------------
 
         for i in range(start_index, len(state.questions)):
             q = state.questions[i]
@@ -142,18 +114,10 @@ class InterviewFlowEngine:
             if getattr(q, "difficulty", None) == target_difficulty:
                 return q, i
 
-        # -----------------------------------------------------
-        # 2. FALLBACK → ANY NON-ASKED QUESTION
-        # -----------------------------------------------------
-
         for i in range(start_index, len(state.questions)):
             q = state.questions[i]
 
             if q.id not in asked_ids:
                 return q, i
-
-        # -----------------------------------------------------
-        # 3. FINAL FALLBACK → SEQUENTIAL (ALLOW REPEAT)
-        # -----------------------------------------------------
 
         return state.questions[start_index], start_index

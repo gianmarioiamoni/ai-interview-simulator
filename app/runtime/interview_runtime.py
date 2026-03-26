@@ -1,19 +1,20 @@
 # app/runtime/interview_runtime.py
 
-from infrastructure.llm.llm_factory import get_llm
-from services.interview_evaluation_service import InterviewEvaluationService
 from domain.contracts.interview_state import InterviewState
 
 from app.graph.interview_graph import build_interview_graph
+from infrastructure.llm.llm_factory import get_llm
+from services.ai_hint_engine.ai_hint_service import AIHintService
+
 
 _graph = None
 _llm = None
-_evaluation_service = None
 
 
 # ---------------------------------------------------------
 # LLM
 # ---------------------------------------------------------
+
 
 def get_runtime_llm():
 
@@ -30,16 +31,19 @@ def get_runtime_llm():
 # ---------------------------------------------------------
 
 
-def get_runtime_graph():
+def get_runtime_graph(llm=None, hint_service=None):
 
     global _graph
 
     if _graph is None:
 
-        llm = get_runtime_llm()
+        llm = llm or get_runtime_llm()
+        hint_service = hint_service or AIHintService()
 
-        compiled = build_interview_graph(llm)
-        print("compiled:", compiled)
+        compiled = build_interview_graph(
+            llm=llm,  
+            hint_service=hint_service,  
+        )
 
         original_invoke = compiled.invoke
 
@@ -60,20 +64,3 @@ def get_runtime_graph():
         _graph = compiled
 
     return _graph
-
-
-# ---------------------------------------------------------
-# Evaluation Service
-# ---------------------------------------------------------
-
-def get_runtime_evaluation_service():
-
-    global _evaluation_service
-
-    if _evaluation_service is None:
-
-        llm = get_runtime_llm()
-
-        _evaluation_service = InterviewEvaluationService(llm)
-
-    return _evaluation_service

@@ -1,18 +1,9 @@
 # interface/cli/interview_cli_runner.py
 
-# InterviewCLIRunner
-#
-# Responsibility:
-# - orchestrate loop
-# - connect adapter and graph
-# - do not write critical fields
-# - do not do business logic
-# - persist and restore interview state
-
-
 from pathlib import Path
 
-from app.graph.interview_graph import build_interview_graph
+from app.runtime.interview_runtime import get_runtime_graph
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.answer import Answer
@@ -26,20 +17,18 @@ STATE_FILE = Path("data/interview_state.json")
 
 
 class CLIRunner:
-    # Coordinates CLI interaction with the LangGraph engine
 
     def __init__(self, llm=None) -> None:
-        # Dependency Injection (critical for tests)
+
         if llm is None:
             llm = DefaultLLMAdapter()
 
-        self.graph = build_interview_graph(llm)
+        # 🔥 FIX
+        self.graph = get_runtime_graph(llm=llm)
 
         self.input_adapter = CLIInputAdapter()
         self.output_renderer = CLIOutputRenderer()
 
-    # ----------------------------
-    # Persistence helpers
     # ----------------------------
 
     def _save_state(self, state: InterviewState | dict) -> None:
@@ -60,12 +49,9 @@ class CLIRunner:
             STATE_FILE.unlink()
 
     # ----------------------------
-    # Main loop
-    # ----------------------------
 
     def run(self, initial_state: InterviewState | None = None) -> InterviewState:
 
-        # Resume if state file exists
         state = self._load_state() or initial_state
 
         if state is None:
@@ -73,19 +59,15 @@ class CLIRunner:
 
         while state.progress != InterviewProgress.COMPLETED:
 
-            # Execute graph until it blocks on awaiting_user_input
             result = self.graph.invoke(state)
 
-            # LangGraph may return dict -> normalize to InterviewState using Pydantic
             if isinstance(result, dict):
                 state = InterviewState.model_validate(result)
             else:
                 state = result
 
-            # Persist after each graph execution
             self._save_state(state)
 
-            # Collect user input if required
             if state.awaiting_user_input and state.current_question_id:
 
                 current_question = next(
@@ -99,7 +81,6 @@ class CLIRunner:
 
                     user_answer_text = self.input_adapter.get_answer(current_question)
 
-                    # Compute attempt number for this question
                     existing_attempts = [
                         a for a in state.answers if a.question_id == current_question.id
                     ]
@@ -114,23 +95,18 @@ class CLIRunner:
                         )
                     )
 
-                    # Router owns semantic meaning.
-                    # CLI only resets the flag after providing input.
                     state.awaiting_user_input = False
 
                     self._save_state(state)
 
-            # Render execution result (if new)
             if state.execution_results:
                 self.output_renderer.render_execution_result(
                     state.execution_results[-1]
                 )
 
-            # Render evaluation (if new)
             if state.evaluations:
                 self.output_renderer.render_evaluation(state.evaluations[-1])
 
-        # Interview completed
         self.output_renderer.render_completion(state.total_score)
 
         self._cleanup_state()

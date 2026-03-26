@@ -4,11 +4,18 @@
 #
 # - Computes evaluation from execution result
 # - Pure domain logic (no external services)
-# - Produces updated InterviewState with evaluation
+# - Produces updated InterviewState with evaluation + feedback bundle
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
 from domain.contracts.question_evaluation import QuestionEvaluation
+
+from app.contracts.feedback_bundle import (
+    FeedbackBundle,
+    FeedbackBlockResult,
+    FeedbackSignal,
+    FeedbackQuality,
+)
 
 
 class EvaluationNode:
@@ -35,8 +42,10 @@ class EvaluationNode:
         if result.execution is None:
             return state
 
-        # Avoid re-evaluation
-        if result.evaluation is not None:
+        # Avoid re-evaluation (BUT allow bundle creation if missing)
+        if result.evaluation is not None and getattr(
+            state, "last_feedback_bundle", None
+        ):
             return state
 
         execution = result.execution
@@ -68,6 +77,53 @@ class EvaluationNode:
         )
 
         # ---------------------------------------------------------
+        # FEEDBACK BUNDLE (🔥 NEW - CRITICAL)
+        # ---------------------------------------------------------
+
+        # --- QUALITY MAPPING ---
+        if execution.success:
+            quality_level = "optimal"
+        elif execution.passed_tests > 0:
+            quality_level = "partial"
+        else:
+            quality_level = "incorrect"
+
+        quality = FeedbackQuality(
+            level=quality_level,
+            explanation=execution.error or "Execution result analysis",
+        )
+
+        # --- SIGNALS ---
+        signals = []
+        if execution.error:
+            signals.append(
+                FeedbackSignal(
+                    severity="error",
+                    message=execution.error,
+                )
+            )
+
+        # --- BLOCK ---
+        block = FeedbackBlockResult(
+            title="Execution Result",
+            content=execution.error or "Execution completed",
+            severity="error" if not execution.success else "info",
+            confidence=0.8,
+            signals=signals,
+            learning=[],
+            quality=quality,
+        )
+
+        # --- FINAL BUNDLE ---
+        bundle = FeedbackBundle(
+            blocks=[block],
+            overall_severity=block.severity,
+            overall_confidence=block.confidence,
+            overall_quality=quality.level,  # 🔥 used by HintNode
+            markdown=block.content,
+        )
+
+        # ---------------------------------------------------------
         # Immutable state update
         # ---------------------------------------------------------
 
@@ -77,4 +133,9 @@ class EvaluationNode:
 
         new_results[question.id] = updated_result
 
-        return state.model_copy(update={"results_by_question": new_results})
+        return state.model_copy(
+            update={
+                "results_by_question": new_results,
+                "last_feedback_bundle": bundle,  # 🔥 CRITICAL WRITE
+            }
+        )

@@ -5,31 +5,35 @@
 from unittest.mock import Mock
 
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
+from app.graph.interview_graph import build_interview_graph
+
 from tests.factories.interview_state_factory import build_interview_state
 
 
 def test_execution_via_graph_updates_state():
 
-    # Arrange
     llm = Mock()
-    mock_hint_service = Mock()  # 🔥 IMPORTANT
+    mock_hint_service = Mock()
+
+    graph = build_interview_graph(llm=llm, hint_service=mock_hint_service)
 
     use_case = EvaluateAnswerUseCase(
         llm=llm,
-        hint_service=mock_hint_service,  # 🔥 inject mock
+        interview_graph=graph,
+        hint_service=mock_hint_service,
     )
 
     state = build_interview_state()
 
-    # Act
     new_state = use_case.execute(state)
 
-    # Assert
     result = new_state.get_result_for_question("q1")
 
     assert result is not None
     assert result.execution is not None
     assert result.evaluation is not None
+    assert result.ai_hint is not None
+    assert result.hint_level is not None
 
 
 def test_hint_is_generated():
@@ -39,8 +43,11 @@ def test_hint_is_generated():
     mock_hint_service = Mock()
     mock_hint_service.generate_hint.return_value = "test hint"
 
+    graph = build_interview_graph(llm=llm, hint_service=mock_hint_service)
+
     use_case = EvaluateAnswerUseCase(
         llm=llm,
+        interview_graph=graph,
         hint_service=mock_hint_service,
     )
 
@@ -61,8 +68,11 @@ def test_hint_not_generated_twice():
     mock_hint_service = Mock()
     mock_hint_service.generate_hint.return_value = "hint"
 
+    graph = build_interview_graph(llm=llm, hint_service=mock_hint_service)
+
     use_case = EvaluateAnswerUseCase(
         llm=llm,
+        interview_graph=graph,
         hint_service=mock_hint_service,
     )
 
@@ -71,5 +81,33 @@ def test_hint_not_generated_twice():
     state = use_case.execute(state)
     state = use_case.execute(state)
 
-    # deve essere chiamato UNA SOLA VOLTA
     mock_hint_service.generate_hint.assert_called_once()
+
+
+def test_pipeline_is_idempotent():
+
+    llm = Mock()
+
+    mock_hint_service = Mock()
+    mock_hint_service.generate_hint.return_value = "hint"
+
+    graph = build_interview_graph(llm=llm, hint_service=mock_hint_service)
+
+    use_case = EvaluateAnswerUseCase(
+        llm=llm,
+        interview_graph=graph,
+        hint_service=mock_hint_service,
+    )
+
+    state = build_interview_state()
+
+    first_state = use_case.execute(state)
+    second_state = use_case.execute(first_state)
+
+    result1 = first_state.get_result_for_question("q1")
+    result2 = second_state.get_result_for_question("q1")
+
+    # No mutation / duplication
+    assert result1.execution == result2.execution
+    assert result1.evaluation == result2.evaluation
+    assert result1.ai_hint == result2.ai_hint

@@ -1,35 +1,42 @@
-from app.graph.nodes.execution_node import ExecutionNode
-from services.execution_engine import ExecutionEngine
+# scripts/manual_execution_test.py
 
+# scripts/manual_execution_test.py
+
+from app.graph.execution_graph import build_execution_graph
 from tests.factories.interview_state_factory import build_interview_state
+from domain.contracts.interview_state import InterviewState
 
 
 def main():
-    engine = ExecutionEngine()
-    node = ExecutionNode(engine)
+
+    graph = build_execution_graph()
 
     state = build_interview_state()
 
-    new_state = node(state)
+    graph_result = graph.invoke(state)
 
-    result = new_state.get_result_for_question("q1")
-
-    print("QUESTION:", state.current_question)
-    print("ANSWER:", state.last_answer) 
-
-    print("EXEC RESULT:", result)
-    print("EXEC QUESTION ID:", result.execution.question_id)
-
-    print("EVAL RESULT:", result.evaluation)
-    print("EVAL SCORE:", result.evaluation.score)
-
-    print("HINT:", result.ai_hint)
-    print("HINT LEVEL:", result.hint_level) 
-
-    if result and result.execution:
-        print("SUCCESS:", result.execution.success)
+    # ---------------------------------------------------------
+    # Robust unwrap (LangGraph compatibility)
+    # ---------------------------------------------------------
+    if isinstance(graph_result, dict):
+        new_state = InterviewState.model_validate(graph_result)
     else:
-        print("NO EXECUTION RESULT")
+        new_state = graph_result
+
+    question = new_state.current_question
+    result = new_state.get_result_for_question(question.id)
+
+    print("QUESTION:", question)
+    print("ANSWER:", new_state.last_answer)
+
+    print("\n=== EXECUTION ===")
+    print(result.execution)
+
+    print("\n=== EVALUATION ===")
+    print(result.evaluation)
+
+    print("\n=== HINT ===")
+    print(result.ai_hint)
 
 
 if __name__ == "__main__":

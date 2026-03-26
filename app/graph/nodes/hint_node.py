@@ -40,7 +40,9 @@ class HintNode:
         attempt = state.get_attempt_for_question(question.id)
 
         bundle = getattr(state, "last_feedback_bundle", None)
-        quality = bundle.overall_quality if bundle else "unknown"
+        quality = (
+            bundle.overall_quality if bundle and bundle.overall_quality else "unknown"
+        )
 
         execution = result.execution
 
@@ -52,7 +54,7 @@ class HintNode:
         failed_tests = self._extract_execution_signals(execution)
 
         # ---------------------------------------------------------
-        # Hint level
+        # Hint level (🔥 updated logic)
         # ---------------------------------------------------------
 
         hint_level = self._resolve_hint_level(
@@ -111,10 +113,18 @@ class HintNode:
         execution: ExecutionResult,
     ) -> HintLevel:
 
+        # ---------------------------------------------------------
+        # 1. ERROR dominates (runtime / execution failure)
+        # ---------------------------------------------------------
+
         if execution and execution.error:
-            if attempt == 1:
+            if attempt <= 1:
                 return HintLevel.TARGETED
             return HintLevel.SOLUTION
+
+        # ---------------------------------------------------------
+        # 2. QUALITY-DRIVEN LOGIC
+        # ---------------------------------------------------------
 
         if quality == "incorrect":
             if attempt == 0:
@@ -126,14 +136,26 @@ class HintNode:
             return HintLevel.SOLUTION
 
         if quality == "partial":
-            if attempt == 1:
+            if attempt <= 1:
                 return HintLevel.BASIC
             return HintLevel.TARGETED
+
+        if quality in ("correct", "optimal"):
+            return HintLevel.NONE
 
         if quality == "inefficient":
             return HintLevel.BASIC
 
+        # ---------------------------------------------------------
+        # 3. FALLBACK (unknown / missing bundle)
+        # ---------------------------------------------------------
+
+        if attempt >= 2:
+            return HintLevel.BASIC
+
         return HintLevel.NONE
+
+    # ---------------------------------------------------------
 
     def _extract_execution_signals(self, execution: ExecutionResult) -> str:
 
