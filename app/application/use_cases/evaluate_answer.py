@@ -1,5 +1,12 @@
 # app/application/use_cases/evaluate_answer.py
 
+# EvaluateAnswerUseCase
+#
+# - Handles answer evaluation pipeline
+# - Written questions: LLM evaluation
+# - Coding/DB questions: execution via LangGraph (ExecutionNode)
+# - Hint generation remains centralized here (temporary, will move later)
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
 
@@ -14,13 +21,26 @@ from domain.contracts.hint_level import HintLevel
 from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.test_execution_result import TestStatus
 
+from app.graph.execution_graph import build_execution_graph
+
 
 class EvaluateAnswerUseCase:
 
-    def __init__(self, llm):
+    def __init__(
+        self,
+        llm,
+        execution_graph=None,
+        hint_service=None,
+    ):
+        # Core dependencies
         self.llm = llm
+
+        # Legacy (temporary, will be removed later)
         self.engine = ExecutionEngine()
-        self.hint_service = AIHintService()
+
+        # Injectables (for testability)
+        self.execution_graph = execution_graph or build_execution_graph()
+        self.hint_service = hint_service or AIHintService()
 
     # ---------------------------------------------------------
     # PUBLIC API
@@ -56,8 +76,9 @@ class EvaluateAnswerUseCase:
         execution = result.execution
 
         # -----------------------------------------------------
-        # EXTRACT EXECUTION SIGNALS 
+        # EXTRACT EXECUTION SIGNALS
         # -----------------------------------------------------
+
         error = execution.error if execution else None
         failed_tests = self._extract_execution_signals(execution)
 
@@ -150,15 +171,35 @@ class EvaluateAnswerUseCase:
 
         result = state.get_result_for_question(question.id)
 
+        # Avoid re-execution
         if result and result.execution:
             return state
 
-        execution = self.engine.execute(
-            question,
-            answer.content,
-        )
+        # ---------------------------------------------------------
+        # Execution via LangGraph
+        # ---------------------------------------------------------
 
-        state.register_execution(execution)
+        graph_result = self.execution_graph.invoke(state)
+
+        print("GRAPH RESULT TYPE:", type(graph_result))
+        print("GRAPH RESULT RAW:", graph_result)
+
+        # 🔥 ROBUST UNWRAP (final version)
+        new_state = self._unwrap_graph_result(graph_result, fallback=state)
+
+        if not isinstance(new_state, InterviewState):
+            return state  # ultimate safety
+
+        result = new_state.get_result_for_question(question.id)
+
+        if not result or not result.execution:
+            return new_state  # safe fallback
+
+        execution = result.execution
+
+        # ---------------------------------------------------------
+        # Evaluation (unchanged logic)
+        # ---------------------------------------------------------
 
         if execution.total_tests and execution.total_tests > 0:
             score = (execution.passed_tests / execution.total_tests) * 100
@@ -178,9 +219,31 @@ class EvaluateAnswerUseCase:
             execution_status=execution.status.value,
         )
 
-        state.register_evaluation(evaluation)
+        new_state.register_evaluation(evaluation)
 
-        return state
+        return new_state
+
+    # ---------------------------------------------------------
+    # GRAPH HELPER (CRITICAL)
+    # ---------------------------------------------------------
+
+    def _unwrap_graph_result(self, graph_result, fallback):
+
+        # Case 1: already correct
+        if isinstance(graph_result, InterviewState):
+            return graph_result
+
+        # Case 2: dict →  reconstruct InterviewState
+        if isinstance(graph_result, dict):
+            try:
+                return InterviewState(**graph_result)
+            except Exception:
+                return fallback
+
+        # Fallback safe
+        return fallback
+
+    # ---------------------------------------------------------
 
     def _resolve_hint_level(
         self,
@@ -189,63 +252,45 @@ class EvaluateAnswerUseCase:
         execution: ExecutionResult,
     ) -> HintLevel:
 
-        # -----------------------------------------------------
-        # RUNTIME ERROR → FAST ESCALATION
-        # -----------------------------------------------------
-
         if execution and execution.error:
             if attempt == 1:
                 return HintLevel.TARGETED
             return HintLevel.SOLUTION
 
-        # -----------------------------------------------------
-        # INCORRECT (logic failure)
-        # -----------------------------------------------------
-
         if quality == "incorrect":
-            if attempt ==0:
+            if attempt == 0:
                 return HintLevel.NONE
             if attempt == 1:
                 return HintLevel.BASIC
             if attempt == 2:
                 return HintLevel.TARGETED
             return HintLevel.SOLUTION
-        # -----------------------------------------------------
-        # PARTIAL
-        # -----------------------------------------------------
 
         if quality == "partial":
             if attempt == 1:
                 return HintLevel.BASIC
             return HintLevel.TARGETED
 
-        # -----------------------------------------------------
-        # INEFFICIENT
-        # -----------------------------------------------------
-
         if quality == "inefficient":
             return HintLevel.BASIC
 
-        # -----------------------------------------------------
-        # CORRECT / OPTIMAL
-        # -----------------------------------------------------
-
         return HintLevel.NONE
+
+    # ---------------------------------------------------------
 
     def _extract_execution_signals(self, execution: ExecutionResult) -> str:
 
         if not execution or not execution.test_results:
-           return "None"
-        
-        failed = [
-            t for t in execution.test_results 
-            if t.status != TestStatus.PASSED
-        ]
+            return "None"
+
+        failed = [t for t in execution.test_results if t.status != TestStatus.PASSED]
 
         if not failed:
             return "None"
 
-        return "\n".join([
-            f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
-            for t in failed[:2]
-        ])
+        return "\n".join(
+            [
+                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
+                for t in failed[:2]
+            ]
+        )
