@@ -1,11 +1,37 @@
-from typing import List
+# tests/factories/interview_state_factory.py
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.answer import Answer
 from domain.contracts.role import Role, RoleType
 from domain.contracts.interview_type import InterviewType
+from domain.contracts.execution_result import ExecutionResult, ExecutionStatus, ExecutionType
+from domain.contracts.question import Question, QuestionType, QuestionDifficulty
+from domain.contracts.interview_area import InterviewArea
+from domain.contracts.question_result import QuestionResult
 
-from tests.factories.question_factory import build_question
+# ---------------------------------------------------------
+# QUESTION FACTORY (INLINE → 🔥 avoids import issues)
+# ---------------------------------------------------------
+
+
+def build_question(
+    *,
+    qid: str = "q1",
+    qtype: QuestionType = QuestionType.CODING,
+) -> Question:
+
+    return Question(
+        id=qid,
+        area=InterviewArea.TECH_CODING,
+        type=qtype,
+        prompt="Write a function",
+        difficulty=QuestionDifficulty.MEDIUM,
+    )
+
+
+# ---------------------------------------------------------
+# BASE FACTORY
+# ---------------------------------------------------------
 
 
 def build_interview_state(
@@ -36,4 +62,85 @@ def build_interview_state(
         questions=questions,
         answers=answers,
         current_question_index=current_question_index,
+    )
+
+
+# ---------------------------------------------------------
+# STATE WITH EXECUTION
+# ---------------------------------------------------------
+
+
+def build_state_with_execution(
+    *,
+    passed_tests: int = 0,
+    total_tests: int = 0,
+) -> InterviewState:
+
+    state = build_interview_state()
+    question = state.current_question
+
+    if total_tests > 0 and passed_tests == total_tests:
+        status = ExecutionStatus.SUCCESS
+        success = True
+        error = None
+    else:
+        status = ExecutionStatus.FAILED_TESTS
+        success = False
+        error = "Failed to execute tests"
+
+    execution = ExecutionResult(
+        question_id=question.id,
+        execution_type=ExecutionType.CODING,
+        status=status,
+        success=success,
+        output="",
+        error=error,
+        passed_tests=passed_tests,
+        total_tests=total_tests,
+        execution_time_ms=10,
+        test_results=[],
+    )
+
+    result = state.get_result_for_question(question.id)
+
+    new_results = dict(state.results_by_question)
+
+    if result is None:
+        new_results[question.id] = QuestionResult(
+            question_id=question.id,
+            execution=execution,
+            evaluation=None,
+            ai_hint=None,
+            hint_level=None,
+        )
+    else:
+        updated = result.model_copy(update={"execution": execution})
+        new_results[question.id] = updated
+
+    return state.model_copy(update={"results_by_question": new_results})
+
+
+# ---------------------------------------------------------
+# WRITTEN QUESTION STATE
+# ---------------------------------------------------------
+
+def build_written_question_state() -> InterviewState:
+
+    question = build_question(qtype=QuestionType.WRITTEN)
+
+    answer = Answer(
+        question_id=question.id,
+        content="REST is an architectural style...",
+        attempt=1,
+    )
+
+    return InterviewState(
+        interview_id="test-id",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
+        company="TestCorp",
+        interview_type=InterviewType.TECHNICAL,
+        language="en",
+        questions=[question],
+        answers=[answer],
+        current_question_index=0,
     )

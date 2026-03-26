@@ -31,7 +31,7 @@ def test_interview_graph_single_written_question():
         ]
     )
 
-    graph = build_interview_graph(fake_llm)
+    graph = build_interview_graph()
 
     question = Question(
         id="q1",
@@ -93,7 +93,7 @@ def test_followup_generated_once():
         ]
     )
 
-    graph = build_interview_graph(fake_llm)
+    graph = build_interview_graph()
 
     question = Question(
         id="q1",
