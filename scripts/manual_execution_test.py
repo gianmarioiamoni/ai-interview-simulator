@@ -18,7 +18,13 @@ def main():
     print("ANSWER:", state.last_answer) 
 
     print("EXEC RESULT:", result)
-    print("EXEC QUESTION ID:", result.execution.question_id) 
+    print("EXEC QUESTION ID:", result.execution.question_id)
+
+    print("EVAL RESULT:", result.evaluation)
+    print("EVAL SCORE:", result.evaluation.score)
+
+    print("HINT:", result.ai_hint)
+    print("HINT LEVEL:", result.hint_level) 
 
     if result and result.execution:
         print("SUCCESS:", result.execution.success)
