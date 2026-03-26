@@ -38,9 +38,12 @@ class EvaluateAnswerUseCase:
         # Legacy (temporary, will be removed later)
         self.engine = ExecutionEngine()
 
-        # Injectables (for testability)
-        self.execution_graph = execution_graph or build_execution_graph()
         self.hint_service = hint_service or AIHintService()
+
+        # Injectables (for testability)
+        self.execution_graph = execution_graph or build_execution_graph(
+            hint_service=self.hint_service
+        )
 
     # ---------------------------------------------------------
     # PUBLIC API
@@ -58,66 +61,11 @@ class EvaluateAnswerUseCase:
             state = self._evaluate_written(state, question, answer)
 
         elif question.type in (QuestionType.CODING, QuestionType.DATABASE):
+            result = state.get_result_for_question(question.id)
+            if result and result.execution and result.evaluation and result.ai_hint:
+                return state
+
             state = self._evaluate_execution(state, question, answer)
-
-        # ---------------------------------------------------------
-        # GENERATE AI HINT (SINGLE SOURCE OF TRUTH)
-        # ---------------------------------------------------------
-
-        result = state.get_result_for_question(question.id)
-        if not result:
-            return state
-
-        attempt = state.get_attempt_for_question(question.id)
-
-        bundle = getattr(state, "last_feedback_bundle", None)
-        quality = bundle.overall_quality if bundle else "unknown"
-
-        execution = result.execution
-
-        # -----------------------------------------------------
-        # EXTRACT EXECUTION SIGNALS
-        # -----------------------------------------------------
-
-        error = execution.error if execution else None
-        failed_tests = self._extract_execution_signals(execution)
-
-        # -----------------------------------------------------
-        # HINT LEVEL
-        # -----------------------------------------------------
-
-        hint_level = self._resolve_hint_level(
-            attempt,
-            quality,
-            execution,
-        )
-
-        user_code = answer.content if answer else ""
-
-        hint_input = AIHintInput(
-            error=error,
-            user_code=user_code[:1000],
-            failed_tests=failed_tests,
-            question=question.prompt,
-            hint_level=hint_level,
-        )
-
-        try:
-            ai_hint = self.hint_service.generate_hint(
-                hint_input,
-                level=hint_level.value,
-            )
-        except Exception:
-            ai_hint = None
-
-        updated = result.model_copy(
-            update={
-                "ai_hint": ai_hint,
-                "hint_level": hint_level,
-            }
-        )
-
-        state.results_by_question[question.id] = updated
 
         return state
 
