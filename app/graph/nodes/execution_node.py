@@ -1,5 +1,11 @@
 # app/graph/nodes/execution_node.py
 
+# ExecutionNode
+#
+# - Executes coding/database answers
+# - Produces a new immutable InterviewState
+# - Owns execution result population in state
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
 from services.execution_engine import ExecutionEngine
@@ -15,36 +21,63 @@ class ExecutionNode:
         question = state.current_question
         answer = state.last_answer
 
-        # Safety
+        # ---------------------------------------------------------
+        # Safety guards
+        # ---------------------------------------------------------
+
         if question is None or answer is None:
             return state
 
-        # ✅ Correct enum type
         if question.type not in (QuestionType.CODING, QuestionType.DATABASE):
             return state
 
+        # Avoid re-processing
+        existing = state.get_result_for_question(question.id)
+        if existing and existing.execution:
+            return state
+
+        # ---------------------------------------------------------
+        # Execution
+        # ---------------------------------------------------------
+
         try:
-            # ✅ FIX: pass string, not object
-            result = self._execution_engine.execute(
+            execution_result = self._execution_engine.execute(
                 question=question,
                 user_answer=answer.content,
             )
 
-            # ⚠️ Important protection
-            if result is None:
+            if execution_result is None:
                 return state
 
-            # ✅ Ensure semantic consistency
-            if getattr(result, "question_id", None) is None:
+            # Ensure consistency
+            if getattr(execution_result, "question_id", None) is None:
                 try:
-                    result = result.model_copy(update={"question_id": question.id})
+                    execution_result = execution_result.model_copy(
+                        update={"question_id": question.id}
+                    )
                 except Exception:
-                    result.question_id = question.id  # fallback simple
-
-            new_state = state.model_copy(deep=True)
-            new_state.register_execution(result)
-
-            return new_state
+                    execution_result.question_id = question.id
 
         except Exception:
-            return state  # fallback simple (for now)
+            return state
+
+        # ---------------------------------------------------------
+        # State update (IMMUTABLE SAFE)
+        # ---------------------------------------------------------
+
+        # Clone map explicitly (critical)
+        new_results = dict(state.results_by_question)
+
+        result = new_results.get(question.id)
+
+        if result is None:
+            from domain.contracts.question_result import QuestionResult
+
+            result = QuestionResult(question_id=question.id)
+
+        result = result.model_copy(update={"execution": execution_result})
+
+        new_results[question.id] = result
+
+        # Return fully new state
+        return state.model_copy(update={"results_by_question": new_results})
