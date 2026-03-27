@@ -11,7 +11,7 @@ def report_node(state: InterviewState, service: InterviewEvaluationService) -> I
         per_question_evaluations=state.evaluations_list,
         questions=state.questions,
         interview_type=state.interview_type,
-        role=state.role_type,
+        role=state.role.type,
     )
 
     return ReportBuilder.build(state, interview_eval)
