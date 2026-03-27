@@ -34,6 +34,10 @@ def retry_answer(state: InterviewState):
     if q:
         new_state = new_state.clear_result_for_question(q.id)
 
+    
+    new_state.last_action = "retry"
+    new_state = graph.invoke(new_state)
+
     response = build_ui_response_from_state(new_state)
     response.ui_state = UIState.QUESTION
 
@@ -46,20 +50,21 @@ def retry_answer(state: InterviewState):
 
 def next_question(state: InterviewState):
 
-    state.last_action = "next"
+    new_state = state.model_copy(deep=True)
+    new_state.last_action = "next"
+    
+    new_state = graph.invoke(new_state)
 
-    state = graph.invoke(state)
+    if new_state.is_completed:
 
-    if state.is_completed:
+        new_state = ensure_final_evaluation(new_state)
 
-        state = ensure_final_evaluation(state)
-
-        response = build_ui_response_from_state(state)
+        response = build_ui_response_from_state(new_state)
         response.ui_state = UIState.REPORT
 
         return response.to_gradio_outputs()
 
-    return build_ui_response_from_state(state).to_gradio_outputs()
+    return build_ui_response_from_state(new_state).to_gradio_outputs()
 
 
 # =========================================================
