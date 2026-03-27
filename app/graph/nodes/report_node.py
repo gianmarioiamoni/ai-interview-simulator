@@ -4,13 +4,8 @@ from domain.contracts.interview_state import InterviewState
 from services.interview_evaluation_service import InterviewEvaluationService
 from services.report_builder import ReportBuilder
 
-from infrastructure.llm.llm_adapter import DefaultLLMAdapter
 
-
-def report_node(state: InterviewState) -> InterviewState:
-
-    llm = DefaultLLMAdapter()
-    service = InterviewEvaluationService(llm)
+def report_node(state: InterviewState, service: InterviewEvaluationService) -> InterviewState:
 
     interview_eval = service.evaluate(
         per_question_evaluations=state.evaluations_list,
@@ -19,6 +14,4 @@ def report_node(state: InterviewState) -> InterviewState:
         role=state.role_type,
     )
 
-    new_state = ReportBuilder.build(state, interview_eval)
-
-    return new_state
+    return ReportBuilder.build(state, interview_eval)
