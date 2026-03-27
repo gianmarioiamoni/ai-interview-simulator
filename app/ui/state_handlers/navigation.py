@@ -9,6 +9,8 @@ from app.ui.state_handlers.helpers import ensure_final_evaluation
 
 from app.application.flow.interview_flow_engine import InterviewFlowEngine
 
+from app.graph.interview_graph import graph
+
 MAX_ATTEMPTS = 3
 
 flow = InterviewFlowEngine()
@@ -57,8 +59,8 @@ def next_question(state: InterviewState):
 
         return response.to_gradio_outputs()
 
-    # use FlowEngine instead of manual logic
-    state = flow.next(state)
+    state.last_action = "next"
+    state = graph.invoke(state)
 
     return build_ui_response_from_state(state).to_gradio_outputs()
 
