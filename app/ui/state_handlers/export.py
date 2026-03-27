@@ -13,7 +13,7 @@ export_service = ReportExportService()
 
 def export_pdf(state: InterviewState) -> str:
     if not state.is_completed:
-        return ""
+        raise ValueError("Interview not completed")
 
     report = FinalReportDTO.from_state(state)
 
@@ -29,7 +29,7 @@ def export_pdf(state: InterviewState) -> str:
 def export_json(state: InterviewState) -> str:
 
     if not state.is_completed:
-        return ""
+        raise ValueError("Interview not completed")
 
     report = FinalReportDTO.from_state(state)
 
