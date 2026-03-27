@@ -11,6 +11,7 @@ def test_retry_when_failed_first_attempt():
     state = build_state_with_execution(
         passed_tests=0,
         total_tests=5,
+        quality="incorrect",  # 🔥 REQUIRED
     )
 
     new_state = node(state)
@@ -26,6 +27,7 @@ def test_no_retry_after_max_attempts():
     state = build_state_with_execution(
         passed_tests=0,
         total_tests=5,
+        quality="incorrect",
     )
 
     # simulate attempts
@@ -51,9 +53,26 @@ def test_pass_moves_forward():
     state = build_state_with_execution(
         passed_tests=5,
         total_tests=5,
+        quality="correct",
     )
 
     new_state = node(state)
 
     assert new_state.awaiting_user_input is False
     assert new_state.last_action == "next"
+
+
+def test_partial_triggers_retry():
+
+    node = DecisionNode()
+
+    state = build_state_with_execution(
+        passed_tests=2,
+        total_tests=5,
+        quality="partial",
+    )
+
+    new_state = node(state)
+
+    assert new_state.awaiting_user_input is True
+    assert new_state.last_action == "retry"
