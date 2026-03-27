@@ -1,18 +1,12 @@
 # app/ui/presenters/result_presenter.py
 
 from app.ui.presenters.mappers.execution_mapper import ExecutionMapper
-from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
 from app.ui.view_models.result_view_model import ResultViewModel
 
 
 class ResultPresenter:
 
-    def __init__(self):
-        self._feedback_builder = FeedbackBuilder()
-
     def present(self, state, result, _question_text):
-
-        print("DEBUG AI HINT:", result.ai_hint)
 
         evaluation = result.evaluation
         execution = result.execution
@@ -25,19 +19,12 @@ class ResultPresenter:
         errors = [r.error for r in execution_vm if r.error]
 
         # -----------------------------------------------------
-        # AI-aware feedback pipeline
+        # USE GRAPH OUTPUT
         # -----------------------------------------------------
+        
+        bundle = getattr(state, "last_feedback_bundle", None)
 
-        feedback_bundle = self._feedback_builder.build(
-            state,
-            result,
-            evaluation,
-            execution,
-        )
-
-        state.last_feedback_bundle = feedback_bundle
-
-        feedback_md = feedback_bundle.markdown
+        feedback_md = bundle.markdown if bundle else ""
 
         # -----------------------------------------------------
         # Evaluation
