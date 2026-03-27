@@ -17,6 +17,7 @@ from app.graph.nodes.report_node import report_node
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
+from services.interview_evaluation_service import InterviewEvaluationService
 
 
 # ---------------------------------------------------------
@@ -61,7 +62,7 @@ def build_interview_graph(
     # -----------------------------------------------------
     # Dependencies
     # -----------------------------------------------------
-
+    evaluation_service = InterviewEvaluationService(llm)
     execution_engine = ExecutionEngine()
     hint_service = hint_service or AIHintService()
 
@@ -78,7 +79,7 @@ def build_interview_graph(
     graph.add_node("decision", DecisionNode())
     graph.add_node("written", WrittenEvaluationNode(llm))
     graph.add_node("completion", completion_node)
-    graph.add_node("report", report_node)
+    graph.add_node("report", lambda state: report_node(state, evaluation_service))
     # -----------------------------------------------------
     # Entry point
     # -----------------------------------------------------

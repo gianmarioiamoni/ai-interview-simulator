@@ -87,7 +87,6 @@ def test_hint_not_generated_twice():
 def test_pipeline_is_idempotent():
 
     llm = Mock()
-
     mock_hint_service = Mock()
     mock_hint_service.generate_hint.return_value = "hint"
 
@@ -107,7 +106,35 @@ def test_pipeline_is_idempotent():
     result1 = first_state.get_result_for_question("q1")
     result2 = second_state.get_result_for_question("q1")
 
-    # No mutation / duplication
     assert result1.execution == result2.execution
     assert result1.evaluation == result2.evaluation
     assert result1.ai_hint == result2.ai_hint
+
+    if first_state.is_completed:
+        assert first_state.report_output == second_state.report_output
+
+
+def test_report_generated_when_completed():
+
+    llm = Mock()
+    mock_hint_service = Mock()
+
+    graph = build_interview_graph(llm=llm, hint_service=mock_hint_service)
+
+    use_case = EvaluateAnswerUseCase(
+        llm=llm,
+        interview_graph=graph,
+        hint_service=mock_hint_service,
+    )
+
+    state = build_interview_state()
+
+    # forza stato finale
+    state.current_question_index = len(state.questions) - 1
+    state.last_action = "next"
+
+    new_state = graph.invoke(state)
+
+    assert new_state.is_completed is True
+    assert hasattr(new_state, "report_output")
+    assert hasattr(new_state, "interview_evaluation")
