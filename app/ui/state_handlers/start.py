@@ -10,12 +10,9 @@ from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
-from app.application.flow.interview_flow_engine import InterviewFlowEngine
-
 from app.graph.interview_graph import graph
 
 test_generator = AITestGenerator()
-flow = InterviewFlowEngine()
 
 
 def start_interview(role: str, interview_type: str, company: str, language: str):
