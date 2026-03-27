@@ -1,11 +1,5 @@
 # app/graph/nodes/decision_node.py
 
-# DecisionNode
-#
-# - Controls retry vs next step
-# - Owns flow control semantics
-# - Does NOT execute business logic
-
 from domain.contracts.interview_state import InterviewState
 
 
@@ -23,39 +17,52 @@ class DecisionNode:
 
         result = state.get_result_for_question(question.id)
 
-        if not result or not result.evaluation:
+        if not result:
             return state
 
-        attempt = state.get_attempt_for_question(question.id)
+        evaluation = result.evaluation
+        execution = result.execution
+
+        attempts = state.get_attempt_for_question(question.id)
 
         # ---------------------------------------------------------
-        # PASS → move forward
+        # PASS → NEXT
         # ---------------------------------------------------------
 
-        if result.evaluation.passed:
+        if evaluation:
+            passed = evaluation.passed
+        elif execution:
+            passed = execution.success
+        else:
+            return state
+
+        if passed:
             return state.model_copy(
                 update={
                     "awaiting_user_input": False,
+                    "last_action": "next",
                 }
             )
 
         # ---------------------------------------------------------
-        # FAIL → retry if possible
+        # FAIL → RETRY
         # ---------------------------------------------------------
 
-        if attempt < self.max_attempts:
+        if attempts < self.max_attempts:
             return state.model_copy(
                 update={
                     "awaiting_user_input": True,
+                    "last_action": "retry",
                 }
             )
 
         # ---------------------------------------------------------
-        # FAIL + max attempts → move on
+        # FAIL → COMPLETE (no more retries)
         # ---------------------------------------------------------
 
         return state.model_copy(
             update={
                 "awaiting_user_input": False,
+                "last_action": "next",  # continua comunque
             }
         )

@@ -75,19 +75,38 @@ def build_state_with_execution(
     *,
     passed_tests: int = 0,
     total_tests: int = 0,
+    error: str | None = None,
 ) -> InterviewState:
 
     state = build_interview_state()
     question = state.current_question
 
-    if total_tests > 0 and passed_tests == total_tests:
+    # -----------------------------------------------------
+    # STATUS + SUCCESS (coerenti con i vincoli Pydantic)
+    # -----------------------------------------------------
+
+    if error:
+        status = ExecutionStatus.RUNTIME_ERROR
+        success = False
+
+    elif total_tests > 0 and passed_tests == total_tests:
         status = ExecutionStatus.SUCCESS
         success = True
-        error = None
-    else:
+
+    elif total_tests > 0:
         status = ExecutionStatus.FAILED_TESTS
         success = False
-        error = "Failed to execute tests"
+        error = error or "Some tests failed"  # ✅ FIX CRITICO
+
+    else:
+        # fallback realistico (caso "no tests")
+        status = ExecutionStatus.INTERNAL_ERROR
+        success = False
+        error = error or "No tests detected"
+
+    # -----------------------------------------------------
+    # EXECUTION RESULT
+    # -----------------------------------------------------
 
     execution = ExecutionResult(
         question_id=question.id,
@@ -102,28 +121,18 @@ def build_state_with_execution(
         test_results=[],
     )
 
-    evaluation = QuestionEvaluation(
-        question_id=question.id,
-        score=(passed_tests / total_tests * 100) if total_tests else 0,
-        max_score=100,
-        feedback="auto",
-        passed=(total_tests > 0 and passed_tests == total_tests),
-        strengths=[],
-        weaknesses=[],
-        passed_tests=passed_tests,
-        total_tests=total_tests,
-        execution_status=status.value,
-    )
+    # -----------------------------------------------------
+    # RESULT STRUCTURE
+    # -----------------------------------------------------
 
     result = state.get_result_for_question(question.id)
-
     new_results = dict(state.results_by_question)
 
     if result is None:
         new_results[question.id] = QuestionResult(
             question_id=question.id,
             execution=execution,
-            evaluation=evaluation,
+            evaluation=None,
             ai_hint=None,
             hint_level=None,
         )

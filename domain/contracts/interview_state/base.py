@@ -33,7 +33,7 @@ class InterviewStateBase(BaseModel):
     results_by_question: dict[str, QuestionResult] = Field(default_factory=dict)
 
     current_question_index: int = 0
-    
+
     awaiting_user_input: bool = False
 
     enable_humanizer: bool = True
@@ -41,6 +41,8 @@ class InterviewStateBase(BaseModel):
     events: list = Field(default_factory=list)
 
     last_feedback_bundle: Optional[Any] = None
+
+    last_action: Optional[str] = None
 
     def with_current_question(self, question, index):
         return self.model_copy(
