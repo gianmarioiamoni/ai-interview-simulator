@@ -7,13 +7,13 @@ from domain.contracts.interview_state import InterviewState
 from app.ui.dto.final_report_dto import FinalReportDTO
 from services.report_export_service import ReportExportService
 
-from app.ui.state_handlers.helpers import ensure_final_evaluation
-
 
 export_service = ReportExportService()
 
 
 def export_pdf(state: InterviewState) -> str:
+    if not state.is_completed:
+        return ""
 
     report = FinalReportDTO.from_state(state)
 
@@ -27,6 +27,9 @@ def export_pdf(state: InterviewState) -> str:
 
 
 def export_json(state: InterviewState) -> str:
+
+    if not state.is_completed:
+        return ""
 
     report = FinalReportDTO.from_state(state)
 
