@@ -14,21 +14,21 @@ class ButtonMapper:
     def map(
         state: InterviewState,
         ui_state: UIState,
-        can_retry: bool,  # lo lasciamo per backward compatibility
+        can_retry: bool,  # backward compatibility
     ) -> ButtonState:
 
         is_feedback = ui_state == UIState.FEEDBACK
         has_valid_state = bool(state and state.current_question)
 
         # -----------------------------------------------------
-        # QUALITY + ATTEMPT (NEW)
+        # QUALITY + ATTEMPT
         # -----------------------------------------------------
 
         quality = ButtonMapper._get_quality(state)
         attempt = ButtonMapper._get_attempt(state)
 
         # -----------------------------------------------------
-        # RULES
+        # VISIBILITY
         # -----------------------------------------------------
 
         show_submit = not is_feedback
@@ -45,13 +45,21 @@ class ButtonMapper:
             quality,
         )
 
+        # -----------------------------------------------------
+        # LABELS (🔥 UX IMPROVEMENT)
+        # -----------------------------------------------------
+
+        next_label = ButtonMapper._next_label(state, quality)
+        retry_label = ButtonMapper._retry_label(quality)
+
         return {
             "show_submit": show_submit,
             "show_retry": show_retry,
             "show_next": show_next,
             "show_submit_interactive": show_submit,
             "retry_interactive": show_retry,
-            "next_label": ButtonMapper._next_label(state, quality),
+            "next_label": next_label,
+            "retry_label": retry_label,  # 👈 nuovo (se lo vuoi usare in UI)
         }
 
     # =========================================================
@@ -69,7 +77,7 @@ class ButtonMapper:
         return bundle.overall_quality
 
     # =========================================================
-    # ATTEMPT (NEW)
+    # ATTEMPT
     # =========================================================
 
     @staticmethod
@@ -81,7 +89,7 @@ class ButtonMapper:
         return state.get_attempt_for_question(state.current_question.id)
 
     # =========================================================
-    # RULES
+    # VISIBILITY RULES
     # =========================================================
 
     @staticmethod
@@ -98,13 +106,7 @@ class ButtonMapper:
         if attempt >= ButtonMapper.MAX_ATTEMPTS:
             return False
 
-        if quality == "incorrect":
-            return True
-
-        if quality == "partial":
-            return True
-
-        return False
+        return quality in ("incorrect", "partial")
 
     @staticmethod
     def _show_next(
@@ -115,22 +117,37 @@ class ButtonMapper:
         if not is_feedback:
             return False
 
-        if quality == "incorrect":
-            return False
-
-        return True
+        # puoi andare avanti se non è completamente sbagliato
+        return quality != "incorrect"
 
     # =========================================================
-    # LABELS
+    # LABELS (🔥 UX CORE)
     # =========================================================
 
     @staticmethod
     def _next_label(state: InterviewState, quality: str) -> str:
 
         if state.is_last_question:
-            return "Generate Report"
+            return "📊 Generate Final Report"
+
+        if quality == "correct":
+            return "➡️ Continue"
+
+        if quality == "partial":
+            return "➡️ Continue (can improve)"
 
         if quality == "inefficient":
-            return "Next (Improve Later)"
+            return "➡️ Continue (optimize later)"
 
         return "Next Question"
+
+    @staticmethod
+    def _retry_label(quality: str) -> str:
+
+        if quality == "incorrect":
+            return "🔁 Try Again"
+
+        if quality == "partial":
+            return "🔧 Fix Issues"
+
+        return "Retry"

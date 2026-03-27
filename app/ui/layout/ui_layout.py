@@ -117,7 +117,20 @@ def build_layout():
             """
         )
 
-        feedback_output = gr.Markdown("")
+        feedback_output = gr.Markdown(elem_id="feedback-box")
+
+        gr.HTML(
+            """
+                <style>
+                    #feedback-box {
+                        padding: 16px;
+                        border-radius: 10px;
+                        background-color: #111;
+                        margin-bottom: 16px;
+                    }
+                    </style>
+            """
+        )
 
         # ---------------------------------------------------------
         # INTERVIEW VIEWS
