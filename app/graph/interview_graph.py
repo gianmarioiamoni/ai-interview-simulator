@@ -11,6 +11,7 @@ from app.graph.nodes.feedback_node import FeedbackNode
 from app.graph.nodes.hint_node import HintNode
 from app.graph.nodes.decision_node import DecisionNode
 from app.graph.nodes.written_evaluation_node import WrittenEvaluationNode
+from app.graph.nodes.navigation_node import navigation_node
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
@@ -67,13 +68,12 @@ def build_interview_graph(
     # -----------------------------------------------------
 
     graph.add_node("router", router_node)
-
+    graph.add_node("navigation", navigation_node)
     graph.add_node("execution", ExecutionNode(execution_engine))
     graph.add_node("evaluation", EvaluationNode())
     graph.add_node("feedback", FeedbackNode())
     graph.add_node("hint", HintNode(hint_service))
     graph.add_node("decision", DecisionNode())
-
     graph.add_node("written", WrittenEvaluationNode(llm))
 
     # -----------------------------------------------------
@@ -114,7 +114,8 @@ def build_interview_graph(
 
     graph.add_edge("feedback", "hint")
     graph.add_edge("hint", "decision")
-    graph.add_edge("decision", END)
+    graph.add_edge("decision", "navigation")
+    graph.add_edge("navigation", END)
 
     # -----------------------------------------------------
     # Compile
