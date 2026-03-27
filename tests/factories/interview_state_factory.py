@@ -14,6 +14,7 @@ from domain.contracts.interview_area import InterviewArea
 from domain.contracts.question_result import QuestionResult
 from app.contracts.feedback_bundle import FeedbackBundle
 
+
 # ---------------------------------------------------------
 # QUESTION FACTORY
 # ---------------------------------------------------------
@@ -80,7 +81,7 @@ def build_state_with_execution(
     passed_tests: int = 0,
     total_tests: int = 0,
     error: str | None = None,
-    quality: str | None = None,  # 🔥 NEW
+    quality: str | None = None,
 ) -> InterviewState:
 
     state = build_interview_state()
@@ -142,7 +143,7 @@ def build_state_with_execution(
     state = state.model_copy(update={"results_by_question": new_results})
 
     # -----------------------------------------------------
-    # 🔥 OPTIONAL FEEDBACK BUNDLE
+    # OPTIONAL FEEDBACK BUNDLE
     # -----------------------------------------------------
 
     if quality:
