@@ -5,18 +5,14 @@ from domain.contracts.interview_state import InterviewState
 
 def completion_node(state: InterviewState) -> InterviewState:
 
-    questions = state.get("questions", [])
-    current_index = state.get("current_question_index", 0)
+    questions = state.questions or []
+    current_index = state.current_question_index or 0
 
     if not questions:
         return state
 
-    is_last = current_index >= len(questions) - 1
-
-    if is_last and state.get("last_action") == "next":
-        return {
-            **state,
-            "is_completed": True,
-        }
+    # completed when index goes beyond last question
+    if current_index >= len(questions):
+        return state.model_copy(update={"is_completed": True})
 
     return state

@@ -74,6 +74,19 @@ def test_question_node_humanized():
 
     state = build_interview_state()
 
+    from domain.contracts.question import QuestionType
+
+    q = state.current_question.model_copy(update={"type": QuestionType.WRITTEN})
+
+    state = state.model_copy(
+        update={
+            "questions": [q],
+            "chat_history": [],
+            "current_question_index": 0,
+            "enable_humanizer": True,
+        }
+    )
+
     new_state = node(state)
 
     assert "humanized question" in new_state.chat_history

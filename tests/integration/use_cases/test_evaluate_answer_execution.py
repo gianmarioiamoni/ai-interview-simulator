@@ -7,6 +7,8 @@ from unittest.mock import Mock
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.graph.interview_graph import build_interview_graph
 
+from domain.contracts.interview_state import InterviewState
+
 from tests.factories.interview_state_factory import build_interview_state
 
 
@@ -133,7 +135,12 @@ def test_report_generated_when_completed():
     state.current_question_index = len(state.questions) - 1
     state.last_action = "next"
 
-    new_state = graph.invoke(state)
+    graph_result = graph.invoke(state)
+
+    if isinstance(graph_result, dict):
+        new_state = InterviewState.model_validate(graph_result)
+    else:
+        new_state = graph_result
 
     assert new_state.is_completed is True
     assert hasattr(new_state, "report_output")

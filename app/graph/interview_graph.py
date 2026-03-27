@@ -21,7 +21,22 @@ from services.interview_evaluation_service import InterviewEvaluationService
 
 
 # ---------------------------------------------------------
-# ROUTING FUNCTION (REAL ROUTER)
+# ROUTING: entry decision
+# ---------------------------------------------------------
+
+
+def route_entry(state: InterviewState) -> str:
+
+    # navigation flow (retry / next)
+    if state.last_action in ("retry", "next"):
+        return "navigation"
+
+    # normal evaluation flow
+    return "router"
+
+
+# ---------------------------------------------------------
+# ROUTING: question type
 # ---------------------------------------------------------
 
 
@@ -30,7 +45,7 @@ def route_by_question_type(state: InterviewState) -> str:
     question = state.current_question
 
     if question is None:
-        return "execution"  # safe fallback
+        return "execution"
 
     if question.type == QuestionType.WRITTEN:
         return "written"
@@ -39,7 +54,7 @@ def route_by_question_type(state: InterviewState) -> str:
 
 
 # ---------------------------------------------------------
-# ROUTER NODE (PASS-THROUGH)
+# ROUTER NODE
 # ---------------------------------------------------------
 
 
@@ -62,12 +77,13 @@ def build_interview_graph(
     # -----------------------------------------------------
     # Dependencies
     # -----------------------------------------------------
+
     evaluation_service = InterviewEvaluationService(llm)
     execution_engine = ExecutionEngine()
     hint_service = hint_service or AIHintService()
 
     # -----------------------------------------------------
-    # Nodes (ordine logico del flusso)
+    # Nodes
     # -----------------------------------------------------
 
     graph.add_node("router", router_node)
@@ -80,14 +96,26 @@ def build_interview_graph(
     graph.add_node("written", WrittenEvaluationNode(llm))
     graph.add_node("completion", completion_node)
     graph.add_node("report", lambda state: report_node(state, evaluation_service))
-    # -----------------------------------------------------
-    # Entry point
-    # -----------------------------------------------------
-
-    graph.set_entry_point("router")
 
     # -----------------------------------------------------
-    # Routing
+    # Entry point (NEW)
+    # -----------------------------------------------------
+
+    graph.set_entry_point("entry")
+
+    graph.add_node("entry", lambda state: state)
+
+    graph.add_conditional_edges(
+        "entry",
+        route_entry,
+        {
+            "navigation": "navigation",
+            "router": "router",
+        },
+    )
+
+    # -----------------------------------------------------
+    # Question routing
     # -----------------------------------------------------
 
     graph.add_conditional_edges(
@@ -100,7 +128,7 @@ def build_interview_graph(
     )
 
     # -----------------------------------------------------
-    # Execution path (coding / db)
+    # Execution path
     # -----------------------------------------------------
 
     graph.add_edge("execution", "evaluation")
@@ -113,12 +141,17 @@ def build_interview_graph(
     graph.add_edge("written", "feedback")
 
     # -----------------------------------------------------
-    # Shared tail (MERGED)
+    # Shared tail
     # -----------------------------------------------------
 
     graph.add_edge("feedback", "hint")
     graph.add_edge("hint", "decision")
     graph.add_edge("decision", "navigation")
+
+    # -----------------------------------------------------
+    # Navigation flow
+    # -----------------------------------------------------
+
     graph.add_edge("navigation", "completion")
     graph.add_edge("completion", "report")
     graph.add_edge("report", END)
