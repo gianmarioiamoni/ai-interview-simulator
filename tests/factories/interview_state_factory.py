@@ -4,14 +4,18 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.answer import Answer
 from domain.contracts.role import Role, RoleType
 from domain.contracts.interview_type import InterviewType
-from domain.contracts.execution_result import ExecutionResult, ExecutionStatus, ExecutionType
+from domain.contracts.execution_result import (
+    ExecutionResult,
+    ExecutionStatus,
+    ExecutionType,
+)
 from domain.contracts.question import Question, QuestionType, QuestionDifficulty
 from domain.contracts.interview_area import InterviewArea
 from domain.contracts.question_result import QuestionResult
-from domain.contracts.question_evaluation import QuestionEvaluation
+from app.contracts.feedback_bundle import FeedbackBundle
 
 # ---------------------------------------------------------
-# QUESTION FACTORY (INLINE → 🔥 avoids import issues)
+# QUESTION FACTORY
 # ---------------------------------------------------------
 
 
@@ -67,7 +71,7 @@ def build_interview_state(
 
 
 # ---------------------------------------------------------
-# STATE WITH EXECUTION
+# STATE WITH EXECUTION (+ OPTIONAL QUALITY)
 # ---------------------------------------------------------
 
 
@@ -76,13 +80,14 @@ def build_state_with_execution(
     passed_tests: int = 0,
     total_tests: int = 0,
     error: str | None = None,
+    quality: str | None = None,  # 🔥 NEW
 ) -> InterviewState:
 
     state = build_interview_state()
     question = state.current_question
 
     # -----------------------------------------------------
-    # STATUS + SUCCESS (coerenti con i vincoli Pydantic)
+    # STATUS + SUCCESS
     # -----------------------------------------------------
 
     if error:
@@ -96,10 +101,9 @@ def build_state_with_execution(
     elif total_tests > 0:
         status = ExecutionStatus.FAILED_TESTS
         success = False
-        error = error or "Some tests failed"  # ✅ FIX CRITICO
+        error = error or "Some tests failed"
 
     else:
-        # fallback realistico (caso "no tests")
         status = ExecutionStatus.INTERNAL_ERROR
         success = False
         error = error or "No tests detected"
@@ -125,27 +129,42 @@ def build_state_with_execution(
     # RESULT STRUCTURE
     # -----------------------------------------------------
 
-    result = state.get_result_for_question(question.id)
     new_results = dict(state.results_by_question)
 
-    if result is None:
-        new_results[question.id] = QuestionResult(
-            question_id=question.id,
-            execution=execution,
-            evaluation=None,
-            ai_hint=None,
-            hint_level=None,
-        )
-    else:
-        updated = result.model_copy(update={"execution": execution})
-        new_results[question.id] = updated
+    new_results[question.id] = QuestionResult(
+        question_id=question.id,
+        execution=execution,
+        evaluation=None,
+        ai_hint=None,
+        hint_level=None,
+    )
 
-    return state.model_copy(update={"results_by_question": new_results})
+    state = state.model_copy(update={"results_by_question": new_results})
+
+    # -----------------------------------------------------
+    # 🔥 OPTIONAL FEEDBACK BUNDLE
+    # -----------------------------------------------------
+
+    if quality:
+        state = state.model_copy(
+            update={
+                "last_feedback_bundle": FeedbackBundle(
+                    blocks=[],
+                    overall_severity="error",
+                    overall_confidence=1.0,
+                    overall_quality=quality,
+                    markdown="",
+                )
+            }
+        )
+
+    return state
 
 
 # ---------------------------------------------------------
 # WRITTEN QUESTION STATE
 # ---------------------------------------------------------
+
 
 def build_written_question_state() -> InterviewState:
 
