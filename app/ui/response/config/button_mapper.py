@@ -127,7 +127,7 @@ class ButtonMapper:
     @staticmethod
     def _next_label(state: InterviewState, quality: str) -> str:
 
-        if state.is_last_question:
+        if state.is_completed:
             return "📊 Generate Final Report"
 
         if quality == "correct":

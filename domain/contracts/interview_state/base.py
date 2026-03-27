@@ -44,6 +44,8 @@ class InterviewStateBase(BaseModel):
 
     last_action: Optional[str] = None
 
+    is_completed: bool = False
+
     def with_current_question(self, question, index):
         return self.model_copy(
             update={

@@ -7,13 +7,9 @@ from app.ui.ui_response import UIResponse
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.state_handlers.helpers import ensure_final_evaluation
 
-from app.application.flow.interview_flow_engine import InterviewFlowEngine
-
 from app.graph.interview_graph import graph
 
 MAX_ATTEMPTS = 3
-
-flow = InterviewFlowEngine()
 
 
 # =========================================================
@@ -36,7 +32,7 @@ def retry_answer(state: InterviewState):
     q = new_state.current_question
 
     if q:
-        new_state.clear_result_for_question(q.id)
+        new_state = new_state.clear_result_for_question(q.id)
 
     response = build_ui_response_from_state(new_state)
     response.ui_state = UIState.QUESTION
@@ -50,7 +46,11 @@ def retry_answer(state: InterviewState):
 
 def next_question(state: InterviewState):
 
-    if state.is_last_question:
+    state.last_action = "next"
+
+    state = graph.invoke(state)
+
+    if state.is_completed:
 
         state = ensure_final_evaluation(state)
 
@@ -58,9 +58,6 @@ def next_question(state: InterviewState):
         response.ui_state = UIState.REPORT
 
         return response.to_gradio_outputs()
-
-    state.last_action = "next"
-    state = graph.invoke(state)
 
     return build_ui_response_from_state(state).to_gradio_outputs()
 
