@@ -2,11 +2,14 @@
 
 from typing import List
 
+from domain.contracts.question import Question
+from domain.contracts.question import QuestionDifficulty
+
 
 class NavigationPolicy:
     @staticmethod
     def select_next_question_index(
-        questions: List[dict],
+        questions: List[Question],
         current_index: int,
     ) -> int:
         # Sequential baseline (safe default)
@@ -20,12 +23,12 @@ class NavigationPolicy:
 
     @staticmethod
     def find_question_by_difficulty(
-        questions: List[dict],
-        target_difficulty: str,
+        questions: List[Question],
+        target_difficulty: QuestionDifficulty,
         fallback_index: int,
     ) -> int:
         for i, q in enumerate(questions):
-            if q.get("difficulty") == target_difficulty:
+            if q.difficulty == target_difficulty:
                 return i
 
         return fallback_index
