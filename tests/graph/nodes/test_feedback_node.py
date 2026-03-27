@@ -82,3 +82,37 @@ def test_feedback_no_tests_detected():
     bundle = new_state.last_feedback_bundle
 
     assert bundle is not None
+
+
+def test_feedback_generates_signal_on_error():
+
+    node = FeedbackNode()
+
+    state = build_state_with_execution(
+        passed_tests=0,
+        total_tests=0,
+        error="syntax error",
+    )
+
+    new_state = node(state)
+
+    bundle = new_state.last_feedback_bundle
+
+    assert len(bundle.blocks[0].signals) > 0
+    assert bundle.blocks[0].signals[0].severity == "error"
+
+
+def test_feedback_generates_learning_for_partial():
+
+    node = FeedbackNode()
+
+    state = build_state_with_execution(
+        passed_tests=2,
+        total_tests=5,
+    )
+
+    new_state = node(state)
+
+    learning = new_state.last_feedback_bundle.blocks[0].learning
+
+    assert len(learning) > 0
