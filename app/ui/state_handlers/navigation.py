@@ -5,7 +5,6 @@ from domain.contracts.interview_state import InterviewState
 from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
-from app.ui.state_handlers.helpers import ensure_final_evaluation
 
 from app.graph.interview_graph import graph
 
@@ -56,8 +55,6 @@ def next_question(state: InterviewState):
     new_state = graph.invoke(new_state)
 
     if new_state.is_completed:
-
-        new_state = ensure_final_evaluation(new_state)
 
         response = build_ui_response_from_state(new_state)
         response.ui_state = UIState.REPORT

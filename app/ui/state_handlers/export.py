@@ -15,8 +15,6 @@ export_service = ReportExportService()
 
 def export_pdf(state: InterviewState) -> str:
 
-    state = ensure_final_evaluation(state)
-
     report = FinalReportDTO.from_state(state)
 
     os.makedirs("/mnt/data", exist_ok=True)
@@ -29,8 +27,6 @@ def export_pdf(state: InterviewState) -> str:
 
 
 def export_json(state: InterviewState) -> str:
-
-    state = ensure_final_evaluation(state)
 
     report = FinalReportDTO.from_state(state)
 

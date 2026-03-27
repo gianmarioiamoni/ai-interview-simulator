@@ -13,6 +13,7 @@ from app.graph.nodes.decision_node import DecisionNode
 from app.graph.nodes.written_evaluation_node import WrittenEvaluationNode
 from app.graph.nodes.navigation_node import navigation_node
 from app.graph.nodes.completion_node import completion_node
+from app.graph.nodes.report_node import report_node
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
@@ -77,6 +78,7 @@ def build_interview_graph(
     graph.add_node("decision", DecisionNode())
     graph.add_node("written", WrittenEvaluationNode(llm))
     graph.add_node("completion", completion_node)
+    graph.add_node("report", report_node)
     # -----------------------------------------------------
     # Entry point
     # -----------------------------------------------------
@@ -117,7 +119,8 @@ def build_interview_graph(
     graph.add_edge("hint", "decision")
     graph.add_edge("decision", "navigation")
     graph.add_edge("navigation", "completion")
-    graph.add_edge("completion", END)
+    graph.add_edge("completion", "report")
+    graph.add_edge("report", END)
 
     # -----------------------------------------------------
     # Compile
