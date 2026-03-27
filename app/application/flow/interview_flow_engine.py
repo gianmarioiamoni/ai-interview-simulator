@@ -8,7 +8,6 @@ from domain.contracts.question import QuestionDifficulty
 class InterviewFlowEngine:
 
     def __init__(self, llm=None):
-        # 🔥 FIX: pass llm
         self._graph = get_runtime_graph(llm=llm)
 
     # =========================================================
@@ -28,7 +27,7 @@ class InterviewFlowEngine:
 
     def submit(self, state: InterviewState, event=None) -> InterviewState:
 
-        # 🔥 FIX: graph expects InterviewState, not dict
+        # graph = evaluation pipeline
         return self._graph.invoke(state)
 
     # =========================================================
@@ -41,6 +40,13 @@ class InterviewFlowEngine:
             return state
 
         # -----------------------------------------------------
+        # NEW: decision-driven flow (STEP 2.6)
+        # -----------------------------------------------------
+
+        if getattr(state, "last_action", None) == "retry":
+            return state
+
+        # -----------------------------------------------------
         # END
         # -----------------------------------------------------
 
@@ -48,7 +54,7 @@ class InterviewFlowEngine:
             return state.model_copy(update={"progress": "completed"})
 
         # -----------------------------------------------------
-        # ADVANCE QUESTION (correct)
+        # ADVANCE QUESTION
         # -----------------------------------------------------
 
         new_state = self._select_next_question(state)
