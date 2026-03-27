@@ -1,12 +1,16 @@
 # app/graph/nodes/report_node.py
 
 from domain.contracts.interview_state import InterviewState
-
-from app.ui.state_handlers.helpers import ensure_final_evaluation
+from services.evaluation_aggregator import EvaluationAggregator
+from services.report_builder import ReportBuilder
 
 
 def report_node(state: InterviewState) -> InterviewState:
 
-    state = ensure_final_evaluation(state)
+    evaluations = state.evaluations_list
 
-    return state
+    aggregation = EvaluationAggregator.aggregate(evaluations)
+
+    new_state = ReportBuilder.build(state, aggregation)
+
+    return new_state
