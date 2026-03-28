@@ -1,5 +1,3 @@
-# app/graph/nodes/question_node.py
-
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
 from services.prompt_builders.humanizer_prompt_builder import build_humanizer_prompt
@@ -26,18 +24,16 @@ def build_question_node(llm):
         # ---------------------------------------------------------
 
         if not state.enable_humanizer:
-
-            state.chat_history.append(question.prompt)
-            return state
+            new_history = state.chat_history + [question.prompt]
+            return state.model_copy(update={"chat_history": new_history})
 
         # ---------------------------------------------------------
         # Non written questions
         # ---------------------------------------------------------
 
         if question.type != QuestionType.WRITTEN:
-
-            state.chat_history.append(question.prompt)
-            return state
+            new_history = state.chat_history + [question.prompt]
+            return state.model_copy(update={"chat_history": new_history})
 
         # ---------------------------------------------------------
         # Humanize question
@@ -51,8 +47,9 @@ def build_question_node(llm):
 
         response = llm.invoke(prompt)
 
-        state.chat_history.append(response.content.strip())
+        new_message = response.content.strip()
+        new_history = state.chat_history + [new_message]
 
-        return state
+        return state.model_copy(update={"chat_history": new_history})
 
     return question_node
