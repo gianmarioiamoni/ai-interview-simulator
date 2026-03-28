@@ -26,7 +26,8 @@ class InterviewStateBase(BaseModel):
     asked_question_ids: list[str] = Field(default_factory=list)
     answers: list[Answer] = Field(default_factory=list)
 
-    final_evaluation: Optional[InterviewEvaluation] = None
+    report_output: dict | None = None
+    interview_evaluation: Optional[InterviewEvaluation] = None
 
     chat_history: list[str] = Field(default_factory=list)
 
@@ -45,6 +46,7 @@ class InterviewStateBase(BaseModel):
     last_action: Optional[str] = None
 
     is_completed: bool = False
+
 
     def with_current_question(self, question, index):
         return self.model_copy(

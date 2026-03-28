@@ -40,7 +40,7 @@ def report_node(
 
     return state.model_copy(
         update={
-            "final_evaluation": interview_eval,  # domain
+            "interview_evaluation": interview_eval,  # domain
             "report_output": report_output,  # UI
         }
     )

@@ -153,11 +153,17 @@ def build_interview_graph(
     # -----------------------------------------------------
 
     graph.add_edge("navigation", "completion")
-    graph.add_edge("completion", "report")
-    graph.add_edge("report", END)
 
-    # -----------------------------------------------------
-    # Compile
-    # -----------------------------------------------------
+    def route_after_completion(state: InterviewState) -> str:
+        if state.is_completed:
+            return "report"
+        return END
+
+    graph.add_conditional_edges("completion", route_after_completion, {
+        "report": "report",
+        END: END,
+    })
+
+    graph.add_edge("report", END)
 
     return graph.compile()
