@@ -28,15 +28,29 @@ class FeedbackNode:
         evaluation = result.evaluation
 
         # =========================================================
-        # WRITTEN FLOW (NEW - FIX)
+        # WRITTEN FLOW (FIXED: includes score)
         # =========================================================
 
         if execution is None and evaluation is not None:
 
-            content = evaluation.feedback or "Evaluation completed."
+            # -----------------------------------------------------
+            # CONTENT (with score)
+            # -----------------------------------------------------
 
-            # Basic quality inference for written answers
+            if evaluation.feedback:
+                content = f"Score: {evaluation.score:.1f}/100\n\n{evaluation.feedback}"
+            else:
+                content = f"Score: {evaluation.score:.1f}/100"
+
+            # -----------------------------------------------------
+            # QUALITY
+            # -----------------------------------------------------
+
             quality = "correct" if evaluation.score >= 70 else "incorrect"
+
+            # -----------------------------------------------------
+            # BLOCK
+            # -----------------------------------------------------
 
             block = FeedbackBlockResult(
                 title="Result",
@@ -50,6 +64,10 @@ class FeedbackNode:
                     explanation="Evaluation based on written answer.",
                 ),
             )
+
+            # -----------------------------------------------------
+            # BUNDLE
+            # -----------------------------------------------------
 
             bundle = FeedbackBundle(
                 blocks=[block],
@@ -137,7 +155,6 @@ class FeedbackNode:
 
         status = execution.status
 
-        # REAL ERRORS
         if status in (
             ExecutionStatus.RUNTIME_ERROR,
             ExecutionStatus.SYNTAX_ERROR,
@@ -145,11 +162,9 @@ class FeedbackNode:
         ):
             return "incorrect"
 
-        # NO TESTS
         if execution.total_tests == 0:
             return "incorrect"
 
-        # TEST RESULTS
         if execution.passed_tests == 0:
             return "incorrect"
 
