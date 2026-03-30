@@ -41,29 +41,43 @@ def get_runtime_graph(llm=None, hint_service=None):
         hint_service = hint_service or AIHintService()
 
         compiled_graph = build_interview_graph(
-            llm=llm,  
-            hint_service=hint_service,  
+            llm=llm,
+            hint_service=hint_service,
         )
 
         original_invoke = compiled_graph.invoke
 
         def invoke_with_model(state):
 
-            if isinstance(state, dict):
+            # -------------------------------------------------
+            # INPUT NORMALIZATION
+            # -------------------------------------------------
+
+            if not isinstance(state, InterviewState):
                 state = InterviewState.model_validate(state)
+
+            # -------------------------------------------------
+            # GRAPH EXECUTION
+            # -------------------------------------------------
 
             result = original_invoke(state)
 
-            if isinstance(result, dict):
-                return InterviewState.model_validate(result)
+            # -------------------------------------------------
+            # OUTPUT NORMALIZATION (CRITICAL FIX)
+            # -------------------------------------------------
 
-            return result
+            return InterviewState.model_validate(result)
 
         compiled_graph.invoke = invoke_with_model
 
         _graph = compiled_graph
 
     return _graph
+
+
+# ---------------------------------------------------------
+# PUBLIC EXECUTION ENTRY POINT
+# ---------------------------------------------------------
 
 
 def run_interview_graph(state: InterviewState) -> InterviewState:

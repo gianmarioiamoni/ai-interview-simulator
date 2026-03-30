@@ -5,15 +5,13 @@ from domain.contracts.role import RoleType
 from domain.contracts.question import QuestionType
 from domain.contracts.interview_state import InterviewState
 
-from app.application.interview_runner import create_interview_runner
-
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
+from app.runtime.interview_runtime import run_interview_graph
 
-runner = create_interview_runner()
 test_generator = AITestGenerator()
 
 
@@ -46,6 +44,7 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     # GRAPH EXECUTION
     # -----------------------------------------------------
     
-    raw_state = runner(state)
+    new_state = run_interview_graph(state)
+    response = build_ui_response_from_state(new_state)
 
-    return build_ui_response_from_state(raw_state)
+    return response
