@@ -6,7 +6,7 @@ from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
 
-from app.graph.interview_graph import graph
+from app.graph.interview_graph import build_interview_graph
 
 
 def retry_answer(state: InterviewState):
@@ -23,7 +23,7 @@ def retry_answer(state: InterviewState):
 
     new_state.last_action = "retry"
 
-    new_state = graph.invoke(new_state)
+    new_state = build_interview_graph().invoke(new_state)
 
     response = build_ui_response_from_state(new_state)
     response.ui_state = UIState.QUESTION
