@@ -11,6 +11,7 @@ from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
 from app.graph.interview_graph import build_interview_graph
+from app.runtime.interview_runtime import get_runtime_llm
 
 test_generator = AITestGenerator()
 
@@ -42,6 +43,6 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
 
     # FLOW ENGINE
     
-    state = build_interview_graph().invoke(state)
+    state = build_interview_graph(llm=get_runtime_llm()).invoke(state)
 
     return build_ui_response_from_state(state)
