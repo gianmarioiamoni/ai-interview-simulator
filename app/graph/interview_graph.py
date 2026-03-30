@@ -22,7 +22,6 @@ from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.interview_evaluation_service import InterviewEvaluationService
 
 
-
 # ---------------------------------------------------------
 # ROUTING: entry decision
 # ---------------------------------------------------------
@@ -168,6 +167,9 @@ def _build_interview_graph(
     return graph.compile()
 
 
-def run_graph(state: InterviewState) -> InterviewState:
-    raw_state = _build_interview_graph(llm=get_runtime_llm()).invoke(state)
+def run_graph(
+    state: InterviewState,
+    hint_service: AIHintService | None = None,
+) -> InterviewState:
+    raw_state = _build_interview_graph(llm=get_runtime_llm(), hint_service=hint_service).invoke(state)
     return InterviewState.model_validate(raw_state)
