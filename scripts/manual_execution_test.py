@@ -1,6 +1,6 @@
 # scripts/manual_execution_test.py
 
-from app.graph.interview_graph import run_graph
+from app.graph.interview_graph import build_interview_graph
 from tests.factories.interview_state_factory import build_interview_state
 from domain.contracts.interview_state import InterviewState
 
@@ -84,10 +84,10 @@ def main():
     llm = DefaultLLMAdapter()
     hint_service = AIHintService(llm)
 
-    graph = run_graph(
+    graph = build_interview_graph(
         llm=llm,
         hint_service=hint_service,
-    )
+    ).invoke(state)
 
     # ---------------------------------------------------------
     # Initial state
@@ -109,7 +109,7 @@ def main():
 
         state.last_action = "next"
 
-        graph_result = run_graph(state)
+        graph_result = graph.invoke(state)
         state = unwrap_state(graph_result)
 
         print_step(state)
