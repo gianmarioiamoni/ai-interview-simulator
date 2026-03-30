@@ -15,11 +15,11 @@ def completion_node(state: InterviewState) -> InterviewState:
 
     last_index = len(questions) - 1
 
-    if current_index == last_index and state.last_action == "next":
+    if current_index >= last_index and state.current_question is not None:
         return state.model_copy(
             update={
                 "is_completed": True,
-                "last_action": None,  # ✅ consume here
+                "last_action": None,  # consume here
             }
         )
 
