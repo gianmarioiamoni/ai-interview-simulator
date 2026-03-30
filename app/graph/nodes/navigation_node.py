@@ -30,8 +30,10 @@ def navigation_node(state: InterviewState) -> InterviewState:
 
     if action == "next":
 
-        # last question → move beyond last (completion handled later)
-        if current_index >= len(questions) - 1:
+        last_index = len(questions) - 1
+
+        # allow move only if strictly before last
+        if current_index < last_index:
             return state.model_copy(
                 update={
                     "current_question_index": current_index + 1,
@@ -39,10 +41,10 @@ def navigation_node(state: InterviewState) -> InterviewState:
                 }
             )
 
-        # normal next
+        # already last → stay
         return state.model_copy(
             update={
-                "current_question_index": current_index + 1,
+                "current_question_index": last_index,
                 "last_action": None,
             }
         )

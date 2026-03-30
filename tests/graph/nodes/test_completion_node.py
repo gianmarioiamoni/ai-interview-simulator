@@ -1,35 +1,48 @@
+# tests/graph/nodes/test_completion_node.py
+
 from app.graph.nodes.completion_node import completion_node
-
-
-def build_state(**overrides):
-    base = {
-        "questions": [{"id": 1}, {"id": 2}],
-        "current_question_index": 1,
-        "last_action": "next",
-        "is_completed": False,
-    }
-    return {**base, **overrides}
+from tests.factories.interview_state_factory import build_interview_state
 
 
 def test_completion_triggers_on_last_question():
-    state = build_state()
+
+    state = build_interview_state()
+
+    state = state.model_copy(
+        update={
+            "current_question_index": len(state.questions) - 1,
+            "last_action": "next",
+            "is_completed": False,
+        }
+    )
 
     new_state = completion_node(state)
 
-    assert new_state["is_completed"] is True
+    assert new_state.is_completed is True
 
 
 def test_completion_not_triggered_if_not_last():
-    state = build_state(current_question_index=0)
+
+    state = build_interview_state()
+
+    state = state.model_copy(
+        update={
+            "current_question_index": 0,
+            "last_action": "next",
+        }
+    )
 
     new_state = completion_node(state)
 
-    assert new_state.get("is_completed") is False
+    assert new_state.is_completed is False
 
 
 def test_completion_not_triggered_on_retry():
-    state = build_state(last_action="retry")
+
+    state = build_interview_state()
+
+    state = state.model_copy(update={"last_action": "retry"})
 
     new_state = completion_node(state)
 
-    assert new_state.get("is_completed") is False
+    assert new_state.is_completed is False

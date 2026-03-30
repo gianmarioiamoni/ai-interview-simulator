@@ -9,14 +9,33 @@ def report_node(
     service: InterviewEvaluationService,
 ) -> InterviewState:
 
-    evaluations = state.evaluations_list
+    # ---------------------------------------------------------
+    # Extract evaluations from results_by_question
+    # ---------------------------------------------------------
+
+    results = state.results_by_question or {}
+
+    evaluations = [
+        r.evaluation
+        for r in results.values()
+        if r is not None and r.evaluation is not None
+    ]
 
     # ---------------------------------------------------------
     # SAFETY: no evaluations → empty report
     # ---------------------------------------------------------
 
     if not evaluations:
-        return state.model_copy(update={"report_output": None})
+        return state.model_copy(
+            update={
+                "report_output": None,
+                "interview_evaluation": None,
+            }
+        )
+
+    # ---------------------------------------------------------
+    # Build interview evaluation
+    # ---------------------------------------------------------
 
     interview_eval = service.evaluate(
         per_question_evaluations=evaluations,
@@ -37,6 +56,10 @@ def report_node(
         "executive_summary": interview_eval.executive_summary,
         "improvement_suggestions": interview_eval.improvement_suggestions,
     }
+
+    # ---------------------------------------------------------
+    # Return updated state
+    # ---------------------------------------------------------
 
     return state.model_copy(
         update={
