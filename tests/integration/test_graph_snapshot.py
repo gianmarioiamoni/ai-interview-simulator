@@ -1,7 +1,8 @@
 from unittest.mock import Mock
 
-from app.graph.interview_graph import build_interview_graph
+from app.graph.interview_graph import run_graph
 from tests.factories.interview_state_factory import build_interview_state
+from domain.contracts.interview_state import InterviewState
 from tests.utils.state_snapshot import serialize_state
 
 
@@ -11,12 +12,12 @@ def test_full_graph_snapshot():
     hint_service = Mock()
     hint_service.generate_hint.return_value = "hint"
 
-    graph = build_interview_graph(llm=llm, hint_service=hint_service)
+    graph = run_graph(llm=llm, hint_service=hint_service)
 
     state = build_interview_state()
 
     # run pipeline
-    final_state = graph.invoke(state)
+    final_state = run_graph(state)
 
     if isinstance(final_state, dict):
         from domain.contracts.interview_state import InterviewState
@@ -48,7 +49,7 @@ def test_completion_snapshot():
     llm = Mock()
     hint_service = Mock()
 
-    graph = build_interview_graph(llm=llm, hint_service=hint_service)
+    graph = run_graph(llm=llm, hint_service=hint_service)
 
     state = build_interview_state()
 
@@ -60,7 +61,7 @@ def test_completion_snapshot():
         }
     )
 
-    final_state = graph.invoke(state)
+    final_state = run_graph(state)
 
     if isinstance(final_state, dict):
         from domain.contracts.interview_state import InterviewState
