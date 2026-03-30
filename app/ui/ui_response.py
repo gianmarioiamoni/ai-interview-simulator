@@ -16,7 +16,7 @@ class UIResponse:
     # HEADER
     question_counter: str = ""
 
-    # FEEDBACK 
+    # FEEDBACK
     feedback_markdown: str = ""
     feedback_quality: Optional[str] = None
 
@@ -37,6 +37,7 @@ class UIResponse:
 
     # RETRY
     retry_interactive: bool = True
+    retry_label: Optional[str] = None
 
     # STATE
     ui_state: Optional[UIState] = None
