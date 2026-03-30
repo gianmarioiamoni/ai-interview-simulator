@@ -40,7 +40,7 @@ class FinalReportDTO(BaseModel):
     # =========================================================
 
     @classmethod
-    def from_state(cls, state: InterviewState):
+    def from_components(cls, state: InterviewState, final_evaluation):
 
         question_assessments: List[QuestionAssessmentDTO] = []
 
@@ -102,7 +102,7 @@ class FinalReportDTO(BaseModel):
                 )
 
             # ======================================================
-            # AI HINT (READ ONLY)
+            # AI HINT
             # ======================================================
 
             if result.ai_hint:
@@ -125,20 +125,11 @@ class FinalReportDTO(BaseModel):
                 ai_hint_suggestion=ai_hint_suggestion,
             )
 
-            assert isinstance(q_assessment.feedback, str)
-            assert isinstance(q_assessment.ai_hint_explanation, (str, type(None)))
-            assert isinstance(q_assessment.ai_hint_suggestion, (str, type(None)))
-
             question_assessments.append(q_assessment)
 
         # =========================================================
         # DIMENSIONS
         # =========================================================
-
-        fe = state.final_evaluation
-
-        if fe is None:
-            raise RuntimeError("Final evaluation missing")
 
         dimension_scores = [
             DimensionScoreDTO(
@@ -146,7 +137,7 @@ class FinalReportDTO(BaseModel):
                 score=dim.score,
                 max_score=100,
             )
-            for dim in fe.performance_dimensions
+            for dim in final_evaluation.performance_dimensions
         ]
 
         # =========================================================
@@ -170,19 +161,19 @@ class FinalReportDTO(BaseModel):
         )
 
         return cls(
-            overall_score=fe.overall_score,
-            hiring_probability=fe.hiring_probability,
-            percentile_rank=fe.percentile_rank,
-            percentile_explanation=fe.percentile_explanation,
-            executive_summary=fe.executive_summary,
-            gating_triggered=fe.gating_triggered,
-            gating_reason=fe.gating_reason,
-            weighted_breakdown=fe.weighted_breakdown,
+            overall_score=final_evaluation.overall_score,
+            hiring_probability=final_evaluation.hiring_probability,
+            percentile_rank=final_evaluation.percentile_rank,
+            percentile_explanation=final_evaluation.percentile_explanation,
+            executive_summary=final_evaluation.executive_summary,
+            gating_triggered=final_evaluation.gating_triggered,
+            gating_reason=final_evaluation.gating_reason,
+            weighted_breakdown=final_evaluation.weighted_breakdown,
             dimension_scores=dimension_scores,
             question_assessments=question_assessments,
             improvement_suggestions=improvements,
             total_tokens_used=tokens,
-            confidence=fe.confidence,
+            confidence=final_evaluation.confidence,
         )
 
     # =========================================================

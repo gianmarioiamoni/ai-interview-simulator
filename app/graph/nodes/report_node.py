@@ -22,24 +22,14 @@ def report_node(
     ]
 
     # ---------------------------------------------------------
-    # SAFETY: no evaluations → empty structured report
+    # SAFETY
     # ---------------------------------------------------------
 
     if not evaluations:
 
-        empty_report = {
-            "overall_score": 0,
-            "hiring_probability": 0,
-            "percentile_rank": 0,
-            "confidence": 0.0,
-            "executive_summary": "No evaluation available",
-            "improvement_suggestions": [],
-        }
-
         return state.model_copy(
             update={
                 "interview_evaluation": None,
-                "report_output": empty_report,
             }
         )
 
@@ -54,18 +44,8 @@ def report_node(
         role=state.role.type,
     )
 
-    report_output = {
-        "overall_score": interview_eval.overall_score,
-        "hiring_probability": interview_eval.hiring_probability,
-        "percentile_rank": interview_eval.percentile_rank,
-        "confidence": interview_eval.confidence.final,
-        "executive_summary": interview_eval.executive_summary,
-        "improvement_suggestions": interview_eval.improvement_suggestions,
-    }
-
     return state.model_copy(
         update={
             "interview_evaluation": interview_eval,
-            "report_output": report_output,
         }
     )
