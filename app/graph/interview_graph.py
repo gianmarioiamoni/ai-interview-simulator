@@ -168,16 +168,3 @@ def build_interview_graph(
 
     return graph.compile()
 
-
-def run_graph(
-    llm: LLM,
-    state: InterviewState,
-    hint_service: AIHintService | None = None,
-) -> InterviewState:
-
-    raw_state = build_interview_graph(
-        llm=llm,
-        hint_service=hint_service,
-    ).invoke(state)
-
-    return InterviewState.model_validate(raw_state)

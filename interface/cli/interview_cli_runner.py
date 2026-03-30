@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from app.runtime.interview_runtime import get_runtime_graph
+from app.runtime.interview_runtime import run_interview_graph
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview_progress import InterviewProgress
@@ -24,7 +24,7 @@ class CLIRunner:
             llm = DefaultLLMAdapter()
 
         # 🔥 FIX
-        self.graph = get_runtime_graph(llm=llm)
+        self.graph = run_interview_graph(llm=llm)
 
         self.input_adapter = CLIInputAdapter()
         self.output_renderer = CLIOutputRenderer()
@@ -59,7 +59,7 @@ class CLIRunner:
 
         while state.progress != InterviewProgress.COMPLETED:
 
-            result = self.graph.invoke(state)
+            result = run_interview_graph(state)
 
             if isinstance(result, dict):
                 state = InterviewState.model_validate(result)
