@@ -2,7 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 
-from app.graph.interview_graph import run_graph
+from app.graph.interview_graph import build_interview_graph
 from infrastructure.llm.llm_factory import get_llm
 from services.ai_hint_engine.ai_hint_service import AIHintService
 
@@ -40,12 +40,12 @@ def get_runtime_graph(llm=None, hint_service=None):
         llm = llm or get_runtime_llm()
         hint_service = hint_service or AIHintService()
 
-        compiled = run_graph(
+        compiled_graph = build_interview_graph(
             llm=llm,  
             hint_service=hint_service,  
         )
 
-        original_invoke = compiled.invoke
+        original_invoke = compiled_graph.invoke
 
         def invoke_with_model(state):
 
@@ -59,8 +59,8 @@ def get_runtime_graph(llm=None, hint_service=None):
 
             return result
 
-        compiled.invoke = invoke_with_model
+        compiled_graph.invoke = invoke_with_model
 
-        _graph = compiled
+        _graph = compiled_graph
 
     return _graph
