@@ -27,42 +27,80 @@ class FeedbackNode:
         execution = result.execution
         evaluation = result.evaluation
 
+        # =========================================================
+        # WRITTEN FLOW (NEW - FIX)
+        # =========================================================
+
+        if execution is None and evaluation is not None:
+
+            content = evaluation.feedback or "Evaluation completed."
+
+            # Basic quality inference for written answers
+            quality = "correct" if evaluation.score >= 70 else "incorrect"
+
+            block = FeedbackBlockResult(
+                title="Result",
+                content=content,
+                severity="info",
+                confidence=1.0,
+                signals=[],
+                learning=[],
+                quality=FeedbackQuality(
+                    level=quality,
+                    explanation="Evaluation based on written answer.",
+                ),
+            )
+
+            bundle = FeedbackBundle(
+                blocks=[block],
+                overall_severity="info",
+                overall_confidence=1.0,
+                overall_quality=quality,
+                markdown=content,
+            )
+
+            return state.model_copy(update={"last_feedback_bundle": bundle})
+
+        # =========================================================
+        # NO DATA SAFETY
+        # =========================================================
+
         if execution is None:
             return state
 
-        # ---------------------------------------------------------
+        # =========================================================
         # QUALITY
-        # ---------------------------------------------------------
+        # =========================================================
 
         quality = self._compute_quality(execution)
 
-        # ---------------------------------------------------------
+        # =========================================================
         # SIGNALS
-        # ---------------------------------------------------------
+        # =========================================================
 
         signals = self._extract_signals(execution)
 
-        # ---------------------------------------------------------
+        # =========================================================
         # LEARNING
-        # ---------------------------------------------------------
+        # =========================================================
 
         learning = self._extract_learning(execution, quality)
 
-        # ---------------------------------------------------------
+        # =========================================================
         # CONTENT
-        # ---------------------------------------------------------
+        # =========================================================
 
         content = self._build_content(evaluation, execution, signals)
 
-        # ---------------------------------------------------------
+        # =========================================================
         # SEVERITY
-        # ---------------------------------------------------------
+        # =========================================================
 
         severity = "error" if not execution.success else "info"
 
-        # ---------------------------------------------------------
+        # =========================================================
         # BLOCK
-        # ---------------------------------------------------------
+        # =========================================================
 
         block = FeedbackBlockResult(
             title="Result",
@@ -77,9 +115,9 @@ class FeedbackNode:
             ),
         )
 
-        # ---------------------------------------------------------
+        # =========================================================
         # BUNDLE
-        # ---------------------------------------------------------
+        # =========================================================
 
         bundle = FeedbackBundle(
             blocks=[block],
