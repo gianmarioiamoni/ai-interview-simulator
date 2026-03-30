@@ -2,7 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 
-from app.runtime.interview_runtime import get_runtime_graph
+from app.runtime.interview_runtime import run_interview_graph
 from services.ai_hint_engine.ai_hint_service import AIHintService
 
 
@@ -23,7 +23,7 @@ class EvaluateAnswerUseCase:
         if interview_graph is not None:
             self.interview_graph = interview_graph
         else:
-            self.interview_graph = get_runtime_graph(llm, self.hint_service)
+            self.interview_graph = run_interview_graph(llm, self.hint_service)
 
     # ---------------------------------------------------------
 

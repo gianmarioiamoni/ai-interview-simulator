@@ -64,3 +64,7 @@ def get_runtime_graph(llm=None, hint_service=None):
         _graph = compiled_graph
 
     return _graph
+
+
+def run_interview_graph(state: InterviewState) -> InterviewState:
+    return get_runtime_graph().invoke(state)
