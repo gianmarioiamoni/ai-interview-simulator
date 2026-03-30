@@ -6,7 +6,7 @@ from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
-from app.graph.interview_graph import build_interview_graph
+from app.graph.interview_graph import run_graph
 
 MAX_ATTEMPTS = 3
 
@@ -35,7 +35,7 @@ def retry_answer(state: InterviewState):
 
     
     new_state.last_action = "retry"
-    new_state = build_interview_graph().invoke(new_state)
+    new_state = run_graph(new_state)
 
     response = build_ui_response_from_state(new_state)
     response.ui_state = UIState.QUESTION
@@ -52,7 +52,7 @@ def next_question(state: InterviewState):
     new_state = state.model_copy(deep=True)
     new_state.last_action = "next"
     
-    new_state = build_interview_graph().invoke(new_state)
+    new_state = run_graph(new_state)
 
     if new_state.is_completed:
 

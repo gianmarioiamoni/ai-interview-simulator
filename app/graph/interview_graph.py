@@ -15,15 +15,17 @@ from app.graph.nodes.navigation_node import navigation_node
 from app.graph.nodes.completion_node import completion_node
 from app.graph.nodes.report_node import report_node
 
+from app.runtime.interview_runtime import get_runtime_llm
+
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.interview_evaluation_service import InterviewEvaluationService
 
 
+
 # ---------------------------------------------------------
 # ROUTING: entry decision
 # ---------------------------------------------------------
-
 
 def route_entry(state: InterviewState) -> str:
 
@@ -38,7 +40,6 @@ def route_entry(state: InterviewState) -> str:
 # ---------------------------------------------------------
 # ROUTING: question type
 # ---------------------------------------------------------
-
 
 def route_by_question_type(state: InterviewState) -> str:
 
@@ -57,7 +58,6 @@ def route_by_question_type(state: InterviewState) -> str:
 # ROUTER NODE
 # ---------------------------------------------------------
 
-
 def router_node(state: InterviewState) -> InterviewState:
     return state
 
@@ -66,8 +66,7 @@ def router_node(state: InterviewState) -> InterviewState:
 # GRAPH BUILDER
 # ---------------------------------------------------------
 
-
-def build_interview_graph(
+def _build_interview_graph(
     llm,
     hint_service: AIHintService | None = None,
 ):
@@ -167,3 +166,8 @@ def build_interview_graph(
     graph.add_edge("report", END)
 
     return graph.compile()
+
+
+def run_graph(state: InterviewState) -> InterviewState:
+    raw_state = _build_interview_graph(llm=get_runtime_llm()).invoke(state)
+    return InterviewState.model_validate(raw_state)
