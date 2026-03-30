@@ -1,8 +1,8 @@
 # app/ui/handlers/report_handler.py
 
-from domain.contracts.question_evaluation import QuestionEvaluation
+from services.interview_evaluation_service import InterviewEvaluationService
 
-from app.runtime.interview_runtime import get_runtime_evaluation_service
+from app.runtime.interview_runtime import get_runtime_llm
 from app.ui.views.report_view import build_report_markdown
 from app.ui.ui_router import route_ui
 from app.ui.ui_state import UIState
@@ -22,7 +22,7 @@ def view_report_handler(state_value):
         "⏳ Generating final report...",
     )
 
-    evaluation_service = get_runtime_evaluation_service()
+    evaluation_service = InterviewEvaluationService(llm=get_runtime_llm())
 
     # ---------------------------------------------------------
     # Step 2 — Build evaluation ordered list from results
