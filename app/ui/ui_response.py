@@ -37,7 +37,7 @@ class UIResponse:
 
     # RETRY
     retry_interactive: bool = True
-    retry_label: Optional[str] = None
+    retry_label: Optional[str] = None 
 
     # STATE
     ui_state: Optional[UIState] = None
