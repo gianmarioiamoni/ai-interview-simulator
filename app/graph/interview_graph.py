@@ -1,6 +1,7 @@
 # app/graph/interview_graph.py
 
 from langgraph.graph import StateGraph, END
+from langchain_core.language_models import LLM
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
@@ -14,8 +15,6 @@ from app.graph.nodes.written_evaluation_node import WrittenEvaluationNode
 from app.graph.nodes.navigation_node import navigation_node
 from app.graph.nodes.completion_node import completion_node
 from app.graph.nodes.report_node import report_node
-
-from app.runtime.interview_runtime import get_runtime_llm
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
@@ -168,8 +167,14 @@ def _build_interview_graph(
 
 
 def run_graph(
+    llm: LLM,
     state: InterviewState,
     hint_service: AIHintService | None = None,
 ) -> InterviewState:
-    raw_state = _build_interview_graph(llm=get_runtime_llm(), hint_service=hint_service).invoke(state)
+
+    raw_state = _build_interview_graph(
+        llm=llm,
+        hint_service=hint_service
+    ).invoke(state)
+
     return InterviewState.model_validate(raw_state)
