@@ -9,32 +9,42 @@ def report_node(
     service: InterviewEvaluationService,
 ) -> InterviewState:
 
-    # ---------------------------------------------------------
-    # Extract evaluations from results_by_question
-    # ---------------------------------------------------------
-
     results = state.results_by_question or {}
 
+    # ---------------------------------------------------------
+    # EXTRACT EVALUATIONS FROM RESULTS
+    # ---------------------------------------------------------
+
     evaluations = [
-        r.evaluation
-        for r in results.values()
-        if r is not None and r.evaluation is not None
+        result.evaluation
+        for result in results.values()
+        if result.evaluation is not None
     ]
 
     # ---------------------------------------------------------
-    # SAFETY: no evaluations → empty report
+    # SAFETY: no evaluations → empty structured report
     # ---------------------------------------------------------
 
     if not evaluations:
+
+        empty_report = {
+            "overall_score": 0,
+            "hiring_probability": 0,
+            "percentile_rank": 0,
+            "confidence": 0.0,
+            "executive_summary": "No evaluation available",
+            "improvement_suggestions": [],
+        }
+
         return state.model_copy(
             update={
-                "report_output": None,
                 "interview_evaluation": None,
+                "report_output": empty_report,
             }
         )
 
     # ---------------------------------------------------------
-    # Build interview evaluation
+    # NORMAL FLOW
     # ---------------------------------------------------------
 
     interview_eval = service.evaluate(
@@ -43,10 +53,6 @@ def report_node(
         interview_type=state.interview_type,
         role=state.role.type,
     )
-
-    # ---------------------------------------------------------
-    # Build UI-friendly output
-    # ---------------------------------------------------------
 
     report_output = {
         "overall_score": interview_eval.overall_score,
@@ -57,13 +63,9 @@ def report_node(
         "improvement_suggestions": interview_eval.improvement_suggestions,
     }
 
-    # ---------------------------------------------------------
-    # Return updated state
-    # ---------------------------------------------------------
-
     return state.model_copy(
         update={
-            "interview_evaluation": interview_eval,  # domain
-            "report_output": report_output,  # UI
+            "interview_evaluation": interview_eval,
+            "report_output": report_output,
         }
     )
