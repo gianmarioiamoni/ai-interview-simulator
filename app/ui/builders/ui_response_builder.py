@@ -139,7 +139,6 @@ class UIResponseBuilder:
             state,
             question,
             ui_state,
-            error_hint,
             has_previous_answer,
         )
 
