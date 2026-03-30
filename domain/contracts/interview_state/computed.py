@@ -36,16 +36,6 @@ class InterviewStateComputedMixin:
 
     # ---------------------------------------------------------
 
-    @property
-    def evaluations_list(self) -> list[QuestionEvaluation]:
-        return [
-            r.evaluation
-            for r in self.results_by_question.values()
-            if r.evaluation is not None
-        ]
-
-    # ---------------------------------------------------------
-
     def get_attempt_for_question(self, question_id: str) -> int:
         return sum(1 for a in self.answers if a.question_id == question_id)
 

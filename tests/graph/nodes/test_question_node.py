@@ -27,12 +27,17 @@ def test_question_node_prevents_double_processing():
 
     state = build_interview_state()
 
-    # simulate already processed
-    state.chat_history.append("already processed")
+    state = state.model_copy(
+        update={
+            "chat_history": ["already processed"],
+            "current_question_index": 0,
+        }
+    )
 
     new_state = node(state)
 
     assert new_state.chat_history == state.chat_history
+    llm.invoke.assert_not_called()
 
 
 def test_question_node_humanizer_disabled():
@@ -48,6 +53,7 @@ def test_question_node_humanizer_disabled():
     new_state = node(state)
 
     assert question.prompt in new_state.chat_history
+    assert len(new_state.chat_history) == len(state.chat_history) + 1
 
 
 def test_question_node_non_written():
@@ -58,11 +64,13 @@ def test_question_node_non_written():
     state = build_interview_state()
 
     q = state.current_question.model_copy(update={"type": QuestionType.CODING})
+
     state = state.model_copy(update={"questions": [q]})
 
     new_state = node(state)
 
     assert q.prompt in new_state.chat_history
+    assert len(new_state.chat_history) == len(state.chat_history) + 1
 
 
 def test_question_node_humanized():
@@ -73,8 +81,6 @@ def test_question_node_humanized():
     node = build_question_node(llm)
 
     state = build_interview_state()
-
-    from domain.contracts.question import QuestionType
 
     q = state.current_question.model_copy(update={"type": QuestionType.WRITTEN})
 
@@ -90,4 +96,5 @@ def test_question_node_humanized():
     new_state = node(state)
 
     assert "humanized question" in new_state.chat_history
+    assert len(new_state.chat_history) == 1
     llm.invoke.assert_called_once()

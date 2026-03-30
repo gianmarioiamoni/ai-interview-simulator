@@ -39,7 +39,6 @@ def build_question(
 # BASE FACTORY
 # ---------------------------------------------------------
 
-
 def build_interview_state(
     *,
     questions=None,
@@ -47,8 +46,12 @@ def build_interview_state(
     current_question_index: int = 0,
 ) -> InterviewState:
 
+    # default = 2 questions
     if questions is None:
-        questions = [build_question()]
+        questions = [
+            build_question(qid="q1"),
+            build_question(qid="q2"),
+        ]
 
     if answers is None:
         answers = [
