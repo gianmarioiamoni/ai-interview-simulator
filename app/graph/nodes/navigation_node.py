@@ -20,7 +20,7 @@ def navigation_node(state: InterviewState) -> InterviewState:
         return state.model_copy(
             update={
                 "awaiting_user_input": True,
-                "last_action": None,
+                # ❗ KEEP last_action
             }
         )
 
@@ -32,25 +32,19 @@ def navigation_node(state: InterviewState) -> InterviewState:
 
         last_index = len(questions) - 1
 
-        # allow move only if strictly before last
         if current_index < last_index:
             return state.model_copy(
                 update={
                     "current_question_index": current_index + 1,
-                    "last_action": None,
+                    # ❗ KEEP last_action
                 }
             )
 
-        # already last → stay
         return state.model_copy(
             update={
                 "current_question_index": last_index,
-                "last_action": None,
+                # ❗ KEEP last_action
             }
         )
-
-    # ---------------------------------------------------------
-    # DEFAULT
-    # ---------------------------------------------------------
 
     return state

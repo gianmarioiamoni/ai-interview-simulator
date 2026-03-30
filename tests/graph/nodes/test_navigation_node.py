@@ -18,6 +18,7 @@ def test_navigation_next_moves_forward():
     new_state = navigation_node(state)
 
     assert new_state.current_question_index == 1
+    assert new_state.last_action == "next"
 
 
 def test_navigation_retry_keeps_same_question():
@@ -35,6 +36,7 @@ def test_navigation_retry_keeps_same_question():
 
     assert new_state.current_question_index == 1
     assert new_state.awaiting_user_input is True
+    assert new_state.last_action == "retry"
 
 
 def test_navigation_does_not_overflow():
