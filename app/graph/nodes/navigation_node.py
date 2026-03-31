@@ -1,6 +1,7 @@
 # app/graph/nodes/navigation_node.py
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.action_type import ActionType
 
 
 def navigation_node(state: InterviewState) -> InterviewState:
@@ -16,7 +17,7 @@ def navigation_node(state: InterviewState) -> InterviewState:
     # RETRY
     # ---------------------------------------------------------
 
-    if action == "retry":
+    if action == ActionType.RETRY:
         return state.model_copy(
             update={
                 "awaiting_user_input": True,

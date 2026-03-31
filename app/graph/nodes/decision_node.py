@@ -2,6 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.policies.decision_policy import DecisionPolicy
+from domain.contracts.action_type import ActionType
 
 
 class DecisionNode:
@@ -33,22 +34,22 @@ class DecisionNode:
         # -----------------------------------------------------
 
         if decision == "retry":
-            allowed_actions = ["retry"]
+            allowed_actions = [ActionType.RETRY]
 
         elif decision == "next":
             # always possible to retry if not reached max attempts
             if attempts < self.max_attempts:
-                allowed_actions = ["retry", "next"]
+                allowed_actions = [ActionType.RETRY, ActionType.NEXT]
             else:
-                allowed_actions = ["next"]
+                allowed_actions = [ActionType.NEXT]
 
         else:
-            allowed_actions = ["next"]
+            allowed_actions = [ActionType.NEXT]
 
         return state.model_copy(
             update={
                 "awaiting_user_input": True,
                 "allowed_actions": allowed_actions,
-                "last_action": None,
+                "last_action": ActionType.NONE,
             }
         )

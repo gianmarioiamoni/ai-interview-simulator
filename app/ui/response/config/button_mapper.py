@@ -1,6 +1,7 @@
 # app/ui/response/config/button_mapper.py
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.action_type import ActionType
 
 from app.ui.ui_state import UIState
 from app.ui.types.ui_fields import ButtonState
@@ -21,7 +22,7 @@ class ButtonMapper:
         has_valid_state = bool(state and state.current_question)
 
         quality = ButtonMapper._get_quality(state)
-        actions = getattr(state, "allowed_actions", [])
+        actions = state.allowed_actions
 
         # =====================================================
         # QUESTION STATE (default input phase)
@@ -42,8 +43,8 @@ class ButtonMapper:
         # FEEDBACK STATE → DRIVEN BY allowed_actions
         # =====================================================
 
-        show_retry = "retry" in actions
-        show_next = "next" in actions
+        show_retry = ActionType.RETRY in actions
+        show_next = ActionType.NEXT in actions
 
         return {
             "show_submit": False,

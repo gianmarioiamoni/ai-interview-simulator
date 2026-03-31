@@ -2,6 +2,7 @@
 
 from app.graph.nodes.completion_node import completion_node
 from tests.factories.interview_state_factory import build_interview_state
+from domain.contracts.action_type import ActionType
 
 
 def test_completion_not_triggered_if_not_last():
@@ -11,7 +12,7 @@ def test_completion_not_triggered_if_not_last():
     state = state.model_copy(
         update={
             "current_question_index": 0,
-            "last_action": "next",
+            "last_action": ActionType.NEXT,
         }
     )
 
@@ -24,7 +25,7 @@ def test_completion_not_triggered_on_retry():
 
     state = build_interview_state()
 
-    state = state.model_copy(update={"last_action": "retry"})
+    state = state.model_copy(update={"last_action": ActionType.RETRY})
 
     new_state = completion_node(state)
 
@@ -38,7 +39,7 @@ def test_completion_triggers_on_last_question():
     state = state.model_copy(
         update={
             "current_question_index": len(state.questions) - 1,
-            "last_action": "next",
+            "last_action": ActionType.NEXT,
             "is_completed": False,
         }
     )
@@ -46,4 +47,4 @@ def test_completion_triggers_on_last_question():
     new_state = completion_node(state)
 
     assert new_state.is_completed is True
-    assert new_state.last_action is None
+    assert new_state.last_action is ActionType.NONE

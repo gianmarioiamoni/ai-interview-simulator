@@ -1,6 +1,7 @@
 # app/graph/nodes/completion_node.py
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.action_type import ActionType
 
 
 def completion_node(state: InterviewState) -> InterviewState:
@@ -19,7 +20,7 @@ def completion_node(state: InterviewState) -> InterviewState:
         return state.model_copy(
             update={
                 "is_completed": True,
-                "last_action": None,  # consume here
+                "last_action": ActionType.NONE,  # consume here
             }
         )
 

@@ -1,6 +1,7 @@
 # app/ui/state_handlers/navigation.py
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.action_type import ActionType
 
 from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
@@ -33,7 +34,7 @@ def retry_answer(state: InterviewState):
     if q:
         new_state = new_state.clear_result_for_question(q.id)
 
-    new_state.last_action = None
+    new_state.last_action = ActionType.NONE
     new_state.awaiting_user_input = True
     new_state.last_feedback_bundle = None
 
@@ -49,7 +50,7 @@ def retry_answer(state: InterviewState):
 def next_question(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
-    new_state.last_action = "next"
+    new_state.last_action = ActionType.NEXT
     
     # CORRECT GRAPH INVOCATION
     new_state = run_interview_graph(new_state)

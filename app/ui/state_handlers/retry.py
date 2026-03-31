@@ -1,6 +1,7 @@
 # domain/contracts/retry.py
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.action_type import ActionType
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 from app.ui.ui_response import UIResponse
@@ -21,7 +22,7 @@ def retry_answer(state: InterviewState):
     if q:
         new_state = new_state.clear_result_for_question(q.id)
 
-    new_state.last_action = "retry"
+    new_state.last_action = ActionType.RETRY
 
     # CORRECT GRAPH INVOCATION
     new_state = run_interview_graph(new_state)
