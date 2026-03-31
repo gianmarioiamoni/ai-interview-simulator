@@ -17,15 +17,25 @@ def completion_node(state: InterviewState) -> InterviewState:
     last_index = len(questions) - 1
 
     # ---------------------------------------------------------
-    # COMPLETE ONLY IF USER EXPLICITLY PRESSED NEXT ON LAST QUESTION
+    # COMPLETE ONLY IF:
+    # - we are on last question
+    # - AND user explicitly chose NEXT
     # ---------------------------------------------------------
 
     if current_index == last_index and state.last_action == ActionType.NEXT:
         return state.model_copy(
             update={
                 "is_completed": True,
-                "last_action": ActionType.NONE,
+                "last_action": None,
             }
         )
 
-    return state
+    # ---------------------------------------------------------
+    # OTHERWISE NEVER COMPLETE
+    # ---------------------------------------------------------
+
+    return state.model_copy(
+        update={
+            "is_completed": False,  # 🔥 CRITICAL RESET
+        }
+    )
