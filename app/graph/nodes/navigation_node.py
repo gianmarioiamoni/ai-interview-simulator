@@ -23,7 +23,7 @@ def navigation_node(state: InterviewState) -> InterviewState:
         return state.model_copy(
             update={
                 "awaiting_user_input": True,
-                "last_action": None,  # consume action
+                "last_action": ActionType.NONE,  
             }
         )
 
@@ -38,7 +38,7 @@ def navigation_node(state: InterviewState) -> InterviewState:
                 update={
                     "current_question_index": current_index + 1,
                     "awaiting_user_input": True,
-                    "last_action": None,  # consume action
+                    "last_action": ActionType.NONE,  
                 }
             )
 
@@ -46,7 +46,7 @@ def navigation_node(state: InterviewState) -> InterviewState:
         return state.model_copy(
             update={
                 "awaiting_user_input": True,
-                "last_action": None,  # consume action
+                "last_action": ActionType.NONE,  
             }
         )
 
