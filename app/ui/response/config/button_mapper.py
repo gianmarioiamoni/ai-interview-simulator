@@ -21,7 +21,7 @@ class ButtonMapper:
         has_valid_state = bool(state and state.current_question)
 
         quality = ButtonMapper._get_quality(state)
-        action = getattr(state, "last_action", None)
+        actions = getattr(state, "allowed_actions", [])
 
         # =====================================================
         # QUESTION STATE (default input phase)
@@ -39,51 +39,20 @@ class ButtonMapper:
             }
 
         # =====================================================
-        # FEEDBACK STATE → DRIVEN BY DECISION NODE
+        # FEEDBACK STATE → DRIVEN BY allowed_actions
         # =====================================================
 
-        # -----------------------------------------------------
-        # RETRY
-        # -----------------------------------------------------
-
-        if action == "retry":
-            return {
-                "show_submit": False,
-                "show_retry": True,
-                "show_next": False,
-                "show_submit_interactive": False,
-                "retry_interactive": True,
-                "next_label": "",
-                "retry_label": ButtonMapper._retry_label(quality),
-            }
-
-        # -----------------------------------------------------
-        # NEXT
-        # -----------------------------------------------------
-
-        if action == "next":
-            return {
-                "show_submit": False,
-                "show_retry": False,
-                "show_next": True,
-                "show_submit_interactive": False,
-                "retry_interactive": False,
-                "next_label": ButtonMapper._next_label(state, quality),
-                "retry_label": "",
-            }
-
-        # =====================================================
-        # FALLBACK (defensive)
-        # =====================================================
+        show_retry = "retry" in actions
+        show_next = "next" in actions
 
         return {
             "show_submit": False,
-            "show_retry": False,
-            "show_next": False,
+            "show_retry": show_retry,
+            "show_next": show_next,
             "show_submit_interactive": False,
-            "retry_interactive": False,
-            "next_label": "",
-            "retry_label": "",
+            "retry_interactive": show_retry,
+            "next_label": ButtonMapper._next_label(state, quality) if show_next else "",
+            "retry_label": ButtonMapper._retry_label(quality) if show_retry else "",
         }
 
     # =========================================================
