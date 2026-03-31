@@ -143,7 +143,15 @@ def build_interview_graph(
 
     graph.add_edge("feedback", "hint")
     graph.add_edge("hint", "decision")
-    graph.add_edge("decision", "navigation")
+    
+    graph.add_conditional_edges(
+        "decision",
+        lambda state: "navigation" if state.last_action else END,
+        {
+            "navigation": "navigation",
+            END: END,
+        },
+    )
 
     # -----------------------------------------------------
     # Navigation flow
@@ -167,4 +175,3 @@ def build_interview_graph(
     graph.add_edge("report", END)
 
     return graph.compile()
-
