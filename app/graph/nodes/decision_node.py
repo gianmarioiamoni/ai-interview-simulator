@@ -30,14 +30,13 @@ class DecisionNode:
         )
 
         # -----------------------------------------------------
-        # MAP decision → allowed actions
+        # ALLOWED ACTIONS (CORE LOGIC)
         # -----------------------------------------------------
 
         if decision == "retry":
             allowed_actions = [ActionType.RETRY]
 
         elif decision == "next":
-            # always possible to retry if not reached max attempts
             if attempts < self.max_attempts:
                 allowed_actions = [ActionType.RETRY, ActionType.NEXT]
             else:
@@ -50,6 +49,6 @@ class DecisionNode:
             update={
                 "awaiting_user_input": True,
                 "allowed_actions": allowed_actions,
-                "last_action": ActionType.NONE,
+                "last_action": None,  # safer than NONE if not defined
             }
         )
