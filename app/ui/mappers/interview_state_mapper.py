@@ -50,8 +50,12 @@ class InterviewStateMapper:
     def to_final_report_dto(
         self,
         state: InterviewState,
-        final_evaluation,
     ) -> FinalReportDTO:
+
+        final_evaluation = state.final_evaluation
+
+        if final_evaluation is None:
+            raise ValueError("Final evaluation is required")
 
         # Delegate entirely to DTO factory
         return FinalReportDTO.from_components(
