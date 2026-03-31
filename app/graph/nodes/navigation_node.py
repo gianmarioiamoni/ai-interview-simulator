@@ -32,7 +32,6 @@ def navigation_node(state: InterviewState) -> InterviewState:
 
     if action == ActionType.NEXT:
 
-        # move to next question ONLY if not last
         if current_index < last_index:
             return state.model_copy(
                 update={
@@ -41,7 +40,7 @@ def navigation_node(state: InterviewState) -> InterviewState:
                 }
             )
 
-        # last question → do NOT complete here
+        # last question → do not complete here
         return state.model_copy(
             update={
                 "awaiting_user_input": True,
