@@ -28,7 +28,7 @@ from services.interview_evaluation_service import InterviewEvaluationService
 def route_entry(state: InterviewState) -> str:
 
     # navigation flow (retry / next)
-    if state.last_action in ("retry", "next"):
+    if state.last_action == "next":
         return "navigation"
 
     # normal evaluation flow

@@ -33,10 +33,9 @@ def retry_answer(state: InterviewState):
     if q:
         new_state = new_state.clear_result_for_question(q.id)
 
-    new_state.last_action = "retry"
-
-    # CORRECT GRAPH INVOCATION
-    new_state = run_interview_graph(new_state)
+    new_state.last_action = None
+    new_state.awaiting_user_input = True
+    new_state.last_feedback_bundle = None
 
     response = build_ui_response_from_state(new_state)
     response.ui_state = UIState.QUESTION
