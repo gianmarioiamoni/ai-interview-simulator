@@ -10,6 +10,7 @@ from app.ui.presenters.result_presenter import ResultPresenter
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
 from app.ui.state_machine.ui_state_machine import UIStateMachine
+from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from app.ui.response.sections.display_section import DisplaySection
 from app.ui.response.sections.feedback_section import FeedbackSection
@@ -66,7 +67,8 @@ class UIResponseBuilder:
 
     def _build_report(self, state: InterviewState) -> UIResponse:
 
-        report = FinalReportDTO.from_state(state)
+        mapper = InterviewStateMapper()
+        report = mapper.to_final_report_dto(state)
         report_md = build_report_markdown(report)
 
         return UIResponse(
