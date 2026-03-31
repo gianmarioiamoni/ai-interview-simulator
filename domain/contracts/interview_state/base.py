@@ -44,9 +44,9 @@ class InterviewStateBase(BaseModel):
     last_feedback_bundle: Optional[Any] = None
 
     last_action: Optional[str] = None
+    allowed_actions: list[str] = Field(default_factory=list)
 
     is_completed: bool = False
-
 
     def with_current_question(self, question, index):
         return self.model_copy(

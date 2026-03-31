@@ -22,15 +22,33 @@ class DecisionNode:
         if not bundle:
             return state
 
-        action = self._policy.decide(
+        decision = self._policy.decide(
             quality=bundle.overall_quality,
             attempts=attempts,
             max_attempts=self.max_attempts,
         )
 
+        # -----------------------------------------------------
+        # MAP decision → allowed actions
+        # -----------------------------------------------------
+
+        if decision == "retry":
+            allowed_actions = ["retry"]
+
+        elif decision == "next":
+            # always possible to retry if not reached max attempts
+            if attempts < self.max_attempts:
+                allowed_actions = ["retry", "next"]
+            else:
+                allowed_actions = ["next"]
+
+        else:
+            allowed_actions = ["next"]
+
         return state.model_copy(
             update={
-                "awaiting_user_input": action == "retry",
-                "last_action": action,
+                "awaiting_user_input": True,
+                "allowed_actions": allowed_actions,
+                "last_action": None,
             }
         )
