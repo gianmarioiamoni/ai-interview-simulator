@@ -2,6 +2,7 @@
 
 from app.graph.nodes.decision_node import DecisionNode
 from tests.factories.interview_state_factory import build_state_with_execution
+from domain.contracts.action_type import ActionType
 
 
 def test_retry_when_failed_first_attempt():
@@ -17,7 +18,7 @@ def test_retry_when_failed_first_attempt():
     new_state = node(state)
 
     assert new_state.awaiting_user_input is True
-    assert new_state.last_action == "retry"
+    assert new_state.last_action == ActionType.RETRY
 
 
 def test_no_retry_after_max_attempts():
@@ -43,7 +44,7 @@ def test_no_retry_after_max_attempts():
     new_state = node(state)
 
     assert new_state.awaiting_user_input is False
-    assert new_state.last_action == "next"
+    assert new_state.last_action == ActionType.NEXT
 
 
 def test_pass_moves_forward():
@@ -59,7 +60,7 @@ def test_pass_moves_forward():
     new_state = node(state)
 
     assert new_state.awaiting_user_input is False
-    assert new_state.last_action == "next"
+    assert new_state.last_action == ActionType.NEXT
 
 
 def test_partial_triggers_retry():
@@ -75,4 +76,4 @@ def test_partial_triggers_retry():
     new_state = node(state)
 
     assert new_state.awaiting_user_input is True
-    assert new_state.last_action == "retry"
+    assert new_state.last_action == ActionType.RETRY

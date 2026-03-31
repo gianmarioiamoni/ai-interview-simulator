@@ -5,6 +5,7 @@ from langchain_core.language_models import LLM
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
+from domain.contracts.action_type import ActionType
 
 from app.graph.nodes.execution_node import ExecutionNode
 from app.graph.nodes.evaluation_node import EvaluationNode
@@ -28,7 +29,7 @@ from services.interview_evaluation_service import InterviewEvaluationService
 def route_entry(state: InterviewState) -> str:
 
     # navigation flow (retry / next)
-    if state.last_action == "next":
+    if state.last_action == ActionType.NEXT:
         return "navigation"
 
     # normal evaluation flow

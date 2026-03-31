@@ -4,6 +4,7 @@ from app.graph.interview_graph import run_graph
 from tests.factories.interview_state_factory import build_interview_state
 from domain.contracts.interview_state import InterviewState
 from tests.utils.state_snapshot import serialize_state
+from domain.contracts.action_type import ActionType
 
 
 def test_full_graph_snapshot():
@@ -29,7 +30,7 @@ def test_full_graph_snapshot():
     expected_snapshot = {
         "current_question_index": 0,
         "is_completed": False,
-        "last_action": None,
+        "last_action": ActionType.NONE,
         "results": {
             "q1": {
                 "score": snapshot["results"]["q1"]["score"],  # non deterministico
@@ -57,7 +58,7 @@ def test_completion_snapshot():
     state = state.model_copy(
         update={
             "current_question_index": len(state.questions) - 1,
-            "last_action": "next",
+            "last_action": ActionType.NEXT,
         }
     )
 
