@@ -13,6 +13,8 @@ def navigation_node(state: InterviewState) -> InterviewState:
     if not questions:
         return state
 
+    last_index = len(questions) - 1
+
     # ---------------------------------------------------------
     # RETRY
     # ---------------------------------------------------------
@@ -21,7 +23,6 @@ def navigation_node(state: InterviewState) -> InterviewState:
         return state.model_copy(
             update={
                 "awaiting_user_input": True,
-                # ❗ KEEP last_action
             }
         )
 
@@ -29,22 +30,21 @@ def navigation_node(state: InterviewState) -> InterviewState:
     # NEXT
     # ---------------------------------------------------------
 
-    if action == "next":
+    if action == ActionType.NEXT:
 
-        last_index = len(questions) - 1
-
+        # move to next question ONLY if not last
         if current_index < last_index:
             return state.model_copy(
                 update={
                     "current_question_index": current_index + 1,
-                    # ❗ KEEP last_action
+                    "awaiting_user_input": True,
                 }
             )
 
+        # last question → do NOT complete here
         return state.model_copy(
             update={
-                "current_question_index": last_index,
-                # ❗ KEEP last_action
+                "awaiting_user_input": True,
             }
         )
 
