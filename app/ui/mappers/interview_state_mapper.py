@@ -52,7 +52,7 @@ class InterviewStateMapper:
         state: InterviewState,
     ) -> FinalReportDTO:
 
-        final_evaluation = state.final_evaluation
+        final_evaluation = state.interview_evaluation
 
         if final_evaluation is None:
             raise ValueError("Final evaluation is required")
