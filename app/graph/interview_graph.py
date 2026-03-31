@@ -28,11 +28,10 @@ from services.interview_evaluation_service import InterviewEvaluationService
 
 def route_entry(state: InterviewState) -> str:
 
-    # navigation flow (retry / next)
-    if state.last_action == ActionType.NEXT:
+    # navigation ONLY if user explicitly triggered it
+    if state.last_action is not None:
         return "navigation"
 
-    # normal evaluation flow
     return "router"
 
 
