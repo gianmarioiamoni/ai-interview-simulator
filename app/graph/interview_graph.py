@@ -29,7 +29,11 @@ from services.interview_evaluation_service import InterviewEvaluationService
 def route_entry(state: InterviewState) -> str:
 
     # navigation ONLY if user explicitly triggered it
-    if state.last_action in [ActionType.RETRY, ActionType.NEXT]:
+    if state.last_action in [
+        ActionType.RETRY,
+        ActionType.NEXT,
+        ActionType.GENERATE_REPORT,
+    ]:
         return "navigation"
 
     return "router"
