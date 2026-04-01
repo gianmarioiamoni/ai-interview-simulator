@@ -32,21 +32,21 @@ class SQLExecutor:
             cursor = conn.cursor()
 
             # ---------------------------------------------------------
-            # Create schema defined in the question
+            # Schema
             # ---------------------------------------------------------
-            print("SCHEMA:", question.db_schema)
+
             if question.db_schema:
                 cursor.executescript(question.db_schema)
 
             # ---------------------------------------------------------
-            # Seed dataset
+            # Seed
             # ---------------------------------------------------------
 
             if question.db_seed_data:
                 cursor.executescript(question.db_seed_data)
 
             # ---------------------------------------------------------
-            # Semantic evaluation (if reference query exists)
+            # Evaluation with reference
             # ---------------------------------------------------------
 
             if question.reference_solution:
@@ -59,12 +59,12 @@ class SQLExecutor:
                 )
 
                 duration = int((time.time() - start) * 1000)
-
                 conn.close()
 
                 if success:
                     status = ExecutionStatus.SUCCESS
                     error = None
+                    passed_tests = 1
                 else:
                     status = ExecutionStatus.FAILED_TESTS
                     error = (
@@ -72,6 +72,7 @@ class SQLExecutor:
                         f"Expected: {reference_rows}\n"
                         f"Got: {candidate_rows}"
                     )
+                    passed_tests = 0
 
                 return ExecutionResult(
                     question_id=question.id,
@@ -81,10 +82,12 @@ class SQLExecutor:
                     output=str(candidate_rows),
                     error=error,
                     execution_time_ms=duration,
+                    passed_tests=passed_tests,
+                    total_tests=1,
                 )
 
             # ---------------------------------------------------------
-            # If no reference solution → just run query
+            # No reference → best effort execution
             # ---------------------------------------------------------
 
             cursor.execute(query)
@@ -100,7 +103,10 @@ class SQLExecutor:
                 status=ExecutionStatus.SUCCESS,
                 success=True,
                 output=str(rows),
+                error=None,
                 execution_time_ms=duration,
+                passed_tests=1,
+                total_tests=1,
             )
 
         except Exception:
@@ -111,4 +117,6 @@ class SQLExecutor:
                 status=ExecutionStatus.RUNTIME_ERROR,
                 success=False,
                 error=traceback.format_exc(),
+                passed_tests=0,
+                total_tests=1,
             )
