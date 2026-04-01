@@ -25,54 +25,63 @@ class FeedbackSection:
         if not bundle or not bundle.blocks:
             return ""
 
-        block = bundle.blocks[0]
+        blocks = bundle.blocks
         quality = bundle.overall_quality or "unknown"
 
         parts: list[str] = []
 
         # -----------------------------------------------------
-        # HEADER (🔥 UX DIFFERENTIATED)
+        # HEADER (🔥 UX DIFFERENTIATED - MANTENUTO)
         # -----------------------------------------------------
 
         parts.append(FeedbackSection._build_header(quality))
 
         # -----------------------------------------------------
-        # SIGNALS
+        # RENDER ALL BLOCKS (NEW CORE LOGIC)
         # -----------------------------------------------------
 
-        if block.signals:
-            parts.append("#### 🔍 Issues")
-            for s in block.signals:
-                parts.append(f"- {s.message}")
+        for block in blocks:
+
+            # -------------------------------
+            # TITLE
+            # -------------------------------
+            if block.title:
+                parts.append(f"\n### {block.title}")
+
+            # -------------------------------
+            # CONTENT
+            # -------------------------------
+            if block.content:
+                parts.append(block.content)
+
+            # -------------------------------
+            # SIGNALS
+            # -------------------------------
+            if block.signals:
+                parts.append("\n#### 🔍 Issues")
+                for s in block.signals:
+                    parts.append(f"- {s.message}")
+
+            # -------------------------------
+            # LEARNING
+            # -------------------------------
+            if block.learning:
+                parts.append("\n#### 💡 Suggestions")
+                for l in block.learning:
+                    parts.append(f"- {l.action}")
 
         # -----------------------------------------------------
-        # LEARNING
-        # -----------------------------------------------------
-
-        if block.learning:
-            parts.append("\n#### 💡 Suggestions")
-            for l in block.learning:
-                parts.append(f"- {l.action}")
-
-        # -----------------------------------------------------
-        # AI HINT
+        # AI HINT (TEMPORARY - verrà centralizzato step 3)
         # -----------------------------------------------------
 
         if result.ai_hint:
             parts.append("\n#### 🤖 Hint")
             parts.append(f"- {result.ai_hint}")
 
-        # -----------------------------------------------------
-        # FALLBACK CONTENT
-        # -----------------------------------------------------
-
-        if block.content:
-            parts.append(f"\n{block.content}")
-
         return "\n".join(parts)
 
     # =========================================================
-    # UX HEADER
+    # UX HEADER (INVARIATO)
     # =========================================================
 
     @staticmethod
@@ -92,7 +101,7 @@ class FeedbackSection:
         return "### ℹ️ Evaluation Result"
 
     # =========================================================
-    # POLICY
+    # POLICY (INVARIATA)
     # =========================================================
 
     @staticmethod
