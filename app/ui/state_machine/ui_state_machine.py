@@ -12,18 +12,35 @@ class UIStateMachine:
         if state is None:
             return UIState.SETUP
 
+        # -----------------------------------------------------
         # REPORT
+        # -----------------------------------------------------
+
         if state.interview_evaluation is not None:
             return UIState.REPORT
 
-        # COMPLETION (optional, redundant)
-        # you can also remove it
+        # -----------------------------------------------------
+        # COMPLETION
+        # -----------------------------------------------------
+
         if state.is_completed:
             return UIState.COMPLETION
 
         current_q = state.current_question
 
-        if current_q and state.is_question_processed(current_q):
+        if not current_q:
+            return UIState.SETUP
+
+        # -----------------------------------------------------
+        # 🔥 CRITICAL FIX
+        # -----------------------------------------------------
+        # FEEDBACK only when graph explicitly says so
+
+        if state.awaiting_user_input and state.allowed_actions:
             return UIState.FEEDBACK
+
+        # -----------------------------------------------------
+        # DEFAULT → QUESTION
+        # -----------------------------------------------------
 
         return UIState.QUESTION
