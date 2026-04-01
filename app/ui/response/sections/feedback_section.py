@@ -76,7 +76,14 @@ class FeedbackSection:
 
         if result.ai_hint:
             parts.append("\n#### 🤖 Hint")
-            parts.append(f"- {result.ai_hint}")
+            hint = result.ai_hint
+
+        if hasattr(hint, "explanation") and hasattr(hint, "suggestion"):
+            parts.append(f"**Explanation:** {hint.explanation}")
+            parts.append("")
+            parts.append(f"**Suggestion:** {hint.suggestion}")
+        else:
+            parts.append(f"- {hint}")
 
         return "\n".join(parts)
 
