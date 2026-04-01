@@ -29,8 +29,13 @@ class DecisionNode:
             max_attempts=self.max_attempts,
         )
 
-        # 🔥 convert to enum immediately
         decision = ActionType(decision_str)
+
+        # -----------------------------------------------------
+        # 🔥 LAST QUESTION DETECTION
+        # -----------------------------------------------------
+
+        is_last_question = state.current_question_index == len(state.questions) - 1
 
         # -----------------------------------------------------
         # ALLOWED ACTIONS
@@ -40,10 +45,19 @@ class DecisionNode:
             allowed_actions = [ActionType.RETRY]
 
         elif decision == ActionType.NEXT:
-            if attempts < self.max_attempts:
-                allowed_actions = [ActionType.RETRY, ActionType.NEXT]
+
+            if is_last_question:
+                # 🔥 FINAL STEP
+                if attempts < self.max_attempts:
+                    allowed_actions = [ActionType.RETRY, ActionType.GENERATE_REPORT]
+                else:
+                    allowed_actions = [ActionType.GENERATE_REPORT]
+
             else:
-                allowed_actions = [ActionType.NEXT]
+                if attempts < self.max_attempts:
+                    allowed_actions = [ActionType.RETRY, ActionType.NEXT]
+                else:
+                    allowed_actions = [ActionType.NEXT]
 
         else:
             allowed_actions = [ActionType.NEXT]
@@ -52,6 +66,6 @@ class DecisionNode:
             update={
                 "awaiting_user_input": True,
                 "allowed_actions": allowed_actions,
-                "last_action": None,  # 🔥 meglio None qui
+                "last_action": None,
             }
         )
