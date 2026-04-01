@@ -24,7 +24,7 @@ def navigation_node(state: InterviewState) -> InterviewState:
             update={
                 "awaiting_user_input": True,
                 "last_action": ActionType.NONE,
-                # 🔥 do NOT clear feedback (needed)
+                # keep feedback
             }
         )
 
@@ -40,7 +40,6 @@ def navigation_node(state: InterviewState) -> InterviewState:
                     "current_question_index": current_index + 1,
                     "awaiting_user_input": False,
                     "last_action": ActionType.NONE,
-                    # 🔥 CRITICAL CLEANUP
                     "last_feedback_bundle": None,
                 }
             )

@@ -1,11 +1,9 @@
 # app/graph/interview_graph.py
 
 from langgraph.graph import StateGraph, END
-from langchain_core.language_models import LLM
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
-from domain.contracts.action_type import ActionType
 
 from app.graph.nodes.execution_node import ExecutionNode
 from app.graph.nodes.evaluation_node import EvaluationNode
@@ -26,6 +24,7 @@ from services.interview_evaluation_service import InterviewEvaluationService
 # ROUTING: entry decision
 # ---------------------------------------------------------
 
+
 def route_entry(state: InterviewState) -> str:
 
     # navigation ONLY if user explicitly triggered it
@@ -38,6 +37,7 @@ def route_entry(state: InterviewState) -> str:
 # ---------------------------------------------------------
 # ROUTING: question type
 # ---------------------------------------------------------
+
 
 def route_by_question_type(state: InterviewState) -> str:
 
@@ -56,6 +56,7 @@ def route_by_question_type(state: InterviewState) -> str:
 # ROUTER NODE
 # ---------------------------------------------------------
 
+
 def router_node(state: InterviewState) -> InterviewState:
     return state
 
@@ -63,6 +64,7 @@ def router_node(state: InterviewState) -> InterviewState:
 # ---------------------------------------------------------
 # GRAPH BUILDER
 # ---------------------------------------------------------
+
 
 def build_interview_graph(
     llm,
@@ -95,11 +97,10 @@ def build_interview_graph(
     graph.add_node("report", lambda state: report_node(state, evaluation_service))
 
     # -----------------------------------------------------
-    # Entry point (NEW)
+    # Entry
     # -----------------------------------------------------
 
     graph.set_entry_point("entry")
-
     graph.add_node("entry", lambda state: state)
 
     graph.add_conditional_edges(
@@ -143,10 +144,19 @@ def build_interview_graph(
 
     graph.add_edge("feedback", "hint")
     graph.add_edge("hint", "decision")
-    
+
+    # 🔥 FIX CRITICO
+    def route_after_decision(state: InterviewState) -> str:
+
+        # STOP → FEEDBACK phase
+        if state.awaiting_user_input:
+            return END
+
+        return "navigation"
+
     graph.add_conditional_edges(
         "decision",
-        lambda state: "navigation" if state.last_action else END,
+        route_after_decision,
         {
             "navigation": "navigation",
             END: END,
@@ -161,16 +171,22 @@ def build_interview_graph(
 
     def route_after_completion(state: InterviewState) -> str:
         print(f"[DEBUG] route_after_completion - is_completed: {state.is_completed}")
+
         if state.is_completed:
             print("[DEBUG] routing → report")
             return "report"
+
         print("[DEBUG] routing → END")
         return END
 
-    graph.add_conditional_edges("completion", route_after_completion, {
-        "report": "report",
-        END: END,
-    })
+    graph.add_conditional_edges(
+        "completion",
+        route_after_completion,
+        {
+            "report": "report",
+            END: END,
+        },
+    )
 
     graph.add_edge("report", END)
 
