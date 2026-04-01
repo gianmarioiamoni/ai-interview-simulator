@@ -37,10 +37,21 @@ class FeedbackSection:
         parts.append(FeedbackSection._build_header(quality))
 
         # -----------------------------------------------------
-        # RENDER ALL BLOCKS (NEW CORE LOGIC)
+        # PRIORITIZE BLOCKS (🔥 NEW)
         # -----------------------------------------------------
 
-        for block in blocks:
+        priority_titles = ["Summary", "Score"]
+
+        priority_blocks = [b for b in blocks if b.title in priority_titles]
+        other_blocks = [b for b in blocks if b.title not in priority_titles]
+
+        ordered_blocks = priority_blocks + other_blocks
+
+        # -----------------------------------------------------
+        # RENDER ALL BLOCKS (ORDERED)
+        # -----------------------------------------------------
+
+        for block in ordered_blocks:
 
             # -------------------------------
             # TITLE
@@ -76,14 +87,7 @@ class FeedbackSection:
 
         if result.ai_hint:
             parts.append("\n#### 🤖 Hint")
-            hint = result.ai_hint
-
-        if hasattr(hint, "explanation") and hasattr(hint, "suggestion"):
-            parts.append(f"**Explanation:** {hint.explanation}")
-            parts.append("")
-            parts.append(f"**Suggestion:** {hint.suggestion}")
-        else:
-            parts.append(f"- {hint}")
+            parts.append(f"- {result.ai_hint}")
 
         return "\n".join(parts)
 
