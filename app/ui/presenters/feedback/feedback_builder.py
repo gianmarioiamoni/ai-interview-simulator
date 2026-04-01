@@ -89,10 +89,10 @@ class FeedbackBuilder:
             markdown=markdown,
         )
 
-    
     # =========================================================
     # INTERNALS
     # =========================================================
+
 
     def _collect_blocks(
         self,
@@ -103,13 +103,24 @@ class FeedbackBuilder:
         analysis,
     ):
 
+        blocks = []
+    
         for block in self._blocks:
             if block.can_handle(result, evaluation, execution, analysis):
-                return [block.build(state, result, evaluation, execution, analysis)]
-
-        return []
-
+            
+                built = block.build(
+                    state,
+                    result,
+                    evaluation,
+                    execution,
+                    analysis,
+                )
     
+                if built:
+                    blocks.append(built)
+    
+        return blocks
+
     def _aggregate_severity(self, blocks):
 
         if any(b.severity == "error" for b in blocks):
@@ -120,7 +131,6 @@ class FeedbackBuilder:
 
         return "info"
 
-    
     def _aggregate_confidence(self, blocks):
 
         if not blocks:
@@ -142,7 +152,6 @@ class FeedbackBuilder:
 
         return round(total / weight_sum if weight_sum else 0.0, 2)
 
-
     def _aggregate_quality(self, blocks):
 
         if not blocks:
@@ -163,7 +172,6 @@ class FeedbackBuilder:
 
         return "correct"
 
-
     def _render_markdown(self, blocks):
 
         lines: List[str] = []
@@ -172,7 +180,7 @@ class FeedbackBuilder:
             lines.append(f"## {b.title}")
             lines.append(b.content)
             lines.append("")
-            
+
             if b.quality:
                 lines.append(f"**Quality:** {b.quality.level}")
                 lines.append(f"{b.quality.explanation}")
