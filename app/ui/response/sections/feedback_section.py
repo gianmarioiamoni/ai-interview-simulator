@@ -37,7 +37,7 @@ class FeedbackSection:
         parts.append(FeedbackSection._build_header(quality))
 
         # -----------------------------------------------------
-        # PRIORITIZE BLOCKS (🔥 NEW)
+        # PRIORITIZE BLOCKS
         # -----------------------------------------------------
 
         priority_titles = ["Summary", "Score"]
@@ -48,7 +48,7 @@ class FeedbackSection:
         ordered_blocks = priority_blocks + other_blocks
 
         # -----------------------------------------------------
-        # RENDER ALL BLOCKS (ORDERED)
+        # RENDER ALL BLOCKS
         # -----------------------------------------------------
 
         for block in ordered_blocks:
@@ -82,12 +82,23 @@ class FeedbackSection:
                     parts.append(f"- {l.action}")
 
         # -----------------------------------------------------
-        # AI HINT (TEMPORARY - verrà centralizzato step 3)
+        # AI HINT (🔥 FIXED FORMAT)
         # -----------------------------------------------------
 
         if result.ai_hint:
             parts.append("\n#### 🤖 Hint")
-            parts.append(f"- {result.ai_hint}")
+
+            hint = result.ai_hint
+
+            # Caso strutturato (AIHint object)
+            if hasattr(hint, "explanation") and hasattr(hint, "suggestion"):
+                parts.append(f"**Explanation:** {hint.explanation}")
+                parts.append("")
+                parts.append(f"**Suggestion:** {hint.suggestion}")
+
+            # Caso stringa (fallback)
+            else:
+                parts.append(str(hint))
 
         return "\n".join(parts)
 
