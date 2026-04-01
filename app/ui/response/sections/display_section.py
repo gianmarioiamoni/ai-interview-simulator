@@ -53,7 +53,7 @@ class DisplaySection:
         last_answer = None
 
         if state.last_answer and state.last_answer.question_id == question.question_id:
-            last_answer = state.get_latest_answer_for_question(question.id)
+            last_answer = state.get_latest_answer_for_question(question.question_id)
 
         is_feedback = ui_state == UIState.FEEDBACK
 
