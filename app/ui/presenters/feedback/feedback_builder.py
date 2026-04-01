@@ -20,6 +20,7 @@ from app.ui.presenters.feedback.blocks.fallback_block import FallbackBlock
 from app.ui.presenters.feedback.blocks.score_block import ScoreBlock
 from app.ui.presenters.feedback.blocks.summary_block import SummaryBlock
 
+
 class FeedbackBuilder:
 
     def __init__(self) -> None:
@@ -28,14 +29,11 @@ class FeedbackBuilder:
         # Order matters!
         self._blocks = [
             WrittenBlock(),
-            
             SummaryBlock(),
             ScoreBlock(),
-
             RuntimeErrorBlock(),
             SuccessBlock(),
             FailureBlock(),
-            
             FallbackBlock(),
         ]
 
@@ -52,14 +50,12 @@ class FeedbackBuilder:
     ) -> FeedbackBundle:
 
         # -----------------------------------------------------
-        # Analysis (FIX HERE)
+        # Analysis
         # -----------------------------------------------------
 
         analysis_raw = self._analyzer.analyze(execution) if execution else None
         analysis = (
-            ExecutionAnalysisAdapter.to_dto(analysis_raw)
-            if analysis_raw
-            else None
+            ExecutionAnalysisAdapter.to_dto(analysis_raw) if analysis_raw else None
         )
 
         # -----------------------------------------------------
@@ -100,7 +96,6 @@ class FeedbackBuilder:
     # INTERNALS
     # =========================================================
 
-
     def _collect_blocks(
         self,
         state,
@@ -112,7 +107,33 @@ class FeedbackBuilder:
 
         blocks = []
 
+        # -----------------------------------------------------
+        # FORCE CORE BLOCKS (🔥 Summary + Score)
+        # -----------------------------------------------------
+
+        if execution:
+            for block in self._blocks:
+                if isinstance(block, (SummaryBlock, ScoreBlock)):
+                    built = block.build(
+                        state,
+                        result,
+                        evaluation,
+                        execution,
+                        analysis,
+                    )
+                    if built:
+                        blocks.append(built)
+
+        # -----------------------------------------------------
+        # NORMAL BLOCKS
+        # -----------------------------------------------------
+
         for block in self._blocks:
+
+            # Skip already added core blocks
+            if isinstance(block, (SummaryBlock, ScoreBlock)):
+                continue
+
             if block.can_handle(result, evaluation, execution, analysis):
 
                 built = block.build(
