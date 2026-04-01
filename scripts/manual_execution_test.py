@@ -24,7 +24,7 @@ def print_step(state: InterviewState):
     print("PROMPT:", question.prompt)
 
     print("\n--- ANSWER ---")
-    print(state.last_answer)
+    print(state.get_latest_answer_for_question(question.id))
 
     print("\n--- EXECUTION ---")
     print(result.execution)

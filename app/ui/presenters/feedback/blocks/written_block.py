@@ -27,18 +27,27 @@ class WrittenBlock:
         feedback = evaluation.feedback if evaluation else ""
 
         # -----------------------------------------------------
+        # get answer scoped to current question
+        # -----------------------------------------------------
+
+        question = _state.current_question
+        question_text = question.prompt if question else ""
+
+        latest_answer = (
+            _state.get_latest_answer_for_question(question.id) if question else None
+        )
+
+        user_answer = latest_answer.content if latest_answer else ""
+
+        # -----------------------------------------------------
         # AI Improved Answer
         # -----------------------------------------------------
 
         improved_answer = ""
 
         try:
-            if score < 90:  # only if not optimal
+            if score < 90 and user_answer:
                 improver = AnswerImprover()
-
-                question_text = _state.current_question.prompt if _state.current_question else ""
-
-                user_answer = _state.last_answer.content if _state.last_answer else ""
 
                 improved_answer = improver.improve(
                     question_text,
@@ -60,7 +69,7 @@ class WrittenBlock:
             severity = "info"
 
         # -----------------------------------------------------
-        # Quality classification (FIXED + UX LABELS)
+        # Quality classification
         # -----------------------------------------------------
 
         if score < 50:
@@ -76,10 +85,9 @@ class WrittenBlock:
             )
 
         elif score < 90:
-            # 🔥 FIX: non è più "correct" → è "good"
             quality_level = "good"
             quality_label = "🟢 Good Answer"
-            quality_explanation = "Answer is correct but could be improved with more concrete examples or clarity."
+            quality_explanation = "Answer is correct but could be improved."
 
         else:
             quality_level = "optimal"
@@ -98,60 +106,30 @@ class WrittenBlock:
         ]
 
         # -----------------------------------------------------
-        # Learning suggestions (improved)
+        # Learning
         # -----------------------------------------------------
 
         if score < 50:
             learning = [
                 LearningSuggestion(
                     topic="Fundamentals",
-                    action="Review core concepts and ensure you fully understand the basics",
+                    action="Review core concepts",
                 )
             ]
-
         elif score < 75:
             learning = [
                 LearningSuggestion(
                     topic="Completeness",
-                    action="Add missing details and improve explanation accuracy",
+                    action="Add missing details",
                 )
             ]
-
         else:
             learning = [
                 LearningSuggestion(
                     topic="Answer quality",
-                    action="Add concrete examples (problem → solution → outcome) to strengthen your answer",
+                    action="Add concrete examples",
                 )
             ]
-
-        # -----------------------------------------------------
-        # Actionable improvement (NEW)
-        # -----------------------------------------------------
-
-        improvement_section = ""
-
-        if score >= 75 and score < 90:
-            improvement_section = "\n".join(
-                [
-                    "",
-                    "### How to Improve",
-                    "- Add a concrete real-world example",
-                    "- Describe a specific challenge you faced",
-                    "- Explain how you solved it and the impact",
-                ]
-            )
-
-        elif score < 75:
-            improvement_section = "\n".join(
-                [
-                    "",
-                    "### How to Improve",
-                    "- Clarify your reasoning",
-                    "- Cover missing aspects of the question",
-                    "- Be more precise in your explanation",
-                ]
-            )
 
         # -----------------------------------------------------
         # Content
@@ -164,40 +142,23 @@ class WrittenBlock:
             "### Feedback",
             feedback,
         ]
-        # improvement tips
-        if improvement_section:
-            content_lines.append(improvement_section)
-        
-        # AI improved answer
+
         if improved_answer:
-            content_lines.extend([
-                "",
-                "### ✨ Suggested Improved Answer",
-                improved_answer,
-            ])
+            content_lines.extend(
+                [
+                    "",
+                    "### ✨ Suggested Improved Answer",
+                    improved_answer,
+                ]
+            )
 
         content = "\n".join(content_lines)
-
-        # -----------------------------------------------------
-        # Confidence
-        # -----------------------------------------------------
-
-        if score < 50:
-            confidence = 0.8
-        elif score < 75:
-            confidence = 0.85
-        else:
-            confidence = 0.9
-
-        # -----------------------------------------------------
-        # Return
-        # -----------------------------------------------------
 
         return FeedbackBlockResult(
             title="Written Answer Evaluation",
             content=content,
             severity=severity,
-            confidence=confidence,
+            confidence=0.9,
             signals=signals,
             learning=learning,
             quality=FeedbackQuality(
