@@ -23,20 +23,23 @@ class DecisionNode:
         if not bundle:
             return state
 
-        decision = self._policy.decide(
+        decision_str = self._policy.decide(
             quality=bundle.overall_quality,
             attempts=attempts,
             max_attempts=self.max_attempts,
         )
 
+        # 🔥 convert to enum immediately
+        decision = ActionType(decision_str)
+
         # -----------------------------------------------------
-        # ALLOWED ACTIONS (CORE LOGIC)
+        # ALLOWED ACTIONS
         # -----------------------------------------------------
 
-        if decision == "retry":
+        if decision == ActionType.RETRY:
             allowed_actions = [ActionType.RETRY]
 
-        elif decision == "next":
+        elif decision == ActionType.NEXT:
             if attempts < self.max_attempts:
                 allowed_actions = [ActionType.RETRY, ActionType.NEXT]
             else:
@@ -49,6 +52,6 @@ class DecisionNode:
             update={
                 "awaiting_user_input": True,
                 "allowed_actions": allowed_actions,
-                "last_action": ActionType.NONE, 
+                "last_action": None,  # 🔥 meglio None qui
             }
         )
