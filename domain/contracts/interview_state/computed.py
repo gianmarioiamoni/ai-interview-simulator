@@ -22,24 +22,34 @@ class InterviewStateComputedMixin:
         if self.current_question_index >= len(self.questions):
             return None
 
+        
         return self.questions[self.current_question_index]
-
-    # ---------------------------------------------------------
-
-    @property
-    def last_answer(self) -> Optional[Answer]:
-
-        if not self.answers:
-            return None
-
-        return self.answers[-1]
 
     # ---------------------------------------------------------
 
     def get_attempt_for_question(self, question_id: str) -> int:
         return sum(1 for a in self.answers if a.question_id == question_id)
 
-        # ---------------------------------------------------------
+    # ---------------------------------------------------------
 
     def add_answer(self, answer: Answer):
         return self.model_copy(update={"answers": self.answers + [answer]})
+
+
+    # ---------------------------------------------------------
+    # ANSWERS BY QUESTION
+    # ---------------------------------------------------------
+
+    def get_answers_for_question(self, question_id: str) -> list[Answer]:
+        return [a for a in self.answers if a.question_id == question_id]
+
+    # ---------------------------------------------------------
+
+    def get_latest_answer_for_question(self, question_id: str) -> Optional[Answer]:
+
+        answers = self.get_answers_for_question(question_id)
+
+        if not answers:
+            return None
+
+        return answers[-1]
