@@ -9,12 +9,11 @@ from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 from app.runtime.interview_runtime import run_interview_graph
 
-MAX_ATTEMPTS = 3
-
 
 # =========================================================
 # RETRY
 # =========================================================
+
 
 def retry_answer(state: InterviewState):
 
@@ -43,8 +42,9 @@ def retry_answer(state: InterviewState):
 
     return response
 
+
 # =========================================================
-# NEXT
+# NEXT / GENERATE REPORT
 # =========================================================
 
 
@@ -53,17 +53,23 @@ def next_question(state: InterviewState):
     new_state = state.model_copy(deep=True)
 
     # -----------------------------------------------------
-    # DETECT GENERATE REPORT ACTION
+    # 🔥 CRITICAL FIX: distinguish NEXT vs GENERATE_REPORT
     # -----------------------------------------------------
 
     if ActionType.GENERATE_REPORT in state.allowed_actions:
-        new_state.last_action = ActionType.GENERATE_REPORT  
+        new_state.last_action = ActionType.GENERATE_REPORT
     else:
         new_state.last_action = ActionType.NEXT
 
-    new_state.awaiting_user_input = False
+    # -----------------------------------------------------
+    # RUN GRAPH
+    # -----------------------------------------------------
 
     new_state = run_interview_graph(new_state)
+
+    # -----------------------------------------------------
+    # REPORT FLOW
+    # -----------------------------------------------------
 
     if new_state.is_completed:
 
@@ -72,11 +78,15 @@ def next_question(state: InterviewState):
 
         return response.to_gradio_outputs()
 
+    # -----------------------------------------------------
+    # NORMAL FLOW
+    # -----------------------------------------------------
+
     return build_ui_response_from_state(new_state).to_gradio_outputs()
 
 
 # =========================================================
-# NEW INTERVIEW (FIXED)
+# NEW INTERVIEW
 # =========================================================
 
 
@@ -85,7 +95,7 @@ def new_interview():
     return UIResponse(
         state=None,
         question_counter="",
-        feedback_markdown="",  
+        feedback_markdown="",
         feedback_quality=None,
         written_display="",
         coding_display="",
