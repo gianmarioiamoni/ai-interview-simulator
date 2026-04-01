@@ -23,7 +23,8 @@ def navigation_node(state: InterviewState) -> InterviewState:
         return state.model_copy(
             update={
                 "awaiting_user_input": True,
-                "last_action": ActionType.NONE,  
+                "last_action": ActionType.NONE,
+                # 🔥 do NOT clear feedback (needed)
             }
         )
 
@@ -37,16 +38,18 @@ def navigation_node(state: InterviewState) -> InterviewState:
             return state.model_copy(
                 update={
                     "current_question_index": current_index + 1,
-                    "awaiting_user_input": True,
-                    "last_action": ActionType.NONE,  
+                    "awaiting_user_input": False,
+                    "last_action": ActionType.NONE,
+                    # 🔥 CRITICAL CLEANUP
+                    "last_feedback_bundle": None,
                 }
             )
 
-        # last question → stay, completion will handle
+        # last question
         return state.model_copy(
             update={
-                "awaiting_user_input": True,
-                "last_action": ActionType.NONE,  
+                "awaiting_user_input": False,
+                "last_action": ActionType.NONE,
             }
         )
 
