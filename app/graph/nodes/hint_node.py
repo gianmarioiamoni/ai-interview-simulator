@@ -21,6 +21,10 @@ class HintNode:
         question = state.current_question
         answer = state.last_answer
 
+        # -----------------------------------------------------
+        # SAFETY GUARDS
+        # -----------------------------------------------------
+
         if not question or not answer:
             return state
 
@@ -29,21 +33,29 @@ class HintNode:
         if not result:
             return state
 
-        # Avoid duplicate generation
-        if result.ai_hint is not None and result.hint_level is not None:
-            return state
-
         execution = result.execution
         bundle = getattr(state, "last_feedback_bundle", None)
 
+        # 👉 critical: hint depends on execution + feedback
         if not execution or not bundle:
             return state
+
+        # -----------------------------------------------------
+        # IDEMPOTENCY
+        # -----------------------------------------------------
+
+        if result.ai_hint is not None and result.hint_level is not None:
+            return state
+
+        # -----------------------------------------------------
+        # CONTEXT
+        # -----------------------------------------------------
 
         attempts = state.get_attempt_for_question(question.id)
         quality = bundle.overall_quality
 
         # -----------------------------------------------------
-        # 🔥 HINT LEVEL (policy-driven)
+        # HINT LEVEL (policy-driven)
         # -----------------------------------------------------
 
         hint_level = self._policy.resolve(
@@ -57,7 +69,7 @@ class HintNode:
             return state
 
         # -----------------------------------------------------
-        # SIGNALS
+        # SIGNALS EXTRACTION
         # -----------------------------------------------------
 
         error = execution.error
@@ -75,6 +87,10 @@ class HintNode:
             hint_level=hint_level,
         )
 
+        # -----------------------------------------------------
+        # AI GENERATION
+        # -----------------------------------------------------
+
         try:
             ai_hint = self._hint_service.generate_hint(
                 hint_input,
@@ -84,7 +100,7 @@ class HintNode:
             ai_hint = None
 
         # -----------------------------------------------------
-        # STATE UPDATE
+        # STATE UPDATE (IMMUTABLE)
         # -----------------------------------------------------
 
         new_results = dict(state.results_by_question)
