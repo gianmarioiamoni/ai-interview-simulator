@@ -8,30 +8,33 @@ class ResultPresenter:
 
     def present(self, state, result, _question_text):
 
-        evaluation = result.evaluation
         execution = result.execution
 
         # -----------------------------------------------------
-        # Execution mapping
+        # Execution mapping 
         # -----------------------------------------------------
 
         execution_vm = ExecutionMapper.map([execution] if execution else [])
         errors = [r.error for r in execution_vm if r.error]
 
         # -----------------------------------------------------
-        # USE GRAPH OUTPUT
+        # SINGLE SOURCE OF TRUTH → FEEDBACK BUNDLE
         # -----------------------------------------------------
-        
+
         bundle = getattr(state, "last_feedback_bundle", None)
 
         feedback_md = bundle.markdown if bundle else ""
 
         # -----------------------------------------------------
-        # Evaluation
+        # REMOVE LEGACY EVALUATION DEPENDENCY
         # -----------------------------------------------------
 
-        score = evaluation.score if evaluation else 0
-        passed = evaluation.passed if evaluation else False
+        score = 0.0
+        passed = False
+
+        # optional: minimal derivation from bundle
+        if bundle and bundle.overall_quality:
+            passed = bundle.overall_quality in ["correct", "optimal"]
 
         # -----------------------------------------------------
         # ViewModel
