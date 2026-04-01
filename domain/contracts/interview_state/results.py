@@ -55,16 +55,6 @@ class InterviewStateResultsMixin:
 
     # ---------------------------------------------------------
 
-    def get_last_result(self):
-
-        if self.last_answer is None:
-            return None
-
-        return self.results_by_question.get(self.last_answer.question_id)
-
-    # ---------------------------------------------------------
-
-
     def is_question_processed(self, question: Question) -> bool:
 
         result = self.results_by_question.get(question.id)
