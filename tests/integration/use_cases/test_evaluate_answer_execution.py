@@ -8,6 +8,7 @@ from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.graph.interview_graph import build_interview_graph
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.action_type import ActionType
 
 from tests.factories.interview_state_factory import build_interview_state
 
@@ -133,7 +134,7 @@ def test_report_generated_when_completed():
 
     # forza stato finale
     state.current_question_index = len(state.questions) - 1
-    state.last_action = "next"
+    state.last_action = ActionType.NEXT
 
     graph_result = graph.invoke(state)
 

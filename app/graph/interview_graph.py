@@ -4,6 +4,7 @@ from langgraph.graph import StateGraph, END
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
+from domain.contracts.action_type import ActionType
 
 from app.graph.nodes.execution_node import ExecutionNode
 from app.graph.nodes.evaluation_node import EvaluationNode
@@ -28,7 +29,7 @@ from services.interview_evaluation_service import InterviewEvaluationService
 def route_entry(state: InterviewState) -> str:
 
     # navigation ONLY if user explicitly triggered it
-    if state.last_action is not None:
+    if state.last_action in [ActionType.RETRY, ActionType.NEXT]:
         return "navigation"
 
     return "router"
