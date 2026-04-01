@@ -24,7 +24,7 @@ def navigation_node(state: InterviewState) -> InterviewState:
             update={
                 "awaiting_user_input": True,
                 "last_action": ActionType.NONE,
-                # keep feedback
+                # keep feedback + allowed_actions
             }
         )
 
@@ -38,17 +38,19 @@ def navigation_node(state: InterviewState) -> InterviewState:
             return state.model_copy(
                 update={
                     "current_question_index": current_index + 1,
-                    "awaiting_user_input": True,  # 🔥 FIX CRITICO
+                    "awaiting_user_input": True,
                     "last_action": ActionType.NONE,
                     "last_feedback_bundle": None,
+                    "allowed_actions": [],  # 🔥 FIX CRITICO
                 }
             )
 
-        # ultima domanda → resti lì ma aspetti submit finale
+        # ultima domanda
         return state.model_copy(
             update={
-                "awaiting_user_input": True,  # 🔥 FIX CRITICO
+                "awaiting_user_input": True,
                 "last_action": ActionType.NONE,
+                "allowed_actions": [],  # 🔥 FIX CRITICO
             }
         )
 
