@@ -13,7 +13,7 @@ MAX_ATTEMPTS = 3
 
 
 # =========================================================
-# RETRY 
+# RETRY
 # =========================================================
 
 def retry_answer(state: InterviewState):
@@ -44,15 +44,25 @@ def retry_answer(state: InterviewState):
     return response
 
 # =========================================================
-# NEXT 
+# NEXT
 # =========================================================
+
 
 def next_question(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
-    new_state.last_action = ActionType.NEXT
-    
-    # CORRECT GRAPH INVOCATION
+
+    # -----------------------------------------------------
+    # DETECT GENERATE REPORT ACTION
+    # -----------------------------------------------------
+
+    if ActionType.GENERATE_REPORT in state.allowed_actions:
+        new_state.last_action = ActionType.GENERATE_REPORT  
+    else:
+        new_state.last_action = ActionType.NEXT
+
+    new_state.awaiting_user_input = False
+
     new_state = run_interview_graph(new_state)
 
     if new_state.is_completed:

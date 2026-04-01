@@ -15,7 +15,7 @@ class ButtonMapper:
     def map(
         state: InterviewState,
         ui_state: UIState,
-        can_retry: bool,  # kept for backward compatibility (not used)
+        can_retry: bool,
     ) -> ButtonState:
 
         is_feedback = ui_state == UIState.FEEDBACK
@@ -25,7 +25,7 @@ class ButtonMapper:
         actions = state.allowed_actions
 
         # =====================================================
-        # QUESTION STATE (default input phase)
+        # QUESTION STATE
         # =====================================================
 
         if not is_feedback or not has_valid_state or not state.last_feedback_bundle:
@@ -40,11 +40,23 @@ class ButtonMapper:
             }
 
         # =====================================================
-        # FEEDBACK STATE → DRIVEN BY allowed_actions
+        # FEEDBACK STATE
         # =====================================================
 
         show_retry = ActionType.RETRY in actions
-        show_next = ActionType.NEXT in actions
+
+        show_next = ActionType.NEXT in actions or ActionType.GENERATE_REPORT in actions
+
+        # -----------------------------------------------------
+        # LABEL LOGIC
+        # -----------------------------------------------------
+
+        if ActionType.GENERATE_REPORT in actions:
+            next_label = "📊 Generate Final Report"
+        elif ActionType.NEXT in actions:
+            next_label = ButtonMapper._next_label(state, quality)
+        else:
+            next_label = ""
 
         return {
             "show_submit": False,
@@ -52,33 +64,23 @@ class ButtonMapper:
             "show_next": show_next,
             "show_submit_interactive": False,
             "retry_interactive": show_retry,
-            "next_label": ButtonMapper._next_label(state, quality) if show_next else "",
+            "next_label": next_label,
             "retry_label": ButtonMapper._retry_label(quality) if show_retry else "",
         }
 
     # =========================================================
-    # QUALITY
-    # =========================================================
 
     @staticmethod
     def _get_quality(state: InterviewState) -> str:
-
         bundle = getattr(state, "last_feedback_bundle", None)
+        return (
+            bundle.overall_quality if bundle and bundle.overall_quality else "unknown"
+        )
 
-        if not bundle or not bundle.overall_quality:
-            return "unknown"
-
-        return bundle.overall_quality
-
-    # =========================================================
-    # LABELS (UX)
     # =========================================================
 
     @staticmethod
     def _next_label(state: InterviewState, quality: str) -> str:
-
-        if state.is_completed:
-            return "📊 Generate Final Report"
 
         if quality == "correct":
             return "➡️ Continue"
