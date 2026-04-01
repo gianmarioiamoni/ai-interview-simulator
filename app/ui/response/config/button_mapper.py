@@ -28,7 +28,7 @@ class ButtonMapper:
         # QUESTION STATE (default input phase)
         # =====================================================
 
-        if not is_feedback or not has_valid_state:
+        if not is_feedback or not has_valid_state or not state.last_feedback_bundle:
             return {
                 "show_submit": True,
                 "show_retry": False,

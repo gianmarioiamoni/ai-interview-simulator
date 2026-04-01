@@ -49,29 +49,21 @@ class DisplaySection:
         has_previous_answer: bool,
     ) -> str:
 
-        # 🔥 FIX: get answer ONLY for current question
-        last_answer = state.last_answer
+        # 🔥 FIX CRITICO: prendi SOLO risposta della domanda corrente
+        last_answer = None
 
-        if last_answer and last_answer.question_id == question.question_id:
-            answer_for_current = last_answer
-        else:
-            answer_for_current = None
+        if state.last_answer and state.last_answer.question_id == question.question_id:
+            last_answer = state.last_answer
 
         is_feedback = ui_state == UIState.FEEDBACK
 
-        # -----------------------------------------------------
-        # SHOW ANSWER (feedback / retry)
-        # -----------------------------------------------------
-
+        # mostra risposta SOLO se è della stessa domanda
         if is_feedback or has_previous_answer:
-            if answer_for_current:
-                return answer_for_current.content
+            if last_answer:
+                return last_answer.content
             return ""
 
-        # -----------------------------------------------------
-        # SHOW QUESTION
-        # -----------------------------------------------------
-
+        # altrimenti mostra domanda
         return question.text
 
     # =========================================================
