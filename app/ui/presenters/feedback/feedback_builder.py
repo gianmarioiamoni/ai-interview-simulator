@@ -11,12 +11,14 @@ from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
 from app.ui.adapters.execution_analysis_adapter import ExecutionAnalysisAdapter
 
 from app.contracts.feedback_bundle import FeedbackBundle
+
 from app.ui.presenters.feedback.blocks.runtime_error_block import RuntimeErrorBlock
 from app.ui.presenters.feedback.blocks.success_block import SuccessBlock
 from app.ui.presenters.feedback.blocks.failure_block import FailureBlock
 from app.ui.presenters.feedback.blocks.written_block import WrittenBlock
 from app.ui.presenters.feedback.blocks.fallback_block import FallbackBlock
-
+from app.ui.presenters.feedback.blocks.score_block import ScoreBlock
+from app.ui.presenters.feedback.blocks.summary_block import SummaryBlock
 
 class FeedbackBuilder:
 
@@ -26,9 +28,14 @@ class FeedbackBuilder:
         # Order matters!
         self._blocks = [
             WrittenBlock(),
+            
+            SummaryBlock(),
+            ScoreBlock(),
+
             RuntimeErrorBlock(),
             SuccessBlock(),
             FailureBlock(),
+            
             FallbackBlock(),
         ]
 
@@ -104,10 +111,10 @@ class FeedbackBuilder:
     ):
 
         blocks = []
-    
+
         for block in self._blocks:
             if block.can_handle(result, evaluation, execution, analysis):
-            
+
                 built = block.build(
                     state,
                     result,
@@ -115,10 +122,10 @@ class FeedbackBuilder:
                     execution,
                     analysis,
                 )
-    
+
                 if built:
                     blocks.append(built)
-    
+
         return blocks
 
     def _aggregate_severity(self, blocks):
