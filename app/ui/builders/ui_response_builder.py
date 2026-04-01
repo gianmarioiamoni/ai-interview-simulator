@@ -109,7 +109,7 @@ class UIResponseBuilder:
         has_previous_answer = attempts > 0
         can_retry = attempts < MAX_ATTEMPTS
 
-        last_answer = state.get_latest_answer_for_question(question.id)
+        last_answer = state.get_latest_answer_for_question(question.question_id)
 
         editor_value = ""
 
