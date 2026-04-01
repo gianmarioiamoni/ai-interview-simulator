@@ -38,16 +38,16 @@ def navigation_node(state: InterviewState) -> InterviewState:
             return state.model_copy(
                 update={
                     "current_question_index": current_index + 1,
-                    "awaiting_user_input": False,
+                    "awaiting_user_input": True,  # 🔥 FIX CRITICO
                     "last_action": ActionType.NONE,
                     "last_feedback_bundle": None,
                 }
             )
 
-        # last question
+        # ultima domanda → resti lì ma aspetti submit finale
         return state.model_copy(
             update={
-                "awaiting_user_input": False,
+                "awaiting_user_input": True,  # 🔥 FIX CRITICO
                 "last_action": ActionType.NONE,
             }
         )
