@@ -31,12 +31,16 @@ class UIStateMachine:
         if not current_q:
             return UIState.SETUP
 
-        # -----------------------------------------------------
-        # 🔥 CRITICAL FIX
-        # -----------------------------------------------------
-        # FEEDBACK only when graph explicitly says so
+        # FEEDBACK ONLY IF:
+        # - the graph has explicitly decided
+        # - there is a real feedback
+        # - there are available actions
 
-        if state.awaiting_user_input and state.allowed_actions:
+        if (
+            state.awaiting_user_input
+            and state.allowed_actions
+            and state.last_feedback_bundle is not None
+        ):
             return UIState.FEEDBACK
 
         # -----------------------------------------------------
