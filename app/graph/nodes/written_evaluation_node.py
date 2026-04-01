@@ -16,7 +16,7 @@ class WrittenEvaluationNode:
     def __call__(self, state: InterviewState) -> InterviewState:
 
         question = state.current_question
-        answer = state.last_answer
+        answer = state.get_latest_answer_for_question(question.id)
 
         if question is None or answer is None:
             return state
