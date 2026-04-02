@@ -182,22 +182,24 @@ class FeedbackBuilder:
 
     def _aggregate_quality(self, blocks):
 
-        if not blocks:
-            return None
-
-        # ASC priority order
-        priority = ["incorrect", "partial", "inefficient", "correct", "optimal"]
-
+        # PRIORITY: try to get quality from blocks (if any)
         levels = [b.quality.level for b in blocks if b.quality]
 
-        if not levels:
-            return None
+        if levels:
+            priority = ["incorrect", "partial", "inefficient", "correct", "optimal"]
 
-        # take the worst
-        for level in priority:
-            if level in levels:
-                return level
+            for level in priority:
+                if level in levels:
+                    return level
 
+        # FALLBACK: derive from severity
+        if any(b.severity == "error" for b in blocks):
+            return "incorrect"
+
+        if any(b.severity == "warning" for b in blocks):
+            return "partial"
+
+        # FINAL fallback
         return "correct"
 
     def _render_markdown(self, blocks):

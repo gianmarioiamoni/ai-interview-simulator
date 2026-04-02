@@ -12,14 +12,22 @@ class FailureBlock:
 
     def can_handle(self, result, evaluation, execution, analysis) -> bool:
 
-        if not execution or not execution.test_results:
+        if not execution:
             return False
 
-        return any(
-            t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
-            for t in execution.test_results
-        )
+        # without test_results, if failed → show block
+        if execution.passed_tests == 0 and execution.total_tests > 0:
+            return True
 
+        if execution.test_results:
+            return any(
+                t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
+                for t in execution.test_results
+            )
+
+        return False
+
+        
     def build(
         self, state, result, evaluation, execution, analysis
     ) -> FeedbackBlockResult:
