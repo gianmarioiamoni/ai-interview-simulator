@@ -99,7 +99,7 @@ class FeedbackSection:
                 "### ❌ Incorrect Solution\nThe solution needs significant improvement."
             )
 
-        return "### ℹ️ Evaluation Result"
+        return "### ⚠️ Evaluation Result\nCheck the details below."
 
     # =========================================================
     # POLICY

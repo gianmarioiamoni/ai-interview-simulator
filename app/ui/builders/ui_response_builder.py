@@ -120,6 +120,9 @@ class UIResponseBuilder:
         feedback_markdown = FeedbackSection.build(state)
         feedback_bundle = getattr(state, "last_feedback_bundle", None)
 
+        if feedback_bundle:
+            print("QUALITY DEBUG:", feedback_bundle.overall_quality)
+
         # -----------------------------------------------------
         # OTHER SECTIONS
         # -----------------------------------------------------

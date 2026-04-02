@@ -3,7 +3,6 @@
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
-    FeedbackQuality,
 )
 
 
@@ -12,29 +11,30 @@ class SummaryBlock:
     def can_handle(self, _result, _evaluation, execution, _analysis) -> bool:
         return execution is not None
 
-    def build(self, _state, _result, _evaluation, execution, _analysis):
+    def build(self, state, _result, _evaluation, execution, _analysis):
 
-        passed = execution.passed_tests or 0
-        total = execution.total_tests or 0
+        bundle = getattr(state, "last_feedback_bundle", None)
+        quality = bundle.overall_quality if bundle else "unknown"
 
         # -----------------------------------------------------
-        # Status
+        # Map quality → UI label
         # -----------------------------------------------------
 
-        if total > 0 and passed == total:
-            status = "correct"
+        if quality in ["correct", "optimal"]:
             icon = "✅"
             label = "Correct Solution"
 
-        elif passed > 0:
-            status = "partial"
+        elif quality == "partial":
             icon = "🟡"
             label = "Partial Solution"
 
-        else:
-            status = "incorrect"
+        elif quality == "incorrect":
             icon = "❌"
             label = "Incorrect Solution"
+
+        else:
+            icon = "ℹ️"
+            label = "Evaluation Result"
 
         # -----------------------------------------------------
         # Content
@@ -43,24 +43,10 @@ class SummaryBlock:
         content = f"{icon} {label}"
 
         # -----------------------------------------------------
-        # Signals
+        # Signals (NOISE FIX)
         # -----------------------------------------------------
 
-        signals = [
-            FeedbackSignal(
-                severity="info",
-                message=label,
-            )
-        ]
-
-        # -----------------------------------------------------
-        # Quality
-        # -----------------------------------------------------
-
-        quality = FeedbackQuality(
-            level=status,
-            explanation=f"Solution classified as {status}.",
-        )
+        signals = []  
 
         return FeedbackBlockResult(
             title="Summary",
@@ -69,5 +55,5 @@ class SummaryBlock:
             confidence=0.95,
             signals=signals,
             learning=[],
-            quality=quality,
+            quality=None,  
         )
