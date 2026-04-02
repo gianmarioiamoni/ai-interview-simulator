@@ -4,7 +4,6 @@ from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
     LearningSuggestion,
-    FeedbackQuality,
 )
 
 
@@ -61,11 +60,13 @@ class RuntimeErrorBlock:
         ]
 
         if "Counter" in clean_error:
-            lines.extend([
-                "",
-                "💡 Suggested fix:",
-                "`from collections import Counter`",
-            ])
+            lines.extend(
+                [
+                    "",
+                    "💡 Suggested fix:",
+                    "`from collections import Counter`",
+                ]
+            )
 
         # AI Hint
         if ai_hint:
@@ -87,11 +88,6 @@ class RuntimeErrorBlock:
 
         content = "\n".join(lines)
 
-        quality = FeedbackQuality(
-            level="incorrect",
-            explanation="Solution contains a runtime error.",
-        )
-
         # -----------------------------------------------------
         # Return block
         # -----------------------------------------------------
@@ -103,5 +99,5 @@ class RuntimeErrorBlock:
             confidence=0.95,
             signals=signals,
             learning=learning,
-            quality=quality,
+            quality=None,  
         )
