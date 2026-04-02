@@ -14,6 +14,7 @@ class EvaluationNode:
         if question is None:
             return state
 
+        # Only execution-based questions
         if question.type not in (QuestionType.CODING, QuestionType.DATABASE):
             return state
 
@@ -25,7 +26,7 @@ class EvaluationNode:
         execution = result.execution
 
         # ---------------------------------------------------------
-        # Compute evaluation (always safe)
+        # Compute evaluation (domain responsibility only)
         # ---------------------------------------------------------
 
         if execution.total_tests and execution.total_tests > 0:
