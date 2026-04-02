@@ -4,9 +4,7 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
 
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
-from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.views.report_view import build_report_markdown
-from app.ui.presenters.result_presenter import ResultPresenter
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
 from app.ui.state_machine.ui_state_machine import UIStateMachine
@@ -15,7 +13,6 @@ from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from app.ui.response.sections.display_section import DisplaySection
 from app.ui.response.sections.feedback_section import FeedbackSection
 from app.ui.response.sections.counter_section import CounterSection
-from app.ui.response.sections.error_hint_builder import ErrorHintBuilder
 
 from app.ui.response.config.visibility_mapper import VisibilityMapper
 from app.ui.response.config.editor_mapper import EditorMapper
@@ -25,9 +22,6 @@ MAX_ATTEMPTS = 3
 
 
 class UIResponseBuilder:
-
-    def __init__(self) -> None:
-        self._presenter = ResultPresenter()
 
     # =========================================================
     # PUBLIC API
@@ -123,7 +117,7 @@ class UIResponseBuilder:
         # FEEDBACK FIRST (important)
         # -----------------------------------------------------
 
-        feedback_markdown = FeedbackSection.build(state, self._presenter)
+        feedback_markdown = FeedbackSection.build(state)
         feedback_bundle = getattr(state, "last_feedback_bundle", None)
 
         # -----------------------------------------------------

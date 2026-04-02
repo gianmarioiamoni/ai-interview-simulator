@@ -1,7 +1,6 @@
 # app/ui/response/sections/feedback_section.py
 
 from domain.contracts.interview_state import InterviewState
-from app.ui.presenters.result_presenter import ResultPresenter
 
 
 class FeedbackSection:
@@ -9,7 +8,6 @@ class FeedbackSection:
     @staticmethod
     def build(
         state: InterviewState,
-        presenter: ResultPresenter,
     ) -> str:
 
         current_q = state.current_question
@@ -31,7 +29,7 @@ class FeedbackSection:
         parts: list[str] = []
 
         # -----------------------------------------------------
-        # HEADER (🔥 UX DIFFERENTIATED - MANTENUTO)
+        # HEADER
         # -----------------------------------------------------
 
         parts.append(FeedbackSection._build_header(quality))
@@ -48,7 +46,7 @@ class FeedbackSection:
         ordered_blocks = priority_blocks + other_blocks
 
         # -----------------------------------------------------
-        # RENDER ALL BLOCKS
+        # RENDER BLOCKS
         # -----------------------------------------------------
 
         for block in ordered_blocks:
@@ -66,9 +64,9 @@ class FeedbackSection:
                 parts.append(block.content)
 
             # -------------------------------
-            # SIGNALS
+            # SIGNALS (🔥 FIX QUI)
             # -------------------------------
-            if block.signals:
+            if block.signals and block.severity in ["warning", "error"]:
                 parts.append("\n#### 🔍 Issues")
                 for s in block.signals:
                     parts.append(f"- {s.message}")
@@ -81,29 +79,10 @@ class FeedbackSection:
                 for l in block.learning:
                     parts.append(f"- {l.action}")
 
-        # -----------------------------------------------------
-        # AI HINT (🔥 FIXED FORMAT)
-        # -----------------------------------------------------
-
-        if result.ai_hint:
-            parts.append("\n#### 🤖 Hint")
-
-            hint = result.ai_hint
-
-            # Caso strutturato (AIHint object)
-            if hasattr(hint, "explanation") and hasattr(hint, "suggestion"):
-                parts.append(f"**Explanation:** {hint.explanation}")
-                parts.append("")
-                parts.append(f"**Suggestion:** {hint.suggestion}")
-
-            # Caso stringa (fallback)
-            else:
-                parts.append(str(hint))
-
         return "\n".join(parts)
 
     # =========================================================
-    # UX HEADER (INVARIATO)
+    # UX HEADER
     # =========================================================
 
     @staticmethod
@@ -123,7 +102,7 @@ class FeedbackSection:
         return "### ℹ️ Evaluation Result"
 
     # =========================================================
-    # POLICY (INVARIATA)
+    # POLICY
     # =========================================================
 
     @staticmethod
