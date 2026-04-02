@@ -22,7 +22,7 @@ class ButtonMapper:
         has_valid_state = bool(state and state.current_question)
 
         quality = ButtonMapper._get_quality(state)
-        actions = state.allowed_actions
+        actions = state.allowed_actions or []
 
         # =====================================================
         # QUESTION STATE
@@ -40,23 +40,63 @@ class ButtonMapper:
             }
 
         # =====================================================
-        # FEEDBACK STATE
+        # QUALITY FLAGS (🔥 NEW CORE LOGIC)
         # =====================================================
 
-        show_retry = ActionType.RETRY in actions
+        is_correct = quality in ["correct", "optimal"]
+        is_partial = quality == "partial"
+        is_incorrect = quality == "incorrect"
 
-        show_next = ActionType.NEXT in actions or ActionType.GENERATE_REPORT in actions
+        # =====================================================
+        # BASE ACTION FLAGS (from graph)
+        # =====================================================
 
-        # -----------------------------------------------------
+        can_next_action = (
+            ActionType.NEXT in actions or ActionType.GENERATE_REPORT in actions
+        )
+
+        can_retry_action = ActionType.RETRY in actions and can_retry
+
+        # =====================================================
+        # FINAL VISIBILITY (🔥 FIXED LOGIC)
+        # =====================================================
+
+        show_retry = False
+        show_next = False
+
+        if is_incorrect:
+            show_retry = can_retry_action
+
+        elif is_partial:
+            show_retry = can_retry_action
+            show_next = can_next_action
+
+        elif is_correct:
+            show_next = can_next_action
+
+        else:
+            # fallback safe behavior
+            show_retry = can_retry_action
+            show_next = can_next_action
+
+        # =====================================================
         # LABEL LOGIC
-        # -----------------------------------------------------
+        # =====================================================
 
         if ActionType.GENERATE_REPORT in actions:
             next_label = "📊 Generate Final Report"
-        elif ActionType.NEXT in actions:
+
+        elif show_next:
             next_label = ButtonMapper._next_label(state, quality)
+
         else:
             next_label = ""
+
+        retry_label = ButtonMapper._retry_label(quality) if show_retry else ""
+
+        # =====================================================
+        # OUTPUT
+        # =====================================================
 
         return {
             "show_submit": False,
@@ -65,7 +105,7 @@ class ButtonMapper:
             "show_submit_interactive": False,
             "retry_interactive": show_retry,
             "next_label": next_label,
-            "retry_label": ButtonMapper._retry_label(quality) if show_retry else "",
+            "retry_label": retry_label,
         }
 
     # =========================================================
@@ -80,9 +120,9 @@ class ButtonMapper:
     # =========================================================
 
     @staticmethod
-    def _next_label(state: InterviewState, quality: str) -> str:
+    def _next_label(_state: InterviewState, quality: str) -> str:
 
-        if quality == "correct":
+        if quality in ["correct", "optimal"]:
             return "➡️ Continue"
 
         if quality == "partial":

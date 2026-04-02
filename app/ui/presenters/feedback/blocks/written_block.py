@@ -85,7 +85,7 @@ class WrittenBlock:
             )
 
         elif score < 90:
-            quality_level = "good"
+            quality_level = "correct"
             quality_label = "🟢 Good Answer"
             quality_explanation = "Answer is correct but could be improved."
 
