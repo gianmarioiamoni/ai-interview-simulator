@@ -1,8 +1,9 @@
 # app/ui/response/config/button_mapper.py
 
+import re
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.action_type import ActionType
-
 from app.ui.ui_state import UIState
 from app.ui.types.ui_fields import ButtonState
 
@@ -40,7 +41,7 @@ class ButtonMapper:
             }
 
         # =====================================================
-        # QUALITY FLAGS (🔥 NEW CORE LOGIC)
+        # QUALITY FLAGS
         # =====================================================
 
         is_correct = quality in ["correct", "optimal"]
@@ -58,7 +59,7 @@ class ButtonMapper:
         can_retry_action = ActionType.RETRY in actions and can_retry
 
         # =====================================================
-        # FINAL VISIBILITY (🔥 FIXED LOGIC)
+        # FINAL VISIBILITY
         # =====================================================
 
         show_retry = False
@@ -73,10 +74,10 @@ class ButtonMapper:
 
         elif is_correct:
             show_next = can_next_action
-            
+
             # allow retry if not perfect score
-            score = state.last_feedback_bundle.overall_score
-       
+            score = ButtonMapper._get_score(state)
+
             if score < 100 and can_retry_action:
                 show_retry = True
 
@@ -150,7 +151,10 @@ class ButtonMapper:
 
         return "Retry"
 
-    
+    # =========================================================
+    # SCORE EXTRACTION (METADATA FIRST)
+    # =========================================================
+
     @staticmethod
     def _get_score(state: InterviewState) -> float:
 
@@ -159,11 +163,15 @@ class ButtonMapper:
         if not bundle or not bundle.blocks:
             return 0.0
 
-        # cerca ScoreBlock
         for b in bundle.blocks:
+
             if b.title == "Score":
-                # parsing semplice (già nel content)
-                import re
+
+                # structured metadata (preferred)
+                if hasattr(b, "metadata") and b.metadata:
+                    return float(b.metadata.get("score", 0.0))
+
+                # fallback (backward compatibility)
                 match = re.search(r"(\d+)", b.content)
                 if match:
                     return float(match.group(1))

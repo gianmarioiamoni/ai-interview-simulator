@@ -42,6 +42,12 @@ class ScoreBlock:
             )
         ]
 
+        metadata = {
+            "score": score,
+            "passed": passed,
+            "total": total,
+        }
+
         return FeedbackBlockResult(
             title="Score",
             content=content,
@@ -49,5 +55,6 @@ class ScoreBlock:
             confidence=0.95,
             signals=signals,
             learning=[],
-            quality=None,  # importante: NON influenza quality globale
+            quality=None,
+            metadata=metadata,
         )
