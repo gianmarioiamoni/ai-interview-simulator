@@ -15,9 +15,16 @@ class FailureBlock:
         if not execution:
             return False
 
-        # without test_results, if failed → show block
-        if execution.passed_tests == 0 and execution.total_tests > 0:
+        # -----------------------------------------------------
+        # CASE 1: execution without test_results (SQL fallback)
+        # -----------------------------------------------------
+
+        if execution.total_tests and execution.passed_tests < execution.total_tests:
             return True
+
+        # -----------------------------------------------------
+        # CASE 2: detailed test results (coding)
+        # -----------------------------------------------------
 
         if execution.test_results:
             return any(
@@ -27,50 +34,81 @@ class FailureBlock:
 
         return False
 
-        
     def build(
         self, state, result, evaluation, execution, analysis
     ) -> FeedbackBlockResult:
 
-        failed = [
-            t
-            for t in execution.test_results
-            if t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
-        ]
-
-        failed_str = "\n".join(
-            [
-                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
-                for t in failed[:2]
-            ]
-        )
-
         ai_hint = result.ai_hint if result else None
 
+        passed = execution.passed_tests or 0
+        total = execution.total_tests or 0
+
         # -----------------------------------------------------
-        # Signals
+        # FAILED TEST DETAILS (if available)
+        # -----------------------------------------------------
+
+        failed_str = ""
+
+        if execution.test_results:
+
+            failed = [
+                t
+                for t in execution.test_results
+                if t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
+            ]
+
+            if failed:
+                failed_str = "\n".join(
+                    [
+                        f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
+                        for t in failed[:2]
+                    ]
+                )
+
+                if len(failed) > 2:
+                    failed_str += (
+                        f"\n\n...and {len(failed) - 2} more failing test cases"
+                    )
+
+        else:
+            # -----------------------------------------------------
+            # SQL / GENERIC FALLBACK
+            # -----------------------------------------------------
+
+            failed_str = "Query result does not match expected output."
+
+        # -----------------------------------------------------
+        # SIGNALS (FIXED: no nonsense)
         # -----------------------------------------------------
 
         signals = [
             FeedbackSignal(
                 severity="error",
-                message=f"{len(failed)} test(s) failed",
+                message=f"{passed}/{total} tests passed",
             )
         ]
 
         # -----------------------------------------------------
-        # Learning
+        # LEARNING (UPGRADED)
         # -----------------------------------------------------
 
-        learning = [
-            LearningSuggestion(
-                topic="Algorithm correctness",
-                action="Analyze failing cases and adjust logic accordingly",
-            )
-        ]
+        if total > 0 and passed == 0:
+            learning = [
+                LearningSuggestion(
+                    topic="Query correctness",
+                    action="Review filtering, ordering, and constraints (e.g. LIMIT, WHERE)",
+                )
+            ]
+        else:
+            learning = [
+                LearningSuggestion(
+                    topic="Algorithm correctness",
+                    action="Analyze failing cases and adjust logic accordingly",
+                )
+            ]
 
         # -----------------------------------------------------
-        # Content
+        # CONTENT
         # -----------------------------------------------------
 
         content_lines = [
@@ -79,9 +117,9 @@ class FailureBlock:
             failed_str,
         ]
 
-        if len(failed) > 2:
-            content_lines.append("")
-            content_lines.append(f"...and {len(failed) - 2} more failing test cases")
+        # -----------------------------------------------------
+        # AI HINT (clean rendering)
+        # -----------------------------------------------------
 
         if ai_hint:
             content_lines.extend(
@@ -102,5 +140,5 @@ class FailureBlock:
             confidence=0.9,
             signals=signals,
             learning=learning,
-            quality=None,  
+            quality=None,  # ✅ IMPORTANT: non decide la qualità
         )

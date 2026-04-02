@@ -4,13 +4,6 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.question import QuestionType
 from domain.contracts.question_evaluation import QuestionEvaluation
 
-from app.contracts.feedback_bundle import (
-    FeedbackBundle,
-    FeedbackBlockResult,
-    FeedbackSignal,
-    FeedbackQuality,
-)
-
 
 class EvaluationNode:
 
@@ -54,50 +47,7 @@ class EvaluationNode:
         )
 
         # ---------------------------------------------------------
-        # ALWAYS BUILD FEEDBACK BUNDLE (🔥 CRITICAL FIX)
-        # ---------------------------------------------------------
-
-        if execution.success:
-            quality_level = "correct"
-        elif execution.passed_tests > 0:
-            quality_level = "partial"
-        else:
-            quality_level = "incorrect"
-
-        quality = FeedbackQuality(
-            level=quality_level,
-            explanation=execution.error or "Execution result analysis",
-        )
-
-        signals = []
-        if execution.error:
-            signals.append(
-                FeedbackSignal(
-                    severity="error",
-                    message=execution.error,
-                )
-            )
-
-        block = FeedbackBlockResult(
-            title="Execution Result",
-            content=execution.error or "Execution completed",
-            severity="error" if not execution.success else "info",
-            confidence=0.8,
-            signals=signals,
-            learning=[],
-            quality=quality,
-        )
-
-        bundle = FeedbackBundle(
-            blocks=[block],
-            overall_severity=block.severity,
-            overall_confidence=block.confidence,
-            overall_quality=quality.level,
-            markdown=block.content,
-        )
-
-        # ---------------------------------------------------------
-        # STATE UPDATE
+        # STATE UPDATE (ONLY evaluation)
         # ---------------------------------------------------------
 
         new_results = dict(state.results_by_question)
@@ -108,6 +58,5 @@ class EvaluationNode:
         return state.model_copy(
             update={
                 "results_by_question": new_results,
-                "last_feedback_bundle": bundle,  # ALWAYS WRITE
             }
         )
