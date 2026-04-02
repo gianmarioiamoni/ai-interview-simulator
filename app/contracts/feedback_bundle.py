@@ -56,6 +56,9 @@ class FeedbackBlockResult:
     # optional quality
     quality: Optional[FeedbackQuality] = None
 
+    # structured metadata
+    metadata: Optional[dict] = None
+
 
 # =========================================================
 # FINAL BUNDLE
