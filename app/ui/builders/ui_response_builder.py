@@ -130,12 +130,12 @@ class UIResponseBuilder:
         # OTHER SECTIONS
         # -----------------------------------------------------
 
-        error_hint = ErrorHintBuilder.build(
-            state,
-            question,
-            has_previous_answer,
-            ui_state,
-        )
+        # error_hint = ErrorHintBuilder.build(
+        #     state,
+        #     question,
+        #     has_previous_answer,
+        #     ui_state,
+        # )
 
         display = DisplaySection.build(
             state,
