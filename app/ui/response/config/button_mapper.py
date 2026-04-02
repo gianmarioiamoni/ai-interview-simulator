@@ -73,6 +73,12 @@ class ButtonMapper:
 
         elif is_correct:
             show_next = can_next_action
+            
+            # allow retry if not perfect score
+            score = state.last_feedback_bundle.overall_score
+       
+            if score < 100 and can_retry_action:
+                show_retry = True
 
         else:
             # fallback safe behavior
@@ -143,3 +149,23 @@ class ButtonMapper:
             return "🔧 Fix Issues"
 
         return "Retry"
+
+    
+    @staticmethod
+    def _get_score(state: InterviewState) -> float:
+
+        bundle = getattr(state, "last_feedback_bundle", None)
+
+        if not bundle or not bundle.blocks:
+            return 0.0
+
+        # cerca ScoreBlock
+        for b in bundle.blocks:
+            if b.title == "Score":
+                # parsing semplice (già nel content)
+                import re
+                match = re.search(r"(\d+)", b.content)
+                if match:
+                    return float(match.group(1))
+
+        return 0.0
