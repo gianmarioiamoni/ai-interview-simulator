@@ -2,7 +2,6 @@
 
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
-    FeedbackSignal,
 )
 
 
@@ -32,15 +31,8 @@ class ScoreBlock:
         content = f"Score: {score}/100\n" f"Tests: {passed}/{total} passed"
 
         # -----------------------------------------------------
-        # Signals
+        # Metadata (CRITICAL for ButtonMapper)
         # -----------------------------------------------------
-
-        signals = [
-            FeedbackSignal(
-                severity="info",
-                message=f"{passed}/{total} tests passed",
-            )
-        ]
 
         metadata = {
             "score": score,
@@ -53,8 +45,8 @@ class ScoreBlock:
             content=content,
             severity="info",
             confidence=0.95,
-            signals=signals,
+            signals=[],  # 🔥 removed noise
             learning=[],
-            quality=None,
+            quality=None,  # 🔥 UI must not decide quality
             metadata=metadata,
         )

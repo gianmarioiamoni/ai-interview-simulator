@@ -5,7 +5,6 @@ from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
     LearningSuggestion,
-    FeedbackQuality,
 )
 
 
@@ -40,12 +39,20 @@ class FailureBlock:
 
         ai_hint = result.ai_hint if result else None
 
+        # -----------------------------------------------------
+        # Signals
+        # -----------------------------------------------------
+
         signals = [
             FeedbackSignal(
                 severity="error",
-                message="One or more test cases failed",
+                message=f"{len(failed)} test(s) failed",
             )
         ]
+
+        # -----------------------------------------------------
+        # Learning
+        # -----------------------------------------------------
 
         learning = [
             LearningSuggestion(
@@ -53,6 +60,10 @@ class FailureBlock:
                 action="Analyze failing cases and adjust logic accordingly",
             )
         ]
+
+        # -----------------------------------------------------
+        # Content
+        # -----------------------------------------------------
 
         content_lines = [
             "### ❌ Failed Tests",
@@ -76,11 +87,6 @@ class FailureBlock:
 
         content = "\n".join(content_lines)
 
-        quality = FeedbackQuality(
-            level="incorrect",
-            explanation="Solution fails on one or more test cases.",
-        )
-
         return FeedbackBlockResult(
             title="Logic Errors Detected",
             content=content,
@@ -88,5 +94,5 @@ class FailureBlock:
             confidence=0.9,
             signals=signals,
             learning=learning,
-            quality=quality,
+            quality=None,  
         )
