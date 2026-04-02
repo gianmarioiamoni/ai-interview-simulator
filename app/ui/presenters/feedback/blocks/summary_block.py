@@ -2,7 +2,7 @@
 
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
-    FeedbackSignal,
+    _FeedbackSignal,
 )
 
 
@@ -14,10 +14,17 @@ class SummaryBlock:
     def build(self, state, _result, _evaluation, execution, _analysis):
 
         bundle = getattr(state, "last_feedback_bundle", None)
-        quality = bundle.overall_quality if bundle else "unknown"
+        quality = (
+            bundle.overall_quality if bundle and bundle.overall_quality else "incorrect"
+        )
 
         # -----------------------------------------------------
-        # Map quality → UI label
+        # DEBUG (temporary, remove later)
+        # -----------------------------------------------------
+        print("SUMMARY QUALITY:", quality)
+
+        # -----------------------------------------------------
+        # Map quality → UI label (SINGLE SOURCE OF TRUTH)
         # -----------------------------------------------------
 
         if quality in ["correct", "optimal"]:
@@ -33,8 +40,9 @@ class SummaryBlock:
             label = "Incorrect Solution"
 
         else:
-            icon = "ℹ️"
-            label = "Evaluation Result"
+            # fallback safety → NEVER misleading
+            icon = "❌"
+            label = "Incorrect Solution"
 
         # -----------------------------------------------------
         # Content
@@ -43,10 +51,10 @@ class SummaryBlock:
         content = f"{icon} {label}"
 
         # -----------------------------------------------------
-        # Signals (NOISE FIX)
+        # Signals (NO NOISE)
         # -----------------------------------------------------
 
-        signals = []  
+        signals = []
 
         return FeedbackBlockResult(
             title="Summary",
@@ -55,5 +63,5 @@ class SummaryBlock:
             confidence=0.95,
             signals=signals,
             learning=[],
-            quality=None,  
+            quality=None,  # IMPORTANT: no ownership here
         )
