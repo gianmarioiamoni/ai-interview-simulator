@@ -11,12 +11,31 @@ class DecisionPolicy:
         max_attempts: int,
     ) -> str:
 
-        if quality == "correct":
+        # -----------------------------------------------------
+        # CORRECT → always go next
+        # -----------------------------------------------------
+
+        if quality in ("correct", "optimal"):
             return "next"
 
-        if quality in ("partial", "incorrect"):
+        # -----------------------------------------------------
+        # PARTIAL → allow progression
+        # -----------------------------------------------------
+
+        if quality == "partial":
+            return "next"
+
+        # -----------------------------------------------------
+        # INCORRECT → force retry if possible
+        # -----------------------------------------------------
+
+        if quality == "incorrect":
             if attempts < max_attempts:
                 return "retry"
             return "next"
+
+        # -----------------------------------------------------
+        # fallback
+        # -----------------------------------------------------
 
         return "next"

@@ -47,7 +47,7 @@ class DecisionNode:
         elif decision == ActionType.NEXT:
 
             if is_last_question:
-                # 🔥 FINAL STEP
+                # FINAL STEP
                 if attempts < self.max_attempts:
                     allowed_actions = [ActionType.RETRY, ActionType.GENERATE_REPORT]
                 else:
