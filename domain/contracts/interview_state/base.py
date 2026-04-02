@@ -11,6 +11,7 @@ from domain.contracts.interview_type import InterviewType
 from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.role import Role
 from domain.contracts.action_type import ActionType
+from app.contracts.feedback_bundle import FeedbackBundle
 
 
 class InterviewStateBase(BaseModel):
@@ -42,7 +43,7 @@ class InterviewStateBase(BaseModel):
 
     events: list = Field(default_factory=list)
 
-    last_feedback_bundle: Optional[Any] = None
+    last_feedback_bundle: Optional[FeedbackBundle] = None
 
     last_action: Optional[ActionType] = None
     allowed_actions: list[ActionType] = Field(default_factory=list)

@@ -1,7 +1,9 @@
 # app/ui/presenters/feedback/feedback_models.py
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
+
+from app.contracts.feedback_bundle import FeedbackQuality
 
 
 # =========================================================
@@ -60,6 +62,9 @@ class FeedbackBundle:
 
     # final UI rendering (backward compatibility)
     markdown: str
+
+    # metadata
+    metadata: Optional[dict] = None
 
 
 # =========================================================
