@@ -135,7 +135,8 @@ def build_interview_graph(
     # -----------------------------------------------------
 
     graph.add_edge("execution", "evaluation")
-    graph.add_edge("evaluation", "feedback")
+    graph.add_edge("evaluation", "hint")
+    graph.add_edge("hint", "feedback")
 
     # -----------------------------------------------------
     # Written path
@@ -147,10 +148,8 @@ def build_interview_graph(
     # Shared tail
     # -----------------------------------------------------
 
-    graph.add_edge("feedback", "hint")
-    graph.add_edge("hint", "decision")
+    graph.add_edge("feedback", "decision")
 
-    # 🔥 FIX CRITICO
     def route_after_decision(state: InterviewState) -> str:
 
         # STOP → FEEDBACK phase
