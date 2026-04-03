@@ -44,8 +44,6 @@ class FailureBlock:
         self, _state, result, _evaluation, execution, _analysis, _quality
     ) -> FeedbackBlockResult:
 
-        ai_hint = result.ai_hint if result else None
-
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
 
@@ -122,20 +120,6 @@ class FailureBlock:
             "",
             failed_str,
         ]
-
-        # -----------------------------------------------------
-        # AI HINT
-        # -----------------------------------------------------
-
-        if ai_hint:
-            content_lines.extend(
-                [
-                    "",
-                    "### 🤖 AI Hint",
-                    f"**Explanation:** {ai_hint.explanation}",
-                    f"**Suggestion:** {ai_hint.suggestion}",
-                ]
-            )
 
         content = "\n".join(content_lines)
 

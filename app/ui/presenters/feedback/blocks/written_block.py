@@ -71,7 +71,7 @@ class WrittenBlock:
 
         else:
             severity = "info"
-            label = "🟢 Strong Answer"
+            label = "🟢🟢 Strong Answer"
 
         # -----------------------------------------------------
         # Signals
