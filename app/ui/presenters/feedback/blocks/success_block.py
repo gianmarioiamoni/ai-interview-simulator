@@ -12,7 +12,15 @@ class SuccessBlock:
     def can_handle(self, _result, _evaluation, execution, _analysis) -> bool:
         return bool(execution and execution.success)
 
-    def build(self, _state, _result, _evaluation, execution, _analysis):
+    def build(
+        self, 
+        _state, 
+        _result, 
+        _evaluation, 
+        execution, 
+        _analysis, 
+        _quality
+    ) -> FeedbackBlockResult:
 
         exec_time = execution.execution_time_ms or 0
 

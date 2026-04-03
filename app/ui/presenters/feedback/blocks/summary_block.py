@@ -13,7 +13,7 @@ class SummaryBlock:
         _state,
         _result,
         _evaluation,
-        execution,
+        _execution,
         _analysis,
         quality: str,  
     ) -> FeedbackBlockResult:
