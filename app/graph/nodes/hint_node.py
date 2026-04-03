@@ -34,10 +34,8 @@ class HintNode:
             return state
 
         execution = result.execution
-        bundle = getattr(state, "last_feedback_bundle", None)
 
-        # 👉 critical: hint depends on execution + feedback
-        if not execution or not bundle:
+        if not execution:
             return state
 
         # -----------------------------------------------------
@@ -52,7 +50,16 @@ class HintNode:
         # -----------------------------------------------------
 
         attempts = state.get_attempt_for_question(question.id)
-        quality = bundle.overall_quality
+
+        passed = execution.passed_tests or 0
+        total = execution.total_tests or 0
+
+        if execution.success:
+            quality = "correct"
+        elif total > 0 and passed > 0:
+            quality = "partial"
+        else:
+            quality = "incorrect"
 
         # -----------------------------------------------------
         # HINT LEVEL (policy-driven)
