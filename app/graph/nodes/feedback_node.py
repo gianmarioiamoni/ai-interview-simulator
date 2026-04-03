@@ -3,6 +3,7 @@
 from domain.contracts.interview_state import InterviewState
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
 from app.contracts.feedback_bundle import FeedbackBundle
+from domain.contracts.quality import Quality
 
 
 class FeedbackNode:
@@ -65,7 +66,7 @@ class FeedbackNode:
     # QUALITY ENGINE
     # =========================================================
 
-    def _compute_quality(self, execution, evaluation) -> str:
+    def _compute_quality(self, execution, evaluation) -> Quality:
 
         # -----------------------------------------------------
         # WRITTEN QUESTIONS (NO EXECUTION)
@@ -76,34 +77,34 @@ class FeedbackNode:
             score = evaluation.score or 0
 
             if score >= 90:
-                return "optimal"
+                return Quality.OPTIMAL
 
             if score >= 75:
-                return "correct"
+                return Quality.CORRECT
 
             if score >= 50:
-                return "partial"
+                return Quality.PARTIAL
 
-            return "incorrect"
+            return Quality.INCORRECT
 
         # -----------------------------------------------------
         # CODING / SQL
         # -----------------------------------------------------
 
         if not execution:
-            return "incorrect"
+            return Quality.INCORRECT
 
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
 
         # edge case (no tests)
         if total == 0:
-            return "correct" if execution.success else "incorrect"
+            return Quality.CORRECT if execution.success else Quality.INCORRECT
 
         if passed == total:
-            return "correct"
+            return Quality.CORRECT
 
         if passed > 0:
-            return "partial"
+            return Quality.PARTIAL
 
-        return "incorrect"
+        return Quality.INCORRECT

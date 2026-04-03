@@ -1,6 +1,7 @@
 # domain/policies/hint_policy.py
 
 from domain.contracts.hint_level import HintLevel
+from domain.contracts.quality import Quality
 
 
 class HintPolicy:
@@ -8,7 +9,7 @@ class HintPolicy:
     def resolve(
         self,
         *,
-        quality: str,
+        quality: Quality,
         attempts: int,
         has_error: bool,
     ) -> HintLevel:
@@ -17,14 +18,14 @@ class HintPolicy:
         # SUCCESS
         # -----------------------------------------------------
 
-        if quality == "correct":
+        if quality == Quality.CORRECT:
             return HintLevel.NONE
 
         # -----------------------------------------------------
         # INCORRECT (strong signal)
         # -----------------------------------------------------
 
-        if quality == "incorrect":
+        if quality == Quality.INCORRECT:
 
             if attempts <= 1:
                 return HintLevel.TARGETED
@@ -35,7 +36,7 @@ class HintPolicy:
         # PARTIAL (progressive guidance)
         # -----------------------------------------------------
 
-        if quality == "partial":
+        if quality == Quality.PARTIAL:
 
             if attempts == 1:
                 return HintLevel.BASIC

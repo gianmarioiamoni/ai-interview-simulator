@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
+from domain.contracts.quality import Quality
+
 
 # =========================================================
 # BASIC SIGNALS
@@ -30,17 +32,6 @@ class LearningSuggestion:
 # =========================================================
 
 @dataclass
-class FeedbackQuality:
-    # "incorrect" | "partial" | "correct" | "optimal" | "inefficient"
-    level: str
-    explanation: str
-
-
-# =========================================================
-# BLOCK RESULT
-# =========================================================
-
-@dataclass
 class FeedbackBlockResult:
     title: str
     content: str
@@ -54,7 +45,7 @@ class FeedbackBlockResult:
     learning: List[LearningSuggestion]
 
     # optional quality
-    quality: Optional[FeedbackQuality] = None
+    quality: Optional[Quality] = None
 
     # structured metadata
     metadata: Optional[dict] = None
@@ -71,7 +62,7 @@ class FeedbackBundle:
     # aggregated values
     overall_severity: str
     overall_confidence: float
-    overall_quality: Optional[str]
-
+    # single source of truth
+    overall_quality: Quality
     # backward compatibility (UI)
     markdown: str

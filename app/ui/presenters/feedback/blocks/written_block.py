@@ -5,7 +5,6 @@ from app.contracts.feedback_bundle import (
     FeedbackSignal,
     LearningSuggestion,
 )
-
 from services.answer_improvement.answer_improver import AnswerImprover
 
 
@@ -21,7 +20,7 @@ class WrittenBlock:
         evaluation, 
         _execution, 
         _analysis, 
-        _quality
+        _quality # injected (unused but required for uniformity)
     ) -> FeedbackBlockResult:
 
         score = evaluation.score if evaluation else 0
