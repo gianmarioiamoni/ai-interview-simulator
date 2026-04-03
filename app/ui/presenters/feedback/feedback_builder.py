@@ -115,7 +115,7 @@ class FeedbackBuilder:
         # CORE BLOCKS (Summary + Score ALWAYS FIRST)
         # -----------------------------------------------------
 
-        if execution or evaluation:
+        if execution:
             for block in self._blocks:
                 if isinstance(block, (SummaryBlock, ScoreBlock)):
                     built = block.build(
