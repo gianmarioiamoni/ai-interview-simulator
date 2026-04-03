@@ -4,7 +4,6 @@ from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
     LearningSuggestion,
-    FeedbackQuality,
 )
 
 
@@ -39,8 +38,5 @@ class FallbackBlock:
             confidence=0.4,
             signals=signals,
             learning=learning,
-            quality=FeedbackQuality(
-                level="partial",
-                explanation="System could not fully evaluate the solution.",
-            ),
+            quality=None,
         )

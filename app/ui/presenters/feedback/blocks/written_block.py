@@ -4,7 +4,6 @@ from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
     LearningSuggestion,
-    FeedbackQuality,
 )
 
 from services.answer_improvement.answer_improver import AnswerImprover
@@ -19,16 +18,8 @@ class WrittenBlock:
         self, _state, _result, evaluation, _execution, _analysis
     ) -> FeedbackBlockResult:
 
-        # -----------------------------------------------------
-        # Base data
-        # -----------------------------------------------------
-
         score = evaluation.score if evaluation else 0
         feedback = evaluation.feedback if evaluation else ""
-
-        # -----------------------------------------------------
-        # get answer scoped to current question
-        # -----------------------------------------------------
 
         question = _state.current_question
         question_text = question.prompt if question else ""
@@ -48,7 +39,6 @@ class WrittenBlock:
         try:
             if score < 90 and user_answer:
                 improver = AnswerImprover()
-
                 improved_answer = improver.improve(
                     question_text,
                     user_answer,
@@ -63,36 +53,19 @@ class WrittenBlock:
 
         if score < 50:
             severity = "error"
+            label = "🔴 Incorrect Answer"
+
         elif score < 75:
             severity = "warning"
-        else:
-            severity = "info"
-
-        # -----------------------------------------------------
-        # Quality classification
-        # -----------------------------------------------------
-
-        if score < 50:
-            quality_level = "incorrect"
-            quality_label = "🔴 Incorrect Answer"
-            quality_explanation = "Answer shows significant gaps in understanding."
-
-        elif score < 75:
-            quality_level = "partial"
-            quality_label = "🟡 Partial Answer"
-            quality_explanation = (
-                "Answer is partially correct but lacks completeness or precision."
-            )
+            label = "🟡 Partial Answer"
 
         elif score < 90:
-            quality_level = "correct"
-            quality_label = "🟢 Good Answer"
-            quality_explanation = "Answer is correct but could be improved."
+            severity = "info"
+            label = "🟢 Good Answer"
 
         else:
-            quality_level = "optimal"
-            quality_label = "🟢 Strong Answer"
-            quality_explanation = "Answer is clear, complete, and well-structured."
+            severity = "info"
+            label = "🟢 Strong Answer"
 
         # -----------------------------------------------------
         # Signals
@@ -136,7 +109,7 @@ class WrittenBlock:
         # -----------------------------------------------------
 
         content_lines = [
-            f"## {quality_label}",
+            f"## {label}",
             f"Score: {score:.1f}/100",
             "",
             "### Feedback",
@@ -161,8 +134,5 @@ class WrittenBlock:
             confidence=0.9,
             signals=signals,
             learning=learning,
-            quality=FeedbackQuality(
-                level=quality_level,
-                explanation=quality_explanation,
-            ),
+            quality=None,
         )

@@ -26,7 +26,6 @@ class FeedbackBuilder:
     def __init__(self) -> None:
         self._analyzer = ExecutionAnalyzer()
 
-        # Order matters!
         self._blocks = [
             WrittenBlock(),
             SummaryBlock(),
@@ -38,8 +37,6 @@ class FeedbackBuilder:
         ]
 
     # =========================================================
-    # PUBLIC API
-    # =========================================================
 
     def build(
         self,
@@ -49,18 +46,10 @@ class FeedbackBuilder:
         execution: ExecutionResult | None,
     ) -> FeedbackBundle:
 
-        # -----------------------------------------------------
-        # Analysis
-        # -----------------------------------------------------
-
         analysis_raw = self._analyzer.analyze(execution) if execution else None
         analysis = (
             ExecutionAnalysisAdapter.to_dto(analysis_raw) if analysis_raw else None
         )
-
-        # -----------------------------------------------------
-        # Collect blocks
-        # -----------------------------------------------------
 
         blocks = self._collect_blocks(
             state,
@@ -70,17 +59,16 @@ class FeedbackBuilder:
             analysis,
         )
 
-        # -----------------------------------------------------
-        # Aggregate
-        # -----------------------------------------------------
-
         overall_severity = self._aggregate_severity(blocks)
         overall_confidence = self._aggregate_confidence(blocks)
-        overall_quality = self._aggregate_quality(blocks)
 
-        # -----------------------------------------------------
-        # Render
-        # -----------------------------------------------------
+        # 🔥 QUALITY: SINGLE SOURCE OF TRUTH (STATE)
+        state_bundle = getattr(state, "last_feedback_bundle", None)
+        overall_quality = (
+            state_bundle.overall_quality
+            if state_bundle and state_bundle.overall_quality
+            else "incorrect"
+        )
 
         markdown = self._render_markdown(blocks)
 
@@ -92,8 +80,6 @@ class FeedbackBuilder:
             markdown=markdown,
         )
 
-    # =========================================================
-    # INTERNALS
     # =========================================================
 
     def _collect_blocks(
@@ -107,10 +93,7 @@ class FeedbackBuilder:
 
         blocks = []
 
-        # -----------------------------------------------------
-        # FORCE CORE BLOCKS (🔥 Summary + Score)
-        # -----------------------------------------------------
-
+        # CORE BLOCKS
         if execution:
             for block in self._blocks:
                 if isinstance(block, (SummaryBlock, ScoreBlock)):
@@ -124,13 +107,9 @@ class FeedbackBuilder:
                     if built:
                         blocks.append(built)
 
-        # -----------------------------------------------------
-        # NORMAL BLOCKS
-        # -----------------------------------------------------
-
+        # OTHER BLOCKS
         for block in self._blocks:
 
-            # Skip already added core blocks
             if isinstance(block, (SummaryBlock, ScoreBlock)):
                 continue
 
@@ -148,6 +127,8 @@ class FeedbackBuilder:
                     blocks.append(built)
 
         return blocks
+
+    # =========================================================
 
     def _aggregate_severity(self, blocks):
 
@@ -180,28 +161,6 @@ class FeedbackBuilder:
 
         return round(total / weight_sum if weight_sum else 0.0, 2)
 
-    def _aggregate_quality(self, blocks):
-
-        # PRIORITY: try to get quality from blocks (if any)
-        levels = [b.quality.level for b in blocks if b.quality]
-
-        if levels:
-            priority = ["incorrect", "partial", "inefficient", "correct", "optimal"]
-
-            for level in priority:
-                if level in levels:
-                    return level
-
-        # FALLBACK: derive from severity
-        if any(b.severity == "error" for b in blocks):
-            return "incorrect"
-
-        if any(b.severity == "warning" for b in blocks):
-            return "partial"
-
-        # FINAL fallback
-        return "correct"
-
     def _render_markdown(self, blocks):
 
         lines: List[str] = []
@@ -210,10 +169,5 @@ class FeedbackBuilder:
             lines.append(f"## {b.title}")
             lines.append(b.content)
             lines.append("")
-
-            if b.quality:
-                lines.append(f"**Quality:** {b.quality.level}")
-                lines.append(f"{b.quality.explanation}")
-                lines.append("")
 
         return "\n".join(lines)

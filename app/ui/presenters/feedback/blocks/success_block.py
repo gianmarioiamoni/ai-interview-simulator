@@ -1,7 +1,6 @@
 # app/ui/presenters/feedback/blocks/success_block.py
 
 from app.contracts.feedback_bundle import (
-    FeedbackQuality,
     FeedbackSignal,
     LearningSuggestion,
     FeedbackBlockResult,
@@ -15,33 +14,10 @@ class SuccessBlock:
 
     def build(self, _state, _result, _evaluation, execution, _analysis):
 
-        # -----------------------------------------------------
-        # Quality classification (enhanced)
-        # -----------------------------------------------------
-
         exec_time = execution.execution_time_ms or 0
 
-        if execution.total_tests and execution.passed_tests == execution.total_tests:
-
-            # Performance-based classification
-            if exec_time and exec_time < 50:
-                quality_level = "optimal"
-                explanation = "Solution is correct and performs efficiently."
-
-            elif exec_time and exec_time < 200:
-                quality_level = "correct"
-                explanation = "Solution is correct with acceptable performance."
-
-            else:
-                quality_level = "inefficient"
-                explanation = "Solution is correct but performance can be improved."
-
-        else:
-            quality_level = "partial"
-            explanation = "Solution works but may not cover all cases."
-
         # -----------------------------------------------------
-        # Build content
+        # Content
         # -----------------------------------------------------
 
         if execution.total_tests:
@@ -53,7 +29,7 @@ class SuccessBlock:
             content = "## ✅ Execution completed successfully"
 
         # -----------------------------------------------------
-        # Signals (slightly enriched)
+        # Signals
         # -----------------------------------------------------
 
         signals = [
@@ -63,7 +39,8 @@ class SuccessBlock:
             )
         ]
 
-        if quality_level == "inefficient":
+        # performance hint (NO quality decision)
+        if exec_time and exec_time > 200:
             signals.append(
                 FeedbackSignal(
                     severity="warning",
@@ -72,10 +49,10 @@ class SuccessBlock:
             )
 
         # -----------------------------------------------------
-        # Learning suggestions (adaptive)
+        # Learning
         # -----------------------------------------------------
 
-        if quality_level == "optimal":
+        if exec_time and exec_time < 50:
             learning = [
                 LearningSuggestion(
                     topic="Advanced optimization",
@@ -83,39 +60,27 @@ class SuccessBlock:
                 )
             ]
 
-        elif quality_level == "correct":
+        elif exec_time and exec_time < 200:
             learning = [
                 LearningSuggestion(
                     topic="Performance tuning",
-                    action="Analyze time and space complexity for potential improvements",
-                )
-            ]
-
-        elif quality_level == "inefficient":
-            learning = [
-                LearningSuggestion(
-                    topic="Algorithm optimization",
-                    action="Refactor the solution to reduce time complexity",
+                    action="Analyze time and space complexity",
                 )
             ]
 
         else:
             learning = [
                 LearningSuggestion(
-                    topic="Completeness",
-                    action="Ensure all edge cases are handled correctly",
+                    topic="Optimization",
+                    action="Refactor the solution to improve performance",
                 )
             ]
 
         # -----------------------------------------------------
-        # Confidence (slightly nuanced)
+        # Confidence
         # -----------------------------------------------------
 
-        confidence = 0.95 if quality_level in ["optimal", "correct"] else 0.85
-
-        # -----------------------------------------------------
-        # Return
-        # -----------------------------------------------------
+        confidence = 0.95 if execution.success else 0.85
 
         return FeedbackBlockResult(
             title="Success",
@@ -124,8 +89,5 @@ class SuccessBlock:
             confidence=confidence,
             signals=signals,
             learning=learning,
-            quality=FeedbackQuality(
-                level=quality_level,
-                explanation=explanation,
-            ),
+            quality=None,
         )
