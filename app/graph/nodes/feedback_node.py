@@ -41,6 +41,7 @@ class FeedbackNode:
             result=result,
             evaluation=evaluation,
             execution=execution,
+            quality=quality,
         )
 
         # -----------------------------------------------------
@@ -59,7 +60,7 @@ class FeedbackNode:
         return state.model_copy(update={"last_feedback_bundle": updated_bundle})
 
     # =========================================================
-    # 🔥 QUALITY ENGINE (FINAL VERSION)
+    # QUALITY ENGINE
     # =========================================================
 
     def _compute_quality(self, execution, evaluation) -> str:

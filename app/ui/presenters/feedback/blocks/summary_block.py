@@ -8,12 +8,15 @@ class SummaryBlock:
     def can_handle(self, _result, _evaluation, execution, _analysis) -> bool:
         return execution is not None
 
-    def build(self, state, _result, _evaluation, execution, _analysis):
-
-        bundle = getattr(state, "last_feedback_bundle", None)
-        quality = (
-            bundle.overall_quality if bundle and bundle.overall_quality else "incorrect"
-        )
+    def build(
+        self,
+        _state,
+        _result,
+        _evaluation,
+        execution,
+        _analysis,
+        quality: str,  
+    ) -> FeedbackBlockResult:
 
         # -----------------------------------------------------
         # Map quality → UI label (SINGLE SOURCE OF TRUTH)
@@ -32,28 +35,17 @@ class SummaryBlock:
             label = "Incorrect Solution"
 
         else:
-            # fallback safety → NEVER misleading
             icon = "❌"
             label = "Incorrect Solution"
 
-        # -----------------------------------------------------
-        # Content
-        # -----------------------------------------------------
-
         content = f"{icon} {label}"
-
-        # -----------------------------------------------------
-        # Signals (NO NOISE)
-        # -----------------------------------------------------
-
-        signals = []
 
         return FeedbackBlockResult(
             title="Summary",
             content=content,
             severity="info",
             confidence=0.95,
-            signals=signals,
+            signals=[],
             learning=[],
-            quality=None, 
+            quality=None,
         )
