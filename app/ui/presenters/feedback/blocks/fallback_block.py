@@ -9,11 +9,24 @@ from app.contracts.feedback_bundle import (
 
 class FallbackBlock:
 
-    def can_handle(self, result, evaluation, execution, analysis) -> bool:
+    def can_handle(
+        self, 
+        _result, 
+        evaluation, 
+        execution, 
+        _analysis, 
+    ) -> bool:
     # enter only if there is no other useful block
         return not execution and not evaluation
 
-    def build(self, _state, _result, _evaluation, _execution, _analysis):
+    def build(
+        self, 
+        _state, 
+        _result, 
+        _evaluation, 
+        _execution, 
+        _analysis, 
+        _quality):
 
         signals = [
             FeedbackSignal(

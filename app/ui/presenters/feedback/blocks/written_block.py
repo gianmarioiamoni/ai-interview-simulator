@@ -15,7 +15,13 @@ class WrittenBlock:
         return bool(evaluation and not execution)
 
     def build(
-        self, _state, _result, evaluation, _execution, _analysis
+        self, 
+        _state, 
+        _result, 
+        evaluation, 
+        _execution, 
+        _analysis, 
+        _quality
     ) -> FeedbackBlockResult:
 
         score = evaluation.score if evaluation else 0

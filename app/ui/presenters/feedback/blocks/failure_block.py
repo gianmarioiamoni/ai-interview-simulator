@@ -10,7 +10,13 @@ from app.contracts.feedback_bundle import (
 
 class FailureBlock:
 
-    def can_handle(self, result, evaluation, execution, analysis) -> bool:
+    def can_handle(
+        self, 
+        _result, 
+        _evaluation, 
+        execution, 
+        _analysis, 
+    ) -> bool:
 
         if not execution:
             return False
@@ -35,7 +41,7 @@ class FailureBlock:
         return False
 
     def build(
-        self, state, result, evaluation, execution, analysis
+        self, _state, result, _evaluation, execution, _analysis, _quality
     ) -> FeedbackBlockResult:
 
         ai_hint = result.ai_hint if result else None
@@ -78,7 +84,7 @@ class FailureBlock:
             failed_str = "Query result does not match expected output."
 
         # -----------------------------------------------------
-        # SIGNALS (FIXED: no nonsense)
+        # SIGNALS
         # -----------------------------------------------------
 
         signals = [
@@ -89,7 +95,7 @@ class FailureBlock:
         ]
 
         # -----------------------------------------------------
-        # LEARNING (UPGRADED)
+        # LEARNING
         # -----------------------------------------------------
 
         if total > 0 and passed == 0:
@@ -118,7 +124,7 @@ class FailureBlock:
         ]
 
         # -----------------------------------------------------
-        # AI HINT (clean rendering)
+        # AI HINT
         # -----------------------------------------------------
 
         if ai_hint:

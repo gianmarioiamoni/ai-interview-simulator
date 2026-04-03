@@ -9,11 +9,23 @@ from app.contracts.feedback_bundle import (
 
 class RuntimeErrorBlock:
 
-    def can_handle(self, result, evaluation, execution, analysis) -> bool:
+    def can_handle(
+        self, 
+        _result, 
+        _evaluation, 
+        _execution, 
+        analysis, 
+    ) -> bool:
         return bool(analysis and analysis.has_runtime_error)
 
     def build(
-        self, state, result, evaluation, execution, analysis
+        self, 
+        _state, 
+        result, 
+        _evaluation, 
+        _execution, 
+        analysis, 
+        _quality
     ) -> FeedbackBlockResult:
 
         # -----------------------------------------------------
