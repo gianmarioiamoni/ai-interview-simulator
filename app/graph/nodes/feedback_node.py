@@ -20,6 +20,8 @@ class FeedbackNode:
         if not result:
             return state
 
+        print("AI HINT DEBUG:", result.ai_hint)
+
         execution = result.execution
         evaluation = result.evaluation
 
