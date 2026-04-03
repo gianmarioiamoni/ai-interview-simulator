@@ -2,6 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
+from app.contracts.feedback_bundle import FeedbackBundle
 
 
 class FeedbackNode:
@@ -23,13 +24,13 @@ class FeedbackNode:
         evaluation = result.evaluation
 
         # -----------------------------------------------------
-        # 🔥 SINGLE SOURCE OF TRUTH FOR QUALITY
+        # SINGLE SOURCE OF TRUTH
         # -----------------------------------------------------
 
         quality = self._compute_quality(execution)
 
         # -----------------------------------------------------
-        # BUILD UI BLOCKS
+        # BUILD BASE BUNDLE
         # -----------------------------------------------------
 
         bundle = self._builder.build(
@@ -40,16 +41,18 @@ class FeedbackNode:
         )
 
         # -----------------------------------------------------
-        # FORCE QUALITY INTO BUNDLE
+        # 🔥 REBUILD BUNDLE WITH CORRECT QUALITY
         # -----------------------------------------------------
 
-        bundle = bundle.model_copy(
-            update={
-                "overall_quality": quality,
-            }
+        updated_bundle = FeedbackBundle(
+            blocks=bundle.blocks,
+            overall_severity=bundle.overall_severity,
+            overall_confidence=bundle.overall_confidence,
+            overall_quality=quality,
+            markdown=bundle.markdown,
         )
 
-        return state.model_copy(update={"last_feedback_bundle": bundle})
+        return state.model_copy(update={"last_feedback_bundle": updated_bundle})
 
     # =========================================================
 
@@ -61,7 +64,6 @@ class FeedbackNode:
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
 
-        # no tests case
         if total == 0:
             return "correct" if execution.success else "incorrect"
 
