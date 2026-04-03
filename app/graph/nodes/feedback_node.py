@@ -23,7 +23,13 @@ class FeedbackNode:
         evaluation = result.evaluation
 
         # -----------------------------------------------------
-        # USE NEW FEEDBACK SYSTEM
+        # 🔥 SINGLE SOURCE OF TRUTH FOR QUALITY
+        # -----------------------------------------------------
+
+        quality = self._compute_quality(execution)
+
+        # -----------------------------------------------------
+        # BUILD UI BLOCKS
         # -----------------------------------------------------
 
         bundle = self._builder.build(
@@ -33,4 +39,36 @@ class FeedbackNode:
             execution=execution,
         )
 
+        # -----------------------------------------------------
+        # FORCE QUALITY INTO BUNDLE
+        # -----------------------------------------------------
+
+        bundle = bundle.model_copy(
+            update={
+                "overall_quality": quality,
+            }
+        )
+
         return state.model_copy(update={"last_feedback_bundle": bundle})
+
+    # =========================================================
+
+    def _compute_quality(self, execution) -> str:
+
+        if not execution:
+            return "incorrect"
+
+        passed = execution.passed_tests or 0
+        total = execution.total_tests or 0
+
+        # no tests case
+        if total == 0:
+            return "correct" if execution.success else "incorrect"
+
+        if passed == total:
+            return "correct"
+
+        if passed > 0:
+            return "partial"
+
+        return "incorrect"

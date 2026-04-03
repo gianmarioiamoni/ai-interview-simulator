@@ -140,5 +140,5 @@ class FailureBlock:
             confidence=0.9,
             signals=signals,
             learning=learning,
-            quality=None,  # ✅ IMPORTANT: non decide la qualità
+            quality=None,  
         )

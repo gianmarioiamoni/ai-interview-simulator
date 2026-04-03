@@ -16,11 +16,6 @@ class SummaryBlock:
         )
 
         # -----------------------------------------------------
-        # DEBUG (temporary, remove later)
-        # -----------------------------------------------------
-        print("SUMMARY QUALITY:", quality)
-
-        # -----------------------------------------------------
         # Map quality → UI label (SINGLE SOURCE OF TRUTH)
         # -----------------------------------------------------
 
@@ -60,5 +55,5 @@ class SummaryBlock:
             confidence=0.95,
             signals=signals,
             learning=[],
-            quality=None,  # IMPORTANT: no ownership here
+            quality=None, 
         )
