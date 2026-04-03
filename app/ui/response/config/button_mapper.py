@@ -23,7 +23,6 @@ class ButtonMapper:
         is_feedback = ui_state == UIState.FEEDBACK
         has_valid_state = bool(state and state.current_question)
 
-        quality = ButtonMapper._get_quality(state)
         actions = state.allowed_actions or []
 
         # =====================================================
@@ -40,6 +39,8 @@ class ButtonMapper:
                 "next_label": "",
                 "retry_label": "",
             }
+
+        quality = ButtonMapper._get_quality(state)
 
         # =====================================================
         # QUALITY FLAGS
