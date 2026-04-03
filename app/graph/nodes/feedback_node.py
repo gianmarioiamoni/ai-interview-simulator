@@ -24,10 +24,13 @@ class FeedbackNode:
         evaluation = result.evaluation
 
         # -----------------------------------------------------
-        # SINGLE SOURCE OF TRUTH
+        # 🔥 SINGLE SOURCE OF TRUTH (FIXED)
         # -----------------------------------------------------
 
-        quality = self._compute_quality(execution)
+        quality = self._compute_quality(
+            execution=execution,
+            evaluation=evaluation,
+        )
 
         # -----------------------------------------------------
         # BUILD BASE BUNDLE
@@ -42,6 +45,7 @@ class FeedbackNode:
 
         # -----------------------------------------------------
         # 🔥 REBUILD BUNDLE WITH CORRECT QUALITY
+        # (dataclass → no model_copy)
         # -----------------------------------------------------
 
         updated_bundle = FeedbackBundle(
@@ -55,8 +59,33 @@ class FeedbackNode:
         return state.model_copy(update={"last_feedback_bundle": updated_bundle})
 
     # =========================================================
+    # 🔥 QUALITY ENGINE (FINAL VERSION)
+    # =========================================================
 
-    def _compute_quality(self, execution) -> str:
+    def _compute_quality(self, execution, evaluation) -> str:
+
+        # -----------------------------------------------------
+        # WRITTEN QUESTIONS (NO EXECUTION)
+        # -----------------------------------------------------
+
+        if execution is None and evaluation is not None:
+
+            score = evaluation.score or 0
+
+            if score >= 90:
+                return "optimal"
+
+            if score >= 75:
+                return "correct"
+
+            if score >= 50:
+                return "partial"
+
+            return "incorrect"
+
+        # -----------------------------------------------------
+        # CODING / SQL
+        # -----------------------------------------------------
 
         if not execution:
             return "incorrect"
@@ -64,6 +93,7 @@ class FeedbackNode:
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
 
+        # edge case (no tests)
         if total == 0:
             return "correct" if execution.success else "incorrect"
 
