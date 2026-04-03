@@ -35,12 +35,6 @@ class RuntimeErrorBlock:
         clean_error = analysis.primary_error.strip().splitlines()[-1]
 
         # -----------------------------------------------------
-        # AI Hint (if available)
-        # -----------------------------------------------------
-
-        ai_hint = result.ai_hint if result and result.ai_hint else None
-
-        # -----------------------------------------------------
         # Signals
         # -----------------------------------------------------
 
@@ -77,24 +71,6 @@ class RuntimeErrorBlock:
                     "",
                     "💡 Suggested fix:",
                     "`from collections import Counter`",
-                ]
-            )
-
-        # AI Hint
-        if ai_hint:
-            lines.extend(
-                [
-                    "### 🤖 AI Hint",
-                    f"**Explanation:** {ai_hint.explanation}",
-                    f"**Suggestion:** {ai_hint.suggestion}",
-                ]
-            )
-        else:
-            # fallback smart hint
-            lines.extend(
-                [
-                    "### 💡 Quick Hint",
-                    "Check imports and variable definitions.",
                 ]
             )
 

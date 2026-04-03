@@ -19,6 +19,7 @@ from app.ui.presenters.feedback.blocks.written_block import WrittenBlock
 from app.ui.presenters.feedback.blocks.fallback_block import FallbackBlock
 from app.ui.presenters.feedback.blocks.score_block import ScoreBlock
 from app.ui.presenters.feedback.blocks.summary_block import SummaryBlock
+from app.ui.presenters.feedback.blocks.hint_block import HintBlock
 
 
 class FeedbackBuilder:
@@ -33,6 +34,7 @@ class FeedbackBuilder:
             RuntimeErrorBlock(),
             SuccessBlock(),
             FailureBlock(),
+            HintBlock(),
             FallbackBlock(),
         ]
 
