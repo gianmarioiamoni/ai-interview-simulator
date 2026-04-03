@@ -17,6 +17,8 @@ class ScoreBlock:
         _analysis,
         _quality,  # injected (unused but required for uniformity)
     ):
+        if not execution:
+            return None
 
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
