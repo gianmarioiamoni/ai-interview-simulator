@@ -37,6 +37,8 @@ class FeedbackBuilder:
         ]
 
     # =========================================================
+    # PUBLIC API
+    # =========================================================
 
     def build(
         self,
@@ -44,12 +46,21 @@ class FeedbackBuilder:
         result: QuestionResult,
         evaluation: QuestionEvaluation | None,
         execution: ExecutionResult | None,
+        quality: str,  # 🔥 SINGLE SOURCE OF TRUTH
     ) -> FeedbackBundle:
+
+        # -----------------------------------------------------
+        # Analysis
+        # -----------------------------------------------------
 
         analysis_raw = self._analyzer.analyze(execution) if execution else None
         analysis = (
             ExecutionAnalysisAdapter.to_dto(analysis_raw) if analysis_raw else None
         )
+
+        # -----------------------------------------------------
+        # Blocks
+        # -----------------------------------------------------
 
         blocks = self._collect_blocks(
             state,
@@ -57,18 +68,22 @@ class FeedbackBuilder:
             evaluation,
             execution,
             analysis,
+            quality,
         )
+
+        # -----------------------------------------------------
+        # Aggregate
+        # -----------------------------------------------------
 
         overall_severity = self._aggregate_severity(blocks)
         overall_confidence = self._aggregate_confidence(blocks)
 
-        # 🔥 QUALITY: SINGLE SOURCE OF TRUTH (STATE)
-        state_bundle = getattr(state, "last_feedback_bundle", None)
-        overall_quality = (
-            state_bundle.overall_quality
-            if state_bundle and state_bundle.overall_quality
-            else "incorrect"
-        )
+        # 🔥 CRITICAL: use injected quality, NOT state
+        overall_quality = quality
+
+        # -----------------------------------------------------
+        # Render
+        # -----------------------------------------------------
 
         markdown = self._render_markdown(blocks)
 
@@ -81,6 +96,8 @@ class FeedbackBuilder:
         )
 
     # =========================================================
+    # INTERNALS
+    # =========================================================
 
     def _collect_blocks(
         self,
@@ -89,12 +106,16 @@ class FeedbackBuilder:
         evaluation,
         execution,
         analysis,
+        quality,
     ):
 
         blocks = []
 
-        # CORE BLOCKS
-        if execution:
+        # -----------------------------------------------------
+        # CORE BLOCKS (Summary + Score ALWAYS FIRST)
+        # -----------------------------------------------------
+
+        if execution or evaluation:
             for block in self._blocks:
                 if isinstance(block, (SummaryBlock, ScoreBlock)):
                     built = block.build(
@@ -103,11 +124,15 @@ class FeedbackBuilder:
                         evaluation,
                         execution,
                         analysis,
+                        quality,
                     )
                     if built:
                         blocks.append(built)
 
+        # -----------------------------------------------------
         # OTHER BLOCKS
+        # -----------------------------------------------------
+
         for block in self._blocks:
 
             if isinstance(block, (SummaryBlock, ScoreBlock)):
@@ -121,6 +146,7 @@ class FeedbackBuilder:
                     evaluation,
                     execution,
                     analysis,
+                    quality,
                 )
 
                 if built:
