@@ -1,5 +1,6 @@
 # app/graph/nodes/hint_node.py
 
+from domain.contracts.quality import Quality
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.ai_hint import AIHintInput
 from domain.contracts.execution_result import ExecutionResult
@@ -55,11 +56,11 @@ class HintNode:
         total = execution.total_tests or 0
 
         if execution.success:
-            quality = "correct"
+            quality = Quality.CORRECT
         elif total > 0 and passed > 0:
-            quality = "partial"
+            quality = Quality.PARTIAL
         else:
-            quality = "incorrect"
+            quality = Quality.INCORRECT
 
         # -----------------------------------------------------
         # HINT LEVEL (policy-driven)

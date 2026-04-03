@@ -6,6 +6,7 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.question_result import QuestionResult
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.quality import Quality
 
 from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
 from app.ui.adapters.execution_analysis_adapter import ExecutionAnalysisAdapter
@@ -48,7 +49,7 @@ class FeedbackBuilder:
         result: QuestionResult,
         evaluation: QuestionEvaluation | None,
         execution: ExecutionResult | None,
-        quality: str,  # 🔥 SINGLE SOURCE OF TRUTH
+        quality: Quality,  # SINGLE SOURCE OF TRUTH
     ) -> FeedbackBundle:
 
         # -----------------------------------------------------
@@ -80,7 +81,7 @@ class FeedbackBuilder:
         overall_severity = self._aggregate_severity(blocks)
         overall_confidence = self._aggregate_confidence(blocks)
 
-        # 🔥 CRITICAL: use injected quality, NOT state
+        # use injected quality, not state
         overall_quality = quality
 
         # -----------------------------------------------------

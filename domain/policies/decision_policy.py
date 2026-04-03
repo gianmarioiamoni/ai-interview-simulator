@@ -1,12 +1,14 @@
 # app/domain/policies/decision_policy.py
 
+from domain.contracts.quality import Quality
+
 
 class DecisionPolicy:
 
     def decide(
         self,
         *,
-        quality: str,
+        quality: Quality,
         attempts: int,
         max_attempts: int,
     ) -> str:
@@ -15,21 +17,21 @@ class DecisionPolicy:
         # CORRECT → always go next
         # -----------------------------------------------------
 
-        if quality in ("correct", "optimal"):
+        if quality in (Quality.CORRECT, Quality.OPTIMAL):
             return "next"
 
         # -----------------------------------------------------
         # PARTIAL → allow progression
         # -----------------------------------------------------
 
-        if quality == "partial":
+        if quality == Quality.PARTIAL:
             return "next"
 
         # -----------------------------------------------------
         # INCORRECT → force retry if possible
         # -----------------------------------------------------
 
-        if quality == "incorrect":
+        if quality == Quality.INCORRECT:
             if attempts < max_attempts:
                 return "retry"
             return "next"

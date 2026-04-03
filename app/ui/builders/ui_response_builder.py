@@ -1,6 +1,7 @@
 # app/ui/builders/ui_response_builder.py
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.quality import Quality
 from domain.contracts.question import QuestionType
 
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
@@ -159,9 +160,7 @@ class UIResponseBuilder:
             state=state,
             question_counter=counter,
             feedback_markdown=feedback_markdown,
-            feedback_quality=(
-                feedback_bundle.overall_quality if feedback_bundle else None
-            ),
+            feedback_quality = feedback_bundle.overall_quality if feedback_bundle else None,
             ui_state=ui_state,
             **buttons,
             **display,

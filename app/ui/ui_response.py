@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from app.ui.ui_router import route_ui
 from app.ui.ui_state import UIState
+from domain.contracts.quality import Quality
 
 
 @dataclass
@@ -18,7 +19,7 @@ class UIResponse:
 
     # FEEDBACK
     feedback_markdown: str = ""
-    feedback_quality: Optional[str] = None
+    feedback_quality: Optional[Quality] = None
 
     # DISPLAY
     written_display: str = ""

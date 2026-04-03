@@ -1,6 +1,7 @@
 # app/ui/presenters/feedback/blocks/summary_block.py
 
 from app.contracts.feedback_bundle import FeedbackBlockResult
+from domain.contracts.quality import Quality
 
 
 class SummaryBlock:
@@ -15,22 +16,22 @@ class SummaryBlock:
         _evaluation,
         _execution,
         _analysis,
-        quality: str,  
+        quality: Quality,  
     ) -> FeedbackBlockResult:
 
         # -----------------------------------------------------
         # Map quality → UI label (SINGLE SOURCE OF TRUTH)
         # -----------------------------------------------------
 
-        if quality in ["correct", "optimal"]:
+        if quality in (Quality.CORRECT, Quality.OPTIMAL):
             icon = "✅"
             label = "Correct Solution"
 
-        elif quality == "partial":
+        elif quality == Quality.PARTIAL:
             icon = "🟡"
             label = "Partial Solution"
 
-        elif quality == "incorrect":
+        elif quality == Quality.INCORRECT:
             icon = "❌"
             label = "Incorrect Solution"
 

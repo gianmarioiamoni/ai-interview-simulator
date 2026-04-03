@@ -1,6 +1,7 @@
 # app/ui/response/sections/feedback_section.py
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.quality import Quality
 
 
 class FeedbackSection:
@@ -18,13 +19,13 @@ class FeedbackSection:
         if not result:
             return ""
 
-        bundle = getattr(state, "last_feedback_bundle", None)
+        bundle = state.last_feedback_bundle
 
         if not bundle or not bundle.blocks:
             return ""
 
         blocks = bundle.blocks
-        quality = bundle.overall_quality or "unknown"
+        quality = bundle.overall_quality
 
         parts: list[str] = []
 
@@ -86,20 +87,20 @@ class FeedbackSection:
     # =========================================================
 
     @staticmethod
-    def _build_header(quality: str) -> str:
+    def _build_header(quality: Quality) -> str:
 
-        if quality == "correct":
+        if quality == Quality.CORRECT:
             return "### ✅ Correct Solution\nGreat job! All tests passed."
 
-        if quality == "partial":
+        if quality == Quality.PARTIAL:
             return "### ⚠️ Partial Solution\nSome tests failed. You're close."
 
-        if quality == "incorrect":
+        if quality == Quality.INCORRECT:
             return (
                 "### ❌ Incorrect Solution\nThe solution needs significant improvement."
             )
 
-        return "### ❌ Incorrect Solution\nCheck the details below."
+        return "### ❌ Unknown Solution\nCheck the details below."
 
     # =========================================================
     # POLICY

@@ -1,6 +1,7 @@
 # app/ui/presenters/feedback/blocks/score_block.py
 
 from app.contracts.feedback_bundle import FeedbackBlockResult
+from domain.contracts.quality import Quality
 
 
 class ScoreBlock:

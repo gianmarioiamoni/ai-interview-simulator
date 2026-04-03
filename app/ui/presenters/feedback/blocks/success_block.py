@@ -5,6 +5,7 @@ from app.contracts.feedback_bundle import (
     LearningSuggestion,
     FeedbackBlockResult,
 )
+from domain.contracts.quality import Quality
 
 
 class SuccessBlock:

@@ -5,6 +5,7 @@ from app.contracts.feedback_bundle import (
     FeedbackSignal,
     LearningSuggestion,
 )
+from domain.contracts.quality import Quality
 
 
 class RuntimeErrorBlock:

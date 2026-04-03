@@ -4,6 +4,7 @@ import re
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.action_type import ActionType
+from domain.contracts.quality import Quality
 from app.ui.ui_state import UIState
 from app.ui.types.ui_fields import ButtonState
 
@@ -44,9 +45,9 @@ class ButtonMapper:
         # QUALITY FLAGS
         # =====================================================
 
-        is_correct = quality in ["correct", "optimal"]
-        is_partial = quality == "partial"
-        is_incorrect = quality == "incorrect"
+        is_correct = quality in (Quality.CORRECT, Quality.OPTIMAL)
+        is_partial = quality == Quality.PARTIAL
+        is_incorrect = quality == Quality.INCORRECT
 
         # =====================================================
         # BASE ACTION FLAGS (from graph)
@@ -118,11 +119,13 @@ class ButtonMapper:
     # =========================================================
 
     @staticmethod
-    def _get_quality(state: InterviewState) -> str:
-        bundle = getattr(state, "last_feedback_bundle", None)
-        return (
-            bundle.overall_quality if bundle and bundle.overall_quality else "unknown"
-        )
+    def _get_quality(state: InterviewState) -> Quality:
+        bundle = state.last_feedback_bundle
+
+        if not bundle:
+            raise RuntimeError("No feedback bundle found")
+
+        return bundle.overall_quality
 
     # =========================================================
 
