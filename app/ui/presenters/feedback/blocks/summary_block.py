@@ -1,9 +1,6 @@
 # app/ui/presenters/feedback/blocks/summary_block.py
 
-from app.contracts.feedback_bundle import (
-    FeedbackBlockResult,
-    _FeedbackSignal,
-)
+from app.contracts.feedback_bundle import FeedbackBlockResult
 
 
 class SummaryBlock:
