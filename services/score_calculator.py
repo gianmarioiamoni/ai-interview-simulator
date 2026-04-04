@@ -1,4 +1,4 @@
-# domain/services/score_calculator.py
+# services/score_calculator.py
 
 from domain.contracts.quality import Quality
 

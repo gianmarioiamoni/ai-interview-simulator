@@ -1,12 +1,11 @@
 # app/graph/nodes/feedback_node.py
 
 from domain.contracts.interview_state import InterviewState
-from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
-from app.contracts.feedback_bundle import FeedbackBundle
-from domain.contracts.quality import Quality
-from domain.services.score_calculator import ScoreCalculator
 from domain.contracts.quality import Quality
 
+from services.score_calculator import ScoreCalculator
+
+from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
 
 class FeedbackNode:
 
