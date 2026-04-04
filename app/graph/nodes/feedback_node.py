@@ -4,12 +4,15 @@ from domain.contracts.interview_state import InterviewState
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
 from app.contracts.feedback_bundle import FeedbackBundle
 from domain.contracts.quality import Quality
+from domain.services.score_calculator import ScoreCalculator
+from domain.contracts.quality import Quality
 
 
 class FeedbackNode:
 
     def __init__(self):
         self._builder = FeedbackBuilder()
+        self._scorer = ScoreCalculator()
 
     def __call__(self, state: InterviewState) -> InterviewState:
 
@@ -21,22 +24,36 @@ class FeedbackNode:
         if not result:
             return state
 
-        print("AI HINT DEBUG:", result.ai_hint)
-
         execution = result.execution
         evaluation = result.evaluation
 
         # -----------------------------------------------------
-        # 🔥 SINGLE SOURCE OF TRUTH (FIXED)
+        # SCORE + QUALITY
         # -----------------------------------------------------
 
-        quality = self._compute_quality(
-            execution=execution,
-            evaluation=evaluation,
-        )
+        if execution:
+            score, quality = self._scorer.compute(
+                passed=execution.passed_tests,
+                total=execution.total_tests,
+                execution_time_ms=execution.execution_time_ms,
+            )
+
+        elif evaluation:
+            score = evaluation.score or 0.0
+
+            if score >= 75:
+                quality = Quality.CORRECT
+            elif score >= 50:
+                quality = Quality.PARTIAL
+            else:
+                quality = Quality.INCORRECT
+
+        else:
+            score = 0.0
+            quality = Quality.INCORRECT
 
         # -----------------------------------------------------
-        # BUILD BASE BUNDLE
+        # BUILD BUNDLE
         # -----------------------------------------------------
 
         bundle = self._builder.build(
@@ -44,13 +61,13 @@ class FeedbackNode:
             result=result,
             evaluation=evaluation,
             execution=execution,
-            quality=quality,
         )
 
         # -----------------------------------------------------
-        # 🔥 REBUILD BUNDLE WITH CORRECT QUALITY
-        # (dataclass → no model_copy)
+        # ENRICH BUNDLE
         # -----------------------------------------------------
+
+        from app.contracts.feedback_bundle import FeedbackBundle
 
         updated_bundle = FeedbackBundle(
             blocks=bundle.blocks,
@@ -61,50 +78,3 @@ class FeedbackNode:
         )
 
         return state.model_copy(update={"last_feedback_bundle": updated_bundle})
-
-    # =========================================================
-    # QUALITY ENGINE
-    # =========================================================
-
-    def _compute_quality(self, execution, evaluation) -> Quality:
-
-        # -----------------------------------------------------
-        # WRITTEN QUESTIONS (NO EXECUTION)
-        # -----------------------------------------------------
-
-        if execution is None and evaluation is not None:
-
-            score = evaluation.score or 0
-
-            if score >= 90:
-                return Quality.OPTIMAL
-
-            if score >= 75:
-                return Quality.CORRECT
-
-            if score >= 50:
-                return Quality.PARTIAL
-
-            return Quality.INCORRECT
-
-        # -----------------------------------------------------
-        # CODING / SQL
-        # -----------------------------------------------------
-
-        if not execution:
-            return Quality.INCORRECT
-
-        passed = execution.passed_tests or 0
-        total = execution.total_tests or 0
-
-        # edge case (no tests)
-        if total == 0:
-            return Quality.CORRECT if execution.success else Quality.INCORRECT
-
-        if passed == total:
-            return Quality.CORRECT
-
-        if passed > 0:
-            return Quality.PARTIAL
-
-        return Quality.INCORRECT

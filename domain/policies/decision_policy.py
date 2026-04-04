@@ -14,7 +14,7 @@ class DecisionPolicy:
     ) -> str:
 
         # -----------------------------------------------------
-        # HIGH QUALITY → always go next
+        # HIGH QUALITY → always next
         # -----------------------------------------------------
 
         if quality.is_at_least(Quality.CORRECT):
@@ -35,9 +35,5 @@ class DecisionPolicy:
             if attempts < max_attempts:
                 return "retry"
             return "next"
-
-        # -----------------------------------------------------
-        # fallback (defensive)
-        # -----------------------------------------------------
 
         return "next"
