@@ -79,8 +79,9 @@ class ButtonMapper:
 
             # allow retry if not perfect score
             score = ButtonMapper._get_score(state)
+            should_allow_retry = score < 100 and can_retry_action
 
-            if score < 100 and can_retry_action:
+            if should_allow_retry:
                 show_retry = True
 
         else:
@@ -123,7 +124,7 @@ class ButtonMapper:
     def _get_quality(state: InterviewState) -> Quality:
         bundle = state.last_feedback_bundle
 
-        if not bundle:
+        if not bundle or not bundle.overall_quality:
             raise RuntimeError("No feedback bundle found")
 
         return bundle.overall_quality
