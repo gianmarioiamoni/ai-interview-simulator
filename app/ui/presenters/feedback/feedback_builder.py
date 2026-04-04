@@ -155,7 +155,7 @@ class FeedbackBuilder:
                 if built:
                     blocks.append(built)
 
-        return blocks
+        return self._order_blocks(blocks)
 
     # =========================================================
 
@@ -200,3 +200,42 @@ class FeedbackBuilder:
             lines.append("")
 
         return "\n".join(lines)
+
+
+    def _order_blocks(self, blocks):
+
+        def block_priority(block):
+
+            # -----------------------------------------------------
+            # HARD PRIORITY (UX)
+            # -----------------------------------------------------
+
+            if block.title == "Summary":
+                return (0, 0)
+
+            if block.title == "Score":
+                return (1, 0)
+
+            # -----------------------------------------------------
+            # ERROR FIRST
+            # -----------------------------------------------------
+
+            severity_rank = {
+                "error": 0,
+                "warning": 1,
+                "info": 2,
+            }.get(block.severity, 3)
+
+            # -----------------------------------------------------
+            # FUTURE: quality-aware ordering
+            # -----------------------------------------------------
+
+            quality_rank = 0
+
+            if block.quality:
+                quality_rank = -block.quality.rank()
+
+            # -----------------------------------------------------
+            return (2, severity_rank, quality_rank)
+
+        return sorted(blocks, key=block_priority)
