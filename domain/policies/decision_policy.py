@@ -14,21 +14,21 @@ class DecisionPolicy:
     ) -> str:
 
         # -----------------------------------------------------
-        # CORRECT → always go next
+        # HIGH QUALITY → always go next
         # -----------------------------------------------------
 
-        if quality in (Quality.CORRECT, Quality.OPTIMAL):
+        if quality.is_at_least(Quality.CORRECT):
             return "next"
 
         # -----------------------------------------------------
-        # PARTIAL → allow progression
+        # MEDIUM QUALITY → allow progression
         # -----------------------------------------------------
 
         if quality == Quality.PARTIAL:
             return "next"
 
         # -----------------------------------------------------
-        # INCORRECT → force retry if possible
+        # LOW QUALITY → retry if possible
         # -----------------------------------------------------
 
         if quality == Quality.INCORRECT:
@@ -37,7 +37,7 @@ class DecisionPolicy:
             return "next"
 
         # -----------------------------------------------------
-        # fallback
+        # fallback (defensive)
         # -----------------------------------------------------
 
         return "next"

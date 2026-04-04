@@ -46,7 +46,7 @@ class ButtonMapper:
         # QUALITY FLAGS
         # =====================================================
 
-        is_correct = quality in (Quality.CORRECT, Quality.OPTIMAL)
+        is_correct = quality.is_at_least(Quality.CORRECT)
         is_partial = quality == Quality.PARTIAL
         is_incorrect = quality == Quality.INCORRECT
 
