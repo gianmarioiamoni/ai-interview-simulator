@@ -2,13 +2,15 @@
 
 from domain.contracts.quality import Quality
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.ai_hint import AIHintInput
+from domain.contracts.ai_hint import AIHintInput, AIHint
 from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.test_execution_result import TestStatus
 from domain.contracts.hint_level import HintLevel
-
 from domain.policies.hint_policy import HintPolicy
+from domain.contracts.question import QuestionType
+
 from services.ai_hint_engine.ai_hint_service import AIHintService
+from services.hint_rules.sql_hint_rules import SQLHintRules
 
 
 class HintNode:
@@ -20,22 +22,18 @@ class HintNode:
     def __call__(self, state: InterviewState) -> InterviewState:
 
         question = state.current_question
+        if not question:
+            return state
+
         answer = state.get_latest_answer_for_question(question.id)
-
-        # -----------------------------------------------------
-        # SAFETY GUARDS
-        # -----------------------------------------------------
-
-        if not question or not answer:
+        if not answer:
             return state
 
         result = state.get_result_for_question(question.id)
-
         if not result:
             return state
 
         execution = result.execution
-
         if not execution:
             return state
 
@@ -63,7 +61,7 @@ class HintNode:
             quality = Quality.INCORRECT
 
         # -----------------------------------------------------
-        # HINT LEVEL (policy-driven)
+        # HINT LEVEL
         # -----------------------------------------------------
 
         hint_level = self._policy.resolve(
@@ -72,9 +70,36 @@ class HintNode:
             has_error=bool(execution.error),
         )
 
-        # No hint needed
         if hint_level == HintLevel.NONE:
             return state
+
+        # =====================================================
+        # 🔥 RULE-BASED HINTS (SQL FIRST)
+        # =====================================================
+
+        if question.type == QuestionType.DATABASE:
+
+            rule_hints = SQLHintRules.generate(answer.content)
+
+            if rule_hints:
+
+                ai_hint = AIHint(
+                    explanation="Your SQL query can be improved.",
+                    suggestion="\n".join(rule_hints),
+                )
+
+                new_results = dict(state.results_by_question)
+
+                updated = result.model_copy(
+                    update={
+                        "ai_hint": ai_hint,
+                        "hint_level": hint_level,
+                    }
+                )
+
+                new_results[question.id] = updated
+
+                return state.model_copy(update={"results_by_question": new_results})
 
         # -----------------------------------------------------
         # SIGNALS EXTRACTION
@@ -96,7 +121,7 @@ class HintNode:
         )
 
         # -----------------------------------------------------
-        # AI GENERATION
+        # AI GENERATION (LLM fallback)
         # -----------------------------------------------------
 
         try:
@@ -108,7 +133,7 @@ class HintNode:
             ai_hint = None
 
         # -----------------------------------------------------
-        # STATE UPDATE (IMMUTABLE)
+        # STATE UPDATE
         # -----------------------------------------------------
 
         new_results = dict(state.results_by_question)
