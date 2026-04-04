@@ -31,7 +31,7 @@ class ScoreBlock:
         if total == 0:
             score = 0
         else:
-            score = int((passed / total) * 100)
+            score = int((passed / total) * 100) if total else 0
 
         # -----------------------------------------------------
         # Content

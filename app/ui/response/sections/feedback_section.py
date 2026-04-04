@@ -89,18 +89,17 @@ class FeedbackSection:
     @staticmethod
     def _build_header(quality: Quality) -> str:
 
+        if quality == Quality.OPTIMAL:
+            return "### 🏆 Optimal Solution\nExcellent performance and correctness."
+
         if quality == Quality.CORRECT:
             return "### ✅ Correct Solution\nGreat job! All tests passed."
 
+        if quality == Quality.INEFFICIENT:
+            return "### ⚠️ Inefficient Solution\nCorrect but performance can be improved."
+
         if quality == Quality.PARTIAL:
             return "### ⚠️ Partial Solution\nSome tests failed. You're close."
-
-        if quality == Quality.INCORRECT:
-            return (
-                "### ❌ Incorrect Solution\nThe solution needs significant improvement."
-            )
-
-        return "### ❌ Unknown Solution\nCheck the details below."
 
     # =========================================================
     # POLICY
