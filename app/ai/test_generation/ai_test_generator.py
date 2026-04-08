@@ -1,12 +1,13 @@
 # app/ai/test_generation/ai_test_generator.py
 
-import re
-from typing import List
-from json_repair import repair_json
 import json
+from typing import List
 
-from domain.contracts.test_case import TestCase
+from pydantic import BaseModel, Field, ValidationError
+
+from domain.contracts.coding_test_case import CodingTestCase
 from domain.contracts.question import Question
+from domain.contracts.coding_spec import CodingSpec
 
 from infrastructure.llm.llm_factory import get_llm
 
@@ -14,19 +15,20 @@ from app.ai.test_generation.test_cache_service import TestCacheService
 from app.ai.test_generation.test_diversity_filter import TestDiversityFilter
 
 
+# =========================================================
+# DTO (Structured Output)
+# =========================================================
+
+class GeneratedTestCase(BaseModel):
+    args: list = Field(default_factory=list)
+    expected: object
+
+
+# =========================================================
+# GENERATOR
+# =========================================================
+
 class AITestGenerator:
-    # Generates hidden edge-case tests using an LLM.
-    #
-    # Pipeline:
-    # Question
-    #   ↓
-    # Cache lookup
-    #   ↓
-    # LLM generation
-    #   ↓
-    # Diversity filter
-    #   ↓
-    # Cache store
 
     def __init__(self):
 
@@ -42,7 +44,10 @@ class AITestGenerator:
         self,
         question: Question,
         num_tests: int = 3,
-    ) -> List[TestCase]:
+    ) -> List[CodingTestCase]:
+
+        if not question.coding_spec:
+            raise ValueError("CodingSpec required for test generation")
 
         # ---------------------------------------------------------
         # Cache lookup
@@ -57,7 +62,19 @@ class AITestGenerator:
         # LLM generation
         # ---------------------------------------------------------
 
-        tests = self._generate_with_llm(question, num_tests * 2)
+        tests = self._generate_with_llm(
+            question,
+            num_tests * 2,
+        )
+
+        # ---------------------------------------------------------
+        # VALIDATION vs CodingSpec (STEP 4.3)
+        # ---------------------------------------------------------
+
+        self._validate_tests_against_spec(
+            tests,
+            question.coding_spec,
+        )
 
         # ---------------------------------------------------------
         # Diversity filter
@@ -88,90 +105,104 @@ class AITestGenerator:
         self,
         question: Question,
         num_tests: int,
-    ) -> List[TestCase]:
+    ) -> List[CodingTestCase]:
 
-        prompt = f"""
-Generate {num_tests} diverse edge-case test cases for this coding problem.
+        spec = question.coding_spec
 
-Problem:
-{question.prompt}
-
-Focus on edge cases such as:
-
-- empty input
-- single element
-- repeated values
-- unusual characters
-- boundary values
-- very large input
-
-You MUST return valid JSON only.
-No explanations.
-No markdown.
-
-Format:
-[
-  {{"input": "...", "expected_output": "..."}}
-]
-"""
+        prompt = self._build_prompt(
+            question.prompt,
+            spec,
+            num_tests,
+        )
 
         response = self._llm.invoke(prompt)
 
-        content = response.content.strip()
-
-        # ---------------------------------------------------------
-        # Remove markdown code blocks if present
-        # ---------------------------------------------------------
-
-        content = re.sub(r"```json", "", content)
-        content = re.sub(r"```", "", content)
-
-        # ---------------------------------------------------------
-        # Extract JSON array
-        # ---------------------------------------------------------
-
-        match = re.search(r"\[.*\]", content, re.DOTALL)
-
-        if not match:
-            print("Error parsing JSON: no JSON array found in LLM output")
-            return []
-
-        json_str = match.group(0)
-
-        # ---------------------------------------------------------
-        # Repair JSON
-        # ---------------------------------------------------------
-
         try:
-
-            repaired = repair_json(json_str)
-
-            tests_json = json.loads(repaired)
-
+            raw_data = json.loads(response.content)
         except Exception as e:
+            raise ValueError(f"Invalid JSON from LLM: {e}")
 
-            print(f"Error parsing JSON: {e}")
-            return []
+        tests: List[CodingTestCase] = []
 
-        # ---------------------------------------------------------
-        # Convert to TestCase objects
-        # ---------------------------------------------------------
+        for item in raw_data:
 
-        tests: List[TestCase] = []
+            try:
+                validated = GeneratedTestCase.model_validate(item)
 
-        for t in tests_json:
-
-            if not isinstance(t, dict):
-                continue
-
-            if "input" not in t or "expected_output" not in t:
-                continue
-
-            tests.append(
-                TestCase(
-                    input=str(t["input"]),
-                    expected_output=str(t["expected_output"]),
+                tests.append(
+                    CodingTestCase(
+                        args=validated.args,
+                        expected=validated.expected,
+                    )
                 )
-            )
+
+            except ValidationError:
+                continue
 
         return tests
+
+    # =========================================================
+    # VALIDATION (STEP 4.3)
+    # =========================================================
+
+    def _validate_tests_against_spec(
+        self,
+        tests: List[CodingTestCase],
+        spec: CodingSpec,
+    ) -> None:
+
+        expected_len = len(spec.parameters)
+
+        for t in tests:
+
+            if len(t.args) != expected_len:
+                raise ValueError(
+                    f"Invalid test args length. Expected {expected_len}, got {len(t.args)}"
+                )
+
+    # =========================================================
+    # PROMPT
+    # =========================================================
+
+    def _build_prompt(
+        self,
+        prompt: str,
+        spec: CodingSpec,
+        num_tests: int,
+    ) -> str:
+
+        return f"""
+You are an expert Python tester.
+
+Given this coding problem:
+
+{prompt}
+
+Function contract:
+
+- Entrypoint: {spec.entrypoint}
+- Parameters: {spec.parameters}
+
+Generate {num_tests} test cases.
+
+Return STRICT JSON:
+
+[
+  {{
+    "args": [...],
+    "expected": ...
+  }}
+]
+
+Rules:
+- args MUST match the parameter order exactly
+- expected MUST be correct
+- Include edge cases:
+  - empty input
+  - single element
+  - duplicates
+  - boundary values
+- No explanations
+- No markdown
+- Only JSON
+"""
