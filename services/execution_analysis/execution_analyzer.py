@@ -1,4 +1,4 @@
-# services/execution_engine/execution_analyzer.py
+# services/execution_analysis/execution_analyzer.py
 
 from typing import Optional
 
@@ -28,8 +28,15 @@ class ExecutionAnalyzer:
         if not execution:
             return ExecutionAnalysis(False, False, False, None)
 
-        # ---------------------------------------------------------
-        # GLOBAL RUNTIME ERROR
+        # 🔥 FIX: signature error → logic failure
+        if execution.error and "Invalid signature" in execution.error:
+            return ExecutionAnalysis(
+                has_global_runtime_error=False,
+                has_test_runtime_errors=False,
+                has_logic_failures=True,
+                primary_error=execution.error,
+            )
+
         # ---------------------------------------------------------
 
         if execution.status == ExecutionStatus.RUNTIME_ERROR:
@@ -40,8 +47,6 @@ class ExecutionAnalyzer:
                 primary_error=execution.error,
             )
 
-        # ---------------------------------------------------------
-        # TEST LEVEL ANALYSIS
         # ---------------------------------------------------------
 
         has_test_runtime_errors = False
