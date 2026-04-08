@@ -49,6 +49,7 @@ class CodingExecutor:
             visible_tests=visible_tests,
             hidden_tests=hidden_tests,
             function_name=question.function_name or "solution",
+            coding_spec=question.coding_spec,  # ✅ NEW
         )
 
         # -----------------------------------------------------
@@ -56,6 +57,8 @@ class CodingExecutor:
         # -----------------------------------------------------
 
         raw = self._sandbox.execute(harness)
+
+        # ✅ RIPRISTINATO (debug utile)
         print("=== RAW STDOUT ===")
         print(raw.stdout)
         print("==================")

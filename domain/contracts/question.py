@@ -8,6 +8,7 @@ from enum import Enum
 
 from domain.contracts.interview_area import InterviewArea
 from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.coding_spec import CodingSpec
 
 
 class QuestionType(str, Enum):
@@ -37,19 +38,7 @@ class Question(BaseModel):
     expected_rows: Optional[list[tuple]] = None
     expected_ordered: bool = Field(default=True)
     function_name: str = "solution"
-
-    model_config = {
-        "frozen": True,
-        "extra": "forbid",
-    }
-
-
-class CodingSpec:
-    function_name: str = Field(..., min_length=1)
-    parameters: list[str] = Field(default_factory=list)
-    is_class_based: bool = Field(default=False)
-    class_name: str | None = Field(default=None)
-    method_name: str | None = Field(default=None)
+    coding_spec: Optional[CodingSpec] = None
 
     model_config = {
         "frozen": True,

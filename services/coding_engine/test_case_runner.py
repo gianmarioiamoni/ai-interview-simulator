@@ -1,7 +1,8 @@
 # services/coding_engine/test_case_runner.py
 
-from typing import List
+from typing import List, Optional
 from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.coding_spec import CodingSpec
 
 
 class TestCaseRunner:
@@ -17,6 +18,7 @@ class TestCaseRunner:
         visible_tests: List[CodingTestCase],
         hidden_tests: List[CodingTestCase],
         function_name: str,
+        coding_spec: Optional[CodingSpec],
     ) -> str:
 
         total_visible = len(visible_tests)
@@ -40,34 +42,93 @@ class TestCaseRunner:
         lines.append("")
 
         # =========================================================
-        # FUNCTION RESOLUTION
+        # CALLABLE RESOLUTION (DETERMINISTIC)
         # =========================================================
 
-        lines.append("def __resolve_callable():")
-        lines.append(f"    if '{function_name}' in globals():")
-        lines.append(f"        return globals()['{function_name}']")
-        lines.append("")
-        lines.append("    candidates = []")
-        lines.append("    for name, obj in globals().items():")
-        lines.append(
-            "        if inspect.isfunction(obj) and not name.startswith('__'):"
-        )
-        lines.append("            candidates.append(obj)")
-        lines.append("")
-        lines.append("    if not candidates:")
-        lines.append("        raise RuntimeError('No callable function found')")
-        lines.append("")
-        lines.append("    return candidates[0]")
-        lines.append("")
+        if coding_spec:
+
+            if coding_spec.is_class_based:
+
+                lines.append("def __resolve_callable():")
+                lines.append(f"    if '{coding_spec.class_name}' not in globals():")
+                lines.append(
+                    f"        raise RuntimeError('Class {coding_spec.class_name} not found')"
+                )
+                lines.append(f"    cls = globals()['{coding_spec.class_name}']")
+                lines.append("    instance = cls()")
+                lines.append(
+                    f"    if not hasattr(instance, '{coding_spec.method_name}'):"
+                )
+                lines.append(
+                    f"        raise RuntimeError('Method {coding_spec.method_name} not found')"
+                )
+                lines.append(
+                    f"    return getattr(instance, '{coding_spec.method_name}')"
+                )
+                lines.append("")
+
+            else:
+
+                lines.append("def __resolve_callable():")
+                lines.append(f"    if '{coding_spec.function_name}' not in globals():")
+                lines.append(
+                    f"        raise RuntimeError('Function {coding_spec.function_name} not found')"
+                )
+                lines.append(f"    return globals()['{coding_spec.function_name}']")
+                lines.append("")
+
+        else:
+            # LEGACY
+            lines.append("def __resolve_callable():")
+            lines.append(f"    if '{function_name}' in globals():")
+            lines.append(f"        return globals()['{function_name}']")
+            lines.append("")
+            lines.append("    candidates = []")
+            lines.append("    for name, obj in globals().items():")
+            lines.append(
+                "        if inspect.isfunction(obj) and not name.startswith('__'):"
+            )
+            lines.append("            candidates.append(obj)")
+            lines.append("")
+            lines.append("    if not candidates:")
+            lines.append("        raise RuntimeError('No callable function found')")
+            lines.append("")
+            lines.append("    if len(candidates) > 1:")
+            lines.append(
+                "        raise RuntimeError('Multiple callables found. Provide CodingSpec.')"
+            )
+            lines.append("")
+            lines.append("    return candidates[0]")
+            lines.append("")
 
         # =========================================================
-        # ENTRY POINT
+        # SIGNATURE VALIDATION
         # =========================================================
 
-        lines.append("def __entry_point__(*args, **kwargs):")
-        lines.append("    func = __resolve_callable()")
-        lines.append("    return func(*args, **kwargs)")
-        lines.append("")
+        if coding_spec and coding_spec.parameters:
+
+            lines.append("def __validate_signature(fn):")
+            lines.append("    sig = inspect.signature(fn)")
+            lines.append("    params = list(sig.parameters.keys())")
+            lines.append(f"    expected = {repr(coding_spec.parameters)}")
+            lines.append("    if params != expected:")
+            lines.append(
+                "        raise RuntimeError(f'Invalid signature. Expected {expected}, got {params}')"
+            )
+            lines.append("")
+
+            lines.append("def __entry_point__(*args, **kwargs):")
+            lines.append("    func = __resolve_callable()")
+            lines.append("    __validate_signature(func)")
+            lines.append("    return func(*args, **kwargs)")
+            lines.append("")
+
+        else:
+
+            lines.append("def __entry_point__(*args, **kwargs):")
+            lines.append("    func = __resolve_callable()")
+            lines.append("    return func(*args, **kwargs)")
+            lines.append("")
 
         # =========================================================
         # COMPARATOR
@@ -81,7 +142,7 @@ class TestCaseRunner:
         lines.append("")
 
         # =========================================================
-        # TEST RUNNER
+        # TEST RUNNER (UNCHANGED)
         # =========================================================
 
         lines.append("def __run_tests():")
@@ -91,84 +152,43 @@ class TestCaseRunner:
         lines.append("    hidden_passed = 0")
         lines.append("")
 
-        # ========================
-        # VISIBLE TESTS
-        # ========================
-
         for idx, test in enumerate(visible_tests, start=1):
-
             lines.append("    try:")
             lines.append(f"        args = {repr(test.args)}")
             lines.append(f"        kwargs = {repr(test.kwargs)}")
             lines.append(f"        expected = {repr(test.expected)}")
-            lines.append("")
             lines.append("        result = func(*args, **kwargs)")
-            lines.append("")
             lines.append("        if not __compare(result, expected):")
             lines.append(
-                f"""            print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
-                "type": "visible",
-                "id": {idx},
-                "status": "failed",
-                "expected": expected,
-                "actual": result,
-                "args": args,
-                "kwargs": kwargs
-            }}))"""
+                f"""            print("{self.TEST_RESULT_MARKER}:" + json.dumps({{"type":"visible","id":{idx},"status":"failed","expected":expected,"actual":result}}))"""
             )
             lines.append("        else:")
             lines.append("            visible_passed += 1")
             lines.append(
-                f"""            print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
-                "type": "visible",
-                "id": {idx},
-                "status": "passed"
-            }}))"""
+                f"""            print("{self.TEST_RESULT_MARKER}:" + json.dumps({{"type":"visible","id":{idx},"status":"passed"}}))"""
             )
-            lines.append("")
             lines.append("    except Exception as e:")
             lines.append(
-                f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
-            "type": "visible",
-            "id": {idx},
-            "status": "error",
-            "error": str(e),
-            "args": args if 'args' in locals() else [],
-            "kwargs": kwargs if 'kwargs' in locals() else {{}}
-        }}))"""
+                f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{"type":"visible","id":{idx},"status":"error","error":str(e)}}))"""
             )
 
-        # ========================
-        # HIDDEN TESTS
-        # ========================
-
         for idx, test in enumerate(hidden_tests, start=1):
-
             lines.append("    try:")
             lines.append(f"        args = {repr(test.args)}")
             lines.append(f"        kwargs = {repr(test.kwargs)}")
             lines.append(f"        expected = {repr(test.expected)}")
-            lines.append("")
             lines.append("        result = func(*args, **kwargs)")
-            lines.append("")
             lines.append("        if __compare(result, expected):")
             lines.append("            hidden_passed += 1")
-            lines.append("")
             lines.append("    except Exception:")
             lines.append("        pass")
-
-        # =========================================================
-        # RESULT MARKERS
-        # =========================================================
 
         lines.append(
             f'    print("{self.VISIBLE_MARKER}:" + str(visible_passed) + ":" + str({total_visible}))'
         )
-
         lines.append(
             f'    print("{self.HIDDEN_MARKER}:" + str(hidden_passed) + ":" + str({total_hidden}))'
         )
-
         lines.append(
             f'    print("{self.RESULT_MARKER}:" + str(visible_passed + hidden_passed) + ":" + str({total_visible + total_hidden}))'
         )
