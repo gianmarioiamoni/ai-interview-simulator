@@ -3,20 +3,19 @@
 import json
 import hashlib
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from domain.contracts.question import Question
-from domain.contracts.test_case import TestCase
+from domain.contracts.coding_test_case import CodingTestCase
 
 
 class TestCacheService:
     # Persistent cache for AI-generated tests.
-    # Prevents repeated LLM calls for the same question.
+    # Supports backward compatibility with legacy TestCase format.
 
     CACHE_FILE = Path("data/ai_test_cache.json")
 
     def __init__(self):
-
         self._cache = self._load_cache()
 
     # =========================================================
@@ -27,7 +26,7 @@ class TestCacheService:
         self,
         question: Question,
         num_tests: int,
-    ) -> List[TestCase] | None:
+    ) -> Optional[List[CodingTestCase]]:
 
         key = self._build_cache_key(question, num_tests)
 
@@ -36,27 +35,56 @@ class TestCacheService:
 
         cached = self._cache[key]
 
-        return [
-            TestCase(
-                input=t["input"],
-                expected_output=t["expected_output"],
-            )
-            for t in cached
-        ]
+        results: List[CodingTestCase] = []
+
+        for item in cached:
+
+            # -----------------------------------------------------
+            # NEW FORMAT (preferred)
+            # -----------------------------------------------------
+
+            if "args" in item:
+                results.append(
+                    CodingTestCase(
+                        args=item.get("args", []),
+                        kwargs=item.get("kwargs", {}),
+                        expected=item.get("expected"),
+                    )
+                )
+
+            # -----------------------------------------------------
+            # LEGACY FORMAT (fallback)
+            # -----------------------------------------------------
+
+            elif "input" in item:
+                results.append(
+                    CodingTestCase(
+                        args=[item.get("input")],
+                        kwargs={},
+                        expected=item.get("expected_output"),
+                    )
+                )
+
+        return results
 
     def store_tests(
         self,
         question: Question,
         num_tests: int,
-        tests: List[TestCase],
+        tests: List[CodingTestCase],
     ) -> None:
 
         key = self._build_cache_key(question, num_tests)
 
+        # ---------------------------------------------------------
+        # STORE ONLY NEW FORMAT
+        # ---------------------------------------------------------
+
         self._cache[key] = [
             {
-                "input": t.input,
-                "expected_output": t.expected_output,
+                "args": t.args,
+                "kwargs": t.kwargs,
+                "expected": t.expected,
             }
             for t in tests
         ]
