@@ -7,6 +7,7 @@ from services.score_calculator import ScoreCalculator
 
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
 
+
 class FeedbackNode:
 
     def __init__(self):
@@ -52,7 +53,7 @@ class FeedbackNode:
             quality = Quality.INCORRECT
 
         # -----------------------------------------------------
-        # BUILD BUNDLE
+        # BUILD BUNDLE (FIX)
         # -----------------------------------------------------
 
         bundle = self._builder.build(
@@ -60,10 +61,11 @@ class FeedbackNode:
             result=result,
             evaluation=evaluation,
             execution=execution,
+            quality=quality,  # 🔥 FIX CRITICO
         )
 
         # -----------------------------------------------------
-        # ENRICH BUNDLE
+        # ENRICH BUNDLE (KEEP - backward compatibility)
         # -----------------------------------------------------
 
         from app.contracts.feedback_bundle import FeedbackBundle

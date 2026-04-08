@@ -49,7 +49,7 @@ class FeedbackBuilder:
         result: QuestionResult,
         evaluation: QuestionEvaluation | None,
         execution: ExecutionResult | None,
-        quality: Quality,  # SINGLE SOURCE OF TRUTH
+        quality: Quality,
     ) -> FeedbackBundle:
 
         # -----------------------------------------------------
@@ -81,7 +81,6 @@ class FeedbackBuilder:
         overall_severity = self._aggregate_severity(blocks)
         overall_confidence = self._aggregate_confidence(blocks)
 
-        # use injected quality, not state
         overall_quality = quality
 
         # -----------------------------------------------------
@@ -201,7 +200,6 @@ class FeedbackBuilder:
 
         return "\n".join(lines)
 
-
     def _order_blocks(self, blocks):
 
         def block_priority(block):
@@ -227,15 +225,16 @@ class FeedbackBuilder:
             }.get(block.severity, 3)
 
             # -----------------------------------------------------
-            # FUTURE: quality-aware ordering
+            # QUALITY AWARE ORDERING (FIX SAFE)
             # -----------------------------------------------------
 
             quality_rank = 0
+            if getattr(block, "quality", None):
+                try:
+                    quality_rank = -block.quality.rank()
+                except Exception:
+                    quality_rank = 0
 
-            if block.quality:
-                quality_rank = -block.quality.rank()
-
-            # -----------------------------------------------------
             return (2, severity_rank, quality_rank)
 
         return sorted(blocks, key=block_priority)
