@@ -1,31 +1,48 @@
 # app/ai/test_generation/test_diversity_filter.py
 
-from domain.contracts.test_case import TestCase
+from typing import List
+
+from domain.contracts.coding_test_case import CodingTestCase
 
 
 class TestDiversityFilter:
-    # Removes duplicated or overly similar test cases.
 
     def filter(
         self,
-        tests: list[TestCase],
+        tests: List[CodingTestCase],
         max_tests: int,
-    ) -> list[TestCase]:
+    ) -> List[CodingTestCase]:
 
         unique_inputs = set()
-
         filtered = []
 
         for test in tests:
 
-            if test.input in unique_inputs:
+            # ---------------------------------------------------------
+            # BUILD SIGNATURE (args + kwargs)
+            # ---------------------------------------------------------
+
+            key = self._build_key(test)
+
+            if key in unique_inputs:
                 continue
 
-            unique_inputs.add(test.input)
-
+            unique_inputs.add(key)
             filtered.append(test)
 
             if len(filtered) >= max_tests:
                 break
 
         return filtered
+
+    # =========================================================
+    # INTERNAL
+    # =========================================================
+
+    def _build_key(self, test: CodingTestCase) -> str:
+        # Create a hashable representation of the test input.
+
+        args_part = str(test.args)
+        kwargs_part = str(sorted(test.kwargs.items())) if test.kwargs else ""
+
+        return f"{args_part}|{kwargs_part}"
