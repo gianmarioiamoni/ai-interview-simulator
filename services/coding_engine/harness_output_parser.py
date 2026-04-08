@@ -35,10 +35,6 @@ class HarnessOutputParser:
 
         for line in stdout.splitlines():
 
-            # ======================================================
-            # TEST RESULT (STRUCTURED)
-            # ======================================================
-
             if line.startswith(self.TEST_RESULT_MARKER):
 
                 try:
@@ -59,15 +55,9 @@ class HarnessOutputParser:
                     )
 
                 except Exception:
-                    # parsing error → ignora ma non bloccare
                     continue
 
-            # ======================================================
-            # VISIBLE SUMMARY
-            # ======================================================
-
             elif line.startswith(self.VISIBLE_MARKER):
-
                 try:
                     _, passed, total = line.split(":")
                     visible_passed = int(passed)
@@ -75,12 +65,7 @@ class HarnessOutputParser:
                 except Exception:
                     pass
 
-            # ======================================================
-            # HIDDEN SUMMARY
-            # ======================================================
-
             elif line.startswith(self.HIDDEN_MARKER):
-
                 try:
                     _, passed, total = line.split(":")
                     hidden_passed = int(passed)
@@ -89,42 +74,64 @@ class HarnessOutputParser:
                     pass
 
         # =========================================================
-        # AGGREGATION
+        # 🔥 FIX: USE STRUCTURED TESTS IF AVAILABLE
         # =========================================================
 
-        total_passed = visible_passed + hidden_passed
-        total_tests = visible_total + hidden_total
+        if test_results:
+            total_tests = len(test_results)
+            total_passed = sum(1 for t in test_results if t.status == TestStatus.PASSED)
+        else:
+            total_passed = visible_passed + hidden_passed
+            total_tests = visible_total + hidden_total
 
         # =========================================================
-        # STATUS DETERMINATION
+        # 🔥 FIX: ERROR CLASSIFICATION
         # =========================================================
-        has_runtime_errors = any(t.status == TestStatus.ERROR for t in test_results)
+
+        signature_error = next(
+            (
+                t.error
+                for t in test_results
+                if t.error and "Invalid signature" in t.error
+            ),
+            None,
+        )
+
+        has_runtime_errors = any(
+            t.status == TestStatus.ERROR and "Invalid signature" not in (t.error or "")
+            for t in test_results
+        )
+
+        # =========================================================
+        # STATUS
+        # =========================================================
 
         if total_tests == 0:
-
             status = ExecutionStatus.INTERNAL_ERROR
             success = False
-            error = "No tests detected in harness output"
-        
+            error = "No tests detected"
+
+        elif signature_error:
+            # 🔥 treat as FAILED_TESTS, not runtime
+            status = ExecutionStatus.FAILED_TESTS
+            success = False
+            error = signature_error
+
         elif has_runtime_errors:
             status = ExecutionStatus.RUNTIME_ERROR
             success = False
             error = next((t.error for t in test_results if t.error), "Runtime error")
 
         elif total_passed == total_tests:
-
             status = ExecutionStatus.SUCCESS
             success = True
             error = None
 
         else:
-
             status = ExecutionStatus.FAILED_TESTS
             success = False
             error = "Some tests failed"
 
-        # =========================================================
-        # RESULT
         # =========================================================
 
         return ExecutionResult(

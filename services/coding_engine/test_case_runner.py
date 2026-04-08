@@ -111,18 +111,22 @@ class TestCaseRunner:
             lines.append("    sig = inspect.signature(fn)")
             lines.append("    params = list(sig.parameters.keys())")
             lines.append(f"    expected = {repr(coding_spec.parameters)}")
-            lines.append("    if params != expected:")
+
+            lines.append("    if len(params) != len(expected):")
             lines.append(
                 "        raise RuntimeError(f'Invalid signature. Expected {expected}, got {params}')"
             )
-            lines.append("")
 
-            lines.append("def __entry_point__(*args, **kwargs):")
-            lines.append("    func = __resolve_callable()")
-            lines.append("    __validate_signature(func)")
-            lines.append("    return func(*args, **kwargs)")
+            lines.append("    if params != expected:")
+            lines.append(
+                f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
+                    "type": "visible",
+                    "id": 0,
+                    "status": "failed",
+                    "error": f"Signature warning. Expected {{expected}}, got {{params}}"
+                }}))"""
+            )
             lines.append("")
-
         else:
 
             lines.append("def __entry_point__(*args, **kwargs):")
