@@ -74,7 +74,7 @@ class HintNode:
             return state
 
         # =====================================================
-        # 🔥 RULE-BASED HINTS (SQL FIRST)
+        # RULE-BASED HINTS (SQL FIRST)
         # =====================================================
 
         if question.type == QuestionType.DATABASE:
@@ -153,22 +153,24 @@ class HintNode:
     # INTERNAL
     # ---------------------------------------------------------
 
-    def _extract_execution_signals(self, execution: ExecutionResult):
+    def _extract_execution_signals(self, execution: ExecutionResult) -> str:
 
         if not execution or not execution.test_results:
-            return []
-
+            return "None"
+    
         failed = [
             t for t in execution.test_results
             if t.status != TestStatus.PASSED
         ]
-
-        return [
-            {
-                "args": t.args,
-                "expected": t.expected,
-                "actual": t.actual,
-                "error": t.error,
-            }
-            for t in failed[:3]
-        ]
+    
+        if not failed:
+            return "None"
+    
+        lines = []
+    
+        for t in failed[:2]:
+            lines.append(
+                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual} | Error: {t.error}"
+            )
+    
+        return "\n".join(lines)
