@@ -112,7 +112,7 @@ class HarnessOutputParser:
             error = "No tests detected"
 
         elif signature_error:
-            # 🔥 treat as FAILED_TESTS, not runtime
+            # Treat as FAILED_TESTS, not runtime
             status = ExecutionStatus.FAILED_TESTS
             success = False
             error = signature_error

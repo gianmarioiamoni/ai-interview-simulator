@@ -1,5 +1,3 @@
-# services/coding_engine/test_case_runner.py
-
 from typing import List, Optional
 from domain.contracts.coding_test_case import CodingTestCase
 from domain.contracts.coding_spec import CodingSpec
@@ -102,7 +100,7 @@ class TestCaseRunner:
             lines.append("")
 
         # =========================================================
-        # SIGNATURE VALIDATION
+        # SIGNATURE VALIDATION (🔥 FIX)
         # =========================================================
 
         if coding_spec and coding_spec.parameters:
@@ -117,14 +115,13 @@ class TestCaseRunner:
                 "        raise RuntimeError(f'Invalid signature. Expected {expected}, got {params}')"
             )
 
+            # 🔥 WARNING → NON TEST
             lines.append("    if params != expected:")
             lines.append(
-                f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
-                    "type": "visible",
-                    "id": 0,
-                    "status": "failed",
-                    "error": f"Signature warning. Expected {{expected}}, got {{params}}"
-                }}))"""
+                """        print("__SIGNATURE_WARNING__:" + json.dumps({
+                    "expected": expected,
+                    "actual": params
+                }))"""
             )
             lines.append("")
 
@@ -134,7 +131,7 @@ class TestCaseRunner:
             lines.append("")
 
         # =========================================================
-        # ENTRY POINT (🔥 FIX CRITICO)
+        # ENTRY POINT (ROBUSTO)
         # =========================================================
 
         lines.append("try:")
@@ -166,14 +163,14 @@ class TestCaseRunner:
 
         lines.append("def __run_tests():")
 
-        # 🔥 SAFE GUARD (fix definitivo)
+        # SAFE GUARD
         lines.append(
             "    if '__entry_point__' not in globals() or __entry_point__ is None:"
         )
         lines.append(
             f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
                 "type": "visible",
-                "id": 0,
+                "id": 1,
                 "status": "error",
                 "error": __entry_error__ if '__entry_error__' in globals() else "Entry point not defined"
             }}))"""
