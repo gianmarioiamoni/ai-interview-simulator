@@ -157,20 +157,24 @@ class HintNode:
 
         if not execution or not execution.test_results:
             return "None"
-    
-        failed = [
-            t for t in execution.test_results
-            if t.status != TestStatus.PASSED
-        ]
-    
+
+        failed = [t for t in execution.test_results if t.status != TestStatus.PASSED]
+
         if not failed:
             return "None"
-    
+
         lines = []
-    
+
         for t in failed[:2]:
+
+            # Readable input representation
+            if t.args:
+                input_repr = t.args[0] if len(t.args) == 1 else t.args
+            else:
+                input_repr = "[]"
+
             lines.append(
-                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual} | Error: {t.error}"
+                f"Input: {input_repr} | Expected: {t.expected} | Actual: {t.actual} | Error: {t.error}"
             )
-    
+
         return "\n".join(lines)

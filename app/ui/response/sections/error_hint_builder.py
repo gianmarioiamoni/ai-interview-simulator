@@ -3,6 +3,7 @@
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.test_execution_result import TestStatus, TestType
 from domain.contracts.execution_result import ExecutionStatus
+from domain.contracts.test_execution_result import TestExecutionResult
 
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.ui_state import UIState
@@ -108,14 +109,20 @@ class ErrorHintBuilder:
     # =========================================================
 
     @staticmethod
-    def _format_failure(test) -> str:
+    def _format_failure(test: TestExecutionResult) -> str:
+
+        input_repr = (
+            test.args[0] if len(test.args) == 1
+            else test.args if test.args
+            else "[]"
+        )
 
         if test.status == TestStatus.ERROR:
-            return f"Runtime error with input {test.args}"
+            return f"Runtime error with input {input_repr}"
 
         return (
             "Failing test:\n"
-            f"Input: {test.args}\n"
+            f"Input: {input_repr}\n"
             f"Expected: {repr(test.expected)}\n"
             f"Actual: {repr(test.actual)}"
         )
