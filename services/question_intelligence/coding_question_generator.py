@@ -13,11 +13,9 @@ from infrastructure.llm.llm_factory import get_llm
 # DTOs (Structured Output)
 # =========================================================
 
-
 class GeneratedTestCase(BaseModel):
     args: List = Field(default_factory=list)
     expected: object
-
 
 class GeneratedCodingQuestion(BaseModel):
     prompt: str
@@ -28,7 +26,6 @@ class GeneratedCodingQuestion(BaseModel):
 # =========================================================
 # Generator
 # =========================================================
-
 
 class CodingQuestionGenerator:
 

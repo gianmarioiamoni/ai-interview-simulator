@@ -26,6 +26,10 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
 
     for q in questions:
         if q.type == QuestionType.CODING:
+
+            if not q.coding_spec:
+                raise ValueError("Coding question missing CodingSpec")
+                
             hidden_tests = test_generator.generate_tests(q, num_tests=3)
             q = q.model_copy(update={"hidden_tests": hidden_tests})
 
