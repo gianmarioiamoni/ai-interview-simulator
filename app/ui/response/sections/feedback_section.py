@@ -80,7 +80,7 @@ class FeedbackSection:
                 for l in block.learning:
                     parts.append(f"- {l.action}")
 
-        return "\n".join(parts)
+        return "\n".join([p for p in parts if isinstance(p, str)])
 
     # =========================================================
     # UX HEADER
@@ -100,6 +100,9 @@ class FeedbackSection:
 
         if quality == Quality.PARTIAL:
             return "### ⚠️ Partial Solution\nSome tests failed. You're close."
+
+        if quality == Quality.INCORRECT:
+            return "### ❌ Incorrect Solution\nYour solution has significant issues."
 
     # =========================================================
     # POLICY
