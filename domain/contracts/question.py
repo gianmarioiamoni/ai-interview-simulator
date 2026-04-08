@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from enum import Enum
 
 from domain.contracts.interview_area import InterviewArea
@@ -22,7 +22,6 @@ class QuestionDifficulty(str, Enum):
     MEDIUM = "medium"
     HARD = "hard"
 
-
 class Question(BaseModel):
     id: str = Field(..., min_length=1)
     area: InterviewArea
@@ -37,7 +36,11 @@ class Question(BaseModel):
     db_seed_data: Optional[str] = None
     expected_rows: Optional[list[tuple]] = None
     expected_ordered: bool = Field(default=True)
+
+    # LEGACY (deprecabile dopo FASE 2)
     function_name: str = "solution"
+
+    # NEW
     coding_spec: Optional[CodingSpec] = None
 
     model_config = {

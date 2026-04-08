@@ -47,14 +47,14 @@ class TestCaseRunner:
 
         if coding_spec:
 
-            if coding_spec.is_class_based:
+            if coding_spec.type == "class_method":
 
                 lines.append("def __resolve_callable():")
-                lines.append(f"    if '{coding_spec.class_name}' not in globals():")
+                lines.append(f"    if '{coding_spec.entrypoint}' not in globals():")
                 lines.append(
-                    f"        raise RuntimeError('Class {coding_spec.class_name} not found')"
+                    f"        raise RuntimeError('Class {coding_spec.entrypoint} not found')"
                 )
-                lines.append(f"    cls = globals()['{coding_spec.class_name}']")
+                lines.append(f"    cls = globals()['{coding_spec.entrypoint}']")
                 lines.append("    instance = cls()")
                 lines.append(
                     f"    if not hasattr(instance, '{coding_spec.method_name}'):"
@@ -70,11 +70,11 @@ class TestCaseRunner:
             else:
 
                 lines.append("def __resolve_callable():")
-                lines.append(f"    if '{coding_spec.function_name}' not in globals():")
+                lines.append(f"    if '{coding_spec.entrypoint}' not in globals():")
                 lines.append(
-                    f"        raise RuntimeError('Function {coding_spec.function_name} not found')"
+                    f"        raise RuntimeError('Function {coding_spec.entrypoint} not found')"
                 )
-                lines.append(f"    return globals()['{coding_spec.function_name}']")
+                lines.append(f"    return globals()['{coding_spec.entrypoint}']")
                 lines.append("")
 
         else:
