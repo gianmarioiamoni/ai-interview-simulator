@@ -10,6 +10,7 @@ from domain.contracts.question import (
 )
 from domain.contracts.interview_area import InterviewArea
 from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.coding_spec import CodingSpec  # ✅ NEW
 
 
 def load_sample_questions(interview_type: InterviewType) -> List[Question]:
@@ -47,11 +48,24 @@ def _load_technical_questions() -> List[Question]:
                 "character in a string. If none exists, return None."
             ),
             difficulty=QuestionDifficulty.HARD,
-            function_name="first_non_repeating_char",
+            # =====================================================
+            # ✅ CODING SPEC (NEW - REQUIRED)
+            # =====================================================
+            coding_spec=CodingSpec(
+                type="function",
+                entrypoint="first_non_repeating_char",
+                parameters=["s"],
+            ),
+            # =====================================================
+            # TESTS
+            # =====================================================
             visible_tests=[
                 CodingTestCase(args=["leetcode"], expected="l"),
                 CodingTestCase(args=["aabbcc"], expected=None),
             ],
+            # =====================================================
+            # REFERENCE SOLUTION
+            # =====================================================
             reference_solution=(
                 "def first_non_repeating_char(s: str):\n"
                 "    from collections import Counter\n"
