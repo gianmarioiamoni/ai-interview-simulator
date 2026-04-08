@@ -153,19 +153,22 @@ class HintNode:
     # INTERNAL
     # ---------------------------------------------------------
 
-    def _extract_execution_signals(self, execution: ExecutionResult) -> str:
+    def _extract_execution_signals(self, execution: ExecutionResult):
 
         if not execution or not execution.test_results:
-            return "None"
+            return []
 
-        failed = [t for t in execution.test_results if t.status != TestStatus.PASSED]
+        failed = [
+            t for t in execution.test_results
+            if t.status != TestStatus.PASSED
+        ]
 
-        if not failed:
-            return "None"
-
-        return "\n".join(
-            [
-                f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
-                for t in failed[:2]
-            ]
-        )
+        return [
+            {
+                "args": t.args,
+                "expected": t.expected,
+                "actual": t.actual,
+                "error": t.error,
+            }
+            for t in failed[:3]
+        ]
