@@ -42,7 +42,7 @@ class TestCaseRunner:
         lines.append("")
 
         # =========================================================
-        # CALLABLE RESOLUTION (DETERMINISTIC)
+        # CALLABLE RESOLUTION
         # =========================================================
 
         if coding_spec:
@@ -127,12 +127,27 @@ class TestCaseRunner:
                 }}))"""
             )
             lines.append("")
-        else:
 
-            lines.append("def __entry_point__(*args, **kwargs):")
-            lines.append("    func = __resolve_callable()")
-            lines.append("    return func(*args, **kwargs)")
+        else:
+            lines.append("def __validate_signature(fn):")
+            lines.append("    return")
             lines.append("")
+
+        # =========================================================
+        # ENTRY POINT (🔥 FIX CRITICO)
+        # =========================================================
+
+        lines.append("try:")
+        lines.append("    __resolved_callable = __resolve_callable()")
+        lines.append("    __validate_signature(__resolved_callable)")
+
+        lines.append("    def __entry_point__(*args, **kwargs):")
+        lines.append("        return __resolved_callable(*args, **kwargs)")
+
+        lines.append("except Exception as e:")
+        lines.append("    __entry_point__ = None")
+        lines.append("    __entry_error__ = str(e)")
+        lines.append("")
 
         # =========================================================
         # COMPARATOR
@@ -146,15 +161,37 @@ class TestCaseRunner:
         lines.append("")
 
         # =========================================================
-        # TEST RUNNER (UNCHANGED)
+        # TEST RUNNER
         # =========================================================
 
         lines.append("def __run_tests():")
+
+        # 🔥 SAFE GUARD (fix definitivo)
+        lines.append(
+            "    if '__entry_point__' not in globals() or __entry_point__ is None:"
+        )
+        lines.append(
+            f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
+                "type": "visible",
+                "id": 0,
+                "status": "error",
+                "error": __entry_error__ if '__entry_error__' in globals() else "Entry point not defined"
+            }}))"""
+        )
+        lines.append(f'        print("{self.VISIBLE_MARKER}:0:{total_visible}")')
+        lines.append(f'        print("{self.HIDDEN_MARKER}:0:{total_hidden}")')
+        lines.append("        return")
+        lines.append("")
+
         lines.append("    func = __entry_point__")
         lines.append("")
         lines.append("    visible_passed = 0")
         lines.append("    hidden_passed = 0")
         lines.append("")
+
+        # =========================================================
+        # VISIBLE TESTS
+        # =========================================================
 
         for idx, test in enumerate(visible_tests, start=1):
             lines.append("    try:")
@@ -176,6 +213,10 @@ class TestCaseRunner:
                 f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{"type":"visible","id":{idx},"status":"error","error":str(e)}}))"""
             )
 
+        # =========================================================
+        # HIDDEN TESTS
+        # =========================================================
+
         for idx, test in enumerate(hidden_tests, start=1):
             lines.append("    try:")
             lines.append(f"        args = {repr(test.args)}")
@@ -186,6 +227,10 @@ class TestCaseRunner:
             lines.append("            hidden_passed += 1")
             lines.append("    except Exception:")
             lines.append("        pass")
+
+        # =========================================================
+        # SUMMARY
+        # =========================================================
 
         lines.append(
             f'    print("{self.VISIBLE_MARKER}:" + str(visible_passed) + ":" + str({total_visible}))'
