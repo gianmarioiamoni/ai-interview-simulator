@@ -6,38 +6,24 @@ from app.contracts.feedback_bundle import (
     FeedbackSignal,
     LearningSuggestion,
 )
-from domain.contracts.quality import Quality
 
 
 class FailureBlock:
 
     def can_handle(
-        self, 
-        _result, 
-        _evaluation, 
-        execution, 
-        _analysis, 
+        self,
+        _result,
+        _evaluation,
+        execution,
+        _analysis,
     ) -> bool:
 
         if not execution:
             return False
 
-        # -----------------------------------------------------
-        # CASE 1: execution without test_results (SQL fallback)
-        # -----------------------------------------------------
-
+        # fallback SQL / generic
         if execution.total_tests and execution.passed_tests < execution.total_tests:
             return True
-
-        # -----------------------------------------------------
-        # CASE 2: detailed test results (coding)
-        # -----------------------------------------------------
-
-        if execution.test_results:
-            return any(
-                t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
-                for t in execution.test_results
-            )
 
         return False
 
@@ -49,38 +35,14 @@ class FailureBlock:
         total = execution.total_tests or 0
 
         # -----------------------------------------------------
-        # FAILED TEST DETAILS (if available)
+        # CONTENT (NO DUPLICATION WITH BREAKDOWN)
         # -----------------------------------------------------
 
-        failed_str = ""
-
-        if execution.test_results:
-
-            failed = [
-                t
-                for t in execution.test_results
-                if t.status != TestStatus.PASSED and t.status != TestStatus.ERROR
-            ]
-
-            if failed:
-                failed_str = "\n".join(
-                    [
-                        f"Input: {t.args} | Expected: {t.expected} | Actual: {t.actual}"
-                        for t in failed[:2]
-                    ]
-                )
-
-                if len(failed) > 2:
-                    failed_str += (
-                        f"\n\n...and {len(failed) - 2} more failing test cases"
-                    )
-
-        else:
-            # -----------------------------------------------------
-            # SQL / GENERIC FALLBACK
-            # -----------------------------------------------------
-
-            failed_str = "Query result does not match expected output."
+        content = (
+            "### ❌ Some tests failed\n\n"
+            f"Passed {passed}/{total} tests.\n\n"
+            "Review the failing cases below."
+        )
 
         # -----------------------------------------------------
         # SIGNALS
@@ -100,29 +62,17 @@ class FailureBlock:
         if total > 0 and passed == 0:
             learning = [
                 LearningSuggestion(
-                    topic="Query correctness",
-                    action="Review filtering, ordering, and constraints (e.g. LIMIT, WHERE)",
+                    topic="Algorithm correctness",
+                    action="Your solution fails all tests — revisit core logic",
                 )
             ]
         else:
             learning = [
                 LearningSuggestion(
-                    topic="Algorithm correctness",
-                    action="Analyze failing cases and adjust logic accordingly",
+                    topic="Edge cases",
+                    action="Focus on edge cases and input variations",
                 )
             ]
-
-        # -----------------------------------------------------
-        # CONTENT
-        # -----------------------------------------------------
-
-        content_lines = [
-            "### ❌ Failed Tests",
-            "",
-            failed_str,
-        ]
-
-        content = "\n".join(content_lines)
 
         return FeedbackBlockResult(
             title="Logic Errors Detected",
@@ -131,5 +81,5 @@ class FailureBlock:
             confidence=0.9,
             signals=signals,
             learning=learning,
-            quality=None,  
+            quality=None,
         )
