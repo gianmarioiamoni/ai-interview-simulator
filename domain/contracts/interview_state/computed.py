@@ -4,8 +4,6 @@ from typing import Optional
 
 from domain.contracts.question import Question
 from domain.contracts.answer import Answer
-from domain.contracts.question_evaluation import QuestionEvaluation
-from domain.contracts.interview_progress import InterviewProgress
 
 
 class InterviewStateComputedMixin:

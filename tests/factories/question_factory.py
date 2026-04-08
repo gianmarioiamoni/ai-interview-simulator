@@ -13,6 +13,6 @@ def build_question(
         id=qid,
         type=qtype,
         prompt="Write a function",
-        area=InterviewArea.TECH_CODING,  # ✅ FIX corretto
+        area=InterviewArea.TECH_CODING,  
         difficulty=QuestionDifficulty.MEDIUM,
     )
