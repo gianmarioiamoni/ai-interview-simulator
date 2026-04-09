@@ -99,6 +99,20 @@ def bind_events(components):
     # START INTERVIEW
     # =========================================================
 
+    def show_start_loading():
+
+        return (
+            None,                          # state
+            "",                            # counter
+            "⏳ Generating interview...",  # feedback_output
+            "", "", "",                    # displays
+            False, False, False,           # containers
+            False, False, False, False,    # sections
+            "", "",                        # completion/report
+            False, False, False,           # buttons
+            "", "", "",                    # inputs
+        )
+    
     start_button.click(
         show_start_loading,
         inputs=[],
@@ -220,19 +234,6 @@ def bind_events(components):
         show_progress=True,
     )
 
-    def show_start_loading():
-
-        return (
-            None,                          # state
-            "",                            # counter
-            "⏳ Generating interview...",  # feedback_output
-            "", "", "",                    # displays
-            False, False, False,           # containers
-            False, False, False, False,    # sections
-            "", "",                        # completion/report
-            False, False, False,           # buttons
-            "", "", "",                    # inputs
-        )
 
     # =========================================================
     # EXPORT PDF
