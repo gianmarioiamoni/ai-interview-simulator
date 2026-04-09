@@ -117,7 +117,6 @@ def bind_events(components):
         show_start_loading,
         inputs=[],
         outputs=outputs,
-        queue=False,
 
     ).then(
         lambda r, i, comp, l: start_handler(r, i, comp, l),
