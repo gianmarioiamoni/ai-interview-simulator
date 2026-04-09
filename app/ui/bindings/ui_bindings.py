@@ -1,6 +1,7 @@
 # app/ui/bindings/ui_bindings.py
 
 import gradio as gr
+from typing import Callable, Any, Generator, List
 
 from app.ui.handlers.start_handler import start_handler
 from app.ui.handlers.report_handler import view_report_handler
@@ -37,26 +38,54 @@ def bind_events(components):
     def idle_updates(outputs_len):
         return [gr.update()] * (outputs_len - 1)
 
-    def submit_handler(state, answer):
-        
-        yield (
-            *idle_updates(len(outputs)),
-            show_loader("⏳ Evaluating answer..."),
-         )
-        response = submit_answer(state, answer)
-        out = list(response.to_gradio_outputs())
-        out.append(hide_loader())
-        yield tuple(out)
+    def build_streaming_handler(action_fn: Callable[..., Any], loader_message: str) -> Callable[..., Any]:
 
-    def next_handler(state):
-        yield (
-            *idle_updates(len(outputs)),
-            show_loader("⏳ Loading next question..."),
-        )
-        response = next_question(state)
-        out = list(response.to_gradio_outputs())
-        out.append(hide_loader())
-        yield tuple(out)
+        def handler(*args: Any, outputs: List[Any]) -> Generator[Any, None, None]:
+
+            # STEP 1 → loader
+            yield (
+                *idle_updates(len(outputs)),
+                show_loader(loader_message),
+            )
+
+            # STEP 2 → business logic
+            response = action_fn(*args)
+
+            # STEP 3 → normalize
+            if isinstance(response, UIResponse):
+                out = list(response.to_gradio_outputs())
+            else:
+                out = response
+
+            # STEP 4 → hide loader
+            out.append(hide_loader())
+
+            yield tuple(out)
+
+        return handler
+
+    submit_handler = build_streaming_handler(
+        submit_answer,
+        "⏳ Evaluating answer..."
+    )
+
+    next_handler = build_streaming_handler(
+        next_question,
+        "⏳ Loading next question..."
+    )
+
+    new_interview_handler = build_streaming_handler(
+        lambda _: new_interview(),
+        "⏳ Starting new interview..."
+    )
+
+    # report_handler = build_streaming_handler(
+    #     view_report_handler,
+    #     "⏳ Loading report..."
+    # )
+    
+    def report_handler(state_value):
+        yield from view_report_handler(state_value)
 
     # =========================================================
     # INPUT VALIDATION
@@ -222,7 +251,7 @@ def bind_events(components):
     # =========================================================
 
     c.new_interview_button.click(
-        lambda _: new_interview().to_gradio_outputs(),
+        new_interview_handler,
         inputs=[state],
         outputs=outputs,
     )
@@ -231,8 +260,6 @@ def bind_events(components):
     # VIEW REPORT (streaming)
     # =========================================================
 
-    def report_handler(state_value):
-        yield from view_report_handler(state_value)
 
     c.view_report_button.click(
         report_handler,
