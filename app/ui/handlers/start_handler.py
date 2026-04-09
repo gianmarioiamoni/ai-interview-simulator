@@ -1,8 +1,8 @@
 # app/ui/handlers/start_handler.py
 
+import gradio as gr
+
 from app.ui.state_handlers import start_interview
-from domain.contracts.interview_type import InterviewType
-from domain.contracts.role import RoleType
 
 
 def start_handler(role, interview_type, company, language):
@@ -13,11 +13,20 @@ def start_handler(role, interview_type, company, language):
         "",
         "⏳ Generating interview...",
         "", "", "",
-        False, False, False,
-        False, True, False, False,
-        "",
-        "",
-        False, False, False,
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=False),
+
+        gr.update(visible=False), # setup section
+        gr.update(visible=True),  # interview section
+        gr.update(visible=False),
+        gr.update(visible=False),
+
+        "", "",
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=False),
+
         "", "", "",
     )
 
