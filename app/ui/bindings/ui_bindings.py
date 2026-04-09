@@ -114,7 +114,7 @@ def bind_events(components):
         )
     
     start_button.click(
-        lambda r, i, comp, l: start_handler(r, i, comp, l).to_gradio_outputs(),
+        lambda r, i, comp, l: start_handler(r, i, comp, l),
         inputs=[
             role_dropdown,
             interview_type_radio,
