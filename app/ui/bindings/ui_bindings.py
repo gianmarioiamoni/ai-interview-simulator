@@ -107,7 +107,7 @@ def bind_events(components):
             "⏳ Generating interview...",  # feedback_output
             "", "", "",                    # displays
             False, False, False,           # containers
-            False, False, False, False,    # sections
+            False, True, False, False,    # sections
             "", "",                        # completion/report
             False, False, False,           # buttons
             "", "", "",                    # inputs
