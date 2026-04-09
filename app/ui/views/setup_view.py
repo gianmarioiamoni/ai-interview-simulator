@@ -38,10 +38,13 @@ class SetupView:
 
         start_button = gr.Button("Start Interview", interactive=False)
 
+        start_loading_text = gr.Markdown("", visible=False, elem_id="start-loading-text")
+
         return (
             role_dropdown,
             interview_type_radio,
             company_input,
             language_dropdown,
             start_button,
+            start_loading_text,
         )
