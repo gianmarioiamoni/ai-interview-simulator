@@ -59,6 +59,10 @@ class UIResponse:
     coding_editor_value: str = ""
     database_editor_value: str = ""
 
+    # LOADER
+    loader_visible: bool = False
+    loader_value: str = ""
+
     def to_gradio_outputs(self) -> List[Any]:
 
         setup_update, interview_update, completion_update, report_update = route_ui(
@@ -115,4 +119,9 @@ class UIResponse:
                     self.database_editor_value if self.database_editor_visible else ""
                 ),
             ),
+            # ---------------- LOADER
+            gr.update(
+                visible=self.loader_visible,
+                value=self.loader_value if self.loader_visible else "",
+            ) if self.loader_visible else gr.update(visible=False),
         ]
