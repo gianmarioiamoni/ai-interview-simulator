@@ -96,6 +96,7 @@ def build_layout():
             company_input,
             language_dropdown,
             start_button,
+            start_loading_text,
         ) = setup_view.render()
 
     # ---------------------------------------------------------
@@ -191,6 +192,7 @@ def build_layout():
         company_input=company_input,
         language_dropdown=language_dropdown,
         start_button=start_button,
+        start_loading_text=start_loading_text,
         question_counter=question_counter,
         feedback_output=feedback_output,
         written_container=written_container,

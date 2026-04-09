@@ -27,7 +27,7 @@ def bind_events(components):
     company_input = c.company_input
     language_dropdown = c.language_dropdown
     start_button = c.start_button
-
+    start_loading_text = c.start_loading_text
     # =========================================================
     # INPUT VALIDATION
     # =========================================================
@@ -93,6 +93,8 @@ def bind_events(components):
         c.written_box,
         c.coding_box,
         c.database_box,
+        # ---------------- START LOADING TEXT
+        c.start_loading_text,
     ]
 
     # =========================================================

@@ -7,27 +7,31 @@ from app.ui.state_handlers import start_interview
 
 def start_handler(role, interview_type, company, language):
 
-    # STEP 1 → immediate loader
+    # STEP 1 → show loader WITHOUT changing view
     yield (
         None,
         "",
-        "⏳ Generating interview...",
-        "", "", "",
-        gr.update(visible=False),
-        gr.update(visible=False),
-        gr.update(visible=False),
-
-        gr.update(visible=False), # setup section
-        gr.update(visible=True),  # interview section
-        gr.update(visible=False),
-        gr.update(visible=False),
-
-        "", "",
-        gr.update(visible=False),
-        gr.update(visible=False),
-        gr.update(visible=False),
-
-        "", "", "",
+        "",
+        "",
+        "",
+        "",
+        gr.update(),
+        gr.update(),
+        gr.update(),
+        gr.update(visible=True),  # setup_section still visible
+        gr.update(visible=False),  # interview_section still hidden
+        gr.update(),
+        gr.update(),
+        "",
+        "",
+        gr.update(),
+        gr.update(),
+        gr.update(),
+        "",
+        "",
+        "",
+        # loader 
+        gr.update(value="⏳ Generating interview...", visible=True),
     )
 
     # STEP 2 → real logic
@@ -38,4 +42,9 @@ def start_handler(role, interview_type, company, language):
         language=language,
     )
 
-    yield response.to_gradio_outputs()
+    # STEP 3 → Final UI + hide loader
+    outputs = list(response.to_gradio_outputs())
+
+    outputs.append(gr.update(value="", visible=False))
+
+    yield tuple(outputs)

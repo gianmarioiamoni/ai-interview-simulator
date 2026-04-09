@@ -19,6 +19,7 @@ class UILayoutComponents:
     company_input: object
     language_dropdown: object
     start_button: object
+    start_loading_text: object
 
     # ---------------------------------------------------------
     # INTERVIEW - COMMON
