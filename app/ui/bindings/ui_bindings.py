@@ -17,10 +17,6 @@ from app.ui.state_handlers import (
 from app.ui.utils.loading_utils import show_loader, hide_loader
 
 
-
-
-
-
 def bind_events(components):
     # Bind UI events to handlers
 
