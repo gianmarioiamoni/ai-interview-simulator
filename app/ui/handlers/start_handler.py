@@ -5,8 +5,23 @@ from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
 
 
-def start_handler(role: RoleType, interview_type: InterviewType, company: str, language: str):
+def start_handler(role, interview_type, company, language):
 
+    # STEP 1 → immediate loader
+    yield (
+        None,
+        "",
+        "⏳ Generating interview...",
+        "", "", "",
+        False, False, False,
+        False, True, False, False,
+        "",
+        "",
+        False, False, False,
+        "", "", "",
+    )
+
+    # STEP 2 → real logic
     response = start_interview(
         role=role,
         interview_type=interview_type,
@@ -14,4 +29,4 @@ def start_handler(role: RoleType, interview_type: InterviewType, company: str, l
         language=language,
     )
 
-    return response.to_gradio_outputs()
+    yield response.to_gradio_outputs()
