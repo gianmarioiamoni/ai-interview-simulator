@@ -40,7 +40,7 @@ def bind_events(components):
 
     def build_streaming_handler(action_fn: Callable[..., Any], loader_message: str) -> Callable[..., Any]:
 
-        def handler(*args: Any, outputs: List[Any]) -> Generator[Any, None, None]:
+        def handler(*args: Any) -> Generator[Any, None, None]:
 
             # STEP 1 → loader
             yield (
