@@ -114,22 +114,18 @@ def bind_events(components):
         )
     
     start_button.click(
-        show_start_loading,
-        inputs=[],
-        outputs=outputs,
-
-    ).then(
-        lambda r, i, comp, l: start_handler(r, i, comp, l),
+        lambda r, i, comp, l: start_handler(r, i, comp, l).to_gradio_outputs(),
         inputs=[
             role_dropdown,
             interview_type_radio,
             company_input,
             language_dropdown,
-
         ],
         outputs=outputs,
         show_progress=True,
+
     )
+
 
     # =========================================================
     # SUBMIT ANSWERS
