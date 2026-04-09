@@ -14,6 +14,11 @@ from app.ui.state_handlers import (
     next_question,
     new_interview,
 )
+from app.ui.utils.loading_utils import show_loader, hide_loader
+
+
+
+
 
 
 def bind_events(components):
@@ -28,6 +33,35 @@ def bind_events(components):
     language_dropdown = c.language_dropdown
     start_button = c.start_button
     start_loading_text = c.start_loading_text
+    
+    # =========================================================
+    # HANDLERS AND HANDLER'S IDLE UPDATES
+    # =========================================================
+
+    def idle_updates(outputs_len):
+        return [gr.update()] * (outputs_len - 1)
+
+    def submit_handler(state, answer):
+        
+        yield (
+            *idle_updates(len(outputs)),
+            show_loader("⏳ Evaluating answer..."),
+         )
+        response = submit_answer(state, answer)
+        out = list(response.to_gradio_outputs())
+        out.append(hide_loader())
+        yield tuple(out)
+
+    def next_handler(state):
+        yield (
+            *idle_updates(len(outputs)),
+            show_loader("⏳ Loading next question..."),
+        )
+        response = next_question(state)
+        out = list(response.to_gradio_outputs())
+        out.append(hide_loader())
+        yield tuple(out)
+
     # =========================================================
     # INPUT VALIDATION
     # =========================================================
@@ -118,19 +152,19 @@ def bind_events(components):
     # =========================================================
 
     c.written_submit.click(
-        lambda s, a: submit_answer(s, a).to_gradio_outputs(),
+        submit_handler,
         inputs=[state, c.written_box],
         outputs=outputs,
     )
 
     c.coding_submit.click(
-        lambda s, a: submit_answer(s, a).to_gradio_outputs(),
+        submit_handler,
         inputs=[state, c.coding_box],
         outputs=outputs,
     )
 
     c.database_submit.click(
-        lambda s, a: submit_answer(s, a).to_gradio_outputs(),
+        submit_handler,
         inputs=[state, c.database_box],
         outputs=outputs,
     )
@@ -182,7 +216,7 @@ def bind_events(components):
     # =========================================================
 
     c.next_button.click(
-        lambda s: next_question(s),
+        next_handler,
         inputs=[state],
         outputs=outputs,
     )
