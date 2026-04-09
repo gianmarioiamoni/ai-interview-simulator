@@ -99,22 +99,8 @@ def bind_events(components):
     # START INTERVIEW
     # =========================================================
 
-    def show_start_loading():
-
-        return (
-            None,                          # state
-            "",                            # counter
-            "⏳ Generating interview...",  # feedback_output
-            "", "", "",                    # displays
-            False, False, False,           # containers
-            False, True, False, False,     # sections
-            "", "",                        # completion/report
-            False, False, False,           # buttons
-            "", "", "",                    # inputs
-        )
-    
     start_button.click(
-        lambda r, i, comp, l: start_handler(r, i, comp, l),
+        start_handler,
         inputs=[
             role_dropdown,
             interview_type_radio,
@@ -122,8 +108,6 @@ def bind_events(components):
             language_dropdown,
         ],
         outputs=outputs,
-        show_progress=True,
-
     )
 
 
