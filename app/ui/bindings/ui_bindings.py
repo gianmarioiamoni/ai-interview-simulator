@@ -100,6 +100,12 @@ def bind_events(components):
     # =========================================================
 
     start_button.click(
+        show_start_loading,
+        inputs=[],
+        outputs=outputs,
+        queue=False,
+
+    ).then(
         lambda r, i, comp, l: start_handler(r, i, comp, l),
         inputs=[
             role_dropdown,
@@ -213,6 +219,20 @@ def bind_events(components):
         ],
         show_progress=True,
     )
+
+    def show_start_loading():
+
+        return (
+            None,                          # state
+            "",                            # counter
+            "⏳ Generating interview...",  # feedback_output
+            "", "", "",                    # displays
+            False, False, False,           # containers
+            False, False, False, False,    # sections
+            "", "",                        # completion/report
+            False, False, False,           # buttons
+            "", "", "",                    # inputs
+        )
 
     # =========================================================
     # EXPORT PDF
