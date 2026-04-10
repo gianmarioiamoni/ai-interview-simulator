@@ -1,0 +1,8 @@
+def __resolve_callable():
+    if '{{ entrypoint }}' not in globals():
+        raise RuntimeError('Class {{ entrypoint }} not found')
+    cls = globals()['{{ entrypoint }}']
+    instance = cls()
+    if not hasattr(instance, '{{ method_name }}'):
+        raise RuntimeError('Method {{ method_name }} not found')
+    return getattr(instance, '{{ method_name }}')
