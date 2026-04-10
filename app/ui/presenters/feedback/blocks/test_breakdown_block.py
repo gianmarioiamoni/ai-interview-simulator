@@ -1,6 +1,8 @@
 # app/ui/presenters/feedback/blocks/test_breakdown_block.py
 
 from domain.contracts.test_execution_result import TestStatus
+from domain.contracts.severity import Severity
+
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
@@ -61,7 +63,7 @@ class TestBreakdownBlock:
 
         signals = [
             FeedbackSignal(
-                severity="error",
+                severity=Severity.ERROR,
                 message=f"{len(failed)} failing test cases detected",
             )
         ]
@@ -80,7 +82,7 @@ class TestBreakdownBlock:
         return FeedbackBlockResult(
             title="Test Breakdown",
             content=content,
-            severity="error",
+            severity=Severity.ERROR,
             confidence=0.95,
             signals=signals,
             learning=learning,

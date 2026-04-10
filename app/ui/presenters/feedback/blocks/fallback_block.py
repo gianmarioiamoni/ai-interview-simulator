@@ -1,5 +1,7 @@
 # app/ui/presenters/feedback/blocks/fallback_block.py
 
+from domain.contracts.severity import Severity
+
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
@@ -30,7 +32,7 @@ class FallbackBlock:
 
         signals = [
             FeedbackSignal(
-                severity="info",
+                severity=Severity.INFO,
                 message="Limited feedback available",
             )
         ]
@@ -47,7 +49,7 @@ class FallbackBlock:
         return FeedbackBlockResult(
             title="General Feedback",
             content=content,
-            severity="info",
+            severity=Severity.INFO,
             confidence=0.4,
             signals=signals,
             learning=learning,

@@ -7,6 +7,8 @@ from app.contracts.feedback_bundle import (
 )
 from services.answer_improvement.answer_improver import AnswerImprover
 
+from domain.contracts.severity import Severity
+
 
 class WrittenBlock:
 
@@ -57,19 +59,19 @@ class WrittenBlock:
         # -----------------------------------------------------
 
         if score < 50:
-            severity = "error"
+            severity = Severity.ERROR,
             label = "🔴 Incorrect Answer"
 
         elif score < 75:
-            severity = "warning"
+            severity = Severity.WARNING,
             label = "🟡 Partial Answer"
 
         elif score < 90:
-            severity = "info"
+            severity = Severity.INFO,
             label = "🟢 Good Answer"
 
         else:
-            severity = "info"
+            severity = Severity.INFO,
             label = "🟢🟢 Strong Answer"
 
         # -----------------------------------------------------

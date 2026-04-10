@@ -1,6 +1,7 @@
 # app/ui/presenters/feedback/blocks/failure_block.py
 
-from domain.contracts.test_execution_result import TestStatus
+from domain.contracts.severity import Severity
+
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
@@ -50,7 +51,7 @@ class FailureBlock:
 
         signals = [
             FeedbackSignal(
-                severity="error",
+                severity=Severity.ERROR,
                 message=f"{passed}/{total} tests passed",
             )
         ]
@@ -77,7 +78,7 @@ class FailureBlock:
         return FeedbackBlockResult(
             title="Logic Errors Detected",
             content=content,
-            severity="error",
+            severity=Severity.ERROR,
             confidence=0.9,
             signals=signals,
             learning=learning,

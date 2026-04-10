@@ -5,7 +5,7 @@ from app.contracts.feedback_bundle import (
     LearningSuggestion,
     FeedbackBlockResult,
 )
-from domain.contracts.quality import Quality
+from domain.contracts.severity import Severity
 
 
 class SuccessBlock:
@@ -43,7 +43,7 @@ class SuccessBlock:
 
         signals = [
             FeedbackSignal(
-                severity="info",
+                severity=Severity.INFO,
                 message="All tests passed successfully",
             )
         ]
@@ -52,7 +52,7 @@ class SuccessBlock:
         if exec_time and exec_time > 200:
             signals.append(
                 FeedbackSignal(
-                    severity="warning",
+                    severity=Severity.WARNING,
                     message="Performance can be improved",
                 )
             )
@@ -94,7 +94,7 @@ class SuccessBlock:
         return FeedbackBlockResult(
             title="Success",
             content=content,
-            severity="info",
+            severity=Severity.INFO,
             confidence=confidence,
             signals=signals,
             learning=learning,

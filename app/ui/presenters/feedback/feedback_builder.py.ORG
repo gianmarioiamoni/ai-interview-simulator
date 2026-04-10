@@ -220,11 +220,7 @@ class FeedbackBuilder:
             # ERROR FIRST
             # -----------------------------------------------------
 
-            severity_rank = {
-                "error": 0,
-                "warning": 1,
-                "info": 2,
-            }.get(block.severity, 3)
+            severity_rank = block.severity.rank() if block.severity else 3
 
             # -----------------------------------------------------
             # QUALITY AWARE ORDERING (FIX SAFE)

@@ -1,8 +1,7 @@
 # app/ui/presenters/feedback/blocks/hint_block.py
 
 from app.contracts.feedback_bundle import FeedbackBlockResult
-from domain.contracts.quality import Quality
-
+from domain.contracts.severity import Severity
 
 class HintBlock:
 
@@ -30,7 +29,7 @@ class HintBlock:
         return FeedbackBlockResult(
             title="AI Hint",
             content=content,
-            severity="info",
+            severity=Severity.INFO,
             confidence=0.85,
             signals=[],
             learning=[],
