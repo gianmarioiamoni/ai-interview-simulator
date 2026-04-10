@@ -1,0 +1,4 @@
+def __resolve_callable():
+    if '{{ entrypoint }}' not in globals():
+        raise RuntimeError('Function {{ entrypoint }} not found')
+    return globals()['{{ entrypoint }}']

@@ -1,0 +1,16 @@
+def __resolve_callable():
+    if '{{ function_name }}' in globals():
+        return globals()['{{ function_name }}']
+
+    candidates = []
+    for name, obj in globals().items():
+        if inspect.isfunction(obj) and not name.startswith('__'):
+            candidates.append(obj)
+
+    if not candidates:
+        raise RuntimeError('No callable function found')
+
+    if len(candidates) > 1:
+        raise RuntimeError('Multiple callables found. Provide CodingSpec.')
+
+    return candidates[0]
