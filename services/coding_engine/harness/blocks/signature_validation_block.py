@@ -1,8 +1,15 @@
 # services/coding_engine/harness/blocks/signature_validation_block.py
 
 from typing import List, Optional
-from .base_block import BaseBlock
+
 from domain.contracts.coding_spec import CodingSpec
+
+from .base_block import BaseBlock
+
+from services.coding_engine.harness.template_renderer import TemplateRenderer
+from services.coding_engine.harness.strategies.signature.validation_strategy_factory import (
+    SignatureValidationStrategyFactory,
+)
 
 
 class SignatureValidationBlock(BaseBlock):
@@ -10,39 +17,15 @@ class SignatureValidationBlock(BaseBlock):
     def __init__(self, coding_spec: Optional[CodingSpec]):
         self.coding_spec = coding_spec
 
+        self._renderer = TemplateRenderer("services/coding_engine/harness/templates")
+
     def render(self) -> List[str]:
 
-        lines: List[str] = []
+        strategy = SignatureValidationStrategyFactory.create(self.coding_spec)
 
-        if self.coding_spec and self.coding_spec.parameters:
+        rendered = self._renderer.render(
+            strategy.template_name(),
+            strategy.context(),
+        )
 
-            lines.extend(
-                [
-                    "def __validate_signature(fn):",
-                    "    sig = inspect.signature(fn)",
-                    "    params = list(sig.parameters.keys())",
-                    f"    expected = {repr(self.coding_spec.parameters)}",
-                    "",
-                    "    if len(params) != len(expected):",
-                    "        raise RuntimeError(f'Invalid signature. Expected {expected}, got {params}')",
-                    "",
-                    "    if params != expected:",
-                    """        print("__SIGNATURE_WARNING__:" + json.dumps({
-            "expected": expected,
-            "actual": params
-        }))""",
-                    "",
-                ]
-            )
-
-        else:
-
-            lines.extend(
-                [
-                    "def __validate_signature(fn):",
-                    "    return",
-                    "",
-                ]
-            )
-
-        return lines
+        return rendered.split("\n") + [""]
