@@ -38,15 +38,15 @@ def bind_events(components):
     def idle_updates(outputs_len):
         return [gr.update()] * (outputs_len - 1)
 
+    loader_index = outputs.index(c.start_loading_text)
     def build_streaming_handler(action_fn: Callable[..., Any], loader_message: str) -> Callable[..., Any]:
 
         def handler(*args: Any) -> Generator[Any, None, None]:
 
             # STEP 1 → loader
-            yield (
-                *idle_updates(len(outputs)),
-                show_loader(loader_message),
-            )
+            updates = idle_updates(len(outputs))
+            updates[loader_index] = show_loader(loader_message)
+            yield tuple(updates)
 
             # STEP 2 → business logic
             response = action_fn(*args)
@@ -58,7 +58,7 @@ def bind_events(components):
                 out = response
 
             # STEP 4 → hide loader
-            out.append(hide_loader())
+            out[loader_index] = hide_loader()
 
             yield tuple(out)
 
