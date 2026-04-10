@@ -5,7 +5,7 @@ from app.contracts.feedback_bundle import (
     FeedbackSignal,
     LearningSuggestion,
 )
-from domain.contracts.quality import Quality
+from domain.contracts.severity import Severity
 
 
 class RuntimeErrorBlock:
@@ -41,7 +41,7 @@ class RuntimeErrorBlock:
 
         signals = [
             FeedbackSignal(
-                severity="error",
+                severity=Severity.ERROR,
                 message=clean_error,
             )
         ]
@@ -84,7 +84,7 @@ class RuntimeErrorBlock:
         return FeedbackBlockResult(
             title="⚠️ Runtime Error",
             content=content,
-            severity="error",
+            severity=Severity.ERROR,
             confidence=0.95,
             signals=signals,
             learning=learning,

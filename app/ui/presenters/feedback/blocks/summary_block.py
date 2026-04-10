@@ -1,7 +1,9 @@
 # app/ui/presenters/feedback/blocks/summary_block.py
 
 from app.contracts.feedback_bundle import FeedbackBlockResult
+
 from domain.contracts.quality import Quality
+from domain.contracts.severity import Severity
 
 
 class SummaryBlock:
@@ -44,7 +46,7 @@ class SummaryBlock:
         return FeedbackBlockResult(
             title="Summary",
             content=content,
-            severity="info",
+            severity=Severity.INFO,
             confidence=0.95,
             signals=[],
             learning=[],

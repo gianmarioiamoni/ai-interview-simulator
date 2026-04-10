@@ -1,34 +1,30 @@
 # app/ui/presenters/feedback/aggregators/feedback_aggregator.py
 
 
+from domain.contracts.severity import Severity
+
 class FeedbackAggregator:
 
     def aggregate_severity(self, blocks):
 
-        if any(b.severity == "error" for b in blocks):
-            return "error"
+        if any(b.severity == Severity.ERROR for b in blocks):
+            return Severity.ERROR,
 
-        if any(b.severity == "warning" for b in blocks):
-            return "warning"
+        if any(b.severity == Severity.WARNING for b in blocks):
+            return Severity.WARNING,
 
-        return "info"
+        return Severity.INFO,
 
     def aggregate_confidence(self, blocks):
 
         if not blocks:
             return 0.0
 
-        weights = {
-            "error": 1.0,
-            "warning": 0.7,
-            "info": 0.5,
-        }
-
         total = 0.0
         weight_sum = 0.0
 
         for b in blocks:
-            w = weights.get(b.severity, 0.5)
+            w = b.severity.weight()
             total += b.confidence * w
             weight_sum += w
 
