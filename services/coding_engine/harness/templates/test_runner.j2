@@ -1,0 +1,77 @@
+def __run_tests():
+
+    if '__entry_point__' not in globals() or __entry_point__ is None:
+        print("{{ markers.TEST_RESULT }}:" + json.dumps({
+            "type": "visible",
+            "id": 1,
+            "status": "error",
+            "error": __entry_error__ if '__entry_error__' in globals() else "Entry point not defined"
+        }))
+        print("{{ markers.VISIBLE }}:0:{{ total_visible }}")
+        print("{{ markers.HIDDEN }}:0:{{ total_hidden }}")
+        return
+
+    func = __entry_point__
+
+    visible_passed = 0
+    hidden_passed = 0
+
+    # =========================================================
+    # VISIBLE TESTS
+    # =========================================================
+
+    {% for test in visible_tests %}
+    try:
+        args = {{ test.args }}
+        kwargs = {{ test.kwargs }}
+        expected = {{ test.expected }}
+        result = func(*args, **kwargs)
+
+        if not __compare(result, expected):
+            print("{{ markers.TEST_RESULT }}:" + json.dumps({
+                "type": "visible",
+                "id": {{ loop.index }},
+                "status": "failed",
+                "expected": expected,
+                "actual": result
+            }))
+        else:
+            visible_passed += 1
+            print("{{ markers.TEST_RESULT }}:" + json.dumps({
+                "type": "visible",
+                "id": {{ loop.index }},
+                "status": "passed"
+            }))
+    except Exception as e:
+        print("{{ markers.TEST_RESULT }}:" + json.dumps({
+            "type": "visible",
+            "id": {{ loop.index }},
+            "status": "error",
+            "error": str(e)
+        }))
+    {% endfor %}
+
+    # =========================================================
+    # HIDDEN TESTS
+    # =========================================================
+
+    {% for test in hidden_tests %}
+    try:
+        args = {{ test.args }}
+        kwargs = {{ test.kwargs }}
+        expected = {{ test.expected }}
+        result = func(*args, **kwargs)
+
+        if __compare(result, expected):
+            hidden_passed += 1
+    except Exception:
+        pass
+    {% endfor %}
+
+    # =========================================================
+    # SUMMARY
+    # =========================================================
+
+    print("{{ markers.VISIBLE }}:" + str(visible_passed) + ":" + str({{ total_visible }}))
+    print("{{ markers.HIDDEN }}:" + str(hidden_passed) + ":" + str({{ total_hidden }}))
+    print("{{ markers.RESULT }}:" + str(visible_passed + hidden_passed) + ":" + str({{ total_visible + total_hidden }}))
