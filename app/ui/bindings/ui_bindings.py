@@ -38,9 +38,10 @@ def bind_events(components):
     def idle_updates(outputs_len):
         return [gr.update()] * (outputs_len - 1)
 
-    loader_index = outputs.index(c.start_loading_text)
     def build_streaming_handler(action_fn: Callable[..., Any], loader_message: str) -> Callable[..., Any]:
 
+        loader_index = outputs.index(start_loading_text)
+        
         def handler(*args: Any) -> Generator[Any, None, None]:
 
             # STEP 1 → loader
