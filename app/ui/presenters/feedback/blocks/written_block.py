@@ -58,21 +58,7 @@ class WrittenBlock:
         # Severity
         # -----------------------------------------------------
 
-        if score < 50:
-            severity = Severity.ERROR,
-            label = "🔴 Incorrect Answer"
-
-        elif score < 75:
-            severity = Severity.WARNING,
-            label = "🟡 Partial Answer"
-
-        elif score < 90:
-            severity = Severity.INFO,
-            label = "🟢 Good Answer"
-
-        else:
-            severity = Severity.INFO,
-            label = "🟢🟢 Strong Answer"
+        severity, label = self._map_score_to_feedback(score)
 
         # -----------------------------------------------------
         # Signals
@@ -143,3 +129,11 @@ class WrittenBlock:
             learning=learning,
             quality=None,
         )
+
+    def _map_score_to_feedback(self, score: float) -> tuple[Severity, str]:
+        if score < 50:
+            return Severity.ERROR, "🔴 Incorrect Answer"
+        elif score < 75:
+            return Severity.WARNING, "🟡 Partial Answer"
+        else:
+            return Severity.INFO, "🟢🟢 Strong Answer"
