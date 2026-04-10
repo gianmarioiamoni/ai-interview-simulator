@@ -6,7 +6,6 @@ from typing import Callable, Any, Generator, List
 from app.ui.handlers.start_handler import start_handler
 from app.ui.handlers.report_handler import view_report_handler
 from app.ui.ui_response import UIResponse
-from app.ui.ui_state import UIState
 from app.ui.state_handlers import (
     export_pdf,
     export_json,
@@ -101,7 +100,7 @@ def bind_events(components):
     ]
 
     # =========================================================
-    # HANDLER HELPERS 
+    # HANDLER HELPERS
     # =========================================================
 
     loader_index = outputs.index(start_loading_text)
@@ -153,7 +152,8 @@ def bind_events(components):
     )
 
     def report_handler(state_value):
-        yield from view_report_handler(state_value)
+        return build_streaming_handler(view_report_handler, "⏳ Loading report...")(state_value)
+        # yield from view_report_handler(state_value)
 
     # =========================================================
     # START INTERVIEW
