@@ -30,63 +30,6 @@ def bind_events(components):
     language_dropdown = c.language_dropdown
     start_button = c.start_button
     start_loading_text = c.start_loading_text
-    
-    # =========================================================
-    # HANDLERS AND HANDLER'S IDLE UPDATES
-    # =========================================================
-
-    def idle_updates(outputs_len):
-        return [gr.update()] * (outputs_len - 1)
-
-    def build_streaming_handler(action_fn: Callable[..., Any], loader_message: str) -> Callable[..., Any]:
-
-        loader_index = outputs.index(start_loading_text)
-        
-        def handler(*args: Any) -> Generator[Any, None, None]:
-
-            # STEP 1 → loader
-            updates = idle_updates(len(outputs))
-            updates[loader_index] = show_loader(loader_message)
-            yield tuple(updates)
-
-            # STEP 2 → business logic
-            response = action_fn(*args)
-
-            # STEP 3 → normalize
-            if isinstance(response, UIResponse):
-                out = list(response.to_gradio_outputs())
-            else:
-                out = response
-
-            # STEP 4 → hide loader
-            out[loader_index] = hide_loader()
-
-            yield tuple(out)
-
-        return handler
-
-    submit_handler = build_streaming_handler(
-        submit_answer,
-        "⏳ Evaluating answer..."
-    )
-
-    next_handler = build_streaming_handler(
-        next_question,
-        "⏳ Loading next question..."
-    )
-
-    new_interview_handler = build_streaming_handler(
-        lambda _: new_interview(),
-        "⏳ Starting new interview..."
-    )
-
-    # report_handler = build_streaming_handler(
-    #     view_report_handler,
-    #     "⏳ Loading report..."
-    # )
-    
-    def report_handler(state_value):
-        yield from view_report_handler(state_value)
 
     # =========================================================
     # INPUT VALIDATION
@@ -129,7 +72,7 @@ def bind_events(components):
         c.state,
         c.question_counter,
         c.feedback_output,
-        # ---------------- DISPLAY (NEW)
+        # ---------------- DISPLAY
         c.written_display,
         c.coding_display,
         c.database_display,
@@ -153,9 +96,64 @@ def bind_events(components):
         c.written_box,
         c.coding_box,
         c.database_box,
-        # ---------------- START LOADING TEXT
+        # ---------------- LOADER
         c.start_loading_text,
     ]
+
+    # =========================================================
+    # HANDLER HELPERS 
+    # =========================================================
+
+    loader_index = outputs.index(start_loading_text)
+
+    def idle_updates(outputs_len: int) -> List[Any]:
+        # 🔥 FIX: evitare lista condivisa
+        return [gr.update() for _ in range(outputs_len)]
+
+    def normalize_response(response: Any) -> List[Any]:
+        if isinstance(response, UIResponse):
+            return list(response.to_gradio_outputs())
+        return response
+
+    def build_streaming_handler(
+        action_fn: Callable[..., Any],
+        loader_message: str,
+    ) -> Callable[..., Generator[Any, None, None]]:
+
+        def handler(*args: Any):
+
+            # STEP 1 → loader (SINGLE SOURCE OF TRUTH)
+            updates = idle_updates(len(outputs))
+            updates[loader_index] = show_loader(loader_message)
+
+            yield tuple(updates)
+
+            # STEP 2 → business logic
+            response = action_fn(*args)
+
+            # STEP 3 → normalize
+            out = normalize_response(response)
+
+            # STEP 4 → hide loader (overwrite, no append!)
+            out[loader_index] = hide_loader()
+
+            yield tuple(out)
+
+        return handler
+
+    # =========================================================
+    # STREAMING HANDLERS
+    # =========================================================
+
+    submit_handler = build_streaming_handler(submit_answer, "⏳ Evaluating answer...")
+    next_handler = build_streaming_handler(next_question, "⏳ Loading next question...")
+    retry_handler = build_streaming_handler(retry_answer, "⏳ Retrying...")
+    new_interview_handler = build_streaming_handler(
+        lambda *_: new_interview(), "⏳ Starting new interview..."
+    )
+
+    def report_handler(state_value):
+        yield from view_report_handler(state_value)
 
     # =========================================================
     # START INTERVIEW
@@ -171,7 +169,6 @@ def bind_events(components):
         ],
         outputs=outputs,
     )
-
 
     # =========================================================
     # SUBMIT ANSWERS
@@ -225,20 +222,17 @@ def bind_events(components):
     )
 
     # =========================================================
-    # RETRY ANSWER
+    # RETRY ANSWER (FIX: ora con loader)
     # =========================================================
 
     c.retry_button.click(
-        lambda s: 
-            retry_answer(s).to_gradio_outputs() 
-            if s 
-            else UIResponse(state=None, ui_state=UIState.SETUP).to_gradio_outputs(),
+        retry_handler,
         inputs=[state],
         outputs=outputs,
     )
 
     # =========================================================
-    # NEXT QUESTION / GENERATE REPORT
+    # NEXT QUESTION
     # =========================================================
 
     c.next_button.click(
@@ -261,7 +255,6 @@ def bind_events(components):
     # VIEW REPORT (streaming)
     # =========================================================
 
-
     c.view_report_button.click(
         report_handler,
         inputs=[state],
@@ -274,7 +267,6 @@ def bind_events(components):
         ],
         show_progress=True,
     )
-
 
     # =========================================================
     # EXPORT PDF
