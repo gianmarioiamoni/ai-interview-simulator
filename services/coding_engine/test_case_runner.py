@@ -1,14 +1,13 @@
+# services/coding_engine/test_case_runner.py
+
 from typing import List, Optional
 from domain.contracts.coding_test_case import CodingTestCase
 from domain.contracts.coding_spec import CodingSpec
 
+from services.coding_engine.harness.harness_builder import HarnessBuilder
+
 
 class TestCaseRunner:
-
-    RESULT_MARKER = "__RESULT__"
-    VISIBLE_MARKER = "__VISIBLE__"
-    HIDDEN_MARKER = "__HIDDEN__"
-    TEST_RESULT_MARKER = "__TEST_RESULT__"
 
     def build_harness(
         self,
@@ -19,227 +18,12 @@ class TestCaseRunner:
         coding_spec: Optional[CodingSpec],
     ) -> str:
 
-        total_visible = len(visible_tests)
-        total_hidden = len(hidden_tests)
+        builder = HarnessBuilder()
 
-        lines: List[str] = []
-
-        # =========================================================
-        # USER CODE
-        # =========================================================
-
-        lines.append(user_code)
-        lines.append("")
-
-        # =========================================================
-        # IMPORTS
-        # =========================================================
-
-        lines.append("import inspect")
-        lines.append("import json")
-        lines.append("")
-
-        # =========================================================
-        # CALLABLE RESOLUTION
-        # =========================================================
-
-        if coding_spec:
-
-            if coding_spec.type == "class_method":
-
-                lines.append("def __resolve_callable():")
-                lines.append(f"    if '{coding_spec.entrypoint}' not in globals():")
-                lines.append(
-                    f"        raise RuntimeError('Class {coding_spec.entrypoint} not found')"
-                )
-                lines.append(f"    cls = globals()['{coding_spec.entrypoint}']")
-                lines.append("    instance = cls()")
-                lines.append(
-                    f"    if not hasattr(instance, '{coding_spec.method_name}'):"
-                )
-                lines.append(
-                    f"        raise RuntimeError('Method {coding_spec.method_name} not found')"
-                )
-                lines.append(
-                    f"    return getattr(instance, '{coding_spec.method_name}')"
-                )
-                lines.append("")
-
-            else:
-
-                lines.append("def __resolve_callable():")
-                lines.append(f"    if '{coding_spec.entrypoint}' not in globals():")
-                lines.append(
-                    f"        raise RuntimeError('Function {coding_spec.entrypoint} not found')"
-                )
-                lines.append(f"    return globals()['{coding_spec.entrypoint}']")
-                lines.append("")
-
-        else:
-            # LEGACY
-            lines.append("def __resolve_callable():")
-            lines.append(f"    if '{function_name}' in globals():")
-            lines.append(f"        return globals()['{function_name}']")
-            lines.append("")
-            lines.append("    candidates = []")
-            lines.append("    for name, obj in globals().items():")
-            lines.append(
-                "        if inspect.isfunction(obj) and not name.startswith('__'):"
-            )
-            lines.append("            candidates.append(obj)")
-            lines.append("")
-            lines.append("    if not candidates:")
-            lines.append("        raise RuntimeError('No callable function found')")
-            lines.append("")
-            lines.append("    if len(candidates) > 1:")
-            lines.append(
-                "        raise RuntimeError('Multiple callables found. Provide CodingSpec.')"
-            )
-            lines.append("")
-            lines.append("    return candidates[0]")
-            lines.append("")
-
-        # =========================================================
-        # SIGNATURE VALIDATION (🔥 FIX)
-        # =========================================================
-
-        if coding_spec and coding_spec.parameters:
-
-            lines.append("def __validate_signature(fn):")
-            lines.append("    sig = inspect.signature(fn)")
-            lines.append("    params = list(sig.parameters.keys())")
-            lines.append(f"    expected = {repr(coding_spec.parameters)}")
-
-            lines.append("    if len(params) != len(expected):")
-            lines.append(
-                "        raise RuntimeError(f'Invalid signature. Expected {expected}, got {params}')"
-            )
-
-            # 🔥 WARNING → NON TEST
-            lines.append("    if params != expected:")
-            lines.append(
-                """        print("__SIGNATURE_WARNING__:" + json.dumps({
-                    "expected": expected,
-                    "actual": params
-                }))"""
-            )
-            lines.append("")
-
-        else:
-            lines.append("def __validate_signature(fn):")
-            lines.append("    return")
-            lines.append("")
-
-        # =========================================================
-        # ENTRY POINT (ROBUSTO)
-        # =========================================================
-
-        lines.append("try:")
-        lines.append("    __resolved_callable = __resolve_callable()")
-        lines.append("    __validate_signature(__resolved_callable)")
-
-        lines.append("    def __entry_point__(*args, **kwargs):")
-        lines.append("        return __resolved_callable(*args, **kwargs)")
-
-        lines.append("except Exception as e:")
-        lines.append("    __entry_point__ = None")
-        lines.append("    __entry_error__ = str(e)")
-        lines.append("")
-
-        # =========================================================
-        # COMPARATOR
-        # =========================================================
-
-        lines.append("def __compare(a, b):")
-        lines.append("    import math")
-        lines.append("    if isinstance(a, float) and isinstance(b, float):")
-        lines.append("        return math.isclose(a, b, rel_tol=1e-6)")
-        lines.append("    return a == b")
-        lines.append("")
-
-        # =========================================================
-        # TEST RUNNER
-        # =========================================================
-
-        lines.append("def __run_tests():")
-
-        # SAFE GUARD
-        lines.append(
-            "    if '__entry_point__' not in globals() or __entry_point__ is None:"
+        return builder.build(
+            user_code=user_code,
+            visible_tests=visible_tests,
+            hidden_tests=hidden_tests,
+            function_name=function_name,
+            coding_spec=coding_spec,
         )
-        lines.append(
-            f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{
-                "type": "visible",
-                "id": 1,
-                "status": "error",
-                "error": __entry_error__ if '__entry_error__' in globals() else "Entry point not defined"
-            }}))"""
-        )
-        lines.append(f'        print("{self.VISIBLE_MARKER}:0:{total_visible}")')
-        lines.append(f'        print("{self.HIDDEN_MARKER}:0:{total_hidden}")')
-        lines.append("        return")
-        lines.append("")
-
-        lines.append("    func = __entry_point__")
-        lines.append("")
-        lines.append("    visible_passed = 0")
-        lines.append("    hidden_passed = 0")
-        lines.append("")
-
-        # =========================================================
-        # VISIBLE TESTS
-        # =========================================================
-
-        for idx, test in enumerate(visible_tests, start=1):
-            lines.append("    try:")
-            lines.append(f"        args = {repr(test.args)}")
-            lines.append(f"        kwargs = {repr(test.kwargs)}")
-            lines.append(f"        expected = {repr(test.expected)}")
-            lines.append("        result = func(*args, **kwargs)")
-            lines.append("        if not __compare(result, expected):")
-            lines.append(
-                f"""            print("{self.TEST_RESULT_MARKER}:" + json.dumps({{"type":"visible","id":{idx},"status":"failed","expected":expected,"actual":result}}))"""
-            )
-            lines.append("        else:")
-            lines.append("            visible_passed += 1")
-            lines.append(
-                f"""            print("{self.TEST_RESULT_MARKER}:" + json.dumps({{"type":"visible","id":{idx},"status":"passed"}}))"""
-            )
-            lines.append("    except Exception as e:")
-            lines.append(
-                f"""        print("{self.TEST_RESULT_MARKER}:" + json.dumps({{"type":"visible","id":{idx},"status":"error","error":str(e)}}))"""
-            )
-
-        # =========================================================
-        # HIDDEN TESTS
-        # =========================================================
-
-        for idx, test in enumerate(hidden_tests, start=1):
-            lines.append("    try:")
-            lines.append(f"        args = {repr(test.args)}")
-            lines.append(f"        kwargs = {repr(test.kwargs)}")
-            lines.append(f"        expected = {repr(test.expected)}")
-            lines.append("        result = func(*args, **kwargs)")
-            lines.append("        if __compare(result, expected):")
-            lines.append("            hidden_passed += 1")
-            lines.append("    except Exception:")
-            lines.append("        pass")
-
-        # =========================================================
-        # SUMMARY
-        # =========================================================
-
-        lines.append(
-            f'    print("{self.VISIBLE_MARKER}:" + str(visible_passed) + ":" + str({total_visible}))'
-        )
-        lines.append(
-            f'    print("{self.HIDDEN_MARKER}:" + str(hidden_passed) + ":" + str({total_hidden}))'
-        )
-        lines.append(
-            f'    print("{self.RESULT_MARKER}:" + str(visible_passed + hidden_passed) + ":" + str({total_visible + total_hidden}))'
-        )
-
-        lines.append("")
-        lines.append("__run_tests()")
-
-        return "\n".join(lines)
