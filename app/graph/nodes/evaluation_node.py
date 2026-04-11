@@ -14,7 +14,6 @@ class EvaluationNode:
         if question is None:
             return state
 
-        # Only execution-based questions
         if question.type not in (QuestionType.CODING, QuestionType.DATABASE):
             return state
 
@@ -26,7 +25,7 @@ class EvaluationNode:
         execution = result.execution
 
         # ---------------------------------------------------------
-        # Compute evaluation (domain responsibility only)
+        # Compute evaluation
         # ---------------------------------------------------------
 
         if execution.total_tests and execution.total_tests > 0:
@@ -48,12 +47,18 @@ class EvaluationNode:
         )
 
         # ---------------------------------------------------------
-        # STATE UPDATE (ONLY evaluation)
+        # STATE UPDATE
         # ---------------------------------------------------------
 
         new_results = dict(state.results_by_question)
 
-        updated_result = result.model_copy(update={"evaluation": evaluation})
+        updated_result = result.model_copy(
+            update={
+                "evaluation": evaluation,
+                "question": result.question or question,  # 🔥 NEW
+            }
+        )
+
         new_results[question.id] = updated_result
 
         return state.model_copy(

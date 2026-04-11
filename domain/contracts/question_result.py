@@ -3,6 +3,7 @@
 from typing import Optional
 from pydantic import BaseModel
 
+from domain.contracts.question import Question
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.ai_hint import AIHint
@@ -11,6 +12,8 @@ from domain.contracts.hint_level import HintLevel
 
 class QuestionResult(BaseModel):
     question_id: str
+
+    question: Optional[Question] = None
 
     evaluation: Optional[QuestionEvaluation] = None
     execution: Optional[ExecutionResult] = None
