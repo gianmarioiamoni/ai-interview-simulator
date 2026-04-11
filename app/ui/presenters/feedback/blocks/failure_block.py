@@ -13,21 +13,27 @@ class FailureBlock:
 
     def can_handle(
         self,
-        state,
+        result,
         _evaluation,
         execution,
         _analysis,
     ) -> bool:
 
-        question = state.current_question
+        question = getattr(result, "question", None)
 
-        if not execution or not question or not question.is_execution_based():
+        if not execution:
             return False
+
+        if question and hasattr(question, "is_execution_based"):
+            if not question.is_execution_based():
+                return False
 
         if execution.total_tests and execution.passed_tests < execution.total_tests:
             return True
 
         return False
+
+    # =========================================================
 
     def build(
         self, _state, result, _evaluation, execution, _analysis, _quality
@@ -36,11 +42,19 @@ class FailureBlock:
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
 
+        # -----------------------------------------------------
+        # CONTENT
+        # -----------------------------------------------------
+
         content = (
             "### ❌ Some tests failed\n\n"
             f"Passed {passed}/{total} tests.\n\n"
             "Review the failing cases below."
         )
+
+        # -----------------------------------------------------
+        # SIGNALS
+        # -----------------------------------------------------
 
         signals = [
             FeedbackSignal(
@@ -48,6 +62,10 @@ class FailureBlock:
                 message=f"{passed}/{total} tests passed",
             )
         ]
+
+        # -----------------------------------------------------
+        # LEARNING
+        # -----------------------------------------------------
 
         if total > 0 and passed == 0:
             learning = [
