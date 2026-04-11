@@ -14,7 +14,7 @@ class TestBreakdownBlock:
 
     def can_handle(
         self,
-        _result,
+        result,
         _evaluation,
         execution,
         _analysis,
@@ -23,10 +23,16 @@ class TestBreakdownBlock:
         if not execution:
             return False
 
+        question = getattr(result, "question", None)
+
+        # TYPE-AWARE
+        if question and hasattr(question, "is_execution_based"):
+            if not question.is_execution_based():
+                return False
+
         if not execution.test_results:
             return False
 
-        # mostra solo se ci sono fallimenti o errori
         return any(t.status != TestStatus.PASSED for t in execution.test_results)
 
     def build(
@@ -57,20 +63,12 @@ class TestBreakdownBlock:
 
         content = "\n\n".join(lines)
 
-        # -----------------------------------------------------
-        # SIGNALS
-        # -----------------------------------------------------
-
         signals = [
             FeedbackSignal(
                 severity=Severity.ERROR,
                 message=f"{len(failed)} failing test cases detected",
             )
         ]
-
-        # -----------------------------------------------------
-        # LEARNING
-        # -----------------------------------------------------
 
         learning = [
             LearningSuggestion(

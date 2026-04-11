@@ -3,10 +3,22 @@
 from app.contracts.feedback_bundle import FeedbackBlockResult
 from domain.contracts.severity import Severity
 
+
 class ScoreBlock:
 
-    def can_handle(self, _result, _evaluation, execution, _analysis) -> bool:
-        return execution is not None and execution.total_tests is not None
+    def can_handle(self, result, _evaluation, execution, _analysis) -> bool:
+
+        if not execution:
+            return False
+
+        question = getattr(result, "question", None)
+
+        # TYPE-AWARE
+        if question and hasattr(question, "is_execution_based"):
+            if not question.is_execution_based():
+                return False
+
+        return execution.total_tests is not None
 
     def build(
         self,
@@ -15,32 +27,21 @@ class ScoreBlock:
         _evaluation,
         execution,
         _analysis,
-        _quality,  # injected (unused but required for uniformity)
+        _quality,
     ):
+
         if not execution:
             return None
 
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
 
-        # -----------------------------------------------------
-        # Score computation
-        # -----------------------------------------------------
-
         if total == 0:
             score = 0
         else:
-            score = int((passed / total) * 100) if total else 0
-
-        # -----------------------------------------------------
-        # Content
-        # -----------------------------------------------------
+            score = int((passed / total) * 100)
 
         content = f"Score: {score}/100\nTests: {passed}/{total} passed"
-
-        # -----------------------------------------------------
-        # Metadata (CRITICAL for ButtonMapper)
-        # -----------------------------------------------------
 
         metadata = {
             "score": score,

@@ -12,23 +12,34 @@ from app.contracts.feedback_bundle import (
 class FallbackBlock:
 
     def can_handle(
-        self, 
-        _result, 
-        evaluation, 
-        execution, 
-        _analysis, 
+        self,
+        result,
+        evaluation,
+        execution,
+        _analysis,
     ) -> bool:
-    # enter only if there is no other useful block
+
+        question = getattr(result, "question", None)
+
+        # TYPE-AWARE
+        if question and hasattr(question, "is_execution_based"):
+            if question.is_execution_based():
+                return not execution
+            else:
+                return not evaluation
+
+        # fallback original
         return not execution and not evaluation
 
     def build(
-        self, 
-        _state, 
-        _result, 
-        _evaluation, 
-        _execution, 
-        _analysis, 
-        _quality):
+        self,
+        _state,
+        _result,
+        _evaluation,
+        _execution,
+        _analysis,
+        _quality,
+    ):
 
         signals = [
             FeedbackSignal(

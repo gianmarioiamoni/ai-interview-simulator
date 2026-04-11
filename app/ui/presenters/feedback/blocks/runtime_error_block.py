@@ -11,33 +11,29 @@ from domain.contracts.severity import Severity
 class RuntimeErrorBlock:
 
     def can_handle(
-        self, 
-        _result, 
-        _evaluation, 
-        _execution, 
-        analysis, 
+        self,
+        result,
+        _evaluation,
+        _execution,
+        analysis,
     ) -> bool:
-        return bool(analysis and analysis.has_runtime_error)
+
+        if not analysis or not analysis.has_runtime_error:
+            return False
+
+        question = getattr(result, "question", None)
+
+        # TYPE-AWARE
+        if question and hasattr(question, "is_execution_based"):
+            return question.is_execution_based()
+
+        return True
 
     def build(
-        self, 
-        _state, 
-        result, 
-        _evaluation, 
-        _execution, 
-        analysis, 
-        _quality
+        self, _state, result, _evaluation, _execution, analysis, _quality
     ) -> FeedbackBlockResult:
 
-        # -----------------------------------------------------
-        # Extract clean error
-        # -----------------------------------------------------
-
         clean_error = analysis.primary_error.strip().splitlines()[-1]
-
-        # -----------------------------------------------------
-        # Signals
-        # -----------------------------------------------------
 
         signals = [
             FeedbackSignal(
@@ -46,20 +42,12 @@ class RuntimeErrorBlock:
             )
         ]
 
-        # -----------------------------------------------------
-        # Learning suggestions
-        # -----------------------------------------------------
-
         learning = [
             LearningSuggestion(
                 topic="Debugging runtime errors",
                 action="Check variable definitions, imports, and variable scope",
             )
         ]
-
-        # -----------------------------------------------------
-        # Content
-        # -----------------------------------------------------
 
         lines = [
             f"`{clean_error}`",
@@ -77,10 +65,6 @@ class RuntimeErrorBlock:
 
         content = "\n".join(lines)
 
-        # -----------------------------------------------------
-        # Return block
-        # -----------------------------------------------------
-
         return FeedbackBlockResult(
             title="⚠️ Runtime Error",
             content=content,
@@ -88,5 +72,5 @@ class RuntimeErrorBlock:
             confidence=0.95,
             signals=signals,
             learning=learning,
-            quality=None,  
+            quality=None,
         )
