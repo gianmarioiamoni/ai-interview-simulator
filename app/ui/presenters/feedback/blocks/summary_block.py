@@ -13,18 +13,21 @@ class SummaryBlock:
 
     def build(
         self,
-        _state,
+        state,
         _result,
-        evaluation,
-        execution,
+        _evaluation,
+        _execution,
         _analysis,
         quality: Quality,
     ) -> FeedbackBlockResult:
 
-        is_coding = execution is not None
+        question = state.current_question
+
+        is_coding = question.is_coding() if question else False
+        is_written = question.is_written() if question else False
 
         # -----------------------------------------------------
-        # Map quality → label
+        # Quality mapping
         # -----------------------------------------------------
 
         if quality in (Quality.CORRECT, Quality.OPTIMAL):
@@ -40,13 +43,22 @@ class SummaryBlock:
             label = "Incorrect Solution"
 
         # -----------------------------------------------------
-        # UX FIX (DIFFERENZIATE CODING VS WRITTEN)
+        # TYPE-AWARE UX (DIFFERENZIATE CODING VS WRITTEN)
         # -----------------------------------------------------
 
-        if is_coding and quality in (Quality.CORRECT, Quality.OPTIMAL):
-            content = f"{icon} {label}\n\nGreat job! All tests passed."
-        elif not is_coding and quality in (Quality.CORRECT, Quality.OPTIMAL):
-            content = f"{icon} {label}\n\nGreat answer! Well structured and complete."
+        if quality in (Quality.CORRECT, Quality.OPTIMAL):
+
+            if is_coding:
+                content = f"{icon} {label}\n\nGreat job! All tests passed."
+
+            elif is_written:
+                content = (
+                    f"{icon} {label}\n\nGreat answer! Well structured and complete."
+                )
+
+            else:
+                content = f"{icon} {label}"
+
         else:
             content = f"{icon} {label}"
 

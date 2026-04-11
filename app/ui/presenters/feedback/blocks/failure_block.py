@@ -13,16 +13,17 @@ class FailureBlock:
 
     def can_handle(
         self,
-        _result,
+        state,
         _evaluation,
         execution,
         _analysis,
     ) -> bool:
 
-        if not execution:
+        question = state.current_question
+
+        if not execution or not question or not question.is_execution_based():
             return False
 
-        # fallback SQL / generic
         if execution.total_tests and execution.passed_tests < execution.total_tests:
             return True
 
@@ -35,19 +36,11 @@ class FailureBlock:
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
 
-        # -----------------------------------------------------
-        # CONTENT (NO DUPLICATION WITH BREAKDOWN)
-        # -----------------------------------------------------
-
         content = (
             "### ❌ Some tests failed\n\n"
             f"Passed {passed}/{total} tests.\n\n"
             "Review the failing cases below."
         )
-
-        # -----------------------------------------------------
-        # SIGNALS
-        # -----------------------------------------------------
 
         signals = [
             FeedbackSignal(
@@ -55,10 +48,6 @@ class FailureBlock:
                 message=f"{passed}/{total} tests passed",
             )
         ]
-
-        # -----------------------------------------------------
-        # LEARNING
-        # -----------------------------------------------------
 
         if total > 0 and passed == 0:
             learning = [

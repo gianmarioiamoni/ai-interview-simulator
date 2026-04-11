@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Optional
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 from enum import Enum
 
 from domain.contracts.interview_area import InterviewArea
@@ -21,6 +21,7 @@ class QuestionDifficulty(str, Enum):
     EASY = "easy"
     MEDIUM = "medium"
     HARD = "hard"
+
 
 class Question(BaseModel):
     id: str = Field(..., min_length=1)
@@ -42,6 +43,24 @@ class Question(BaseModel):
 
     # NEW
     coding_spec: Optional[CodingSpec] = None
+
+    # =========================================================
+    # TYPE HELPERS
+    # =========================================================
+
+    def is_coding(self) -> bool:
+        return self.type == QuestionType.CODING
+
+    def is_written(self) -> bool:
+        return self.type == QuestionType.WRITTEN
+
+    def is_database(self) -> bool:
+        return self.type == QuestionType.DATABASE
+
+    def is_execution_based(self) -> bool:
+        return self.type in (QuestionType.CODING, QuestionType.DATABASE)
+
+    # =========================================================
 
     model_config = {
         "frozen": True,
