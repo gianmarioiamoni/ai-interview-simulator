@@ -1,0 +1,17 @@
+def __validate_signature(fn):
+    import inspect
+    import json
+
+    sig = inspect.signature(fn)
+    params = list(sig.parameters.keys())
+    expected = {{ expected }}
+
+    if len(params) != len(expected):
+        raise RuntimeError(f'Invalid signature. Expected {expected}, got {params}')
+
+    # WARNING (non blocca l'esecuzione)
+    if params != expected:
+        print("__SIGNATURE_WARNING__:" + json.dumps({
+            "expected": expected,
+            "actual": params
+        }))
