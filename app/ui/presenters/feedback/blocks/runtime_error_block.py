@@ -6,67 +6,78 @@ from app.contracts.feedback_bundle import (
     LearningSuggestion,
 )
 from domain.contracts.severity import Severity
+from domain.contracts.error_type import ErrorType
 
 
 class RuntimeErrorBlock:
 
     def can_handle(
         self,
-        result,
+        _result,
         _evaluation,
         _execution,
         analysis,
     ) -> bool:
 
-        if not analysis or not analysis.has_runtime_error:
-            return False
-
-        question = getattr(result, "question", None)
-
-        # TYPE-AWARE
-        if question and hasattr(question, "is_execution_based"):
-            return question.is_execution_based()
-
-        return True
+        return bool(analysis and analysis.has_runtime_error)
 
     def build(
-        self, _state, result, _evaluation, _execution, analysis, _quality
+        self, _state, _result, _evaluation, _execution, analysis, _quality
     ) -> FeedbackBlockResult:
 
-        clean_error = analysis.primary_error.strip().splitlines()[-1]
+        error = (analysis.primary_error or "").strip().splitlines()[-1]
+        error_type = analysis.error_type
+
+        # -----------------------------------------------------
+        # TYPE-AWARE MESSAGING
+        # -----------------------------------------------------
+
+        if error_type == ErrorType.SYNTAX:
+            title = "⚠️ Syntax Error"
+            suggestion = "Check syntax (missing colons, parentheses, indentation)"
+
+        elif error_type == ErrorType.SIGNATURE:
+            title = "⚠️ Signature Error"
+            suggestion = "Ensure function signature matches expected parameters"
+
+        elif error_type == ErrorType.TIMEOUT:
+            title = "⚠️ Timeout Error"
+            suggestion = "Optimize algorithm (likely O(n²) or worse)"
+
+        else:
+            title = "⚠️ Runtime Error"
+            suggestion = "Check variable definitions, imports, and variable scope"
+
+        # -----------------------------------------------------
+        # SIGNALS
+        # -----------------------------------------------------
 
         signals = [
             FeedbackSignal(
                 severity=Severity.ERROR,
-                message=clean_error,
+                message=error,
             )
         ]
+
+        # -----------------------------------------------------
+        # LEARNING
+        # -----------------------------------------------------
 
         learning = [
             LearningSuggestion(
-                topic="Debugging runtime errors",
-                action="Check variable definitions, imports, and variable scope",
+                topic="Debugging",
+                action=suggestion,
             )
         ]
 
-        lines = [
-            f"`{clean_error}`",
-            "",
-        ]
+        # -----------------------------------------------------
+        # CONTENT
+        # -----------------------------------------------------
 
-        if "Counter" in clean_error:
-            lines.extend(
-                [
-                    "",
-                    "💡 Suggested fix:",
-                    "`from collections import Counter`",
-                ]
-            )
-
-        content = "\n".join(lines)
+        content = f"`{error}`"
 
         return FeedbackBlockResult(
-            title="⚠️ Runtime Error",
+            title=title,
             content=content,
             severity=Severity.ERROR,
             confidence=0.95,
