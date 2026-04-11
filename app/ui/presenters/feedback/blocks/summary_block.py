@@ -13,15 +13,15 @@ class SummaryBlock:
 
     def build(
         self,
-        state,
-        _result,
+        _state,
+        result,
         _evaluation,
         _execution,
         _analysis,
         quality: Quality,
     ) -> FeedbackBlockResult:
 
-        question = state.current_question
+        question = getattr(result, "question", None)
 
         is_coding = question.is_coding() if question else False
         is_written = question.is_written() if question else False

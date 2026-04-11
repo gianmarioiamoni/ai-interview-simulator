@@ -18,7 +18,7 @@ class WrittenBlock:
     def build(
         self, 
         _state, 
-        _result, 
+        result, 
         evaluation, 
         _execution, 
         _analysis, 
@@ -28,7 +28,7 @@ class WrittenBlock:
         score = evaluation.score if evaluation else 0
         feedback = evaluation.feedback if evaluation else ""
 
-        question = _state.current_question
+        question = getattr(result, "question", None)
         question_text = question.prompt if question else ""
 
         latest_answer = (

@@ -10,9 +10,9 @@ from domain.contracts.severity import Severity
 
 class SuccessBlock:
 
-    def can_handle(self, state, _evaluation, execution, _analysis) -> bool:
+    def can_handle(self, result, _evaluation, execution, _analysis) -> bool:
 
-        question = state.current_question
+        question = getattr(result, "question", None)
 
         return bool(
             execution
