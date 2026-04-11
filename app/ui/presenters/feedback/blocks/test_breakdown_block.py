@@ -10,8 +10,16 @@ from app.contracts.feedback_bundle import (
     LearningSuggestion,
 )
 
+from services.explanation.test_case_explanation_service import (
+    TestCaseExplanationService,
+)
+
 
 class TestBreakdownBlock:
+
+    def __init__(self):
+        # 🔥 LLM fallback service (lazy usage)
+        self._explanation_service = TestCaseExplanationService()
 
     def can_handle(
         self,
@@ -52,13 +60,22 @@ class TestBreakdownBlock:
 
         lines = []
 
-        # =====================================================
-        # PER-TEST DETAIL (SMART)
-        # =====================================================
+        # 🔥 LIMIT LLM CALLS
+        llm_used = False
 
         for idx, t in enumerate(failed[:3], start=1):
 
-            lines.append(self._format_test_case(idx, t, error_type))
+            case_text, used_llm = self._format_test_case(
+                idx,
+                t,
+                error_type,
+                llm_used,
+            )
+
+            if used_llm:
+                llm_used = True
+
+            lines.append(case_text)
 
         if len(failed) > 3:
             lines.append(f"\n...and {len(failed) - 3} more failing tests")
@@ -77,7 +94,7 @@ class TestBreakdownBlock:
         ]
 
         # =====================================================
-        # LEARNING (TYPE-AWARE)
+        # LEARNING
         # =====================================================
 
         learning = self._build_learning(error_type)
@@ -96,30 +113,40 @@ class TestBreakdownBlock:
     # HELPERS
     # =========================================================
 
-    def _format_test_case(self, idx, test, error_type):
+    def _format_test_case(self, idx, test, error_type, llm_used):
 
         # -----------------------------------------------------
-        # RUNTIME ERROR CASE
+        # RUNTIME ERROR
         # -----------------------------------------------------
 
         if test.status == TestStatus.ERROR:
 
-            return "\n".join(
-                [
-                    f"❌ Case {idx} — Runtime Error",
-                    f"Input: {test.args}",
-                    f"Error: {test.error}",
-                ]
+            return (
+                "\n".join(
+                    [
+                        f"❌ Case {idx} — Runtime Error",
+                        f"Input: {test.args}",
+                        f"Error: {test.error}",
+                    ]
+                ),
+                False,
             )
 
         # -----------------------------------------------------
-        # LOGIC FAILURE CASE
+        # LOGIC FAILURE
         # -----------------------------------------------------
 
         expected = test.expected
         actual = test.actual
 
         insight = self._infer_logic_issue(expected, actual, error_type)
+
+        # 🔥 LLM FALLBACK (only once, only if needed)
+        if not insight and error_type == ErrorType.LOGIC and not llm_used:
+            insight = self._explain_with_llm(test, expected, actual)
+            used_llm = True
+        else:
+            used_llm = False
 
         lines = [
             f"❌ Case {idx} — Incorrect Output",
@@ -131,7 +158,7 @@ class TestBreakdownBlock:
         if insight:
             lines.append(f"💡 Likely issue: {insight}")
 
-        return "\n".join(lines)
+        return "\n".join(lines), used_llm
 
     # =========================================================
 
@@ -141,10 +168,6 @@ class TestBreakdownBlock:
             return None
 
         try:
-            # -------------------------------------------------
-            # SIMPLE HEURISTICS
-            # -------------------------------------------------
-
             if isinstance(expected, (int, float)) and isinstance(actual, (int, float)):
                 if actual > expected:
                     return "Result is too large → possible double counting or incorrect aggregation"
@@ -163,6 +186,16 @@ class TestBreakdownBlock:
             return None
 
         return None
+
+    # =========================================================
+
+    def _explain_with_llm(self, test, expected, actual):
+
+        return self._explanation_service.explain(
+            input_data=test.args,
+            expected=expected,
+            actual=actual,
+        )
 
     # =========================================================
 
