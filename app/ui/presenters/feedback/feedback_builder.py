@@ -6,6 +6,8 @@ from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
 from domain.contracts.quality import Quality
 
+from services.feedback_bundle_factory import FeedbackBundleFactory
+
 from app.contracts.feedback_bundle import FeedbackBundle
 
 from app.ui.presenters.feedback.pipeline.feedback_block_pipeline import (
@@ -50,15 +52,10 @@ class FeedbackBuilder:
             quality,
         )
 
-        overall_severity = self._aggregator.aggregate_severity(blocks)
-        overall_confidence = self._aggregator.aggregate_confidence(blocks)
-
         markdown = self._renderer.render(blocks)
 
-        return FeedbackBundle(
+        return FeedbackBundleFactory.create(
             blocks=blocks,
-            overall_severity=overall_severity,
-            overall_confidence=overall_confidence,
-            overall_quality=quality,
+            quality=quality,
             markdown=markdown,
         )
