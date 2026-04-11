@@ -5,6 +5,7 @@ import re
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.action_type import ActionType
 from domain.contracts.quality import Quality
+
 from app.ui.ui_state import UIState
 from app.ui.types.ui_fields import ButtonState
 
@@ -68,8 +69,8 @@ class ButtonMapper:
         show_next = False
 
         if is_incorrect:
-            show_retry = can_retry_action
-
+            show_retry = ActionType.RETRY in actions and can_retry
+            show_next = ActionType.NEXT in actions or ActionType.GENERATE_REPORT in actions
         elif is_partial:
             show_retry = can_retry_action
             show_next = can_next_action
@@ -97,7 +98,7 @@ class ButtonMapper:
             next_label = "📊 Generate Final Report"
 
         elif show_next:
-            next_label = ButtonMapper._next_label(state, quality)
+            next_label = ButtonMapper._next_label(quality)
 
         else:
             next_label = ""
@@ -132,26 +133,26 @@ class ButtonMapper:
     # =========================================================
 
     @staticmethod
-    def _next_label(_state: InterviewState, quality: str) -> str:
+    def _next_label(quality: Quality) -> str:
 
-        if quality in ["correct", "optimal"]:
+        if quality in [Quality.CORRECT, Quality.OPTIMAL]:
             return "➡️ Continue"
 
-        if quality == "partial":
+        if quality == Quality.PARTIAL:
             return "➡️ Continue (can improve)"
 
-        if quality == "inefficient":
+        if quality == Quality.INEFFICIENT:
             return "➡️ Continue (optimize later)"
 
         return "Next Question"
 
     @staticmethod
-    def _retry_label(quality: str) -> str:
+    def _retry_label(quality: Quality) -> str:
 
-        if quality == "incorrect":
+        if quality == Quality.INCORRECT:
             return "🔁 Try Again"
 
-        if quality == "partial":
+        if quality == Quality.PARTIAL:
             return "🔧 Fix Issues"
 
         return "Retry"
