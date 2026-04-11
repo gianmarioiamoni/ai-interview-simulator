@@ -8,21 +8,23 @@ from domain.contracts.severity import Severity
 
 class SummaryBlock:
 
-    def can_handle(self, _result, _evaluation, execution, _analysis) -> bool:
-        return execution is not None
+    def can_handle(self, _result, _evaluation, _execution, _analysis) -> bool:
+        return True
 
     def build(
         self,
         _state,
         _result,
-        _evaluation,
-        _execution,
+        evaluation,
+        execution,
         _analysis,
-        quality: Quality,  
+        quality: Quality,
     ) -> FeedbackBlockResult:
 
+        is_coding = execution is not None
+
         # -----------------------------------------------------
-        # Map quality → UI label (SINGLE SOURCE OF TRUTH)
+        # Map quality → label
         # -----------------------------------------------------
 
         if quality in (Quality.CORRECT, Quality.OPTIMAL):
@@ -33,15 +35,20 @@ class SummaryBlock:
             icon = "🟡"
             label = "Partial Solution"
 
-        elif quality == Quality.INCORRECT:
-            icon = "❌"
-            label = "Incorrect Solution"
-
         else:
             icon = "❌"
             label = "Incorrect Solution"
 
-        content = f"{icon} {label}"
+        # -----------------------------------------------------
+        # UX FIX (DIFFERENZIATE CODING VS WRITTEN)
+        # -----------------------------------------------------
+
+        if is_coding and quality in (Quality.CORRECT, Quality.OPTIMAL):
+            content = f"{icon} {label}\n\nGreat job! All tests passed."
+        elif not is_coding and quality in (Quality.CORRECT, Quality.OPTIMAL):
+            content = f"{icon} {label}\n\nGreat answer! Well structured and complete."
+        else:
+            content = f"{icon} {label}"
 
         return FeedbackBlockResult(
             title="Summary",

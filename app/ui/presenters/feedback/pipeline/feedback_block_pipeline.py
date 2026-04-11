@@ -37,14 +37,20 @@ class FeedbackBlockPipeline:
     ):
         blocks = []
 
-        # Core blocks first
+        # -----------------------------------------------------
+        # CORE BLOCKS → ALWAYS
+        # -----------------------------------------------------
+
         blocks.extend(
             self._build_core_blocks(
                 state, result, evaluation, execution, analysis, quality
             )
         )
 
-        # Other blocks
+        # -----------------------------------------------------
+        # OTHER BLOCKS
+        # -----------------------------------------------------
+
         for block in self._blocks:
             if self._is_core(block):
                 continue
@@ -58,11 +64,10 @@ class FeedbackBlockPipeline:
 
         return self._order(blocks)
 
+    # =========================================================
+
     def _build_core_blocks(self, *args):
         state, result, evaluation, execution, analysis, quality = args
-
-        if not execution:
-            return []
 
         core_blocks = []
 
@@ -76,8 +81,12 @@ class FeedbackBlockPipeline:
 
         return core_blocks
 
+    # =========================================================
+
     def _is_core(self, block):
         return block.__class__.__name__ in ("SummaryBlock", "ScoreBlock")
+
+    # =========================================================
 
     def _order(self, blocks):
 
