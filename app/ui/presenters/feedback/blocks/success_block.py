@@ -10,17 +10,19 @@ from domain.contracts.severity import Severity
 
 class SuccessBlock:
 
-    def can_handle(self, _result, _evaluation, execution, _analysis) -> bool:
-        return bool(execution and execution.success)
+    def can_handle(self, state, _evaluation, execution, _analysis) -> bool:
+
+        question = state.current_question
+
+        return bool(
+            execution
+            and execution.success
+            and question
+            and question.is_execution_based()
+        )
 
     def build(
-        self, 
-        _state, 
-        _result, 
-        _evaluation, 
-        execution, 
-        _analysis, 
-        _quality
+        self, _state, _result, _evaluation, execution, _analysis, _quality
     ) -> FeedbackBlockResult:
 
         exec_time = execution.execution_time_ms or 0
@@ -48,7 +50,6 @@ class SuccessBlock:
             )
         ]
 
-        # performance hint (NO quality decision)
         if exec_time and exec_time > 200:
             signals.append(
                 FeedbackSignal(
@@ -84,10 +85,6 @@ class SuccessBlock:
                     action="Refactor the solution to improve performance",
                 )
             ]
-
-        # -----------------------------------------------------
-        # Confidence
-        # -----------------------------------------------------
 
         confidence = 0.95 if execution.success else 0.85
 
