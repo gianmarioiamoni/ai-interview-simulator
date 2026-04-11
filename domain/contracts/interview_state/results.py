@@ -19,8 +19,17 @@ class InterviewStateResultsMixin:
 
         result = self.results_by_question.get(qid)
 
+        question = next((q for q in self.questions if q.id == qid), None)
+
         if result is None:
-            result = QuestionResult(question_id=qid)
+            result = QuestionResult(
+                question_id=qid,
+                question=question,
+            )
+
+        else:
+            if result.question is None:
+                result = result.model_copy(update={"question": question})
 
         result = result.model_copy(update={"evaluation": evaluation})
 
@@ -37,8 +46,17 @@ class InterviewStateResultsMixin:
 
         result = self.results_by_question.get(qid)
 
+        question = next((q for q in self.questions if q.id == qid), None)
+
         if result is None:
-            result = QuestionResult(question_id=qid)
+            result = QuestionResult(
+                question_id=qid,
+                question=question,
+            )
+
+        else:
+            if result.question is None:
+                result = result.model_copy(update={"question": question})
 
         result = result.model_copy(update={"execution": execution})
 
