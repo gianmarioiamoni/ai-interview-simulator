@@ -1,6 +1,7 @@
 # app/ui/presenters/feedback/blocks/failure_block.py
 
 from domain.contracts.severity import Severity
+from domain.contracts.error_type import ErrorType
 
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
@@ -19,10 +20,10 @@ class FailureBlock:
         _analysis,
     ) -> bool:
 
-        question = getattr(result, "question", None)
-
         if not execution:
             return False
+
+        question = getattr(result, "question", None)
 
         if question and hasattr(question, "is_execution_based"):
             if not question.is_execution_based():
@@ -33,21 +34,58 @@ class FailureBlock:
 
         return False
 
-    # =========================================================
-
     def build(
-        self, _state, result, _evaluation, execution, _analysis, _quality
+        self, _state, _result, _evaluation, execution, analysis, _quality
     ) -> FeedbackBlockResult:
 
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
+
+        error_type = getattr(analysis, "error_type", ErrorType.UNKNOWN)
+
+        # -----------------------------------------------------
+        # TYPE-AWARE TITLE + MESSAGE
+        # -----------------------------------------------------
+
+        if error_type == ErrorType.LOGIC:
+            title = "Logic Errors Detected"
+            message = "Your solution produces incorrect results."
+
+            learning = [
+                LearningSuggestion(
+                    topic="Algorithm correctness",
+                    action="Review logic and edge cases — output is incorrect",
+                )
+            ]
+
+        elif error_type == ErrorType.RUNTIME:
+            title = "Runtime Errors in Tests"
+            message = "Your code fails during execution for some inputs."
+
+            learning = [
+                LearningSuggestion(
+                    topic="Runtime debugging",
+                    action="Check how your code handles edge inputs and types",
+                )
+            ]
+
+        else:
+            title = "Logic Errors Detected"
+            message = "Some tests failed."
+
+            learning = [
+                LearningSuggestion(
+                    topic="Debugging",
+                    action="Analyze failing test cases to identify issues",
+                )
+            ]
 
         # -----------------------------------------------------
         # CONTENT
         # -----------------------------------------------------
 
         content = (
-            "### ❌ Some tests failed\n\n"
+            f"### ❌ {message}\n\n"
             f"Passed {passed}/{total} tests.\n\n"
             "Review the failing cases below."
         )
@@ -63,27 +101,8 @@ class FailureBlock:
             )
         ]
 
-        # -----------------------------------------------------
-        # LEARNING
-        # -----------------------------------------------------
-
-        if total > 0 and passed == 0:
-            learning = [
-                LearningSuggestion(
-                    topic="Algorithm correctness",
-                    action="Your solution fails all tests — revisit core logic",
-                )
-            ]
-        else:
-            learning = [
-                LearningSuggestion(
-                    topic="Edge cases",
-                    action="Focus on edge cases and input variations",
-                )
-            ]
-
         return FeedbackBlockResult(
-            title="Logic Errors Detected",
+            title=title,
             content=content,
             severity=Severity.ERROR,
             confidence=0.9,

@@ -43,6 +43,9 @@ class RuntimeErrorBlock:
         elif error_type == ErrorType.TIMEOUT:
             title = "⚠️ Timeout Error"
             suggestion = "Optimize algorithm (likely O(n²) or worse)"
+        elif error_type == ErrorType.RUNTIME:
+            title = "⚠️ Runtime Error"
+            suggestion = "Check variable definitions, imports, and edge cases"
 
         else:
             title = "⚠️ Runtime Error"
