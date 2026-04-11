@@ -16,9 +16,6 @@ from app.ui.presenters.feedback.pipeline.feedback_block_pipeline import (
 from app.ui.presenters.feedback.services.execution_analysis_service import (
     ExecutionAnalysisService,
 )
-from app.ui.presenters.feedback.aggregators.feedback_aggregator import (
-    FeedbackAggregator,
-)
 from app.ui.presenters.feedback.renderers.feedback_markdown_renderer import (
     FeedbackMarkdownRenderer,
 )
@@ -29,7 +26,6 @@ class FeedbackBuilder:
     def __init__(self) -> None:
         self._analysis_service = ExecutionAnalysisService()
         self._pipeline = FeedbackBlockPipeline()
-        self._aggregator = FeedbackAggregator()
         self._renderer = FeedbackMarkdownRenderer()
 
     def build(
@@ -41,7 +37,10 @@ class FeedbackBuilder:
         quality: Quality,
     ) -> FeedbackBundle:
 
-        analysis = self._analysis_service.analyze(execution)
+        # ANALYSIS ONLY IF NEEDED
+        analysis = None
+        if execution:
+            analysis = self._analysis_service.analyze(execution)
 
         blocks = self._pipeline.build_blocks(
             state,
