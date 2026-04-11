@@ -25,3 +25,6 @@ class Severity(str, Enum):
             Severity.WARNING: 0.7,
             Severity.INFO: 0.5,
         }[self]
+
+    def weighted_confidence(self, confidence: float) -> float:
+        return self.weight() * confidence
