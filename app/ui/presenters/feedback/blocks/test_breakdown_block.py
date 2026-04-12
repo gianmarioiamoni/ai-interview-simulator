@@ -15,10 +15,14 @@ from services.explanation.test_case_explanation_service import (
 )
 
 
+def _safe_repr(value):
+    return repr(value)
+
+
 class TestBreakdownBlock:
 
     def __init__(self):
-        # 🔥 LLM fallback service (lazy usage)
+        # LLM fallback service (lazy usage)
         self._explanation_service = TestCaseExplanationService()
 
     def can_handle(
@@ -60,7 +64,7 @@ class TestBreakdownBlock:
 
         lines = []
 
-        # 🔥 LIMIT LLM CALLS
+        # LIMIT LLM CALLS
         llm_used = False
 
         for idx, t in enumerate(failed[:3], start=1):
@@ -112,7 +116,53 @@ class TestBreakdownBlock:
     # =========================================================
     # HELPERS
     # =========================================================
+    
+    def _is_complex_case(self, expected, actual, test) -> bool:
+            # Decide whether LLM is worth calling.
+            # Keeps cost low and avoids useless explanations.
+    
+        try:
+            # -----------------------------------------------------
+            # SKIP trivial scalar mismatches
+            # -----------------------------------------------------
+    
+            if isinstance(expected, (int, float, str, bool)) and isinstance(actual, (int, float, str, bool)):
+                return False
 
+            # -----------------------------------------------------
+            # SKIP None vs "None" (we handle via heuristic)
+            # -----------------------------------------------------
+    
+            if expected is None and actual == "None":
+                return False
+    
+            # -----------------------------------------------------
+            # SKIP simple list mismatches
+            # -----------------------------------------------------
+
+            if isinstance(expected, list) and isinstance(actual, list):
+            
+                # length mismatch → already handled
+                if len(expected) != len(actual):
+                    return False
+
+                # order mismatch → already handled
+                if sorted(expected) == sorted(actual):
+                    return False
+
+            # -----------------------------------------------------
+            # USE LLM for complex structures
+            # -----------------------------------------------------
+    
+            if isinstance(expected, (list, dict)) or isinstance(actual, (list, dict)):
+                return True
+
+        except Exception:
+            return False
+    
+        return False
+    
+    
     def _format_test_case(self, idx, test, error_type, llm_used):
 
         # -----------------------------------------------------
@@ -141,8 +191,13 @@ class TestBreakdownBlock:
 
         insight = self._infer_logic_issue(expected, actual, error_type)
 
-        # 🔥 LLM FALLBACK (only once, only if needed)
-        if not insight and error_type == ErrorType.LOGIC and not llm_used:
+        # LLM FALLBACK (only once, only if needed)
+        if (
+            not insight 
+            and error_type == ErrorType.LOGIC 
+            and not llm_used
+            and self._is_complex_case(expected, actual, test)
+        ):
             insight = self._explain_with_llm(test, expected, actual)
             used_llm = True
         else:
@@ -151,8 +206,8 @@ class TestBreakdownBlock:
         lines = [
             f"❌ Case {idx} — Incorrect Output",
             f"Input: {test.args}",
-            f"Expected: {expected}",
-            f"Actual: {actual}",
+            f"Expected: {_safe_repr(expected)}",
+            f"Actual: {_safe_repr(actual)}",
         ]
 
         if insight:
