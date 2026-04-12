@@ -5,8 +5,8 @@ from pydantic import ValidationError
 from domain.contracts.user.role import Role
 from domain.contracts.user.role import RoleType
 from domain.contracts.question.question_bank_item import QuestionBankItem
-from domain.contracts.interview_area import InterviewArea
-from domain.contracts.interview_type import InterviewType
+from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.interview.interview_typeimport InterviewType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 

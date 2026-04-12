@@ -9,7 +9,7 @@ from services.question_intelligence.question_retrieval_service import (
 )
 from domain.contracts.user.role import Role
 from domain.contracts.user.role import RoleType
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview.interview_area import InterviewArea
 
 
 def create_mock_document():

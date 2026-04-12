@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from domain.contracts.user.role import Role
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview.interview_area import InterviewArea
 
 
 class RetrievalMetadata(BaseModel):

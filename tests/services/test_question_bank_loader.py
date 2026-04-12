@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from services.question_bank_loader import QuestionBankLoader
 from domain.contracts.user.role import Role, RoleType
-from domain.contracts.interview_area import InterviewArea
-from domain.contracts.interview_type import InterviewType
+from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.interview.interview_typeimport InterviewType
 
 
 def test_load_converts_dict_to_question_bank_item() -> None:

@@ -7,7 +7,7 @@ from domain.contracts.retrieval.retrieval_result import RetrievalResult
 from domain.contracts.retrieval.retrieval_document import RetrievalDocument
 from domain.contracts.retrieval.retrieval_metadata import RetrievalMetadata
 from domain.contracts.user.role import Role, RoleType
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview.interview_area import InterviewArea
 
 
 def test_retrieval_result_empty_valid() -> None:

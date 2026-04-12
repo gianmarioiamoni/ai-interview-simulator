@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from domain.contracts.retrieval.retrieval_query import RetrievalQuery
 from domain.contracts.user.role import Role
 from domain.contracts.user.role import RoleType
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview.interview_area import InterviewArea
 
 
 def test_retrieval_query_valid_defaults() -> None:
