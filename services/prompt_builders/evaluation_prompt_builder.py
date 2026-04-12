@@ -1,7 +1,7 @@
 # services/prompt_builders/evaluation_prompt_builder.py
 
 from domain.contracts.question.question import Question
-from domain.contracts.answer import Answer
+from domain.contracts.interview.answer import Answer
 
 
 def build_evaluation_prompt(question: Question, answer: Answer) -> str:

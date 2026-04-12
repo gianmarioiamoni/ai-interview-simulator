@@ -1,7 +1,7 @@
 # app/ui/state_handlers/submit.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.answer import Answer
+from domain.contracts.interview.answer import Answer
 
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state

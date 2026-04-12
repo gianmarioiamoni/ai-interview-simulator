@@ -13,7 +13,7 @@ class InterviewStateEventsMixin:
 
         if isinstance(event, AnswerSubmittedEvent):
 
-            from domain.contracts.answer import Answer
+            from domain.contracts.interview.answer import Answer
 
             new_state.answers.append(
                 Answer(
