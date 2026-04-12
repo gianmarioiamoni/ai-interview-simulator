@@ -3,7 +3,7 @@
 import os
 from typing import List, Optional
 
-from domain.contracts.coding_spec import CodingSpec
+from domain.contracts.execution.coding_spec import CodingSpec
 
 from .base_block import BaseBlock
 

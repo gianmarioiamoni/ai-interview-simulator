@@ -1,6 +1,6 @@
 # services/coding_engine/harness/strategies/resolver_strategy_factory.py
 
-from domain.contracts.coding_spec import CodingSpec
+from domain.contracts.execution.coding_spec import CodingSpec
 
 from .function_strategy import FunctionResolverStrategy
 from .class_method_strategy import ClassMethodResolverStrategy

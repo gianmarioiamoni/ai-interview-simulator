@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
-from domain.contracts.feedback.feedback.quality import Quality
-from domain.contracts.feedback.feedback.severity import Severity
+from domain.contracts.feedback.quality import Quality
+from domain.contracts.feedback.severity import Severity
 
 
 @dataclass

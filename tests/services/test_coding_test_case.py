@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.execution.coding_test_case import CodingTestCase
 
 
 def test_valid_test_case():

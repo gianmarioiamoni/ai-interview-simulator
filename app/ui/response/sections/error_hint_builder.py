@@ -1,9 +1,9 @@
 # app/ui/response/sections/error_hint_builder.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.test_execution_result import TestStatus, TestType
-from domain.contracts.execution_result import ExecutionStatus
-from domain.contracts.test_execution_result import TestExecutionResult
+from domain.contracts.execution.test_execution_result import TestStatus, TestType
+from domain.contracts.execution.execution_result import ExecutionStatus
+from domain.contracts.execution.test_execution_result import TestExecutionResult
 
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.ui_state import UIState

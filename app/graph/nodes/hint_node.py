@@ -1,10 +1,10 @@
 # app/graph/nodes/hint_node.py
 
-from domain.contracts.feedback.feedback.quality import Quality
+from domain.contracts.feedback.quality import Quality
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.ai_hint import AIHintInput, AIHint
-from domain.contracts.execution_result import ExecutionResult
-from domain.contracts.test_execution_result import TestStatus
+from domain.contracts.execution.execution_result import ExecutionResult
+from domain.contracts.execution.test_execution_result import TestStatus
 from domain.contracts.hint_level import HintLevel
 from domain.policies.hint_policy import HintPolicy
 from domain.contracts.question import QuestionType

@@ -4,7 +4,7 @@ from typing import Optional
 
 from domain.contracts.question import Question, QuestionType
 from domain.contracts.question_evaluation import QuestionEvaluation
-from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.execution.execution_result import ExecutionResult
 from domain.contracts.question_result import QuestionResult
 
 

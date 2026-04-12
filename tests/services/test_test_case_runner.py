@@ -1,6 +1,6 @@
 # tests/services/test_test_case_runner.py
 
-from domain.contracts.test_case import TestCase
+from domain.contracts.execution.test_case import TestCase
 from services.coding_engine.test_case_runner import TestCaseRunner
 
 

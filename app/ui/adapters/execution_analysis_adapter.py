@@ -3,7 +3,7 @@
 from typing import Optional
 
 from services.execution_analysis.execution_analyzer import ExecutionAnalysis
-from domain.contracts.feedback.feedback.error_type import ErrorType
+from domain.contracts.feedback.error_type import ErrorType
 
 
 class ExecutionAnalysisDTO:

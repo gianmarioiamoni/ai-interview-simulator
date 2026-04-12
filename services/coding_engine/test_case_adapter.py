@@ -3,8 +3,8 @@
 import ast
 from typing import List
 
-from domain.contracts.test_case import TestCase
-from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.execution.test_case import TestCase
+from domain.contracts.execution.coding_test_case import CodingTestCase
 
 
 class TestCaseAdapter:

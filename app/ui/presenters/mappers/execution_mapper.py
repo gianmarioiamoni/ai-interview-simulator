@@ -1,7 +1,7 @@
 # app/ui/presenters/mappers/execution_mapper.py
 
 from typing import List
-from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.execution.execution_result import ExecutionResult
 from app.ui.view_models.execution_result_view import ExecutionResultView
 
 

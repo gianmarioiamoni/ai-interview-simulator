@@ -1,8 +1,8 @@
 # services/coding_engine/test_case_runner.py
 
 from typing import List, Optional
-from domain.contracts.coding_test_case import CodingTestCase
-from domain.contracts.coding_spec import CodingSpec
+from domain.contracts.execution.coding_test_case import CodingTestCase
+from domain.contracts.execution.coding_spec import CodingSpec
 
 from services.coding_engine.harness.harness_builder import HarnessBuilder
 

@@ -2,8 +2,8 @@
 
 from typing import List, Optional
 
-from domain.contracts.coding_test_case import CodingTestCase
-from domain.contracts.coding_spec import CodingSpec
+from domain.contracts.execution.coding_test_case import CodingTestCase
+from domain.contracts.execution.coding_spec import CodingSpec
 
 from services.coding_engine.harness.blocks.user_code_block import UserCodeBlock
 from services.coding_engine.harness.blocks.imports_block import ImportsBlock

@@ -6,7 +6,7 @@ from app.graph.nodes.execution_node import ExecutionNode
 from tests.factories.interview_state_factory import build_interview_state
 from tests.factories.question_factory import build_question
 
-from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.execution.execution_result import ExecutionResult
 from domain.contracts.question import QuestionType
 
 

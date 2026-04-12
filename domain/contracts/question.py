@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field
 from enum import Enum
 
 from domain.contracts.interview_area import InterviewArea
-from domain.contracts.coding_test_case import CodingTestCase
-from domain.contracts.coding_spec import CodingSpec
+from domain.contracts.execution.coding_test_case import CodingTestCase
+from domain.contracts.execution.coding_spec import CodingSpec
 
 
 class QuestionType(str, Enum):

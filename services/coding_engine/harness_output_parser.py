@@ -3,12 +3,12 @@
 import json
 from typing import List
 
-from domain.contracts.execution_result import (
+from domain.contracts.execution.execution_result import (
     ExecutionResult,
     ExecutionType,
     ExecutionStatus,
 )
-from domain.contracts.test_execution_result import (
+from domain.contracts.execution.test_execution_result import (
     TestExecutionResult,
     TestStatus,
     TestType,

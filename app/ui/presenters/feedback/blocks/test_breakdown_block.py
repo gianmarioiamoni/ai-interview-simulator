@@ -1,8 +1,8 @@
 # app/ui/presenters/feedback/blocks/test_breakdown_block.py
 
-from domain.contracts.test_execution_result import TestStatus
-from domain.contracts.feedback.feedback.severity import Severity
-from domain.contracts.feedback.feedback.error_type import ErrorType
+from domain.contracts.execution.test_execution_result import TestStatus
+from domain.contracts.feedback.severity import Severity
+from domain.contracts.feedback.error_type import ErrorType
 
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
