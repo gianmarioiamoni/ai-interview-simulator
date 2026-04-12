@@ -1,7 +1,7 @@
 # app/ui/presenters/feedback/blocks/score_block.py
 
 from app.contracts.feedback_bundle import FeedbackBlockResult
-from domain.contracts.severity import Severity
+from domain.contracts.feedback.feedback.severity import Severity
 
 
 class ScoreBlock:

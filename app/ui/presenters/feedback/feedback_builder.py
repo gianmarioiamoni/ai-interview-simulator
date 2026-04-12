@@ -4,7 +4,7 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.question_result import QuestionResult
 from domain.contracts.question_evaluation import QuestionEvaluation
 from domain.contracts.execution_result import ExecutionResult
-from domain.contracts.quality import Quality
+from domain.contracts.feedback.feedback.quality import Quality
 
 from services.feedback_bundle_factory import FeedbackBundleFactory
 

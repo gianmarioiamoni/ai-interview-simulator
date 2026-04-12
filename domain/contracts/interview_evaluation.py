@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from domain.contracts.performance_dimension import PerformanceDimension
 from domain.contracts.question_evaluation import QuestionEvaluation
-from domain.contracts.confidence import Confidence
+from domain.contracts.feedback.feedback.confidence import Confidence
 
 
 class InterviewEvaluation(BaseModel):

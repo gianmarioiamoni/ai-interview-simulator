@@ -1,8 +1,8 @@
 # app/ui/presenters/feedback/blocks/test_breakdown_block.py
 
 from domain.contracts.test_execution_result import TestStatus
-from domain.contracts.severity import Severity
-from domain.contracts.error_type import ErrorType
+from domain.contracts.feedback.feedback.severity import Severity
+from domain.contracts.feedback.feedback.error_type import ErrorType
 
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
@@ -120,28 +120,28 @@ class TestBreakdownBlock:
     def _is_complex_case(self, expected, actual, test) -> bool:
             # Decide whether LLM is worth calling.
             # Keeps cost low and avoids useless explanations.
-    
+
         try:
             # -----------------------------------------------------
             # SKIP trivial scalar mismatches
             # -----------------------------------------------------
-    
+
             if isinstance(expected, (int, float, str, bool)) and isinstance(actual, (int, float, str, bool)):
                 return False
 
             # -----------------------------------------------------
             # SKIP None vs "None" (we handle via heuristic)
             # -----------------------------------------------------
-    
+
             if expected is None and actual == "None":
                 return False
-    
+
             # -----------------------------------------------------
             # SKIP simple list mismatches
             # -----------------------------------------------------
 
             if isinstance(expected, list) and isinstance(actual, list):
-            
+
                 # length mismatch → already handled
                 if len(expected) != len(actual):
                     return False
@@ -153,13 +153,13 @@ class TestBreakdownBlock:
             # -----------------------------------------------------
             # USE LLM for complex structures
             # -----------------------------------------------------
-    
+
             if isinstance(expected, (list, dict)) or isinstance(actual, (list, dict)):
                 return True
 
         except Exception:
             return False
-    
+
         return False
     
     

@@ -2,8 +2,8 @@
 
 from app.contracts.feedback_bundle import FeedbackBlockResult
 
-from domain.contracts.quality import Quality
-from domain.contracts.severity import Severity
+from domain.contracts.feedback.feedback.quality import Quality
+from domain.contracts.feedback.feedback.severity import Severity
 
 
 class SummaryBlock:

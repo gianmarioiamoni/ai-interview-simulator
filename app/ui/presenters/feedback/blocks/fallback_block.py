@@ -1,6 +1,6 @@
 # app/ui/presenters/feedback/blocks/fallback_block.py
 
-from domain.contracts.severity import Severity
+from domain.contracts.feedback.feedback.severity import Severity
 
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,

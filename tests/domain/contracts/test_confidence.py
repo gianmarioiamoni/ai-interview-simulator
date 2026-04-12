@@ -5,7 +5,7 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.confidence import Confidence
+from domain.contracts.feedback.feedback.confidence import Confidence
 
 
 def test_confidence_valid() -> None:

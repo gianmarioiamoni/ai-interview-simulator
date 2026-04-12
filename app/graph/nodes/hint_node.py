@@ -1,6 +1,6 @@
 # app/graph/nodes/hint_node.py
 
-from domain.contracts.quality import Quality
+from domain.contracts.feedback.feedback.quality import Quality
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.ai_hint import AIHintInput, AIHint
 from domain.contracts.execution_result import ExecutionResult

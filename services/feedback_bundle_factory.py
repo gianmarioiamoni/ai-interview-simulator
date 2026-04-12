@@ -1,6 +1,6 @@
 # services/feedback_bundle_factory.py
 
-from domain.contracts.feedback import FeedbackBundle
+from domain.contracts.feedback.feedback import FeedbackBundle
 
 from services.feedback_aggregation import (
     compute_overall_confidence,

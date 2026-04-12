@@ -3,9 +3,9 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.evaluation_report import EvaluationReport
+from domain.contracts.feedback.feedback.evaluation_report import EvaluationReport
 from domain.contracts.question_evaluation import QuestionEvaluation
-from domain.contracts.confidence import Confidence
+from domain.contracts.feedback.feedback.confidence import Confidence
 
 
 def _evaluation() -> QuestionEvaluation:

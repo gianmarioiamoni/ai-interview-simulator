@@ -7,7 +7,7 @@ from app.contracts.feedback_bundle import (
 )
 from services.answer_improvement.answer_improver import AnswerImprover
 
-from domain.contracts.severity import Severity
+from domain.contracts.feedback.feedback.severity import Severity
 
 
 class WrittenBlock:
