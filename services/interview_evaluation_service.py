@@ -28,6 +28,7 @@ from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.question.question import Question
 from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION, ALLOWED_DIMENSIONS, ROLE_WEIGHTS
 
+from services.interview_scoring.interview_scoring_engine import InterviewScoringEngine
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class InterviewEvaluationService:
 
     def __init__(self, llm: LLMPort) -> None:
         self._llm = llm
+        self._scoring_engine = InterviewScoringEngine()
 
     # ---------------------------------------------------------
     # PUBLIC API
@@ -52,33 +54,23 @@ class InterviewEvaluationService:
         if not per_question_evaluations:
             raise ValueError("Cannot evaluate interview without question evaluations")
 
+        scoring = self._scoring_engine.compute(
+            questions=questions,
+            evaluations=per_question_evaluations,
+            role=role,
+        )
         # 1️⃣ Dimension scoring
-        dimension_scores = self._compute_dimension_scores(
-            questions,
-            per_question_evaluations,
-        )
+        dimension_scores = scoring.dimension_scores
+        weighted_breakdown = scoring.weighted_breakdown
 
-        # 2️⃣ Weighted breakdown
-        weighted_breakdown = self._compute_weighted_breakdown(
-            dimension_scores,
-            role,
-        )
-
-        overall_score = round(sum(weighted_breakdown.values()), 1)
+        overall_score = scoring.overall_score
 
         # 3️⃣ Gating
-        gating_triggered, gating_reason = self._apply_gating_rule(
-            dimension_scores,
-            role,
-        )
-
-        if gating_triggered:
-            hiring_probability = 0.0
-        else:
-            hiring_probability = self._compute_hiring_probability(overall_score)
+        gating_triggered, gating_reason = scoring.gating_triggered, scoring.gating_reason
+        hiring_probability = scoring.hiring_probability
 
         # 4️⃣ Percentile (deterministic analytical)
-        percentile = self._compute_percentile(overall_score, role)
+        percentile = scoring.percentile
 
         dist_params = ROLE_DISTRIBUTION[role]
         percentile_explanation = (
@@ -87,7 +79,7 @@ class InterviewEvaluationService:
         )
 
         # 5️⃣ Confidence
-        confidence = self._compute_confidence(per_question_evaluations)
+        confidence = Confidence(base=scoring.confidence, final=scoring.confidence)
 
         # 6️⃣ Executive summary
         executive_summary = self._generate_executive_summary(
