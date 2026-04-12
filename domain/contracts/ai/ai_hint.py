@@ -3,7 +3,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
-from domain.contracts.hint_level import HintLevel
+from domain.contracts.ai.hint_level import HintLevel
 
 
 class AIHintInput(BaseModel):

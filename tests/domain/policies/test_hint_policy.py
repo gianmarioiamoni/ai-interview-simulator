@@ -1,7 +1,7 @@
 # tests/domain/policies/test_hint_policy.py
 
 from domain.policies.hint_policy import HintPolicy
-from domain.contracts.hint_level import HintLevel
+from domain.contracts.ai.hint_level import HintLevel
 
 
 def test_hint_level_error_progression():
