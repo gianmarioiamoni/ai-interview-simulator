@@ -3,7 +3,7 @@
 from pydantic import BaseModel, Field
 from typing import List
 
-from domain.contracts.retrieval_document import RetrievalDocument
+from domain.contracts.retrieval.retrieval_document import RetrievalDocument
 
 
 class RetrievalResult(BaseModel):
