@@ -1,7 +1,7 @@
 # app/ui/response/sections/feedback_section.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.quality import Quality
+from domain.contracts.feedback.feedback.quality import Quality
 
 
 class FeedbackSection:

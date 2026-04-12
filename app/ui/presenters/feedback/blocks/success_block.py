@@ -5,7 +5,7 @@ from app.contracts.feedback_bundle import (
     LearningSuggestion,
     FeedbackBlockResult,
 )
-from domain.contracts.severity import Severity
+from domain.contracts.feedback.feedback.severity import Severity
 
 
 class SuccessBlock:

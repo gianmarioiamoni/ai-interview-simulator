@@ -1,6 +1,6 @@
 # services/score_calculator.py
 
-from domain.contracts.quality import Quality
+from domain.contracts.feedback.feedback.quality import Quality
 
 
 class ScoreCalculator:

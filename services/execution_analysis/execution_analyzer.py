@@ -4,7 +4,7 @@ from typing import Optional
 
 from domain.contracts.execution_result import ExecutionResult, ExecutionStatus
 from domain.contracts.test_execution_result import TestStatus
-from domain.contracts.error_type import ErrorType
+from domain.contracts.feedback.feedback.error_type import ErrorType
 
 
 class ExecutionAnalysis:

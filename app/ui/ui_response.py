@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from app.ui.ui_router import route_ui
 from app.ui.ui_state import UIState
-from domain.contracts.quality import Quality
+from domain.contracts.feedback.feedback.quality import Quality
 
 
 @dataclass
