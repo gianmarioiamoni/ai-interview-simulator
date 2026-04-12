@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.retrieval_query import RetrievalQuery
+from domain.contracts.retrieval.retrieval_query import RetrievalQuery
 from domain.contracts.role import Role
 from domain.contracts.role import RoleType
 from domain.contracts.interview_area import InterviewArea

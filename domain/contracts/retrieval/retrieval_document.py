@@ -11,7 +11,7 @@
 
 from pydantic import BaseModel, Field
 
-from domain.contracts.retrieval_metadata import RetrievalMetadata
+from domain.contracts.retrieval.retrieval_metadata import RetrievalMetadata
 
 
 class RetrievalDocument(BaseModel):
