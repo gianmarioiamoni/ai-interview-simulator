@@ -7,7 +7,7 @@ from unittest.mock import Mock
 from services.interview_evaluation_service import (
     InterviewEvaluationService,
 )
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.performance_dimension import PerformanceDimension
 

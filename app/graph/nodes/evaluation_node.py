@@ -1,8 +1,8 @@
 # app/graph/nodes/evaluation_node.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question import QuestionType
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question import QuestionType
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 
 
 class EvaluationNode:

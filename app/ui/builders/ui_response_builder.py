@@ -2,7 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.feedback.quality import Quality
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.views.report_view import build_report_markdown

@@ -9,7 +9,7 @@
 import json
 from typing import List
 
-from domain.contracts.generated_question import GeneratedQuestion
+from domain.contracts.question.generated_question import GeneratedQuestion
 from infrastructure.llm.llm_factory import get_llm
 
 

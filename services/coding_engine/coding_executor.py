@@ -1,6 +1,6 @@
 # services/coding_engine/coding_executor.py
 
-from domain.contracts.question import Question
+from domain.contracts.question.question import Question
 from domain.contracts.execution.execution_result import (
     ExecutionResult,
     ExecutionType,

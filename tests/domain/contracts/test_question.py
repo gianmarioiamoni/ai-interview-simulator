@@ -5,7 +5,7 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.question import Question, QuestionType
+from domain.contracts.question.question import Question, QuestionType
 from domain.contracts.interview_area import InterviewArea
 
 

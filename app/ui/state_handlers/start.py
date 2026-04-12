@@ -2,7 +2,7 @@
 
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import RoleType
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 from domain.contracts.interview_state import InterviewState
 
 from app.ui.sample_data_loader import load_sample_questions

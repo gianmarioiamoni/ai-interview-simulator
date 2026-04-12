@@ -3,7 +3,7 @@
 from langgraph.graph import StateGraph, END
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 from domain.contracts.action_type import ActionType
 
 from app.graph.nodes.execution_node import ExecutionNode

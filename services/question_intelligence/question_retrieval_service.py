@@ -11,7 +11,7 @@ from typing import List, Optional
 
 from langchain_core.documents import Document
 
-from domain.contracts.question_bank_item import QuestionBankItem
+from domain.contracts.question.question_bank_item import QuestionBankItem
 from services.question_intelligence.question_vector_store import (
     QuestionVectorStore,
 )

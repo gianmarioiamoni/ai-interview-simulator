@@ -1,7 +1,7 @@
 # domain/services/evaluation_aggregator.py
 
 from typing import List, Dict
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 
 
 class EvaluationAggregator:

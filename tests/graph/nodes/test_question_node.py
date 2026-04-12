@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 from app.graph.nodes.question_node import build_question_node
 from tests.factories.interview_state_factory import build_interview_state
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 
 
 def test_question_node_no_question():

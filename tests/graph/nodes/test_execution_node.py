@@ -7,7 +7,7 @@ from tests.factories.interview_state_factory import build_interview_state
 from tests.factories.question_factory import build_question
 
 from domain.contracts.execution.execution_result import ExecutionResult
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 
 
 def test_execution_node_success() -> None:

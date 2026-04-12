@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.generated_question import GeneratedQuestion
+from domain.contracts.question.generated_question import GeneratedQuestion
 
 
 def test_valid_generated_question():

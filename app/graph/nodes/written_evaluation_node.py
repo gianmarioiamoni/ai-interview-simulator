@@ -4,7 +4,7 @@ from domain.contracts.interview_state import InterviewState
 
 from services.prompt_builders.evaluation_prompt_builder import build_evaluation_prompt
 
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.evaluation_decision import EvaluationDecision
 
 
@@ -57,7 +57,7 @@ class WrittenEvaluationNode:
         new_results = dict(state.results_by_question)
 
         if result is None:
-            from domain.contracts.question_result import QuestionResult
+            from domain.contracts.question.question_result import QuestionResult
 
             result = QuestionResult(question_id=question.id)
 

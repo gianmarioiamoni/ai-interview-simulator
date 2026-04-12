@@ -5,7 +5,7 @@ import time
 import traceback
 import logging
 
-from domain.contracts.question import Question
+from domain.contracts.question.question import Question
 from domain.contracts.execution.execution_result import (
     ExecutionResult,
     ExecutionType,

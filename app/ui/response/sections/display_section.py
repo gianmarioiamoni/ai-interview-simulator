@@ -1,7 +1,7 @@
 # app/ui/response/sections/display_section.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.ui_state import UIState

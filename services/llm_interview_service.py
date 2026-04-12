@@ -1,6 +1,6 @@
 # services/llm_interview_service.py
 
-from domain.contracts.question import Question
+from domain.contracts.question.question import Question
 from infrastructure.llm.openai_client import OpenAIClient
 
 

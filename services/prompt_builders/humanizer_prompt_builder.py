@@ -1,6 +1,6 @@
 # services/prompt_builders/humanizer_prompt_builder.py
 
-from domain.contracts.question import Question
+from domain.contracts.question.question import Question
 
 
 def build_humanizer_prompt(

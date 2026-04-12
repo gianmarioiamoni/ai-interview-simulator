@@ -5,8 +5,8 @@ import logging
 import os
 
 from openai import OpenAI
-from domain.contracts.question import Question
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question import Question
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 
 logger = logging.getLogger(__name__)
 

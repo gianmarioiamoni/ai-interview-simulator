@@ -3,7 +3,7 @@
 from typing import List
 
 from domain.contracts.interview_type import InterviewType
-from domain.contracts.question import (
+from domain.contracts.question.question import (
     Question,
     QuestionType,
     QuestionDifficulty,

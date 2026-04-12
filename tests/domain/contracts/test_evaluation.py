@@ -5,7 +5,7 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 
 
 def test_evaluation_score_valid() -> None:

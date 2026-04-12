@@ -9,9 +9,9 @@ from domain.contracts.execution.execution_result import (
     ExecutionStatus,
     ExecutionType,
 )
-from domain.contracts.question import Question, QuestionType, QuestionDifficulty
+from domain.contracts.question.question import Question, QuestionType, QuestionDifficulty
 from domain.contracts.interview_area import InterviewArea
-from domain.contracts.question_result import QuestionResult
+from domain.contracts.question.question_result import QuestionResult
 from app.contracts.feedback_bundle import FeedbackBundle
 
 

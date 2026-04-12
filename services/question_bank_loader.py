@@ -3,7 +3,7 @@
 import uuid
 from typing import List
 
-from domain.contracts.question_bank_item import QuestionBankItem
+from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.interview_area import InterviewArea
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.role import Role, RoleType
