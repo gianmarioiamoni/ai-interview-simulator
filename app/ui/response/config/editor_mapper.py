@@ -1,6 +1,6 @@
 # app/ui/response/config/editor_mapper.py
 
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.ui_state import UIState

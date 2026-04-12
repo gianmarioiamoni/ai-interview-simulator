@@ -1,6 +1,6 @@
 # app/ui/response/config/visibility_mapper.py
 
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.types.ui_fields import VisibilityFields
 

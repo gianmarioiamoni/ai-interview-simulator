@@ -2,8 +2,8 @@
 
 from unittest.mock import MagicMock
 
-from domain.contracts.generated_question import GeneratedQuestion
-from domain.contracts.question_bank_item import QuestionBankItem
+from domain.contracts.question.generated_question import GeneratedQuestion
+from domain.contracts.question.question_bank_item import QuestionBankItem
 from services.question_intelligence.question_selection_service import (
     QuestionSelectionService,
 )

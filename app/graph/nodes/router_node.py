@@ -1,7 +1,7 @@
 # app/graph/nodes/router_node.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 
 
 def router_node(state: InterviewState) -> str:

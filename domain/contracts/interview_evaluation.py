@@ -4,7 +4,7 @@ from typing import List, Optional, Dict
 from pydantic import BaseModel, Field
 
 from domain.contracts.performance_dimension import PerformanceDimension
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.confidence import Confidence
 
 

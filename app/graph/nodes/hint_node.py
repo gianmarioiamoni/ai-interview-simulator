@@ -7,7 +7,7 @@ from domain.contracts.execution.execution_result import ExecutionResult
 from domain.contracts.execution.test_execution_result import TestStatus
 from domain.contracts.hint_level import HintLevel
 from domain.policies.hint_policy import HintPolicy
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 
 from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.hint_rules.sql_hint_rules import SQLHintRules

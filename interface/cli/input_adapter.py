@@ -8,7 +8,7 @@
 # - No direct state modifications
 # - Return raw data
 
-from domain.contracts.question import Question
+from domain.contracts.question.question import Question
 
 
 class CLIInputAdapter:

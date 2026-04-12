@@ -3,7 +3,7 @@
 from sqlite3 import Connection
 from typing import List
 
-from domain.contracts.question_bank_item import QuestionBankItem
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
 
 class QuestionBankRepository:

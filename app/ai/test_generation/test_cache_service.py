@@ -5,7 +5,7 @@ import hashlib
 from pathlib import Path
 from typing import List, Optional
 
-from domain.contracts.question import Question
+from domain.contracts.question.question import Question
 from domain.contracts.execution.coding_test_case import CodingTestCase
 
 

@@ -1,8 +1,8 @@
 # app/ui/presenters/feedback/feedback_builder.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question_result import QuestionResult
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_result import QuestionResult
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.execution.execution_result import ExecutionResult
 from domain.contracts.feedback.quality import Quality
 

@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field, model_validator
 
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.confidence import Confidence
 
 

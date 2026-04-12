@@ -29,7 +29,7 @@ def test_written_eval_idempotent():
     q = state.current_question
 
     # simulate existing evaluation
-    from domain.contracts.question_result import QuestionResult
+    from domain.contracts.question.question_result import QuestionResult
 
     result = QuestionResult(question_id=q.id)
     result = result.model_copy(update={"evaluation": Mock()})

@@ -1,7 +1,7 @@
 # services/evaluation_engine.py
 
-from domain.contracts.question import Question
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question import Question
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 
 from services.question_evaluation_service import QuestionEvaluationService
 

@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock
 
-from domain.contracts.question import Question, QuestionType
+from domain.contracts.question.question import Question, QuestionType
 from services.question_intelligence.question_set_builder import (
     QuestionSetBuilder,
 )

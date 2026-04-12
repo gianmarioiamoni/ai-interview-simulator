@@ -8,7 +8,7 @@
 
 from typing import List
 
-from domain.contracts.question import Question
+from domain.contracts.question.question import Question
 from services.question_intelligence.question_selection_service import (
     QuestionSelectionService,
 )

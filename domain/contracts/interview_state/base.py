@@ -3,9 +3,9 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Any
 
-from domain.contracts.question import Question
+from domain.contracts.question.question import Question
 from domain.contracts.answer import Answer
-from domain.contracts.question_result import QuestionResult
+from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.interview_evaluation import InterviewEvaluation

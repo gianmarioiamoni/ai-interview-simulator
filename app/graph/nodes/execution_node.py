@@ -1,7 +1,7 @@
 # app/graph/nodes/execution_node.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 from services.execution_engine import ExecutionEngine
 
 
@@ -62,7 +62,7 @@ class ExecutionNode:
         result = new_results.get(question.id)
 
         if result is None:
-            from domain.contracts.question_result import QuestionResult
+            from domain.contracts.question.question_result import QuestionResult
 
             result = QuestionResult(
                 question_id=question.id,

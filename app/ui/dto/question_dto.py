@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from domain.contracts.question import QuestionType
+from domain.contracts.question.question import QuestionType
 
 
 @dataclass

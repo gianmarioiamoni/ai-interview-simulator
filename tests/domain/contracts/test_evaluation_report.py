@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from domain.contracts.feedback.evaluation_report import EvaluationReport
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.confidence import Confidence
 
 

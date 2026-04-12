@@ -2,8 +2,8 @@
 
 from typing import List
 
-from domain.contracts.question import Question
-from domain.contracts.question import QuestionDifficulty
+from domain.contracts.question.question import Question
+from domain.contracts.question.question import QuestionDifficulty
 
 
 class NavigationPolicy:

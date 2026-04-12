@@ -2,7 +2,7 @@
 
 import os
 from openai import OpenAI
-from domain.contracts.question import Question
+from domain.contracts.question.question import Question
 
 
 class SimpleLLMFeedbackService:

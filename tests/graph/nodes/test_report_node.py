@@ -5,8 +5,8 @@ from unittest.mock import Mock
 from app.graph.nodes.report_node import report_node
 from tests.factories.interview_state_factory import build_interview_state
 
-from domain.contracts.question_result import QuestionResult
-from domain.contracts.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_result import QuestionResult
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 
 
 def test_report_node_builds_report():
