@@ -6,8 +6,8 @@ from pydantic import BaseModel
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.execution.execution_result import ExecutionResult
-from domain.contracts.ai_hint import AIHint
-from domain.contracts.hint_level import HintLevel
+from domain.contracts.ai.ai_hint import AIHint
+from domain.contracts.ai.hint_level import HintLevel
 
 
 class QuestionResult(BaseModel):

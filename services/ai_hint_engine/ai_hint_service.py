@@ -2,7 +2,7 @@
 
 import json
 from typing import Optional
-from domain.contracts.ai_hint import AIHintInput, AIHint
+from domain.contracts.ai.ai_hint import AIHintInput, AIHint
 from infrastructure.llm.llm_factory import get_llm
 
 
