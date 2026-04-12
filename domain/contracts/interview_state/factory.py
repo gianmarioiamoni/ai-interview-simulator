@@ -2,11 +2,11 @@
 
 from typing import Self
 
-from domain.contracts.role import Role
+from domain.contracts.user.role import Role
 from domain.contracts.interview_type import InterviewType
 from domain.contracts.question.question import Question
 from domain.contracts.interview_progress import InterviewProgress
-from domain.contracts.role import RoleType
+from domain.contracts.user.role import RoleType
 
 
 class InterviewStateFactoryMixin:

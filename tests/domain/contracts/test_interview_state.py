@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.role import Role, RoleType
+from domain.contracts.user.role import Role, RoleType
 
 
 def _base_state() -> dict:

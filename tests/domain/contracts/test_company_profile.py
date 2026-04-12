@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.company_profile import CompanyProfile, CompanyType
+from domain.contracts.user.company_profile import CompanyProfile, CompanyType
 
 
 def test_company_profile_valid_standard() -> None:

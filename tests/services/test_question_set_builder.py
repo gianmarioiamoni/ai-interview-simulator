@@ -6,8 +6,8 @@ from domain.contracts.question.question import Question, QuestionType
 from services.question_intelligence.question_set_builder import (
     QuestionSetBuilder,
 )
-from domain.contracts.role import Role
-from domain.contracts.role import RoleType
+from domain.contracts.user.role import Role
+from domain.contracts.user.role import RoleType
 
 
 def create_fake_questions(area: str):

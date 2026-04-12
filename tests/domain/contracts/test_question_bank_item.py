@@ -2,12 +2,12 @@
 
 import pytest
 from pydantic import ValidationError
-from domain.contracts.role import Role
-from domain.contracts.role import RoleType
+from domain.contracts.user.role import Role
+from domain.contracts.user.role import RoleType
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.interview_area import InterviewArea
 from domain.contracts.interview_type import InterviewType
-from domain.contracts.seniority_level import SeniorityLevel
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 
 def test_question_bank_item_is_immutable():

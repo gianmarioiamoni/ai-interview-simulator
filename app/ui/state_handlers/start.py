@@ -1,7 +1,7 @@
 # app/ui/state_handlers/start.py
 
 from domain.contracts.interview_type import InterviewType
-from domain.contracts.role import RoleType
+from domain.contracts.user.role import RoleType
 from domain.contracts.question.question import QuestionType
 from domain.contracts.interview_state import InterviewState
 

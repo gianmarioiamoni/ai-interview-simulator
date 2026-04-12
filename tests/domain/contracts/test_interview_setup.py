@@ -4,8 +4,8 @@ import pytest
 from pydantic import ValidationError
 
 from domain.contracts.interview_setup import InterviewSetup
-from domain.contracts.role import Role, RoleType
-from domain.contracts.company_profile import CompanyProfile, CompanyType
+from domain.contracts.user.role import Role, RoleType
+from domain.contracts.user.company_profile import CompanyProfile, CompanyType
 from domain.contracts.interview_type import InterviewType
 
 

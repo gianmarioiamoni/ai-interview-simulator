@@ -26,7 +26,7 @@ from domain.contracts.performance_dimension import PerformanceDimension
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.question.question import Question
-from domain.contracts.role import RoleType, ROLE_DISTRIBUTION, ALLOWED_DIMENSIONS, ROLE_WEIGHTS
+from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION, ALLOWED_DIMENSIONS, ROLE_WEIGHTS
 
 
 logger = logging.getLogger(__name__)

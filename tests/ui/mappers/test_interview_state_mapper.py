@@ -7,8 +7,8 @@ from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.question.question import QuestionType
-from domain.contracts.role import Role
-from domain.contracts.role import RoleType
+from domain.contracts.user.role import Role
+from domain.contracts.user.role import RoleType
 
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
