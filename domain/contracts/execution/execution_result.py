@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional
 from typing import List
 
-from domain.contracts.test_execution_result import TestExecutionResult
+from domain.contracts.execution.test_execution_result import TestExecutionResult
 
 from pydantic import BaseModel, Field, model_validator
 

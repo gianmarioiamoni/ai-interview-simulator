@@ -4,7 +4,7 @@ import re
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.action_type import ActionType
-from domain.contracts.feedback.feedback.quality import Quality
+from domain.contracts.feedback.quality import Quality
 
 from app.ui.ui_state import UIState
 from app.ui.types.ui_fields import ButtonState

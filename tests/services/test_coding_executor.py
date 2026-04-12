@@ -2,8 +2,8 @@
 
 from unittest.mock import MagicMock
 
-from domain.contracts.execution_result import ExecutionStatus
-from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.execution.execution_result import ExecutionStatus
+from domain.contracts.execution.coding_test_case import CodingTestCase
 from services.coding_engine.coding_executor import CodingExecutor
 
 

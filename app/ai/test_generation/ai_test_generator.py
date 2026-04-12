@@ -5,9 +5,9 @@ from typing import List
 
 from pydantic import BaseModel, Field, ValidationError
 
-from domain.contracts.coding_test_case import CodingTestCase
+from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.question import Question
-from domain.contracts.coding_spec import CodingSpec
+from domain.contracts.execution.coding_spec import CodingSpec
 
 from infrastructure.llm.llm_factory import get_llm
 

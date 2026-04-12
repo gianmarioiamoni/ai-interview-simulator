@@ -1,6 +1,6 @@
 # services/feedback_aggregation.py
 
-from domain.contracts.feedback.feedback.severity import Severity
+from domain.contracts.feedback.severity import Severity
 
 
 def compute_overall_confidence(blocks) -> float:

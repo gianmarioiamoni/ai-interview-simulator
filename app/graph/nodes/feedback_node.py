@@ -1,7 +1,7 @@
 # app/graph/nodes/feedback_node.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.feedback.feedback.quality import Quality
+from domain.contracts.feedback.quality import Quality
 
 from services.score_calculator import ScoreCalculator
 

@@ -1,6 +1,6 @@
 # app/core/evaluation/execution_score_policy.py
 
-from domain.contracts.execution_result import ExecutionResult, ExecutionStatus
+from domain.contracts.execution.execution_result import ExecutionResult, ExecutionStatus
 from domain.contracts.question_evaluation import QuestionEvaluation
 
 

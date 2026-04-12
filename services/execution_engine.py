@@ -2,7 +2,7 @@
 
 from domain.contracts.question import QuestionType
 from domain.contracts.question import Question
-from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.execution.execution_result import ExecutionResult
 
 from services.coding_engine.coding_executor import CodingExecutor
 from services.sql_engine.sql_executor import SQLExecutor

@@ -5,7 +5,7 @@ from domain.contracts.interview_state import InterviewState
 from services.prompt_builders.evaluation_prompt_builder import build_evaluation_prompt
 
 from domain.contracts.question_evaluation import QuestionEvaluation
-from domain.contracts.feedback.feedback.evaluation_decision import EvaluationDecision
+from domain.contracts.feedback.evaluation_decision import EvaluationDecision
 
 
 class WrittenEvaluationNode:

@@ -2,7 +2,7 @@
 
 from services.sql_engine.sql_database import SQLDatabase
 from services.sql_engine.sql_execution_service import SQLExecutionService
-from domain.contracts.execution_result import ExecutionStatus
+from domain.contracts.execution.execution_result import ExecutionStatus
 
 
 def test_successful_query_validation():

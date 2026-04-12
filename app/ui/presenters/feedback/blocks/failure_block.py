@@ -1,7 +1,7 @@
 # app/ui/presenters/feedback/blocks/failure_block.py
 
-from domain.contracts.feedback.feedback.severity import Severity
-from domain.contracts.feedback.feedback.error_type import ErrorType
+from domain.contracts.feedback.severity import Severity
+from domain.contracts.feedback.error_type import ErrorType
 
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,

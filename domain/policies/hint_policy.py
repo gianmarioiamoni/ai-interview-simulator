@@ -1,7 +1,7 @@
 # domain/policies/hint_policy.py
 
 from domain.contracts.hint_level import HintLevel
-from domain.contracts.feedback.feedback.quality import Quality
+from domain.contracts.feedback.quality import Quality
 
 
 class HintPolicy:

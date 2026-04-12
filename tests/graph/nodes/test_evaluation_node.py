@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 from app.graph.nodes.evaluation_node import EvaluationNode
 from tests.factories.interview_state_factory import build_interview_state
-from domain.contracts.execution_result import ExecutionResult
+from domain.contracts.execution.execution_result import ExecutionResult
 from tests.factories.interview_state_factory import build_state_with_execution
 
 

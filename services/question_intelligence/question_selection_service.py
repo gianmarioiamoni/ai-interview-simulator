@@ -6,8 +6,8 @@ from typing import List
 from domain.contracts.question import Question, QuestionType
 from domain.contracts.generated_question import GeneratedQuestion
 from domain.contracts.question_bank_item import QuestionBankItem
-from domain.contracts.coding_test_case import CodingTestCase
-from domain.contracts.coding_spec import CodingSpec
+from domain.contracts.execution.coding_test_case import CodingTestCase
+from domain.contracts.execution.coding_spec import CodingSpec
 
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
