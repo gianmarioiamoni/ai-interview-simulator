@@ -2,7 +2,7 @@
 
 from app.graph.nodes.navigation_node import navigation_node
 from tests.factories.interview_state_factory import build_interview_state
-from domain.contracts.action_type import ActionType
+from domain.contracts.shared.action_type import ActionType
 
 
 def test_navigation_next_moves_forward():
