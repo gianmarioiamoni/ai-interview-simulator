@@ -3,7 +3,7 @@
 from typing import Optional
 
 from domain.contracts.question.question import Question
-from domain.contracts.answer import Answer
+from domain.contracts.interview.answer import Answer
 
 
 class InterviewStateComputedMixin:
