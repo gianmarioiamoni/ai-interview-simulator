@@ -1,7 +1,7 @@
 # domain/contracts/retry.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.action_type import ActionType
+from domain.contracts.shared.action_type import ActionType
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 from app.ui.ui_response import UIResponse

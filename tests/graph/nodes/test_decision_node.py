@@ -2,7 +2,7 @@
 
 from app.graph.nodes.decision_node import DecisionNode
 from tests.factories.interview_state_factory import build_state_with_execution
-from domain.contracts.action_type import ActionType
+from domain.contracts.shared.action_type import ActionType
 
 
 def test_retry_when_failed_first_attempt():

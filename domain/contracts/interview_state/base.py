@@ -10,7 +10,7 @@ from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.interview.interview_typeimport InterviewType
 from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.user.role import Role
-from domain.contracts.action_type import ActionType
+from domain.contracts.shared.action_type import ActionType
 from app.contracts.feedback_bundle import FeedbackBundle
 
 

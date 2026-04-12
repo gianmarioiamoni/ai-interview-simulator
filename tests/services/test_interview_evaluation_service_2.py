@@ -9,7 +9,7 @@ from services.interview_evaluation_service import (
 )
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.interview_evaluation import InterviewEvaluation
-from domain.contracts.performance_dimension import PerformanceDimension
+from domain.contracts.shared.performance_dimension import PerformanceDimension
 
 # ------------------------------------------------------------------
 # Helpers

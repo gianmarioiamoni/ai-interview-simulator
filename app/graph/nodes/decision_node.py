@@ -2,7 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.policies.decision_policy import DecisionPolicy
-from domain.contracts.action_type import ActionType
+from domain.contracts.shared.action_type import ActionType
 
 
 class DecisionNode:

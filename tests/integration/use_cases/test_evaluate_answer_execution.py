@@ -8,7 +8,7 @@ from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.graph.interview_graph import build_interview_graph
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.action_type import ActionType
+from domain.contracts.shared.action_type import ActionType
 
 from tests.factories.interview_state_factory import build_interview_state
 

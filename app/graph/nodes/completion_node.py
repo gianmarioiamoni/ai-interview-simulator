@@ -1,7 +1,7 @@
 # app/graph/nodes/completion_node.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.action_type import ActionType
+from domain.contracts.shared.action_type import ActionType
 
 
 def completion_node(state: InterviewState) -> InterviewState:
