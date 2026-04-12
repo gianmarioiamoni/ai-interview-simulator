@@ -7,8 +7,8 @@ from langchain_core.documents import Document
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
 )
-from domain.contracts.role import Role
-from domain.contracts.role import RoleType
+from domain.contracts.user.role import Role
+from domain.contracts.user.role import RoleType
 from domain.contracts.interview_area import InterviewArea
 
 

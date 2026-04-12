@@ -2,7 +2,7 @@
 
 import gradio as gr
 
-from domain.contracts.role import RoleType
+from domain.contracts.user.role import RoleType
 from domain.contracts.interview_type import InterviewType
 
 

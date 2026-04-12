@@ -3,8 +3,8 @@
 import pytest
 from domain.contracts.interview_progress import InterviewProgress
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.role import Role
-from domain.contracts.role import RoleType
+from domain.contracts.user.role import Role
+from domain.contracts.user.role import RoleType
 
 
 def test_default_progress_is_setup() -> None:

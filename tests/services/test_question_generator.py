@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 from services.question_intelligence.question_generator import (
     QuestionGenerator,
 )
-from domain.contracts.role import Role
-from domain.contracts.role import RoleType
+from domain.contracts.user.role import Role
+from domain.contracts.user.role import RoleType
 from domain.contracts.interview_area import InterviewArea
 
 

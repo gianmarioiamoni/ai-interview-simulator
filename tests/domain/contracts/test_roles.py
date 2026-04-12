@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.role import Role, RoleType
+from domain.contracts.user.role import Role, RoleType
 
 
 def test_role_valid_standard() -> None:

@@ -2,8 +2,8 @@ from pydantic import BaseModel, Field
 
 from domain.contracts.interview_area import InterviewArea
 from domain.contracts.interview_type import InterviewType
-from domain.contracts.role import Role
-from domain.contracts.seniority_level import SeniorityLevel
+from domain.contracts.user.role import Role
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 
 class QuestionBankItem(BaseModel):
