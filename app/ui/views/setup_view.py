@@ -3,7 +3,7 @@
 import gradio as gr
 
 from domain.contracts.user.role import RoleType
-from domain.contracts.interview.interview_typeimport InterviewType
+from domain.contracts.interview.interview_type import InterviewType
 
 
 class SetupView:
