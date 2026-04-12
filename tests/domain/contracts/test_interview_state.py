@@ -29,7 +29,7 @@ def test_follow_up_count_invalid() -> None:
 
 
 def test_interview_state_minimal_instantiation() -> None:
-    from domain.contracts.interview_progress import InterviewProgress
+    from domain.contracts.interview.interview_progress import InterviewProgress
     
     state = InterviewState(
         interview_id="int-1",

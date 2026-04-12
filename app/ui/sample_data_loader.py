@@ -2,7 +2,7 @@
 
 from typing import List
 
-from domain.contracts.interview.interview_typeimport InterviewType
+from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.question.question import (
     Question,
     QuestionType,
@@ -10,7 +10,7 @@ from domain.contracts.question.question import (
 )
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.execution.coding_test_case import CodingTestCase
-from domain.contracts.execution.coding_spec import CodingSpec  # ✅ NEW
+from domain.contracts.execution.coding_spec import CodingSpec
 
 
 def load_sample_questions(interview_type: InterviewType) -> List[Question]:
@@ -49,7 +49,7 @@ def _load_technical_questions() -> List[Question]:
             ),
             difficulty=QuestionDifficulty.HARD,
             # =====================================================
-            # ✅ CODING SPEC (NEW - REQUIRED)
+            # CODING SPEC (NEW - REQUIRED)
             # =====================================================
             coding_spec=CodingSpec(
                 type="function",

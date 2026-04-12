@@ -1,7 +1,7 @@
 # tests/domain/contracts/test_interview_progress.py
 
 import pytest
-from domain.contracts.interview_progress import InterviewProgress
+from domain.contracts.interview.interview_progress import InterviewProgress
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.user.role import Role
 from domain.contracts.user.role import RoleType

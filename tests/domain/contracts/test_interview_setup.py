@@ -3,10 +3,10 @@
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.interview_setup import InterviewSetup
+from domain.contracts.interview.interview_setup import InterviewSetup
 from domain.contracts.user.role import Role, RoleType
 from domain.contracts.user.company_profile import CompanyProfile, CompanyType
-from domain.contracts.interview.interview_typeimport InterviewType
+from domain.contracts.interview.interview_type import InterviewType
 
 
 def test_interview_setup_valid() -> None:
