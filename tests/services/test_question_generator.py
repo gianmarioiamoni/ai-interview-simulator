@@ -7,7 +7,7 @@ from services.question_intelligence.question_generator import (
 )
 from domain.contracts.user.role import Role
 from domain.contracts.user.role import RoleType
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview.interview_area import InterviewArea
 
 
 def test_generate_parses_and_validates_output():

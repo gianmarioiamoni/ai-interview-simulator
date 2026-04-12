@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from domain.contracts.question.question import Question, QuestionType
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview.interview_area import InterviewArea
 
 
 def test_question_valid_difficulty_range() -> None:

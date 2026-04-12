@@ -3,14 +3,14 @@
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.answer import Answer
 from domain.contracts.user.role import Role, RoleType
-from domain.contracts.interview_type import InterviewType
+from domain.contracts.interview.interview_typeimport InterviewType
 from domain.contracts.execution.execution_result import (
     ExecutionResult,
     ExecutionStatus,
     ExecutionType,
 )
 from domain.contracts.question.question import Question, QuestionType, QuestionDifficulty
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.question.question_result import QuestionResult
 from app.contracts.feedback_bundle import FeedbackBundle
 

@@ -2,8 +2,8 @@
 
 import pytest
 
-from domain.contracts.interview_area import InterviewArea
-from domain.contracts.interview_type import InterviewType
+from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.interview.interview_typeimport InterviewType
 
 
 def test_interview_area_valid_enum() -> None:

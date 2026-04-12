@@ -2,13 +2,13 @@
 
 from typing import List
 
-from domain.contracts.interview_type import InterviewType
+from domain.contracts.interview.interview_typeimport InterviewType
 from domain.contracts.question.question import (
     Question,
     QuestionType,
     QuestionDifficulty,
 )
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.execution.coding_spec import CodingSpec  # ✅ NEW
 

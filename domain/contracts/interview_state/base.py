@@ -7,7 +7,7 @@ from domain.contracts.question.question import Question
 from domain.contracts.answer import Answer
 from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.interview_progress import InterviewProgress
-from domain.contracts.interview_type import InterviewType
+from domain.contracts.interview.interview_typeimport InterviewType
 from domain.contracts.interview_evaluation import InterviewEvaluation
 from domain.contracts.user.role import Role
 from domain.contracts.action_type import ActionType

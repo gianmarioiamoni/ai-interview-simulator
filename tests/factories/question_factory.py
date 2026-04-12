@@ -1,7 +1,7 @@
 # tests/factories/question_factory.py
 
 from domain.contracts.question.question import Question, QuestionType, QuestionDifficulty
-from domain.contracts.interview_area import InterviewArea
+from domain.contracts.interview.interview_area import InterviewArea
 
 
 def build_question(
