@@ -1,14 +1,14 @@
 # domain/contracts/interview_state/base.py
 
 from pydantic import BaseModel, Field
-from typing import Optional, Any
+from typing import Optional
 
 from domain.contracts.question.question import Question
 from domain.contracts.interview.answer import Answer
 from domain.contracts.question.question_result import QuestionResult
-from domain.contracts.interview_progress import InterviewProgress
-from domain.contracts.interview.interview_typeimport InterviewType
-from domain.contracts.interview_evaluation import InterviewEvaluation
+from domain.contracts.interview.interview_progress import InterviewProgress
+from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.user.role import Role
 from domain.contracts.shared.action_type import ActionType
 from app.contracts.feedback_bundle import FeedbackBundle

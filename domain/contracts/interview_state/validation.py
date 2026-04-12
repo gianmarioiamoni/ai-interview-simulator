@@ -2,7 +2,7 @@
 
 from pydantic import model_validator
 
-from domain.contracts.interview_progress import InterviewProgress
+from domain.contracts.interview.interview_progress import InterviewProgress
 
 
 class InterviewStateValidationMixin:

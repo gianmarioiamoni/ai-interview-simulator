@@ -3,7 +3,7 @@
 import pytest
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.interview_progress import InterviewProgress
+from domain.contracts.interview.interview_progress import InterviewProgress
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.question.question import QuestionType

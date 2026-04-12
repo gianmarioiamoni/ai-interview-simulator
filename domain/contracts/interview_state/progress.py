@@ -1,7 +1,5 @@
 # domain/contracts/interview_state/progress.py
 
-from domain.contracts.interview_progress import InterviewProgress
-
 
 class InterviewStateProgressMixin:
 

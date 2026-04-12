@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 
 from domain.contracts.user.role import Role
 from domain.contracts.user.company_profile import CompanyProfile
-from domain.contracts.interview.interview_typeimport InterviewType
+from domain.contracts.interview.interview_type import InterviewType
 
 
 class InterviewSetup(BaseModel):

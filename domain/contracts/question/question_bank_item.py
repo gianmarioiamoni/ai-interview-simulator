@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 from domain.contracts.interview.interview_area import InterviewArea
-from domain.contracts.interview.interview_typeimport InterviewType
+from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import Role
 from domain.contracts.user.seniority_level import SeniorityLevel
 

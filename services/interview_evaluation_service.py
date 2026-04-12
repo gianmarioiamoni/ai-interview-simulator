@@ -20,8 +20,8 @@ import math
 
 from app.ports.llm_port import LLMPort
 
-from domain.contracts.interview_evaluation import InterviewEvaluation
-from domain.contracts.interview.interview_typeimport InterviewType
+from domain.contracts.interview.interview_evaluation import InterviewEvaluation
+from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.shared.performance_dimension import PerformanceDimension
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.confidence import Confidence

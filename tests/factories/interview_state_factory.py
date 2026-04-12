@@ -3,7 +3,7 @@
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview.answer import Answer
 from domain.contracts.user.role import Role, RoleType
-from domain.contracts.interview.interview_typeimport InterviewType
+from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.execution.execution_result import (
     ExecutionResult,
     ExecutionStatus,
