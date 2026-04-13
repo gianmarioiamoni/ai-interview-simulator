@@ -6,12 +6,17 @@ import math
 
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
+from domain.contracts.interview.interview_level import InterviewLevel
+from domain.contracts.interview.hire_decision import HireDecision
 from domain.contracts.user.role import (
     RoleType,
     ROLE_DISTRIBUTION,
     ALLOWED_DIMENSIONS,
     ROLE_WEIGHTS,
 )
+
+from services.interview_scoring.scoring_result import ScoringResult
+
 
 
 class InterviewScoringEngine:
@@ -46,10 +51,15 @@ class InterviewScoringEngine:
 
         confidence = self._compute_confidence(evaluations)
 
+        level = self._compute_level(overall_score)
+        hire_decision = self._compute_hire_decision(overall_score, gating_triggered)
+
         return ScoringResult(
             dimension_scores=dimension_scores,
             weighted_breakdown=weighted_breakdown,
             overall_score=overall_score,
+            level=level,
+            hire_decision=hire_decision,
             gating_triggered=gating_triggered,
             gating_reason=gating_reason,
             hiring_probability=hiring_probability,
@@ -58,6 +68,18 @@ class InterviewScoringEngine:
         )
 
     # ---------------------------------------------------------
+
+    def _compute_level(self, score: float) -> InterviewLevel:
+
+        if score < 50:
+            return InterviewLevel.POOR
+        elif score < 65:
+            return InterviewLevel.AVERAGE
+        elif score < 80:
+            return InterviewLevel.STRONG
+        else:
+            return InterviewLevel.EXCELLENT
+
 
     def _compute_dimension_scores(
         self,
@@ -151,6 +173,26 @@ class InterviewScoringEngine:
         return 95.0
 
     # ---------------------------------------------------------
+
+    def _compute_hire_decision(
+        self,
+        score: float,
+        gating_triggered: bool,
+    ) -> HireDecision:
+
+        # Hard fail via gating
+        if gating_triggered:
+            return HireDecision.NO_HIRE
+
+        if score < 55:
+            return HireDecision.NO_HIRE
+        elif score < 65:
+            return HireDecision.LEAN_NO_HIRE
+        elif score < 75:
+            return HireDecision.LEAN_HIRE
+        else:
+            return HireDecision.HIRE
+
 
     def _compute_percentile(self, score: float, role: RoleType) -> float:
 

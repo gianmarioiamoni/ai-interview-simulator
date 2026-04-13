@@ -59,6 +59,10 @@ class InterviewEvaluationService:
             evaluations=per_question_evaluations,
             role=role,
         )
+
+        level = scoring.level
+        hire_decision = scoring.hire_decision
+
         # 1️⃣ Dimension scoring
         dimension_scores = scoring.dimension_scores
         weighted_breakdown = scoring.weighted_breakdown
@@ -115,6 +119,10 @@ class InterviewEvaluationService:
             overall_score=overall_score,
             executive_summary=executive_summary,
             performance_dimensions=performance_dimensions,
+
+            level=level,
+            hire_decision=hire_decision,
+
             hiring_probability=hiring_probability,
             percentile_rank=percentile,
             percentile_explanation=percentile_explanation,
