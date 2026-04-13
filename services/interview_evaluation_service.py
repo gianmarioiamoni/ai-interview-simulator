@@ -60,6 +60,8 @@ class InterviewEvaluationService:
             role=role,
         )
 
+        logger.info(f"SCORING DEBUG: {scoring}")
+
         level = scoring.level
         hire_decision = scoring.hire_decision
 
@@ -120,9 +122,10 @@ class InterviewEvaluationService:
             executive_summary=executive_summary,
             performance_dimensions=performance_dimensions,
 
+            dimension_scores=dimension_scores,
             level=level,
             hire_decision=hire_decision,
-
+            
             hiring_probability=hiring_probability,
             percentile_rank=percentile,
             percentile_explanation=percentile_explanation,

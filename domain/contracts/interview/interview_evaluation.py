@@ -18,7 +18,7 @@ class InterviewEvaluation(BaseModel):
     performance_dimensions: List[PerformanceDimension]
 
     # NEW: deterministic dimension scores
-    dimension_scores: Dict[PerformanceDimension, float]
+    dimension_scores: Dict[str, float]
 
     # NEW: FAANG-style ranking
     level: InterviewLevel
