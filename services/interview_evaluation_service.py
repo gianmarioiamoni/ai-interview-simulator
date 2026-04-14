@@ -126,7 +126,9 @@ class InterviewEvaluationService:
 
             label = DIMENSION_LABELS.get(dim, dim.value)
 
-            justification = narrative["dimension_justifications"].get(
+            dimension_justification = narrative.get("dimension_justifications", {})
+
+            justification = dimension_justification.get(
                 label,
                 "Justification unavailable.",
             )
@@ -263,13 +265,21 @@ Return JSON.
         response = self._llm.invoke(prompt)
 
         try:
-            return self._extract_json(response.content)
+            parsed = self._extract_json(response.content)
+            
+            if "dimension_justifications" not in parsed:
+                parsed["dimension_justifications"] = {}
+            if "improvement_suggestions" not in parsed:
+                parsed["improvement_suggestions"] = []
+            
+            return parsed
         except Exception:
             logger.warning("narrative_json_parsing_failed")
 
             return {
                 "dimension_justifications": {
-                    name: "Justification unavailable." for name in ALLOWED_DIMENSIONS
+                    name: "Justification unavailable."
+                    for name in DIMENSION_LABELS.values()
                 },
                 "improvement_suggestions": [],
             }
