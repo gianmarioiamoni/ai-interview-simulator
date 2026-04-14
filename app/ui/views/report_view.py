@@ -2,7 +2,6 @@
 
 import io
 import base64
-import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -25,11 +24,15 @@ def _fig_to_base64(fig) -> str:
 # Radar Chart
 # =========================================================
 
+
 def _radar_chart(dimensions: list[str], scores: list[float]) -> str:
 
+    if not dimensions or not scores:
+        return "<i>No dimension data available</i>"
+
     angles = np.linspace(0, 2 * np.pi, len(dimensions), endpoint=False).tolist()
-    scores += scores[:1]
-    angles += angles[:1]
+    scores = scores + scores[:1]
+    angles = angles + angles[:1]
 
     fig, ax = plt.subplots(figsize=(5, 5), subplot_kw=dict(polar=True))
 
@@ -47,6 +50,7 @@ def _radar_chart(dimensions: list[str], scores: list[float]) -> str:
 # =========================================================
 # Percentile Gaussian Curve
 # =========================================================
+
 
 def _percentile_distribution(
     score: float, percentile: float, mean: float = 63, std: float = 14
@@ -71,6 +75,7 @@ def _percentile_distribution(
 # Score Badges
 # =========================================================
 
+
 def _badge(value: str, color: str) -> str:
     return f"""
 <span style="
@@ -84,6 +89,7 @@ def _badge(value: str, color: str) -> str:
 </span>
 """
 
+
 def _score_badge(score: float) -> str:
     if score >= 80:
         return _badge(f"{score}/100", "#16a34a")
@@ -95,6 +101,7 @@ def _score_badge(score: float) -> str:
 # =========================================================
 # Confidence Bar
 # =========================================================
+
 
 def _confidence_bar(conf: float) -> str:
     percent = round(conf * 100, 1)
@@ -117,16 +124,13 @@ def _confidence_bar(conf: float) -> str:
 
 
 # =========================================================
-# Test Progress Bar (NEW)
+# Test Progress Bar
 # =========================================================
+
 
 def _test_progress_bar(passed: int, total: int) -> str:
 
-    if total == 0:
-        percent = 0
-    else:
-        percent = (passed / total) * 100
-
+    percent = (passed / total) * 100 if total else 0
     color = "#16a34a" if passed == total else "#ca8a04"
 
     return f"""
@@ -145,17 +149,42 @@ def _test_progress_bar(passed: int, total: int) -> str:
 # MAIN RENDER
 # =========================================================
 
+
 def build_report_markdown(report) -> str:
+
+    # =========================================================
+    # Dimensions
+    # =========================================================
 
     dimensions = [d.name for d in report.dimension_scores]
     scores = [d.score for d in report.dimension_scores]
 
-    strongest = max(report.dimension_scores, key=lambda x: x.score)
-    weakest = min(report.dimension_scores, key=lambda x: x.score)
+    strongest = None
+    weakest = None
+
+    if report.dimension_scores:
+        strongest = max(report.dimension_scores, key=lambda x: x.score)
+        weakest = min(report.dimension_scores, key=lambda x: x.score)
 
     radar_img = _radar_chart(dimensions, scores.copy())
     gaussian_img = _percentile_distribution(
         report.overall_score, report.percentile_rank
+    )
+
+    # =========================================================
+    # Hire Decision Badge
+    # =========================================================
+
+    decision_color = {
+        "hire": "#16a34a",
+        "lean_hire": "#65a30d",
+        "lean_no_hire": "#ca8a04",
+        "no_hire": "#dc2626",
+    }
+
+    decision_badge = _badge(
+        report.hire_decision.upper(),
+        decision_color.get(report.hire_decision, "#6b7280"),
     )
 
     # =========================================================
@@ -172,9 +201,7 @@ def build_report_markdown(report) -> str:
 
             execution_block += f"""
 <br>
-
 <strong>Test Results</strong>
-
 {_test_progress_bar(q.passed_tests, q.total_tests)}
 """
 
@@ -197,13 +224,28 @@ Score: {_score_badge(q.score)}
 {execution_block}
 """
 
-    improvements = "\n".join([f"- {i}" for i in report.improvement_suggestions])
+    # =========================================================
+    # Improvements
+    # =========================================================
+
+    if report.improvement_suggestions:
+        improvements = "\n".join([f"- {i}" for i in report.improvement_suggestions])
+    else:
+        improvements = "No major improvement areas identified."
+
+    # =========================================================
+    # Gating
+    # =========================================================
 
     gating_block = (
         f"<div style='color:#dc2626;font-weight:bold;'>🚨 Gating Triggered: {report.gating_reason}</div>"
         if report.gating_triggered
         else "<div style='color:#16a34a;font-weight:bold;'>✅ No Gating Applied</div>"
     )
+
+    # =========================================================
+    # Render
+    # =========================================================
 
     return f"""
 # 🧠 AI Interview Final Evaluation
@@ -218,7 +260,9 @@ Score: {_score_badge(q.score)}
 ## 🎯 Overall Performance
 
 Overall Score: {_score_badge(report.overall_score)}  
-Hiring Probability: {_score_badge(report.hiring_probability)}
+
+<strong>Hiring Decision:</strong> {decision_badge}  
+Hiring Probability (statistical estimate): {_score_badge(report.hiring_probability)}
 
 {gating_block}
 
@@ -246,6 +290,7 @@ Percentile: {_score_badge(report.percentile_rank)}
 <div style="flex:1;">
 <h4>Highlights</h4>
 
+{"<i>No dimension data available</i>" if not strongest else f'''
 <strong>Strongest Dimension:</strong><br>
 {_badge(strongest.name, "#16a34a")}  
 Score: {strongest.score}/100
@@ -255,6 +300,7 @@ Score: {strongest.score}/100
 <strong>Weakest Dimension:</strong><br>
 {_badge(weakest.name, "#dc2626")}  
 Score: {weakest.score}/100
+'''}
 
 <br><br>
 
