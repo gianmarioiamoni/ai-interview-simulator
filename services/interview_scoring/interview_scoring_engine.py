@@ -8,6 +8,7 @@ from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.interview.interview_level import InterviewLevel
 from domain.contracts.interview.hire_decision import HireDecision
+from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 from domain.contracts.user.role import (
     RoleType,
     ROLE_DISTRIBUTION,
@@ -102,7 +103,7 @@ class InterviewScoringEngine:
             "hr_analytical": "Problem Solving",
         }
 
-        dimension_map: Dict[str, List[float]] = {}
+        dimension_map: Dict[PerformanceDimensionType, List[float]] = {}
 
         for ev in evaluations:
             area = question_area_map.get(ev.question_id)
@@ -117,7 +118,7 @@ class InterviewScoringEngine:
 
         result: Dict[str, float] = {}
 
-        for dimension in ALLOWED_DIMENSIONS:
+        for dimension in PerformanceDimensionType:
             scores = dimension_map.get(dimension, [])
             result[dimension] = round(sum(scores) / len(scores), 1) if scores else 0.0
 

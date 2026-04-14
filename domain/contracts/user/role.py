@@ -11,6 +11,7 @@
 from typing import Dict
 from enum import Enum
 from pydantic import BaseModel, model_validator
+from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 
 
 # predefined roles
@@ -42,61 +43,56 @@ if _missing:
     raise ValueError(f"Missing percentile distribution for roles: {_missing}")
 
 
-ALLOWED_DIMENSIONS = [
-    "Technical Depth",
-    "Communication",
-    "Problem Solving",
-    "System Design",
-]
+ALLOWED_DIMENSIONS = list(PerformanceDimensionType) 
 
-ROLE_WEIGHTS: Dict[RoleType, Dict[str, float]] = {
+ROLE_WEIGHTS: Dict[RoleType, Dict[PerformanceDimensionType, float]] = {
     RoleType.BACKEND_ENGINEER: {
-        "Technical Depth": 0.35,
-        "System Design": 0.30,
-        "Problem Solving": 0.20,
-        "Communication": 0.15,
+        PerformanceDimensionType.TECHNICAL_DEPTH: 0.35,
+        PerformanceDimensionType.SYSTEM_DESIGN: 0.30,
+        PerformanceDimensionType.PROBLEM_SOLVING: 0.20,
+        PerformanceDimensionType.COMMUNICATION: 0.15,
     },
     RoleType.FRONTEND_ENGINEER: {
-        "Technical Depth": 0.30,
-        "System Design": 0.20,
-        "Problem Solving": 0.25,
-        "Communication": 0.25,
+        PerformanceDimensionType.TECHNICAL_DEPTH: 0.30,
+        PerformanceDimensionType.SYSTEM_DESIGN: 0.20,
+        PerformanceDimensionType.PROBLEM_SOLVING: 0.25,
+        PerformanceDimensionType.COMMUNICATION: 0.25,
     },
     RoleType.FULLSTACK_ENGINEER: {
-        "Technical Depth": 0.30,
-        "System Design": 0.25,
-        "Problem Solving": 0.25,
-        "Communication": 0.20,
+        PerformanceDimensionType.TECHNICAL_DEPTH: 0.30,
+        PerformanceDimensionType.SYSTEM_DESIGN: 0.25,
+        PerformanceDimensionType.PROBLEM_SOLVING: 0.25,
+        PerformanceDimensionType.COMMUNICATION: 0.20,
     },
     RoleType.DEVOPS_ENGINEER: {
-        "Technical Depth": 0.30,
-        "System Design": 0.30,
-        "Problem Solving": 0.20,
-        "Communication": 0.20,
+        PerformanceDimensionType.TECHNICAL_DEPTH: 0.30,
+        PerformanceDimensionType.SYSTEM_DESIGN: 0.30,
+        PerformanceDimensionType.PROBLEM_SOLVING: 0.20,
+        PerformanceDimensionType.COMMUNICATION: 0.20,
     },
     RoleType.DATA_ENGINEER: {
-        "Technical Depth": 0.35,
-        "System Design": 0.25,
-        "Problem Solving": 0.25,
-        "Communication": 0.15,
+        PerformanceDimensionType.TECHNICAL_DEPTH: 0.35,
+        PerformanceDimensionType.SYSTEM_DESIGN: 0.25,
+        PerformanceDimensionType.PROBLEM_SOLVING: 0.25,
+        PerformanceDimensionType.COMMUNICATION: 0.15,
     },
     RoleType.ML_ENGINEER: {
-        "Technical Depth": 0.40,
-        "System Design": 0.20,
-        "Problem Solving": 0.25,
-        "Communication": 0.15,
+        PerformanceDimensionType.TECHNICAL_DEPTH: 0.40,
+        PerformanceDimensionType.SYSTEM_DESIGN: 0.20,
+        PerformanceDimensionType.PROBLEM_SOLVING: 0.25,
+        PerformanceDimensionType.COMMUNICATION: 0.15,
     },
     RoleType.QA_ENGINEER: {
-        "Technical Depth": 0.25,
-        "System Design": 0.15,
-        "Problem Solving": 0.30,
-        "Communication": 0.30,
+        PerformanceDimensionType.TECHNICAL_DEPTH: 0.25,
+        PerformanceDimensionType.SYSTEM_DESIGN: 0.15,
+        PerformanceDimensionType.PROBLEM_SOLVING: 0.30,
+        PerformanceDimensionType.COMMUNICATION: 0.30,
     },
     RoleType.OTHER: {
-        "Technical Depth": 0.25,
-        "System Design": 0.25,
-        "Problem Solving": 0.25,
-        "Communication": 0.25,
+        PerformanceDimensionType.TECHNICAL_DEPTH: 0.25,
+        PerformanceDimensionType.SYSTEM_DESIGN: 0.25,
+        PerformanceDimensionType.PROBLEM_SOLVING: 0.25,
+        PerformanceDimensionType.COMMUNICATION: 0.25,
     },
 }
 
