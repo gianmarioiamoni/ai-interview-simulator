@@ -86,21 +86,21 @@ class InterviewScoringEngine:
         self,
         questions: List[Question],
         evaluations: List[QuestionEvaluation],
-    ) -> Dict[str, float]:
+    ) -> Dict[PerformanceDimensionType, float]:
 
         question_area_map = {q.id: q.area for q in questions}
 
         AREA_TO_DIMENSION = {
-            "technical_background": "Technical Depth",
-            "technical_technical_knowledge": "Technical Depth",
-            "technical_database": "Technical Depth",
-            "technical_coding": "Problem Solving",
-            "technical_case_study": "System Design",
-            "hr_background": "Communication",
-            "hr_technical_knowledge": "Technical Depth",
-            "hr_situational": "Communication",
-            "hr_brain_teaser": "Problem Solving",
-            "hr_analytical": "Problem Solving",
+            "technical_background": PerformanceDimensionType.TECHNICAL_DEPTH,
+            "technical_technical_knowledge": PerformanceDimensionType.TECHNICAL_DEPTH,
+            "technical_database": PerformanceDimensionType.TECHNICAL_DEPTH,
+            "technical_coding": PerformanceDimensionType.PROBLEM_SOLVING,
+            "technical_case_study": PerformanceDimensionType.SYSTEM_DESIGN,
+            "hr_background": PerformanceDimensionType.COMMUNICATION,
+            "hr_technical_knowledge": PerformanceDimensionType.TECHNICAL_DEPTH,
+            "hr_situational": PerformanceDimensionType.COMMUNICATION,
+            "hr_brain_teaser": PerformanceDimensionType.PROBLEM_SOLVING,
+            "hr_analytical": PerformanceDimensionType.PROBLEM_SOLVING,
         }
 
         dimension_map: Dict[PerformanceDimensionType, List[float]] = {}

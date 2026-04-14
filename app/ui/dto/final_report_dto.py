@@ -17,6 +17,8 @@ class FinalReportDTO(BaseModel):
 
     overall_score: float
     hiring_probability: float
+    hire_decision: str  # ✅ NEW
+
     percentile_rank: float
     percentile_explanation: str
 
@@ -29,6 +31,7 @@ class FinalReportDTO(BaseModel):
 
     dimension_scores: List[DimensionScoreDTO]
     question_assessments: List[QuestionAssessmentDTO]
+
     improvement_suggestions: List[str]
 
     total_tokens_used: int
@@ -141,14 +144,20 @@ class FinalReportDTO(BaseModel):
         ]
 
         # =========================================================
-        # IMPROVEMENTS
+        # IMPROVEMENTS (FIXED 🔥)
         # =========================================================
 
-        improvements = [
+        # 1️⃣ LLM suggestions (primary)
+        llm_improvements = final_evaluation.improvement_suggestions or []
+
+        # 2️⃣ fallback deterministic
+        fallback_improvements = [
             f"Improve performance on question {q.question_id} (score {q.score:.1f}/100)."
             for q in question_assessments
             if q.score < 60
         ]
+
+        improvements = llm_improvements if llm_improvements else fallback_improvements
 
         # =========================================================
         # TOKENS
@@ -163,6 +172,7 @@ class FinalReportDTO(BaseModel):
         return cls(
             overall_score=final_evaluation.overall_score,
             hiring_probability=final_evaluation.hiring_probability,
+            hire_decision=final_evaluation.hire_decision.value,  # ✅ NEW
             percentile_rank=final_evaluation.percentile_rank,
             percentile_explanation=final_evaluation.percentile_explanation,
             executive_summary=final_evaluation.executive_summary,
