@@ -1,7 +1,7 @@
 # app/ui/dto/final_report_dto.py
 
 from typing import List, Dict, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
 from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
@@ -18,7 +18,7 @@ class FinalReportDTO(BaseModel):
     overall_score: float
     hiring_probability: float
     hire_decision: str
-    decision_reasons: List[str]
+    decision_reasons: List[str] = Field(default_factory=list)
 
     percentile_rank: float
     percentile_explanation: str

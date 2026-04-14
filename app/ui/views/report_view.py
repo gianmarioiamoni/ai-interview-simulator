@@ -187,7 +187,14 @@ def build_report_markdown(report) -> str:
         decision_color.get(report.hire_decision, "#6b7280"),
     )
 
-    decision_reasons_block = "\n".join([f"- {r}" for r in report.decision_reasons])
+    # =========================================================
+    # Decision Rationale
+    # =========================================================
+
+    if report.decision_reasons:
+        decision_reasons_block = "\n".join([f"- {r}" for r in report.decision_reasons])
+    else:
+        decision_reasons_block = "No specific decision rationale available."
 
     # =========================================================
     # Question Blocks
@@ -268,7 +275,12 @@ Hiring Probability (statistical estimate): {_score_badge(report.hiring_probabili
 
 {gating_block}
 
+---
+
+## 🧾 Decision Rationale
+
 {decision_reasons_block}
+
 ---
 
 ## 📈 Percentile Ranking

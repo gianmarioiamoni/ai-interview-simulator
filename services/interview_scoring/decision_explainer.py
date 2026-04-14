@@ -2,6 +2,8 @@
 
 from typing import List, Dict
 
+from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
+
 
 class DecisionExplainer:
 
@@ -36,18 +38,23 @@ class DecisionExplainer:
         # WEAK DIMENSIONS
         # -----------------------------------------------------
 
-        weak_dims = [k for k, v in dimension_scores.items() if v < 40]
+        weak_dims = [
+            k for k, v in dimension_scores.items()
+             if v < 40 and v > 0]
 
         for dim in weak_dims:
             reasons.append(
-                f"{dim} is below acceptable level ({dimension_scores[dim]:.1f})."
+                f"{DIMENSION_LABELS[dim]} is below acceptable level ({dimension_scores[dim]:.1f})."
             )
 
         # -----------------------------------------------------
         # STRONG DIMENSIONS (for balance reasoning)
         # -----------------------------------------------------
 
-        strong_dims = [k for k, v in dimension_scores.items() if v >= 80]
+        strong_dims = [
+            k for k, v in dimension_scores.items()
+            if v >= 80 and v < 100
+        ]
 
         if strong_dims and weak_dims:
             reasons.append(
