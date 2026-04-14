@@ -17,14 +17,16 @@ class InterviewEvaluation(BaseModel):
 
     performance_dimensions: List[PerformanceDimension]
 
-    # NEW: deterministic dimension scores
+    # deterministic dimension scores
     dimension_scores: Dict[str, float]
 
-    # NEW: FAANG-style ranking
+    # FAANG-style ranking
     level: InterviewLevel
 
-    # NEW: explicit hiring decision
+    # explicit hiring decision
     hire_decision: HireDecision
+
+    decision_reasons: List[str]
 
     hiring_probability: float = Field(..., ge=0.0, le=100.0)
     percentile_rank: float = Field(..., ge=0.0, le=100.0)
