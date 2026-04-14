@@ -11,6 +11,7 @@ from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.execution.test_execution_result import TestStatus
 from domain.contracts.execution.execution_result import ExecutionResult
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
 
 
 class FinalReportDTO(BaseModel):
@@ -28,7 +29,7 @@ class FinalReportDTO(BaseModel):
     gating_triggered: bool
     gating_reason: Optional[str]
 
-    weighted_breakdown: Dict[str, float]
+    weighted_breakdown: Dict
 
     dimension_scores: List[DimensionScoreDTO]
     question_assessments: List[QuestionAssessmentDTO]
@@ -65,18 +66,13 @@ class FinalReportDTO(BaseModel):
             ai_hint_explanation: Optional[str] = None
             ai_hint_suggestion: Optional[str] = None
 
-            # ======================================================
-            # WRITTEN
-            # ======================================================
+            # ---------------- WRITTEN ----------------
 
             if result.evaluation and not result.execution:
-
                 score = result.evaluation.score
                 feedback = result.evaluation.feedback
 
-            # ======================================================
-            # EXECUTION
-            # ======================================================
+            # ---------------- EXECUTION ----------------
 
             elif result.execution:
 
@@ -84,12 +80,9 @@ class FinalReportDTO(BaseModel):
                 execution_status = exec_res.status.value
 
                 if exec_res.total_tests == 0 and not exec_res.success:
-
                     execution_status = "RUNTIME_ERROR"
                     score = 0
-
                 else:
-
                     passed_tests = exec_res.passed_tests
                     total_tests = exec_res.total_tests
 
@@ -105,53 +98,64 @@ class FinalReportDTO(BaseModel):
                     or "Execution evaluated automatically."
                 )
 
-            # ======================================================
-            # AI HINT
-            # ======================================================
+            # ---------------- AI HINT ----------------
 
             if result.ai_hint:
                 ai_hint_explanation = result.ai_hint.explanation
                 ai_hint_suggestion = result.ai_hint.suggestion
 
-            # ======================================================
-            # DTO
-            # ======================================================
-
-            q_assessment = QuestionAssessmentDTO(
-                question_id=q.id,
-                score=score,
-                feedback=feedback,
-                passed_tests=passed_tests,
-                total_tests=total_tests,
-                execution_status=execution_status,
-                attempts=attempts,
-                ai_hint_explanation=ai_hint_explanation,
-                ai_hint_suggestion=ai_hint_suggestion,
+            question_assessments.append(
+                QuestionAssessmentDTO(
+                    question_id=q.id,
+                    score=score,
+                    feedback=feedback,
+                    passed_tests=passed_tests,
+                    total_tests=total_tests,
+                    execution_status=execution_status,
+                    attempts=attempts,
+                    ai_hint_explanation=ai_hint_explanation,
+                    ai_hint_suggestion=ai_hint_suggestion,
+                )
             )
 
-            question_assessments.append(q_assessment)
-
         # =========================================================
-        # DIMENSIONS
+        # DIMENSIONS + CONTRIBUTION
         # =========================================================
 
-        dimension_scores = [
-            DimensionScoreDTO(
-                name=dim.name,
-                score=dim.score,
-                max_score=100,
+        dimension_scores: List[DimensionScoreDTO] = []
+
+        for dim in final_evaluation.performance_dimensions:
+
+            dim_type = next(
+                (k for k, v in DIMENSION_LABELS.items() if v == dim.name),
+                None,
             )
-            for dim in final_evaluation.performance_dimensions
-        ]
+
+            contribution = 0.0
+            weight = 0.0
+
+            if dim_type and dim_type in final_evaluation.weighted_breakdown:
+                contribution = final_evaluation.weighted_breakdown[dim_type]
+
+                if dim.score > 0:
+                    weight = round(contribution / dim.score, 2)
+
+            dimension_scores.append(
+                DimensionScoreDTO(
+                    name=dim.name,
+                    score=dim.score,
+                    max_score=100,
+                    weight=weight,
+                    contribution=contribution,
+                )
+            )
 
         # =========================================================
-        # IMPROVEMENTS (FIXED 🔥)
+        # IMPROVEMENTS
         # =========================================================
 
-        # 1️⃣ LLM suggestions (primary)
         llm_improvements = final_evaluation.improvement_suggestions or []
 
-        # 2️⃣ fallback deterministic
         fallback_improvements = [
             f"Improve performance on question {q.question_id} (score {q.score:.1f}/100)."
             for q in question_assessments
@@ -189,7 +193,7 @@ class FinalReportDTO(BaseModel):
         )
 
     # =========================================================
-    # FAILED TESTS
+    # FAILED TESTS (KEEP)
     # =========================================================
 
     @staticmethod

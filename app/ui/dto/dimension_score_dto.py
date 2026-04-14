@@ -8,3 +8,5 @@ class DimensionScoreDTO:
     name: str
     score: float
     max_score: float
+    weight: float
+    contribution: float

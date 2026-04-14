@@ -1,3 +1,5 @@
+# domain/contracts/shared/performance_dimension_labels.py
+
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 
 DIMENSION_LABELS = {

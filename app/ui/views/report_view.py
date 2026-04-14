@@ -145,6 +145,36 @@ def _test_progress_bar(passed: int, total: int) -> str:
 """
 
 
+def _contribution_table(dimensions) -> str:
+
+    if not dimensions:
+        return "<i>No contribution data available</i>"
+
+    rows = ""
+
+    for d in dimensions:
+        rows += f"""
+<tr>
+<td>{d.name}</td>
+<td>{d.score}</td>
+<td>{d.weight}</td>
+<td><strong>{d.contribution}</strong></td>
+</tr>
+"""
+
+    return f"""
+<table style="width:100%; border-collapse: collapse;">
+<tr>
+<th align="left">Dimension</th>
+<th>Score</th>
+<th>Weight</th>
+<th>Contribution</th>
+</tr>
+{rows}
+</table>
+"""
+
+
 # =========================================================
 # MAIN RENDER
 # =========================================================
@@ -300,10 +330,15 @@ Percentile: {_score_badge(report.percentile_rank)}
 <div style="flex:1;">
 <h4>Dimension Breakdown</h4>
 {radar_img}
+
+<h4>Weighted Contribution</h4>
+{_contribution_table(report.dimension_scores)}
+
 </div>
 
 <div style="flex:1;">
 <h4>Highlights</h4>
+
 
 {"<i>No dimension data available</i>" if not strongest else f'''
 <strong>Strongest Dimension:</strong><br>
