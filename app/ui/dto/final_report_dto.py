@@ -17,7 +17,8 @@ class FinalReportDTO(BaseModel):
 
     overall_score: float
     hiring_probability: float
-    hire_decision: str  # ✅ NEW
+    hire_decision: str
+    decision_reasons: List[str]
 
     percentile_rank: float
     percentile_explanation: str
@@ -172,7 +173,8 @@ class FinalReportDTO(BaseModel):
         return cls(
             overall_score=final_evaluation.overall_score,
             hiring_probability=final_evaluation.hiring_probability,
-            hire_decision=final_evaluation.hire_decision.value,  # ✅ NEW
+            hire_decision=final_evaluation.hire_decision.value,
+            decision_reasons=final_evaluation.decision_reasons,
             percentile_rank=final_evaluation.percentile_rank,
             percentile_explanation=final_evaluation.percentile_explanation,
             executive_summary=final_evaluation.executive_summary,

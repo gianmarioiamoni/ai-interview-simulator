@@ -30,6 +30,7 @@ from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION, ALLOWED_DIME
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 from services.interview_scoring.interview_scoring_engine import InterviewScoringEngine
 from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
+from services.interview_scoring.decision_explainer import DecisionExplainer
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class InterviewEvaluationService:
     def __init__(self, llm: LLMPort) -> None:
         self._llm = llm
         self._scoring_engine = InterviewScoringEngine()
+        self._explainer = DecisionExplainer()
 
     # ---------------------------------------------------------
     # PUBLIC API
@@ -75,6 +77,14 @@ class InterviewEvaluationService:
         # 3️⃣ Gating
         gating_triggered, gating_reason = scoring.gating_triggered, scoring.gating_reason
         hiring_probability = scoring.hiring_probability
+
+        decision_reasons = self._explainer.explain(
+            overall_score=overall_score,
+            hire_decision=hire_decision.value,
+            dimension_scores=dimension_scores,
+            gating_triggered=gating_triggered,
+            gating_reason=gating_reason,
+        )
 
         # 4️⃣ Percentile (deterministic analytical)
         percentile = scoring.percentile
