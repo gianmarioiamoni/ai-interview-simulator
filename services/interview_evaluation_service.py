@@ -348,7 +348,7 @@ class InterviewEvaluationService:
     ) -> Dict:
 
         readable_dimension_scores = {
-            DIMENSION_LABELS.get[dim, dim.value]: score
+            DIMENSION_LABELS.get(dim, dim.value): score
             for dim, score in dimension_scores.items()
         }
 
