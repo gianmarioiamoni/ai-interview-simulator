@@ -10,7 +10,7 @@ from domain.contracts.shared.performance_dimension_type import PerformanceDimens
 
 @dataclass
 class ScoringResult:
-    dimension_scores: Dict[PerformanceDimensionType, float]
+    dimension_scores: Dict[PerformanceDimensionType, Optional[float]]
     weighted_breakdown: Dict[PerformanceDimensionType, float]
 
     overall_score: float

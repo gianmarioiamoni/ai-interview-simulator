@@ -1,6 +1,6 @@
 # services/interview_scoring/decision_explainer.py
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
@@ -13,7 +13,7 @@ class DecisionExplainer:
         *,
         overall_score: float,
         hire_decision: str,
-        dimension_scores: Dict[PerformanceDimensionType, float],
+        dimension_scores: Dict[PerformanceDimensionType, Optional[float]],
         gating_triggered: bool,
         gating_reason: str | None,
     ) -> List[str]:
