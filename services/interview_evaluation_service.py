@@ -311,8 +311,8 @@ class InterviewEvaluationService:
         dimension_scores: Dict[str, float],
     ) -> str:
 
-        max_score = max(dimension_scores.values())
-        min_score = min(dimension_scores.values())
+        max_score = max(dimension_scores.values()) if dimension_scores else 0.0
+        min_score = min(dimension_scores.values()) if dimension_scores else 0.0
         spread = max_score - min_score
 
         if overall_score >= 80:
@@ -347,6 +347,11 @@ class InterviewEvaluationService:
         role: RoleType,
     ) -> Dict:
 
+        readable_dimension_scores = {
+            DIMENSION_LABELS.get[dim, dim.value]: score
+            for dim, score in dimension_scores.items()
+        }
+
         prompt = f"""
 You are a senior technical interviewer.
 
@@ -357,7 +362,7 @@ Here are evaluated answers:
 {[e.model_dump() for e in evaluations]}
 
 Dimension scores (deterministically computed):
-{dimension_scores}
+{readable_dimension_scores}
 
 Provide:
 
