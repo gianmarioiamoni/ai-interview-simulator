@@ -10,3 +10,4 @@ class DimensionScoreDTO:
     max_score: float
     weight: float
     contribution: float
+    is_evaluated: bool

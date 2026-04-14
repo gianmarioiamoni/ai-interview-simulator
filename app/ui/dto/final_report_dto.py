@@ -40,10 +40,6 @@ class FinalReportDTO(BaseModel):
 
     confidence: Confidence
 
-    # =========================================================
-    # Factory
-    # =========================================================
-
     @classmethod
     def from_components(cls, state: InterviewState, final_evaluation):
 
@@ -57,22 +53,19 @@ class FinalReportDTO(BaseModel):
 
             score = 0.0
             feedback = ""
-            passed_tests: Optional[int] = None
-            total_tests: Optional[int] = None
-            execution_status: Optional[str] = None
+
+            passed_tests = None
+            total_tests = None
+            execution_status = None
 
             attempts = state.get_attempt_for_question(q.id)
 
-            ai_hint_explanation: Optional[str] = None
-            ai_hint_suggestion: Optional[str] = None
-
-            # ---------------- WRITTEN ----------------
+            ai_hint_explanation = None
+            ai_hint_suggestion = None
 
             if result.evaluation and not result.execution:
                 score = result.evaluation.score
                 feedback = result.evaluation.feedback
-
-            # ---------------- EXECUTION ----------------
 
             elif result.execution:
 
@@ -98,8 +91,6 @@ class FinalReportDTO(BaseModel):
                     or "Execution evaluated automatically."
                 )
 
-            # ---------------- AI HINT ----------------
-
             if result.ai_hint:
                 ai_hint_explanation = result.ai_hint.explanation
                 ai_hint_suggestion = result.ai_hint.suggestion
@@ -118,13 +109,14 @@ class FinalReportDTO(BaseModel):
                 )
             )
 
-        # =========================================================
-        # DIMENSIONS + CONTRIBUTION
-        # =========================================================
+        # ✅ DIMENSIONS (safe with None)
 
         dimension_scores: List[DimensionScoreDTO] = []
 
         for dim in final_evaluation.performance_dimensions:
+
+            score = dim.score if dim.score is not None else 0.0
+            is_evaluated = dim.score is not None
 
             dim_type = next(
                 (k for k, v in DIMENSION_LABELS.items() if v == dim.name),
@@ -137,36 +129,22 @@ class FinalReportDTO(BaseModel):
             if dim_type and dim_type in final_evaluation.weighted_breakdown:
                 contribution = final_evaluation.weighted_breakdown[dim_type]
 
-                if dim.score > 0:
-                    weight = round(contribution / dim.score, 2)
+                if score > 0:
+                    weight = round(contribution / score, 2)
 
             dimension_scores.append(
                 DimensionScoreDTO(
                     name=dim.name,
-                    score=dim.score,
+                    score=score,
                     max_score=100,
                     weight=weight,
                     contribution=contribution,
+                    is_evaluated=is_evaluated,
                 )
             )
 
-        # =========================================================
-        # IMPROVEMENTS
-        # =========================================================
-
-        llm_improvements = final_evaluation.improvement_suggestions or []
-
-        fallback_improvements = [
-            f"Improve performance on question {q.question_id} (score {q.score:.1f}/100)."
-            for q in question_assessments
-            if q.score < 60
-        ]
-
-        improvements = llm_improvements if llm_improvements else fallback_improvements
-
-        # =========================================================
-        # TOKENS
-        # =========================================================
+        # improvements già arricchiti dal service
+        improvements = final_evaluation.improvement_suggestions
 
         tokens = sum(
             getattr(r.evaluation, "tokens_used", 0)
@@ -191,10 +169,6 @@ class FinalReportDTO(BaseModel):
             total_tokens_used=tokens,
             confidence=final_evaluation.confidence,
         )
-
-    # =========================================================
-    # FAILED TESTS (KEEP)
-    # =========================================================
 
     @staticmethod
     def _format_failed_tests(exec_res: ExecutionResult) -> str:
