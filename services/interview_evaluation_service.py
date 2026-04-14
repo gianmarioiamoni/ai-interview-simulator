@@ -27,8 +27,9 @@ from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.question.question import Question
 from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION, ALLOWED_DIMENSIONS, ROLE_WEIGHTS
-
+from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 from services.interview_scoring.interview_scoring_engine import InterviewScoringEngine
+from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
 
 logger = logging.getLogger(__name__)
 
@@ -104,14 +105,17 @@ class InterviewEvaluationService:
         performance_dimensions = []
         for name, score in dimension_scores.items():
 
+            dim_type = PerformanceDimensionType(name)
+            label = DIMENSION_LABELS.get(dim_type, name)
+
             justification = narrative["dimension_justifications"].get(
-                name,
+                label,
                 "Justification unavailable.",
             )
 
             performance_dimensions.append(
                 PerformanceDimension(
-                    name=name,
+                    name=label,
                     score=score,
                     justification=justification,
                 )
@@ -150,16 +154,16 @@ class InterviewEvaluationService:
         question_area_map = {q.id: q.area for q in questions}
 
         AREA_TO_DIMENSION = {
-            "technical_background": "Technical Depth",
-            "technical_technical_knowledge": "Technical Depth",
-            "technical_database": "Technical Depth",
-            "technical_coding": "Problem Solving",
-            "technical_case_study": "System Design",
-            "hr_background": "Communication",
-            "hr_technical_knowledge": "Technical Depth",
-            "hr_situational": "Communication",
-            "hr_brain_teaser": "Problem Solving",
-            "hr_analytical": "Problem Solving",
+            "technical_background": PerformanceDimensionType.TECHNICAL_DEPTH,
+            "technical_technical_knowledge": PerformanceDimensionType.TECHNICAL_DEPTH,
+            "technical_database": PerformanceDimensionType.TECHNICAL_DEPTH,
+            "technical_coding": PerformanceDimensionType.PROBLEM_SOLVING,
+            "technical_case_study": PerformanceDimensionType.SYSTEM_DESIGN,
+            "hr_background": PerformanceDimensionType.COMMUNICATION,
+            "hr_technical_knowledge": PerformanceDimensionType.TECHNICAL_DEPTH,
+            "hr_situational": PerformanceDimensionType.COMMUNICATION,
+            "hr_brain_teaser": PerformanceDimensionType.PROBLEM_SOLVING,
+            "hr_analytical": PerformanceDimensionType.PROBLEM_SOLVING,
         }
 
         dimension_map: Dict[str, List[float]] = {}
@@ -177,7 +181,7 @@ class InterviewEvaluationService:
 
         result: Dict[str, float] = {}
 
-        for dimension in ALLOWED_DIMENSIONS:
+        for dimension in PerformanceDimensionType:
             scores = dimension_map.get(dimension, [])
             if scores:
                 result[dimension] = round(sum(scores) / len(scores), 1)
