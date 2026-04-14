@@ -4,6 +4,7 @@ import io
 import base64
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import Optional
 
 
 # =========================================================
@@ -25,14 +26,21 @@ def _fig_to_base64(fig) -> str:
 # =========================================================
 
 
-def _radar_chart(dimensions: list[str], scores: list[float]) -> str:
+def _radar_chart(dimensions: list[str], scores: list[Optional[float]]) -> str:
 
-    if not dimensions or not scores:
+    filtered = [
+        (dim, score) for dim, score in zip(dimensions, scores) 
+        if score is not None
+    ]
+
+    if not filtered:
         return "<i>No dimension data available</i>"
 
+    dimensions, scores = zip(*filtered)
+
     angles = np.linspace(0, 2 * np.pi, len(dimensions), endpoint=False).tolist()
-    scores = scores + scores[:1]
-    angles = angles + angles[:1]
+    scores = list(scores) + [scores[0]] 
+    angles = angles + [angles[0]]
 
     fig, ax = plt.subplots(figsize=(5, 5), subplot_kw=dict(polar=True))
 
@@ -90,7 +98,10 @@ def _badge(value: str, color: str) -> str:
 """
 
 
-def _score_badge(score: float) -> str:
+def _score_badge(score: Optional[float]) -> str:
+    if score is None:
+        return _badge("NOT_EVALUATED", "#6b7280")
+
     if score >= 80:
         return _badge(f"{score}/100", "#16a34a")
     elif score >= 60:
@@ -146,6 +157,9 @@ def _test_progress_bar(passed: int, total: int) -> str:
 
 
 def _contribution_table(dimensions) -> str:
+    score_display = "NOT_EVALUATED" if d.score is None else f"{d.score}"
+    weight_display = "-" if d.score is None else f"{d.weight}"
+    contribution_display = "-" if d.score is None else f"{d.contribution}"
 
     if not dimensions:
         return "<i>No contribution data available</i>"
@@ -156,9 +170,9 @@ def _contribution_table(dimensions) -> str:
         rows += f"""
 <tr>
 <td>{d.name}</td>
-<td>{d.score}</td>
-<td>{d.weight}</td>
-<td><strong>{d.contribution}</strong></td>
+<td>{score_display}</td>
+<td>{weight_display}</td>
+<td><strong>{contribution_display}</strong></td>
 </tr>
 """
 
@@ -193,8 +207,9 @@ def build_report_markdown(report) -> str:
     weakest = None
 
     if report.dimension_scores:
-        strongest = max(report.dimension_scores, key=lambda x: x.score)
-        weakest = min(report.dimension_scores, key=lambda x: x.score)
+        valid_dimensions = [d for d in report.dimension_scores if d.score is not None]
+        strongest = max(valid_dimensions, key=lambda x: x.score) if valid_dimensions else None
+        weakest = min(valid_dimensions, key=lambda x: x.score) if valid_dimensions else None
 
     radar_img = _radar_chart(dimensions, scores.copy())
     gaussian_img = _percentile_distribution(
@@ -283,6 +298,24 @@ Score: {_score_badge(q.score)}
     )
 
     # =========================================================
+    # Missing Dimensions
+    # =========================================================
+
+    missing_dims = [d.name for d in report.dimension_scores if d.score is None]
+
+    missing_block = ""
+    if missing_dims:
+        missing_block = f"""
+            <div style="margin-top:20px; padding:12px; border-radius:8px; background:#fef3c7; color:#92400e;">
+                <strong>⚠️ Missing Evaluation</strong><br>
+                The following dimensions were not assessed:<br>
+                <ul>
+                    {''.join(f"<li>{d}</li>" for d in missing_dims)}
+                </ul>
+            </div>
+        """
+
+    # =========================================================
     # Render
     # =========================================================
 
@@ -336,6 +369,7 @@ Percentile: {_score_badge(report.percentile_rank)}
 
 </div>
 
+
 <div style="flex:1;">
 <h4>Highlights</h4>
 
@@ -361,6 +395,8 @@ Score: {weakest.score}/100
 </div>
 
 </div>
+
+{missing_block}
 
 ---
 
