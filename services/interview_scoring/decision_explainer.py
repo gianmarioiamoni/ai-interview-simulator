@@ -3,6 +3,7 @@
 from typing import List, Dict
 
 from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
+from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 
 
 class DecisionExplainer:
@@ -12,7 +13,7 @@ class DecisionExplainer:
         *,
         overall_score: float,
         hire_decision: str,
-        dimension_scores: Dict[str, float],
+        dimension_scores: Dict[PerformanceDimensionType, float],
         gating_triggered: bool,
         gating_reason: str | None,
     ) -> List[str]:
@@ -20,7 +21,7 @@ class DecisionExplainer:
         reasons: List[str] = []
 
         # -----------------------------------------------------
-        # GATING (highest priority)
+        # GATING
         # -----------------------------------------------------
 
         if gating_triggered:
@@ -39,21 +40,23 @@ class DecisionExplainer:
         # -----------------------------------------------------
 
         weak_dims = [
-            k for k, v in dimension_scores.items()
-             if v < 40 and v > 0]
+            dim for dim, score in dimension_scores.items() if score < 40 and score > 0
+        ]
 
         for dim in weak_dims:
+            label = DIMENSION_LABELS.get(dim, dim.value)
             reasons.append(
-                f"{DIMENSION_LABELS[dim]} is below acceptable level ({dimension_scores[dim]:.1f})."
+                f"{label} is below acceptable level ({dimension_scores[dim]:.1f})."
             )
 
         # -----------------------------------------------------
-        # STRONG DIMENSIONS (for balance reasoning)
+        # STRONG DIMENSIONS
         # -----------------------------------------------------
 
         strong_dims = [
-            k for k, v in dimension_scores.items()
-            if v >= 80 and v < 100
+            dim
+            for dim, score in dimension_scores.items()
+            if score >= 80 and score < 100
         ]
 
         if strong_dims and weak_dims:

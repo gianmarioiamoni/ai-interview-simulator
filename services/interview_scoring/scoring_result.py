@@ -5,12 +5,13 @@ from typing import Dict, Optional
 
 from domain.contracts.interview.interview_level import InterviewLevel
 from domain.contracts.interview.hire_decision import HireDecision
+from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 
 
 @dataclass
 class ScoringResult:
-    dimension_scores: Dict[str, float]
-    weighted_breakdown: Dict[str, float]
+    dimension_scores: Dict[PerformanceDimensionType, float]
+    weighted_breakdown: Dict[PerformanceDimensionType, float]
 
     overall_score: float
 
