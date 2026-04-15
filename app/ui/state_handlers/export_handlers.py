@@ -3,7 +3,6 @@
 from datetime import datetime, timezone
 
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
-
 from services.report_export_service import ReportExportService
 
 
