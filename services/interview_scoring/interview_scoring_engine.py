@@ -223,3 +223,17 @@ class InterviewScoringEngine:
         variance = statistics.pvariance(scores)
 
         return round(1 / (1 + variance / 1000.0), 2)
+
+    def _compute_hiring_probability(self, score: float) -> float:
+
+        if score < 50:
+            return 0.0
+        elif score < 60:
+            return 30.0
+        elif score < 70:
+            return 50.0
+        elif score < 80:
+            return 70.0
+        elif score < 90:
+            return 85.0
+        return 95.0    
