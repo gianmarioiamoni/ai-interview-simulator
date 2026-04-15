@@ -66,13 +66,25 @@ TASK:
 - Identify key drivers (positive)
 - Identify blockers (negative)
 
-OUTPUT:
-Return 3-5 bullet points (short, concrete).
+OUTPUT FORMAT (STRICT JSON):
+{{
+  "drivers": ["...", "..."],
+  "blockers": ["...", "..."]
+}}
 """
 
         response = self._llm.invoke(prompt)
 
-        return self._parse_bullets(response.content)
+        try:
+            parsed = self._extract_json(response.content)
+
+            return {
+                "drivers": parsed.get("drivers", []),
+                "blockers": parsed.get("blockers", []),
+            }
+        except Exception:
+            return {"drivers": [], "blockers": []}
+
 
     # ---------------------------------------------------------
     # DIMENSION NARRATIVE

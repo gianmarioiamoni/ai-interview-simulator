@@ -19,7 +19,7 @@ class FinalReportDTO(BaseModel):
     overall_score: float
     hiring_probability: float
     hire_decision: str
-    decision_reasons: List[str] = Field(default_factory=list)
+    decision_explanation: Dict[str, List[str]] 
 
     percentile_rank: float
     percentile_explanation: str
