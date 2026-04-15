@@ -185,7 +185,6 @@ def build_report_markdown(report):
 
     # ---------------- BUILD SAFE STRINGS
 
-    decision_reasons_html = "".join(f"<li>{r}</li>" for r in report.decision_reasons.drivers)
     drivers_html = "".join(
         f"<li>{d}</li>" for d in report.decision_explanation.get("drivers", [])
     )

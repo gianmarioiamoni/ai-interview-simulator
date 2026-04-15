@@ -25,8 +25,7 @@ class InterviewEvaluation(BaseModel):
 
     # explicit hiring decision
     hire_decision: HireDecision
-
-    decision_reasons: List[str]
+    decision_explanation: Dict[str, List[str]] 
 
     hiring_probability: float = Field(..., ge=0.0, le=100.0)
     percentile_rank: float = Field(..., ge=0.0, le=100.0)
