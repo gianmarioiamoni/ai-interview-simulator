@@ -86,11 +86,13 @@ def _percentile_distribution(
 def _badge(value: str, color: str) -> str:
     return f"""
 <span style="
+    display:inline-block;
     background:{color};
     color:white;
     padding:6px 12px;
     border-radius:8px;
     font-weight:bold;
+    margin-top:4px;
 ">
 {value}
 </span>
@@ -313,9 +315,25 @@ def build_report_markdown(report) -> str:
 
 <h2>🎯 Overall Performance</h2>
 
-<div>Overall Score: {_score_badge(report.overall_score)}</div>
-<div><strong>Hiring Decision:</strong> {decision_badge}</div>
-<div>Hiring Probability: {_score_badge(report.hiring_probability)}</div>
+
+<div style="display:flex; flex-direction:column; gap:8px;">
+
+<div>
+<strong>Overall Score:</strong><br>
+{_score_badge(report.overall_score)}
+</div>
+
+<div>
+<strong>Hiring Decision:</strong><br>
+{decision_badge}
+</div>
+
+<div>
+<strong>Hiring Probability:</strong><br>
+{_score_badge(report.hiring_probability)}
+</div>
+
+</div>
 
 {gating_block}
 
@@ -329,8 +347,14 @@ def build_report_markdown(report) -> str:
 <h2>📈 Percentile Ranking</h2>
 {gaussian_img}
 
-<div>Percentile: {_score_badge(report.percentile_rank)}</div>
-<p>{report.percentile_explanation}</p>
+<div style="margin-top:10px;">
+<strong>Percentile:</strong><br>
+{_score_badge(report.percentile_rank)}
+</div>
+
+<div style="margin-top:6px;">
+{report.percentile_explanation}
+</div>
 
 <hr>
 
@@ -350,15 +374,21 @@ def build_report_markdown(report) -> str:
 <h4>Highlights</h4>
 
 {"<i>No dimension data available</i>" if not strongest else f'''
+
+<div style="margin-bottom:16px;">
 <strong>Strongest Dimension:</strong><br>
-{_badge(strongest.name, "#16a34a")}  
-Score: {strongest.score}/100
+<div style="margin-top:4px;">{_badge(strongest.name, "#16a34a")}</div>
+<div>Score: {strongest.score}/100</div>
+</div>
 
 <br><br>
 
+<div style="margin-bottom:16px;">
 <strong>Weakest Dimension:</strong><br>
-{_badge(weakest.name, "#dc2626")}  
-Score: {weakest.score}/100
+<div style="margin-top:4px;">{_badge(weakest.name, "#dc2626")}</div>
+<div>Score: {weakest.score}/100</div>
+</div>
+
 '''}
 
 <br><br>
