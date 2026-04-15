@@ -163,6 +163,8 @@ def _contribution_table(dimensions):
 
 def build_report_markdown(report):
 
+    print("DEBUG VIEW:", report.decision_explanation)
+
     dims = report.dimension_scores
     names = [d.name for d in dims]
     scores = [d.score for d in dims]
@@ -184,8 +186,6 @@ def build_report_markdown(report):
     roadmap = builder.prioritize_improvements(dims)
 
     # ---------------- BUILD SAFE STRINGS
-    drivers = report.decision_explanation.get("drivers", [])
-    blockers = report.decision_explanation.get("blockers", [])
     drivers_html = "".join(
         f"<li>{d}</li>" for d in report.decision_explanation.get("drivers", [])
     )
