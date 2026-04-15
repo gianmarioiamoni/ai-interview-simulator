@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # app/ui/views/report_view.py
 
 import io
@@ -308,7 +309,7 @@ Candidate is positioned in <strong>{percentile_segment}</strong><br>
 
 {''.join(f"""
 <div style="border:1px solid #ddd;padding:10px;margin-bottom:10px;border-radius:8px;">
-<strong>{d.name}</strong> — {_score_badge(d.score)}<br>
+<strong>{d.name}</strong> - {_score_badge(d.score)}<br>
 Impact: <strong>{d.impact}</strong><br>
 </div>
 """ for d in dimension_insights)}
