@@ -1,7 +1,7 @@
 # app/ui/bindings/factories/streaming_handler_factory.py
 
 import gradio as gr
-from typing import Callable, Any, Generator, List
+from typing import Callable, Any, Generator, List, Optional
 
 from app.ui.ui_response import UIResponse
 from app.ui.utils.loading_utils import show_loader, hide_loader
@@ -36,7 +36,7 @@ class StreamingHandlerFactory:
         self,
         action_fn: Callable[..., Any],
         loader_message: str,
-        disable_first_output: bool = False,  # 👈 NEW
+        disable_button: Optional[gr.Button] = None, 
     ) -> Callable[..., Generator[Any, None, None]]:
 
         def handler(*args: Any):
@@ -47,11 +47,12 @@ class StreamingHandlerFactory:
 
             updates = self._idle_updates()
 
-            # Disable first output if required (button)
-            if disable_first_output:
-                updates[0] = gr.update(interactive=False)
+            # Disable button if required
+            if disable_button:
+                disable_button.update(interactive=False)
 
             # Show loader
+            updates = self._idle_updates()
             updates[self.loader_index] = show_loader(loader_message)
 
             yield tuple(updates)
@@ -69,10 +70,6 @@ class StreamingHandlerFactory:
             # -------------------------------------------------
 
             out[self.loader_index] = hide_loader()
-
-            # Keep button disabled after execution
-            if disable_first_output:
-                out[0] = gr.update(interactive=False)
 
             yield tuple(out)
 
