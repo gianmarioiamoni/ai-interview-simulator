@@ -110,7 +110,7 @@ def _confidence_bar(conf):
 
 
 # =========================================================
-# Contribution table (full version)
+# Contribution table
 # =========================================================
 
 
@@ -183,28 +183,53 @@ def build_report_markdown(report):
     percentile_segment = builder.build_percentile_segment(report.percentile_rank)
     roadmap = builder.prioritize_improvements(dims)
 
+    # ---------------- BUILD SAFE STRINGS
+
+    decision_reasons_html = "".join(f"<li>{r}</li>" for r in report.decision_reasons)
+
+    roadmap_html = ""
+    for r in roadmap:
+        roadmap_html += f"""
+<div style="margin-bottom:10px;">
+<strong>[{r['priority']}] {r['dimension']}</strong><br>
+{r['action']}
+</div>
+"""
+
+    dimension_html = ""
+    for d in dimension_insights:
+        dimension_html += f"""
+<div style="border:1px solid #ddd;padding:10px;margin-bottom:10px;border-radius:8px;">
+<strong>{d.name}</strong> - {_score_badge(d.score)}<br>
+Impact: <strong>{d.impact}</strong><br>
+</div>
+"""
+
     # ---------------- GATING
+
     gating_block = (
-        f"<div style='color:#dc2626;font-weight:bold;'>🚨 Gating Triggered: {report.gating_reason}</div>"
+        f"<div style='color:#dc2626;font-weight:bold;'>Gating Triggered: {report.gating_reason}</div>"
         if report.gating_triggered
-        else "<div style='color:#16a34a;font-weight:bold;'>✅ No Gating Applied</div>"
+        else "<div style='color:#16a34a;font-weight:bold;'>No Gating Applied</div>"
     )
 
     # ---------------- MISSING
+
     missing_dims = [d.name for d in dims if d.score is None]
 
     missing_block = ""
     if missing_dims:
         missing_block = f"""
 <div style="margin-top:20px;background:#fef3c7;padding:10px;">
-<strong>⚠️ Missing Evaluation</strong>
+<strong>Missing Evaluation</strong>
 <ul>
 {''.join(f"<li>{d}</li>" for d in missing_dims)}
 </ul>
 </div>
 """
 
-    # ---------------- QUESTIONS (FULL VERSION)
+    # ---------------- QUESTIONS
+
     question_block = ""
 
     for q in report.question_assessments:
@@ -227,24 +252,17 @@ Score: {_score_badge(q.score)}<br><br>
 </div>
 """
 
-    # ---------------- IMPROVEMENTS
-    improvements = (
-        "<ul>"
-        + "".join(f"<li>{i}</li>" for i in report.improvement_suggestions)
-        + "</ul>"
-    )
-
     # =========================================================
     # FINAL
     # =========================================================
 
     return f"""
-<h1>🧠 AI Interview Final Evaluation</h1>
+<h1>AI Interview Final Evaluation</h1>
 
-<h2>📊 Executive Summary</h2>
+<h2>Executive Summary</h2>
 <p>{report.executive_summary}</p>
 
-<h2>🎯 Overall Performance</h2>
+<h2>Overall Performance</h2>
 
 <table>
 <tr>
@@ -256,14 +274,14 @@ Score: {_score_badge(q.score)}<br><br>
 
 {gating_block}
 
-<h2>🧾 Decision Rationale</h2>
+<h2>Decision Rationale</h2>
 <div style="background:#f9fafb;padding:12px;border-radius:8px;">
 <ul>
-{''.join(f"<li>{r}</li>" for r in report.decision_reasons)}
+{decision_reasons_html}
 </ul>
 </div>
 
-<h2>📈 Market Position</h2>
+<h2>Market Position</h2>
 
 <p>
 Candidate is positioned in <strong>{percentile_segment}</strong><br>
@@ -274,8 +292,7 @@ Candidate is positioned in <strong>{percentile_segment}</strong><br>
 
 <p>{report.percentile_explanation}</p>
 
-
-<h2>🧭 Performance Overview</h2>
+<h2>Performance Overview</h2>
 
 <table>
 <tr>
@@ -293,24 +310,12 @@ Candidate is positioned in <strong>{percentile_segment}</strong><br>
 
 {missing_block}
 
-<h2>📝 Question-Level Assessment</h2>
+<h2>Dimension Analysis</h2>
+{dimension_html}
+
+<h2>Question-Level Assessment</h2>
 {question_block}
 
-<h2>🚀 Improvement Roadmap</h2>
-
-{''.join(f"""
-<div style="margin-bottom:10px;">
-<strong>[{r['priority']}] {r['dimension']}</strong><br>
-{r['action']}
-</div>
-""" for r in roadmap)}
-
-<h2>🧠 Dimension Analysis</h2>
-
-{''.join(f"""
-<div style="border:1px solid #ddd;padding:10px;margin-bottom:10px;border-radius:8px;">
-<strong>{d.name}</strong> - {_score_badge(d.score)}<br>
-Impact: <strong>{d.impact}</strong><br>
-</div>
-""" for d in dimension_insights)}
+<h2>Improvement Roadmap</h2>
+{roadmap_html}
 """
