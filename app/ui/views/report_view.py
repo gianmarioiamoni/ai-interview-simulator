@@ -184,7 +184,8 @@ def build_report_markdown(report):
     roadmap = builder.prioritize_improvements(dims)
 
     # ---------------- BUILD SAFE STRINGS
-
+    drivers = report.decision_explanation.get("drivers", [])
+    blockers = report.decision_explanation.get("blockers", [])
     drivers_html = "".join(
         f"<li>{d}</li>" for d in report.decision_explanation.get("drivers", [])
     )
