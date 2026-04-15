@@ -275,8 +275,8 @@ Score: {_score_badge(q.score)}<br><br>
 {gating_block}
 
 <h2>Decision Rationale</h2>
-<div style="background:#f3f4f6;padding:12px;border-radius:8px;color:#111827;">
-<ul>
+<div style="background:#f3f4f6;padding:12px;border-radius:8px;">
+<ul style="color:#111827;margin:0;padding-left:20px;">
 {decision_reasons_html}
 </ul>
 </div>
