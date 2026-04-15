@@ -156,7 +156,7 @@ class FinalReportDTO(BaseModel):
             overall_score=final_evaluation.overall_score,
             hiring_probability=final_evaluation.hiring_probability,
             hire_decision=final_evaluation.hire_decision.value,
-            decision_reasons=final_evaluation.decision_reasons,
+            decision_explanation=final_evaluation.decision_explanation,
             percentile_rank=final_evaluation.percentile_rank,
             percentile_explanation=final_evaluation.percentile_explanation,
             executive_summary=final_evaluation.executive_summary,

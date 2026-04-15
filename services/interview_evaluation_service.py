@@ -214,7 +214,7 @@ class InterviewEvaluationService:
             dimension_scores=dimension_scores,
             level=scoring.level,
             hire_decision=scoring.hire_decision,
-            decision_reasons=decision_explanation,
+            decision_explanation=decision_explanation,
             hiring_probability=hiring_probability,
             percentile_rank=percentile,
             percentile_explanation=percentile_explanation,
