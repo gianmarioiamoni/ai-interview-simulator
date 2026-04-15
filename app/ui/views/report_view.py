@@ -157,36 +157,37 @@ def _test_progress_bar(passed: int, total: int) -> str:
 
 
 def _contribution_table(dimensions) -> str:
-    score_display = "NOT_EVALUATED" if d.score is None else f"{d.score}"
-    weight_display = "-" if d.score is None else f"{d.weight}"
-    contribution_display = "-" if d.score is None else f"{d.contribution}"
 
     if not dimensions:
         return "<i>No contribution data available</i>"
 
     rows = ""
 
-    for d in dimensions:
+    for d in dimensions or []:
+        score_display = "NOT_EVALUATED" if d.score is None else f"{d.score}"
+        weight_display = "-" if d.score is None else f"{d.weight}"
+        contribution_display = "-" if d.score is None else f"{d.contribution}"
+        
         rows += f"""
-<tr>
-<td>{d.name}</td>
-<td>{score_display}</td>
-<td>{weight_display}</td>
-<td><strong>{contribution_display}</strong></td>
-</tr>
-"""
+            <tr>
+                <td>{d.name}</td>
+                <td>{score_display}</td>
+                <td>{weight_display}</td>
+                <td><strong>{contribution_display}</strong></td>
+            </tr>
+        """
 
     return f"""
-<table style="width:100%; border-collapse: collapse;">
-<tr>
-<th align="left">Dimension</th>
-<th>Score</th>
-<th>Weight</th>
-<th>Contribution</th>
-</tr>
-{rows}
-</table>
-"""
+        <table style="width:100%; border-collapse: collapse;">
+            <tr>
+                <th align="left">Dimension</th>
+                <th>Score</th>
+                <th>Weight</th>
+                <th>Contribution</th>
+            </tr>
+            {rows}
+        </table>
+    """
 
 
 # =========================================================
