@@ -1,6 +1,10 @@
 # services/narrative_service.py
 
 from typing import List, Dict
+
+import json
+import re
+
 from app.ports.llm_port import LLMPort
 
 
@@ -51,7 +55,7 @@ RULES:
         self,
         decision: str,
         dimensions: List[Dict],
-    ) -> List[str]:
+    ) -> Dict[str, List[str]]:
 
         prompt = f"""
 You are a technical hiring panel.
@@ -78,14 +82,28 @@ OUTPUT FORMAT (STRICT JSON):
 
         try:
             parsed = self._extract_json(response.content)
+            print("PARSED JSON:", parsed)
+
+            drivers = parsed.get("drivers", [])
+            blockers = parsed.get("blockers", [])
+
+            if not isinstance(drivers, list):
+                drivers = []
+            if not isinstance(blockers, list):
+                blockers = []
+
+            print("PARSED:", parsed)
+            print("FINAL:", drivers, blockers)
 
             return {
-                "drivers": parsed.get("drivers", []),
-                "blockers": parsed.get("blockers", []),
+                "drivers": drivers,
+                "blockers": blockers,
             }
         except Exception:
-            return {"drivers": [], "blockers": []}
-
+            return {
+                "drivers": [],
+                "blockers": [],
+            }
 
     # ---------------------------------------------------------
     # DIMENSION NARRATIVE
@@ -126,3 +144,18 @@ Be specific and professional.
                 bullets.append(l)
 
         return bullets[:5]
+
+
+    def _extract_json(self, text: str) -> Dict:
+
+        try:
+            return json.loads(text)
+        except Exception:
+            try:
+                match = re.search(r"\{.*\}", text, re.DOTALL)
+                if match:
+                    return json.loads(match.group(0))
+            except Exception:
+                pass
+
+        return {}
