@@ -4,7 +4,8 @@ import io
 import base64
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Optional
+
+from services.report_insight_builder import ReportInsightBuilder
 
 
 # =========================================================
@@ -175,6 +176,12 @@ def build_report_markdown(report):
 
     decision_badge = _badge(report.hire_decision.upper(), "#2563eb")
 
+    builder = ReportInsightBuilder()
+
+    dimension_insights = builder.build_dimension_insights(dims)
+    percentile_segment = builder.build_percentile_segment(report.percentile_rank)
+    roadmap = builder.prioritize_improvements(dims)
+
     # ---------------- GATING
     gating_block = (
         f"<div style='color:#dc2626;font-weight:bold;'>🚨 Gating Triggered: {report.gating_reason}</div>"
@@ -249,14 +256,23 @@ Score: {_score_badge(q.score)}<br><br>
 {gating_block}
 
 <h2>🧾 Decision Rationale</h2>
+<div style="background:#f9fafb;padding:12px;border-radius:8px;">
 <ul>
 {''.join(f"<li>{r}</li>" for r in report.decision_reasons)}
 </ul>
+</div>
 
-<h2>📈 Percentile Ranking</h2>
+<h2>📈 Market Position</h2>
+
+<p>
+Candidate is positioned in <strong>{percentile_segment}</strong><br>
+({_score_badge(report.percentile_rank)})
+</p>
+
 {gaussian}
-{_score_badge(report.percentile_rank)}
+
 <p>{report.percentile_explanation}</p>
+
 
 <h2>🧭 Performance Overview</h2>
 
@@ -280,5 +296,20 @@ Score: {_score_badge(q.score)}<br><br>
 {question_block}
 
 <h2>🚀 Improvement Roadmap</h2>
-{improvements}
+
+{''.join(f"""
+<div style="margin-bottom:10px;">
+<strong>[{r['priority']}] {r['dimension']}</strong><br>
+{r['action']}
+</div>
+""" for r in roadmap)}
+
+<h2>🧠 Dimension Analysis</h2>
+
+{''.join(f"""
+<div style="border:1px solid #ddd;padding:10px;margin-bottom:10px;border-radius:8px;">
+<strong>{d.name}</strong> — {_score_badge(d.score)}<br>
+Impact: <strong>{d.impact}</strong><br>
+</div>
+""" for d in dimension_insights)}
 """
