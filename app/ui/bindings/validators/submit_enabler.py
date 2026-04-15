@@ -4,7 +4,17 @@ import gradio as gr
 
 
 class SubmitEnabler:
+
     def enable(self, text):
-        if text and str(text).strip():
-            return gr.update(interactive=True)
-        return gr.update(interactive=False)
+
+        # normalize input
+        if text is None:
+            return gr.update(interactive=False)
+
+        if isinstance(text, str):
+            text = text.strip()
+
+        # enable only if real content exists
+        is_valid = bool(text)
+
+        return gr.update(interactive=is_valid)
