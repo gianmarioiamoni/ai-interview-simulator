@@ -36,7 +36,7 @@ class StreamingHandlerFactory:
         self,
         action_fn: Callable[..., Any],
         loader_message: str,
-        disable_button: Optional[gr.Button] = None, 
+        include_button: bool = False, 
     ) -> Callable[..., Generator[Any, None, None]]:
 
         def handler(*args: Any):
@@ -45,15 +45,18 @@ class StreamingHandlerFactory:
             # STEP 1 — INITIAL STATE (disable + loader)
             # -------------------------------------------------
 
-            updates = self._idle_updates()
+            base_updates = self._idle_updates()
 
             # Disable button if required
-            if disable_button:
-                disable_button.interactive = False
+            if include_button:
+                updates = [gr.update(interactive=False), *base_updates]
+            else:
+                updates = base_updates
 
             # Show loader
-            updates = self._idle_updates()
-            updates[self.loader_index] = show_loader(loader_message)
+            updates[self.loader_index + (1 if include_button else 0)] = show_loader(
+                loader_message
+            )
 
             yield tuple(updates)
 
@@ -70,6 +73,9 @@ class StreamingHandlerFactory:
             # -------------------------------------------------
 
             out[self.loader_index] = hide_loader()
+
+            if include_button:
+                out = [gr.update(interactive=True), *out]   
 
             yield tuple(out)
 
