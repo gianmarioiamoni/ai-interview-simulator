@@ -71,32 +71,34 @@ class ReportInsightBuilder:
     # ROADMAP PRIORITY
     # ---------------------------------------------------------
 
-    def prioritize_improvements(self, dimensions):
-
-        weak = [d for d in dimensions if d.score is not None and d.score < 80]
-
-        if not weak:
-            weakest = sorted(
-                [d for d in dimensions if d.score is not None],
-                key=lambda x: x.score
-            )[:1]
-
-            weak = weakest
-
-        weak_sorted = sorted(weak, key=lambda x: x.score)
+    def prioritize_improvements(self, dims):
 
         roadmap = []
 
-        for i, d in enumerate(weak_sorted):
+        for d in dims:
 
-            priority = "HIGH" if i < 2 else "MEDIUM"
+            if d.score is None:
+                continue
 
-            roadmap.append(
-                {
+            if d.name == "Communication" and d.score < 80:
+                roadmap.append({
+                    "priority": "HIGH",
                     "dimension": d.name,
-                    "priority": priority,
-                    "action": f"Improve {d.name} through targeted practice",
-                }
-            )
+                    "action": "Practice structured communication (STAR method) and improve clarity in technical explanations."
+                })
+
+            elif d.name == "Problem Solving" and d.score < 80:
+                roadmap.append({
+                    "priority": "HIGH",
+                    "dimension": d.name,
+                    "action": "Work on algorithmic problem solving and edge-case handling under time constraints."
+                })
+
+            elif d.name == "Technical Depth" and d.score < 80:
+                roadmap.append({
+                    "priority": "HIGH",
+                    "dimension": d.name,
+                    "action": "Deepen knowledge of system design, scalability, and real-world architecture patterns."
+                })
 
         return roadmap

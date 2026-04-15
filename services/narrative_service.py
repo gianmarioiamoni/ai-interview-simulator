@@ -58,52 +58,39 @@ RULES:
     ) -> Dict[str, List[str]]:
 
         prompt = f"""
-You are a technical hiring panel.
+            You are a senior technical hiring panel.
 
-INPUT:
-Decision: {decision}
+            Decision: {decision}
 
-Dimensions:
-{dimensions}
+            Dimensions:
+            {dimensions}
 
-TASK:
-- Identify key drivers (positive)
-- Identify blockers (negative)
+            TASK:
+            - Identify key drivers (positive signals that support hiring)
+            - Identify blockers (risks or weaknesses affecting hiring decision)
 
-OUTPUT FORMAT (STRICT JSON):
-{{
-  "drivers": ["...", "..."],
-  "blockers": ["...", "..."]
-}}
-"""
+            RULES:
+            - Each point must explain IMPACT on hiring decision
+            - Be specific (mention score or implication)
+            - Avoid generic statements
+
+            OUTPUT FORMAT (STRICT JSON):
+            {{
+              "drivers": ["..."],
+              "blockers": ["..."]
+            }}
+        """
 
         response = self._llm.invoke(prompt)
-        print ("RAW LLM RESPONSE:", response.content)
 
         try:
             parsed = self._extract_json(response.content)
-            print("PARSED JSON:", parsed)
-
-            drivers = parsed.get("drivers", [])
-            blockers = parsed.get("blockers", [])
-
-            if not isinstance(drivers, list):
-                drivers = []
-            if not isinstance(blockers, list):
-                blockers = []
-
-            print("PARSED:", parsed)
-            print("FINAL:", drivers, blockers)
-
             return {
-                "drivers": drivers,
-                "blockers": blockers,
+                "drivers": parsed.get("drivers", []),
+                "blockers": parsed.get("blockers", []),
             }
         except Exception:
-            return {
-                "drivers": [],
-                "blockers": [],
-            }
+            return {"drivers": [], "blockers": []}
 
     # ---------------------------------------------------------
     # DIMENSION NARRATIVE

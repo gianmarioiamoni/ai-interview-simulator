@@ -71,6 +71,8 @@ Rules:
                 temperature=0.0,
             )
 
+            tokens_used = response.usage.total_tokens if hasattr(response, "usage") else 0
+
             try:
                 parsed = self._extract_json(response.choices[0].message.content)
                 evaluation = QuestionEvaluation.model_validate(parsed)
@@ -81,6 +83,7 @@ Rules:
 
                 if attempt == MAX_RETRIES:
                     return self._fallback(question)
+
 
         return self._fallback(question)
 
