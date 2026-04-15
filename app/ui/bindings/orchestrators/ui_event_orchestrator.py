@@ -10,8 +10,10 @@ from app.ui.state_handlers import (
     next_question,
     new_interview,
 )
-from app.ui.state_handlers.export_handlers import export_pdf_handler, export_json_handler
-
+from app.ui.state_handlers.export_handlers import (
+    export_pdf_handler,
+    export_json_handler,
+)
 
 from app.ui.bindings.builders.ui_outputs_builder import UIOutputsBuilder
 from app.ui.bindings.factories.streaming_handler_factory import StreamingHandlerFactory
@@ -79,30 +81,35 @@ class UIEventOrchestrator:
         )
 
     # =========================================================
-    # SUBMIT
+    # SUBMIT (DISABLE BUTTON FIX)
     # =========================================================
 
     def _bind_submit(self):
         submit_handler = self.handler_factory.create(
-            submit_answer, "⏳ Evaluating answer..."
+            submit_answer, 
+            "⏳ Evaluating answer...",
+            disable_first_output=True,
         )
 
+        # WRITTEN
         self.c.written_submit.click(
             submit_handler,
             inputs=[self.state, self.c.written_box],
-            outputs=self.outputs,
+            outputs=[self.c.written_submit, *self.outputs],
         )
 
+        # CODING
         self.c.coding_submit.click(
             submit_handler,
             inputs=[self.state, self.c.coding_box],
-            outputs=self.outputs,
+            outputs=[self.c.coding_submit, *self.outputs],
         )
 
+        # DATABASE
         self.c.database_submit.click(
             submit_handler,
             inputs=[self.state, self.c.database_box],
-            outputs=self.outputs,
+            outputs=[self.c.database_submit, *self.outputs],
         )
 
     # =========================================================
@@ -164,18 +171,21 @@ class UIEventOrchestrator:
         )
 
     # =========================================================
-    # REPORT
+    # REPORT (DISABLE BUTTON FIX)
     # =========================================================
 
     def _bind_report(self):
         report_handler = self.handler_factory.create(
-            view_report_handler, "⏳ Loading report..."
+            view_report_handler, 
+            "⏳ Loading report...",
+            disable_first_output=True,
         )
 
         self.c.view_report_button.click(
             report_handler,
             inputs=[self.state],
             outputs=[
+                self.c.view_report_button,
                 self.c.setup_section,
                 self.c.interview_section,
                 self.c.completion_section,
