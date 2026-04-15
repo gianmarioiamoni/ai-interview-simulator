@@ -102,12 +102,15 @@ class InterviewEvaluationService:
             )
         except Exception:
             logger.warning("decision_explanation_generation_failed")
-            decision_reasons = self._explainer.explain(
-                overall_score=overall_score,
-                hire_decision=scoring.hire_decision.value,
-                dimension_scores=dimension_scores,
-                gating_triggered=gating_triggered,
-                gating_reason=gating_reason,
+            
+            decision_explanation = (
+                self._narrative_service.generate_decision_explanation(
+                    decision=scoring.hire_decision.value,
+                    dimensions=[
+                        {"name": DIMENSION_LABELS.get(dim, dim.value), "score": score}
+                        for dim, score in dimension_scores.items()
+                    ],
+                )
             )
 
         # ---------------------------------------------------------
@@ -215,7 +218,7 @@ class InterviewEvaluationService:
             dimension_scores=dimension_scores,
             level=scoring.level,
             hire_decision=scoring.hire_decision,
-            decision_reasons=decision_reasons,
+            decision_reasons=decision_explanation,
             hiring_probability=hiring_probability,
             percentile_rank=percentile,
             percentile_explanation=percentile_explanation,

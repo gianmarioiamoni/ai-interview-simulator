@@ -185,7 +185,13 @@ def build_report_markdown(report):
 
     # ---------------- BUILD SAFE STRINGS
 
-    decision_reasons_html = "".join(f"<li>{r}</li>" for r in report.decision_reasons)
+    decision_reasons_html = "".join(f"<li>{r}</li>" for r in report.decision_reasons.drivers)
+    drivers_html = "".join(
+        f"<li>{d}</li>" for d in report.decision_explanation.get("drivers", [])
+    )
+    blockers_html = "".join(
+        f"<li>{b}</li>" for b in report.decision_explanation.get("blockers", [])
+    )
 
     roadmap_html = ""
     for r in roadmap:
@@ -275,9 +281,17 @@ Score: {_score_badge(q.score)}<br><br>
 {gating_block}
 
 <h2>Decision Rationale</h2>
-<div style="background:#f3f4f6;padding:12px;border-radius:8px;">
-<ul style="color:#111827;margin:0;padding-left:20px;">
-{decision_reasons_html}
+
+<div style="margin-top:10px;">
+
+<strong>Key Drivers</strong>
+<ul>
+{drivers_html}
+</ul>
+
+<strong>Blockers</strong>
+<ul>
+{blockers_html}
 </ul>
 </div>
 
