@@ -31,7 +31,7 @@ class ReportInsightBuilder:
             if not d.is_evaluated:
                 continue
 
-            impact_score = d.score * d.weight
+            impact_score = d.score * d.weight * 100
 
             if impact_score >= 60:
                 impact = "HIGH"
@@ -73,7 +73,15 @@ class ReportInsightBuilder:
 
     def prioritize_improvements(self, dimensions):
 
-        weak = [d for d in dimensions if d.score is not None and d.score < 60]
+        weak = [d for d in dimensions if d.score is not None and d.score < 80]
+
+        if not weak:
+            weakest = sorted(
+                [d for d in dimensions if d.score is not None],
+                key=lambda x: x.score
+            )[:1]
+
+            weak = weakest
 
         weak_sorted = sorted(weak, key=lambda x: x.score)
 

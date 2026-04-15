@@ -12,7 +12,7 @@ class DecisionExplainer:
         self,
         *,
         overall_score: float,
-        hire_decision: str,
+        _hire_decision: str,
         dimension_scores: Dict[PerformanceDimensionType, Optional[float]],
         gating_triggered: bool,
         gating_reason: str | None,
@@ -34,6 +34,12 @@ class DecisionExplainer:
 
         if overall_score < 60:
             reasons.append("Overall score is below the expected hiring threshold (60).")
+
+        if overall_score >= 70:
+            reasons.append("Candidate demonstrates strong overall performance.")
+        
+        if overall_score >= 80:
+            reasons.append("Candidate demonstrates exceptional overall performance.")
 
         # -----------------------------------------------------
         # WEAK DIMENSIONS
