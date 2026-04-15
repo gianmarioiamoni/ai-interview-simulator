@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # services/interview_evaluation_service.py
 
 from typing import List, Dict, Optional
@@ -12,12 +13,13 @@ from domain.contracts.shared.performance_dimension import PerformanceDimension
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.question.question import Question
-from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION, ALLOWED_DIMENSIONS
+from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
 
 from services.interview_scoring.interview_scoring_engine import InterviewScoringEngine
 from services.interview_scoring.decision_explainer import DecisionExplainer
+from services.narrative_service import NarrativeService
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,7 @@ class InterviewEvaluationService:
         self._llm = llm
         self._scoring_engine = InterviewScoringEngine()
         self._explainer = DecisionExplainer()
+        self._narrative_service = NarrativeService(llm)
 
     # ---------------------------------------------------------
     # PUBLIC API
@@ -43,6 +46,10 @@ class InterviewEvaluationService:
 
         if not per_question_evaluations:
             raise ValueError("Cannot evaluate interview without question evaluations")
+
+        # ---------------------------------------------------------
+        # SCORING
+        # ---------------------------------------------------------
 
         scoring = self._scoring_engine.compute(
             questions=questions,
@@ -64,15 +71,44 @@ class InterviewEvaluationService:
         hiring_probability = scoring.hiring_probability
 
         # ---------------------------------------------------------
-        # DECISION EXPLANATION
+        # READABLE DIMENSIONS
         # ---------------------------------------------------------
 
-        decision_reasons = self._explainer.explain(
-            overall_score=overall_score,
-            dimension_scores=dimension_scores,
-            gating_triggered=gating_triggered,
-            gating_reason=gating_reason,
-        )
+        readable_dimensions = [
+            {
+                "name": DIMENSION_LABELS.get(dim, dim.value),
+                "score": score,
+            }
+            for dim, score in dimension_scores.items()
+            if score is not None
+        ]
+
+        # strongest / weakest safe
+        if readable_dimensions:
+            strongest = max(readable_dimensions, key=lambda x: x["score"])["name"]
+            weakest = min(readable_dimensions, key=lambda x: x["score"])["name"]
+        else:
+            strongest = "N/A"
+            weakest = "N/A"
+
+        # ---------------------------------------------------------
+        # DECISION EXPLANATION (LLM with fallback)
+        # ---------------------------------------------------------
+
+        try:
+            decision_reasons = self._narrative_service.generate_decision_explanation(
+                decision=scoring.hire_decision.value,
+                dimensions=readable_dimensions,
+            )
+        except Exception:
+            logger.warning("decision_explanation_generation_failed")
+            decision_reasons = self._explainer.explain(
+                overall_score=overall_score,
+                hire_decision=scoring.hire_decision.value,
+                dimension_scores=dimension_scores,
+                gating_triggered=gating_triggered,
+                gating_reason=gating_reason,
+            )
 
         # ---------------------------------------------------------
         # PERCENTILE
@@ -96,16 +132,26 @@ class InterviewEvaluationService:
         )
 
         # ---------------------------------------------------------
-        # EXECUTIVE SUMMARY (SAFE)
+        # EXECUTIVE SUMMARY (LLM + fallback SAFE)
         # ---------------------------------------------------------
 
-        executive_summary = self._generate_executive_summary(
-            overall_score,
-            dimension_scores,
-        )
+        try:
+            executive_summary = self._narrative_service.generate_executive_summary(
+                decision=scoring.hire_decision.value,
+                overall_score=overall_score,
+                strongest=strongest,
+                weakest=weakest,
+                percentile=percentile,
+            )
+        except Exception:
+            logger.warning("executive_summary_generation_failed")
+            executive_summary = self._generate_executive_summary(
+                overall_score,
+                dimension_scores,
+            )
 
         # ---------------------------------------------------------
-        # NARRATIVE
+        # NARRATIVE (EXISTING - KEEP)
         # ---------------------------------------------------------
 
         narrative = self._generate_narrative(
@@ -182,7 +228,7 @@ class InterviewEvaluationService:
         )
 
     # ---------------------------------------------------------
-    # EXECUTIVE SUMMARY (SAFE VERSION)
+    # EXECUTIVE SUMMARY (SAFE VERSION - FALLBACK)
     # ---------------------------------------------------------
 
     def _generate_executive_summary(
@@ -223,7 +269,7 @@ class InterviewEvaluationService:
         return f"{base} {stability}"
 
     # ---------------------------------------------------------
-    # NARRATIVE
+    # NARRATIVE (UNCHANGED)
     # ---------------------------------------------------------
 
     def _generate_narrative(

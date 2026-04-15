@@ -12,7 +12,9 @@ class DecisionExplainer:
         self,
         *,
         overall_score: float,
-        dimension_scores: Dict[PerformanceDimensionType, Optional[float]],
+        strangest: PerformanceDimensionType,
+        weakest: PerformanceDimensionType,
+        percentile: float,
         gating_triggered: bool,
         gating_reason: str | None,
     ) -> List[str]:
