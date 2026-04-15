@@ -5,13 +5,13 @@ import gradio as gr
 from app.ui.handlers.start_handler import start_handler
 from app.ui.handlers.report_handler import view_report_handler
 from app.ui.state_handlers import (
-    export_pdf,
-    export_json,
     submit_answer,
     retry_answer,
     next_question,
     new_interview,
 )
+from app.ui.state_handlers.export_handlers import export_pdf_handler, export_json_handler
+
 
 from app.ui.bindings.builders.ui_outputs_builder import UIOutputsBuilder
 from app.ui.bindings.factories.streaming_handler_factory import StreamingHandlerFactory
@@ -191,13 +191,13 @@ class UIEventOrchestrator:
 
     def _bind_exports(self):
         self.c.pdf_button.click(
-            lambda s: (export_pdf(s), gr.update(visible=True)),
+            export_pdf_handler,
             inputs=[self.state],
-            outputs=[self.c.pdf_file, self.c.pdf_file],
+            outputs=self.c.pdf_file,
         )
 
         self.c.json_button.click(
-            lambda s: (export_json(s), gr.update(visible=True)),
+            export_json_handler,
             inputs=[self.state],
-            outputs=[self.c.json_file, self.c.json_file],
+            outputs=self.c.json_file,
         )
