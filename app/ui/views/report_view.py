@@ -29,8 +29,7 @@ def _fig_to_base64(fig) -> str:
 def _radar_chart(dimensions: list[str], scores: list[Optional[float]]) -> str:
 
     filtered = [
-        (dim, score) for dim, score in zip(dimensions, scores) 
-        if score is not None
+        (dim, score) for dim, score in zip(dimensions, scores) if score is not None
     ]
 
     if not filtered:
@@ -39,7 +38,7 @@ def _radar_chart(dimensions: list[str], scores: list[Optional[float]]) -> str:
     dimensions, scores = zip(*filtered)
 
     angles = np.linspace(0, 2 * np.pi, len(dimensions), endpoint=False).tolist()
-    scores = list(scores) + [scores[0]] 
+    scores = list(scores) + [scores[0]]
     angles = angles + [angles[0]]
 
     fig, ax = plt.subplots(figsize=(5, 5), subplot_kw=dict(polar=True))
@@ -156,6 +155,11 @@ def _test_progress_bar(passed: int, total: int) -> str:
 """
 
 
+# =========================================================
+# Contribution Table
+# =========================================================
+
+
 def _contribution_table(dimensions) -> str:
 
     if not dimensions:
@@ -167,7 +171,7 @@ def _contribution_table(dimensions) -> str:
         score_display = "NOT_EVALUATED" if d.score is None else f"{d.score}"
         weight_display = "-" if d.score is None else f"{d.weight}"
         contribution_display = "-" if d.score is None else f"{d.contribution}"
-        
+
         rows += f"""
             <tr>
                 <td>{d.name}</td>
@@ -197,29 +201,20 @@ def _contribution_table(dimensions) -> str:
 
 def build_report_markdown(report) -> str:
 
-    # =========================================================
-    # Dimensions
-    # =========================================================
-
     dimensions = [d.name for d in report.dimension_scores]
     scores = [d.score for d in report.dimension_scores]
 
-    strongest = None
-    weakest = None
+    valid_dimensions = [d for d in report.dimension_scores if d.score is not None]
 
-    if report.dimension_scores:
-        valid_dimensions = [d for d in report.dimension_scores if d.score is not None]
-        strongest = max(valid_dimensions, key=lambda x: x.score) if valid_dimensions else None
-        weakest = min(valid_dimensions, key=lambda x: x.score) if valid_dimensions else None
+    strongest = (
+        max(valid_dimensions, key=lambda x: x.score) if valid_dimensions else None
+    )
+    weakest = min(valid_dimensions, key=lambda x: x.score) if valid_dimensions else None
 
     radar_img = _radar_chart(dimensions, scores.copy())
     gaussian_img = _percentile_distribution(
         report.overall_score, report.percentile_rank
     )
-
-    # =========================================================
-    # Hire Decision Badge
-    # =========================================================
 
     decision_color = {
         "hire": "#16a34a",
@@ -233,19 +228,17 @@ def build_report_markdown(report) -> str:
         decision_color.get(report.hire_decision, "#6b7280"),
     )
 
-    # =========================================================
-    # Decision Rationale
-    # =========================================================
-
+    # ---------------- Decision reasons (HTML)
     if report.decision_reasons:
-        decision_reasons_block = "\n".join([f"- {r}" for r in report.decision_reasons])
+        decision_reasons_block = (
+            "<ul>"
+            + "".join([f"<li>{r}</li>" for r in report.decision_reasons])
+            + "</ul>"
+        )
     else:
-        decision_reasons_block = "No specific decision rationale available."
+        decision_reasons_block = "<i>No specific decision rationale available.</i>"
 
-    # =========================================================
-    # Question Blocks
-    # =========================================================
-
+    # ---------------- Questions (HTML)
     question_block = ""
 
     for q in report.question_assessments:
@@ -253,15 +246,12 @@ def build_report_markdown(report) -> str:
         execution_block = ""
 
         if q.passed_tests is not None and q.total_tests is not None:
-
             execution_block += f"""
-<br>
 <strong>Test Results</strong>
 {_test_progress_bar(q.passed_tests, q.total_tests)}
 """
 
         if q.execution_status:
-
             status_color = "#16a34a" if q.execution_status == "success" else "#dc2626"
 
             execution_block += f"""
@@ -270,94 +260,81 @@ def build_report_markdown(report) -> str:
 """
 
         question_block += f"""
-### Question {q.question_id}
-
-Score: {_score_badge(q.score)}
-
-{q.feedback}
-
+<h3>Question {q.question_id}</h3>
+<div>Score: {_score_badge(q.score)}</div>
+<p>{q.feedback}</p>
 {execution_block}
 """
 
-    # =========================================================
-    # Improvements
-    # =========================================================
-
+    # ---------------- Improvements (HTML)
     if report.improvement_suggestions:
-        improvements = "\n".join([f"- {i}" for i in report.improvement_suggestions])
+        improvements = (
+            "<ul>"
+            + "".join([f"<li>{i}</li>" for i in report.improvement_suggestions])
+            + "</ul>"
+        )
     else:
-        improvements = "No major improvement areas identified."
+        improvements = "<i>No major improvement areas identified.</i>"
 
-    # =========================================================
-    # Gating
-    # =========================================================
-
+    # ---------------- Gating
     gating_block = (
         f"<div style='color:#dc2626;font-weight:bold;'>🚨 Gating Triggered: {report.gating_reason}</div>"
         if report.gating_triggered
         else "<div style='color:#16a34a;font-weight:bold;'>✅ No Gating Applied</div>"
     )
 
-    # =========================================================
-    # Missing Dimensions
-    # =========================================================
-
+    # ---------------- Missing dimensions
     missing_dims = [d.name for d in report.dimension_scores if d.score is None]
 
     missing_block = ""
     if missing_dims:
         missing_block = f"""
-            <div style="margin-top:20px; padding:12px; border-radius:8px; background:#fef3c7; color:#92400e;">
-                <strong>⚠️ Missing Evaluation</strong><br>
-                The following dimensions were not assessed:<br>
-                <ul>
-                    {''.join(f"<li>{d}</li>" for d in missing_dims)}
-                </ul>
-            </div>
+        <div style="margin-top:20px; padding:12px; border-radius:8px; background:#fef3c7; color:#92400e;">
+            <strong>⚠️ Missing Evaluation</strong><br>
+            The following dimensions were not assessed:
+            <ul>
+                {''.join(f"<li>{d}</li>" for d in missing_dims)}
+            </ul>
+        </div>
         """
 
     # =========================================================
-    # Render
+    # FINAL HTML
     # =========================================================
 
     return f"""
-# 🧠 AI Interview Final Evaluation
+<h1>🧠 AI Interview Final Evaluation</h1>
+<hr>
 
----
+<h2>📊 Executive Summary</h2>
+<p>{report.executive_summary}</p>
 
-## 📊 Executive Summary
-{report.executive_summary}
+<hr>
 
----
+<h2>🎯 Overall Performance</h2>
 
-## 🎯 Overall Performance
-
-Overall Score: {_score_badge(report.overall_score)}  
-
-<strong>Hiring Decision:</strong> {decision_badge}  
-Hiring Probability (statistical estimate): {_score_badge(report.hiring_probability)}
+<div>Overall Score: {_score_badge(report.overall_score)}</div>
+<div><strong>Hiring Decision:</strong> {decision_badge}</div>
+<div>Hiring Probability: {_score_badge(report.hiring_probability)}</div>
 
 {gating_block}
 
----
+<hr>
 
-## 🧾 Decision Rationale
-
+<h2>🧾 Decision Rationale</h2>
 {decision_reasons_block}
 
----
+<hr>
 
-## 📈 Percentile Ranking
-
+<h2>📈 Percentile Ranking</h2>
 {gaussian_img}
 
-Percentile: {_score_badge(report.percentile_rank)}
+<div>Percentile: {_score_badge(report.percentile_rank)}</div>
+<p>{report.percentile_explanation}</p>
 
-{report.percentile_explanation}
+<hr>
 
----
-
-## 🧭 Performance Overview
+<h2>🧭 Performance Overview</h2>
 
 <div style="display:flex; gap:40px;">
 
@@ -367,13 +344,10 @@ Percentile: {_score_badge(report.percentile_rank)}
 
 <h4>Weighted Contribution</h4>
 {_contribution_table(report.dimension_scores)}
-
 </div>
-
 
 <div style="flex:1;">
 <h4>Highlights</h4>
-
 
 {"<i>No dimension data available</i>" if not strongest else f'''
 <strong>Strongest Dimension:</strong><br>
@@ -399,22 +373,20 @@ Score: {weakest.score}/100
 
 {missing_block}
 
----
+<hr>
 
-## 📝 Question-Level Assessment
-
+<h2>📝 Question-Level Assessment</h2>
 {question_block}
 
----
+<hr>
 
-## 🚀 Improvement Roadmap
-
+<h2>🚀 Improvement Roadmap</h2>
 {improvements}
 
----
+<hr>
 
 <small>
-This evaluation combines deterministic scoring, role-weighted modeling, statistical percentile estimation, 
+This evaluation combines deterministic scoring, role-weighted modeling, statistical percentile estimation,
 and AI-generated qualitative justification.
 </small>
 """
