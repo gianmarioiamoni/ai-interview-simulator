@@ -83,7 +83,6 @@ class InterviewEvaluationService:
             if score is not None
         ]
 
-        # strongest / weakest safe
         if readable_dimensions:
             strongest = max(readable_dimensions, key=lambda x: x["score"])["name"]
             weakest = min(readable_dimensions, key=lambda x: x["score"])["name"]
@@ -92,26 +91,23 @@ class InterviewEvaluationService:
             weakest = "N/A"
 
         # ---------------------------------------------------------
-        # DECISION EXPLANATION (LLM with fallback)
+        # DECISION EXPLANATION (SAFE)
         # ---------------------------------------------------------
 
+        decision_explanation = {
+            "drivers": [],
+            "blockers": [],
+        }
+
         try:
-            decision_reasons = self._narrative_service.generate_decision_explanation(
-                decision=scoring.hire_decision.value,
-                dimensions=readable_dimensions,
-            )
-        except Exception:
-            logger.warning("decision_explanation_generation_failed")
-            
             decision_explanation = (
                 self._narrative_service.generate_decision_explanation(
                     decision=scoring.hire_decision.value,
-                    dimensions=[
-                        {"name": DIMENSION_LABELS.get(dim, dim.value), "score": score}
-                        for dim, score in dimension_scores.items()
-                    ],
+                    dimensions=readable_dimensions,
                 )
             )
+        except Exception:
+            logger.warning("decision_explanation_generation_failed")
 
         # ---------------------------------------------------------
         # PERCENTILE
@@ -135,7 +131,7 @@ class InterviewEvaluationService:
         )
 
         # ---------------------------------------------------------
-        # EXECUTIVE SUMMARY (LLM + fallback SAFE)
+        # EXECUTIVE SUMMARY (LLM + fallback)
         # ---------------------------------------------------------
 
         try:
@@ -154,7 +150,7 @@ class InterviewEvaluationService:
             )
 
         # ---------------------------------------------------------
-        # NARRATIVE (EXISTING - KEEP)
+        # NARRATIVE (KEEP EXISTING)
         # ---------------------------------------------------------
 
         narrative = self._generate_narrative(
@@ -199,7 +195,7 @@ class InterviewEvaluationService:
             if score is None
         ]
 
-        improvement_suggestions = narrative["improvement_suggestions"] or []
+        improvement_suggestions = narrative.get("improvement_suggestions", []) or []
 
         if missing_dims:
             improvement_suggestions += [
@@ -231,7 +227,7 @@ class InterviewEvaluationService:
         )
 
     # ---------------------------------------------------------
-    # EXECUTIVE SUMMARY (SAFE VERSION - FALLBACK)
+    # EXECUTIVE SUMMARY (SAFE FALLBACK)
     # ---------------------------------------------------------
 
     def _generate_executive_summary(
