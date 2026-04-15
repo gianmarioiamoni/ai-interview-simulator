@@ -88,7 +88,7 @@ class UIEventOrchestrator:
         submit_handler = self.handler_factory.create(
             submit_answer, 
             "⏳ Evaluating answer...",
-            disable_first_output=True,
+            disable_button=self.c.written_submit,
         )
 
         # WRITTEN
@@ -178,14 +178,13 @@ class UIEventOrchestrator:
         report_handler = self.handler_factory.create(
             view_report_handler, 
             "⏳ Loading report...",
-            disable_first_output=True,
+            disable_button=self.c.view_report_button,
         )
 
         self.c.view_report_button.click(
             report_handler,
             inputs=[self.state],
             outputs=[
-                self.c.view_report_button,
                 self.c.setup_section,
                 self.c.interview_section,
                 self.c.completion_section,
