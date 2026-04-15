@@ -61,7 +61,7 @@ class InterviewEvaluationService:
 
         gating_triggered = scoring.gating_triggered
         gating_reason = scoring.gating_reason
-        hiring_probability = scoring.hiring_probability
+        hiring_probability = self._compute_hiring_probability(overall_score)
 
         # ---------------------------------------------------------
         # DECISION EXPLANATION
@@ -266,12 +266,12 @@ Return JSON.
 
         try:
             parsed = self._extract_json(response.content)
-            
+
             if "dimension_justifications" not in parsed:
                 parsed["dimension_justifications"] = {}
             if "improvement_suggestions" not in parsed:
                 parsed["improvement_suggestions"] = []
-            
+
             return parsed
         except Exception:
             logger.warning("narrative_json_parsing_failed")

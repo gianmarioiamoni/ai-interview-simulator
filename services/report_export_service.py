@@ -1,5 +1,10 @@
 # app/services/report_export_service.py
 
+# Report export service
+#
+# HTML → PDF rendering using WeasyPrint
+# Ensures visual consistency with UI report
+
 import json
 from typing import Any
 
@@ -45,37 +50,65 @@ class ReportExportService:
 <html>
 <head>
     <meta charset="utf-8">
+
     <style>
         body {{
             font-family: Arial, sans-serif;
             padding: 30px;
+            line-height: 1.5;
         }}
 
         h1, h2, h3, h4 {{
-            margin-top: 20px;
+            margin-top: 24px;
+            margin-bottom: 10px;
+        }}
+
+        p {{
+            margin: 6px 0;
         }}
 
         table {{
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            margin-bottom: 20px;
+            font-size: 12px;
         }}
 
         th, td {{
             border: 1px solid #ddd;
             padding: 8px;
+            text-align: left;
         }}
 
         th {{
             background-color: #f5f5f5;
+            font-weight: bold;
         }}
 
         span {{
             display: inline-block;
             margin-top: 4px;
         }}
+
+        img {{
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }}
+
+        /* Prevent bad page breaks */
+        table, img, div {{
+            page-break-inside: avoid;
+        }}
+
+        h2, h3 {{
+            page-break-after: avoid;
+        }}
+
     </style>
 </head>
+
 <body>
 {body}
 </body>
