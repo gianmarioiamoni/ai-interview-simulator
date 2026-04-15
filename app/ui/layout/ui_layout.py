@@ -176,8 +176,8 @@ def build_layout():
         pdf_button = gr.Button("Download PDF")
         json_button = gr.Button("Download JSON")
 
-        pdf_file = gr.File(visible=False)
-        json_file = gr.File(visible=False)
+        pdf_file = gr.File(visible=False, label="Download PDF Report")
+        json_file = gr.File(visible=False, label="Download JSON Report")
 
         new_interview_button = gr.Button("Start New Interview")
 
