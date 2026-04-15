@@ -127,6 +127,7 @@ def _confidence_bar(conf: float) -> str:
 
     return f"""
 <div style="margin-top:8px;">
+    <strong>Confidence</strong>
     <div style="background:#e5e7eb;height:12px;border-radius:6px;">
         <div style="width:{percent}%;background:{color};height:12px;border-radius:6px;"></div>
     </div>
@@ -174,12 +175,20 @@ def _contribution_table(dimensions) -> str:
         weight_display = "-" if d.score is None else f"{d.weight}"
         contribution_display = "-" if d.score is None else f"{d.contribution}"
 
+        status = (
+            "⚪ N/A" if d.score is None 
+            else "🟢 Strong" if d.score >= 80
+            else "🟡 Medium" if d.score >= 60 
+            else "🔴 Weak"
+        )
+
         rows += f"""
             <tr>
                 <td>{d.name}</td>
                 <td>{score_display}</td>
                 <td>{weight_display}</td>
                 <td><strong>{contribution_display}</strong></td>
+                <td>{status}</td>
             </tr>
         """
 
@@ -190,6 +199,7 @@ def _contribution_table(dimensions) -> str:
                 <th>Score</th>
                 <th>Weight</th>
                 <th>Contribution</th>
+                <th>Status</th>
             </tr>
             {rows}
         </table>
@@ -262,9 +272,11 @@ def build_report_markdown(report) -> str:
 """
 
         question_block += f"""
-<h3>Question {q.question_id}</h3>
-<div>Score: {_score_badge(q.score)}</div>
-<p>{q.feedback}</p>
+<div style="padding:12px; border:1px solid #1f2937; border-radius:10px; margin-bottom:12px;">
+    <strong>Question {q.question_id}</strong><br>
+    Score: {_score_badge(q.score)}<br><br>
+    {q.feedback}
+</div>
 {execution_block}
 """
 
@@ -316,21 +328,23 @@ def build_report_markdown(report) -> str:
 <h2>🎯 Overall Performance</h2>
 
 
-<div style="display:flex; flex-direction:column; gap:8px;">
+<div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:10px;">
 
-<div>
-<strong>Overall Score:</strong><br>
-{_score_badge(report.overall_score)}
+<div style="padding:12px; background:#111827; border-radius:10px; min-width:150px;">
+    <div style="font-size:12px; color:#9ca3af;">Overall Score</div>
+    <div style="font-size:22px; font-weight:bold;">
+        {_score_badge(report.overall_score)}
+    </div>
 </div>
 
-<div>
-<strong>Hiring Decision:</strong><br>
-{decision_badge}
+<div style="padding:12px; background:#111827; border-radius:10px; min-width:150px;">
+    <div style="font-size:12px; color:#9ca3af;">Hiring Decision</div>
+    <div>{decision_badge}</div>
 </div>
 
-<div>
-<strong>Hiring Probability:</strong><br>
-{_score_badge(report.hiring_probability)}
+<div style="padding:12px; background:#111827; border-radius:10px; min-width:150px;">
+    <div style="font-size:12px; color:#9ca3af;">Hiring Probability</div>
+    <div>{_score_badge(report.hiring_probability)}</div>
 </div>
 
 </div>
