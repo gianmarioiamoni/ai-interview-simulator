@@ -171,7 +171,7 @@ def build_layout():
 
     with gr.Column(visible=False) as report_section:
 
-        report_output = gr.Markdown("")
+        report_output = gr.HTML("")
 
         pdf_button = gr.Button("Download PDF")
         json_button = gr.Button("Download JSON")
