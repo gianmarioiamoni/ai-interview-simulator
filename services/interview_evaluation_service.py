@@ -61,7 +61,7 @@ class InterviewEvaluationService:
 
         gating_triggered = scoring.gating_triggered
         gating_reason = scoring.gating_reason
-        hiring_probability = self._compute_hiring_probability(overall_score)
+        hiring_probability = scoring.hiring_probability
 
         # ---------------------------------------------------------
         # DECISION EXPLANATION
