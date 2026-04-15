@@ -12,7 +12,6 @@ class DecisionExplainer:
         self,
         *,
         overall_score: float,
-        _hire_decision: str,
         dimension_scores: Dict[PerformanceDimensionType, Optional[float]],
         gating_triggered: bool,
         gating_reason: str | None,

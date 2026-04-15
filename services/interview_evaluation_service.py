@@ -69,7 +69,6 @@ class InterviewEvaluationService:
 
         decision_reasons = self._explainer.explain(
             overall_score=overall_score,
-            hire_decision=scoring.hire_decision.value,
             dimension_scores=dimension_scores,
             gating_triggered=gating_triggered,
             gating_reason=gating_reason,
