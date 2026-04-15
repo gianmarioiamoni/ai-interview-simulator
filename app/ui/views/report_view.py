@@ -182,8 +182,17 @@ def _contribution_table(dimensions) -> str:
             else "🔴 Weak"
         )
 
+        row_style = (
+            "background-color:#1f2937;" if d.score is None      # dark grey
+            else "background-color:#052e16;" if d.score >= 80   # dark green
+            else "background-color:#3f2f05;" if d.score >= 60   # dark yellow
+            else "background-color:#3f0a0a;"                    # dark red
+        )
+
+        text_style = "color:white;"
+
         rows += f"""
-            <tr>
+            <tr style="{row_style} {text_style}">
                 <td>{d.name}</td>
                 <td>{score_display}</td>
                 <td>{weight_display}</td>
