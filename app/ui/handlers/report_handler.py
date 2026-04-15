@@ -1,5 +1,7 @@
 # app/ui/handlers/report_handler.py
 
+import gradio as gr
+
 from app.ui.views.report_view import build_report_markdown
 from app.ui.ui_router import route_ui
 from app.ui.ui_state import UIState
