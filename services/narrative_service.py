@@ -74,6 +74,7 @@ OUTPUT FORMAT (STRICT JSON):
 """
 
         response = self._llm.invoke(prompt)
+        print ("RAW LLM RESPONSE:", response.content)
 
         try:
             parsed = self._extract_json(response.content)
