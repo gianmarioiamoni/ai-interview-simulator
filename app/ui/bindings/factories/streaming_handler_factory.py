@@ -49,7 +49,7 @@ class StreamingHandlerFactory:
 
             # Disable button if required
             if disable_button:
-                disable_button.update(interactive=False)
+                disable_button.gr.update(interactive=False)
 
             # Show loader
             updates = self._idle_updates()
