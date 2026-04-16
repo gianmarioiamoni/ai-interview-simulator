@@ -327,7 +327,7 @@ Candidate is positioned in <strong>{percentile_segment}</strong><br>
 
 <p>{report.percentile_explanation}</p>
 
-<div style="margin-top:10px;padding:10px;border-left:4px solid #2563eb;background:#f9fafb;">
+<div style="margin-top:10px;padding:10px;border-left:4px solid #2563eb;">
 {percentile_narrative}
 </div>
 
