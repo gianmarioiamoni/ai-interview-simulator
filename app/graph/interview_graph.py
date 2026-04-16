@@ -15,6 +15,7 @@ from app.graph.nodes.written_evaluation_node import WrittenEvaluationNode
 from app.graph.nodes.navigation_node import navigation_node
 from app.graph.nodes.completion_node import completion_node
 from app.graph.nodes.report_node import report_node
+from app.graph.nodes.evaluation_aggregate_node import EvaluationAggregateNode
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
@@ -94,6 +95,7 @@ def build_interview_graph(
     graph.add_node("navigation", navigation_node)
     graph.add_node("execution", ExecutionNode(execution_engine))
     graph.add_node("evaluation", EvaluationNode())
+    graph.add_node("evaluation_aggregate", EvaluationAggregateNode(evaluation_service))
     graph.add_node("feedback", FeedbackNode())
     graph.add_node("hint", HintNode(hint_service))
     graph.add_node("decision", DecisionNode())
@@ -172,6 +174,7 @@ def build_interview_graph(
     # -----------------------------------------------------
 
     graph.add_edge("navigation", "completion")
+    graph.add_edge("completion", "evaluation_aggregate")
 
     def route_after_completion(state: InterviewState) -> str:
         print(f"[DEBUG] route_after_completion - is_completed: {state.is_completed}")
@@ -184,7 +187,7 @@ def build_interview_graph(
         return END
 
     graph.add_conditional_edges(
-        "completion",
+        "evaluation_aggregate",
         route_after_completion,
         {
             "report": "report",
