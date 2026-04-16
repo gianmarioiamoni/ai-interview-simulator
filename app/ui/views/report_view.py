@@ -198,6 +198,9 @@ def build_report_markdown(report):
             else "Low confidence (inconsistent performance)"
         )
     )
+    confidence_text = (
+        f"{confidence_text} — based on score consistency across evaluated dimensions"
+    )
 
     # ---------------- DECISION EXPLANATION
 
