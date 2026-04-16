@@ -131,18 +131,3 @@ Be specific and professional.
                 bullets.append(l)
 
         return bullets[:5]
-
-
-    def _extract_json(self, text: str) -> Dict:
-
-        try:
-            return json.loads(text)
-        except Exception:
-            try:
-                match = re.search(r"\{.*\}", text, re.DOTALL)
-                if match:
-                    return json.loads(match.group(0))
-            except Exception:
-                pass
-
-        return {}
