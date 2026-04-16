@@ -20,6 +20,7 @@ from services.interview_evaluation.generators.decision_explanation_generator imp
 from services.interview_evaluation.generators.executive_summary_generator import ExecutiveSummaryGenerator
 from services.interview_evaluation.builders.dimension_builder import DimensionBuilder
 from services.interview_evaluation.builders.improvement_builder import ImprovementBuilder
+from services.interview_evaluation.generators.narrative_generator import NarrativeGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class InterviewEvaluationService:
         self._summary_generator = ExecutiveSummaryGenerator(self._narrative_service)
         self._dimension_builder = DimensionBuilder()
         self._improvement_builder = ImprovementBuilder()
-
+        self._narrative_generator = NarrativeGenerator(llm)
     # ---------------------------------------------------------
 
     def evaluate(
@@ -107,7 +108,7 @@ class InterviewEvaluationService:
 
         # ---------------- narrative
 
-        narrative = self._generate_narrative(
+        narrative = self._narrative_generator.generate(
             per_question_evaluations,
             dimension_scores,
             interview_type,
