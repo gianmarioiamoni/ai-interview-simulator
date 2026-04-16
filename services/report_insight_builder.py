@@ -69,7 +69,7 @@ class ReportInsightBuilder:
         return "Bottom 25%"
 
     def build_percentile_narrative(self, percentile: float, role: RoleType) -> str:
-        role_label = _format_role(role)
+        role_label = self._format_role(role)
 
         if percentile >= 90:
             return f"Top-tier {role_label}s in this range typically demonstrate exceptional technical depth, strong system design skills, and consistent high-quality performance across all areas."
