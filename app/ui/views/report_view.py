@@ -1,7 +1,7 @@
 # app/ui/views/report/report_view.py
 
-from .report_view_model_builder import ReportViewModelBuilder
-from .report_renderer import ReportRenderer
+from app.ui.views.report.report_view_model_builder import ReportViewModelBuilder
+from app.ui.views.report.report_renderer import ReportRenderer
 
 
 class ReportViewFacade:
