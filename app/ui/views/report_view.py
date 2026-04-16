@@ -183,6 +183,7 @@ def build_report_markdown(report):
 
     dimension_insights = builder.build_dimension_insights(dims)
     percentile_segment = builder.build_percentile_segment(report.percentile_rank)
+    percentile_narrative = builder.build_percentile_narrative(report.percentile_rank, report.role)
     roadmap = builder.prioritize_improvements(dims)
 
     # ---------------- CONFIDENCE TEXT
@@ -325,6 +326,10 @@ Candidate is positioned in <strong>{percentile_segment}</strong><br>
 {gaussian}
 
 <p>{report.percentile_explanation}</p>
+
+<div style="margin-top:10px;padding:10px;border-left:4px solid #2563eb;background:#f9fafb;">
+{percentile_narrative}
+</div>
 
 <h2>Performance Overview</h2>
 

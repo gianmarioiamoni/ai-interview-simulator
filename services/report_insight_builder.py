@@ -2,6 +2,7 @@
 
 from typing import List
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
+from domain.contracts.user.role import RoleType
 
 
 class DimensionInsight:
@@ -67,6 +68,24 @@ class ReportInsightBuilder:
             return "Below Average"
         return "Bottom 25%"
 
+    def build_percentile_narrative(self, percentile: float, role: RoleType) -> str:
+        role_label = _format_role(role)
+
+        if percentile >= 90:
+            return f"Top-tier {role_label}s in this range typically demonstrate exceptional technical depth, strong system design skills, and consistent high-quality performance across all areas."
+
+        elif percentile >= 75:
+            return f"Strong {role_label}s in this range are strong performers, typically showing solid technical expertise and problem-solving ability, with minor areas for improvement."
+
+        elif percentile >= 60:
+            return f"Above-average {role_label}s demonstrate good technical foundations and problem-solving skills, though some inconsistencies or weaker areas may still be present."
+
+        elif percentile >= 40:
+            return f"{role_label}s in this range show partial competency, but require improvement across multiple areas to meet hiring expectations."
+
+        else:
+            return f"{role_label}s below average typically exhibit significant gaps in key technical and communication skills required for the role."
+
     # ---------------------------------------------------------
     # ROADMAP PRIORITY
     # ---------------------------------------------------------
@@ -102,3 +121,7 @@ class ReportInsightBuilder:
                 })
 
         return roadmap
+
+
+    def _format_role(self, role: RoleType) -> str:
+        return role.value.replace("_", " ").title()
