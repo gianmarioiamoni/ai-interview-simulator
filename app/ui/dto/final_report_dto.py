@@ -12,6 +12,7 @@ from domain.contracts.execution.test_execution_result import TestStatus
 from domain.contracts.execution.execution_result import ExecutionResult
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
+from domain.contracts.user.role import RoleType
 
 
 class FinalReportDTO(BaseModel):
@@ -40,8 +41,11 @@ class FinalReportDTO(BaseModel):
 
     confidence: Confidence
 
+    role: RoleType
+
     @classmethod
     def from_components(cls, state: InterviewState, final_evaluation):
+        role = state.role.type
 
         question_assessments: List[QuestionAssessmentDTO] = []
 
@@ -168,6 +172,7 @@ class FinalReportDTO(BaseModel):
             improvement_suggestions=improvements,
             total_tokens_used=tokens,
             confidence=final_evaluation.confidence,
+            role=role,
         )
 
     @staticmethod
