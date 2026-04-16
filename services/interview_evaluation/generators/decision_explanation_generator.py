@@ -13,10 +13,30 @@ class DecisionExplanationGenerator:
     def generate(self, decision, dimensions):
 
         try:
-            return self._narrative_service.generate_decision_explanation(
+            result = self._narrative_service.generate_decision_explanation(
                 decision=decision,
                 dimensions=dimensions,
             )
+
         except Exception:
             logger.warning("decision_explanation_generation_failed")
-            return {"drivers": [], "blockers": []}
+            result = {"drivers": [], "blockers": []}
+
+        # -----------------------------------------------------
+        # FALLBACK (CRUCIALE)
+        # -----------------------------------------------------
+
+        drivers = result.get("drivers") or []
+        blockers = result.get("blockers") or []
+
+        if not drivers and not blockers:
+
+            strongest = max(dimensions, key=lambda x: x["score"])["name"] if dimensions else None
+            weakest = min(dimensions, key=lambda x: x["score"])["name"] if dimensions else None
+    
+            return {
+                "drivers": [f"Strong performance in {strongest}"] if strongest else ["Evaluation completed"],
+                "blockers": [f"Weak performance in {weakest}"] if weakest else ["No significant strengths identified"],
+            }
+
+        return result
