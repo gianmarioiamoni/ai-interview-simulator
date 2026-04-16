@@ -30,7 +30,7 @@ def _fig_to_base64(fig) -> str:
 
 def _radar_chart(dimensions, scores):
 
-    filtered = [(d, s) for d, s in zip(dimensions, scores) if s is not None]
+    filtered = list(zip(dimensions, scores))
 
     if not filtered:
         return "<i>No dimension data available</i>"
@@ -328,7 +328,9 @@ Candidate is positioned in <strong>{percentile_segment}</strong><br>
 
 {gaussian}
 
-<p>{report.percentile_explanation}</p>
+<p style="color:#6b7280;font-size:12px;>
+{report.percentile_explanation}
+</p>
 
 <div style="margin-top:10px;padding:10px;border-left:4px solid #2563eb;">
 {percentile_narrative}
