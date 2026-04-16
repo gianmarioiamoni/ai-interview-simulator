@@ -58,27 +58,33 @@ RULES:
     ) -> Dict[str, List[str]]:
 
         prompt = f"""
-            You are a senior technical hiring panel.
+        You are a senior technical interviewer.
 
-            Decision: {decision}
+        Decision: {decision}
 
-            Dimensions:
-            {dimensions}
+        Candidate performance by dimension:
+        {dimensions}
 
-            TASK:
-            - Identify key drivers (positive signals that support hiring)
-            - Identify blockers (risks or weaknesses affecting hiring decision)
+        Task:
+        Explain the hiring decision.
 
-            RULES:
-            - Each point must explain IMPACT on hiring decision
-            - Be specific (mention score or implication)
-            - Avoid generic statements
+        Return JSON with:
+        - drivers: key strengths supporting the decision
+        - blockers: key weaknesses preventing hiring
 
-            OUTPUT FORMAT (STRICT JSON):
-            {{
-              "drivers": ["..."],
-              "blockers": ["..."]
-            }}
+        Rules:
+        - Always return at least 1 driver and 1 blocker
+        - Be specific and reference dimensions when possible
+        - Drivers must explain why the candidate could be hired
+        - Blockers must explain why the candidate is not fully suitable
+        - If the decision is negative, blockers should be stronger than drivers
+        - Do not be generic (avoid "overall performance is good")
+
+        Output format:
+        {
+          "drivers": [...],
+          "blockers": [...]
+        }
         """
 
         response = self._llm.invoke(prompt)
@@ -104,14 +110,14 @@ RULES:
     ) -> str:
 
         prompt = f"""
-Explain this performance dimension in 1 sentence.
+        Explain this performance dimension in 1 sentence.
 
-Dimension: {name}
-Score: {score}
-Impact: {impact}
+        Dimension: {name}
+        Score: {score}
+        Impact: {impact}
 
-Be specific and professional.
-"""
+        Be specific and professional.
+        """
 
         response = self._llm.invoke(prompt)
         return response.content.strip()
