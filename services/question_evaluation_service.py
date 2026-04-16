@@ -75,6 +75,7 @@ Rules:
 
             try:
                 parsed = self._extract_json(response.choices[0].message.content)
+                parsed["tokens_used"] = tokens_used
                 evaluation = QuestionEvaluation.model_validate(parsed)
                 return evaluation
 

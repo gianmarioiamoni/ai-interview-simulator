@@ -23,3 +23,5 @@ class QuestionEvaluation(BaseModel):
     execution_status: Optional[str] = None
 
     model_config = {"frozen": True}
+
+    tokens_used: int = 0
