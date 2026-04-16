@@ -185,22 +185,30 @@ def build_report_markdown(report):
     percentile_segment = builder.build_percentile_segment(report.percentile_rank)
     roadmap = builder.prioritize_improvements(dims)
 
+    # ---------------- CONFIDENCE TEXT
+
     confidence_value = report.confidence.final
     confidence_text = (
         "High confidence (consistent performance)"
         if confidence_value > 0.85
-        else "Moderate confidence (some variability)"
-        if confidence_value > 0.65
-        else "Low confidence (inconsistent performance)"
+        else (
+            "Moderate confidence (some variability)"
+            if confidence_value > 0.65
+            else "Low confidence (inconsistent performance)"
+        )
     )
 
-    # ---------------- BUILD SAFE STRINGS
+    # ---------------- DECISION EXPLANATION
+
     drivers_html = "".join(
         f"<li>{d}</li>" for d in report.decision_explanation.get("drivers", [])
     )
+
     blockers_html = "".join(
         f"<li>{b}</li>" for b in report.decision_explanation.get("blockers", [])
     )
+
+    # ---------------- ROADMAP
 
     roadmap_html = ""
     for r in roadmap:
@@ -210,6 +218,8 @@ def build_report_markdown(report):
 {r['action']}
 </div>
 """
+
+    # ---------------- DIMENSION INSIGHTS
 
     dimension_html = ""
     for d in dimension_insights:
@@ -227,6 +237,21 @@ Impact: <strong>{d.impact}</strong><br>
         if report.gating_triggered
         else "<div style='color:#16a34a;font-weight:bold;'>No Gating Applied</div>"
     )
+
+    # ---------------- MISSING (FIX RIPRISTINATO)
+
+    missing_dims = [d.name for d in dims if d.score is None]
+
+    missing_block = ""
+    if missing_dims:
+        missing_block = f"""
+<div style="margin-top:20px;background:#fef3c7;padding:10px;">
+<strong>Missing Evaluation</strong>
+<ul>
+{''.join(f"<li>{d}</li>" for d in missing_dims)}
+</ul>
+</div>
+"""
 
     # ---------------- QUESTIONS
 
@@ -287,6 +312,7 @@ Score: {_score_badge(q.score)}<br><br>
 <ul>
 {blockers_html}
 </ul>
+
 </div>
 
 <h2>Market Position</h2>
