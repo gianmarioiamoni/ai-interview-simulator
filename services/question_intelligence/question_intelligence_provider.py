@@ -1,13 +1,5 @@
 # services/question_intelligence/question_intelligence_provider.py
 
-# QuestionIntelligenceProvider
-#
-# Responsibility:
-# Provides a fully wired QuestionIntelligenceService.
-# Encapsulates dependency construction.
-#
-# This avoids leaking infrastructure wiring into UI/application layer.
-
 from typing import List
 
 from domain.contracts.question.question import Question
@@ -30,6 +22,10 @@ from services.question_intelligence.question_vector_store import (
     QuestionVectorStore,
 )
 
+from infrastructure.vector_store.chroma_question_store import (
+    ChromaQuestionStore,
+)
+
 
 class QuestionIntelligenceProvider:
     def __init__(self) -> None:
@@ -38,13 +34,16 @@ class QuestionIntelligenceProvider:
         # Infrastructure
         # -----------------------------------------------------
 
-        vector_store = QuestionVectorStore()
+        chroma_store = ChromaQuestionStore()
+
+        vector_store = QuestionVectorStore(chroma_store)
 
         # -----------------------------------------------------
         # Services
         # -----------------------------------------------------
 
         retrieval_service = QuestionRetrievalService(vector_store)
+
         generator = QuestionGenerator()
         coding_generator = CodingQuestionGenerator()
 
