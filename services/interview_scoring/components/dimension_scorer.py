@@ -1,21 +1,23 @@
 # services/interview_scoring/components/dimension_scorer.py
 
 from typing import List, Dict
-from domain.contracts.question.question import Question, QuestionType
+from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
+from domain.contracts.interview.interview_area import InterviewArea
+
 
 
 AREA_TO_DIMENSION = {
-    "technical_technical_knowledge": PerformanceDimensionType.TECHNICAL_DEPTH,
-    "technical_database": PerformanceDimensionType.TECHNICAL_DEPTH,
-    "technical_coding": PerformanceDimensionType.PROBLEM_SOLVING,
-    "technical_case_study": PerformanceDimensionType.SYSTEM_DESIGN,
-    "hr_background": PerformanceDimensionType.COMMUNICATION,
-    "hr_technical_knowledge": PerformanceDimensionType.TECHNICAL_DEPTH,
-    "hr_situational": PerformanceDimensionType.COMMUNICATION,
-    "hr_brain_teaser": PerformanceDimensionType.PROBLEM_SOLVING,
-    "hr_analytical": PerformanceDimensionType.PROBLEM_SOLVING,
+    InterviewArea.TECHNICAL_TECHNICAL_KNOWLEDGE: PerformanceDimensionType.TECHNICAL_DEPTH,
+    InterviewArea.TECHNICAL_DATABASE: PerformanceDimensionType.TECHNICAL_DEPTH,
+    InterviewArea.TECHNICAL_CODING: PerformanceDimensionType.PROBLEM_SOLVING,
+    InterviewArea.TECHNICAL_CASE_STUDY: PerformanceDimensionType.SYSTEM_DESIGN,
+    InterviewArea.HR_BACKGROUND: PerformanceDimensionType.COMMUNICATION,
+    InterviewArea.HR_TECHNICAL_KNOWLEDGE: PerformanceDimensionType.TECHNICAL_DEPTH,
+    InterviewArea.HR_SITUATIONAL: PerformanceDimensionType.COMMUNICATION,
+    InterviewArea.HR_BRAIN_TEASER: PerformanceDimensionType.PROBLEM_SOLVING,
+    InterviewArea.HR_ANALYTICAL: PerformanceDimensionType.PROBLEM_SOLVING,
 }
 
 
@@ -36,10 +38,7 @@ class DimensionScorer:
             if not question:
                 continue
 
-            if question.type == QuestionType.WRITTEN:
-                dimension = PerformanceDimensionType.COMMUNICATION
-            else:
-                dimension = AREA_TO_DIMENSION.get(question.area)
+            dimension = AREA_TO_DIMENSION.get(question.area)
 
             if not dimension:
                 continue

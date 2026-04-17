@@ -1,4 +1,4 @@
-# services/interview_evaluation/interview_evaluation_service.py
+# services/interview_evaluation_service.py
 
 from typing import List
 import logging
