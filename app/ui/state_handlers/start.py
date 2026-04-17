@@ -5,6 +5,10 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.question.question import QuestionType
 from domain.contracts.interview_state import InterviewState
 
+from services.question_intelligence.question_intelligence_provider import (
+    QuestionIntelligenceProvider,
+)
+
 from app.ui.sample_data_loader import load_sample_questions
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
@@ -20,7 +24,19 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     role_type = RoleType[role.replace(" ", "_")]
     interview_type_enum = InterviewType[interview_type]
 
-    questions = load_sample_questions(interview_type_enum.value)
+    # -----------------------------------------------------
+    # Question generation
+    # -----------------------------------------------------
+
+    question_intelligence = QuestionIntelligenceProvider()
+
+    questions = question_intelligence.generate(
+        role=role,
+        level="mid",  # temporaneo
+        interview_type=interview_type_enum.value,
+        areas=[area.value for area in interview_type_enum.get_areas()],
+    )
+
 
     enriched_questions = []
 
