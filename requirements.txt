@@ -20,7 +20,7 @@ huggingface_hub==0.26.2
 pydantic==2.7.4
 python-dotenv
 langchain==0.3.12
-langchain-core==0.3.79
+#langchain-core==0.3.79
 langchain-openai==0.2.6
 langgraph==0.2.50
 tiktoken==0.12.0
