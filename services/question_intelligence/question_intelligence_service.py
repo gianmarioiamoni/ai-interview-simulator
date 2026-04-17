@@ -15,6 +15,8 @@ from domain.contracts.question.question import Question
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.interview.interview_area import InterviewArea
 
+from app.settings.constants import QUESTIONS_PER_AREA
+
 from services.question_intelligence.question_set_builder import (
     QuestionSetBuilder,
 )
@@ -36,7 +38,7 @@ class QuestionIntelligenceService:
         level: str,
         interview_type: InterviewType,
         areas: List[InterviewArea],
-        questions_per_area: int = 1,
+        questions_per_area: int = QUESTIONS_PER_AREA,
     ) -> List[Question]:
 
         return self._question_set_builder.build(
