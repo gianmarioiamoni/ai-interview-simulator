@@ -1,6 +1,6 @@
 # services/interview_scoring/components/dimension_scorer.py
 
-from typing import List, Dict
+from typing import List, Dict, Enum
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
