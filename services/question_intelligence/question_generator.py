@@ -34,7 +34,7 @@ class QuestionGenerator:
             n=n,
         )
 
-        response = self._llm.invoke(prompt)
+        response = self._llm.invoke(prompt, temperature=0.7)
 
         data = json.loads(response.content)
 
@@ -55,6 +55,12 @@ class QuestionGenerator:
             Generate {n} {interview_type} interview questions
             for a {level} {role} candidate
             in the area of {area}.
+
+            IMPORTANT:
+             - Questions MUST be diverse and different in topic and structure
+             - DO NOT repeat similar questions
+             - Each question must be different in topic and structure
+
 
             Return STRICTLY a JSON array of objects with:
                 - text (string)
