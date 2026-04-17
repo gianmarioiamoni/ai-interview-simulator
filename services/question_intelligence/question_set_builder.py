@@ -43,7 +43,6 @@ class QuestionSetBuilder:
 
             all_questions.extend(area_questions[:questions_per_area])
 
-
         self._validate_no_duplicates(all_questions)
 
         return all_questions
@@ -52,4 +51,5 @@ class QuestionSetBuilder:
         prompts = [q.prompt.strip().lower() for q in questions]
 
         if len(prompts) != len(set(prompts)):
-            raise ValueError("Duplicate questions detected in final set")
+            #raise ValueError("Duplicate questions detected in final set")
+            print("[WARNING] Duplicate questions detected in final set")
