@@ -41,14 +41,14 @@ class QuestionSelectionService:
     ) -> List[Question]:
 
         # -----------------------------------------------------
-        # CODING AREA → dedicated pipeline
+        # CODING AREA
         # -----------------------------------------------------
 
         if area == "TECH_CODING":
             return self._build_coding_questions(role, level, area)
 
         # -----------------------------------------------------
-        # STANDARD FLOW (WRITTEN)
+        # STANDARD FLOW
         # -----------------------------------------------------
 
         retrieved = self._retrieval_service.retrieve(
@@ -70,8 +70,16 @@ class QuestionSelectionService:
 
         questions: List[Question] = []
 
+        # -----------------------------------------------------
+        # MAP RETRIEVED
+        # -----------------------------------------------------
+
         for item in retrieved:
             questions.append(self._map_bank_item(item))
+
+        # -----------------------------------------------------
+        # MAP GENERATED
+        # -----------------------------------------------------
 
         for gen in generated:
             questions.append(
@@ -80,7 +88,31 @@ class QuestionSelectionService:
                     area=area,
                     interview_type=interview_type,
                 )
+         )
+
+        # -----------------------------------------------------
+        # FALLBACK (CRUCIALE)
+        # -----------------------------------------------------
+
+        missing = 4 - len(questions)
+
+        if missing > 0:
+            extra_generated = self._generator.generate(
+                role=role,
+                level=level,
+                interview_type=interview_type,
+                area=area,
+                n=missing,
             )
+
+            for gen in extra_generated:
+                questions.append(
+                    self._map_generated_question(
+                        gen,
+                        area=area,
+                        interview_type=interview_type,
+                    )
+                )
 
         return questions
 
