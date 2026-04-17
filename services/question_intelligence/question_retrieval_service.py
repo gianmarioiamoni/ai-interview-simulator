@@ -65,7 +65,14 @@ class QuestionRetrievalService:
         if area:
             filters["area"] = area
 
-        return filters if filters else None
+        if not filters:
+            return None
+
+        
+        # convert to Chroma-compatible filter
+        return {
+            "$and": [{k: v} for k, v in filters.items()]
+        }
 
     def _to_domain(self, document: Document) -> QuestionBankItem:
         metadata = document.metadata
