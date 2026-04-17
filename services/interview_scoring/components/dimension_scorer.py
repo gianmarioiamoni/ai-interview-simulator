@@ -1,7 +1,6 @@
 # services/interview_scoring/components/dimension_scorer.py
 
 from typing import List, Dict
-from enum import Enum
 
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
@@ -15,28 +14,14 @@ AREA_TO_DIMENSION = {
     InterviewArea.TECH_DATABASE: PerformanceDimensionType.TECHNICAL_DEPTH,
     InterviewArea.TECH_CODING: PerformanceDimensionType.PROBLEM_SOLVING,
     InterviewArea.TECH_CASE_STUDY: PerformanceDimensionType.SYSTEM_DESIGN,
-    InterviewArea.HR_BACKGROUND: PerformanceDimensionType.COMMUNICATION,
+    InterviewArea.TECH_BACKGROUND: PerformanceDimensionType.TECHNICAL_DEPTH,
     # HR
     InterviewArea.HR_TECHNICAL_KNOWLEDGE: PerformanceDimensionType.TECHNICAL_DEPTH,
     InterviewArea.HR_SITUATIONAL: PerformanceDimensionType.COMMUNICATION,
     InterviewArea.HR_BRAIN_TEASER: PerformanceDimensionType.PROBLEM_SOLVING,
     InterviewArea.HR_ANALYTICAL: PerformanceDimensionType.PROBLEM_SOLVING,
+    InterviewArea.HR_BACKGROUND: PerformanceDimensionType.COMMUNICATION,
 }
-class InterviewArea(str, Enum):
-
-    # HR interview areas (5)
-    HR_BACKGROUND = "hr_background"
-    HR_TECHNICAL_KNOWLEDGE = "hr_technical_knowledge"
-    HR_SITUATIONAL = "hr_situational"
-    HR_BRAIN_TEASER = "hr_brain_teaser"
-    HR_ANALYTICAL = "hr_analytical"
-
-    # Technical interview areas (5)
-    TECH_BACKGROUND = "technical_background"
-    TECH_TECHNICAL_KNOWLEDGE = "technical_technical_knowledge"
-    TECH_CASE_STUDY = "technical_case_study"
-    TECH_DATABASE = "technical_database"
-    TECH_CODING = "technical_coding"
 
 
 class DimensionScorer:

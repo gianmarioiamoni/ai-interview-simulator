@@ -13,6 +13,7 @@ from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.execution.coding_spec import CodingSpec
 from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.interview.interview_type import InterviewType
 
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
@@ -22,6 +23,7 @@ from services.question_intelligence.question_generator import (
 )
 from services.question_intelligence.coding_question_generator import (
     CodingQuestionGenerator,
+    GeneratedCodingQuestion,
 )
 
 from app.settings.constants import QUESTIONS_PER_AREA
@@ -46,7 +48,7 @@ class QuestionSelectionService:
         self,
         role: str,
         level: str,
-        interview_type: str,
+        interview_type: InterviewType,
         area: InterviewArea,
         questions_per_area: int = QUESTIONS_PER_AREA,
     ) -> List[Question]:
@@ -65,22 +67,27 @@ class QuestionSelectionService:
         # 1. RETRIEVE
         retrieved = self._retrieval_service.retrieve(
             query=f"{role} {area.value}",
-            k=2,
+            k=questions_per_area,
             role=role,
             level=level,
-            interview_type=interview_type,
+            interview_type=interview_type.value,
             area=area.value,
         )
 
         # 2. GENERATE (una sola chiamata)
         total_needed = questions_per_area
-        generated = self._generator.generate(
-            role=role,
-            level=level,
-            interview_type=interview_type,
-            area=area.value,
-            n=total_needed,
-        )
+        remaining_slots = total_needed - len(questions)
+        if remaining_slots > 0:
+            generated = self._generator.generate(
+                role=role,
+                level=level,
+                interview_type=interview_type,
+                area=area,
+                n=remaining_slots,
+            )
+
+            for gen in generated:
+                questions.append(self._map_generated_question(gen, area=area))
 
         questions: List[Question] = []
 
@@ -116,12 +123,13 @@ class QuestionSelectionService:
         role: str,
         level: str,
         area: InterviewArea,
+        questions_per_area: int = QUESTIONS_PER_AREA,
     ) -> List[Question]:
 
         raw_items = self._coding_generator.generate(
             role=role,
             level=level,
-            n=2,
+            n=questions_per_area,
         )
 
         questions: List[Question] = []
@@ -139,7 +147,8 @@ class QuestionSelectionService:
                 prompt=item.prompt,
                 coding_spec=coding_spec,
                 visible_tests=[
-                    CodingTestCase(**t.model_dump()) for t in item.visible_tests
+                    CodingTestCase(**t.model_dump()) 
+                    for t in item.visible_tests
                 ],
             )
 
@@ -153,7 +162,7 @@ class QuestionSelectionService:
 
     def _validate_alignment(
         self,
-        item,
+        item: GeneratedCodingQuestion,
         spec: CodingSpec,
     ) -> None:
 

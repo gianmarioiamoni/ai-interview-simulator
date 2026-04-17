@@ -33,8 +33,8 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     questions = question_intelligence.generate(
         role=role,
         level="mid",  # temporaneo
-        interview_type=interview_type_enum.value,
-        areas=[area.value for area in interview_type_enum.get_areas()],
+        interview_type=interview_type_enum,
+        areas=interview_type_enum.get_areas(),
         questions_per_area=QUESTIONS_PER_AREA,
     )
 
