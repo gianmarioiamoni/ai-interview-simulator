@@ -8,6 +8,7 @@ from domain.contracts.question.generated_question import GeneratedQuestion
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.execution.coding_spec import CodingSpec
+from domain.contracts.question.question import QuestionDifficulty
 
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
@@ -167,6 +168,13 @@ class QuestionSelectionService:
             difficulty=item.difficulty,
         )
 
+    def _map_difficulty(self, value: int) -> QuestionDifficulty:
+        if value <= 2:
+            return QuestionDifficulty.EASY
+        if value == 3:
+            return QuestionDifficulty.MEDIUM
+        return QuestionDifficulty.HARD
+
     def _map_generated_question(
         self,
         generated: GeneratedQuestion,
@@ -179,5 +187,5 @@ class QuestionSelectionService:
             area=area,
             type=QuestionType.WRITTEN,
             prompt=generated.text,
-            difficulty=generated.difficulty,
+            difficulty=self._map_difficulty(generated.difficulty),
         )
