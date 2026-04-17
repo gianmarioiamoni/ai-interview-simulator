@@ -1,7 +1,5 @@
 # services/question_intelligence/question_set_builder.py
 
-# QuestionSetBuilder
-#
 # Responsibility:
 # Builds the full interview question set (20 questions total).
 # Ensures structural integrity and coherence.
@@ -27,6 +25,7 @@ class QuestionSetBuilder:
         level: str,
         interview_type: str,
         areas: List[str],
+        questions_per_area: int = 1,
     ) -> List[Question]:
 
         all_questions: List[Question] = []
@@ -39,13 +38,11 @@ class QuestionSetBuilder:
                 area=area,
             )
 
-            if len(area_questions) != 4:
-                raise ValueError(f"Area {area} did not produce exactly 4 questions")
+            if len(area_questions) < questions_per_area:
+                f"Area {area} produced {len(area_questions)} questions, expected at least {questions_per_area}"
 
-            all_questions.extend(area_questions)
+            all_questions.extend(area_questions[:questions_per_area])
 
-        if len(all_questions) != 20:
-            raise ValueError(f"Expected 20 questions, got {len(all_questions)}")
 
         self._validate_no_duplicates(all_questions)
 

@@ -9,12 +9,12 @@ from services.question_intelligence.question_intelligence_provider import (
     QuestionIntelligenceProvider,
 )
 
-from app.ui.sample_data_loader import load_sample_questions
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
-
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
 from app.runtime.interview_runtime import run_interview_graph
+
+from app.settings.constants import QUESTIONS_PER_AREA
 
 test_generator = AITestGenerator()
 
@@ -35,6 +35,7 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
         level="mid",  # temporaneo
         interview_type=interview_type_enum.value,
         areas=[area.value for area in interview_type_enum.get_areas()],
+        questions_per_area=QUESTIONS_PER_AREA,
     )
 
 

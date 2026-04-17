@@ -67,6 +67,7 @@ class QuestionIntelligenceProvider:
         level: str,
         interview_type: str,
         areas: List[str],
+        questions_per_area: int = 1,
     ) -> List[Question]:
 
         return self._service.generate_interview_questions(
@@ -74,4 +75,5 @@ class QuestionIntelligenceProvider:
             level=level,
             interview_type=interview_type,
             areas=areas,
+            questions_per_area=questions_per_area,
         )

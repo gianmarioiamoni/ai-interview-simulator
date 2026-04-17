@@ -16,7 +16,6 @@ from services.question_intelligence.question_set_builder import (
     QuestionSetBuilder,
 )
 
-
 class QuestionIntelligenceService:
     def __init__(
         self,
@@ -34,6 +33,7 @@ class QuestionIntelligenceService:
         level: str,
         interview_type: str,
         areas: List[str],
+        questions_per_area: int = 1,
     ) -> List[Question]:
 
         return self._question_set_builder.build(
@@ -41,4 +41,5 @@ class QuestionIntelligenceService:
             level=level,
             interview_type=interview_type,
             areas=areas,
+            questions_per_area=questions_per_area,
         )
