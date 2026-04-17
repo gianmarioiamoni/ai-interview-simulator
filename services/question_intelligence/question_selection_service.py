@@ -58,11 +58,18 @@ class QuestionSelectionService:
         # -----------------------------------------------------
 
         if area == InterviewArea.TECH_CODING:
-            return self._build_coding_questions(role, level, area)
+            return self._build_coding_questions(
+                role=role,
+                level=level,
+                area=area,
+                questions_per_area=questions_per_area,
+            )
 
         # -----------------------------------------------------
         # STANDARD FLOW
         # -----------------------------------------------------
+
+        questions: List[Question] = []
 
         # 1. RETRIEVE
         retrieved = self._retrieval_service.retrieve(
@@ -74,9 +81,12 @@ class QuestionSelectionService:
             area=area.value,
         )
 
-        # 2. GENERATE (una sola chiamata)
-        total_needed = questions_per_area
-        remaining_slots = total_needed - len(questions)
+        for item in retrieved:
+            questions.append(self._map_bank_item(item))
+
+        # 2. GENERATE SOLO SE SERVE
+        remaining_slots = questions_per_area - len(questions)
+
         if remaining_slots > 0:
             generated = self._generator.generate(
                 role=role,
@@ -87,30 +97,12 @@ class QuestionSelectionService:
             )
 
             for gen in generated:
-                questions.append(self._map_generated_question(gen, area=area))
-
-        questions: List[Question] = []
-
-        # -----------------------------------------------------
-        # MAP RETRIEVED
-        # -----------------------------------------------------
-
-        for item in retrieved:
-            questions.append(self._map_bank_item(item))
-
-        # -----------------------------------------------------
-        # MAP GENERATED (slice per evitare duplicati)
-        # -----------------------------------------------------
-
-        remaining_slots = total_needed - len(questions)
-
-        for gen in generated[:remaining_slots]:
-            questions.append(
-                self._map_generated_question(
-                    gen,
-                    area=area,
+                questions.append(
+                    self._map_generated_question(
+                        gen,
+                        area=area,
+                    )
                 )
-            )
 
         return questions
 
@@ -136,9 +128,17 @@ class QuestionSelectionService:
 
         for item in raw_items:
 
+            # -------------------------
+            # VALIDATION
+            # -------------------------
+
             coding_spec = item.coding_spec
 
             self._validate_alignment(item, coding_spec)
+
+            # -------------------------
+            # MAPPING → DOMAIN
+            # -------------------------
 
             question = Question(
                 id=str(uuid.uuid4()),
@@ -147,8 +147,7 @@ class QuestionSelectionService:
                 prompt=item.prompt,
                 coding_spec=coding_spec,
                 visible_tests=[
-                    CodingTestCase(**t.model_dump()) 
-                    for t in item.visible_tests
+                    CodingTestCase(**t.model_dump()) for t in item.visible_tests
                 ],
             )
 
@@ -168,9 +167,11 @@ class QuestionSelectionService:
 
         prompt = item.prompt
 
+        # entrypoint must be in prompt
         if spec.entrypoint not in prompt:
             raise ValueError(f"Entrypoint '{spec.entrypoint}' not found in prompt")
 
+        # parameters must be in prompt
         for p in spec.parameters:
             if p not in prompt:
                 raise ValueError(f"Parameter '{p}' not found in prompt")
