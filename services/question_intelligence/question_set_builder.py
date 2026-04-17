@@ -8,6 +8,7 @@ from typing import List
 import random
 
 from domain.contracts.question.question import Question
+from domain.contracts.interview.interview_area import InterviewArea
 from services.question_intelligence.question_selection_service import (
     QuestionSelectionService,
 )
@@ -27,9 +28,11 @@ class QuestionSetBuilder:
         role: str,
         level: str,
         interview_type: str,
-        areas: List[str],
+        areas: List[InterviewArea],
         questions_per_area: int = QUESTIONS_PER_AREA,
     ) -> List[Question]:
+
+        print(type(areas[0]), areas[0])
 
         all_questions: List[Question] = []
         shuffled_areas = random.sample(areas, len(areas))

@@ -2,6 +2,8 @@
 
 from typing import List
 
+from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.question.question import Question
 
 from services.question_intelligence.question_intelligence_service import (
@@ -65,8 +67,8 @@ class QuestionIntelligenceProvider:
         self,
         role: str,
         level: str,
-        interview_type: str,
-        areas: List[str],
+        interview_type: InterviewType,
+        areas: List[InterviewArea],
         questions_per_area: int = 1,
     ) -> List[Question]:
 

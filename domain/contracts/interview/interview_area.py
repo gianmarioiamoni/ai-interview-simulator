@@ -18,3 +18,5 @@ class InterviewArea(str, Enum):
     TECH_CASE_STUDY = "technical_case_study"
     TECH_DATABASE = "technical_database"
     TECH_CODING = "technical_coding"
+
+    
