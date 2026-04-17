@@ -9,6 +9,7 @@ import random
 
 from domain.contracts.question.question import Question
 from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.interview.interview_type import InterviewType
 from services.question_intelligence.question_selection_service import (
     QuestionSelectionService,
 )
@@ -27,7 +28,7 @@ class QuestionSetBuilder:
         self,
         role: str,
         level: str,
-        interview_type: str,
+        interview_type: InterviewType,
         areas: List[InterviewArea],
         questions_per_area: int = QUESTIONS_PER_AREA,
     ) -> List[Question]:

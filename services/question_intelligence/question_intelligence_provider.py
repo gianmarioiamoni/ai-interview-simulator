@@ -28,6 +28,8 @@ from infrastructure.vector_store.chroma_question_store import (
     ChromaQuestionStore,
 )
 
+from app.settings.constants import QUESTIONS_PER_AREA
+
 
 class QuestionIntelligenceProvider:
     def __init__(self) -> None:
@@ -69,7 +71,7 @@ class QuestionIntelligenceProvider:
         level: str,
         interview_type: InterviewType,
         areas: List[InterviewArea],
-        questions_per_area: int = 1,
+        questions_per_area: int = QUESTIONS_PER_AREA,
     ) -> List[Question]:
 
         return self._service.generate_interview_questions(
