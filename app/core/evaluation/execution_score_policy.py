@@ -3,8 +3,14 @@
 from domain.contracts.execution.execution_result import ExecutionResult, ExecutionStatus
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 
+from services.score_calibration_service import ScoreCalibrationService
+
 
 class ExecutionScorePolicy:
+
+    def __init__(self):
+        self._calibration = ScoreCalibrationService()
+
     # Adjusts LLM evaluation score based on execution results.
 
     def apply(
@@ -36,10 +42,12 @@ class ExecutionScorePolicy:
 
             capped_score = min(evaluation.score, 30.0)
 
+            calibrated_score = self._calibration.calibrate(capped_score)
+
             return evaluation.model_copy(
                 update={
                     **execution_metadata,
-                    "score": capped_score,
+                    "score": calibrated_score,
                     "feedback": (
                         evaluation.feedback + "\n\n⚠ Execution failed during runtime."
                     ),
@@ -67,10 +75,12 @@ class ExecutionScorePolicy:
 
             print(f"Test results: {execution_result.output}")
 
+            calibrated_score = self._calibration.calibrate(capped_score)
+
             return evaluation.model_copy(
                 update={
                     **execution_metadata,
-                    "score": capped_score,
+                    "score": calibrated_score,
                     "feedback": (
                         evaluation.feedback
                         + "\n\n🧪 Test Results\n"
@@ -90,9 +100,12 @@ class ExecutionScorePolicy:
                 f"{execution_result.passed_tests}/{execution_result.total_tests}"
             )
 
+            calibrated_score = self._calibration.calibrate(evaluation.score)
+
             return evaluation.model_copy(
                 update={
                     **execution_metadata,
+                    "score": calibrated_score,
                     "feedback": (
                         evaluation.feedback
                         + "\n\n🧪 Test Results\n"
