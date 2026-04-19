@@ -28,7 +28,9 @@ from infrastructure.vector_store.chroma_question_store import (
     ChromaQuestionStore,
 )
 
-from app.settings.constants import QUESTIONS_PER_AREA
+from services.question_intelligence.semantic_deduplicator import SemanticDeduplicator
+
+from app.settings.constants import QUESTIONS_PER_AREA, DEDUPLICATION_THRESHOLD
 
 
 class QuestionIntelligenceProvider:
@@ -56,8 +58,8 @@ class QuestionIntelligenceProvider:
             generator=generator,
             coding_generator=coding_generator,
         )
-
-        set_builder = QuestionSetBuilder(selection_service)
+        deduplicator = SemanticDeduplicator(threshold=DEDUPLICATION_THRESHOLD)   
+        set_builder = QuestionSetBuilder(selection_service, deduplicator)
 
         self._service = QuestionIntelligenceService(set_builder)
 

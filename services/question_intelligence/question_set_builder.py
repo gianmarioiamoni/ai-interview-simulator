@@ -10,6 +10,8 @@ import random
 from domain.contracts.question.question import Question
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
+
+from services.question_intelligence.semantic_deduplicator import SemanticDeduplicator
 from services.question_intelligence.question_selection_service import (
     QuestionSelectionService,
 )
@@ -21,8 +23,10 @@ class QuestionSetBuilder:
     def __init__(
         self,
         selection_service: QuestionSelectionService,
+        deduplicator: SemanticDeduplicator,
     ) -> None:
         self._selection_service = selection_service
+        self._deduplicator = deduplicator
 
     def build(
         self,
@@ -51,6 +55,8 @@ class QuestionSetBuilder:
                 f"Area {area} produced {len(area_questions)} questions, expected at least {questions_per_area}"
 
             all_questions.extend(area_questions[:questions_per_area])
+
+        all_questions = self._deduplicator.deduplicate(all_questions)
 
         self._validate_no_duplicates(all_questions)
 
