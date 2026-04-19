@@ -7,6 +7,8 @@
 # Enforces strict JSON structure and validates via Pydantic.
 
 import json
+import random
+
 from typing import List
 
 from domain.contracts.question.generated_question import GeneratedQuestion
@@ -31,12 +33,22 @@ class QuestionGenerator:
         n: int = 2,
     ) -> List[GeneratedQuestion]:
 
+        VARIATION_SEEDS = [
+            "Focus on scalability aspects",
+            "Focus on performance trade-offs",
+            "Focus on edge cases and failure scenarios",
+            "Focus on real-world production issues",
+            "Focus on architectural decisions",
+        ]
+
+        variation = random.choice(VARIATION_SEEDS)
         prompt = self._build_prompt(
             role=role,
             level=level,
             interview_type=interview_type,
             area=area,
             n=n,
+            variation=variation,
         )
 
         response = self._llm.invoke(prompt, temperature=0.7)
@@ -52,6 +64,7 @@ class QuestionGenerator:
         interview_type: InterviewType,
         area: InterviewArea,
         n: int,
+        variation: str,
     ) -> str:
 
         return f"""
@@ -66,6 +79,8 @@ class QuestionGenerator:
              - DO NOT repeat similar questions
              - Each question must be different in topic and structure
 
+            CONTEXT:
+            {variation}
 
             Return STRICTLY a JSON array of objects with:
                 - text (string)
