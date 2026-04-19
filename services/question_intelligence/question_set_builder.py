@@ -1,9 +1,5 @@
 # services/question_intelligence/question_set_builder.py
 
-# Responsibility:
-# Builds the full interview question set (20 questions total).
-# Ensures structural integrity and coherence.
-
 from typing import List
 import random
 import logging
@@ -33,6 +29,10 @@ class QuestionSetBuilder:
         self._selection_service = selection_service
         self._deduplicator = deduplicator
 
+    # =========================================================
+    # PUBLIC
+    # =========================================================
+
     def build(
         self,
         role: RoleType,
@@ -42,12 +42,13 @@ class QuestionSetBuilder:
         questions_per_area: int = QUESTIONS_PER_AREA,
     ) -> List[Question]:
 
-        print(type(areas[0]), areas[0])
-
         all_questions: List[Question] = []
+
+        # shuffle per evitare bias ordine
         shuffled_areas = random.sample(areas, len(areas))
 
         for area in shuffled_areas:
+
             area_questions = self._selection_service.build_area_questions(
                 role=role,
                 level=level,
@@ -57,19 +58,63 @@ class QuestionSetBuilder:
             )
 
             if len(area_questions) < questions_per_area:
-                logger.warning(f"Area {area} produced {len(area_questions)} questions, expected at least {questions_per_area}")
+                logger.warning(
+                    f"[QuestionSetBuilder] Area {area.value} produced "
+                    f"{len(area_questions)} questions (expected {questions_per_area})"
+                )
 
             all_questions.extend(area_questions[:questions_per_area])
 
+        # -----------------------------------------------------
+        # STEP 1 → cheap dedup (exact match)
+        # -----------------------------------------------------
+
+        all_questions = self._remove_exact_duplicates(all_questions)
+
+        # -----------------------------------------------------
+        # STEP 2 → semantic dedup (LLM/embeddings)
+        # -----------------------------------------------------
+
+        before = len(all_questions)
+
         all_questions = self._deduplicator.deduplicate(all_questions)
+
+        after = len(all_questions)
+
+        if after < before:
+            logger.info(
+                f"[QuestionSetBuilder] Semantic dedup applied: {before} → {after}"
+            )
+
+        # -----------------------------------------------------
+        # FINAL VALIDATION
+        # -----------------------------------------------------
 
         self._validate_no_duplicates(all_questions)
 
         return all_questions
 
+    # =========================================================
+    # HELPERS
+    # =========================================================
+
+    def _remove_exact_duplicates(self, questions: List[Question]) -> List[Question]:
+
+        seen = set()
+        unique: List[Question] = []
+
+        for q in questions:
+            key = q.prompt.strip().lower()
+
+            if key not in seen:
+                seen.add(key)
+                unique.append(q)
+
+        return unique
+
     def _validate_no_duplicates(self, questions: List[Question]) -> None:
+
         prompts = [q.prompt.strip().lower() for q in questions]
 
         if len(prompts) != len(set(prompts)):
-            # raise ValueError("Duplicate questions detected in final set")
-            print("[WARNING] Duplicate questions detected in final set")
+            logger.warning("[QuestionSetBuilder] Duplicate questions still detected")
