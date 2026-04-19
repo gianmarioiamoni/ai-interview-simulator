@@ -6,10 +6,13 @@
 
 from typing import List
 import random
+import logging
 
 from domain.contracts.question.question import Question
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 from services.question_intelligence.semantic_deduplicator import SemanticDeduplicator
 from services.question_intelligence.question_selection_service import (
@@ -17,6 +20,8 @@ from services.question_intelligence.question_selection_service import (
 )
 
 from app.settings.constants import QUESTIONS_PER_AREA
+
+logger = logging.getLogger(__name__)
 
 
 class QuestionSetBuilder:
@@ -30,8 +35,8 @@ class QuestionSetBuilder:
 
     def build(
         self,
-        role: str,
-        level: str,
+        role: RoleType,
+        level: SeniorityLevel,
         interview_type: InterviewType,
         areas: List[InterviewArea],
         questions_per_area: int = QUESTIONS_PER_AREA,
@@ -52,7 +57,7 @@ class QuestionSetBuilder:
             )
 
             if len(area_questions) < questions_per_area:
-                f"Area {area} produced {len(area_questions)} questions, expected at least {questions_per_area}"
+                logger.warning(f"Area {area} produced {len(area_questions)} questions, expected at least {questions_per_area}")
 
             all_questions.extend(area_questions[:questions_per_area])
 
