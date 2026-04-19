@@ -42,9 +42,14 @@ class QuestionSetBuilder:
         questions_per_area: int = QUESTIONS_PER_AREA,
     ) -> List[Question]:
 
+        expected_total = len(areas) * questions_per_area
+
         all_questions: List[Question] = []
 
-        # shuffle per evitare bias ordine
+        # -----------------------------------------------------
+        # INITIAL GENERATION
+        # -----------------------------------------------------
+
         shuffled_areas = random.sample(areas, len(areas))
 
         for area in shuffled_areas:
@@ -66,25 +71,61 @@ class QuestionSetBuilder:
             all_questions.extend(area_questions[:questions_per_area])
 
         # -----------------------------------------------------
-        # STEP 1 → cheap dedup (exact match)
+        # DEDUP (INITIAL)
         # -----------------------------------------------------
 
         all_questions = self._remove_exact_duplicates(all_questions)
-
-        # -----------------------------------------------------
-        # STEP 2 → semantic dedup (LLM/embeddings)
-        # -----------------------------------------------------
-
-        before = len(all_questions)
-
         all_questions = self._deduplicator.deduplicate(all_questions)
 
-        after = len(all_questions)
+        # -----------------------------------------------------
+        # REFILL LOOP (STEP 2.4)
+        # -----------------------------------------------------
 
-        if after < before:
+        max_attempts = 3
+        attempt = 0
+
+        while len(all_questions) < expected_total and attempt < max_attempts:
+
+            missing = expected_total - len(all_questions)
+
             logger.info(
-                f"[QuestionSetBuilder] Semantic dedup applied: {before} → {after}"
+                f"[QuestionSetBuilder] Refill attempt {attempt+1} → missing {missing}"
             )
+
+            for area in areas:
+
+                if missing <= 0:
+                    break
+
+                new_questions = self._selection_service.build_area_questions(
+                    role=role,
+                    level=level,
+                    interview_type=interview_type,
+                    area=area,
+                    questions_per_area=1,
+                )
+
+                all_questions.extend(new_questions)
+                missing -= len(new_questions)
+
+            # re-dedup dopo refill
+            all_questions = self._remove_exact_duplicates(all_questions)
+            all_questions = self._deduplicator.deduplicate(all_questions)
+
+            attempt += 1
+
+        # -----------------------------------------------------
+        # FINAL GUARD
+        # -----------------------------------------------------
+
+        if len(all_questions) < expected_total:
+            logger.warning(
+                f"[QuestionSetBuilder] Could not reach expected size "
+                f"{expected_total}, got {len(all_questions)}"
+            )
+
+        # trimming finale (importante)
+        all_questions = all_questions[:expected_total]
 
         # -----------------------------------------------------
         # FINAL VALIDATION
