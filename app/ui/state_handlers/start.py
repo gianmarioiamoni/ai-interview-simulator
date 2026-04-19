@@ -4,6 +4,7 @@ from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import RoleType
 from domain.contracts.question.question import QuestionType
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 from services.question_intelligence.question_intelligence_provider import (
     QuestionIntelligenceProvider,
@@ -22,6 +23,7 @@ test_generator = AITestGenerator()
 def start_interview(role: str, interview_type: str, company: str, language: str):
 
     role_type = RoleType[role.replace(" ", "_")]
+    level_enum = SeniorityLevel.MID  # temporaneo
     interview_type_enum = InterviewType[interview_type]
 
     # -----------------------------------------------------
@@ -31,13 +33,12 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     question_intelligence = QuestionIntelligenceProvider()
 
     questions = question_intelligence.generate(
-        role=role,
-        level="mid",  # temporaneo
+        role=role_type,
+        level=level_enum,
         interview_type=interview_type_enum,
         areas=interview_type_enum.get_areas(),
         questions_per_area=QUESTIONS_PER_AREA,
     )
-
 
     enriched_questions = []
 
@@ -46,7 +47,7 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
 
             if not q.coding_spec:
                 raise ValueError("Coding question missing CodingSpec")
-                
+
             hidden_tests = test_generator.generate_tests(q, num_tests=3)
             q = q.model_copy(update={"hidden_tests": hidden_tests})
 
@@ -64,7 +65,7 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     # -----------------------------------------------------
     # GRAPH EXECUTION
     # -----------------------------------------------------
-    
+
     new_state = run_interview_graph(state)
     response = build_ui_response_from_state(new_state)
 

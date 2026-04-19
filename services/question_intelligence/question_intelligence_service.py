@@ -14,6 +14,8 @@ from typing import List
 from domain.contracts.question.question import Question
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 from app.settings.constants import QUESTIONS_PER_AREA
 
@@ -34,8 +36,8 @@ class QuestionIntelligenceService:
 
     def generate_interview_questions(
         self,
-        role: str,
-        level: str,
+        role: RoleType,
+        level: SeniorityLevel,
         interview_type: InterviewType,
         areas: List[InterviewArea],
         questions_per_area: int = QUESTIONS_PER_AREA,

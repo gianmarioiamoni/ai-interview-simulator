@@ -1,6 +1,8 @@
 # services/question_intelligence/question_selection_service.py
 
 import uuid
+import logging
+
 from typing import List
 
 from domain.contracts.question.question import (
@@ -14,6 +16,9 @@ from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.execution.coding_spec import CodingSpec
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.user.role import Role
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
@@ -27,6 +32,9 @@ from services.question_intelligence.coding_question_generator import (
 )
 
 from app.settings.constants import QUESTIONS_PER_AREA
+from domain.contracts.user.seniority_level import SeniorityLevel
+
+logger = logging.getLogger(__name__)
 
 
 class QuestionSelectionService:
@@ -46,8 +54,8 @@ class QuestionSelectionService:
 
     def build_area_questions(
         self,
-        role: str,
-        level: str,
+        role: RoleType,
+        level: SeniorityLevel,
         interview_type: InterviewType,
         area: InterviewArea,
         questions_per_area: int = QUESTIONS_PER_AREA,
@@ -73,10 +81,10 @@ class QuestionSelectionService:
 
         # 1. RETRIEVE
         retrieved = self._retrieval_service.retrieve(
-            query=f"{role} {area.value}",
+            query=self._build_retrieval_query(role, level, area),
             k=questions_per_area,
-            role=role,
-            level=level,
+            role=role.value,
+            level=level.value,
             interview_type=interview_type.value,
             area=area.value,
         )
@@ -112,15 +120,15 @@ class QuestionSelectionService:
 
     def _build_coding_questions(
         self,
-        role: str,
-        level: str,
+        role: RoleType,
+        level: SeniorityLevel,
         area: InterviewArea,
         questions_per_area: int = QUESTIONS_PER_AREA,
     ) -> List[Question]:
 
         raw_items = self._coding_generator.generate(
-            role=role,
-            level=level,
+            role=role.value,
+            level=level.value,
             n=questions_per_area,
         )
 
@@ -152,9 +160,35 @@ class QuestionSelectionService:
             )
 
             questions.append(question)
+        # -----------------------------------------------------
+        # SAFETY CHECK: ensure we have enough questions
+        # -----------------------------------------------------
+
+        if len(questions) < questions_per_area:
+            logger.warning(
+                f"[CODING] Area {area.value} produced {len(questions)} "
+                f"questions, expected {questions_per_area}"
+            )
 
         return questions
 
+    def _build_retrieval_query(
+        self,
+        role: RoleType,
+        level: SeniorityLevel,
+        area: InterviewArea,
+    ) -> str:
+
+        return f"""
+        {role.value} {level.value} interview question
+        topic: {area.value}
+
+        Focus on:
+        - diverse concepts
+        - different problem types
+        - avoid repetition of API questions
+        - Ensure each question targets a DIFFERENT concept within the area
+        """
     # =========================================================
     # VALIDATION
     # =========================================================

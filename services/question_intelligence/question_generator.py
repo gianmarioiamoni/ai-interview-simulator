@@ -12,6 +12,8 @@ from typing import List
 from domain.contracts.question.generated_question import GeneratedQuestion
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 from infrastructure.llm.llm_factory import get_llm
 
@@ -22,8 +24,8 @@ class QuestionGenerator:
 
     def generate(
         self,
-        role: str,
-        level: str,
+        role: RoleType,
+        level: SeniorityLevel,
         interview_type: InterviewType,
         area: InterviewArea,
         n: int = 2,
@@ -45,8 +47,8 @@ class QuestionGenerator:
 
     def _build_prompt(
         self,
-        role: str,
-        level: str,
+        role: RoleType,
+        level: SeniorityLevel,
         interview_type: InterviewType,
         area: InterviewArea,
         n: int,
@@ -56,7 +58,7 @@ class QuestionGenerator:
             You are an expert technical interviewer.
 
             Generate {n} {interview_type.value} interview questions
-            for a {level} {role} candidate
+            for a {level.value} {role.value} candidate
             in the area of {area.value}.
 
             IMPORTANT:

@@ -1,12 +1,17 @@
 # services/question_intelligence/coding_question_generator.py
 
 import json
+import logging
 from typing import List
-
 from pydantic import BaseModel, Field, ValidationError
 
 from domain.contracts.execution.coding_spec import CodingSpec
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
+
 from infrastructure.llm.llm_factory import get_llm
+
+logger = logging.getLogger(__name__)
 
 
 # =========================================================
@@ -34,12 +39,12 @@ class CodingQuestionGenerator:
 
     def generate(
         self,
-        role: str,
-        level: str,
+        role: RoleType,
+        level: SeniorityLevel,
         n: int = 1,
     ) -> List[GeneratedCodingQuestion]:
 
-        prompt = self._build_prompt(role, level, n)
+        prompt = self._build_prompt(role.value, level.value, n)
 
         response = self._llm.invoke(prompt)
 
