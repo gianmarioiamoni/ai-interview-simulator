@@ -127,8 +127,8 @@ class QuestionSelectionService:
     ) -> List[Question]:
 
         raw_items = self._coding_generator.generate(
-            role=role.value,
-            level=level.value,
+            role=role,
+            level=level,
             n=questions_per_area,
         )
 
