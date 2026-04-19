@@ -5,8 +5,10 @@ import logging
 import os
 
 from openai import OpenAI
+
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
+from services.score_calibration_service import ScoreCalibrationService
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,8 @@ class QuestionEvaluationService:
             raise RuntimeError("OPENAI_API_KEY not set")
 
         self._client = OpenAI(api_key=api_key)
+
+        self._calibration = ScoreCalibrationService()
 
     # ---------------------------------------------------------
 
@@ -77,6 +81,7 @@ Rules:
                 parsed = self._extract_json(response.choices[0].message.content)
                 parsed["tokens_used"] = tokens_used
                 evaluation = QuestionEvaluation.model_validate(parsed)
+                evaluation = self._calibration.calibrate(evaluation)
                 return evaluation
 
             except Exception as e:
