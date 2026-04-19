@@ -47,3 +47,17 @@ class QuestionVectorStore:
                 "difficulty": item.difficulty,
             },
         )
+
+    def max_marginal_relevance_search(
+        self,
+        query: str,
+        k: int,
+        fetch_k: int,
+        metadata_filter: dict | None = None,
+    ):
+        return self._vector_store.max_marginal_relevance_search(
+           query=query,
+            k=k,
+            fetch_k=fetch_k,
+           filter=metadata_filter,
+        )
