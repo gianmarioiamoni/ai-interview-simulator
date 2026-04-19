@@ -21,6 +21,10 @@ class QuestionRetrievalService:
     def __init__(self, vector_store: QuestionVectorStore) -> None:
         self._vector_store = vector_store
 
+    # =========================================================
+    # PUBLIC API
+    # =========================================================
+
     def retrieve(
         self,
         query: str,
@@ -38,13 +42,32 @@ class QuestionRetrievalService:
             area=area,
         )
 
-        documents = self._vector_store.similarity_search(
-            query=query,
-            k=k,
-            metadata_filter=metadata_filter,
-        )
+        # -----------------------------------------------------
+        # MMR (future-ready, diversity-aware retrieval)
+        # -----------------------------------------------------
+
+        try:
+            documents = self._vector_store.max_marginal_relevance_search(
+                query=query,
+                k=k,
+                fetch_k=k * 4,
+                metadata_filter=metadata_filter,
+            )
+        except Exception:
+            # -------------------------------------------------
+            # FALLBACK → classic similarity search
+            # -------------------------------------------------
+            documents = self._vector_store.similarity_search(
+                query=query,
+                k=k,
+                metadata_filter=metadata_filter,
+            )
 
         return [self._to_domain(doc) for doc in documents]
+
+    # =========================================================
+    # FILTER BUILDER
+    # =========================================================
 
     def _build_filter(
         self,
@@ -68,11 +91,12 @@ class QuestionRetrievalService:
         if not filters:
             return None
 
-        
         # convert to Chroma-compatible filter
-        return {
-            "$and": [{k: v} for k, v in filters.items()]
-        }
+        return {"$and": [{k: v} for k, v in filters.items()]}
+
+    # =========================================================
+    # MAPPER
+    # =========================================================
 
     def _to_domain(self, document: Document) -> QuestionBankItem:
         metadata = document.metadata
