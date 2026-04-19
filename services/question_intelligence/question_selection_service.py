@@ -112,7 +112,7 @@ class QuestionSelectionService:
                     )
                 )
 
-        return questions
+        return self._select_by_difficulty(questions, questions_per_area)
 
     # =========================================================
     # CODING PIPELINE
@@ -243,3 +243,40 @@ class QuestionSelectionService:
         if value == 3:
             return QuestionDifficulty.MEDIUM
         return QuestionDifficulty.HARD
+
+    def _select_by_difficulty(
+        self,
+        questions: List[Question],
+        total: int,
+    ) -> List[Question]:
+
+        buckets = {
+            QuestionDifficulty.EASY: [],
+            QuestionDifficulty.MEDIUM: [],
+            QuestionDifficulty.HARD: [],
+        }
+
+        for q in questions:
+            buckets[q.difficulty].append(q)
+
+        # target distribution
+        target = {
+            QuestionDifficulty.EASY: int(total * 0.2),
+            QuestionDifficulty.MEDIUM: int(total * 0.6),
+            QuestionDifficulty.HARD: int(total * 0.2),
+        }
+
+        selected: List[Question] = []
+
+        # pick per bucket
+        for diff, count in target.items():
+            selected.extend(buckets[diff][:count])
+
+        # fallback: fill remaining
+        if len(selected) < total:
+            remaining = [
+                q for q in questions if q not in selected
+            ]
+            selected.extend(remaining[: total - len(selected)])
+
+        return selected[:total]
