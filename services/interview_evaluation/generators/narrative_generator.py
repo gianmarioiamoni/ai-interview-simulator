@@ -39,7 +39,9 @@ Provide:
 1. Justification for each dimension
 2. 3 improvement suggestions
 
-Return JSON.
+Return STRICT JSON only.
+No explanations.
+No text outside JSON.
 """
 
         response = self._llm.invoke(prompt)
