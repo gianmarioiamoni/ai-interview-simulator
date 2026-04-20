@@ -48,6 +48,7 @@ class DimensionScorer:
 
             dimension_map.setdefault(dimension, []).append(ev.score)
 
+        
         return {
             dim: round(sum(scores) / len(scores), 1)
             for dim, scores in dimension_map.items()
