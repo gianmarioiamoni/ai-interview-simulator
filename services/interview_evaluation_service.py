@@ -64,7 +64,7 @@ class InterviewEvaluationService:
 
         # ---------------- readable dimensions
 
-        readable, strongest, weakest = self._dimension_mapper.map(dimension_scores)
+        readable, strongest, weakest, strongest_score, weakest_score = self._dimension_mapper.map(dimension_scores)
 
         # ---------------- decision explanation
 
@@ -98,6 +98,8 @@ class InterviewEvaluationService:
             strongest,
             weakest,
             percentile,
+            strongest_score,
+            weakest_score,
         )
 
         if not executive_summary:

@@ -8,6 +8,7 @@ from domain.contracts.interview.hire_decision import HireDecision
 from domain.contracts.user.role import RoleType, ROLE_WEIGHTS
 
 from services.interview_scoring.scoring_result import ScoringResult
+from app.ui.presenters.helpers.dimension_ranking import DimensionRanking
 
 from .components.dimension_scorer import DimensionScorer
 from .components.gating_policy import GatingPolicy
@@ -55,7 +56,11 @@ class InterviewScoringEngine:
         confidence = self._confidence_calculator.compute(evaluations)
 
         level = self._compute_level(overall_score)
-        hire_decision = self._compute_hire_decision(overall_score, gating_triggered)
+        hire_decision = self._compute_hire_decision(
+            overall_score, 
+            gating_triggered, 
+            dimension_scores,
+        )
 
         return ScoringResult(
             dimension_scores=dimension_scores,
@@ -72,10 +77,21 @@ class InterviewScoringEngine:
 
     # ---------------------------------------------------------
 
-    def _compute_hire_decision(self, score: float, gating_triggered: bool):
+    def _compute_hire_decision(
+        self, 
+        score: float, 
+        gating_triggered: bool,
+        dimension_scores: dict):
 
         if gating_triggered:
             return HireDecision.NO_HIRE
+
+        _strongest, weakest = DimensionRanking.compute(dimension_scores)
+
+        # penalty if weakest is low
+        if weakest and weakest.score < 65:
+            return HireDecision.LEAN_NO_HIRE
+
 
         if score < 55:
             return HireDecision.NO_HIRE
@@ -95,16 +111,14 @@ class InterviewScoringEngine:
             return InterviewLevel.STRONG
         return InterviewLevel.EXCELLENT
 
-    def _compute_hiring_probability(self, score: float):
+    def _compute_hiring_probability(self, score: float, weakest: float | None):
 
-        if score < 50:
-            return 0.0
-        elif score < 60:
-            return 30.0
-        elif score < 70:
-            return 50.0
-        elif score < 80:
-            return 70.0
-        elif score < 90:
-            return 85.0
-        return 95.0
+        base = score
+
+        if weakest is not None:
+            if weakest < 70:
+                base -= 5
+            elif weakest > 90: 
+                base += 3
+        
+        return max(0.0, min(100.0, round(base, 1)))
