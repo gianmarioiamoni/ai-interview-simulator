@@ -5,6 +5,7 @@ from domain.contracts.interview_state import InterviewState
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
+from app.ui.mappers.interview_area_mapper import InterviewAreaMapper
 
 
 class InterviewStateMapper:
@@ -25,16 +26,18 @@ class InterviewStateMapper:
             index = state.current_question_index + 1
             total = len(state.questions)
 
+            area = InterviewAreaMapper.to_label(question.area)
+
             question_dto = QuestionDTO(
                 question_id=question.id,
                 text=question.prompt,
                 type=question.type.value,
-                area=question.area.value,
+                area=area,
                 index=index,
                 total=total,
             )
 
-            current_area = question.area.value
+            current_area = area
 
         return InterviewSessionDTO(
             session_id=state.interview_id,
