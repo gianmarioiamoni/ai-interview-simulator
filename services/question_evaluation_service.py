@@ -5,10 +5,8 @@ import logging
 import os
 
 from openai import OpenAI
-
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
-from services.score_calibration_service import ScoreCalibrationService
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +22,6 @@ class QuestionEvaluationService:
 
         self._client = OpenAI(api_key=api_key)
 
-        self._calibration = ScoreCalibrationService()
-
     # ---------------------------------------------------------
 
     def evaluate(
@@ -34,8 +30,48 @@ class QuestionEvaluationService:
         answer_text: str,
     ) -> QuestionEvaluation:
 
-        prompt = f"""
-You are a strict technical interviewer.
+        prompt = self._build_prompt(question, answer_text)
+
+        for attempt in range(MAX_RETRIES + 1):
+
+            response = self._client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a strict and demanding FAANG-level technical interviewer.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.0,
+            )
+
+            tokens_used = (
+                response.usage.total_tokens if hasattr(response, "usage") else 0
+            )
+
+            try:
+                parsed = self._extract_json(response.choices[0].message.content)
+                parsed["tokens_used"] = tokens_used
+
+                evaluation = QuestionEvaluation.model_validate(parsed)
+
+                return evaluation
+
+            except Exception as e:
+                logger.warning(f"question_evaluation_retry_{attempt}: {e}")
+
+                if attempt == MAX_RETRIES:
+                    return self._fallback(question)
+
+        return self._fallback(question)
+
+    # ---------------------------------------------------------
+
+    def _build_prompt(self, question: Question, answer_text: str) -> str:
+
+        return f"""
+You are evaluating a candidate in a real technical interview.
 
 Question:
 {question.prompt}
@@ -57,74 +93,54 @@ Format:
   "passed": boolean
 }}
 
-SCORING GUIDELINES (STRICT):
+SCORING SYSTEM (STRICT AND ENFORCED):
 
-You must evaluate like a real senior interviewer in a top tech company.
+You must evaluate like a senior interviewer in a top-tier tech company.
 
 Score ranges:
 
-- 90-100 → Exceptional (rare)
-  - Deep, precise, complete, with trade-offs and real-world insight
+- 90-100 → Exceptional (VERY RARE)
+  Deep, precise, complete, with trade-offs and real-world insight
 
 - 75-89 → Good
-  - Correct and solid, but missing depth, edge cases, or trade-offs
+  Correct and structured, but missing depth OR real-world insight
 
 - 60-74 → Average
-  - Partially correct, superficial, lacks depth or clarity
+  Partial, generic, or somewhat superficial
 
 - 40-59 → Weak
-  - Major gaps, misunderstandings, or incomplete reasoning
+  Significant gaps or incomplete understanding
 
 - 0-39 → Incorrect
-  - Fundamentally wrong or irrelevant
+  Wrong or irrelevant
 
-CRITICAL RULES:
+ENFORCED PENALTIES:
 
-- DO NOT give scores above 90 unless the answer is truly exceptional
-- Missing depth MUST reduce the score significantly (at least -10)
-- Generic answers MUST NOT score above 75
-- If no real examples or trade-offs are provided → max 80
-- If explanation is shallow → max 70
-- Be critical, not polite
+- If answer is generic → MAX 75
+- If no concrete examples → MAX 80
+- If missing trade-offs → MAX 78
+- If explanation is shallow → MAX 70
 
-Consistency rules:
+CRITICAL CONSTRAINTS:
 
-- If weaknesses are significant → score MUST reflect it
-- strengths and weaknesses must justify the score
+- Most answers should fall between 60 and 80
+- Scores above 85 must be rare
+- If the answer has any meaningful weakness → score MUST be below 85
+- Scores ≥90 ONLY if the answer is complete, deep, and has no meaningful gaps
+- If you mention missing depth → score MUST be ≤ 80
 
-Return STRICT JSON only.
+CONSISTENCY RULE:
+
+- The score MUST match the weaknesses
+- If weaknesses are present → score MUST reflect them clearly
+
+STRICT RULES:
+
+- score must be between 0 and 100
+- max_score must be 100
+- no extra fields
+- no explanations outside JSON
 """
-
-        for attempt in range(MAX_RETRIES + 1):
-
-            response = self._client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a strict and demanding FAANG-level interviewer.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.0,
-            )
-
-            tokens_used = response.usage.total_tokens if hasattr(response, "usage") else 0
-
-            try:
-                parsed = self._extract_json(response.choices[0].message.content)
-                parsed["tokens_used"] = tokens_used
-                evaluation = QuestionEvaluation.model_validate(parsed)
-                evaluation = self._calibration.calibrate(evaluation)
-                return evaluation
-
-            except Exception as e:
-                logger.warning(f"question_evaluation_retry_{attempt}: {e}")
-
-                if attempt == MAX_RETRIES:
-                    return self._fallback(question)
-
-        return self._fallback(question)
 
     # ---------------------------------------------------------
 
