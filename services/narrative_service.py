@@ -24,28 +24,63 @@ class NarrativeService:
         strongest: str,
         weakest: str,
         percentile: float,
+        strongest_score: float,
+        weakest_score: float,
     ) -> str:
 
+        is_balanced = False
+        if strongest_score is not None and weakest_score is not None:
+            if (abs(strongest_score - weakest_score) < 10):
+                is_balanced = True
+        balance_instruction = ""
+
+        if is_balanced: 
+            balance_instruction = f"""
+            The candidate shows balanced performance across dimensions.
+            - Do NOT say "no strengths or weaknesses"
+            - Do NOT exaggerate differences
+            - Use phrasing like "well-balanced", "consistent across areas"
+            """
+        else:   
+            balance_instruction = """
+            Highlight strongest and weakest areas clearly.
+            Explain strengths and areas for improvement.
+            """
+
+        balance_flag = "BALANCED" if is_balanced else "UNBALANCED"
+
         prompt = f"""
-You are a senior hiring manager.
+            You are a senior technical interviewer writing an executive summary.
 
-Write a concise executive summary (max 4 lines).
+            Write a concise executive summary (max 4 lines).
 
-INPUT:
-- Decision: {decision}
-- Score: {overall_score}
-- Strongest area: {strongest}
-- Weakest area: {weakest}
-- Percentile: {percentile}
+            INPUT:
+            - Decision: {decision}
+            - Score: {overall_score}
+            - Strongest area: {strongest}
+            - Weakest area: {weakest}
+            - Performance type: {balance_flag}
+            - Percentile: {percentile}
+            - Strongest score: {strongest_score}
+            - Weakest score: {weakest_score}
 
-RULES:
-- Be decisive and professional
-- No generic phrases
-- Focus on hiring decision
-"""
+            RULES:
+            - Be decisive and professional
+            - No generic phrases
+            - Focus on hiring decision
+
+            {balance_instruction}
+
+            STRICT CONSTRAINTS:
+            - NEVER say "no strengths or weaknesses"
+            - ALWAYS reflect strongest and weakest areas OR balanced performance correctly
+            """
 
         response = self._llm.invoke(prompt)
+        
+        
         return response.content.strip()
+
 
     # ---------------------------------------------------------
     # DECISION EXPLANATION (DRIVERS / BLOCKERS)
