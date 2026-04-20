@@ -78,51 +78,18 @@ class NarrativeService:
         dimensions: List[Dict],
     ) -> Dict[str, List[str]]:
 
-        print("DEBUG DIMENSIONS:", dimensions)
+        template = PromptLoader.load("narrative/decision_explanation.txt")
+        print("DEBUG DECISION EXPLANATION TEMPLATE:", template)
 
-        prompt = f"""
-        You are a senior technical interviewer.
-
-        Decision: {decision}
-
-        Candidate performance by dimension:
-        {dimensions}
-
-        Task:
-        Explain the hiring decision.
-
-        Return JSON with:
-        - drivers: key strengths supporting the decision
-        - blockers: key weaknesses preventing hiring
-
-        Rules:
-        - Always return at least 1 driver and 1 blocker
-        - Be specific and reference dimensions when possible
-        - Drivers must explain why the candidate could be hired
-        - Blockers must explain why the candidate is not fully suitable
-        - If the decision is negative, blockers should be stronger than drivers
-        - Do not be generic (avoid "overall performance is good")
-
-        Additional rules:
-        - If a dimension score is >= 80:
-            - DO NOT describe it as "weak"
-            - Use "area for improvement" instead
-
-        - Use "weak" ONLY if score < 70
-        - Do not be generic
-
-
-        Output format:
-        {
-          "drivers": [...],
-          "blockers": [...]
-        }
-        Return STRICT JSON only.
-        No explanations outside JSON.
-        """
+        prompt = template.format(
+            decision=decision,
+            dimensions=dimensions,
+        )
+        print("DEBUG DECISION EXPLANATION PROMPT:", prompt)
 
         response = self._llm.invoke(prompt)
-
+        print("DEBUG DECISION EXPLANATION RESPONSE:", response.content)
+        
         try:
             parsed = self._extract_json(response.content)
             return {
