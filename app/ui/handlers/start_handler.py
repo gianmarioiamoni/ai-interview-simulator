@@ -31,7 +31,7 @@ def start_handler(role, interview_type, company, language):
         "",
         "",
         # loader 
-        gr.update(value="⏳ Generating interview...", visible=True),
+        gr.update(value="⏳ Generating interview. It can takes a few minutes. Please wait...", visible=True),
     )
 
     # STEP 2 → real logic
