@@ -1,13 +1,14 @@
 # services/narrative_service.py
 
-from typing import List, Dict
-
 import json
-import re
+import logging
+from typing import List, Dict
 
 from app.ports.llm_port import LLMPort
 
 from app.prompts.prompt_loader import PromptLoader
+
+logger = logging.getLogger(__name__)
 
 
 class NarrativeService:
@@ -79,24 +80,28 @@ class NarrativeService:
     ) -> Dict[str, List[str]]:
 
         template = PromptLoader.load("narrative/decision_explanation.txt")
-        print("DEBUG DECISION EXPLANATION TEMPLATE:", template)
+        logger.debug("DECISION EXPLANATION TEMPLATE: %s", template)
+
+        # serialize dimensions to string
+        dimensions_str = json.dumps(dimensions, indent=2)
 
         prompt = template.format(
             decision=decision,
-            dimensions=dimensions,
+            dimensions=dimensions_str,
         )
-        print("DEBUG DECISION EXPLANATION PROMPT:", prompt)
+        logger.debug("DECISION EXPLANATION PROMPT: %s", prompt)
 
         response = self._llm.invoke(prompt)
-        print("DEBUG DECISION EXPLANATION RESPONSE:", response.content)
-        
+        logger.debug("DECISION EXPLANATION RESPONSE: %s", response.content)
+
         try:
             parsed = self._extract_json(response.content)
             return {
                 "drivers": parsed.get("drivers", []),
                 "blockers": parsed.get("blockers", []),
             }
-        except Exception:
+        except Exception as e:
+            logger.error("DECISION EXPLANATION PARSE ERROR: %s", e)
             return {"drivers": [], "blockers": []}
 
     # ---------------------------------------------------------
@@ -138,3 +143,15 @@ class NarrativeService:
                 bullets.append(l)
 
         return bullets[:5]
+
+    def _extract_json(self, text: str) -> dict:
+        try:
+            return json.loads(text)
+        except Exception:
+            start = text.find("{")
+            end = text.rfind("}")
+
+            if start == -1 or end == -1:
+                raise ValueError("No JSON object found")
+
+            return json.loads(text[start : end + 1])
