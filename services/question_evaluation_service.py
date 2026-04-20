@@ -57,11 +57,42 @@ Format:
   "passed": boolean
 }}
 
-Rules:
-- score must be between 0 and 100
-- max_score must be 100
-- no extra fields
-- no explanations outside JSON
+SCORING GUIDELINES (STRICT):
+
+You must evaluate like a real senior interviewer in a top tech company.
+
+Score ranges:
+
+- 90-100 → Exceptional (rare)
+  - Deep, precise, complete, with trade-offs and real-world insight
+
+- 75-89 → Good
+  - Correct and solid, but missing depth, edge cases, or trade-offs
+
+- 60-74 → Average
+  - Partially correct, superficial, lacks depth or clarity
+
+- 40-59 → Weak
+  - Major gaps, misunderstandings, or incomplete reasoning
+
+- 0-39 → Incorrect
+  - Fundamentally wrong or irrelevant
+
+CRITICAL RULES:
+
+- DO NOT give scores above 90 unless the answer is truly exceptional
+- Missing depth MUST reduce the score significantly (at least -10)
+- Generic answers MUST NOT score above 75
+- If no real examples or trade-offs are provided → max 80
+- If explanation is shallow → max 70
+- Be critical, not polite
+
+Consistency rules:
+
+- If weaknesses are significant → score MUST reflect it
+- strengths and weaknesses must justify the score
+
+Return STRICT JSON only.
 """
 
         for attempt in range(MAX_RETRIES + 1):
@@ -69,7 +100,10 @@ Rules:
             response = self._client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are a precise evaluator."},
+                    {
+                        "role": "system",
+                        "content": "You are a strict and demanding FAANG-level interviewer.",
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.0,
@@ -89,7 +123,6 @@ Rules:
 
                 if attempt == MAX_RETRIES:
                     return self._fallback(question)
-
 
         return self._fallback(question)
 
