@@ -7,6 +7,7 @@ from typing import Optional
 @dataclass
 class QuestionAssessmentDTO:
     question_id: str
+    area: str
     score: float
     feedback: str
     passed_tests: Optional[int]

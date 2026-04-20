@@ -4,6 +4,7 @@ from typing import List
 
 from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
 from app.ui.utils.error_formatter import simplify_execution_error
+from app.ui.mappers.interview_area_mapper import InterviewAreaMapper
 
 
 class QuestionMapper:
@@ -18,11 +19,15 @@ class QuestionMapper:
             if result is None:
                 continue
 
-            assessments.append(self._map_single(q.id, result, state))
+            assessments.append(
+                self._map_single(q, result, state)
+            )  # 🔥 pass full question
 
         return assessments
 
-    def _map_single(self, question_id, result, state) -> QuestionAssessmentDTO:
+    def _map_single(self, question, result, state) -> QuestionAssessmentDTO:
+
+        question_id = question.id
 
         score = 0.0
         feedback = ""
@@ -74,6 +79,10 @@ class QuestionMapper:
             ai_hint_explanation = result.ai_hint.explanation
             ai_hint_suggestion = result.ai_hint.suggestion
 
+        # ---------------- AREA
+
+        area_label = InterviewAreaMapper.to_label(question.area)
+
         return QuestionAssessmentDTO(
             question_id=question_id,
             score=score,
@@ -84,4 +93,5 @@ class QuestionMapper:
             attempts=attempts,
             ai_hint_explanation=ai_hint_explanation,
             ai_hint_suggestion=ai_hint_suggestion,
+            area=area_label,  
         )
