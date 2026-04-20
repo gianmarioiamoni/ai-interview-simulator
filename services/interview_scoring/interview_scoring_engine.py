@@ -47,7 +47,10 @@ class InterviewScoringEngine:
             role,
         )
 
-        _strongest, weakest = DimensionRanking.compute(dimension_scores)
+        weakest = min(
+            (score for score in dimension_scores.values() if score is not None),
+            default=None,
+        )
 
         hiring_probability = (
             0.0 if gating_triggered else self._compute_hiring_probability(overall_score, weakest)
@@ -88,12 +91,14 @@ class InterviewScoringEngine:
         if gating_triggered:
             return HireDecision.NO_HIRE
 
-        _strongest, weakest = DimensionRanking.compute(dimension_scores)
+        weakest = min(
+            (score for score in dimension_scores.values() if score is not None),
+            default=None,
+        )
 
         # penalty if weakest is low
         if weakest and weakest.score < 65:
             return HireDecision.LEAN_NO_HIRE
-
 
         if score < 55:
             return HireDecision.NO_HIRE
@@ -122,5 +127,5 @@ class InterviewScoringEngine:
                 base -= 5
             elif weakest > 90: 
                 base += 3
-        
+
         return max(0.0, min(100.0, round(base, 1)))
