@@ -97,7 +97,7 @@ class InterviewScoringEngine:
         )
 
         # penalty if weakest is low
-        if weakest and weakest.score < 65:
+        if weakest is not None and weakest < 65:
             return HireDecision.LEAN_NO_HIRE
 
         if score < 55:
