@@ -30,7 +30,6 @@ class NarrativeService:
         weakest_score: float,
     ) -> str:
 
-        
         is_balanced = False
         if strongest_score is not None and weakest_score is not None:
             if (abs(strongest_score - weakest_score) < 10):
@@ -64,7 +63,6 @@ class NarrativeService:
             balance_flag=balance_flag,
             balance_instruction=balance_instruction,
         )
-
 
         response = self._llm.invoke(prompt)
 
@@ -119,6 +117,8 @@ class NarrativeService:
           "drivers": [...],
           "blockers": [...]
         }
+        Return STRICT JSON only.
+        No explanations outside JSON.
         """
 
         response = self._llm.invoke(prompt)

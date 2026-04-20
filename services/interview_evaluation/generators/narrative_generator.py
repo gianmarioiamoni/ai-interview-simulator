@@ -76,4 +76,8 @@ No text outside JSON.
         except Exception:
             start = text.find("{")
             end = text.rfind("}")
+            if start == -1 or end == -1:
+                raise ValueError("Invalid JSON format")
+            
+            
             return json.loads(text[start : end + 1])
