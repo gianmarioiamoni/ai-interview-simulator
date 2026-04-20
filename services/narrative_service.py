@@ -74,13 +74,15 @@ class NarrativeService:
             STRICT CONSTRAINTS:
             - NEVER say "no strengths or weaknesses"
             - ALWAYS reflect strongest and weakest areas OR balanced performance correctly
+            
+            If the weakest score is >= 80:
+                - DO NOT use words like "gap", "weak", or "deficiency"
+                - Use softer language like "minor area for improvement"
             """
 
         response = self._llm.invoke(prompt)
-        
-        
-        return response.content.strip()
 
+        return response.content.strip()
 
     # ---------------------------------------------------------
     # DECISION EXPLANATION (DRIVERS / BLOCKERS)
@@ -91,6 +93,8 @@ class NarrativeService:
         decision: str,
         dimensions: List[Dict],
     ) -> Dict[str, List[str]]:
+
+        print("DEBUG DIMENSIONS:", dimensions)
 
         prompt = f"""
         You are a senior technical interviewer.
@@ -114,6 +118,15 @@ class NarrativeService:
         - Blockers must explain why the candidate is not fully suitable
         - If the decision is negative, blockers should be stronger than drivers
         - Do not be generic (avoid "overall performance is good")
+
+        Additional rules:
+        - If a dimension score is >= 80:
+            - DO NOT describe it as "weak"
+            - Use "area for improvement" instead
+
+        - Use "weak" ONLY if score < 70
+        - Do not be generic
+
 
         Output format:
         {
