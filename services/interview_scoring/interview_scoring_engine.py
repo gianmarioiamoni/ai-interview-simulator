@@ -47,8 +47,10 @@ class InterviewScoringEngine:
             role,
         )
 
+        _strongest, weakest = DimensionRanking.compute(dimension_scores)
+
         hiring_probability = (
-            0.0 if gating_triggered else self._compute_hiring_probability(overall_score)
+            0.0 if gating_triggered else self._compute_hiring_probability(overall_score, weakest)
         )
 
         percentile = self._percentile_calculator.compute(overall_score, role)
