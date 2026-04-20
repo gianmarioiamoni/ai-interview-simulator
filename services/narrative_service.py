@@ -7,6 +7,8 @@ import re
 
 from app.ports.llm_port import LLMPort
 
+from app.prompts.prompt_loader import PromptLoader
+
 
 class NarrativeService:
 
@@ -28,6 +30,7 @@ class NarrativeService:
         weakest_score: float,
     ) -> str:
 
+        
         is_balanced = False
         if strongest_score is not None and weakest_score is not None:
             if (abs(strongest_score - weakest_score) < 10):
@@ -49,36 +52,19 @@ class NarrativeService:
 
         balance_flag = "BALANCED" if is_balanced else "UNBALANCED"
 
-        prompt = f"""
-            You are a senior technical interviewer writing an executive summary.
+        prompt_template = PromptLoader.load("narrative/executive_summary.txt")
+        prompt = prompt_template.format(
+            decision=decision,
+            overall_score=overall_score,
+            strongest=strongest,
+            weakest=weakest,
+            percentile=percentile,
+            strongest_score=strongest_score,
+            weakest_score=weakest_score,
+            balance_flag=balance_flag,
+            balance_instruction=balance_instruction,
+        )
 
-            Write a concise executive summary (max 4 lines).
-
-            INPUT:
-            - Decision: {decision}
-            - Score: {overall_score}
-            - Strongest area: {strongest}
-            - Weakest area: {weakest}
-            - Performance type: {balance_flag}
-            - Percentile: {percentile}
-            - Strongest score: {strongest_score}
-            - Weakest score: {weakest_score}
-
-            RULES:
-            - Be decisive and professional
-            - No generic phrases
-            - Focus on hiring decision
-
-            {balance_instruction}
-
-            STRICT CONSTRAINTS:
-            - NEVER say "no strengths or weaknesses"
-            - ALWAYS reflect strongest and weakest areas OR balanced performance correctly
-            
-            If the weakest score is >= 80:
-                - DO NOT use words like "gap", "weak", or "deficiency"
-                - Use softer language like "minor area for improvement"
-            """
 
         response = self._llm.invoke(prompt)
 
