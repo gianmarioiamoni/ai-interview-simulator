@@ -6,6 +6,8 @@ from pydantic import BaseModel
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
 from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
 
+from app.ui.mappers.hire_decision_mapper import HireDecisionMapper
+
 from app.ui.dto.builders.question_mapper import QuestionMapper
 from app.ui.dto.builders.dimension_mapper import DimensionMapper
 from app.ui.dto.builders.token_calculator import TokenCalculator
@@ -56,10 +58,12 @@ class FinalReportDTO(BaseModel):
 
         role = state.role.type
 
+        hire_decision = (HireDecisionMapper.to_label(final_evaluation.hire_decision))
+
         return cls(
             overall_score=final_evaluation.overall_score,
             hiring_probability=final_evaluation.hiring_probability,
-            hire_decision=final_evaluation.hire_decision.value,
+            hire_decision=hire_decision,
             decision_explanation=final_evaluation.decision_explanation,
             percentile_rank=final_evaluation.percentile_rank,
             percentile_explanation=final_evaluation.percentile_explanation,
