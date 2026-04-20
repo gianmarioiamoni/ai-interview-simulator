@@ -40,3 +40,4 @@ You are a senior technical interviewer.
         - Do NOT include markdown
         - Do NOT include backticks
         - Do NOT include text before or after JSON
+        - Output must be directly parseable with json.loads()

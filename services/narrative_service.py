@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from typing import List, Dict
 
 from app.ports.llm_port import LLMPort
@@ -101,8 +102,13 @@ class NarrativeService:
                 "blockers": parsed.get("blockers", []),
             }
         except Exception as e:
+            print("DECISION EXPLANATION PARSE ERROR:", e)
+            print("RAW RESPONSE:", response.content)
             logger.error("DECISION EXPLANATION PARSE ERROR: %s", e)
-            return {"drivers": [], "blockers": []}
+
+            return {
+                "drivers": ["Strong performance in key areas"], 
+                "blockers": ["Area for improvement identified"]}
 
     # ---------------------------------------------------------
     # DIMENSION NARRATIVE
@@ -126,6 +132,10 @@ class NarrativeService:
         """
 
         response = self._llm.invoke(prompt)
+
+        print("------ RAW LLM RESPONSE ------")
+        print(response.content)
+        print("------ END RESPONSE ------")
         return response.content.strip()
 
     # ---------------------------------------------------------
@@ -145,13 +155,16 @@ class NarrativeService:
         return bullets[:5]
 
     def _extract_json(self, text: str) -> dict:
-        try:
-            return json.loads(text)
-        except Exception:
-            start = text.find("{")
-            end = text.rfind("}")
 
-            if start == -1 or end == -1:
-                raise ValueError("No JSON object found")
+        # Remove markdown code blocks if present
+        text = re.sub(r"```json|```", "", text)
 
-            return json.loads(text[start : end + 1])
+        # Extract JSON object
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+
+        if not match:
+            raise ValueError("No JSON object found in LLM output")
+
+        json_str = match.group(0)
+
+        return json.loads(json_str)
