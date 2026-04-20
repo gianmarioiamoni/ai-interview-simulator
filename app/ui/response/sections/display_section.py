@@ -18,6 +18,8 @@ class DisplaySection:
         has_previous_answer: bool,
     ) -> DisplayFields:
 
+        print("AREA DTO:", question.area)
+
         content = DisplaySection._resolve_content(
             state,
             question,

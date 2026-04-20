@@ -30,7 +30,9 @@ class UIResponseBuilder:
 
     def build(self, state: InterviewState) -> UIResponse:
 
-        session_dto = InterviewSessionDTO.from_state(state)
+        mapper = InterviewStateMapper()
+        session_dto = mapper.to_session_dto(state)
+        
         ui_state = UIStateMachine.resolve(state)
 
         if ui_state == UIState.SETUP:
