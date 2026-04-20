@@ -2,13 +2,15 @@
 
 from services.report_insight_builder import ReportInsightBuilder
 
+from app.ui.presenters.helpers.dimension_ranking import DimensionRanking
+
 
 class ReportViewModelBuilder:
 
     def build(self, report):
 
         dims = report.dimension_scores
-        valid = [d for d in dims if d.score is not None]
+        strongest, weakest = DimensionRanking.compute(dims)
 
         builder = ReportInsightBuilder()
 
@@ -17,8 +19,8 @@ class ReportViewModelBuilder:
             "dims": dims,
             "names": [d.name for d in dims],
             "scores": [d.score for d in dims],
-            "strongest": max(valid, key=lambda x: x.score) if valid else None,
-            "weakest": min(valid, key=lambda x: x.score) if valid else None,
+            "strongest": strongest,
+            "weakest": weakest,
             "dimension_insights": builder.build_dimension_insights(dims),
             "percentile_segment": builder.build_percentile_segment(
                 report.percentile_rank

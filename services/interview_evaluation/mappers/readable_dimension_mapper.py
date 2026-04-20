@@ -16,11 +16,5 @@ class ReadableDimensionMapper:
             if score is not None
         ]
 
-        if readable:
-            strongest = max(readable, key=lambda x: x["score"])["name"]
-            weakest = min(readable, key=lambda x: x["score"])["name"]
-        else:
-            strongest = "N/A"
-            weakest = "N/A"
 
-        return readable, strongest, weakest
+        return readable, None, None
