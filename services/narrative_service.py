@@ -95,6 +95,15 @@ class NarrativeService:
         response = self._llm.invoke(prompt)
         logger.debug("DECISION EXPLANATION RESPONSE: %s", response.content)
 
+        content = response.content.strip()
+        print("\n--- DECISION EXPLANATION RAW ---")
+        print(response.content)
+        print("--- END ---\n")
+
+        # HARD VALIDATION
+        if not content.startswith("{"):
+            raise ValueError("LLM did not return JSON")
+
         try:
             parsed = self._extract_json(response.content)
             return {
@@ -106,9 +115,7 @@ class NarrativeService:
             print("RAW RESPONSE:", response.content)
             logger.error("DECISION EXPLANATION PARSE ERROR: %s", e)
 
-            return {
-                "drivers": ["Strong performance in key areas"], 
-                "blockers": ["Area for improvement identified"]}
+            return self._deterministic_fallback(dimensions)
 
     # ---------------------------------------------------------
     # DIMENSION NARRATIVE
@@ -168,3 +175,23 @@ class NarrativeService:
         json_str = match.group(0)
 
         return json.loads(json_str)
+
+    def _deterministic_fallback(self, dimensions):
+        drivers = []
+        blockers = []
+
+        for d in dimensions:
+            name = d["name"]
+            score = d["score"]
+
+            if score >= 85:
+                drivers.append(f"Strong performance in {name}")
+            elif score < 70:
+                blockers.append(f"Weak performance in {name}")
+            else:
+                blockers.append(f"Area for improvement in {name}")
+
+        return {
+            "drivers": drivers[:2],
+            "blockers": blockers[:2],
+        }
