@@ -35,6 +35,7 @@ class NarrativeService:
 
         builder = NarrativeControlBuilder()
 
+
         payload = builder.build_summary_payload(
             decision=decision,
             overall_score=overall_score,
@@ -44,12 +45,14 @@ class NarrativeService:
                 {"name": weakest, "score": weakest_score},
             ],
         )
-
+        
         if not payload:
             logger.error("Empty narrative payload")
             return "Evaluation completed with insufficient data."
         
-        balance_flag = payload.get("balance_flag")
+        classification = json.dumps(payload["classification"], indent=2)
+
+        balance_flag = payload["balance_flag"]
 
         if balance_flag == "BALANCED":
             balance_instruction = """
@@ -71,10 +74,10 @@ class NarrativeService:
 
         template = PromptLoader.load("narrative/executive_summary.txt")
 
-
         prompt = template.format(
             **payload,
             balance_instruction=balance_instruction,
+            classification=classification,
         )
 
         response = self._llm.invoke(prompt)
@@ -135,14 +138,14 @@ class NarrativeService:
     ) -> str:
 
         prompt = f"""
-Explain this performance dimension in 1 sentence.
+        Explain this performance dimension in 1 sentence.
 
-Dimension: {name}
-Score: {score}
-Impact: {impact}
+        Dimension: {name}
+        Score: {score}
+        Impact: {impact}
 
-Be specific and professional.
-"""
+        Be specific and professional.
+        """
 
         response = self._llm.invoke(prompt)
 
@@ -176,13 +179,33 @@ Be specific and professional.
                 continue
 
             if score >= 90:
-                drivers.append(f"Strong capability in {name}")
+                phrases = [
+                    f"Strong capability in {name}",
+                    f"{name} is a strong capability",
+                    f"{name} is a solid and differentiating capability",
+                ]
+                drivers.append(phrases[len(drivers) % len(phrases)])
             elif score >= 80:
-                drivers.append(f"Solid performance in {name}")
+                phrases = [
+                    f"{name} is solid but not a differentiating strength",
+                    f"{name} is a strong foundation but not a standout capability",
+                    f"{name} is a solid capability but not a differentiating strength",
+                ]
+                drivers.append(phrases[len(drivers) % len(phrases)])
             elif score >= 70:
-                blockers.append(f"Area for improvement in {name}")
+                phrases = [
+                    f"{name} requires further development",
+                    f"{name} could be strengthened",
+                    f"{name} shows room for improvement",
+                ]
+                blockers.append(phrases[len(blockers) % len(phrases)])
             else:
-                blockers.append(f"Weak performance in {name}")
+                phrases = [
+                    f"Weak performance in {name}",
+                    f"{name} show significant gaps",
+                    f"{name} is below expected performance level",
+                ]
+                blockers.append(phrases[len(blockers) % len(phrases)])
 
         return {
             "drivers": drivers[:2] or ["Overall solid performance"],

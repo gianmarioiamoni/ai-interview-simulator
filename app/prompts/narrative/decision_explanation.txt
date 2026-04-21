@@ -1,28 +1,39 @@
-Return STRICT JSON only.
+You are a senior technical interviewer explaining a hiring decision.
 
-Output format:
-{{
-  "drivers": [...],
-  "blockers": [...]
-}}
-
-Context:
 Decision: {decision}
 
-Dimensions:
+Candidate performance by dimension:
 {dimensions}
 
-Rules:
-- At least 1 driver and 1 blocker
-- Be specific and reference dimensions
+TASK:
+Explain the hiring decision in terms of DRIVERS and BLOCKERS.
 
-Scoring rules:
-- score >= 80 → use "area for improvement"
-- score < 70 → you may use "weak"
+RULES:
+- Drivers must justify why the candidate could be hired
+- Blockers must justify why the candidate is not a strong hire
+- Be specific and reference dimensions explicitly
+- Avoid generic phrases
+
+SCORING RULES:
+- If score >= 90 → treat as a strong driver
+- If 80–89 → treat as solid but not differentiating
+- If 70–79 → area for improvement
+- If < 70 → real weakness
+
+LANGUAGE RULES:
+- Do NOT use "weak" for scores >= 80
+- Use varied phrasing (avoid repetition like "area for improvement")
+
+OUTPUT FORMAT:
+{
+  "drivers": [...],
+  "blockers": [...]
+}
 
 CRITICAL:
-- ONLY JSON
-- No text
+- Return ONLY valid JSON
 - No markdown
+- No explanation outside JSON
+- No text
 - No backticks
 - No explanation
