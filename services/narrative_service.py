@@ -33,26 +33,6 @@ class NarrativeService:
         weakest_score: float,
     ) -> str:
 
-        is_balanced = False
-        if strongest_score is not None and weakest_score is not None:
-            if abs(strongest_score - weakest_score) < 10:
-                is_balanced = True
-
-        if is_balanced:
-            balance_instruction = """
-The candidate shows balanced performance across dimensions.
-- Do NOT say "no strengths or weaknesses"
-- Do NOT exaggerate differences
-- Use phrasing like "well-balanced", "consistent across areas"
-"""
-        else:
-            balance_instruction = """
-Highlight strongest and weakest areas clearly.
-Explain strengths and areas for improvement.
-"""
-
-        template = PromptLoader.load("narrative/executive_summary.txt")
-
         builder = NarrativeControlBuilder()
 
         payload = builder.build_summary_payload(
@@ -64,6 +44,33 @@ Explain strengths and areas for improvement.
                 {"name": weakest, "score": weakest_score},
             ],
         )
+
+        if not payload:
+            logger.error("Empty narrative payload")
+            return "Evaluation completed with insufficient data."
+        
+        balance_flag = payload.get("balance_flag")
+
+        if balance_flag == "BALANCED":
+            balance_instruction = """
+            The candidate shows consistent performance across dimensions.
+            - Do NOT exaggerate differences
+            - Emphasize overall strength
+            """
+        elif balance_flag == "SLIGHTLY_UNEVEN":
+            balance_instruction = """
+            The candidate shows strong overall performance with minor variation across areas.
+            - Highlight strengths
+            - Mention improvement areas without overemphasis
+            """
+        else:
+            balance_instruction = """
+            There is a noticeable gap between strongest and weakest areas.
+            - Clearly highlight strengths and improvement areas
+            """
+
+        template = PromptLoader.load("narrative/executive_summary.txt")
+
 
         prompt = template.format(
             **payload,
@@ -169,7 +176,7 @@ Be specific and professional.
                 continue
 
             if score >= 90:
-                drivers.append(f"Strong performance in {name}")
+                drivers.append(f"Strong capability in {name}")
             elif score >= 80:
                 drivers.append(f"Solid performance in {name}")
             elif score >= 70:

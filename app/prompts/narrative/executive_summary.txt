@@ -10,8 +10,7 @@ INPUT:
 - Strongest area: {strongest} ({strongest_score})
 - Weakest area: {weakest} ({weakest_score})
 
-- Performance spread: {spread}
-- Balanced: {is_balanced}
+- Profile: {balance_flag}
 
 RULES:
 
@@ -24,6 +23,16 @@ Additional rules:
 
 - If weakest_score < 70:
   → you MAY say "weak"
+
+Balance interpretation:
+- BALANCED → consistent performance across areas
+- SLIGHTLY_UNEVEN → strong overall with minor variation
+- UNBALANCED → clear gaps between strengths and weaker areas
+
+IMPORTANT:
+- Do NOT mention "spread"
+- Do NOT expose internal scoring logic
+- Use natural hiring language
 
 - Be precise, not generic
 - Do NOT contradict the scores

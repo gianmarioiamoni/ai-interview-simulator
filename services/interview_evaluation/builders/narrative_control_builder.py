@@ -14,18 +14,29 @@ class NarrativeControlBuilder:
     ) -> Dict:
 
         if not dimensions:
-            return {}
+            return {
+                "decision": decision,
+                "overall_score": overall_score,
+                "percentile": percentile,
+                "strongest": "N/A",
+                "strongest_score": 0,
+                "weakest": "N/A",
+                "weakest_score": 0,
+                "balance_flag": "BALANCED",
+                "classification": {},
+            }
 
         strongest = max(dimensions, key=lambda x: x["score"])
         weakest = min(dimensions, key=lambda x: x["score"])
 
         spread = strongest["score"] - weakest["score"]
 
-        is_balanced = spread < 10
-
-        # -----------------------------------------------------
-        # semantic classification
-        # -----------------------------------------------------
+        if spread < 15:
+            balance_flag = "BALANCED"
+        elif spread < 25:
+            balance_flag = "SLIGHTLY_UNEVEN"
+        else:
+            balance_flag = "UNBALANCED"
 
         def classify(score: float) -> str:
             if score >= 90:
@@ -45,7 +56,6 @@ class NarrativeControlBuilder:
             "strongest_score": strongest["score"],
             "weakest": weakest["name"],
             "weakest_score": weakest["score"],
-            "is_balanced": is_balanced,
-            "spread": spread,
+            "balance_flag": balance_flag,
             "classification": {d["name"]: classify(d["score"]) for d in dimensions},
         }
