@@ -8,6 +8,8 @@ from typing import List, Dict
 from app.ports.llm_port import LLMPort
 from app.prompts.prompt_loader import PromptLoader
 
+from services.interview_evaluation.builders.narrative_control_builder import NarrativeControlBuilder
+
 logger = logging.getLogger(__name__)
 
 
@@ -49,19 +51,22 @@ Highlight strongest and weakest areas clearly.
 Explain strengths and areas for improvement.
 """
 
-        balance_flag = "BALANCED" if is_balanced else "UNBALANCED"
-
         template = PromptLoader.load("narrative/executive_summary.txt")
 
-        prompt = template.format(
+        builder = NarrativeControlBuilder()
+
+        payload = builder.build_summary_payload(
             decision=decision,
             overall_score=overall_score,
-            strongest=strongest,
-            weakest=weakest,
             percentile=percentile,
-            strongest_score=strongest_score,
-            weakest_score=weakest_score,
-            balance_flag=balance_flag,
+            dimensions=[
+                {"name": strongest, "score": strongest_score},
+                {"name": weakest, "score": weakest_score},
+            ],
+        )
+
+        prompt = template.format(
+            **payload,
             balance_instruction=balance_instruction,
         )
 
