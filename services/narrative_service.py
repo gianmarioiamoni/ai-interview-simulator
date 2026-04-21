@@ -6,7 +6,6 @@ import re
 from typing import List, Dict
 
 from app.ports.llm_port import LLMPort
-
 from app.prompts.prompt_loader import PromptLoader
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ class NarrativeService:
         self._llm = llm
 
     # ---------------------------------------------------------
-    # EXECUTIVE SUMMARY (ENTERPRISE)
+    # EXECUTIVE SUMMARY
     # ---------------------------------------------------------
 
     def generate_executive_summary(
@@ -34,27 +33,27 @@ class NarrativeService:
 
         is_balanced = False
         if strongest_score is not None and weakest_score is not None:
-            if (abs(strongest_score - weakest_score) < 10):
+            if abs(strongest_score - weakest_score) < 10:
                 is_balanced = True
-        balance_instruction = ""
 
-        if is_balanced: 
-            balance_instruction = f"""
-            The candidate shows balanced performance across dimensions.
-            - Do NOT say "no strengths or weaknesses"
-            - Do NOT exaggerate differences
-            - Use phrasing like "well-balanced", "consistent across areas"
-            """
-        else:   
+        if is_balanced:
             balance_instruction = """
-            Highlight strongest and weakest areas clearly.
-            Explain strengths and areas for improvement.
-            """
+The candidate shows balanced performance across dimensions.
+- Do NOT say "no strengths or weaknesses"
+- Do NOT exaggerate differences
+- Use phrasing like "well-balanced", "consistent across areas"
+"""
+        else:
+            balance_instruction = """
+Highlight strongest and weakest areas clearly.
+Explain strengths and areas for improvement.
+"""
 
         balance_flag = "BALANCED" if is_balanced else "UNBALANCED"
 
-        prompt_template = PromptLoader.load("narrative/executive_summary.txt")
-        prompt = prompt_template.format(
+        template = PromptLoader.load("narrative/executive_summary.txt")
+
+        prompt = template.format(
             decision=decision,
             overall_score=overall_score,
             strongest=strongest,
@@ -71,7 +70,7 @@ class NarrativeService:
         return response.content.strip()
 
     # ---------------------------------------------------------
-    # DECISION EXPLANATION (DRIVERS / BLOCKERS)
+    # DECISION EXPLANATION
     # ---------------------------------------------------------
 
     def generate_decision_explanation(
@@ -81,44 +80,39 @@ class NarrativeService:
     ) -> Dict[str, List[str]]:
 
         template = PromptLoader.load("narrative/decision_explanation.txt")
-        logger.debug("DECISION EXPLANATION TEMPLATE: %s", template)
 
-        # serialize dimensions to string
         dimensions_str = json.dumps(dimensions, indent=2)
 
         prompt = template.format(
             decision=decision,
             dimensions=dimensions_str,
         )
-        logger.debug("DECISION EXPLANATION PROMPT: %s", prompt)
+
+        logger.debug("Decision explanation prompt: %s", prompt)
 
         response = self._llm.invoke(prompt)
-        logger.debug("DECISION EXPLANATION RESPONSE: %s", response.content)
 
         content = response.content.strip()
-        print("\n--- DECISION EXPLANATION RAW ---")
-        print(response.content)
-        print("--- END ---\n")
 
-        # HARD VALIDATION
         if not content.startswith("{"):
-            raise ValueError("LLM did not return JSON")
+            logger.warning("LLM did not return pure JSON")
 
         try:
-            parsed = self._extract_json(response.content)
+            parsed = self._extract_json(content)
+
             return {
                 "drivers": parsed.get("drivers", []),
                 "blockers": parsed.get("blockers", []),
             }
+
         except Exception as e:
-            print("DECISION EXPLANATION PARSE ERROR:", e)
-            print("RAW RESPONSE:", response.content)
-            logger.error("DECISION EXPLANATION PARSE ERROR: %s", e)
+            logger.error("Decision explanation parsing failed: %s", e)
+            logger.debug("Raw LLM output: %s", content)
 
             return self._deterministic_fallback(dimensions)
 
     # ---------------------------------------------------------
-    # DIMENSION NARRATIVE
+    # DIMENSION EXPLANATION
     # ---------------------------------------------------------
 
     def generate_dimension_explanation(
@@ -129,69 +123,56 @@ class NarrativeService:
     ) -> str:
 
         prompt = f"""
-        Explain this performance dimension in 1 sentence.
+Explain this performance dimension in 1 sentence.
 
-        Dimension: {name}
-        Score: {score}
-        Impact: {impact}
+Dimension: {name}
+Score: {score}
+Impact: {impact}
 
-        Be specific and professional.
-        """
+Be specific and professional.
+"""
 
         response = self._llm.invoke(prompt)
 
-        print("------ RAW LLM RESPONSE ------")
-        print(response.content)
-        print("------ END RESPONSE ------")
         return response.content.strip()
 
     # ---------------------------------------------------------
     # UTILS
     # ---------------------------------------------------------
 
-    def _parse_bullets(self, text: str) -> List[str]:
-
-        lines = text.split("\n")
-
-        bullets = []
-        for l in lines:
-            l = l.strip("-• ").strip()
-            if l:
-                bullets.append(l)
-
-        return bullets[:5]
-
     def _extract_json(self, text: str) -> dict:
 
-        # Remove markdown code blocks if present
         text = re.sub(r"```json|```", "", text)
 
-        # Extract JSON object
         match = re.search(r"\{.*\}", text, re.DOTALL)
 
         if not match:
-            raise ValueError("No JSON object found in LLM output")
+            raise ValueError("No JSON object found")
 
-        json_str = match.group(0)
-
-        return json.loads(json_str)
+        return json.loads(match.group(0))
 
     def _deterministic_fallback(self, dimensions):
+
         drivers = []
         blockers = []
 
         for d in dimensions:
-            name = d["name"]
-            score = d["score"]
+            try:
+                name = d["name"]
+                score = d["score"]
+            except Exception:
+                continue
 
-            if score >= 85:
+            if score >= 90:
                 drivers.append(f"Strong performance in {name}")
-            elif score < 70:
-                blockers.append(f"Weak performance in {name}")
-            else:
+            elif score >= 80:
+                drivers.append(f"Solid performance in {name}")
+            elif score >= 70:
                 blockers.append(f"Area for improvement in {name}")
+            else:
+                blockers.append(f"Weak performance in {name}")
 
         return {
-            "drivers": drivers[:2],
-            "blockers": blockers[:2],
+            "drivers": drivers[:2] or ["Overall solid performance"],
+            "blockers": blockers[:2] or ["Minor areas for improvement"],
         }

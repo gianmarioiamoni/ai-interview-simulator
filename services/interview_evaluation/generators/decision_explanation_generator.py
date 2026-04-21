@@ -18,25 +18,42 @@ class DecisionExplanationGenerator:
                 dimensions=dimensions,
             )
 
-        except Exception:
-            logger.warning("decision_explanation_generation_failed")
+        except Exception as e:
+            logger.warning(f"decision_explanation_exception: {e}")
             result = {"drivers": [], "blockers": []}
-
-        # -----------------------------------------------------
-        # FALLBACK (CRUCIALE)
-        # -----------------------------------------------------
 
         drivers = result.get("drivers") or []
         blockers = result.get("blockers") or []
 
+        # -----------------------------------------------------
+        # FALLBACK (SEMANTICO CORRETTO)
+        # -----------------------------------------------------
+
         if not drivers and not blockers:
 
-            strongest = max(dimensions, key=lambda x: x["score"])["name"] if dimensions else None
-            weakest = min(dimensions, key=lambda x: x["score"])["name"] if dimensions else None
-    
+            if not dimensions:
+                return {
+                    "drivers": ["Evaluation completed"],
+                    "blockers": ["No significant issues identified"],
+                }
+
+            strongest_dim = max(dimensions, key=lambda x: x["score"])
+            weakest_dim = min(dimensions, key=lambda x: x["score"])
+
+            strongest = strongest_dim["name"]
+            weakest = weakest_dim["name"]
+            weakest_score = weakest_dim["score"]
+
+            if weakest_score >= 80:
+                blocker = f"Area for improvement in {weakest}"
+            elif weakest_score >= 70:
+                blocker = f"Moderate improvement needed in {weakest}"
+            else:
+                blocker = f"Weak performance in {weakest}"
+
             return {
-                "drivers": [f"Strong performance in {strongest}"] if strongest else ["Evaluation completed"],
-                "blockers": [f"Weak performance in {weakest}"] if weakest else ["No significant strengths identified"],
+                "drivers": [f"Strong performance in {strongest}"],
+                "blockers": [blocker],
             }
 
         return result
