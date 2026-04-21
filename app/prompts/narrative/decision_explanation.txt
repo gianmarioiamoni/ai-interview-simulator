@@ -1,13 +1,3 @@
-You are a senior technical interviewer.
-
-Decision: {decision}
-
-Candidate performance by dimension:
-{dimensions}
-
-Task:
-Explain the hiring decision.
-
 Return STRICT JSON only.
 
 Format:
@@ -16,22 +6,23 @@ Format:
   "blockers": ["..."]
 }
 
+Context:
+Decision: {decision}
+
+Dimensions:
+{dimensions}
+
 Rules:
-- Always return at least 1 driver and 1 blocker
+- At least 1 driver and 1 blocker
 - Be specific and reference dimensions
-- Do not be generic
 
 Scoring rules:
-- If score >= 80 → use "area for improvement"
-- If score < 70 → you may use "weak"
-
-Language rules:
-- Do NOT use "weak" for scores >= 80
-- Prefer precise, professional phrasing
+- score >= 80 → use "area for improvement"
+- score < 70 → you may use "weak"
 
 CRITICAL:
-- Return ONLY JSON
+- ONLY JSON
+- No text
 - No markdown
 - No backticks
-- No explanations
-- Output must be directly parseable with json.loads()
+- No explanation
