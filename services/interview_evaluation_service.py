@@ -15,12 +15,22 @@ from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION
 from services.interview_scoring.interview_scoring_engine import InterviewScoringEngine
 from services.narrative_service import NarrativeService
 
-from services.interview_evaluation.mappers.readable_dimension_mapper import ReadableDimensionMapper
-from services.interview_evaluation.generators.decision_explanation_generator import DecisionExplanationGenerator
-from services.interview_evaluation.generators.executive_summary_generator import ExecutiveSummaryGenerator
+from services.interview_evaluation.mappers.readable_dimension_mapper import (
+    ReadableDimensionMapper,
+)
+from services.interview_evaluation.generators.decision_explanation_generator import (
+    DecisionExplanationGenerator,
+)
+from services.interview_evaluation.generators.executive_summary_generator import (
+    ExecutiveSummaryGenerator,
+)
 from services.interview_evaluation.builders.dimension_builder import DimensionBuilder
-from services.interview_evaluation.builders.improvement_builder import ImprovementBuilder
-from services.interview_evaluation.generators.narrative_generator import NarrativeGenerator
+from services.interview_evaluation.builders.improvement_builder import (
+    ImprovementBuilder,
+)
+from services.interview_evaluation.generators.narrative_generator import (
+    NarrativeGenerator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +40,7 @@ class InterviewEvaluationService:
     def __init__(self, llm: LLMPort) -> None:
         self._llm = llm
 
+        # core services
         self._scoring_engine = InterviewScoringEngine()
         self._narrative_service = NarrativeService(llm)
 
@@ -40,6 +51,7 @@ class InterviewEvaluationService:
         self._dimension_builder = DimensionBuilder()
         self._improvement_builder = ImprovementBuilder()
         self._narrative_generator = NarrativeGenerator(llm)
+
     # ---------------------------------------------------------
 
     def evaluate(
@@ -53,6 +65,8 @@ class InterviewEvaluationService:
         if not per_question_evaluations:
             raise ValueError("Cannot evaluate interview without question evaluations")
 
+        # ---------------- scoring
+
         scoring = self._scoring_engine.compute(
             questions=questions,
             evaluations=per_question_evaluations,
@@ -64,7 +78,9 @@ class InterviewEvaluationService:
 
         # ---------------- readable dimensions
 
-        readable, strongest, weakest, strongest_score, weakest_score = self._dimension_mapper.map(dimension_scores)
+        readable, strongest, weakest, strongest_score, weakest_score = (
+            self._dimension_mapper.map(dimension_scores)
+        )
 
         # ---------------- decision explanation
 
@@ -90,7 +106,7 @@ class InterviewEvaluationService:
             final=scoring.confidence,
         )
 
-        # ---------------- executive summary
+        # ---------------- executive summary (FIXED)
 
         executive_summary = self._summary_generator.generate(
             scoring.hire_decision.value,
@@ -102,10 +118,14 @@ class InterviewEvaluationService:
             weakest_score,
         )
 
-        if not executive_summary:
-            executive_summary = self._generate_executive_summary(
-                overall_score,
-                dimension_scores,
+        # 🔥 HARD FALLBACK (NO legacy method)
+        if not executive_summary or not executive_summary.strip():
+            logger.warning("executive_summary_empty → fallback applied")
+
+            executive_summary = (
+                f"The candidate achieved an overall score of {overall_score:.1f}. "
+                f"Strongest area: {strongest} ({strongest_score:.1f}). "
+                f"Area for improvement: {weakest} ({weakest_score:.1f})."
             )
 
         # ---------------- narrative
@@ -131,7 +151,7 @@ class InterviewEvaluationService:
             narrative,
         )
 
-        # ---------------- final
+        # ---------------- final object
 
         return InterviewEvaluation(
             overall_score=overall_score,
