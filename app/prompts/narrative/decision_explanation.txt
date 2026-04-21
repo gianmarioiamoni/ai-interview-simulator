@@ -1,10 +1,10 @@
 Return STRICT JSON only.
 
-Format:
-{
-  "drivers": ["..."],
-  "blockers": ["..."]
-}
+Output format:
+{{
+  "drivers": [...],
+  "blockers": [...]
+}}
 
 Context:
 Decision: {decision}
