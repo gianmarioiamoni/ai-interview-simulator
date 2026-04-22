@@ -73,9 +73,9 @@ class NarrativeService:
 
         template = PromptLoader.load("narrative/executive_summary.txt")
 
-        print("\n=== TEMPLATE ===")
+        print("\n=== TEMPLATE START ===")
         print(template)
-        print("=== END ===\n")
+        print("=== TEMPLATE END ===\n")
 
         print("\n=== EXEC SUMMARY PAYLOAD ===")
         print(payload)
@@ -93,11 +93,17 @@ class NarrativeService:
         
         response = self._llm.invoke(prompt)
 
+        content = (response.content or "").strip()
+
         print("\n================ EXECUTIVE SUMMARY RESPONSE ================\n")
-        print(response.content)
+        print(repr(content))
         print("\n=========================================================\n")
 
-        return response.content.strip()
+        if len(content) < 20:
+            print("EMPTY OR TOO SHORT → forcing fallback")
+            return ""
+
+        return content
 
     # ---------------------------------------------------------
     # DECISION EXPLANATION
