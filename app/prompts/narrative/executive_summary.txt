@@ -1,4 +1,4 @@
-YYou are a senior technical interviewer making a hiring recommendation.
+You are a senior technical interviewer making a hiring recommendation.
 
 Write a concise executive summary (max 4 lines).
 
