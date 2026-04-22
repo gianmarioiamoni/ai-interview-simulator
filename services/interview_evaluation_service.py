@@ -120,7 +120,7 @@ class InterviewEvaluationService:
 
         # HARD FALLBACK (NO legacy method)
         if not executive_summary or not executive_summary.strip():
-            logger.warning("executive_summary_empty → fallback applied")
+            print("executive_summary_empty → fallback applied")
             print("\n⚠️ EXECUTIVE SUMMARY FALLBACK TRIGGERED\n")
 
             executive_summary = (

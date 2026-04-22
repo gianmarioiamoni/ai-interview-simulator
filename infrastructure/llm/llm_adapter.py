@@ -29,7 +29,8 @@ class DefaultLLMAdapter(LLMPort):
         ]
         raw = self._llm.invoke(messages)
 
-        return _LangChainResponse(content=raw.content)
+        content = getattr(raw, "content", "") or ""
+        return _LangChainResponse(content=content)
 
 
 class LLMPort(Protocol):

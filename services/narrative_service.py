@@ -46,7 +46,7 @@ class NarrativeService:
         )
         
         if not payload:
-            logger.error("Empty narrative payload")
+            print("Empty narrative payload")
             return "Evaluation completed with insufficient data."
         
         classification = json.dumps(payload["classification"], indent=2)
@@ -118,7 +118,6 @@ class NarrativeService:
             dimensions=dimensions_str,
         )
 
-        logger.debug("Decision explanation prompt: %s", prompt)
 
         print("\n=== DECISION PROMPT ===")
         print(prompt)
@@ -133,7 +132,7 @@ class NarrativeService:
         content = response.content.strip()
 
         if not content.startswith("{"):
-            logger.warning("LLM did not return pure JSON")
+            print("LLM did not return pure JSON")
 
         try:
             parsed = self._extract_json(content)
@@ -144,8 +143,8 @@ class NarrativeService:
             }
 
         except Exception as e:
-            logger.error("Decision explanation parsing failed: %s", e)
-            logger.debug("Raw LLM output: %s", content)
+            print("Decision explanation parsing failed: %s", e)
+            print("Raw LLM output: %s", content)
 
             return self._deterministic_fallback(dimensions)
 
