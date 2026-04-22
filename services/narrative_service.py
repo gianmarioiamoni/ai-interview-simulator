@@ -44,11 +44,11 @@ class NarrativeService:
                 {"name": weakest, "score": weakest_score},
             ],
         )
-        
+
         if not payload:
             print("Empty narrative payload")
             return "Evaluation completed with insufficient data."
-        
+
         classification = json.dumps(payload["classification"], indent=2)
 
         balance_flag = payload["balance_flag"]
@@ -90,17 +90,28 @@ class NarrativeService:
         print("\n================ EXECUTIVE SUMMARY PROMPT ================\n")
         print(prompt)
         print("\n=========================================================\n")
-        
-        response = self._llm.invoke(prompt)
+
+        response = self._llm.invoke(
+            prompt,
+            system_prompt=(
+                "You are a senior technical interviewer. "
+                "Always provide a concise, clear, and complete answer. "
+                "Never return empty output."
+            )
+        )
 
         content = (response.content or "").strip()
 
         print("\n================ EXECUTIVE SUMMARY RESPONSE ================\n")
-        print(repr(content))
+        print("LEN:", len(content))
+        print("RAW:", repr(content))
         print("\n=========================================================\n")
 
-        if len(content) < 20:
-            print("EMPTY OR TOO SHORT → forcing fallback")
+        # if len(content) < 20:
+        #     print("EMPTY OR TOO SHORT → forcing fallback")
+        #     return ""
+        if not content.strip():
+            print("EMPTY OUTPUT DETECTED")
             return ""
 
         return content
@@ -123,7 +134,6 @@ class NarrativeService:
             decision=decision,
             dimensions=dimensions_str,
         )
-
 
         print("\n=== DECISION PROMPT ===")
         print(prompt)

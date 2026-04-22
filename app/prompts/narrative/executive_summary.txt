@@ -1,4 +1,6 @@
-Write a concise executive summary (max 3-4 lines).
+You are a senior technical interviewer making a hiring decision.
+
+Write a concise executive summary (3-4 lines max).
 
 INPUT:
 - Decision: {decision}
@@ -6,9 +8,10 @@ INPUT:
 - Strongest: {strongest}
 - Weakest: {weakest}
 
-Instructions:
+Rules:
+- Always produce a complete answer (never empty)
 - Start with the hiring decision
-- Explain why the candidate is (or is not) a hire
+- Justify the decision
 - Mention strongest capability
-- Mention weakest area as improvement
-- Be clear and direct
+- Mention weakest area as development point
+- Be direct and professional
