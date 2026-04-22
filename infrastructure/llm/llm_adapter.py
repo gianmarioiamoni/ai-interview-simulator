@@ -13,20 +13,19 @@ class _LangChainResponse:
 
 class DefaultLLMAdapter(LLMPort):
 
-    def __init__(self):
-        self._llm = get_llm()
+    def invoke(
+        self, 
+        prompt: str, 
+        system_prompt: str | None = None
+    ) -> LLMResponse:
 
-    def invoke(self, prompt: str) -> LLMResponse:
-        messages = [
-            SystemMessage(
-                content=(
-                    "You must return STRICT JSON only."
-                    "No explanations, no markdown, no extra text."
-                    "Output must start with '{' and end with '}'."
-                )
-            ),
-            HumanMessage(content=prompt),
-        ]
+        messages = []
+
+        if system_prompt:
+            messages.append(SystemMessage(content=system_prompt))
+
+        messages.append(HumanMessage(content=prompt))
+
         raw = self._llm.invoke(messages)
 
         content = getattr(raw, "content", "") or ""
