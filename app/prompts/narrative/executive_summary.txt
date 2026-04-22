@@ -1,31 +1,14 @@
-You are a senior technical interviewer making a hiring recommendation.
-
-Write a concise executive summary (max 4 lines).
+Write a concise executive summary (max 3-4 lines).
 
 INPUT:
 - Decision: {decision}
 - Score: {overall_score}
-- Percentile: {percentile}
-- Strongest: {strongest} ({strongest_score})
-- Weakest: {weakest} ({weakest_score})
-- Profile: {balance_flag}
+- Strongest: {strongest}
+- Weakest: {weakest}
 
-GUIDELINES:
-- Be decisive and assertive
-- Focus on hiring rationale, not description
-- Avoid generic phrases (e.g., "demonstrates strong performance")
-- Avoid HR-style language
-- Do NOT repeat the same wording across sentences
-
-BALANCE CONTEXT:
-{balance_instruction}
-
-Classification:
-{classification}
-
-RULES:
-- Start from the hiring decision
-- Clearly state why the candidate is (or is not) a hire
-- Mention strongest capability as a driver
-- Mention weakest area as a development point
-- Keep it tight, professional, and specific
+Instructions:
+- Start with the hiring decision
+- Explain why the candidate is (or is not) a hire
+- Mention strongest capability
+- Mention weakest area as improvement
+- Be clear and direct
