@@ -35,7 +35,6 @@ class NarrativeService:
 
         builder = NarrativeControlBuilder()
 
-
         payload = builder.build_summary_payload(
             decision=decision,
             overall_score=overall_score,
@@ -74,13 +73,29 @@ class NarrativeService:
 
         template = PromptLoader.load("narrative/executive_summary.txt")
 
+        print("\n=== TEMPLATE ===")
+        print(template)
+        print("=== END ===\n")
+
+        print("\n=== EXEC SUMMARY PAYLOAD ===")
+        print(payload)
+        print("=== END ===\n")
+
         prompt = template.format(
             **payload,
             balance_instruction=balance_instruction,
             classification=classification,
         )
 
+        print("\n================ EXECUTIVE SUMMARY PROMPT ================\n")
+        print(prompt)
+        print("\n=========================================================\n")
+        
         response = self._llm.invoke(prompt)
+
+        print("\n================ EXECUTIVE SUMMARY RESPONSE ================\n")
+        print(response.content)
+        print("\n=========================================================\n")
 
         return response.content.strip()
 
@@ -105,7 +120,15 @@ class NarrativeService:
 
         logger.debug("Decision explanation prompt: %s", prompt)
 
+        print("\n=== DECISION PROMPT ===")
+        print(prompt)
+        print("=== END ===\n")
+
         response = self._llm.invoke(prompt)
+
+        print("\n=== DECISION EXPLANATION RAW ===")
+        print(response.content)
+        print("=== END ===\n")
 
         content = response.content.strip()
 
