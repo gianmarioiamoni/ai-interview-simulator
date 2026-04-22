@@ -129,7 +129,9 @@ class NarrativeService:
         print(prompt)
         print("=== END ===\n")
 
-        response = self._llm.invoke(prompt)
+        response = self._llm.invoke(
+            prompt, 
+            system_prompt="You must return STRICT JSON only. No explanations, no markdown, no extra text. Output must start with '{' and end with '}'.")
 
         print("\n=== DECISION EXPLANATION RAW ===")
         print(response.content)

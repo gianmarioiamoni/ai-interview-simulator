@@ -8,4 +8,8 @@ class LLMResponse(Protocol):
 
 
 class LLMPort(Protocol):
-    def invoke(self, prompt: str) -> LLMResponse: ...
+    def invoke(
+        self, 
+        prompt: str,
+        system_prompt:str | None = None
+    ) -> LLMResponse: ...
