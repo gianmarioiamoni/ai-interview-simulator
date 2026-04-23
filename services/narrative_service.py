@@ -8,7 +8,9 @@ from typing import List, Dict
 from app.ports.llm_port import LLMPort
 from app.prompts.prompt_loader import PromptLoader
 
-from services.interview_evaluation.builders.narrative_control_builder import NarrativeControlBuilder
+from services.interview_evaluation.builders.narrative_control_builder import (
+    NarrativeControlBuilder,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,30 +48,33 @@ class NarrativeService:
         )
 
         if not payload:
-            print("Empty narrative payload")
+            logger.error("Empty narrative payload")
             return "Evaluation completed with insufficient data."
 
-        classification = json.dumps(payload["classification"], indent=2)
+        # -----------------------------------------------------
+        # PREPARE TEMPLATE INPUT (NO MUTATION)
+        # -----------------------------------------------------
 
+        classification_str = json.dumps(payload["classification"], indent=2)
         balance_flag = payload["balance_flag"]
 
         if balance_flag == "BALANCED":
             balance_instruction = """
-            The candidate shows consistent performance across dimensions.
-            - Do NOT exaggerate differences
-            - Emphasize overall strength
-            """
+The candidate shows consistent performance across dimensions.
+- Do NOT exaggerate differences
+- Emphasize overall strength
+"""
         elif balance_flag == "SLIGHTLY_UNEVEN":
             balance_instruction = """
-            The candidate shows strong overall performance with minor variation across areas.
-            - Highlight strengths
-            - Mention improvement areas without overemphasis
-            """
+The candidate shows strong overall performance with minor variation across areas.
+- Highlight strengths
+- Mention improvement areas without overemphasis
+"""
         else:
             balance_instruction = """
-            There is a noticeable gap between strongest and weakest areas.
-            - Clearly highlight strengths and improvement areas
-            """
+There is a noticeable gap between strongest and weakest areas.
+- Clearly highlight strengths and improvement areas
+"""
 
         template = PromptLoader.load("narrative/executive_summary.txt")
 
@@ -81,26 +86,30 @@ class NarrativeService:
         print(payload)
         print("=== END ===\n")
 
-        # stringify the classification
-        payload["classification"] = json.dumps(payload["classification"], indent=2)
+        # -----------------------------------------------------
+        # BUILD PROMPT (NO SIDE EFFECTS)
+        # -----------------------------------------------------
 
         prompt = template.format(
-            **payload,
+            decision=payload["decision"],
+            overall_score=payload["overall_score"],
+            percentile=payload["percentile"],
+            strongest=payload["strongest"],
+            strongest_score=payload["strongest_score"],
+            weakest=payload["weakest"],
+            weakest_score=payload["weakest_score"],
+            balance_flag=payload["balance_flag"],
+            classification=classification_str,
             balance_instruction=balance_instruction,
         )
 
         print("\n================ EXECUTIVE SUMMARY PROMPT ================\n")
         print(prompt)
         print("\n=========================================================\n")
+
         print("CALLING LLM FOR EXEC SUMMARY...")
-        response = self._llm.invoke(
-            prompt,
-            system_prompt=(
-                "You are a senior technical interviewer. "
-                "Always provide a concise, clear, and complete answer. "
-                "Never return empty output."
-            )
-        )
+
+        response = self._llm.invoke(prompt)
 
         content = (response.content or "").strip()
 
@@ -109,10 +118,7 @@ class NarrativeService:
         print("RAW:", repr(content))
         print("\n=========================================================\n")
 
-        # if len(content) < 20:
-        #     print("EMPTY OR TOO SHORT → forcing fallback")
-        #     return ""
-        if not content.strip():
+        if not content:
             print("EMPTY OUTPUT DETECTED")
             return ""
 
@@ -141,9 +147,8 @@ class NarrativeService:
         print(prompt)
         print("=== END ===\n")
 
-        response = self._llm.invoke(
-            prompt, 
-            system_prompt="You must return STRICT JSON only. No explanations, no markdown, no extra text. Output must start with '{' and end with '}'.")
+        # 👉 qui puoi migliorare dopo con invoke_json
+        response = self._llm.invoke(prompt)
 
         print("\n=== DECISION EXPLANATION RAW ===")
         print(response.content)
@@ -163,8 +168,8 @@ class NarrativeService:
             }
 
         except Exception as e:
-            print("Decision explanation parsing failed: %s", e)
-            print("Raw LLM output: %s", content)
+            print("Decision explanation parsing failed:", e)
+            print("Raw LLM output:", content)
 
             return self._deterministic_fallback(dimensions)
 
@@ -180,14 +185,14 @@ class NarrativeService:
     ) -> str:
 
         prompt = f"""
-        Explain this performance dimension in 1 sentence.
+Explain this performance dimension in 1 sentence.
 
-        Dimension: {name}
-        Score: {score}
-        Impact: {impact}
+Dimension: {name}
+Score: {score}
+Impact: {impact}
 
-        Be specific and professional.
-        """
+Be specific and professional.
+"""
 
         response = self._llm.invoke(prompt)
 
@@ -221,33 +226,13 @@ class NarrativeService:
                 continue
 
             if score >= 90:
-                phrases = [
-                    f"Strong capability in {name}",
-                    f"{name} is a strong capability",
-                    f"{name} is a solid and differentiating capability",
-                ]
-                drivers.append(phrases[len(drivers) % len(phrases)])
+                drivers.append(f"Strong capability in {name}")
             elif score >= 80:
-                phrases = [
-                    f"{name} is solid but not a differentiating strength",
-                    f"{name} is a strong foundation but not a standout capability",
-                    f"{name} is a solid capability but not a differentiating strength",
-                ]
-                drivers.append(phrases[len(drivers) % len(phrases)])
+                drivers.append(f"{name} is solid but not a differentiating strength")
             elif score >= 70:
-                phrases = [
-                    f"{name} requires further development",
-                    f"{name} could be strengthened",
-                    f"{name} shows room for improvement",
-                ]
-                blockers.append(phrases[len(blockers) % len(phrases)])
+                blockers.append(f"{name} requires further development")
             else:
-                phrases = [
-                    f"Weak performance in {name}",
-                    f"{name} show significant gaps",
-                    f"{name} is below expected performance level",
-                ]
-                blockers.append(phrases[len(blockers) % len(phrases)])
+                blockers.append(f"Weak performance in {name}")
 
         return {
             "drivers": drivers[:2] or ["Overall solid performance"],
