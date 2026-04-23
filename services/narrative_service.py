@@ -148,7 +148,7 @@ There is a noticeable gap between strongest and weakest areas.
         print("=== END ===\n")
 
         # 👉 qui puoi migliorare dopo con invoke_json
-        response = self._llm.invoke(prompt)
+        response = self._llm.invoke_json(prompt)
 
         print("\n=== DECISION EXPLANATION RAW ===")
         print(response.content)
