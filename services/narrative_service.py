@@ -81,10 +81,12 @@ class NarrativeService:
         print(payload)
         print("=== END ===\n")
 
+        # stringify the classification
+        payload["classification"] = json.dumps(payload["classification"], indent=2)
+
         prompt = template.format(
             **payload,
             balance_instruction=balance_instruction,
-            classification=classification,
         )
 
         print("\n================ EXECUTIVE SUMMARY PROMPT ================\n")
