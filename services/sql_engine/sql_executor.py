@@ -1,4 +1,4 @@
-# services/sql_engine/sql_executor.py
+## services/sql_engine/sql_executor.py
 
 import sqlite3
 import time
@@ -11,9 +11,13 @@ from domain.contracts.execution.execution_result import (
     ExecutionType,
     ExecutionStatus,
 )
+from domain.contracts.execution.test_execution_result import (
+    TestExecutionResult,
+    TestStatus,
+    TestType,
+)
 
 from services.sql_engine.sql_evaluator import SQLEvaluator
-from services.sql_engine.sql_database import SQLDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -23,146 +27,104 @@ class SQLExecutor:
     def __init__(self):
         self._evaluator = SQLEvaluator()
 
+    # ---------------------------------------------------------
+
     def execute(self, question: Question, query: str) -> ExecutionResult:
 
         start = time.time()
 
         try:
 
-            # ---------------------------------------------------------
-            # DB Setup (fallback to default DB)
-            # ---------------------------------------------------------
+            conn = sqlite3.connect(":memory:")
+            cursor = conn.cursor()
 
-            if not question.db_schema and not question.db_seed_data:
-                db = SQLDatabase()
-                conn = db.connection
-                cursor = conn.cursor()
-            else:
-                conn = sqlite3.connect(":memory:")
-                cursor = conn.cursor()
+            # -----------------------------------------------------
+            # SCHEMA + DATA
+            # -----------------------------------------------------
 
-                if question.db_schema:
-                    cursor.executescript(question.db_schema)
+            if question.db_schema:
+                cursor.executescript(question.db_schema)
 
-                if question.db_seed_data:
-                    cursor.executescript(question.db_seed_data)
+            if question.db_seed_data:
+                cursor.executescript(question.db_seed_data)
 
-            # ---------------------------------------------------------
-            # MULTI TEST CASES (NEW)
-            # ---------------------------------------------------------
+            # -----------------------------------------------------
+            # MULTI TEST EXECUTION (NEW)
+            # -----------------------------------------------------
 
-            if question.sql_test_cases:
+            test_results = []
 
-                passed_tests = 0
-                total_tests = len(question.sql_test_cases)
-                last_candidate_rows = []
-                last_reference_rows = []
+            sql_tests = getattr(question, "sql_test_cases", []) or []
 
-                for test_case in question.sql_test_cases:
+            for idx, test in enumerate(sql_tests):
 
-                    success, candidate_rows, reference_rows = self._evaluator.evaluate(
+                try:
+
+                    success, candidate_rows, expected_rows = self._evaluator.evaluate(
                         cursor,
                         candidate_query=query,
-                        reference_query=test_case.expected_query,
-                        ordered=test_case.ordered,
+                        reference_query=test.expected_query,
+                        ordered=test.ordered,
                     )
 
-                    last_candidate_rows = candidate_rows
-                    last_reference_rows = reference_rows
+                    status = TestStatus.PASSED if success else TestStatus.FAILED
 
-                    if success:
-                        passed_tests += 1
-
-                duration = int((time.time() - start) * 1000)
-                conn.close()
-
-                success = passed_tests == total_tests
-
-                if success:
-                    status = ExecutionStatus.SUCCESS
-                    error = None
-                else:
-                    status = ExecutionStatus.FAILED_TESTS
-                    error = (
-                        f"Passed {passed_tests}/{total_tests} tests\n"
-                        f"Last expected: {last_reference_rows}\n"
-                        f"Last got: {last_candidate_rows}"
+                    test_results.append(
+                        TestExecutionResult(
+                            id=idx,
+                            type=TestType.VISIBLE,
+                            status=status,
+                            expected=expected_rows,
+                            actual=candidate_rows,
+                            error=None,
+                        )
                     )
 
-                return ExecutionResult(
-                    question_id=question.id,
-                    execution_type=ExecutionType.DATABASE,
-                    status=status,
-                    success=success,
-                    output=str(last_candidate_rows),
-                    error=error,
-                    execution_time_ms=duration,
-                    passed_tests=passed_tests,
-                    total_tests=total_tests,
-                )
+                except Exception as e:
 
-            # ---------------------------------------------------------
-            # SINGLE TEST (LEGACY)
-            # ---------------------------------------------------------
-
-            if question.reference_solution:
-
-                success, candidate_rows, reference_rows = self._evaluator.evaluate(
-                    cursor,
-                    candidate_query=query,
-                    reference_query=question.reference_solution,
-                    ordered=question.expected_ordered,
-                )
-
-                duration = int((time.time() - start) * 1000)
-                conn.close()
-
-                if success:
-                    status = ExecutionStatus.SUCCESS
-                    error = None
-                    passed_tests = 1
-                else:
-                    status = ExecutionStatus.FAILED_TESTS
-                    error = (
-                        "Query results differ from reference solution\n"
-                        f"Expected: {reference_rows}\n"
-                        f"Got: {candidate_rows}"
+                    test_results.append(
+                        TestExecutionResult(
+                            id=idx,
+                            type=TestType.VISIBLE,
+                            status=TestStatus.ERROR,
+                            expected=None,
+                            actual=None,
+                            error=str(e),
+                        )
                     )
-                    passed_tests = 0
 
-                return ExecutionResult(
-                    question_id=question.id,
-                    execution_type=ExecutionType.DATABASE,
-                    status=status,
-                    success=success,
-                    output=str(candidate_rows),
-                    error=error,
-                    execution_time_ms=duration,
-                    passed_tests=passed_tests,
-                    total_tests=1,
-                )
+            # -----------------------------------------------------
+            # AGGREGATION
+            # -----------------------------------------------------
 
-            # ---------------------------------------------------------
-            # NO REFERENCE → best effort
-            # ---------------------------------------------------------
+            total_tests = len(test_results)
+            passed_tests = sum(1 for t in test_results if t.status == TestStatus.PASSED)
 
-            cursor.execute(query)
-            rows = cursor.fetchall()
-
-            conn.close()
+            success = passed_tests == total_tests and total_tests > 0
 
             duration = int((time.time() - start) * 1000)
+            conn.close()
+
+            status = (
+                ExecutionStatus.SUCCESS if success else ExecutionStatus.FAILED_TESTS
+            )
+
+            error = None
+
+            if not success:
+                error = f"{passed_tests}/{total_tests} tests passed"
 
             return ExecutionResult(
                 question_id=question.id,
                 execution_type=ExecutionType.DATABASE,
-                status=ExecutionStatus.SUCCESS,
-                success=True,
-                output=str(rows),
-                error=None,
+                status=status,
+                success=success,
+                output="",
+                error=error if not success else None,
                 execution_time_ms=duration,
-                passed_tests=1,
-                total_tests=1,
+                passed_tests=passed_tests,
+                total_tests=total_tests,
+                test_results=test_results,  # 🔥 KEY
             )
 
         except Exception:
@@ -174,5 +136,6 @@ class SQLExecutor:
                 success=False,
                 error=traceback.format_exc(),
                 passed_tests=0,
-                total_tests=1,
+                total_tests=0,
+                test_results=[],
             )

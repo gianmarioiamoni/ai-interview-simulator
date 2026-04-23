@@ -12,7 +12,7 @@ from domain.contracts.execution.coding_spec import CodingSpec
 
 
 # =========================================================
-# NEW: SQL Test Case
+# SQL Test Case
 # =========================================================
 
 
