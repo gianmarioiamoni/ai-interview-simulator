@@ -10,7 +10,8 @@ INPUT:
 
 Rules:
 - Always produce a complete answer (never empty)
-- Start with the hiring decision
+- Start directly with the hiring decision WITHOUT labels
+- DO NOT use prefixes like "Decision:"
 - Justify the decision
 - Mention strongest capability
 - Mention weakest area as development point
