@@ -31,6 +31,7 @@ class ExecutiveSummaryGenerator:
                 strongest_score=strongest_score,
                 weakest_score=weakest_score,
             )
-        except Exception:
-            logger.warning("executive_summary_generation_failed")
+        except Exception as e:
+            logger.exception("executive_summary_generation_failed")
+            print("ERROR:", e)
             return None
