@@ -11,6 +11,25 @@ from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.execution.coding_spec import CodingSpec
 
 
+# =========================================================
+# NEW: SQL Test Case
+# =========================================================
+
+
+class SQLTestCase(BaseModel):
+    id: str = Field(..., min_length=1)
+    expected_query: str = Field(..., min_length=1)
+    ordered: bool = True
+
+    model_config = {
+        "frozen": True,
+        "extra": "forbid",
+    }
+
+
+# =========================================================
+
+
 class QuestionType(str, Enum):
     WRITTEN = "written"
     CODING = "coding"
@@ -38,10 +57,15 @@ class Question(BaseModel):
     expected_rows: Optional[list[tuple]] = None
     expected_ordered: bool = Field(default=True)
 
-    # LEGACY (deprecabile dopo FASE 2)
+    # =========================================================
+    # SQL support
+    # =========================================================
+    sql_test_cases: list[SQLTestCase] = Field(default_factory=list)
+
+    # Coding support (legacy)
     function_name: str = "solution"
 
-    # NEW
+    # Coding support
     coding_spec: Optional[CodingSpec] = None
 
     # =========================================================
