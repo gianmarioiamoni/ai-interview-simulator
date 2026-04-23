@@ -16,7 +16,6 @@ from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.execution.coding_spec import CodingSpec
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
-from domain.contracts.user.role import Role
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
@@ -30,9 +29,9 @@ from services.question_intelligence.coding_question_generator import (
     CodingQuestionGenerator,
     GeneratedCodingQuestion,
 )
+from services.question_intelligence.sql_question_generator import SQLQuestionGenerator
 
 from app.settings.constants import QUESTIONS_PER_AREA
-from domain.contracts.user.seniority_level import SeniorityLevel
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +42,7 @@ class QuestionSelectionService:
         retrieval_service: QuestionRetrievalService,
         generator: QuestionGenerator,
         coding_generator: CodingQuestionGenerator,
+        sql_generator: SQLQuestionGenerator,
     ) -> None:
         self._retrieval_service = retrieval_service
         self._generator = generator
@@ -72,6 +72,26 @@ class QuestionSelectionService:
                 area=area,
                 questions_per_area=questions_per_area,
             )
+        
+        # -----------------------------------------------------
+        # DATABASE AREA
+        # -----------------------------------------------------
+
+        if area == InterviewArea.TECH_DATABASE:
+
+            sql_questions = self._sql_generator.generate(
+                role=role,
+                level=level,
+                n=questions_per_area,
+            )
+
+            if len(sql_questions) < questions_per_area:
+                logger.warning(
+                           f"[SQL] Area {area.value} produced {len(sql_questions)} "
+                    f"questions, expected {questions_per_area}"
+               )
+
+            return sql_questions
 
         # -----------------------------------------------------
         # STANDARD FLOW
