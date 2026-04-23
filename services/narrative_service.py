@@ -90,7 +90,7 @@ class NarrativeService:
         print("\n================ EXECUTIVE SUMMARY PROMPT ================\n")
         print(prompt)
         print("\n=========================================================\n")
-
+        print("CALLING LLM FOR EXEC SUMMARY...")
         response = self._llm.invoke(
             prompt,
             system_prompt=(

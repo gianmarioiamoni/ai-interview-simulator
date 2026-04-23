@@ -26,11 +26,20 @@ class DefaultLLMAdapter(LLMPort):
 
         messages.append(HumanMessage(content=prompt))
 
-        raw = self._llm.invoke(messages)
+        try:
+           raw = self._llm.invoke(messages)
+           content = getattr(raw, "content", "") or ""
+           return _LangChainResponse(content=content)
 
-        content = getattr(raw, "content", "") or ""
-        return _LangChainResponse(content=content)
+        except Exception as e:
+           print("\n🔥 LLM INVOCATION FAILED 🔥")
+           print(str(e))
+           raise
 
 
 class LLMPort(Protocol):
-    def invoke(self, prompt: str, temperature: float = 0.0) -> LLMResponse: ...
+    def invoke(
+        self, 
+        prompt: str, 
+        system_prompt: str | None = None
+    ) -> LLMResponse: ...
