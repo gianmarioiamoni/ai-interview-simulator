@@ -159,6 +159,7 @@ There is a noticeable gap between strongest and weakest areas.
         if not content.startswith("{"):
             print("LLM did not return pure JSON")
 
+        content = content[content.find("{") :]
         try:
             parsed = self._extract_json(content)
 

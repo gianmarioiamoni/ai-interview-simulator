@@ -75,7 +75,7 @@ class InterviewEvaluationService:
             role=role,
         )
 
-        dimension_scores = scoring.dimension_scores
+        dimension_scores = scoring.dimension_scores or {}
         overall_score = scoring.overall_score
 
         # ---------------- readable dimensions
