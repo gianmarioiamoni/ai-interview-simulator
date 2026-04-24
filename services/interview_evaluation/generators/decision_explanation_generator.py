@@ -10,7 +10,7 @@ class DecisionExplanationGenerator:
     def __init__(self, narrative_service):
         self._narrative_service = narrative_service
 
-    def generate(self, decision, dimensions):
+    def generate(self, decision, dimensions, dimension_signals=None):
 
         try:
             result = self._narrative_service.generate_decision_explanation(
@@ -21,6 +21,10 @@ class DecisionExplanationGenerator:
         except Exception as e:
             logger.warning(f"decision_explanation_exception: {e}")
             result = {"drivers": [], "blockers": []}
+
+        # -----------------------------------------------------
+        # NORMALIZE OUTPUT (CRITICAL)
+        # -----------------------------------------------------
 
         drivers = result.get("drivers") or []
         blockers = result.get("blockers") or []
@@ -56,4 +60,45 @@ class DecisionExplanationGenerator:
                 "blockers": [blocker],
             }
 
-        return result
+        # -----------------------------------------------------
+        # ENRICH WITH RUNTIME SIGNALS
+        # -----------------------------------------------------
+
+        if dimension_signals:
+
+            # normalize keys (enum → string)
+            normalized_signals = {
+                (k.value if hasattr(k, "value") else k): v
+                for k, v in dimension_signals.items()
+            }
+
+            enriched_blockers = []
+
+            for dim in dimensions:
+
+                dim_name = dim["name"]
+                dim_score = dim["score"]
+
+                # es: "Problem Solving" → "problem_solving"
+                dim_key = dim_name.lower().replace(" ", "_")
+
+                signal_strength = normalized_signals.get(dim_key)
+
+                if signal_strength and dim_score < 75:
+
+                    enriched_blockers.append(
+                        f"Issues in {dim_name} reflected by execution errors "
+                        f"(signal strength {signal_strength})"
+                    )
+
+            if enriched_blockers:
+                blockers = blockers + enriched_blockers
+
+        # -----------------------------------------------------
+        # FINAL RETURN (ALWAYS NORMALIZED)
+        # -----------------------------------------------------
+
+        return {
+            "drivers": drivers,
+            "blockers": blockers,
+        }
