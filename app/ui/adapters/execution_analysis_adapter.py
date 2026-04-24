@@ -1,4 +1,4 @@
-## app/ui/adapters/execution_analysis_adapter.py
+# app/ui/adapters/execution_analysis_adapter.py
 
 from typing import Optional
 

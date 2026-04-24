@@ -1,4 +1,4 @@
-# app/ui/adapters/execution_analysis_adapter.py
+# app/ui/adapters/execution_analysis_dto.py
 
 from dataclasses import dataclass
 

@@ -1,12 +1,48 @@
-# app/ui/presenters/feedback/blocks/test_breakdown/learning_builder.py
-
 from domain.contracts.feedback.error_type import ErrorType
 from app.contracts.feedback_bundle import LearningSuggestion
 
 
 class LearningBuilder:
 
-    def build(self, error_type):
+    def build(self, error_type, question=None):
+
+        is_sql = False
+
+        if question and hasattr(question, "is_database"):
+            is_sql = question.is_database()
+
+        # -----------------------------------------------------
+        # SQL BRANCH
+        # -----------------------------------------------------
+
+        if is_sql:
+
+            if error_type == ErrorType.LOGIC:
+                return [
+                    LearningSuggestion(
+                        topic="SQL query logic",
+                        action="Verify JOIN conditions, filters, and aggregation logic",
+                    )
+                ]
+
+            if error_type == ErrorType.RUNTIME:
+                return [
+                    LearningSuggestion(
+                        topic="SQL execution",
+                        action="Check syntax, table names, and column references",
+                    )
+                ]
+
+            return [
+                LearningSuggestion(
+                    topic="SQL debugging",
+                    action="Compare expected vs actual result sets to identify logic errors",
+                )
+            ]
+
+        # -----------------------------------------------------
+        # CODING (DEFAULT)
+        # -----------------------------------------------------
 
         if error_type == ErrorType.LOGIC:
             return [

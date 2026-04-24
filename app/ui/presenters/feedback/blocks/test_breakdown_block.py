@@ -39,7 +39,7 @@ class TestBreakdownBlock:
 
     # -----------------------------------------------------
 
-    def build(self, _state, _result, _evaluation, execution, analysis, _quality):
+    def build(self, _state, result, _evaluation, execution, analysis, _quality):
 
         failed = [t for t in execution.test_results if t.status != TestStatus.PASSED]
         error_type = getattr(analysis, "error_type", ErrorType.UNKNOWN)
@@ -72,8 +72,8 @@ class TestBreakdownBlock:
                 message=f"{len(failed)} failing test cases detected",
             )
         ]
-
-        learning = self._learning_builder.build(error_type)
+        question = getattr(result, "question", None)
+        learning = self._learning_builder.build(error_type, question)
 
         return FeedbackBlockResult(
             title="Test Breakdown",
