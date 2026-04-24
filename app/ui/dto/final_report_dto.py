@@ -7,9 +7,8 @@ from app.ui.dto.dimension_score_dto import DimensionScoreDTO
 from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
 
 from app.ui.mappers.hire_decision_mapper import HireDecisionMapper
-
+from app.ui.dto.builders.dimension_score_mapper import DimensionScoreMapper
 from app.ui.dto.builders.question_mapper import QuestionMapper
-from app.ui.dto.builders.dimension_mapper import DimensionMapper
 from app.ui.dto.builders.token_calculator import TokenCalculator
 
 from domain.contracts.feedback.confidence import Confidence
@@ -49,11 +48,11 @@ class FinalReportDTO(BaseModel):
     def from_components(cls, state: InterviewState, final_evaluation):
 
         question_mapper = QuestionMapper()
-        dimension_mapper = DimensionMapper()
+        dimension_mapper = DimensionScoreMapper()
         token_calculator = TokenCalculator()
 
         question_assessments = question_mapper.map(state)
-        dimension_scores = dimension_mapper.map(final_evaluation)
+        dimension_scores = dimension_mapper.map(final_evaluation) or []
         tokens = token_calculator.calculate(state)
 
         role = state.role.type

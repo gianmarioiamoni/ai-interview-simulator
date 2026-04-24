@@ -154,14 +154,12 @@ There is a noticeable gap between strongest and weakest areas.
         print(response.content)
         print("=== END ===\n")
 
-        content = response.content.strip()
-
-        if not content.startswith("{"):
-            print("LLM did not return pure JSON")
-
-        content = content[content.find("{") :]
         try:
-            parsed = self._extract_json(content)
+            if isinstance(response.content, dict):
+                parsed = response.content
+            else:
+                content = (response.content or "").strip()
+                parsed = self._extract_json(content)
 
             return {
                 "drivers": parsed.get("drivers", []),
@@ -186,14 +184,14 @@ There is a noticeable gap between strongest and weakest areas.
     ) -> str:
 
         prompt = f"""
-Explain this performance dimension in 1 sentence.
+        Explain this performance dimension in 1 sentence.
 
-Dimension: {name}
-Score: {score}
-Impact: {impact}
+        Dimension: {name}
+        Score: {score}
+        Impact: {impact}
 
-Be specific and professional.
-"""
+        Be specific and professional.
+        """
 
         response = self._llm.invoke(prompt)
 

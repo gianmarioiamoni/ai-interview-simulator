@@ -4,6 +4,8 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 
+from app.ui.dto.builders.dimension_mapper import DimensionMapper
+
 
 class EvaluationNode:
 
@@ -47,6 +49,21 @@ class EvaluationNode:
         )
 
         # ---------------------------------------------------------
+        # DIMENSION SIGNALS UPDATE 
+        # ---------------------------------------------------------
+
+        dimension_mapper = DimensionMapper()
+
+        error_type = execution.error_type if hasattr(execution, "error_type") else None
+
+        dimension = dimension_mapper.map(error_type, execution)
+
+        current_signals = dict(state.get("dimension_signals") or {})
+
+        if dimension:
+            current_signals[dimension] = current_signals.get(dimension, 0) + 1
+
+        # ---------------------------------------------------------
         # STATE UPDATE
         # ---------------------------------------------------------
 
@@ -55,7 +72,7 @@ class EvaluationNode:
         updated_result = result.model_copy(
             update={
                 "evaluation": evaluation,
-                "question": result.question or question,  # 🔥 NEW
+                "question": result.question or question,
             }
         )
 
@@ -64,5 +81,6 @@ class EvaluationNode:
         return state.model_copy(
             update={
                 "results_by_question": new_results,
+                "dimension_signals": current_signals,
             }
         )
