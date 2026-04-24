@@ -32,6 +32,8 @@ from services.interview_evaluation.generators.narrative_generator import (
     NarrativeGenerator,
 )
 
+from services.feedback.signal_extractor import SignalExtractor
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,7 +45,7 @@ class InterviewEvaluationService:
         # core services
         self._scoring_engine = InterviewScoringEngine()
         self._narrative_service = NarrativeService(llm)
-
+        self._signal_extractor = SignalExtractor()
         # components
         self._dimension_mapper = ReadableDimensionMapper()
         self._decision_generator = DecisionExplanationGenerator(self._narrative_service)
@@ -82,11 +84,35 @@ class InterviewEvaluationService:
             self._dimension_mapper.map(dimension_scores)
         )
 
+        # ---------------- signals extraction (NEW)
+
+        dimension_signals = {}
+
+        try:
+            # collect execution signals from all questions
+            for q, ev in zip(questions, per_question_evaluations):
+
+                if ev.execution_status and q.is_execution_based():
+
+                    result = next(
+                        (r for r in per_question_evaluations if r.question_id == ev.question_id),
+                        None,
+                    )
+
+            last_eval = per_question_evaluations[-1]
+
+            if last_eval.execution_status:
+                dimension_signals = {}
+
+        except Exception:
+            dimension_signals = {}
+
         # ---------------- decision explanation
 
         decision_explanation = self._decision_generator.generate(
             scoring.hire_decision.value,
             readable,
+            dimension_signals,
         )
 
         # ---------------- percentile
