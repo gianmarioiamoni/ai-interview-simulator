@@ -10,6 +10,8 @@ from domain.contracts.shared.performance_dimension_type import (
     PerformanceDimensionType,
 )
 
+from services.feedback.dimension_mapper import FeedbackDimensionMapper
+
 
 class SignalExtractor:
     # Extracts dimension-level signals from execution results.
@@ -33,14 +35,16 @@ class SignalExtractor:
         signals = defaultdict(float)
 
         # -----------------------------------------------------
-        # GLOBAL ERROR SIGNALS
+        # 1. ERROR TYPE → DIMENSION (PRIMARY SIGNAL)
         # -----------------------------------------------------
 
-        if execution.status in ["runtime_error", "syntax_error"]:
-            signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += 0.7
+        mapped_dimension = FeedbackDimensionMapper.map(error_type, execution)
+
+        if mapped_dimension:
+            signals[mapped_dimension.value] += 0.6
 
         # -----------------------------------------------------
-        # TEST-LEVEL SIGNALS
+        # 2. TEST-LEVEL SIGNALS
         # -----------------------------------------------------
 
         failed = 0
@@ -50,45 +54,31 @@ class SignalExtractor:
 
             if t.status == TestStatus.FAILED:
                 failed += 1
-                signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += 0.3
+                signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += 0.2
 
             elif t.status == TestStatus.ERROR:
-                signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += 0.4
+                signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += 0.3
 
         # -----------------------------------------------------
-        # NORMALIZE BY FAILURE RATIO
+        # 3. FAILURE RATIO BOOST
         # -----------------------------------------------------
 
         if total > 0:
             failure_ratio = failed / total
 
             signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += (
-                failure_ratio * 0.5
+                failure_ratio * 0.4
             )
 
         # -----------------------------------------------------
-        # PERFORMANCE SIGNAL
+        # 4. PERFORMANCE SIGNAL
         # -----------------------------------------------------
 
         if execution.execution_time_ms and execution.execution_time_ms > 200:
             signals[PerformanceDimensionType.SYSTEM_DESIGN.value] += 0.3
 
         # -----------------------------------------------------
-        # ERROR TYPE BOOST
-        # -----------------------------------------------------
-
-        if error_type == ErrorType.LOGIC:
-            signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += 0.5
-
-        elif error_type in (
-            ErrorType.RUNTIME,
-            ErrorType.SYNTAX,
-            ErrorType.SIGNATURE,
-        ):
-            signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += 0.5
-
-        # -----------------------------------------------------
-        # CLAMP VALUES [0, 1]
+        # 5. CLAMP VALUES [0, 1]
         # -----------------------------------------------------
 
         return {k: min(1.0, round(v, 2)) for k, v in signals.items() if v > 0}
