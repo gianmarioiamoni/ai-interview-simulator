@@ -4,7 +4,7 @@ from domain.contracts.execution.test_execution_result import TestStatus
 from domain.contracts.feedback.severity import Severity
 from domain.contracts.feedback.error_type import ErrorType
 
-from services.feedback.dimension_mapper import FeedbackDimensionMapper
+from app.ui.dto.builders.dimension_mapper import DimensionMapper
 
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
@@ -81,7 +81,7 @@ class TestBreakdownBlock:
         # DIMENSION MAPPING
         # -----------------------------------------------------
 
-        dimension = FeedbackDimensionMapper.map(error_type, execution)
+        dimension = DimensionMapper.map(error_type, execution)
 
         metadata = {}
 

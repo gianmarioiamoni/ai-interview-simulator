@@ -1,4 +1,4 @@
-# services/feedback/dimension_mapper.py
+# app/ui/dto/builders/dimension_mapper.py
 
 from domain.contracts.feedback.error_type import ErrorType
 from domain.contracts.shared.performance_dimension_type import (
@@ -6,7 +6,7 @@ from domain.contracts.shared.performance_dimension_type import (
 )
 
 
-class FeedbackDimensionMapper:
+class DimensionMapper:
 
     @staticmethod
     def map(error_type: ErrorType, execution=None):
