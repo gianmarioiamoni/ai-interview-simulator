@@ -4,6 +4,7 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.feedback.quality import Quality
 
 from services.score_calculator import ScoreCalculator
+from services.feedback.dimension_aggregator import FeedbackDimensionAggregator
 
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
 
@@ -13,6 +14,7 @@ class FeedbackNode:
     def __init__(self):
         self._builder = FeedbackBuilder()
         self._scorer = ScoreCalculator()
+        self._dimension_aggregator = FeedbackDimensionAggregator()
 
     def __call__(self, state: InterviewState) -> InterviewState:
 
@@ -65,6 +67,13 @@ class FeedbackNode:
         )
 
         # -----------------------------------------------------
+        # AGGREGATE DIMENSIONS
+        # -----------------------------------------------------
+
+        dimension_signals = self._dimension_aggregator.aggregate(bundle.blocks)
+        print("DIMENSION SIGNALS:", dimension_signals)
+
+        # -----------------------------------------------------
         # ENRICH BUNDLE (KEEP - backward compatibility)
         # -----------------------------------------------------
 
@@ -77,5 +86,6 @@ class FeedbackNode:
             overall_quality=quality,
             markdown=bundle.markdown,
         )
+        updated_bundle.dimension_signals = dimension_signals
 
         return state.model_copy(update={"last_feedback_bundle": updated_bundle})
