@@ -20,6 +20,9 @@ from services.question_intelligence.question_generator import QuestionGenerator
 from services.question_intelligence.coding_question_generator import (
     CodingQuestionGenerator,
 )
+from services.question_intelligence.sql_question_generator import (
+    SQLQuestionGenerator,
+)
 from services.question_intelligence.question_vector_store import (
     QuestionVectorStore,
 )
@@ -41,7 +44,6 @@ class QuestionIntelligenceProvider:
         # -----------------------------------------------------
 
         chroma_store = ChromaQuestionStore()
-
         vector_store = QuestionVectorStore(chroma_store)
 
         # -----------------------------------------------------
@@ -52,13 +54,17 @@ class QuestionIntelligenceProvider:
 
         generator = QuestionGenerator()
         coding_generator = CodingQuestionGenerator()
+        sql_generator = SQLQuestionGenerator()
 
         selection_service = QuestionSelectionService(
             retrieval_service=retrieval_service,
             generator=generator,
             coding_generator=coding_generator,
+            sql_generator=sql_generator,
         )
-        deduplicator = SemanticDeduplicator(threshold=DEDUPLICATION_THRESHOLD)   
+
+        deduplicator = SemanticDeduplicator(threshold=DEDUPLICATION_THRESHOLD)
+
         set_builder = QuestionSetBuilder(selection_service, deduplicator)
 
         self._service = QuestionIntelligenceService(set_builder)

@@ -14,6 +14,8 @@ from domain.contracts.question.generated_question import GeneratedQuestion
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.execution.coding_spec import CodingSpec
+from domain.contracts.question.question import SQLTestCase
+from domain.contracts.question.question import QuestionDifficulty
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import RoleType
@@ -29,7 +31,10 @@ from services.question_intelligence.coding_question_generator import (
     CodingQuestionGenerator,
     GeneratedCodingQuestion,
 )
-from services.question_intelligence.sql_question_generator import SQLQuestionGenerator
+from services.question_intelligence.sql_question_generator import (
+    SQLQuestionGenerator,
+    GeneratedSQLQuestion,
+)
 
 from app.settings.constants import QUESTIONS_PER_AREA
 
@@ -47,6 +52,7 @@ class QuestionSelectionService:
         self._retrieval_service = retrieval_service
         self._generator = generator
         self._coding_generator = coding_generator
+        self._sql_generator = sql_generator
 
     # =========================================================
     # PUBLIC
@@ -72,26 +78,18 @@ class QuestionSelectionService:
                 area=area,
                 questions_per_area=questions_per_area,
             )
-        
+
         # -----------------------------------------------------
         # DATABASE AREA
         # -----------------------------------------------------
 
         if area == InterviewArea.TECH_DATABASE:
-
-            sql_questions = self._sql_generator.generate(
+            return self._build_sql_questions(
                 role=role,
                 level=level,
-                n=questions_per_area,
+                area=area,
+                questions_per_area=questions_per_area,
             )
-
-            if len(sql_questions) < questions_per_area:
-                logger.warning(
-                           f"[SQL] Area {area.value} produced {len(sql_questions)} "
-                    f"questions, expected {questions_per_area}"
-               )
-
-            return sql_questions
 
         # -----------------------------------------------------
         # STANDARD FLOW
@@ -135,6 +133,57 @@ class QuestionSelectionService:
         return self._select_by_difficulty(questions, questions_per_area)
 
     # =========================================================
+    # SQL PIPELINE
+    # =========================================================
+
+    def _build_sql_questions(
+        self,
+        role: RoleType,
+        level: SeniorityLevel,
+        area: InterviewArea,
+        questions_per_area: int,
+    ) -> List[Question]:
+
+        raw_items = self._sql_generator.generate(
+            role=role,
+            level=level,
+            n=questions_per_area,
+        )
+
+        questions: List[Question] = []
+
+        for item in raw_items:
+
+            sql_test_cases = [
+                SQLTestCase(
+                    id=f"tc_{i}",
+                    expected_query=tc.expected_query,
+                    ordered=tc.ordered,
+                )
+                for i, tc in enumerate(item.test_cases)
+            ]
+
+            question = Question(
+                id=str(uuid.uuid4()),
+                area=area,
+                type=QuestionType.DATABASE,
+                prompt=item.prompt,
+                reference_solution=item.reference_query,
+                sql_test_cases=sql_test_cases,
+                expected_ordered=False,
+            )
+
+            questions.append(question)
+
+        if len(questions) < questions_per_area:
+            logger.warning(
+                f"[SQL] Area {area.value} produced {len(questions)} "
+                f"questions, expected {questions_per_area}"
+            )
+
+        return questions
+
+    # =========================================================
     # CODING PIPELINE
     # =========================================================
 
@@ -156,17 +205,8 @@ class QuestionSelectionService:
 
         for item in raw_items:
 
-            # -------------------------
-            # VALIDATION
-            # -------------------------
-
             coding_spec = item.coding_spec
-
             self._validate_alignment(item, coding_spec)
-
-            # -------------------------
-            # MAPPING → DOMAIN
-            # -------------------------
 
             question = Question(
                 id=str(uuid.uuid4()),
@@ -180,9 +220,6 @@ class QuestionSelectionService:
             )
 
             questions.append(question)
-        # -----------------------------------------------------
-        # SAFETY CHECK: ensure we have enough questions
-        # -----------------------------------------------------
 
         if len(questions) < questions_per_area:
             logger.warning(
@@ -191,6 +228,10 @@ class QuestionSelectionService:
             )
 
         return questions
+
+    # =========================================================
+    # HELPERS
+    # =========================================================
 
     def _build_retrieval_query(
         self,
@@ -209,9 +250,6 @@ class QuestionSelectionService:
         - avoid repetition of API questions
         - Ensure each question targets a DIFFERENT concept within the area
         """
-    # =========================================================
-    # VALIDATION
-    # =========================================================
 
     def _validate_alignment(
         self,
@@ -221,11 +259,9 @@ class QuestionSelectionService:
 
         prompt = item.prompt
 
-        # entrypoint must be in prompt
         if spec.entrypoint not in prompt:
             raise ValueError(f"Entrypoint '{spec.entrypoint}' not found in prompt")
 
-        # parameters must be in prompt
         for p in spec.parameters:
             if p not in prompt:
                 raise ValueError(f"Parameter '{p}' not found in prompt")
@@ -279,7 +315,6 @@ class QuestionSelectionService:
         for q in questions:
             buckets[q.difficulty].append(q)
 
-        # target distribution
         target = {
             QuestionDifficulty.EASY: int(total * 0.2),
             QuestionDifficulty.MEDIUM: int(total * 0.6),
@@ -288,15 +323,11 @@ class QuestionSelectionService:
 
         selected: List[Question] = []
 
-        # pick per bucket
         for diff, count in target.items():
             selected.extend(buckets[diff][:count])
 
-        # fallback: fill remaining
         if len(selected) < total:
-            remaining = [
-                q for q in questions if q not in selected
-            ]
+            remaining = [q for q in questions if q not in selected]
             selected.extend(remaining[: total - len(selected)])
 
         return selected[:total]
