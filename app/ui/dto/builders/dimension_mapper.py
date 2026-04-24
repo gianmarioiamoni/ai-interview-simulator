@@ -11,16 +11,16 @@ class FeedbackDimensionMapper:
     @staticmethod
     def map(error_type: ErrorType, execution=None):
 
-        # -----------------------------------------------------
-        # SQL / LOGIC
-        # -----------------------------------------------------
+        # =====================================================
+        # LOGIC ERRORS → PROBLEM SOLVING
+        # =====================================================
 
         if error_type == ErrorType.LOGIC:
             return PerformanceDimensionType.PROBLEM_SOLVING
 
-        # -----------------------------------------------------
-        # RUNTIME / SYNTAX
-        # -----------------------------------------------------
+        # =====================================================
+        # RUNTIME / SYNTAX / SIGNATURE → TECHNICAL DEPTH
+        # =====================================================
 
         if error_type in (
             ErrorType.RUNTIME,
@@ -29,17 +29,35 @@ class FeedbackDimensionMapper:
         ):
             return PerformanceDimensionType.TECHNICAL_DEPTH
 
-        # -----------------------------------------------------
-        # PERFORMANCE (basic heuristic)
-        # -----------------------------------------------------
+        # =====================================================
+        # TIMEOUT → SYSTEM DESIGN (performance / complexity)
+        # =====================================================
 
-        if execution and execution.execution_time_ms:
+        if error_type == ErrorType.TIMEOUT:
+            return PerformanceDimensionType.SYSTEM_DESIGN
 
-            if execution.execution_time_ms > 200:
+        # =====================================================
+        # PERFORMANCE HEURISTIC (execution-based)
+        # =====================================================
+
+        if execution:
+
+            exec_time = execution.execution_time_ms or 0
+
+            # slow but correct → system design issue
+            if execution.success and exec_time > 200:
                 return PerformanceDimensionType.SYSTEM_DESIGN
 
-        # -----------------------------------------------------
+        # =====================================================
+        # FALLBACK HEURISTICS (important for robustness)
+        # =====================================================
+
+        # If execution failed but no clear type → assume technical issue
+        if execution and not execution.success:
+            return PerformanceDimensionType.TECHNICAL_DEPTH
+
+        # =====================================================
         # DEFAULT
-        # -----------------------------------------------------
+        # =====================================================
 
         return None
