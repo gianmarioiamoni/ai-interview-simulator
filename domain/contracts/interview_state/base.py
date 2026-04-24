@@ -1,8 +1,9 @@
 # domain/contracts/interview_state/base.py
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Dict
 
+from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 from domain.contracts.question.question import Question
 from domain.contracts.interview.answer import Answer
 from domain.contracts.question.question_result import QuestionResult
@@ -34,6 +35,9 @@ class InterviewStateBase(BaseModel):
     chat_history: list[str] = Field(default_factory=list)
 
     results_by_question: dict[str, QuestionResult] = Field(default_factory=dict)
+    dimension_signals: Dict[PerformanceDimensionType, float] = Field(
+        default_factory=dict
+    )
 
     current_question_index: int = 0
 

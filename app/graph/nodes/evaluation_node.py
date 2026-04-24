@@ -49,7 +49,7 @@ class EvaluationNode:
         )
 
         # ---------------------------------------------------------
-        # DIMENSION SIGNALS UPDATE 
+        # DIMENSION SIGNALS UPDATE
         # ---------------------------------------------------------
 
         dimension_mapper = DimensionMapper()
@@ -58,7 +58,7 @@ class EvaluationNode:
 
         dimension = dimension_mapper.map(error_type, execution)
 
-        current_signals = dict(state.get("dimension_signals") or {})
+        current_signals = dict(getattr(state, "dimension_signals", {}) or {})
 
         if dimension:
             current_signals[dimension] = current_signals.get(dimension, 0) + 1
