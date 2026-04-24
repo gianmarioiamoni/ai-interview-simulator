@@ -50,6 +50,7 @@ class SQLQuestionGenerator:
     def __init__(self) -> None:
         self._llm = get_llm()
         self._schema_generator = SchemaSummaryGenerator()
+        self._db = SQLDatabase()
 
     # -----------------------------------------------------
 
@@ -102,7 +103,7 @@ class SQLQuestionGenerator:
 
     def _build_schema_summary(self) -> str:
 
-        db = SQLDatabase()
+        db = self._db 
         conn = db.connection
 
         return self._schema_generator.generate(conn)
@@ -119,10 +120,10 @@ class SQLQuestionGenerator:
             difficulty=QuestionDifficulty.MEDIUM,
             # SQL core
             reference_solution=item.reference_query,
-            expected_ordered=True,
+            expected_ordered=False,
             # IMPORTANT: use default DB (executor fallback)
-            db_schema=None,
-            db_seed_data=None,
+            db_schema=self._db.get_schema_sql(),
+            db_seed_data=self._db.get_seed_sql(),
             # Test cases
             sql_test_cases=[
                 SQLTestCase(
@@ -192,6 +193,12 @@ Rules:
   - use of aliases
   - ordering differences
   - equivalent SQL constructs
+
+IMPORTANT:
+- Use EXACT table names from schema
+- DO NOT invent tables
+- DO NOT rename tables
+- DO NOT assume columns
 
 All test cases must return the SAME result as the reference query.
 """
