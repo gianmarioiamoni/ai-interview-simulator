@@ -24,6 +24,15 @@ class TestCaseFormatter:
 
     def _format_runtime(self, idx, test):
 
+        if not test.args:
+            # SQL case
+            return "\n".join(
+                [
+                    f"❌ Case {idx} — Query Error",
+                    f"Error: {test.error}",
+                ]
+            )
+
         return "\n".join(
             [
                 f"❌ Case {idx} — Runtime Error",
@@ -47,12 +56,28 @@ class TestCaseFormatter:
             insight = self._llm.explain(test, expected, actual)
             used_llm = True
 
-        lines = [
-            f"❌ Case {idx} — Incorrect Output",
-            f"Input: {test.args}",
-            f"Expected: {safe_repr(expected)}",
-            f"Actual: {safe_repr(actual)}",
-        ]
+        # -----------------------------------------------------
+        # SQL vs CODING DETECTION
+        # -----------------------------------------------------
+
+        is_sql = not test.args  # 🔥 semplice e robusto
+
+        if is_sql:
+
+            lines = [
+                f"❌ Case {idx} — Incorrect Result Set",
+                f"Expected rows: {safe_repr(expected)}",
+                f"Actual rows: {safe_repr(actual)}",
+            ]
+
+        else:
+
+            lines = [
+                f"❌ Case {idx} — Incorrect Output",
+                f"Input: {test.args}",
+                f"Expected: {safe_repr(expected)}",
+                f"Actual: {safe_repr(actual)}",
+            ]
 
         if insight:
             lines.append(f"💡 Likely issue: {insight}")
