@@ -144,36 +144,11 @@ class QuestionSelectionService:
         questions_per_area: int,
     ) -> List[Question]:
 
-        raw_items = self._sql_generator.generate(
+        questions = self._sql_generator.generate(
             role=role,
             level=level,
             n=questions_per_area,
         )
-
-        questions: List[Question] = []
-
-        for item in raw_items:
-
-            sql_test_cases = [
-                SQLTestCase(
-                    id=f"tc_{i}",
-                    expected_query=tc.expected_query,
-                    ordered=tc.ordered,
-                )
-                for i, tc in enumerate(item.test_cases)
-            ]
-
-            question = Question(
-                id=str(uuid.uuid4()),
-                area=area,
-                type=QuestionType.DATABASE,
-                prompt=item.prompt,
-                reference_solution=item.reference_query,
-                sql_test_cases=sql_test_cases,
-                expected_ordered=False,
-            )
-
-            questions.append(question)
 
         if len(questions) < questions_per_area:
             logger.warning(
