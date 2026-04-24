@@ -10,6 +10,6 @@ class DimensionScoreMapper:
             return []
 
         return [
-            DimensionScoreDTO(dimension=dim, score=score)
+            DimensionScoreDTO(name=dim.value.replace("_", " ").title(), score=score)
             for dim, score in final_evaluation.dimension_scores.items()
         ]
