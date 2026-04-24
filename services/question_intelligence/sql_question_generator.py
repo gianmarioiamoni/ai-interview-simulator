@@ -89,6 +89,20 @@ class SQLQuestionGenerator:
             except ValidationError as e:
                 raise ValueError(f"Invalid SQL question structure: {e}")
 
+        # --------------------------
+        # VALIDATE GENERATED QUERIES
+        # --------------------------
+        for item in validated_items:
+
+            try:
+                conn = self._db.get_fresh_connection()
+                cursor = conn.cursor()
+                cursor.execute(item.reference_query)
+            except Exception as e:
+                logger.warning(f"Invalid generated SQL: {e}")
+                continue
+
+        
         return [self._map_to_question(item) for item in validated_items]
 
     # =========================================================
