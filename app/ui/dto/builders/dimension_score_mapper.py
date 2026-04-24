@@ -1,24 +1,21 @@
 # app/ui/dto/builders/dimension_score_mapper.py
 
+from typing import List, Dict, Any
+
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
-from domain.contracts.interview.interview_evaluation import InterviewEvaluation
-from typing import List
 
 
 class DimensionScoreMapper:
-    # Maps a QuestionEvaluation object to a list of DimensionScoreDTO objects.
+    # Maps dimension_scores dict to DimensionScoreDTO list
 
-    def map(
-        self,
-        evaluation: InterviewEvaluation | None
-    ) -> List[DimensionScoreDTO]:
+    def map(self, dimension_scores: Dict[Any, float] | None) -> List[DimensionScoreDTO]:
 
-        if not evaluation or not evaluation.dimension_scores:
+        if not dimension_scores:
             return []
 
-        results = []
+        results: List[DimensionScoreDTO] = []
 
-        for dim, score in evaluation.dimension_scores.items():
+        for dim, score in dimension_scores.items():
 
             # -----------------------------------------------------
             # HANDLE ENUM OR STRING
@@ -30,7 +27,7 @@ class DimensionScoreMapper:
                 dim_value = str(dim)
 
             # -----------------------------------------------------
-            # HUMAN READABLE
+            # HUMAN READABLE LABEL
             # -----------------------------------------------------
 
             label = dim_value.replace("_", " ").title()
