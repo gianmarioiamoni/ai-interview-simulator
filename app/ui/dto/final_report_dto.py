@@ -52,7 +52,7 @@ class FinalReportDTO(BaseModel):
         token_calculator = TokenCalculator()
 
         question_assessments = question_mapper.map(state)
-        dimension_scores = dimension_mapper.map(final_evaluation) or []
+        dimension_scores = dimension_mapper.map(final_evaluation.dimension_scores) or []
         tokens = token_calculator.calculate(state)
 
         role = state.role.type

@@ -60,14 +60,14 @@ class InterviewStateMapper:
         if final_evaluation is None:
             raise ValueError("Final evaluation is required")
 
-        # Delegate entirely to DTO factory
+        # 👇 CORRETTO: delega tutto al DTO
         return FinalReportDTO.from_components(
             state=state,
             final_evaluation=final_evaluation,
         )
 
     # =========================================================
-    # WEAKNESS AGGREGATION
+    # WEAKNESS AGGREGATION (legacy helper)
     # =========================================================
 
     def _aggregate_weaknesses(self, question_assessments):
