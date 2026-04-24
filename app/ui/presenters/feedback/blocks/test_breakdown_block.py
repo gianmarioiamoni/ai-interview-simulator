@@ -4,6 +4,8 @@ from domain.contracts.execution.test_execution_result import TestStatus
 from domain.contracts.feedback.severity import Severity
 from domain.contracts.feedback.error_type import ErrorType
 
+from services.feedback.dimension_mapper import FeedbackDimensionMapper
+
 from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
@@ -74,13 +76,25 @@ class TestBreakdownBlock:
         ]
         question = getattr(result, "question", None)
         learning = self._learning_builder.build(error_type, question)
+        
+        # -----------------------------------------------------
+        # DIMENSION MAPPING
+        # -----------------------------------------------------
+
+        dimension = FeedbackDimensionMapper.map(error_type, execution)
+
+        metadata = {}
+
+        if dimension:
+            metadata["dimension"] = dimension.value
 
         return FeedbackBlockResult(
-            title="Test Breakdown",
-            content=content,
-            severity=Severity.ERROR,
-            confidence=0.95,
-            signals=signals,
-            learning=learning,
-            quality=None,
+                title="Test Breakdown",
+                content=content,
+                severity=Severity.ERROR,
+                confidence=0.95,
+                signals=signals,
+                learning=learning,
+                quality=None,
+                metadata=metadata,
         )
