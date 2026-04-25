@@ -159,11 +159,20 @@ There is a noticeable gap between strongest and weakest areas.
                 parsed = response.content
             else:
                 content = (response.content or "").strip()
-                parsed = self._extract_json(content)
+                parsed = self._safe_extract_json(content)
+
+            
+            drivers = parsed.get("drivers")
+            blockers = parsed.get("blockers")
+
+            if not isinstance(drivers, list):
+                drivers = []
+            if not isinstance(blockers, list):
+                blockers = []
 
             return {
-                "drivers": parsed.get("drivers", []),
-                "blockers": parsed.get("blockers", []),
+                "drivers": drivers,
+                "blockers": blockers,
             }
 
         except Exception as e:
@@ -211,6 +220,31 @@ There is a noticeable gap between strongest and weakest areas.
             raise ValueError("No JSON object found")
 
         return json.loads(match.group(0))
+
+    def _safe_extract_json(self, content: str) -> dict:
+        # -----------------------------------------------------
+        # STEP 1: direct parse (fast path)
+        # -----------------------------------------------------
+        try:
+            return json.loads(content)
+        except Exception:
+            pass
+
+        # -----------------------------------------------------
+        # STEP 2: extract first JSON object via regex
+        # -----------------------------------------------------
+        match = re.search(r"\{.*\}", content, re.DOTALL)
+
+        if match:
+            try:
+                return json.loads(match.group())
+            except Exception:
+                pass
+
+        # -----------------------------------------------------
+        # STEP 3: fallback
+        # -----------------------------------------------------
+        raise ValueError("Unable to extract valid JSON from LLM output")
 
     def _deterministic_fallback(self, dimensions):
 
