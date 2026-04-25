@@ -8,8 +8,4 @@ from typing import Optional
 class DimensionScoreDTO:
     name: str
     score: Optional[float]
-    max_score: float
-    weight: float
-    contribution: float
-    is_evaluated: bool
-    status: str
+  
