@@ -84,27 +84,30 @@ class InterviewEvaluationService:
             self._dimension_mapper.map(dimension_scores)
         )
 
-        # ---------------- signals extraction (NEW)
+        # ---------------- signals extraction 
 
         dimension_signals = {}
 
         try:
-            # collect execution signals from all questions
-            for q, ev in zip(questions, per_question_evaluations):
+            aggregated = {}
 
-                if ev.execution_status and q.is_execution_based():
+            # NOTE:
+            # oggi NON hai execution qui → quindi niente signals reali
+            # workaround: skip se non hai execution
 
-                    result = next(
-                        (r for r in per_question_evaluations if r.question_id == ev.question_id),
-                        None,
-                    )
+            # FUTURE (correct design):
+            # passare QuestionResult invece di QuestionEvaluation
 
-            last_eval = per_question_evaluations[-1]
+            for ev in per_question_evaluations:
 
-            if last_eval.execution_status:
-                dimension_signals = {}
+                # placeholder: execution non disponibile
+                continue
 
-        except Exception:
+            # no signals available for now
+            dimension_signals = {}
+
+        except Exception as e:
+            logger.warning(f"signal_extraction_failed: {e}")
             dimension_signals = {}
 
         # ---------------- decision explanation

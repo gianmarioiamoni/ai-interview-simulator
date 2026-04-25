@@ -161,7 +161,6 @@ There is a noticeable gap between strongest and weakest areas.
                 content = (response.content or "").strip()
                 parsed = self._safe_extract_json(content)
 
-            
             drivers = parsed.get("drivers")
             blockers = parsed.get("blockers")
 
@@ -210,18 +209,8 @@ There is a noticeable gap between strongest and weakest areas.
     # UTILS
     # ---------------------------------------------------------
 
-    def _extract_json(self, text: str) -> dict:
-
-        text = re.sub(r"```json|```", "", text)
-
-        match = re.search(r"\{.*\}", text, re.DOTALL)
-
-        if not match:
-            raise ValueError("No JSON object found")
-
-        return json.loads(match.group(0))
-
     def _safe_extract_json(self, content: str) -> dict:
+        print("USING SAFE JSON PARSER")
         # -----------------------------------------------------
         # STEP 1: direct parse (fast path)
         # -----------------------------------------------------

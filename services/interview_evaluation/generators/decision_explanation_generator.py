@@ -48,9 +48,9 @@ class DecisionExplanationGenerator:
             weakest = weakest_dim["name"]
             weakest_score = weakest_dim["score"]
 
-            if weakest_score >= 80:
+            if weakest_score >= 85:
                 blocker = f"Area for improvement in {weakest}"
-            elif weakest_score >= 70:
+            elif weakest_score >= 75:
                 blocker = f"Moderate improvement needed in {weakest}"
             else:
                 blocker = f"Weak performance in {weakest}"
