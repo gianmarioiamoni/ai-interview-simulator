@@ -1,37 +1,69 @@
 # app/ui/dto/builders/dimension_score_mapper.py
 
-from typing import List, Dict, Any
-
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
+from typing import List, Dict
 
 
 class DimensionScoreMapper:
-    # Maps dimension_scores dict to DimensionScoreDTO list
 
-    def map(self, dimension_scores: Dict[Any, float] | None) -> List[DimensionScoreDTO]:
+    def map(
+        self,
+        dimension_scores: Dict,
+        weighted_breakdown: Dict | None = None,
+    ) -> List[DimensionScoreDTO]:
 
         if not dimension_scores:
             return []
 
-        results: List[DimensionScoreDTO] = []
+        results = []
 
         for dim, score in dimension_scores.items():
 
-            # -----------------------------------------------------
-            # HANDLE ENUM OR STRING
-            # -----------------------------------------------------
+            # -----------------------------------------
+            # NORMALIZE KEY
+            # -----------------------------------------
 
             if hasattr(dim, "value"):
-                dim_value = dim.value
+                dim_key = dim.value
             else:
-                dim_value = str(dim)
+                dim_key = str(dim)
 
-            # -----------------------------------------------------
-            # HUMAN READABLE LABEL
-            # -----------------------------------------------------
+            label = dim_key.replace("_", " ").title()
 
-            label = dim_value.replace("_", " ").title()
+            # -----------------------------------------
+            # WEIGHT / CONTRIBUTION
+            # -----------------------------------------
 
-            results.append(DimensionScoreDTO(name=label, score=score))
+            contribution = 0.0
+            weight = 0.0
+
+            if weighted_breakdown and dim in weighted_breakdown:
+                contribution = weighted_breakdown.get(dim, 0.0)
+
+                if score > 0:
+                    weight = round(contribution / score, 2)
+
+            # -----------------------------------------
+            # STATUS
+            # -----------------------------------------
+
+            if score >= 85:
+                status = "strong"
+            elif score >= 70:
+                status = "moderate"
+            else:
+                status = "weak"
+
+            results.append(
+                DimensionScoreDTO(
+                    name=label,
+                    score=score,
+                    max_score=100.0,
+                    weight=weight,
+                    contribution=contribution,
+                    is_evaluated=True,
+                    status=status,
+                )
+            )
 
         return results
