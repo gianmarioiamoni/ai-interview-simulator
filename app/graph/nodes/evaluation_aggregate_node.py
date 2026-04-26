@@ -21,9 +21,10 @@ class EvaluationAggregateNode:
         evaluations = [
             r.evaluation for r in state.results_by_question.values() if r.evaluation
         ]
+        question_results = list(state.results_by_question.values())
 
         interview_eval = self._service.evaluate(
-            per_question_evaluations=evaluations,
+            per_question_results=question_results,
             questions=state.questions,
             interview_type=state.interview_type,
             role=state.role.type,
