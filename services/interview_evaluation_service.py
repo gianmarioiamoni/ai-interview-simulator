@@ -8,6 +8,7 @@ from app.ports.llm_port import LLMPort
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.question.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.question.question import Question
 from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION
@@ -33,6 +34,7 @@ from services.interview_evaluation.generators.narrative_generator import (
 )
 
 from services.feedback.signal_extractor import SignalExtractor
+from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +48,8 @@ class InterviewEvaluationService:
         self._scoring_engine = InterviewScoringEngine()
         self._narrative_service = NarrativeService(llm)
         self._signal_extractor = SignalExtractor()
+        self._execution_analyzer = ExecutionAnalyzer()
+
         # components
         self._dimension_mapper = ReadableDimensionMapper()
         self._decision_generator = DecisionExplanationGenerator(self._narrative_service)
@@ -58,59 +62,84 @@ class InterviewEvaluationService:
 
     def evaluate(
         self,
-        per_question_evaluations: List[QuestionEvaluation],
+        question_results: List[QuestionResult],
         questions: List[Question],
         interview_type: InterviewType,
         role: RoleType,
     ) -> InterviewEvaluation:
 
-        if not per_question_evaluations:
-            raise ValueError("Cannot evaluate interview without question evaluations")
+        if not question_results:
+            raise ValueError("Cannot evaluate interview without question results")
 
-        # ---------------- scoring
+        # -----------------------------------------------------
+        # BACKWARD COMPATIBILITY: extract evaluations
+        # -----------------------------------------------------
+
+        evaluations: List[QuestionEvaluation] = [
+            qr.evaluation for qr in question_results if qr.evaluation is not None
+        ]
+
+        if not evaluations:
+            raise ValueError("No question evaluations available")
+
+        # -----------------------------------------------------
+        # SCORING
+        # -----------------------------------------------------
 
         scoring = self._scoring_engine.compute(
             questions=questions,
-            evaluations=per_question_evaluations,
+            evaluations=evaluations,
             role=role,
         )
 
         dimension_scores = scoring.dimension_scores or {}
         overall_score = scoring.overall_score
 
-        # ---------------- readable dimensions
+        # -----------------------------------------------------
+        # READABLE DIMENSIONS
+        # -----------------------------------------------------
 
         readable, strongest, weakest, strongest_score, weakest_score = (
             self._dimension_mapper.map(dimension_scores)
         )
 
-        # ---------------- signals extraction 
+        # -----------------------------------------------------
+        # SIGNAL EXTRACTION (CORRETTO)
+        # -----------------------------------------------------
 
         dimension_signals = {}
 
         try:
-            aggregated = {}
+            for qr in question_results:
 
-            # NOTE:
-            # oggi NON hai execution qui → quindi niente signals reali
-            # workaround: skip se non hai execution
+                execution = qr.execution
+                if not execution:
+                    continue
 
-            # FUTURE (correct design):
-            # passare QuestionResult invece di QuestionEvaluation
+                analysis = self._execution_analyzer.analyze(execution)
 
-            for ev in per_question_evaluations:
+                signals = self._signal_extractor.extract(
+                    execution=execution,
+                    error_type=analysis.error_type,
+                )
 
-                # placeholder: execution non disponibile
-                continue
+                for k, v in signals.items():
+                    dimension_signals[k] = dimension_signals.get(k, 0.0) + v
 
-            # no signals available for now
-            dimension_signals = {}
+            # normalize
+            dimension_signals = {
+                k: round(min(1.0, v), 2) for k, v in dimension_signals.items()
+            }
+
+            print("FINAL DIMENSION SIGNALS:", dimension_signals)
 
         except Exception as e:
             logger.warning(f"signal_extraction_failed: {e}")
             dimension_signals = {}
 
-        # ---------------- decision explanation
+        # -----------------------------------------------------
+        # DECISION EXPLANATION
+        # -----------------------------------------------------
 
         decision_explanation = self._decision_generator.generate(
             scoring.hire_decision.value,
@@ -118,7 +147,9 @@ class InterviewEvaluationService:
             dimension_signals,
         )
 
-        # ---------------- percentile
+        # -----------------------------------------------------
+        # PERCENTILE
+        # -----------------------------------------------------
 
         percentile = scoring.percentile
         dist_params = ROLE_DISTRIBUTION[role]
@@ -128,14 +159,18 @@ class InterviewEvaluationService:
             f"normal distribution (μ={dist_params['mean']}, σ={dist_params['std']})."
         )
 
-        # ---------------- confidence
+        # -----------------------------------------------------
+        # CONFIDENCE
+        # -----------------------------------------------------
 
         confidence = Confidence(
             base=scoring.confidence,
             final=scoring.confidence,
         )
 
-        # ---------------- executive summary (FIXED)
+        # -----------------------------------------------------
+        # EXECUTIVE SUMMARY
+        # -----------------------------------------------------
 
         executive_summary = self._summary_generator.generate(
             scoring.hire_decision.value,
@@ -147,10 +182,8 @@ class InterviewEvaluationService:
             weakest_score,
         )
 
-        # HARD FALLBACK (NO legacy method)
         if not executive_summary or not executive_summary.strip():
-            print("executive_summary_empty → fallback applied")
-            print("\n⚠️ EXECUTIVE SUMMARY FALLBACK TRIGGERED\n")
+            logger.warning("executive_summary_empty → fallback applied")
 
             executive_summary = (
                 f"The candidate achieved an overall score of {overall_score:.1f}. "
@@ -158,30 +191,38 @@ class InterviewEvaluationService:
                 f"Area for improvement: {weakest} ({weakest_score:.1f})."
             )
 
-        # ---------------- narrative
+        # -----------------------------------------------------
+        # NARRATIVE
+        # -----------------------------------------------------
 
         narrative = self._narrative_generator.generate(
-            per_question_evaluations,
+            evaluations,
             dimension_scores,
             interview_type,
             role,
         )
 
-        # ---------------- dimensions
+        # -----------------------------------------------------
+        # DIMENSIONS
+        # -----------------------------------------------------
 
         performance_dimensions = self._dimension_builder.build(
             dimension_scores,
             narrative,
         )
 
-        # ---------------- improvements
+        # -----------------------------------------------------
+        # IMPROVEMENTS
+        # -----------------------------------------------------
 
         improvement_suggestions = self._improvement_builder.build(
             dimension_scores,
             narrative,
         )
 
-        # ---------------- final object
+        # -----------------------------------------------------
+        # FINAL OBJECT
+        # -----------------------------------------------------
 
         return InterviewEvaluation(
             overall_score=overall_score,
@@ -197,7 +238,7 @@ class InterviewEvaluationService:
             gating_triggered=scoring.gating_triggered,
             gating_reason=scoring.gating_reason,
             weighted_breakdown=scoring.weighted_breakdown,
-            per_question_assessment=per_question_evaluations,
+            per_question_assessment=evaluations,
             improvement_suggestions=improvement_suggestions,
             confidence=confidence,
         )
