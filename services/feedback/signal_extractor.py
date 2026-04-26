@@ -11,31 +11,25 @@ from domain.contracts.shared.performance_dimension_type import (
 )
 
 from services.feedback.dimension_mapper import FeedbackDimensionMapper
+from services.execution_analysis.execution_analyzer import ExecutionAnalysis
 
 
 class SignalExtractor:
-    # Extracts dimension-level signals from execution results.
-    #
-    # Output:
-    # {
-    #     "problem_solving": float,
-    #     "technical_depth": float,
-    #     "system_design": float
-    # }
 
     def extract(
         self,
         execution: Optional[ExecutionResult],
         error_type: Optional[ErrorType],
+        analysis: Optional[ExecutionAnalysis] = None,
     ) -> Dict[str, float]:
 
-        if not execution:
+        if not execution or not analysis:
             return {}
 
         signals = defaultdict(float)
 
         # -----------------------------------------------------
-        # 1. ERROR TYPE → DIMENSION (PRIMARY SIGNAL)
+        # 1. PRIMARY ERROR SIGNAL
         # -----------------------------------------------------
 
         mapped_dimension = FeedbackDimensionMapper.map(error_type, execution)
@@ -44,7 +38,7 @@ class SignalExtractor:
             signals[mapped_dimension.value] += 0.6
 
         # -----------------------------------------------------
-        # 2. TEST-LEVEL SIGNALS
+        # 2. TEST-LEVEL NEGATIVE SIGNALS
         # -----------------------------------------------------
 
         failed = 0
@@ -60,25 +54,35 @@ class SignalExtractor:
                 signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += 0.3
 
         # -----------------------------------------------------
-        # 3. FAILURE RATIO BOOST
+        # 3. FAILURE RATIO
         # -----------------------------------------------------
 
         if total > 0:
             failure_ratio = failed / total
-
             signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += (
                 failure_ratio * 0.4
             )
 
         # -----------------------------------------------------
-        # 4. PERFORMANCE SIGNAL
+        # 4. POSITIVE SIGNALS (🔥 CRITICAL FIX)
+        # -----------------------------------------------------
+
+        if analysis.is_perfect:
+            signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += 0.6
+            signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += 0.4
+
+        elif analysis.pass_rate > 0.7:
+            signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += 0.4
+
+        # -----------------------------------------------------
+        # 5. PERFORMANCE SIGNAL
         # -----------------------------------------------------
 
         if execution.execution_time_ms and execution.execution_time_ms > 200:
             signals[PerformanceDimensionType.SYSTEM_DESIGN.value] += 0.3
 
         # -----------------------------------------------------
-        # 5. CLAMP VALUES [0, 1]
+        # 6. CLAMP
         # -----------------------------------------------------
 
         return {k: min(1.0, round(v, 2)) for k, v in signals.items() if v > 0}

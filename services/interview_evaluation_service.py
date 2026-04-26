@@ -121,6 +121,7 @@ class InterviewEvaluationService:
                 signals = self._signal_extractor.extract(
                     execution=execution,
                     error_type=analysis.error_type,
+                    analysis=analysis,
                 )
 
                 for k, v in signals.items():
@@ -229,6 +230,7 @@ class InterviewEvaluationService:
             executive_summary=executive_summary,
             performance_dimensions=performance_dimensions,
             dimension_scores=dimension_scores,
+            dimension_signals=dimension_signals,
             level=scoring.level,
             hire_decision=scoring.hire_decision,
             decision_explanation=decision_explanation,

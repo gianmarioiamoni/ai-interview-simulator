@@ -20,6 +20,9 @@ class InterviewEvaluation(BaseModel):
     # deterministic dimension scores
     dimension_scores: Dict[str, float]
 
+    # signals extracted from execution results
+    dimension_signals: Dict[str, float] = {}
+
     # FAANG-style ranking
     level: InterviewLevel
 

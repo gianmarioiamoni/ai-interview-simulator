@@ -16,6 +16,8 @@ class ExecutionAnalysis:
         has_logic_failures: bool,
         primary_error: Optional[str],
         error_type: ErrorType = ErrorType.UNKNOWN,
+        pass_rate: float = 0.0,
+        is_perfect: bool = False,
     ):
         self.has_global_runtime_error = has_global_runtime_error
         self.has_test_runtime_errors = has_test_runtime_errors
@@ -23,15 +25,27 @@ class ExecutionAnalysis:
         self.primary_error = primary_error
         self.error_type = error_type
 
+        # 🔥 NEW (fondamentali)
+        self.pass_rate = pass_rate
+        self.is_perfect = is_perfect
+
 
 class ExecutionAnalyzer:
 
-    def analyze(self, execution: ExecutionResult) -> ExecutionAnalysis:
+    def analyze(self, execution: Optional[ExecutionResult]) -> ExecutionAnalysis:
 
         if not execution:
             return ExecutionAnalysis(False, False, False, None)
 
         error = execution.error or ""
+
+        total = execution.total_tests or 0
+        passed = execution.passed_tests or 0
+
+        pass_rate = (
+            (passed / total) if total > 0 else (1.0 if execution.success else 0.0)
+        )
+        is_perfect = total > 0 and passed == total
 
         # ---------------------------------------------------------
         # SIGNATURE ERROR
@@ -44,6 +58,8 @@ class ExecutionAnalyzer:
                 has_logic_failures=True,
                 primary_error=error,
                 error_type=ErrorType.SIGNATURE,
+                pass_rate=pass_rate,
+                is_perfect=is_perfect,
             )
 
         # ---------------------------------------------------------
@@ -57,6 +73,8 @@ class ExecutionAnalyzer:
                 has_logic_failures=False,
                 primary_error=error,
                 error_type=ErrorType.SYNTAX,
+                pass_rate=0.0,
+                is_perfect=False,
             )
 
         # ---------------------------------------------------------
@@ -70,6 +88,8 @@ class ExecutionAnalyzer:
                 has_logic_failures=False,
                 primary_error=error,
                 error_type=ErrorType.RUNTIME,
+                pass_rate=0.0,
+                is_perfect=False,
             )
 
         # ---------------------------------------------------------
@@ -109,4 +129,6 @@ class ExecutionAnalyzer:
             has_logic_failures=has_logic_failures,
             primary_error=primary_error,
             error_type=error_type,
+            pass_rate=pass_rate,
+            is_perfect=is_perfect,
         )

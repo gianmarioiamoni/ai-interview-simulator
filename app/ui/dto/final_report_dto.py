@@ -22,6 +22,7 @@ class FinalReportDTO(BaseModel):
     hiring_probability: float
     hire_decision: str
     decision_explanation: Dict[str, List[str]]
+    dimension_signals: Dict[str, float]
 
     percentile_rank: float
     percentile_explanation: str
@@ -67,6 +68,7 @@ class FinalReportDTO(BaseModel):
             hiring_probability=final_evaluation.hiring_probability,
             hire_decision=hire_decision,
             decision_explanation=final_evaluation.decision_explanation,
+            dimension_signals=final_evaluation.dimension_signals,
             percentile_rank=final_evaluation.percentile_rank,
             percentile_explanation=final_evaluation.percentile_explanation,
             executive_summary=final_evaluation.executive_summary,

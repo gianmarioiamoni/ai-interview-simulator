@@ -30,4 +30,7 @@ class ReportViewModelBuilder:
             ),
             "roadmap": builder.prioritize_improvements(dims),
             "missing_dims": [d.name for d in dims if d.score is None],
+            "signal_insights": builder.build_signal_insights(
+                report.dimension_signals
+            ),
         }
