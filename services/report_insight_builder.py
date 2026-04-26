@@ -110,13 +110,13 @@ class ReportInsightBuilder:
 
         ps = signals.get("problem_solving", 0.0)
         td = signals.get("technical_depth", 0.0)
-        sd = signals.get("system_design", 0.0)
+        sd = signals.get("system_design")
 
         # -----------------------------
         # POSITIVE SIGNALS
         # -----------------------------
 
-        if ps >= 0.7:
+        if ps is not None and ps >= 0.7:
             insights.append(
                 {
                     "text": "Strong problem-solving ability with high correctness.",
@@ -126,7 +126,7 @@ class ReportInsightBuilder:
                 }
             )
 
-        if td >= 0.7:
+        if td is not None and td >= 0.7:
             insights.append(
                 {
                     "text": "Solid technical implementation and code reliability.",
@@ -140,7 +140,7 @@ class ReportInsightBuilder:
         # NEGATIVE SIGNALS
         # -----------------------------
 
-        if td < 0.4:
+        if td is not None and td < 0.4:
             insights.append(
                 {
                     "text": "Struggles with technical implementation and runtime stability.",
@@ -150,7 +150,7 @@ class ReportInsightBuilder:
                 }
             )
 
-        if ps < 0.4:
+        if ps is not None and ps < 0.4:
             insights.append(
                 {
                     "text": "Weak handling of edge cases and problem decomposition.",
@@ -160,7 +160,7 @@ class ReportInsightBuilder:
                 }
             )
 
-        if sd < 0.4:
+        if sd is not None and sd < 0.4:
             insights.append(
                 {
                     "text": "Limited awareness of performance and system-level concerns.",
