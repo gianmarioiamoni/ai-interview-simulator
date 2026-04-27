@@ -52,6 +52,7 @@ class DefaultLLMAdapter(LLMPort):
     # ---------------------------------------------------------
 
     def invoke_json(self, prompt: str, schema: Type[T]) -> T:
+        print("INVOKE_JSON ADAPTER CALLED")
 
         messages = [
             SystemMessage(
@@ -77,7 +78,7 @@ class DefaultLLMAdapter(LLMPort):
                 start = content.find("{")
                 end = content.rfind("}")
 
-                if start == -1 or end == -1:
+                if start != -1 and end != -1:
                     json_str = content[start:end+1]
                     return schema.model_validate_json(json_str)
                 
@@ -98,4 +99,4 @@ class LLMPort(Protocol):
 
     def invoke(self, prompt: str) -> LLMResponse: ...
 
-    def invoke_json(self, prompt: str) -> LLMResponse: ...
+    def invoke_json(self, prompt: str) -> T: ...
