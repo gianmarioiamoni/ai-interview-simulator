@@ -30,7 +30,7 @@ class DecisionExplanationGenerator:
         blockers = result.get("blockers") or []
 
         # -----------------------------------------------------
-        # FALLBACK (SEMANTICO CORRETTO)
+        # FALLBACK 
         # -----------------------------------------------------
 
         if not drivers and not blockers:
