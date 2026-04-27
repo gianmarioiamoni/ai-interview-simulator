@@ -21,7 +21,7 @@ class DecisionExplanationGenerator:
         dimensions: List[Dict[str, Any]],
         dimension_signals: Dict[str, float] | None = None,
     ) -> Dict[str, List[str]]:
-
+        print("✅ NEW DECISION GENERATOR ACTIVE")
         # -----------------------------------------------------
         # CALL NARRATIVE SERVICE (STRUCTURED)
         # -----------------------------------------------------

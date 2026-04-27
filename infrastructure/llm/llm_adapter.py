@@ -70,7 +70,18 @@ class DefaultLLMAdapter(LLMPort):
             print("\n=== RAW LLM JSON ===")
             print(content)
             print("=== END RAW LLM JSON ===\n")
-            return schema.model_validate_json(content)
+
+            try:
+                return schema.model_validate_json(content)
+            except Exception:
+                start = content.find("{")
+                end = content.rfind("}")
+
+                if start == -1 or end == -1:
+                    json_str = content[start:end+1]
+                    return schema.model_validate_json(json_str)
+                
+                raise
 
         except Exception as e:
             print("\n LLM JSON INVOCATION FAILED ")
@@ -82,7 +93,6 @@ class DefaultLLMAdapter(LLMPort):
 # ---------------------------------------------------------
 # PORT
 # ---------------------------------------------------------
-
 
 class LLMPort(Protocol):
 
