@@ -1,8 +1,7 @@
 # services/interview_evaluation/generators/decision_explanation_generator.py
 
 import logging
-import re
-import json
+from typing import Dict, List, Any
 
 logger = logging.getLogger(__name__)
 
@@ -12,9 +11,20 @@ class DecisionExplanationGenerator:
     def __init__(self, narrative_service):
         self._narrative_service = narrative_service
 
-    def generate(self, decision, dimensions, dimension_signals=None):
+    # ---------------------------------------------------------
+    # MAIN GENERATION
+    # ---------------------------------------------------------
 
+    def generate(
+        self,
+        decision: str,
+        dimensions: List[Dict[str, Any]],
+        dimension_signals: Dict[str, float] | None = None,
+    ) -> Dict[str, List[str]]:
 
+        # -----------------------------------------------------
+        # CALL NARRATIVE SERVICE (STRUCTURED)
+        # -----------------------------------------------------
 
         try:
             result = self._narrative_service.generate_decision_explanation(
@@ -27,14 +37,20 @@ class DecisionExplanationGenerator:
             result = {"drivers": [], "blockers": []}
 
         # -----------------------------------------------------
-        # NORMALIZE OUTPUT (CRITICAL)
+        # NORMALIZE OUTPUT (DEFENSIVE)
         # -----------------------------------------------------
 
-        drivers = result.get("drivers") or []
-        blockers = result.get("blockers") or []
+        drivers = result.get("drivers") if isinstance(result, dict) else []
+        blockers = result.get("blockers") if isinstance(result, dict) else []
+
+        if not isinstance(drivers, list):
+            drivers = []
+
+        if not isinstance(blockers, list):
+            blockers = []
 
         # -----------------------------------------------------
-        # FALLBACK
+        # FALLBACK (DETERMINISTIC)
         # -----------------------------------------------------
 
         if not drivers and not blockers:
@@ -45,12 +61,12 @@ class DecisionExplanationGenerator:
                     "blockers": ["No significant issues identified"],
                 }
 
-            strongest_dim = max(dimensions, key=lambda x: x["score"])
-            weakest_dim = min(dimensions, key=lambda x: x["score"])
+            strongest_dim = max(dimensions, key=lambda x: x.get("score", 0))
+            weakest_dim = min(dimensions, key=lambda x: x.get("score", 0))
 
-            strongest = strongest_dim["name"]
-            weakest = weakest_dim["name"]
-            weakest_score = weakest_dim["score"]
+            strongest = strongest_dim.get("name", "Unknown")
+            weakest = weakest_dim.get("name", "Unknown")
+            weakest_score = weakest_dim.get("score", 0)
 
             if weakest_score >= 85:
                 blocker = f"Area for improvement in {weakest}"
@@ -70,7 +86,6 @@ class DecisionExplanationGenerator:
 
         if dimension_signals:
 
-            # normalize keys (enum → string)
             normalized_signals = {
                 (k.value if hasattr(k, "value") else k): v
                 for k, v in dimension_signals.items()
@@ -80,18 +95,20 @@ class DecisionExplanationGenerator:
 
             for dim in dimensions:
 
-                dim_name = dim["name"]
-                dim_score = dim["score"]
+                dim_name = dim.get("name")
+                dim_score = dim.get("score")
 
-                # es: "Problem Solving" → "problem_solving"
+                if not dim_name or dim_score is None:
+                    continue
+
                 dim_key = dim_name.lower().replace(" ", "_")
-
                 signal_strength = normalized_signals.get(dim_key)
 
+                # conservative threshold to avoid noise
                 if signal_strength and dim_score < 75:
 
                     enriched_blockers.append(
-                        f"Issues in {dim_name} reflected by execution errors "
+                        f"Issues in {dim_name} reflected by execution signals "
                         f"(signal strength {signal_strength})"
                     )
 
@@ -99,11 +116,10 @@ class DecisionExplanationGenerator:
                 blockers = blockers + enriched_blockers
 
         # -----------------------------------------------------
-        # FINAL RETURN (ALWAYS NORMALIZED)
+        # FINAL RETURN (ALWAYS SAFE)
         # -----------------------------------------------------
 
         return {
             "drivers": drivers,
             "blockers": blockers,
         }
-
