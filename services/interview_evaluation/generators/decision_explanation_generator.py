@@ -1,6 +1,8 @@
 # services/interview_evaluation/generators/decision_explanation_generator.py
 
 import logging
+import re
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +13,8 @@ class DecisionExplanationGenerator:
         self._narrative_service = narrative_service
 
     def generate(self, decision, dimensions, dimension_signals=None):
+
+
 
         try:
             result = self._narrative_service.generate_decision_explanation(
@@ -30,7 +34,7 @@ class DecisionExplanationGenerator:
         blockers = result.get("blockers") or []
 
         # -----------------------------------------------------
-        # FALLBACK 
+        # FALLBACK
         # -----------------------------------------------------
 
         if not drivers and not blockers:
@@ -102,3 +106,4 @@ class DecisionExplanationGenerator:
             "drivers": drivers,
             "blockers": blockers,
         }
+

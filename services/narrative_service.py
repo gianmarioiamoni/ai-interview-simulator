@@ -2,7 +2,6 @@
 
 import json
 import logging
-import re
 from typing import List, Dict
 
 from app.ports.llm_port import LLMPort
@@ -10,6 +9,9 @@ from app.prompts.prompt_loader import PromptLoader
 
 from services.interview_evaluation.builders.narrative_control_builder import (
     NarrativeControlBuilder,
+)
+from domain.contracts.feedback.decision_explanation_schema import (
+    DecisionExplanationSchema,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,10 +53,6 @@ class NarrativeService:
             logger.error("Empty narrative payload")
             return "Evaluation completed with insufficient data."
 
-        # -----------------------------------------------------
-        # PREPARE TEMPLATE INPUT (NO MUTATION)
-        # -----------------------------------------------------
-
         classification_str = json.dumps(payload["classification"], indent=2)
         balance_flag = payload["balance_flag"]
 
@@ -78,18 +76,6 @@ There is a noticeable gap between strongest and weakest areas.
 
         template = PromptLoader.load("narrative/executive_summary.txt")
 
-        print("\n=== TEMPLATE START ===")
-        print(template)
-        print("=== TEMPLATE END ===\n")
-
-        print("\n=== EXEC SUMMARY PAYLOAD ===")
-        print(payload)
-        print("=== END ===\n")
-
-        # -----------------------------------------------------
-        # BUILD PROMPT (NO SIDE EFFECTS)
-        # -----------------------------------------------------
-
         prompt = template.format(
             decision=payload["decision"],
             overall_score=payload["overall_score"],
@@ -103,23 +89,10 @@ There is a noticeable gap between strongest and weakest areas.
             balance_instruction=balance_instruction,
         )
 
-        print("\n================ EXECUTIVE SUMMARY PROMPT ================\n")
-        print(prompt)
-        print("\n=========================================================\n")
-
-        print("CALLING LLM FOR EXEC SUMMARY...")
-
         response = self._llm.invoke(prompt)
-
         content = (response.content or "").strip()
 
-        print("\n================ EXECUTIVE SUMMARY RESPONSE ================\n")
-        print("LEN:", len(content))
-        print("RAW:", repr(content))
-        print("\n=========================================================\n")
-
         if not content:
-            print("EMPTY OUTPUT DETECTED")
             return ""
 
         return content
@@ -147,36 +120,20 @@ There is a noticeable gap between strongest and weakest areas.
         print(prompt)
         print("=== END ===\n")
 
-        # 👉 qui puoi migliorare dopo con invoke_json
-        response = self._llm.invoke_json(prompt)
-
-        print("\n=== DECISION EXPLANATION RAW ===")
-        print(response.content)
-        print("=== END ===\n")
-
         try:
-            if isinstance(response.content, dict):
-                parsed = response.content
-            else:
-                content = (response.content or "").strip()
-                parsed = self._safe_extract_json(content)
 
-            drivers = parsed.get("drivers")
-            blockers = parsed.get("blockers")
-
-            if not isinstance(drivers, list):
-                drivers = []
-            if not isinstance(blockers, list):
-                blockers = []
+            explanation = self._llm.invoke_json(
+                prompt,
+                schema=DecisionExplanationSchema
+            )
 
             return {
-                "drivers": drivers,
-                "blockers": blockers,
+                "drivers": explanation.drivers,
+                "blockers": explanation.blockers,
             }
 
         except Exception as e:
-            print("Decision explanation parsing failed:", e)
-            print("Raw LLM output:", content)
+            logger.warning(f"decision_explanation_structured_failed: {e}")
 
             return self._deterministic_fallback(dimensions)
 
@@ -192,48 +149,23 @@ There is a noticeable gap between strongest and weakest areas.
     ) -> str:
 
         prompt = f"""
-        Explain this performance dimension in 1 sentence.
+            Explain this performance dimension in 1 sentence.
 
-        Dimension: {name}
-        Score: {score}
-        Impact: {impact}
+            Dimension: {name}
+            Score: {score}
+            Impact: {impact}
 
-        Be specific and professional.
+            Be specific and professional.
         """
 
         response = self._llm.invoke(prompt)
 
-        return response.content.strip()
+        return (response.content or "").strip()
+
 
     # ---------------------------------------------------------
-    # UTILS
+    # FALLBACK
     # ---------------------------------------------------------
-
-    def _safe_extract_json(self, content: str) -> dict:
-        print("USING SAFE JSON PARSER")
-        # -----------------------------------------------------
-        # STEP 1: direct parse (fast path)
-        # -----------------------------------------------------
-        try:
-            return json.loads(content)
-        except Exception:
-            pass
-
-        # -----------------------------------------------------
-        # STEP 2: extract first JSON object via regex
-        # -----------------------------------------------------
-        match = re.search(r"\{.*\}", content, re.DOTALL)
-
-        if match:
-            try:
-                return json.loads(match.group())
-            except Exception:
-                pass
-
-        # -----------------------------------------------------
-        # STEP 3: fallback
-        # -----------------------------------------------------
-        raise ValueError("Unable to extract valid JSON from LLM output")
 
     def _deterministic_fallback(self, dimensions):
 

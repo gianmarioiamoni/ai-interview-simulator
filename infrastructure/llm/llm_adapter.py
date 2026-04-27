@@ -5,7 +5,10 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from app.ports.llm_port import LLMPort, LLMResponse
 from infrastructure.llm.llm_factory import get_llm
 
-from typing import Protocol
+from typing import Type, TypeVar, Protocol
+from pydantic import BaseModel
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class _LangChainResponse:
@@ -48,7 +51,7 @@ class DefaultLLMAdapter(LLMPort):
     # JSON INVOKE (STRICT FORMAT)
     # ---------------------------------------------------------
 
-    def invoke_json(self, prompt: str) -> LLMResponse:
+    def invoke_json(self, prompt: str, schema: Type[T]) -> T:
 
         messages = [
             SystemMessage(
@@ -64,11 +67,15 @@ class DefaultLLMAdapter(LLMPort):
         try:
             raw = self._llm.invoke(messages)
             content = getattr(raw, "content", "") or ""
-            return _LangChainResponse(content=content)
+            print("\n=== RAW LLM JSON ===")
+            print(content)
+            print("=== END RAW LLM JSON ===\n")
+            return schema.model_validate_json(content)
 
         except Exception as e:
-            print("\n🔥 LLM JSON INVOCATION FAILED 🔥")
+            print("\n LLM JSON INVOCATION FAILED ")
             print(str(e))
+            print("RAW:", content)
             raise
 
 

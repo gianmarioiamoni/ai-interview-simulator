@@ -1,6 +1,8 @@
-# app/ports/llm_port.py
+from typing import Protocol, Type, TypeVar
+from pydantic import BaseModel
 
-from typing import Protocol
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class LLMResponse(Protocol):
@@ -8,8 +10,13 @@ class LLMResponse(Protocol):
 
 
 class LLMPort(Protocol):
+
     def invoke(
-        self, 
+        self, prompt: str, system_prompt: str | None = None
+    ) -> "LLMResponse": ...
+
+    def invoke_json(
+        self,
         prompt: str,
-        system_prompt:str | None = None
-    ) -> LLMResponse: ...
+        schema: Type[T],
+    ) -> T: ...
