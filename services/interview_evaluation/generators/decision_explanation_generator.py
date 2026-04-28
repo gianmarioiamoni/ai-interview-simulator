@@ -32,6 +32,8 @@ class DecisionExplanationGenerator:
                 dimensions=dimensions,
             )
 
+            print("🔥 USING NARRATIVE SERVICE:", type(self._narrative_service))
+
         except Exception as e:
             logger.warning(f"decision_explanation_exception: {e}")
             result = {"drivers": [], "blockers": []}
