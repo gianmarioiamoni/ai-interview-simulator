@@ -34,10 +34,12 @@ from infrastructure.vector_store.chroma_question_store import (
 from services.question_intelligence.semantic_deduplicator import SemanticDeduplicator
 
 from app.settings.constants import QUESTIONS_PER_AREA, DEDUPLICATION_THRESHOLD
+from app.ports.llm_port import LLMPort
 
 
 class QuestionIntelligenceProvider:
-    def __init__(self) -> None:
+
+    def __init__(self, llm: LLMPort) -> None:
 
         # -----------------------------------------------------
         # Infrastructure
@@ -47,14 +49,15 @@ class QuestionIntelligenceProvider:
         vector_store = QuestionVectorStore(chroma_store)
 
         # -----------------------------------------------------
-        # Services
+        # Services (NO global LLM usage)
         # -----------------------------------------------------
 
         retrieval_service = QuestionRetrievalService(vector_store)
 
-        generator = QuestionGenerator()
-        coding_generator = CodingQuestionGenerator()
-        sql_generator = SQLQuestionGenerator()
+        # 🔥 LLM injected everywhere needed
+        generator = QuestionGenerator(llm)
+        coding_generator = CodingQuestionGenerator(llm)
+        sql_generator = SQLQuestionGenerator(llm)
 
         selection_service = QuestionSelectionService(
             retrieval_service=retrieval_service,
@@ -65,7 +68,10 @@ class QuestionIntelligenceProvider:
 
         deduplicator = SemanticDeduplicator(threshold=DEDUPLICATION_THRESHOLD)
 
-        set_builder = QuestionSetBuilder(selection_service, deduplicator)
+        set_builder = QuestionSetBuilder(
+            selection_service,
+            deduplicator,
+        )
 
         self._service = QuestionIntelligenceService(set_builder)
 
