@@ -87,7 +87,7 @@ def build_interview_graph(
 
     evaluation_service = InterviewEvaluationService(llm)
     execution_engine = ExecutionEngine()
-    hint_service = hint_service or AIHintService()
+    hint_service = hint_service or AIHintService(llm)
 
     # -----------------------------------------------------
     # Nodes

@@ -42,7 +42,7 @@ def get_runtime_graph(llm=None, hint_service=None):
         print("LLM TYPE:", type(llm))
         print("LLM HAS invoke_json:", hasattr(llm, "invoke_json"))
 
-        hint_service = hint_service or AIHintService()
+        hint_service = hint_service or AIHintService(llm)
 
         compiled_graph = build_interview_graph(
             llm=llm,

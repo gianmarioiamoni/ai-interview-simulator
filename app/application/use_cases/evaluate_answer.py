@@ -15,7 +15,7 @@ class EvaluateAnswerUseCase:
         hint_service=None,
     ):
         self.llm = llm
-        self.hint_service = hint_service or AIHintService()
+        self.hint_service = hint_service or AIHintService(llm)
 
         # ---------------------------------------------------------
         # GRAPH INJECTION STRATEGY
