@@ -26,17 +26,13 @@ class DecisionExplanationGenerator:
         # CALL NARRATIVE SERVICE (STRUCTURED)
         # -----------------------------------------------------
 
-        try:
-            result = self._narrative_service.generate_decision_explanation(
-                decision=decision,
-                dimensions=dimensions,
-            )
+        result = self._narrative_service.generate_decision_explanation(
+            decision=decision,
+            dimensions=dimensions,
+        )
 
-            print("🔥 USING NARRATIVE SERVICE:", type(self._narrative_service))
+        print("🔥 USING NARRATIVE SERVICE:", type(self._narrative_service))
 
-        except Exception as e:
-            logger.warning(f"decision_explanation_exception: {e}")
-            result = {"drivers": [], "blockers": []}
 
         # -----------------------------------------------------
         # NORMALIZE OUTPUT (DEFENSIVE)
