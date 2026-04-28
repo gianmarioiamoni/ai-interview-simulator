@@ -83,7 +83,7 @@ def main():
     from services.ai_hint_engine.ai_hint_service import AIHintService
 
     llm = DefaultLLMAdapter()
-    hint_service = AIHintService(llm)
+    hint_service = hint_service or AIHintService(llm)
 
     graph = build_interview_graph(
         llm=llm,

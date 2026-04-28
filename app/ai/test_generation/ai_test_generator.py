@@ -9,8 +9,7 @@ from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.question.question import Question
 from domain.contracts.execution.coding_spec import CodingSpec
 
-from infrastructure.llm.llm_factory import get_llm
-
+from app.ports.llm_port import LLMPort
 from app.ai.test_generation.test_cache_service import TestCacheService
 from app.ai.test_generation.test_diversity_filter import TestDiversityFilter
 
@@ -30,9 +29,8 @@ class GeneratedTestCase(BaseModel):
 
 class AITestGenerator:
 
-    def __init__(self):
-
-        self._llm = get_llm()
+    def __init__(self, llm: LLMPort):
+        self._llm = llm
         self._cache = TestCacheService()
         self._diversity_filter = TestDiversityFilter()
 

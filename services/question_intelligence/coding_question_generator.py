@@ -9,7 +9,7 @@ from domain.contracts.execution.coding_spec import CodingSpec
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
-from infrastructure.llm.llm_factory import get_llm
+from app.ports.llm_port import LLMPort
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,8 @@ class GeneratedCodingQuestion(BaseModel):
 
 class CodingQuestionGenerator:
 
-    def __init__(self) -> None:
-        self._llm = get_llm()
+    def __init__(self, llm: LLMPort) -> None:
+        self._llm = llm
 
     def generate(
         self,

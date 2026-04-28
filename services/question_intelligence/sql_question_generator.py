@@ -16,7 +16,7 @@ from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
-from infrastructure.llm.llm_factory import get_llm
+from app.ports.llm_port import LLMPort
 
 from services.sql_engine.sql_database import SQLDatabase
 
@@ -46,8 +46,8 @@ class GeneratedSQLQuestion(BaseModel):
 
 class SQLQuestionGenerator:
 
-    def __init__(self) -> None:
-        self._llm = get_llm()
+    def __init__(self, llm: LLMPort) -> None:
+        self._llm = llm
         self._db = SQLDatabase()
 
     # -----------------------------------------------------

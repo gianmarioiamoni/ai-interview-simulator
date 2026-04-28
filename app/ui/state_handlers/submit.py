@@ -6,7 +6,7 @@ from domain.contracts.interview.answer import Answer
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
-from infrastructure.llm.llm_factory import get_llm
+from app.runtime.interview_runtime import get_runtime_llm
 
 
 def submit_answer(state: InterviewState, answer: str):
@@ -39,8 +39,8 @@ def submit_answer(state: InterviewState, answer: str):
     # USE CASE
     # -----------------------------------------------------
 
-    llm = get_llm()
-    use_case = EvaluateAnswerUseCase(llm)
+    llm = get_runtime_llm()
+    use_case = EvaluateAnswerUseCase(llm=llm)
 
     state = use_case.execute(state)
 

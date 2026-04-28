@@ -1,12 +1,12 @@
 # services/answer_improvement/answer_improver.py
 
-from infrastructure.llm.llm_factory import get_llm
+from app.ports.llm_port import LLMPort
 
 
 class AnswerImprover:
 
-    def __init__(self):
-        self._llm = get_llm()
+    def __init__(self, llm: LLMPort):
+        self._llm = llm
 
     def improve(
         self,
