@@ -9,9 +9,9 @@ from .utils import safe_repr
 
 class TestCaseFormatter:
 
-    def __init__(self):
+    def __init__(self, explanation_policy: LLMExplanationPolicy):
         self._logic = LogicIssueAnalyzer()
-        self._llm = LLMExplanationPolicy()
+        self._policy = explanation_policy
 
     def format(self, idx, test, error_type, llm_used):
 
@@ -52,8 +52,8 @@ class TestCaseFormatter:
 
         used_llm = False
 
-        if not insight and self._llm.should_use(expected, actual, error_type, llm_used):
-            insight = self._llm.explain(test, expected, actual)
+        if not insight and self._policy.should_use(expected, actual, error_type, llm_used):
+            insight = self._policy.explain(test, expected, actual)
             used_llm = True
 
         # -----------------------------------------------------

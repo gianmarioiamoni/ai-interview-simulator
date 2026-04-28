@@ -98,7 +98,7 @@ def build_interview_graph(
     graph.add_node("execution", ExecutionNode(execution_engine))
     graph.add_node("evaluation", EvaluationNode())
     graph.add_node("evaluation_aggregate", EvaluationAggregateNode(evaluation_service))
-    graph.add_node("feedback", FeedbackNode())
+    graph.add_node("feedback", FeedbackNode(llm))
     graph.add_node("hint", HintNode(hint_service))
     graph.add_node("decision", DecisionNode())
     graph.add_node("written", WrittenEvaluationNode(llm))

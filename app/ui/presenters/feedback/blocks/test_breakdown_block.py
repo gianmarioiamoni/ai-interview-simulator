@@ -17,8 +17,8 @@ from app.ui.presenters.feedback.blocks.test_breakdown.learning_builder import Le
 
 class TestBreakdownBlock:
 
-    def __init__(self):
-        self._formatter = TestCaseFormatter()
+    def __init__(self, formatter: TestCaseFormatter):
+        self._formatter = formatter
         self._learning_builder = LearningBuilder()
 
     # -----------------------------------------------------

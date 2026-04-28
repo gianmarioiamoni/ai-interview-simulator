@@ -20,12 +20,14 @@ from app.ui.presenters.feedback.renderers.feedback_markdown_renderer import (
     FeedbackMarkdownRenderer,
 )
 
+from app.ports.llm_port import LLMPort
+
 
 class FeedbackBuilder:
 
-    def __init__(self) -> None:
+    def __init__(self, llm: LLMPort) -> None:
         self._analysis_service = ExecutionAnalysisService()
-        self._pipeline = FeedbackBlockPipeline()
+        self._pipeline = FeedbackBlockPipeline(llm)
         self._renderer = FeedbackMarkdownRenderer()
 
     def build(

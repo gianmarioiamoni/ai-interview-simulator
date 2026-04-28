@@ -8,6 +8,8 @@ from domain.contracts.feedback.severity import Severity
 
 class SummaryBlock:
 
+    is_core = True
+
     def can_handle(self, _result, _evaluation, _execution, _analysis) -> bool:
         return True
 
@@ -22,7 +24,6 @@ class SummaryBlock:
     ) -> FeedbackBlockResult:
 
         question = getattr(result, "question", None)
-
         is_coding = question.is_coding() if question else False
         is_written = question.is_written() if question else False
 
