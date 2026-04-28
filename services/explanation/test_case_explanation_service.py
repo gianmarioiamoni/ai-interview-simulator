@@ -2,13 +2,13 @@
 
 from typing import Optional
 
-from infrastructure.llm.llm_factory import get_llm
+from app.ports.llm_port import LLMPort
 
 
 class TestCaseExplanationService:
 
-    def __init__(self):
-        self._llm = get_llm()
+    def __init__(self, llm: LLMPort):
+        self._llm = llm
 
     def explain(
         self,

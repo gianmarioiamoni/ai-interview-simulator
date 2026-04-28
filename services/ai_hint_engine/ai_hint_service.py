@@ -3,13 +3,13 @@
 import json
 from typing import Optional
 from domain.contracts.ai.ai_hint import AIHintInput, AIHint
-from infrastructure.llm.llm_factory import get_llm
+from app.ports.llm_port import LLMPort
 
 
 class AIHintService:
 
-    def __init__(self):
-        self._llm = get_llm()
+    def __init__(self, llm: LLMPort):
+        self._llm = llm
 
     def generate_hint(
         self,

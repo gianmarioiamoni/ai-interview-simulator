@@ -6,7 +6,7 @@ from app.contracts.feedback_bundle import (
     LearningSuggestion,
 )
 from services.answer_improvement.answer_improver import AnswerImprover
-
+from app.runtime.interview_runtime import get_runtime_llm
 from domain.contracts.feedback.severity import Severity
 
 
@@ -45,7 +45,8 @@ class WrittenBlock:
 
         try:
             if score < 90 and user_answer:
-                improver = AnswerImprover()
+                llm = get_runtime_llm()
+                improver = AnswerImprover(llm)
                 improved_answer = improver.improve(
                     question_text,
                     user_answer,

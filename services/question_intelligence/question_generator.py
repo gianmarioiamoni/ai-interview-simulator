@@ -17,12 +17,12 @@ from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
-from infrastructure.llm.llm_factory import get_llm
+from app.ports.llm_port import LLMPort
 
 
 class QuestionGenerator:
-    def __init__(self) -> None:
-        self._llm = get_llm()
+    def __init__(self, llm: LLMPort) -> None:
+        self._llm = llm
 
     def generate(
         self,
@@ -51,8 +51,8 @@ class QuestionGenerator:
             variation=variation,
         )
 
-        response = self._llm.invoke(prompt, temperature=0.7)
-
+        response = self._llm.invoke(prompt)
+        
         data = json.loads(response.content)
 
         return [GeneratedQuestion(**item) for item in data]

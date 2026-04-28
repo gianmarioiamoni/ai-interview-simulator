@@ -14,10 +14,9 @@ from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
 from app.runtime.interview_runtime import run_interview_graph
+from app.runtime.interview_runtime import get_runtime_llm
 
 from app.settings.constants import QUESTIONS_PER_AREA
-
-test_generator = AITestGenerator()
 
 
 def start_interview(role: str, interview_type: str, company: str, language: str):
@@ -29,8 +28,10 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     # -----------------------------------------------------
     # Question generation
     # -----------------------------------------------------
+    llm = get_runtime_llm()
 
-    question_intelligence = QuestionIntelligenceProvider()
+    question_intelligence = QuestionIntelligenceProvider(llm)
+    test_generator = AITestGenerator(llm)
 
     questions = question_intelligence.generate(
         role=role_type,
