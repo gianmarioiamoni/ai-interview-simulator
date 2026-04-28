@@ -126,6 +126,9 @@ There is a noticeable gap between strongest and weakest areas.
                 prompt,
                 schema=DecisionExplanationSchema
             )
+            print("\n✅ PARSED EXPLANATION OBJECT:")
+            print(explanation)
+            print("TYPE:", type(explanation))
 
             return {
                 "drivers": explanation.drivers,
@@ -134,6 +137,14 @@ There is a noticeable gap between strongest and weakest areas.
 
         except Exception as e:
             logger.warning(f"decision_explanation_structured_failed: {e}")
+            print("\n❌ DECISION EXPLANATION FAILED")
+            print("ERROR:", e)
+
+            # 🔥 CRITICAL DEBUG
+            raw = self._llm.invoke(prompt)
+            print("\n=== RAW FALLBACK LLM OUTPUT ===")
+            print(raw.content)
+            print("=== END RAW ===\n")
 
             return self._deterministic_fallback(dimensions)
 
