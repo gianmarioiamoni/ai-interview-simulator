@@ -106,6 +106,11 @@ There is a noticeable gap between strongest and weakest areas.
         decision: str,
         dimensions: List[Dict],
     ) -> Dict[str, List[str]]:
+        
+        print("🔥 NARRATIVE SERVICE CALLED")
+        print("🔥 NARRATIVE SERVICE GENERATING DECISION EXPLANATION")
+        print("🔥 DECISION:", decision)
+        print("🔥 DIMENSIONS:", dimensions)
 
         template = PromptLoader.load("narrative/decision_explanation.txt")
 
@@ -172,7 +177,6 @@ There is a noticeable gap between strongest and weakest areas.
         response = self._llm.invoke(prompt)
 
         return (response.content or "").strip()
-
 
     # ---------------------------------------------------------
     # FALLBACK
