@@ -5,10 +5,7 @@ from langchain_openai import ChatOpenAI
 import os
 
 
-def get_llm() -> LLM:
-    # Factory for creating the default LLM instance
-    # Central place to configure model, temperature, etc.
-
+def get_raw_llm() -> LLM:
     return ChatOpenAI(
         model="gpt-4o-mini",
         temperature=0.0,

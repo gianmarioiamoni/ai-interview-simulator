@@ -21,6 +21,8 @@ from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.interview_evaluation_service import InterviewEvaluationService
 
+from app.ports.llm_port import LLMPort
+
 
 # ---------------------------------------------------------
 # ROUTING: entry decision
@@ -73,7 +75,7 @@ def router_node(state: InterviewState) -> InterviewState:
 
 
 def build_interview_graph(
-    llm,
+    llm: LLMPort,
     hint_service: AIHintService | None = None,
 ):
 
