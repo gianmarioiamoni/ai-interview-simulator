@@ -6,6 +6,8 @@ from domain.contracts.feedback.severity import Severity
 
 class ScoreBlock:
 
+    is_core = True
+
     def can_handle(self, result, _evaluation, execution, _analysis) -> bool:
 
         if not execution:

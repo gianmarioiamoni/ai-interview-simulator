@@ -5,14 +5,11 @@ from services.explanation.test_case_explanation_service import (
     TestCaseExplanationService,
 )
 
-from app.runtime.interview_runtime import get_runtime_llm
-
 
 class LLMExplanationPolicy:
 
-    def __init__(self):
-        llm = get_runtime_llm()
-        self._service = TestCaseExplanationService(llm)
+    def __init__(self, service: TestCaseExplanationService):
+        self._service = service
 
     def should_use(self, expected, actual, error_type, already_used):
 

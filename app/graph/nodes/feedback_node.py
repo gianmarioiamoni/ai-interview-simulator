@@ -7,12 +7,13 @@ from services.score_calculator import ScoreCalculator
 from services.feedback.dimension_aggregator import FeedbackDimensionAggregator
 
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
+from app.ports.llm_port import LLMPort
 
 
 class FeedbackNode:
 
-    def __init__(self):
-        self._builder = FeedbackBuilder()
+    def __init__(self, llm: LLMPort):
+        self._builder = FeedbackBuilder(llm)
         self._scorer = ScoreCalculator()
         self._dimension_aggregator = FeedbackDimensionAggregator()
 

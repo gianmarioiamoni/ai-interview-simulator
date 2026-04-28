@@ -9,17 +9,29 @@ from app.ui.presenters.feedback.blocks.score_block import ScoreBlock
 from app.ui.presenters.feedback.blocks.summary_block import SummaryBlock
 from app.ui.presenters.feedback.blocks.hint_block import HintBlock
 from app.ui.presenters.feedback.blocks.test_breakdown_block import TestBreakdownBlock
+from services.answer_improvement.answer_improver import AnswerImprover
+from app.ui.presenters.feedback.blocks.test_breakdown.test_case_formatter import TestCaseFormatter
+from app.ui.presenters.feedback.blocks.test_breakdown.llm_explanation_policy import LLMExplanationPolicy
+from services.explanation.test_case_explanation_service import TestCaseExplanationService
+from app.ports.llm_port import LLMPort
 
 
 class FeedbackBlockPipeline:
 
-    def __init__(self) -> None:
+    def __init__(self, llm: LLMPort) -> None:
+        answer_improver = AnswerImprover(llm)
+        
+        explanation_service = TestCaseExplanationService(llm)
+        explanation_policy = LLMExplanationPolicy(explanation_service)
+        
+        formatter = TestCaseFormatter(explanation_policy)
+        
         self._blocks = [
-            WrittenBlock(),
+            WrittenBlock(answer_improver),
             SummaryBlock(),
             ScoreBlock(),
             RuntimeErrorBlock(),
-            TestBreakdownBlock(),
+            TestBreakdownBlock(formatter),
             SuccessBlock(),
             FailureBlock(),
             HintBlock(),
@@ -84,7 +96,7 @@ class FeedbackBlockPipeline:
     # =========================================================
 
     def _is_core(self, block):
-        return block.__class__.__name__ in ("SummaryBlock", "ScoreBlock")
+        return getattr(block, "is_core", False)
 
     # =========================================================
 
