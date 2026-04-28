@@ -82,11 +82,18 @@ class DefaultLLMAdapter(LLMPort):
             try:
                 raw = self._llm.invoke(messages)
                 content = getattr(raw, "content", "") or ""
+                content = content.strip()
                 last_content = content
 
                 print("\n=== RAW LLM JSON ===")
                 print(content)
                 print("=== END RAW LLM JSON ===\n")
+                print("LEN:", len(content))
+                print("ATTEMPT:", attempt)
+                print("START CHAR:", content[:1])
+                print("END CHAR:", content[-1:])
+                print("FIRST 50:", content[:50])
+                print("LAST 50:", content[-50:])
 
                 # -------------------------------------------------
                 # TRY STRICT PARSE
@@ -106,15 +113,24 @@ class DefaultLLMAdapter(LLMPort):
 
                 if start != -1 and end != -1:
                     json_str = content[start : end + 1]
-                    return schema.model_validate_json(json_str)
+                    try:
+                        return schema.model_validate_json(json_str)
+                    except Exception as e:
+                        print("⚠️ EXTRACT RECOVERY FAILED:", e)
 
                 # -------------------------------------------------
                 # RECOVERY 2: wrap missing braces
                 # -------------------------------------------------
 
-                if '"drivers"' in content or '"blockers"' in content:
+                if (
+                    ('"drivers"' in content or '"blockers"' in content)
+                    and not content.strip().startswith("{")
+                ):
                     json_str = "{" + content.strip().strip(",") + "}"
-                    return schema.model_validate_json(json_str)
+                    try:
+                        return schema.model_validate_json(json_str)
+                    except Exception as e:
+                        print("⚠️ WRAP RECOVERY FAILED:", e)
 
                 # -------------------------------------------------
                 # RETRY (if first attempt)
@@ -123,7 +139,7 @@ class DefaultLLMAdapter(LLMPort):
                 if attempt == 0:
                     print("⚠️ JSON parsing failed → retrying with correction prompt")
 
-                    messages.append(
+                    messages = list(base_messages) + [
                         HumanMessage(
                             content=(
                                 "Your previous response was not valid JSON.\n"
@@ -131,7 +147,7 @@ class DefaultLLMAdapter(LLMPort):
                                 "Do not include any text outside JSON."
                             )
                         )
-                    )
+                    ]
                     continue
 
                 # second attempt failed → raise
