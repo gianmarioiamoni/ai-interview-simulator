@@ -3,7 +3,7 @@
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.ports.llm_port import LLMPort, LLMResponse
-from infrastructure.llm.llm_factory import get_llm
+from infrastructure.llm.llm_factory import get_raw_llm
 
 from typing import Type, TypeVar, Protocol
 from pydantic import BaseModel
@@ -19,7 +19,7 @@ class _LangChainResponse:
 class DefaultLLMAdapter(LLMPort):
 
     def __init__(self):
-        self._llm = get_llm()
+        self._llm = get_raw_llm()
 
     # ---------------------------------------------------------
     # GENERIC INVOKE (TEXT)
@@ -99,4 +99,4 @@ class LLMPort(Protocol):
 
     def invoke(self, prompt: str) -> LLMResponse: ...
 
-    def invoke_json(self, prompt: str) -> T: ...
+    def invoke_json(self, prompt: str, schema: Type[T]) -> T: ...

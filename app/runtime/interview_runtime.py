@@ -3,8 +3,9 @@
 from domain.contracts.interview_state import InterviewState
 
 from app.graph.interview_graph import build_interview_graph
-from infrastructure.llm.llm_factory import get_llm
 from services.ai_hint_engine.ai_hint_service import AIHintService
+
+from infrastructure.llm.llm_adapter import DefaultLLMAdapter
 
 
 _graph = None
@@ -21,7 +22,7 @@ def get_runtime_llm():
     global _llm
 
     if _llm is None:
-        _llm = get_llm()
+        _llm = DefaultLLMAdapter()
 
     return _llm
 
@@ -38,6 +39,9 @@ def get_runtime_graph(llm=None, hint_service=None):
     if _graph is None:
 
         llm = llm or get_runtime_llm()
+        print("LLM TYPE:", type(llm))
+        print("LLM HAS invoke_json:", hasattr(llm, "invoke_json"))
+
         hint_service = hint_service or AIHintService()
 
         compiled_graph = build_interview_graph(
