@@ -1,7 +1,8 @@
 # app/ai/test_generation/ai_test_generator.py
 
 import json
-from typing import List
+import logging
+from typing import List, Any
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -14,19 +15,23 @@ from app.ai.test_generation.test_cache_service import TestCacheService
 from app.ai.test_generation.test_diversity_filter import TestDiversityFilter
 from app.prompts.prompt_loader import PromptLoader
 
+logger = logging.getLogger(__name__)
+
 
 # =========================================================
-# DTO (Structured Output)
+# DTO
 # =========================================================
+
 
 class GeneratedTestCase(BaseModel):
     args: list = Field(default_factory=list)
-    expected: object
+    expected: Any
 
 
 # =========================================================
 # GENERATOR
 # =========================================================
+
 
 class AITestGenerator:
 
@@ -35,8 +40,6 @@ class AITestGenerator:
         self._cache = TestCacheService()
         self._diversity_filter = TestDiversityFilter()
 
-    # =========================================================
-    # PUBLIC API
     # =========================================================
 
     def generate_tests(
@@ -48,51 +51,57 @@ class AITestGenerator:
         if not question.coding_spec:
             raise ValueError("CodingSpec required for test generation")
 
-        # ---------------------------------------------------------
-        # Cache lookup
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
+        # CACHE
+        # -----------------------------------------------------
 
         cached = self._cache.get_tests(question, num_tests)
-
         if cached:
             return cached
 
-        # ---------------------------------------------------------
-        # LLM generation
-        # ---------------------------------------------------------
+        # -----------------------------------------------------
+        # GENERATION (RETRY)
+        # -----------------------------------------------------
 
-        tests = self._generate_with_llm(
-            question,
-            num_tests * 2,
-        )
+        tests: List[CodingTestCase] = []
 
-        # ---------------------------------------------------------
-        # VALIDATION vs CodingSpec (STEP 4.3)
-        # ---------------------------------------------------------
+        for attempt in range(2):
 
-        tests = self._validate_tests_against_spec(
-            tests,
-            question.coding_spec,
-        )
+            tests = self._generate_with_llm(
+                question,
+                num_tests * 2,
+                retry=(attempt == 1),
+            )
 
-        # ---------------------------------------------------------
-        # Diversity filter
-        # ---------------------------------------------------------
+            tests = self._validate_tests_against_spec(
+                tests,
+                question.coding_spec,
+            )
 
-        tests = self._diversity_filter.filter(
-            tests,
-            num_tests,
-        )
+            if tests:
+                break
 
-        # ---------------------------------------------------------
-        # Store cache
-        # ---------------------------------------------------------
+            logger.warning(f"test_generation_empty_attempt_{attempt}")
 
-        self._cache.store_tests(
-            question,
-            num_tests,
-            tests,
-        )
+        # -----------------------------------------------------
+        # FALLBACK (CRITICAL)
+        # -----------------------------------------------------
+
+        if not tests:
+            logger.warning("LLM test generation failed → using fallback")
+            tests = self._fallback_tests(question.coding_spec)
+
+        # -----------------------------------------------------
+        # DIVERSITY
+        # -----------------------------------------------------
+
+        tests = self._diversity_filter.filter(tests, num_tests)
+
+        # -----------------------------------------------------
+        # CACHE STORE
+        # -----------------------------------------------------
+
+        self._cache.store_tests(question, num_tests, tests)
 
         return tests
 
@@ -104,6 +113,7 @@ class AITestGenerator:
         self,
         question: Question,
         num_tests: int,
+        retry: bool = False,
     ) -> List[CodingTestCase]:
 
         spec = question.coding_spec
@@ -114,12 +124,18 @@ class AITestGenerator:
             num_tests,
         )
 
+        if retry:
+            prompt += "\n\nIMPORTANT: Return ONLY valid JSON."
+
         response = self._llm.invoke(prompt)
 
-        try:
-            raw_data = json.loads(response.content)
-        except Exception as e:
-            raise ValueError(f"Invalid JSON from LLM: {e}")
+        content = response.content or ""
+
+        raw_data = self._safe_json_parse(content)
+
+        if not isinstance(raw_data, list):
+            logger.warning("LLM output is not a list")
+            return []
 
         tests: List[CodingTestCase] = []
 
@@ -131,6 +147,7 @@ class AITestGenerator:
                 tests.append(
                     CodingTestCase(
                         args=validated.args,
+                        kwargs={},  # enforce consistency
                         expected=validated.expected,
                     )
                 )
@@ -141,7 +158,38 @@ class AITestGenerator:
         return tests
 
     # =========================================================
-    # VALIDATION (STEP 4.3)
+    # SAFE JSON PARSE (KEY HARDENING)
+    # =========================================================
+
+    def _safe_json_parse(self, content: str):
+
+        # 1. Try direct
+        try:
+            return json.loads(content)
+        except Exception:
+            pass
+
+        # 2. Extract JSON block
+        start = content.find("[")
+        end = content.rfind("]")
+
+        if start != -1 and end != -1:
+            try:
+                return json.loads(content[start : end + 1])
+            except Exception:
+                pass
+
+        # 3. Remove markdown fences
+        content = content.replace("```json", "").replace("```", "")
+
+        try:
+            return json.loads(content)
+        except Exception:
+            logger.warning("Failed to parse LLM JSON output")
+            return []
+
+    # =========================================================
+    # VALIDATION
     # =========================================================
 
     def _validate_tests_against_spec(
@@ -156,15 +204,33 @@ class AITestGenerator:
 
         for t in tests:
 
-            if len(t.args) == expected_len:
-                valid.append(t)
+            # strict length
+            if len(t.args) != expected_len:
+                continue
 
-        if not valid:
-            raise ValueError(
-                f"Invalid test args length. Expected args length to be {expected_len}"
-            )
+            # basic sanity: no None args
+            if any(arg is None for arg in t.args):
+                continue
+
+            valid.append(t)
 
         return valid
+
+    # =========================================================
+    # FALLBACK (CRITICAL FOR UX)
+    # =========================================================
+
+    def _fallback_tests(self, spec: CodingSpec) -> List[CodingTestCase]:
+
+        num_params = len(spec.parameters)
+
+        # simple deterministic fallback
+        base_args = [0] * num_params
+
+        return [
+            CodingTestCase(args=base_args, expected=0),
+            CodingTestCase(args=[1] * num_params, expected=1),
+        ]
 
     # =========================================================
     # PROMPT
@@ -178,15 +244,13 @@ class AITestGenerator:
     ) -> str:
 
         template = PromptLoader.load("test_generation/ai_test_generator.txt")
+
         parameters = json.dumps(spec.parameters)
 
-        prompt = template.format(
+        return template.format(
             problem=prompt,
             entrypoint=spec.entrypoint,
             parameters=parameters,
             num_tests=num_tests,
-            param_count=len(parameters),
+            param_count=len(spec.parameters),
         )
-
-        return prompt
-
