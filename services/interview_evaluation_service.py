@@ -72,7 +72,7 @@ class InterviewEvaluationService:
             raise ValueError("Cannot evaluate interview without question results")
 
         # -----------------------------------------------------
-        # BACKWARD COMPATIBILITY: extract evaluations
+        # EXTRACT EVALUATIONS
         # -----------------------------------------------------
 
         evaluations: List[QuestionEvaluation] = [
@@ -83,7 +83,7 @@ class InterviewEvaluationService:
             raise ValueError("No question evaluations available")
 
         # -----------------------------------------------------
-        # SCORING
+        # SCORING (BASE)
         # -----------------------------------------------------
 
         scoring = self._scoring_engine.compute(
@@ -92,37 +92,11 @@ class InterviewEvaluationService:
             role=role,
         )
 
-        dimension_scores = scoring.dimension_scores or {}
+        base_dimension_scores = scoring.dimension_scores or {}
         overall_score = scoring.overall_score
 
         # -----------------------------------------------------
-        # ENHANCE SCORES WITH SIGNALS 
-        # -----------------------------------------------------
-        ENRICHMENT_ALPHA = 0.3
-
-        enriched_scores = {}
-
-        for dim, base_score in dimension_scores.items():
-
-            dim_key = dim.value if hasattr(dim, "value") else dim
-            signal = dimension_signals.get(dim_key, 0.0)
-
-            enriched = (base_score * (1 - ENRICHMENT_ALPHA)) + ((signal * 100) * ENRICHMENT_ALPHA)
-
-            enriched_scores[dim] = round(enriched, 1)
-
-        dimension_scores = enriched_scores 
-
-        # -----------------------------------------------------
-        # READABLE DIMENSIONS
-        # -----------------------------------------------------
-
-        readable, strongest, weakest, strongest_score, weakest_score = (
-            self._dimension_mapper.map(dimension_scores)
-        )
-
-        # -----------------------------------------------------
-        # SIGNAL EXTRACTION (CORRETTO)
+        # SIGNAL EXTRACTION (FIRST!)
         # -----------------------------------------------------
 
         dimension_signals = {}
@@ -145,7 +119,7 @@ class InterviewEvaluationService:
                 for k, v in signals.items():
                     dimension_signals[k] = dimension_signals.get(k, 0.0) + v
 
-            # normalize
+            # normalize [0,1]
             dimension_signals = {
                 k: round(min(1.0, v), 2) for k, v in dimension_signals.items()
             }
@@ -155,6 +129,35 @@ class InterviewEvaluationService:
         except Exception as e:
             logger.warning(f"signal_extraction_failed: {e}")
             dimension_signals = {}
+
+        # -----------------------------------------------------
+        # ENRICHMENT (AFTER SIGNALS)
+        # -----------------------------------------------------
+
+        ENRICHMENT_ALPHA = 0.3
+
+        enriched_scores = {}
+
+        for dim, base_score in base_dimension_scores.items():
+
+            dim_key = dim.value if hasattr(dim, "value") else dim
+            signal = dimension_signals.get(dim_key, 0.0)
+
+            enriched = (
+                base_score * (1 - ENRICHMENT_ALPHA) + (signal * 100) * ENRICHMENT_ALPHA
+            )
+
+            enriched_scores[dim] = round(enriched, 1)
+
+        dimension_scores = enriched_scores
+
+        # -----------------------------------------------------
+        # READABLE DIMENSIONS
+        # -----------------------------------------------------
+
+        readable, strongest, weakest, strongest_score, weakest_score = (
+            self._dimension_mapper.map(dimension_scores)
+        )
 
         # -----------------------------------------------------
         # DECISION EXPLANATION
@@ -167,7 +170,7 @@ class InterviewEvaluationService:
         )
 
         # -----------------------------------------------------
-        # PERCENTILE
+        # PERCENTILE (NOTE: still based on base scoring)
         # -----------------------------------------------------
 
         percentile = scoring.percentile
@@ -193,7 +196,7 @@ class InterviewEvaluationService:
 
         executive_summary = self._summary_generator.generate(
             scoring.hire_decision.value,
-            overall_score,
+            overall_score,  # ⚠️ still base score (coerente per ora)
             strongest,
             weakest,
             percentile,
@@ -244,10 +247,10 @@ class InterviewEvaluationService:
         # -----------------------------------------------------
 
         return InterviewEvaluation(
-            overall_score=overall_score,
+            overall_score=overall_score,  # ⚠️ base (coerente con scoring engine)
             executive_summary=executive_summary,
             performance_dimensions=performance_dimensions,
-            dimension_scores=dimension_scores,
+            dimension_scores=dimension_scores,  # 🔥 enriched
             dimension_signals=dimension_signals,
             level=scoring.level,
             hire_decision=scoring.hire_decision,
