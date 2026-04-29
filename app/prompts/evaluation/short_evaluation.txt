@@ -1,0 +1,7 @@
+Question:
+{{ question }}
+
+Candidate Answer:
+{{ answer }}
+
+Provide a short professional evaluation (max 5 sentences).

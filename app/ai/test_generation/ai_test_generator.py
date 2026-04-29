@@ -14,6 +14,7 @@ from app.ports.llm_port import LLMPort
 from app.ai.test_generation.test_cache_service import TestCacheService
 from app.ai.test_generation.test_diversity_filter import TestDiversityFilter
 from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 
 logger = logging.getLogger(__name__)
 
@@ -245,12 +246,12 @@ class AITestGenerator:
 
         template = PromptLoader.load("test_generation/ai_test_generator.txt")
 
-        parameters = json.dumps(spec.parameters)
+        context = {
+            "problem": prompt,
+            "entrypoint": spec.entrypoint,
+            "parameters": json.dumps(spec.parameters),
+            "num_tests": num_tests,
+            "param_count": len(spec.parameters),
+        }
 
-        return template.format(
-            problem=prompt,
-            entrypoint=spec.entrypoint,
-            parameters=parameters,
-            num_tests=num_tests,
-            param_count=len(spec.parameters),
-        )
+        return PromptRenderer.render(template, context)

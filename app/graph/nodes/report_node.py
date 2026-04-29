@@ -37,12 +37,6 @@ def report_node(
     # NORMAL FLOW
     # ---------------------------------------------------------
 
-    # interview_eval = service.evaluate(
-    #     per_question_evaluations=evaluations,
-    #     questions=state.questions,
-    #     interview_type=state.interview_type,
-    #     role=state.role.type,
-    # )
     interview_eval = state.interview_evaluation
 
     return state.model_copy(

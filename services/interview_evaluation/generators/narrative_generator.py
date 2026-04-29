@@ -5,6 +5,9 @@ import json
 
 from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
 
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,27 +25,19 @@ class NarrativeGenerator:
             for dim, score in dimension_scores.items()
         }
 
-        prompt = f"""
-You are a senior technical interviewer.
+        # convert to string
+        evaluations_str = json.dumps([e.model_dump() for e in evaluations], indent=2)
+        readable_dimension_scores_str = json.dumps(readable_dimension_scores, indent=2)
 
-Role: {role.value}
-Interview type: {interview_type.value}
+        template = PromptLoader.load("narrative/narrative_generator.txt")
 
-Here are evaluated answers:
-{[e.model_dump() for e in evaluations]}
-
-Dimension scores:
-{readable_dimension_scores}
-
-Provide:
-
-1. Justification for each dimension
-2. 3 improvement suggestions
-
-Return STRICT JSON only.
-No explanations.
-No text outside JSON.
-"""
+        context = {
+            "role": role.value,
+            "interview_type": interview_type.value,
+            "evaluations": evaluations_str,
+            "dimension_scores": readable_dimension_scores_str,
+        }
+        prompt = PromptRenderer.render(template, context)
 
         response = self._llm.invoke(prompt)
 

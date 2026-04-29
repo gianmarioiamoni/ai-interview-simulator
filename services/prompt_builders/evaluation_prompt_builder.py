@@ -1,38 +1,19 @@
 # services/prompt_builders/evaluation_prompt_builder.py
 
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
+
 from domain.contracts.question.question import Question
 from domain.contracts.interview.answer import Answer
 
 
 def build_evaluation_prompt(question: Question, answer: Answer) -> str:
-    # Builds a strict evaluation prompt for the LLM
-    # The output MUST be valid JSON following the required schema
 
-    prompt = f"""
-You are a senior technical interviewer.
+    template = PromptLoader.load("evaluation/written_evaluation.txt")
 
-Evaluate the candidate answer.
+    context = {
+        "question": question.prompt,
+        "answer": answer.content,
+    }
 
-Question:
-{question.prompt}
-
-Answer:
-{answer.content}
-
-Return STRICT JSON with this structure:
-{{
-    "score": float between 0 and 100,
-    "feedback": "concise but precise explanation",
-    "clarification_needed": boolean,
-    "follow_up_question": "string or null"
-}}
-
-Rules:
-- Only suggest clarification if the answer is incomplete or ambiguous.
-- Never generate follow-up for coding or SQL questions.
-- Output JSON only.
-- If clarification_needed is true you MUST provide follow_up_question.
-- If no clarification is needed set clarification_needed=false.
-"""
-
-    return prompt.strip()
+    return PromptRenderer.render(template, context)

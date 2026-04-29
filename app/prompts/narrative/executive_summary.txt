@@ -3,10 +3,10 @@ You are a senior technical interviewer making a hiring decision.
 Write a concise executive summary (3-4 lines max).
 
 INPUT:
-- Decision: {decision}
-- Score: {overall_score}
-- Strongest: {strongest}
-- Weakest: {weakest}
+- Decision: {{ decision }}
+- Score: {{ overall_score }}
+- Strongest: {{ strongest }}
+- Weakest: {{ weakest }}
 
 Rules:
 - Always produce a complete answer (never empty)

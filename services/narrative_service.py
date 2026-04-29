@@ -6,6 +6,7 @@ from typing import List, Dict
 
 from app.ports.llm_port import LLMPort
 from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 
 from services.interview_evaluation.builders.narrative_control_builder import (
     NarrativeControlBuilder,
@@ -76,18 +77,14 @@ There is a noticeable gap between strongest and weakest areas.
 
         template = PromptLoader.load("narrative/executive_summary.txt")
 
-        prompt = template.format(
-            decision=payload["decision"],
-            overall_score=payload["overall_score"],
-            percentile=payload["percentile"],
-            strongest=payload["strongest"],
-            strongest_score=payload["strongest_score"],
-            weakest=payload["weakest"],
-            weakest_score=payload["weakest_score"],
-            balance_flag=payload["balance_flag"],
-            classification=classification_str,
-            balance_instruction=balance_instruction,
-        )
+        context = {
+            "decision": payload["decision"],
+            "overall_score": payload["overall_score"],
+            "strongest": payload["strongest"],
+            "weakest": payload["weakest"],
+        }
+
+        prompt = PromptRenderer.render(template, context)
 
         response = self._llm.invoke(prompt)
         content = (response.content or "").strip()
@@ -116,10 +113,12 @@ There is a noticeable gap between strongest and weakest areas.
 
         dimensions_str = json.dumps(dimensions, indent=2)
 
-        prompt = template.format(
-            decision=decision,
-            dimensions=dimensions_str,
-        )
+        context = {
+            "decision": decision,
+            "dimensions": dimensions_str,
+        }
+
+        prompt = PromptRenderer.render(template, context)
 
         print("\n=== DECISION PROMPT ===")
         print(prompt)
@@ -164,15 +163,15 @@ There is a noticeable gap between strongest and weakest areas.
         impact: str,
     ) -> str:
 
-        prompt = f"""
-            Explain this performance dimension in 1 sentence.
+        template = PromptLoader.load("narrative/dimension_explanation.txt")
 
-            Dimension: {name}
-            Score: {score}
-            Impact: {impact}
+        context = {
+            "name": name,
+            "score": score,
+            "impact": impact,
+        }
 
-            Be specific and professional.
-        """
+        prompt = PromptRenderer.render(template, context)
 
         response = self._llm.invoke(prompt)
 

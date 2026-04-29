@@ -1,9 +1,9 @@
 You are a senior technical interviewer explaining a hiring decision.
 
-Decision: {decision}
+Decision: {{ decision }}
 
 Candidate performance by dimension:
-{dimensions}
+{{ dimensions }}
 
 TASK:
 Explain the hiring decision in terms of DRIVERS and BLOCKERS.
@@ -25,10 +25,13 @@ LANGUAGE RULES:
 - Use varied phrasing (avoid repetition like "area for improvement")
 
 OUTPUT FORMAT:
-{{
+
+{% raw %}
+{
   "drivers": [...],
   "blockers": [...]
-}}
+}
+{% endraw %}
 
 CRITICAL:
 - Return ONLY valid JSON
