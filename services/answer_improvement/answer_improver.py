@@ -3,6 +3,9 @@
 from app.ports.llm_port import LLMPort
 
 
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
+
 class AnswerImprover:
 
     def __init__(self, llm: LLMPort):
@@ -15,30 +18,15 @@ class AnswerImprover:
         feedback: str,
     ) -> str:
 
-        prompt = f"""
-You are a senior technical interviewer.
+        template = PromptLoader.load("transformation/answer_improver.txt")
 
-Your task is to rewrite the candidate's answer to make it stronger.
+        context = {
+            "question": question,
+            "user_answer": user_answer,
+            "feedback": feedback,
+        }
 
-CONTEXT:
-Question:
-{question}
-
-Candidate Answer:
-{user_answer}
-
-Feedback:
-{feedback}
-
-INSTRUCTIONS:
-- Keep the original intent
-- Improve clarity and structure
-- Add a concrete example if missing
-- Be concise but strong
-- Do NOT explain, just output the improved answer
-
-OUTPUT:
-"""
+        prompt = PromptRenderer.render(template, context)
 
         try:
             response = self._llm.invoke(prompt)

@@ -2,29 +2,31 @@ You are an expert Python tester.
 
 Given this coding problem:
 
-{problem}
+{{ problem }}
 
 Function contract:
 
-- Entrypoint: {entrypoint}
-- Parameters: {parameters}
+- Entrypoint: {{ entrypoint }}
+- Parameters: {{ parameters }}
 
-Generate {num_tests} test cases.
+Generate {{ num_tests }} test cases.
 
 Return STRICT JSON:
 
+{% raw %}
 [
-  {{
+  {
     "args": [...],
     "expected": ...
-  }}
+  }
 ]
+{% endraw %}
 
 Function parameters:
-{parameters}
+{{ parameters }}
 
 CRITICAL RULE:
-- args length MUST be exactly {param_count}
+- args length MUST be exactly {{ param_count }}
 
 Example:
 If parameters = ["x"], then:
@@ -44,7 +46,7 @@ args = [[1,2,3]]
 - If a parameter is a dictionary, it must be passed as a SINGLE element
 Example:
 parameters = ["person"]
-args = [{{"name": "John", "age": 30}}]
+args = [{"name": "John", "age": 30}]
 
 - If a parameter is a tuple, it must be passed as a SINGLE element
 Example:

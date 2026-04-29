@@ -64,7 +64,7 @@ class FeedbackNode:
             result=result,
             evaluation=evaluation,
             execution=execution,
-            quality=quality,  # 🔥 FIX CRITICO
+            quality=quality,  
         )
 
         # -----------------------------------------------------

@@ -32,7 +32,7 @@ class DecisionNode:
         decision = ActionType(decision_str)
 
         # -----------------------------------------------------
-        # 🔥 LAST QUESTION DETECTION
+        # LAST QUESTION DETECTION
         # -----------------------------------------------------
 
         is_last_question = state.current_question_index == len(state.questions) - 1

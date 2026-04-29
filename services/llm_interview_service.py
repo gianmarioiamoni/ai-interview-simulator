@@ -1,7 +1,11 @@
 # services/llm_interview_service.py
 
 from domain.contracts.question.question import Question
+
 from infrastructure.llm.openai_client import OpenAIClient
+
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 
 
 class LLMInterviewService:
@@ -11,14 +15,13 @@ class LLMInterviewService:
 
     def evaluate_answer(self, question: Question, answer: str) -> str:
 
-        prompt = f"""
-        Question:
-        {question.prompt}
+        template = PromptLoader.load("evaluation/short_evaluation.txt")
 
-        Candidate Answer:
-        {answer}
+        context = {
+            "question": question.prompt,
+            "answer": answer,
+        }
 
-        Provide a short professional evaluation (max 5 sentences).
-        """
+        prompt = PromptRenderer.render(template, context)
 
         return self._client.generate_answer(prompt)

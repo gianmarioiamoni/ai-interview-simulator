@@ -1,0 +1,7 @@
+Explain this performance dimension in 1 sentence.
+
+Dimension: {{ name }}
+Score: {{ score }}
+Impact: {{ impact }}
+
+Be specific and professional.
