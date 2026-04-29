@@ -152,6 +152,16 @@ class InterviewEvaluationService:
         dimension_scores = enriched_scores
 
         # -----------------------------------------------------
+        # RECOMPUTE DECISION (ALIGNED WITH ENRICHMENT)
+        # -----------------------------------------------------
+
+        hire_decision = self._scoring_engine.recompute_decision_from_scores(
+            dimension_scores=dimension_scores,
+            overall_score=overall_score,
+            role=role,
+        )
+
+        # -----------------------------------------------------
         # RECOMPUTE OVERALL SCORE (ALIGNED WITH ENRICHMENT)
         # -----------------------------------------------------
 
@@ -183,7 +193,7 @@ class InterviewEvaluationService:
         # -----------------------------------------------------
 
         decision_explanation = self._decision_generator.generate(
-            scoring.hire_decision.value,
+            hire_decision.value,
             readable,
             dimension_signals,
         )
@@ -214,7 +224,7 @@ class InterviewEvaluationService:
         # -----------------------------------------------------
 
         executive_summary = self._summary_generator.generate(
-            scoring.hire_decision.value,
+            hire_decision.value,
             overall_score,
             strongest,
             weakest,
@@ -272,7 +282,7 @@ class InterviewEvaluationService:
             dimension_scores=dimension_scores,  # 🔥 enriched
             dimension_signals=dimension_signals,
             level=scoring.level,
-            hire_decision=scoring.hire_decision,
+            hire_decision=hire_decision,
             decision_explanation=decision_explanation,
             hiring_probability=scoring.hiring_probability,
             percentile_rank=percentile,

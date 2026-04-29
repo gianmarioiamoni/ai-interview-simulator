@@ -80,6 +80,25 @@ class InterviewScoringEngine:
             confidence=confidence,
         )
 
+
+    def recompute_decision_from_scores(
+        self,
+        dimension_scores: dict,
+        overall_score: float,
+        role: RoleType,
+    ) -> HireDecision:
+
+        gating_triggered, _ = self._gating_policy.apply(
+           dimension_scores,
+           role,
+        )
+
+        return self._compute_hire_decision(
+            overall_score,
+            gating_triggered,
+            dimension_scores,
+        )
+    
     # ---------------------------------------------------------
 
     def _compute_hire_decision(
