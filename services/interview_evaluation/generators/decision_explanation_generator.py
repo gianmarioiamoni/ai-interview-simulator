@@ -22,6 +22,7 @@ class DecisionExplanationGenerator:
         dimension_signals: Dict[str, float] | None = None,
     ) -> Dict[str, List[str]]:
         print("✅ NEW DECISION GENERATOR ACTIVE")
+
         # -----------------------------------------------------
         # CALL NARRATIVE SERVICE (STRUCTURED)
         # -----------------------------------------------------
@@ -32,7 +33,6 @@ class DecisionExplanationGenerator:
         )
 
         print("🔥 USING NARRATIVE SERVICE:", type(self._narrative_service))
-
 
         # -----------------------------------------------------
         # NORMALIZE OUTPUT (DEFENSIVE)
@@ -102,16 +102,56 @@ class DecisionExplanationGenerator:
                 dim_key = dim_name.lower().replace(" ", "_")
                 signal_strength = normalized_signals.get(dim_key)
 
-                # conservative threshold to avoid noise
-                if signal_strength and dim_score < 75:
+                if not signal_strength:
+                    continue
 
+                # -----------------------------------------------------
+                # SIGNAL-DRIVEN EXPLANATION (CONSISTENT LOGIC)
+                # -----------------------------------------------------
+
+                if signal_strength >= 0.8:
                     enriched_blockers.append(
-                        f"Issues in {dim_name} reflected by execution signals "
+                        f"Strong execution issues in {dim_name} "
+                        f"(high signal strength {signal_strength})"
+                    )
+
+                elif signal_strength >= 0.5:
+                    enriched_blockers.append(
+                        f"Noticeable execution weaknesses in {dim_name} "
                         f"(signal strength {signal_strength})"
                     )
 
-            if enriched_blockers:
-                blockers = blockers + enriched_blockers
+                elif signal_strength >= 0.3:
+                    enriched_blockers.append(
+                        f"Minor execution issues detected in {dim_name}"
+                    )
+
+            # -----------------------------------------------------
+            # DUPLICATE FILTERING (BY DIMENSION)
+            # -----------------------------------------------------
+
+            existing_blockers_text = " ".join(blockers).lower()
+
+            filtered_blockers = []
+
+            for b in enriched_blockers:
+                # evita duplicati sulla stessa dimensione
+                if not any(
+                    dim.get("name", "").lower() in b.lower() for dim in dimensions
+                ):
+                    continue
+
+                if b.lower() not in existing_blockers_text:
+                    filtered_blockers.append(b)
+
+            # -----------------------------------------------------
+            # LIMIT BLOCKERS (UX CONTROL)
+            # -----------------------------------------------------
+
+            filtered_blockers = filtered_blockers[:2]
+
+            if filtered_blockers:
+                blockers = blockers + filtered_blockers
 
         # -----------------------------------------------------
         # FINAL RETURN (ALWAYS SAFE)
