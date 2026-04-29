@@ -177,7 +177,7 @@ class AITestGenerator:
         num_tests: int,
     ) -> str:
 
-        template = PromptLoader.load("test_generation/test_generation_prompt.txt")
+        template = PromptLoader.load("test_generation/ai_test_generator.txt")
         parameters = json.dumps(spec.parameters)
 
         prompt = template.format(
