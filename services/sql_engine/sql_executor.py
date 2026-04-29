@@ -112,7 +112,7 @@ class SQLExecutor:
             error = None
 
             if not success:
-                error = f"{passed_tests}/{total_tests} tests passed"
+                error = "Test execution failed"
 
             return ExecutionResult(
                 question_id=question.id,

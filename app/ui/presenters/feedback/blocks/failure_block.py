@@ -41,6 +41,21 @@ class FailureBlock:
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
 
+        pass_rate = (passed / total) if total > 0 else (1.0 if execution.success else 0.0)
+
+        if pass_rate >= 0.75:
+            summary = "Most test cases passed, but some issues remain."
+        elif pass_rate >= 0.4:
+            summary = "Several test cases failed."
+        else:
+            summary = "Most test cases failed."
+        
+        content = (
+            f"### ❌ {message}\n\n"
+            f"{summary}\n"
+            f"Passed {passed}/{total} tests.\n\n"
+            "Review the failing cases below."
+        )
         error_type = getattr(analysis, "error_type", ErrorType.UNKNOWN)
 
         # -----------------------------------------------------
