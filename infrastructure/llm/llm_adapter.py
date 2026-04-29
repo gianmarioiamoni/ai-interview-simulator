@@ -1,5 +1,7 @@
 # infrastructure/llm/llm_adapter.py
 
+import json
+
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.ports.llm_port import LLMPort, LLMResponse
@@ -100,7 +102,12 @@ class DefaultLLMAdapter(LLMPort):
                 # -------------------------------------------------
 
                 try:
-                    return schema.model_validate_json(content)
+                    parsed = json.loads(content)
+
+                    if isinstance(parsed, dict) and "drivers" in parsed and "blockers" in parsed:
+                        parsed = _normalize_decision_schema(parsed)
+
+                    return schema.model_validate(parsed)
                 except Exception:
                     pass
 
@@ -114,7 +121,12 @@ class DefaultLLMAdapter(LLMPort):
                 if start != -1 and end != -1:
                     json_str = content[start : end + 1]
                     try:
-                        return schema.model_validate_json(json_str)
+                        parsed = json.loads(json_str)
+
+                        if isinstance(parsed, dict) and "drivers" in parsed and "blockers" in parsed:
+                            parsed = _normalize_decision_schema(parsed)
+
+                        return schema.model_validate(parsed)
                     except Exception as e:
                         print("⚠️ EXTRACT RECOVERY FAILED:", e)
 
@@ -128,7 +140,12 @@ class DefaultLLMAdapter(LLMPort):
                 ):
                     json_str = "{" + content.strip().strip(",") + "}"
                     try:
-                        return schema.model_validate_json(json_str)
+                        parsed = json.loads(json_str)
+
+                        if isinstance(parsed, dict) and "drivers" in parsed and "blockers" in parsed:
+                            parsed = _normalize_decision_schema(parsed)
+
+                        return schema.model_validate(parsed)
                     except Exception as e:
                         print("⚠️ WRAP RECOVERY FAILED:", e)
 
@@ -174,3 +191,25 @@ class LLMPort(Protocol):
     def invoke(self, prompt: str) -> LLMResponse: ...
 
     def invoke_json(self, prompt: str, schema: Type[T]) -> T: ...
+
+
+# ---------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------
+def _normalize_decision_schema(data: dict) -> dict:
+
+    def extract(items):
+        out = []
+        for i in items:
+            if isinstance(i, str):
+                out.append(i)
+            elif isinstance(i, dict):
+                text = i.get("justification") or i.get("text")
+                if text:
+                    out.append(text)
+        return out
+
+    return {
+        "drivers": extract(data.get("drivers", [])),
+        "blockers": extract(data.get("blockers", [])),
+    }
