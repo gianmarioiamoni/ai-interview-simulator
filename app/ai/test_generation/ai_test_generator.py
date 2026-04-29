@@ -12,6 +12,7 @@ from domain.contracts.execution.coding_spec import CodingSpec
 from app.ports.llm_port import LLMPort
 from app.ai.test_generation.test_cache_service import TestCacheService
 from app.ai.test_generation.test_diversity_filter import TestDiversityFilter
+from app.prompts.prompt_loader import PromptLoader
 
 
 # =========================================================
@@ -176,68 +177,16 @@ class AITestGenerator:
         num_tests: int,
     ) -> str:
 
-        return f"""
-You are an expert Python tester.
+        template = PromptLoader.load("ai/test_generation/test_generation_prompt.txt")
+        parameters = json.dumps(spec.parameters)
 
-Given this coding problem:
+        prompt = template.format(
+            problem=prompt,
+            entrypoint=spec.entrypoint,
+            parameters=parameters,
+            num_tests=num_tests,
+            param_count=len(parameters),
+        )
 
-{prompt}
+        return prompt
 
-Function contract:
-
-- Entrypoint: {spec.entrypoint}
-- Parameters: {spec.parameters}
-
-Generate {num_tests} test cases.
-
-Return STRICT JSON:
-
-[
-  {{
-    "args": [...],
-    "expected": ...
-  }}
-]
-
-Function parameters:
-{spec.parameters}
-
-CRITICAL RULE:
-- args length MUST be exactly {len(spec.parameters)}
-- Example:
-  If parameters = ["x"], then:
-    args = [value]
-  NOT:
-    args = [v1, v2, v3]
-
-Each element in args corresponds to ONE parameter.
-
-IMPORTANT:
-- If a parameter is a list, it must be passed as a SINGLE element
-- Example:
-  parameters = ["nums"]
-  args = [[1,2,3]]
-
-  If a parameter is a dictionary, it must be passed as a SINGLE element
-  Example:
-  parameters = ["person"]
-  args = [{"name": "John", "age": 30}]
-
-  If a parameter is a tuple, it must be passed as a SINGLE element
-  Example:
-  parameters = ["point"]
-  args = [(1,2)]
-
-
-Rules:
-- args MUST match the parameter order exactly
-- expected MUST be correct
-- Include edge cases:
-  - empty input
-  - single element
-  - duplicates
-  - boundary values
-- No explanations
-- No markdown
-- Only JSON
-"""
