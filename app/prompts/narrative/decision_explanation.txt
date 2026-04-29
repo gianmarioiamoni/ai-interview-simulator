@@ -25,10 +25,10 @@ LANGUAGE RULES:
 - Use varied phrasing (avoid repetition like "area for improvement")
 
 OUTPUT FORMAT:
-{
+{{
   "drivers": [...],
   "blockers": [...]
-}
+}}
 
 CRITICAL:
 - Return ONLY valid JSON
