@@ -69,7 +69,7 @@ class AITestGenerator:
         # VALIDATION vs CodingSpec (STEP 4.3)
         # ---------------------------------------------------------
 
-        self._validate_tests_against_spec(
+        tests = self._validate_tests_against_spec(
             tests,
             question.coding_spec,
         )
@@ -147,16 +147,23 @@ class AITestGenerator:
         self,
         tests: List[CodingTestCase],
         spec: CodingSpec,
-    ) -> None:
+    ) -> List[CodingTestCase]:
 
         expected_len = len(spec.parameters)
 
+        valid = []
+
         for t in tests:
 
-            if len(t.args) != expected_len:
-                raise ValueError(
-                    f"Invalid test args length. Expected {expected_len}, got {len(t.args)}"
-                )
+            if len(t.args) == expected_len:
+                valid.append(t)
+
+        if not valid:
+            raise ValueError(
+                f"Invalid test args length. Expected args length to be {expected_len}"
+            )
+
+        return valid
 
     # =========================================================
     # PROMPT
@@ -191,6 +198,36 @@ Return STRICT JSON:
     "expected": ...
   }}
 ]
+
+Function parameters:
+{spec.parameters}
+
+CRITICAL RULE:
+- args length MUST be exactly {len(spec.parameters)}
+- Example:
+  If parameters = ["x"], then:
+    args = [value]
+  NOT:
+    args = [v1, v2, v3]
+
+Each element in args corresponds to ONE parameter.
+
+IMPORTANT:
+- If a parameter is a list, it must be passed as a SINGLE element
+- Example:
+  parameters = ["nums"]
+  args = [[1,2,3]]
+
+  If a parameter is a dictionary, it must be passed as a SINGLE element
+  Example:
+  parameters = ["person"]
+  args = [{"name": "John", "age": 30}]
+
+  If a parameter is a tuple, it must be passed as a SINGLE element
+  Example:
+  parameters = ["point"]
+  args = [(1,2)]
+
 
 Rules:
 - args MUST match the parameter order exactly
