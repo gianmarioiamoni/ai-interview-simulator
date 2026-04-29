@@ -35,17 +35,14 @@ class DecisionExplanationGenerator:
         print("🔥 USING NARRATIVE SERVICE:", type(self._narrative_service))
 
         # -----------------------------------------------------
-        # NORMALIZE OUTPUT (DEFENSIVE)
+        # NORMALIZE OUTPUT (CRITICAL FIX)
         # -----------------------------------------------------
 
-        drivers = result.get("drivers") if isinstance(result, dict) else []
-        blockers = result.get("blockers") if isinstance(result, dict) else []
+        raw_drivers = result.get("drivers") if isinstance(result, dict) else []
+        raw_blockers = result.get("blockers") if isinstance(result, dict) else []
 
-        if not isinstance(drivers, list):
-            drivers = []
-
-        if not isinstance(blockers, list):
-            blockers = []
+        drivers = self._normalize_items(raw_drivers)
+        blockers = self._normalize_items(raw_blockers)
 
         # -----------------------------------------------------
         # FALLBACK (DETERMINISTIC)
@@ -147,7 +144,34 @@ class DecisionExplanationGenerator:
         }
 
     # ---------------------------------------------------------
-    # CAUSAL EXPLANATION BUILDER (NEW)
+    # NORMALIZATION (CRITICAL)
+    # ---------------------------------------------------------
+
+    def _normalize_items(self, items: Any) -> List[str]:
+
+        if not isinstance(items, list):
+            return []
+
+        normalized = []
+
+        for item in items:
+
+            # CASE 1: already string
+            if isinstance(item, str):
+                normalized.append(item)
+                continue
+
+            # CASE 2: dict (LLM structured output)
+            if isinstance(item, dict):
+                text = item.get("justification") or item.get("text")
+                if text:
+                    normalized.append(text)
+                    continue
+
+        return normalized
+
+    # ---------------------------------------------------------
+    # CAUSAL EXPLANATION BUILDER
     # ---------------------------------------------------------
 
     def _build_causal_explanation(
