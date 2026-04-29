@@ -16,3 +16,10 @@ Rules:
 - Mention strongest capability
 - Mention weakest area as development point
 - Be direct and professional
+
+LANGUAGE RULES:
+- For scores >= 70 DO NOT use words like "lacking", "weak", or "poor"
+- Use:
+  - "area for improvement" for 70–79
+  - "moderate gap" for 60–69
+- Keep tone professional and balanced
