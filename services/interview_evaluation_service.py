@@ -11,7 +11,7 @@ from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.question.question import Question
-from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION
+from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION, ROLE_WEIGHTS
 
 from services.interview_scoring.interview_scoring_engine import InterviewScoringEngine
 from services.narrative_service import NarrativeService
@@ -152,6 +152,25 @@ class InterviewEvaluationService:
         dimension_scores = enriched_scores
 
         # -----------------------------------------------------
+        # RECOMPUTE OVERALL SCORE (ALIGNED WITH ENRICHMENT)
+        # -----------------------------------------------------
+
+        weights = ROLE_WEIGHTS[role]
+
+        weighted_breakdown = {}
+
+        for dim, score in dimension_scores.items():
+
+            if dim not in weights:
+                raise ValueError(f"Missing weight for dimension: {dim}")
+            
+            weight = weights[dim]
+            weighted_breakdown[dim] = round(score * weight, 2)
+
+        overall_score = round(sum(weighted_breakdown.values()), 1)
+
+
+        # -----------------------------------------------------
         # READABLE DIMENSIONS
         # -----------------------------------------------------
 
@@ -196,7 +215,7 @@ class InterviewEvaluationService:
 
         executive_summary = self._summary_generator.generate(
             scoring.hire_decision.value,
-            overall_score,  # ⚠️ still base score (coerente per ora)
+            overall_score,
             strongest,
             weakest,
             percentile,

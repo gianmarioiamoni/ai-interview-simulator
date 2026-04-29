@@ -36,7 +36,7 @@ class InterviewScoringEngine:
         dimension_scores = self._dimension_scorer.compute(questions, evaluations)
 
         weighted_breakdown = {
-            dim: round(score * ROLE_WEIGHTS[role].get(dim.value, 0.0), 2)
+            dim: round(score * ROLE_WEIGHTS[role].get(dim, 0.0), 2)
             for dim, score in dimension_scores.items()
         }
 
