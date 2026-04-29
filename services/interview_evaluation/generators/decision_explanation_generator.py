@@ -79,7 +79,7 @@ class DecisionExplanationGenerator:
             }
 
         # -----------------------------------------------------
-        # ENRICH WITH RUNTIME SIGNALS
+        # ENRICH WITH RUNTIME SIGNALS (STEP 2 - CAUSAL)
         # -----------------------------------------------------
 
         if dimension_signals:
@@ -102,32 +102,22 @@ class DecisionExplanationGenerator:
                 dim_key = dim_name.lower().replace(" ", "_")
                 signal_strength = normalized_signals.get(dim_key)
 
-                if not signal_strength:
-                    continue
-
                 # -----------------------------------------------------
-                # SIGNAL-DRIVEN EXPLANATION (CONSISTENT LOGIC)
+                # CAUSAL EXPLANATION TRIGGER
                 # -----------------------------------------------------
 
-                if signal_strength >= 0.8:
-                    enriched_blockers.append(
-                        f"Strong execution issues in {dim_name} "
-                        f"(high signal strength {signal_strength})"
+                if dim_score < 80 or (signal_strength and signal_strength >= 0.5):
+
+                    explanation = self._build_causal_explanation(
+                        dim_name,
+                        dim_score,
+                        signal_strength,
                     )
 
-                elif signal_strength >= 0.5:
-                    enriched_blockers.append(
-                        f"Noticeable execution weaknesses in {dim_name} "
-                        f"(signal strength {signal_strength})"
-                    )
-
-                elif signal_strength >= 0.3:
-                    enriched_blockers.append(
-                        f"Minor execution issues detected in {dim_name}"
-                    )
+                    enriched_blockers.append(explanation)
 
             # -----------------------------------------------------
-            # DUPLICATE FILTERING (BY DIMENSION)
+            # DUPLICATE FILTERING
             # -----------------------------------------------------
 
             existing_blockers_text = " ".join(blockers).lower()
@@ -135,12 +125,6 @@ class DecisionExplanationGenerator:
             filtered_blockers = []
 
             for b in enriched_blockers:
-                # evita duplicati sulla stessa dimensione
-                if not any(
-                    dim.get("name", "").lower() in b.lower() for dim in dimensions
-                ):
-                    continue
-
                 if b.lower() not in existing_blockers_text:
                     filtered_blockers.append(b)
 
@@ -154,10 +138,69 @@ class DecisionExplanationGenerator:
                 blockers = blockers + filtered_blockers
 
         # -----------------------------------------------------
-        # FINAL RETURN (ALWAYS SAFE)
+        # FINAL RETURN
         # -----------------------------------------------------
 
         return {
             "drivers": drivers,
             "blockers": blockers,
         }
+
+    # ---------------------------------------------------------
+    # CAUSAL EXPLANATION BUILDER (NEW)
+    # ---------------------------------------------------------
+
+    def _build_causal_explanation(
+        self,
+        dim_name: str,
+        dim_score: float,
+        signal_strength: float | None,
+    ) -> str:
+
+        dim_lower = dim_name.lower()
+
+        # -----------------------------------------------------
+        # BASE CAUSE BY DIMENSION
+        # -----------------------------------------------------
+
+        if "system design" in dim_lower:
+            base_cause = "limited architectural reasoning and lack of structured system trade-offs"
+        elif "technical depth" in dim_lower:
+            base_cause = "insufficient depth in core technical concepts and incomplete understanding of underlying mechanisms"
+        elif "problem solving" in dim_lower:
+            base_cause = "inconsistent reasoning and gaps in handling edge cases"
+        elif "communication" in dim_lower:
+            base_cause = "lack of clarity and structured explanation of ideas"
+        else:
+            base_cause = "inconsistent performance"
+
+        # -----------------------------------------------------
+        # SIGNAL ENRICHMENT
+        # -----------------------------------------------------
+
+        if signal_strength and signal_strength >= 0.8:
+            evidence = "strongly reinforced by execution failures"
+        elif signal_strength and signal_strength >= 0.5:
+            evidence = "supported by execution inconsistencies"
+        elif signal_strength and signal_strength >= 0.3:
+            evidence = "partially reflected in execution signals"
+        else:
+            evidence = None
+
+        # -----------------------------------------------------
+        # BUILD FINAL SENTENCE
+        # -----------------------------------------------------
+
+        if dim_score < 70:
+            sentence = f"{dim_name} is weak due to {base_cause}"
+        elif dim_score < 80:
+            sentence = f"{dim_name} shows gaps due to {base_cause}"
+        else:
+            sentence = (
+                f"{dim_name} is solid, though some limitations remain in {base_cause}"
+            )
+
+        if evidence:
+            sentence += f", {evidence}"
+
+        return sentence
