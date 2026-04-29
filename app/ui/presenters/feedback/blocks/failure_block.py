@@ -41,69 +41,106 @@ class FailureBlock:
         passed = execution.passed_tests or 0
         total = execution.total_tests or 0
 
-        pass_rate = (passed / total) if total > 0 else (1.0 if execution.success else 0.0)
-
-        if pass_rate >= 0.75:
-            summary = "Most test cases passed, but some issues remain."
-        elif pass_rate >= 0.4:
-            summary = "Several test cases failed."
-        else:
-            summary = "Most test cases failed."
-        
-        content = (
-            f"### ❌ {message}\n\n"
-            f"{summary}\n"
-            f"Passed {passed}/{total} tests.\n\n"
-            "Review the failing cases below."
-        )
         error_type = getattr(analysis, "error_type", ErrorType.UNKNOWN)
 
         # -----------------------------------------------------
-        # TYPE-AWARE TITLE + MESSAGE
+        # TITLE + MESSAGE
         # -----------------------------------------------------
 
         if error_type == ErrorType.LOGIC:
             title = "Logic Errors Detected"
             message = "Your solution produces incorrect results."
 
-            learning = [
-                LearningSuggestion(
-                    topic="Algorithm correctness",
-                    action="Review logic and edge cases — output is incorrect",
-                )
-            ]
-
         elif error_type == ErrorType.RUNTIME:
             title = "Runtime Errors in Tests"
             message = "Your code fails during execution for some inputs."
 
+        else:
+            title = "Test Failures Detected"
+            message = "Some test cases failed."
+
+        # -----------------------------------------------------
+        # ADVANCED CLASSIFICATION
+        # -----------------------------------------------------
+
+        is_edge_case = False
+
+        if execution and execution.test_results:
+            for t in execution.test_results:
+                if (
+                    t.status != "passed"
+                    and t.expected is not None
+                    and t.actual is not None
+                ):
+
+                    if t.expected == [] or t.actual == []:
+                        is_edge_case = True
+
+                    if isinstance(t.expected, (int, float)) and t.expected in [0, 1]:
+                        is_edge_case = True
+
+        # -----------------------------------------------------
+        # SMART LEARNING SUGGESTIONS
+        # -----------------------------------------------------
+
+        if error_type == ErrorType.LOGIC:
+
+            if is_edge_case:
+                learning = [
+                    LearningSuggestion(
+                        topic="Edge cases",
+                        action="Review how your solution handles boundary inputs (empty, single values, zero)",
+                    )
+                ]
+            else:
+                learning = [
+                    LearningSuggestion(
+                        topic="Algorithm correctness",
+                        action="Check your core logic and verify intermediate steps",
+                    )
+                ]
+
+        elif error_type == ErrorType.RUNTIME:
+
             learning = [
                 LearningSuggestion(
                     topic="Runtime debugging",
-                    action="Check how your code handles edge inputs and types",
+                    action="Validate input types and ensure safe access to data structures",
                 )
             ]
 
         else:
-            title = "Logic Errors Detected"
-            message = "Some tests failed."
-
             learning = [
                 LearningSuggestion(
                     topic="Debugging",
-                    action="Analyze failing test cases to identify issues",
+                    action="Analyze failing test cases step-by-step",
                 )
             ]
 
         # -----------------------------------------------------
-        # CONTENT
+        # BUILD FAILURE DETAILS
         # -----------------------------------------------------
 
-        content = (
-            f"### ❌ {message}\n\n"
-            f"Passed {passed}/{total} tests.\n\n"
-            "Review the failing cases below."
-        )
+        details = ""
+
+        if execution and execution.test_results:
+
+            failed_tests = [t for t in execution.test_results if t.status != "passed"]
+
+            if failed_tests:
+                sample = failed_tests[0]
+
+                details = "\n\n---\n\n"
+
+                if sample.expected is not None and sample.actual is not None:
+                    details += (
+                        "### 🔍 Example Failure\n"
+                        f"- Expected: {sample.expected}\n"
+                        f"- Got: {sample.actual}\n"
+                    )
+
+                elif sample.error:
+                    details += "### 🔍 Runtime Error\n" f"{sample.error}\n"
 
         # -----------------------------------------------------
         # SIGNALS
@@ -115,6 +152,17 @@ class FailureBlock:
                 message=f"{passed}/{total} tests passed",
             )
         ]
+
+        # -----------------------------------------------------
+        # CONTENT
+        # -----------------------------------------------------
+
+        content = (
+            f"### ❌ {message}\n\n"
+            f"Passed {passed}/{total} tests.\n"
+            + details
+            + "\n\nReview the failing cases to identify the issue."
+        )
 
         return FeedbackBlockResult(
             title=title,
