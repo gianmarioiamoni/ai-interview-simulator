@@ -151,15 +151,7 @@ class InterviewEvaluationService:
 
         dimension_scores = enriched_scores
 
-        # -----------------------------------------------------
-        # RECOMPUTE DECISION (ALIGNED WITH ENRICHMENT)
-        # -----------------------------------------------------
-
-        hire_decision = self._scoring_engine.recompute_decision_from_scores(
-            dimension_scores=dimension_scores,
-            overall_score=overall_score,
-            role=role,
-        )
+        
 
         # -----------------------------------------------------
         # RECOMPUTE OVERALL SCORE (ALIGNED WITH ENRICHMENT)
@@ -179,6 +171,15 @@ class InterviewEvaluationService:
 
         overall_score = round(sum(weighted_breakdown.values()), 1)
 
+        # -----------------------------------------------------
+        # RECOMPUTE DECISION (ALIGNED WITH ENRICHMENT)
+        # -----------------------------------------------------
+
+        hire_decision = self._scoring_engine.recompute_decision_from_scores(
+            dimension_scores=dimension_scores,
+            overall_score=overall_score,
+            role=role,
+        )
 
         # -----------------------------------------------------
         # READABLE DIMENSIONS
