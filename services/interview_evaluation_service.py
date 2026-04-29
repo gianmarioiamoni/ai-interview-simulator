@@ -96,6 +96,24 @@ class InterviewEvaluationService:
         overall_score = scoring.overall_score
 
         # -----------------------------------------------------
+        # ENHANCE SCORES WITH SIGNALS 
+        # -----------------------------------------------------
+        ENRICHMENT_ALPHA = 0.3
+
+        enriched_scores = {}
+
+        for dim, base_score in dimension_scores.items():
+
+            dim_key = dim.value if hasattr(dim, "value") else dim
+            signal = dimension_signals.get(dim_key, 0.0)
+
+            enriched = (base_score * (1 - ENRICHMENT_ALPHA)) + ((signal * 100) * ENRICHMENT_ALPHA)
+
+            enriched_scores[dim] = round(enriched, 1)
+
+        dimension_scores = enriched_scores 
+
+        # -----------------------------------------------------
         # READABLE DIMENSIONS
         # -----------------------------------------------------
 
