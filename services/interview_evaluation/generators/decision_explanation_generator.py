@@ -21,10 +21,11 @@ class DecisionExplanationGenerator:
         dimensions: List[Dict[str, Any]],
         dimension_signals: Dict[str, float] | None = None,
     ) -> Dict[str, List[str]]:
+
         print("✅ NEW DECISION GENERATOR ACTIVE")
 
         # -----------------------------------------------------
-        # CALL NARRATIVE SERVICE (STRUCTURED)
+        # CALL NARRATIVE SERVICE
         # -----------------------------------------------------
 
         result = self._narrative_service.generate_decision_explanation(
@@ -35,7 +36,7 @@ class DecisionExplanationGenerator:
         print("🔥 USING NARRATIVE SERVICE:", type(self._narrative_service))
 
         # -----------------------------------------------------
-        # NORMALIZE OUTPUT (CRITICAL FIX)
+        # NORMALIZE OUTPUT (CRITICAL)
         # -----------------------------------------------------
 
         raw_drivers = result.get("drivers") if isinstance(result, dict) else []
@@ -45,7 +46,7 @@ class DecisionExplanationGenerator:
         blockers = self._normalize_items(raw_blockers)
 
         # -----------------------------------------------------
-        # FALLBACK (DETERMINISTIC)
+        # FALLBACK
         # -----------------------------------------------------
 
         if not drivers and not blockers:
@@ -76,7 +77,7 @@ class DecisionExplanationGenerator:
             }
 
         # -----------------------------------------------------
-        # ENRICH WITH RUNTIME SIGNALS (STEP 2 - CAUSAL)
+        # ENRICH WITH SIGNALS (CAUSAL + DEDUP)
         # -----------------------------------------------------
 
         if dimension_signals:
@@ -85,6 +86,23 @@ class DecisionExplanationGenerator:
                 (k.value if hasattr(k, "value") else k): v
                 for k, v in dimension_signals.items()
             }
+
+            # -------------------------------------------------
+            # DETECT COVERED DIMENSIONS (LLM already used)
+            # -------------------------------------------------
+
+            covered_dimensions = set()
+
+            for b in blockers:
+                b_lower = b.lower()
+                for dim in dimensions:
+                    name = dim.get("name", "").lower()
+                    if name and name in b_lower:
+                        covered_dimensions.add(name)
+
+            # -------------------------------------------------
+            # BUILD ENRICHMENT
+            # -------------------------------------------------
 
             enriched_blockers = []
 
@@ -97,12 +115,14 @@ class DecisionExplanationGenerator:
                     continue
 
                 dim_key = dim_name.lower().replace(" ", "_")
+
+                # skip if already covered by LLM
+                if dim_name.lower() in covered_dimensions:
+                    continue
+
                 signal_strength = normalized_signals.get(dim_key)
 
-                # -----------------------------------------------------
-                # CAUSAL EXPLANATION TRIGGER
-                # -----------------------------------------------------
-
+                # trigger only if meaningful
                 if dim_score < 80 or (signal_strength and signal_strength >= 0.5):
 
                     explanation = self._build_causal_explanation(
@@ -113,21 +133,19 @@ class DecisionExplanationGenerator:
 
                     enriched_blockers.append(explanation)
 
-            # -----------------------------------------------------
-            # DUPLICATE FILTERING
-            # -----------------------------------------------------
+            # -------------------------------------------------
+            # FILTER DUPLICATES (TEXT LEVEL)
+            # -------------------------------------------------
 
             existing_blockers_text = " ".join(blockers).lower()
 
-            filtered_blockers = []
+            filtered_blockers = [
+                b for b in enriched_blockers if b.lower() not in existing_blockers_text
+            ]
 
-            for b in enriched_blockers:
-                if b.lower() not in existing_blockers_text:
-                    filtered_blockers.append(b)
-
-            # -----------------------------------------------------
-            # LIMIT BLOCKERS (UX CONTROL)
-            # -----------------------------------------------------
+            # -------------------------------------------------
+            # LIMIT (UX)
+            # -------------------------------------------------
 
             filtered_blockers = filtered_blockers[:2]
 
@@ -135,7 +153,7 @@ class DecisionExplanationGenerator:
                 blockers = blockers + filtered_blockers
 
         # -----------------------------------------------------
-        # FINAL RETURN
+        # FINAL
         # -----------------------------------------------------
 
         return {
@@ -144,7 +162,7 @@ class DecisionExplanationGenerator:
         }
 
     # ---------------------------------------------------------
-    # NORMALIZATION (CRITICAL)
+    # NORMALIZATION
     # ---------------------------------------------------------
 
     def _normalize_items(self, items: Any) -> List[str]:
@@ -156,17 +174,13 @@ class DecisionExplanationGenerator:
 
         for item in items:
 
-            # CASE 1: already string
             if isinstance(item, str):
                 normalized.append(item)
-                continue
 
-            # CASE 2: dict (LLM structured output)
-            if isinstance(item, dict):
+            elif isinstance(item, dict):
                 text = item.get("justification") or item.get("text")
                 if text:
                     normalized.append(text)
-                    continue
 
         return normalized
 
@@ -183,10 +197,6 @@ class DecisionExplanationGenerator:
 
         dim_lower = dim_name.lower()
 
-        # -----------------------------------------------------
-        # BASE CAUSE BY DIMENSION
-        # -----------------------------------------------------
-
         if "system design" in dim_lower:
             base_cause = "limited architectural reasoning and lack of structured system trade-offs"
         elif "technical depth" in dim_lower:
@@ -198,10 +208,6 @@ class DecisionExplanationGenerator:
         else:
             base_cause = "inconsistent performance"
 
-        # -----------------------------------------------------
-        # SIGNAL ENRICHMENT
-        # -----------------------------------------------------
-
         if signal_strength and signal_strength >= 0.8:
             evidence = "strongly reinforced by execution failures"
         elif signal_strength and signal_strength >= 0.5:
@@ -210,10 +216,6 @@ class DecisionExplanationGenerator:
             evidence = "partially reflected in execution signals"
         else:
             evidence = None
-
-        # -----------------------------------------------------
-        # BUILD FINAL SENTENCE
-        # -----------------------------------------------------
 
         if dim_score < 70:
             sentence = f"{dim_name} is weak due to {base_cause}"
