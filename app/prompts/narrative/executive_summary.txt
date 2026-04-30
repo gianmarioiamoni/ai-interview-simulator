@@ -4,20 +4,22 @@ Write a concise executive summary (3-4 lines max).
 
 INPUT:
 - Decision: {{ decision }}
-- Score: {{ overall_score }}
-- Strongest: {{ strongest }}
-- Weakest: {{ weakest }}
+- Overall Score: {{ overall_score }}
+- Percentile: {{ percentile }}
+- Strongest: {{ strongest }} ({{ strongest_score }})
+- Weakest: {{ weakest }} ({{ weakest_score }})
 - Evaluation context: {{ classification }}
 - Guidance: {{ balance_instruction }}
+- Tone: {{ tone }}
 
 Rules:
 - Always produce a complete answer (never empty)
 - Start directly with the hiring decision WITHOUT labels
 - DO NOT use prefixes like "Decision:"
 - Justify the decision
-- Mention strongest capability
-- Mention weakest area as development point
-- Be direct and professional
+- Mention strongest capability WITH its score
+- Mention weakest area as development point WITH its score
+- Keep overall score separate from dimension scores
 
 LANGUAGE RULES:
 - For scores >= 70 DO NOT use words like "lacking", "weak", or "poor"
