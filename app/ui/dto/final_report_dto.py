@@ -19,6 +19,8 @@ from domain.contracts.user.role import RoleType
 class FinalReportDTO(BaseModel):
 
     overall_score: float
+    raw_score: float
+    adjusted_score: float
     hiring_probability: float
     hire_decision: str
     decision_explanation: Dict[str, List[str]]
@@ -65,6 +67,8 @@ class FinalReportDTO(BaseModel):
 
         return cls(
             overall_score=final_evaluation.overall_score,
+            raw_score=final_evaluation.raw_score,
+            adjusted_score=final_evaluation.adjusted_score,
             hiring_probability=final_evaluation.hiring_probability,
             hire_decision=hire_decision,
             decision_explanation=final_evaluation.decision_explanation,

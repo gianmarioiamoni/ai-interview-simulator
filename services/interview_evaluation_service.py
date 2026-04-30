@@ -1,5 +1,3 @@
-# services/interview_evaluation_service.py
-
 from typing import List
 import logging
 
@@ -15,6 +13,7 @@ from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION, ROLE_WEIGHTS
 
 from services.interview_scoring.interview_scoring_engine import InterviewScoringEngine
 from services.narrative_service import NarrativeService
+from services.decision_engine.decision_engine import DecisionEngine
 
 from services.interview_evaluation.mappers.readable_dimension_mapper import (
     ReadableDimensionMapper,
@@ -53,6 +52,7 @@ class InterviewEvaluationService:
         # components
         self._dimension_mapper = ReadableDimensionMapper()
         self._decision_generator = DecisionExplanationGenerator(self._narrative_service)
+        self._decision_engine = DecisionEngine()
         self._summary_generator = ExecutiveSummaryGenerator(self._narrative_service)
         self._dimension_builder = DimensionBuilder()
         self._improvement_builder = ImprovementBuilder()
@@ -119,7 +119,6 @@ class InterviewEvaluationService:
                 for k, v in signals.items():
                     dimension_signals[k] = dimension_signals.get(k, 0.0) + v
 
-            # normalize
             dimension_signals = {
                 k: round(min(1.0, v), 2) for k, v in dimension_signals.items()
             }
@@ -151,7 +150,7 @@ class InterviewEvaluationService:
         dimension_scores = enriched_scores
 
         # -----------------------------------------------------
-        # FIX: NORMALIZED WEIGHTS
+        # NORMALIZED WEIGHTS (FIX)
         # -----------------------------------------------------
 
         weights = ROLE_WEIGHTS[role]
@@ -182,45 +181,25 @@ class InterviewEvaluationService:
         overall_score = round(sum(weighted_breakdown.values()), 1)
 
         # -----------------------------------------------------
-        # DECISION (BASE)
+        # DECISION ENGINE (UNICA FONTE DI VERITÀ)
         # -----------------------------------------------------
 
-        hire_decision = self._scoring_engine.recompute_decision_from_scores(
-            dimension_scores=dimension_scores,
-            overall_score=overall_score,
-            role=role,
+        raw_score = overall_score
+
+        hire_decision, adjusted_score, gating_triggered, gating_reason = (
+            self._decision_engine.compute_decision(
+                dimension_scores=dimension_scores,
+                overall_score=overall_score,
+                role=role,
+            )
         )
 
-        # -----------------------------------------------------
-        # GATING RULE (EXPLICIT)
-        # -----------------------------------------------------
+        overall_score = adjusted_score
 
-        gating_triggered = False
-        gating_reason = None
-
-        system_design_score = next(
-            (
-                score
-                for dim, score in dimension_scores.items()
-                if (dim.value if hasattr(dim, "value") else dim) == "system_design"
-            ),
-            None,
+        logger.info(
+            f"DECISION TRACE → raw={raw_score}, adjusted={adjusted_score}, "
+            f"decision={hire_decision}, gating={gating_reason}"
         )
-
-        if system_design_score is not None and system_design_score < 60:
-            logger.info("SOFT GATING APPLIED: system_design penalty")
-
-            # penalty
-            overall_score = round(overall_score * 0.85, 1)
-
-            # downgrade decision
-            if hire_decision.name.lower() == "hire":
-                hire_decision = hire_decision.__class__.LEAN_HIRE
-            elif hire_decision.name.lower() == "lean_hire":
-                hire_decision = hire_decision.__class__.LEAN_NO_HIRE
-
-            gating_triggered = True
-            gating_reason = "systsystem_design_penalty"
 
         # -----------------------------------------------------
         # READABLE DIMENSIONS
@@ -319,6 +298,8 @@ class InterviewEvaluationService:
 
         return InterviewEvaluation(
             overall_score=overall_score,
+            raw_score=raw_score,
+            adjusted_score=adjusted_score,
             executive_summary=executive_summary,
             performance_dimensions=performance_dimensions,
             dimension_scores=dimension_scores,
