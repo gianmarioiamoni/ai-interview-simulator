@@ -31,6 +31,7 @@ class DecisionExplanationGenerator:
         result = self._narrative_service.generate_decision_explanation(
             decision=decision,
             dimensions=dimensions,
+            dimension_signals=dimension_signals,
         )
 
         print("🔥 USING NARRATIVE SERVICE:", type(self._narrative_service))
@@ -43,6 +44,15 @@ class DecisionExplanationGenerator:
         raw_blockers = result.get("blockers") if isinstance(result, dict) else []
 
         drivers = self._normalize_items(raw_drivers)
+        existing_drivers_text = " ".join(drivers).lower()
+
+        filtered_drivers = [
+            d for d in enriched_drivers 
+            if d.lower() not in existing_drivers_text
+        ]
+
+        drivers = drivers + filtered_drivers[:2]
+
         blockers = self._normalize_items(raw_blockers)
 
         # -----------------------------------------------------
@@ -83,7 +93,7 @@ class DecisionExplanationGenerator:
         if dimension_signals:
 
             normalized_signals = {
-                (k.value if hasattr(k, "value") else k): v
+                (k.value.lower() if hasattr(k, "value") else str(k).lower()): v
                 for k, v in dimension_signals.items()
             }
 
@@ -105,6 +115,7 @@ class DecisionExplanationGenerator:
             # -------------------------------------------------
 
             enriched_blockers = []
+            enriched_drivers = []
 
             for dim in dimensions:
 
@@ -122,6 +133,14 @@ class DecisionExplanationGenerator:
 
                 signal_strength = normalized_signals.get(dim_key)
 
+                # -------------------------------------------------
+                # DRIVER ENRICHMENT 
+                # -------------------------------------------------
+                if signal_strength and signal_strength >= 0.8 and dim_score >= 85:
+                    enriched_drivers.append(
+                        f"Consistent strong execution in {dim_name}"
+                    )
+
                 # trigger only if meaningful
                 if dim_score < 75 or (signal_strength and signal_strength >= 0.7):
 
@@ -132,6 +151,7 @@ class DecisionExplanationGenerator:
                     )
 
                     enriched_blockers.append(explanation)
+
 
             # -------------------------------------------------
             # FILTER DUPLICATES (TEXT LEVEL)

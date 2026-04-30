@@ -74,17 +74,19 @@ The candidate shows strong overall performance with minor variation across areas
 There is a noticeable gap between strongest and weakest areas.
 - Clearly highlight strengths and improvement areas
 """
-
+        
         template = PromptLoader.load("narrative/executive_summary.txt")
 
         context = {
             "decision": decision,
             "overall_score": overall_score,
+            "percentile": percentile,
             "strongest": strongest,
             "weakest": weakest,
             "strongest_score": strongest_score,
             "weakest_score": weakest_score,
             "balance_flag": balance_flag,
+            "classification": classification_str,
             "balance_instruction": balance_instruction,
         }
 
@@ -106,7 +108,7 @@ There is a noticeable gap between strongest and weakest areas.
         self,
         decision: str,
         dimensions: List[Dict],
-        dimension_signals: Dict[str, float] = {}, 
+        dimension_signals: Dict[str, float] | None = None, 
     ) -> Dict[str, List[str]]:
 
         print("🔥 NARRATIVE SERVICE CALLED")
