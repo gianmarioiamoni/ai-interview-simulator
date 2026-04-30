@@ -78,10 +78,14 @@ There is a noticeable gap between strongest and weakest areas.
         template = PromptLoader.load("narrative/executive_summary.txt")
 
         context = {
-            "decision": payload["decision"],
-            "overall_score": payload["overall_score"],
-            "strongest": payload["strongest"],
-            "weakest": payload["weakest"],
+            "decision": decision,
+            "overall_score": overall_score,
+            "strongest": strongest,
+            "weakest": weakest,
+            "strongest_score": strongest_score,
+            "weakest_score": weakest_score,
+            "balance_flag": balance_flag,
+            "balance_instruction": balance_instruction,
         }
 
         prompt = PromptRenderer.render(template, context)
@@ -102,8 +106,9 @@ There is a noticeable gap between strongest and weakest areas.
         self,
         decision: str,
         dimensions: List[Dict],
+        dimension_signals: Dict[str, float] = {}, 
     ) -> Dict[str, List[str]]:
-        
+
         print("🔥 NARRATIVE SERVICE CALLED")
         print("🔥 NARRATIVE SERVICE GENERATING DECISION EXPLANATION")
         print("🔥 DECISION:", decision)
@@ -113,9 +118,15 @@ There is a noticeable gap between strongest and weakest areas.
 
         dimensions_str = json.dumps(dimensions, indent=2)
 
+        signals_str = json.dumps(dimension_signals or {}, indent=2)
+
+        tone = self._derive_tone(decision)
+
         context = {
             "decision": decision,
             "dimensions": dimensions_str,
+            "signals": signals_str,
+            "tone": tone,
         }
 
         prompt = PromptRenderer.render(template, context)
@@ -206,3 +217,14 @@ There is a noticeable gap between strongest and weakest areas.
             "drivers": drivers[:2] or ["Overall solid performance"],
             "blockers": blockers[:2] or ["Minor areas for improvement"],
         }
+
+
+    def _derive_tone(self, decision: str) -> str:
+
+        if decision in ["no_hire", "lean_no_hire"]:
+            return "critical"
+
+        if decision in ["hire", "strong_hire"]:
+            return "positive"
+
+        return "balanced"

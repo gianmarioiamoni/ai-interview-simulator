@@ -96,7 +96,7 @@ class InterviewEvaluationService:
         overall_score = scoring.overall_score
 
         # -----------------------------------------------------
-        # SIGNAL EXTRACTION (FIRST!)
+        # SIGNAL EXTRACTION
         # -----------------------------------------------------
 
         dimension_signals = {}
@@ -119,7 +119,6 @@ class InterviewEvaluationService:
                 for k, v in signals.items():
                     dimension_signals[k] = dimension_signals.get(k, 0.0) + v
 
-            # normalize [0,1]
             dimension_signals = {
                 k: round(min(1.0, v), 2) for k, v in dimension_signals.items()
             }
@@ -131,7 +130,7 @@ class InterviewEvaluationService:
             dimension_signals = {}
 
         # -----------------------------------------------------
-        # ENRICHMENT (AFTER SIGNALS)
+        # ENRICHMENT
         # -----------------------------------------------------
 
         ENRICHMENT_ALPHA = 0.3
@@ -151,10 +150,8 @@ class InterviewEvaluationService:
 
         dimension_scores = enriched_scores
 
-        
-
         # -----------------------------------------------------
-        # RECOMPUTE OVERALL SCORE (ALIGNED WITH ENRICHMENT)
+        # RECOMPUTE OVERALL SCORE
         # -----------------------------------------------------
 
         weights = ROLE_WEIGHTS[role]
@@ -165,14 +162,14 @@ class InterviewEvaluationService:
 
             if dim not in weights:
                 raise ValueError(f"Missing weight for dimension: {dim}")
-            
+
             weight = weights[dim]
             weighted_breakdown[dim] = round(score * weight, 2)
 
         overall_score = round(sum(weighted_breakdown.values()), 1)
 
         # -----------------------------------------------------
-        # RECOMPUTE DECISION (ALIGNED WITH ENRICHMENT)
+        # DECISION (BASE)
         # -----------------------------------------------------
 
         hire_decision = self._scoring_engine.recompute_decision_from_scores(
@@ -180,6 +177,29 @@ class InterviewEvaluationService:
             overall_score=overall_score,
             role=role,
         )
+
+        # -----------------------------------------------------
+        # 🔴 GATING RULE (EXPLICIT)
+        # -----------------------------------------------------
+
+        gating_triggered = False
+        gating_reason = None
+
+        system_design_score = next(
+            (
+                score
+                for dim, score in dimension_scores.items()
+                if (dim.value if hasattr(dim, "value") else dim) == "system_design"
+            ),
+            None,
+        )
+
+        if system_design_score is not None and system_design_score < 60:
+            logger.info(f"GATING TRIGGERED: system_design={system_design_score} < 60")
+
+            hire_decision = hire_decision.__class__.LEAN_NO_HIRE
+            gating_triggered = True
+            gating_reason = "system_design_below_threshold"
 
         # -----------------------------------------------------
         # READABLE DIMENSIONS
@@ -200,7 +220,7 @@ class InterviewEvaluationService:
         )
 
         # -----------------------------------------------------
-        # PERCENTILE (NOTE: still based on base scoring)
+        # PERCENTILE
         # -----------------------------------------------------
 
         percentile = scoring.percentile
@@ -277,10 +297,10 @@ class InterviewEvaluationService:
         # -----------------------------------------------------
 
         return InterviewEvaluation(
-            overall_score=overall_score,  # ⚠️ base (coerente con scoring engine)
+            overall_score=overall_score,
             executive_summary=executive_summary,
             performance_dimensions=performance_dimensions,
-            dimension_scores=dimension_scores,  # 🔥 enriched
+            dimension_scores=dimension_scores,
             dimension_signals=dimension_signals,
             level=scoring.level,
             hire_decision=hire_decision,
@@ -288,9 +308,9 @@ class InterviewEvaluationService:
             hiring_probability=scoring.hiring_probability,
             percentile_rank=percentile,
             percentile_explanation=percentile_explanation,
-            gating_triggered=scoring.gating_triggered,
-            gating_reason=scoring.gating_reason,
-            weighted_breakdown=scoring.weighted_breakdown,
+            gating_triggered=gating_triggered,
+            gating_reason=gating_reason,
+            weighted_breakdown=weighted_breakdown,
             per_question_assessment=evaluations,
             improvement_suggestions=improvement_suggestions,
             confidence=confidence,

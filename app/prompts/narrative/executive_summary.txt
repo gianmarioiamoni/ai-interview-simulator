@@ -7,6 +7,8 @@ INPUT:
 - Score: {{ overall_score }}
 - Strongest: {{ strongest }}
 - Weakest: {{ weakest }}
+- Evaluation context: {{ classification }}
+- Guidance: {{ balance_instruction }}
 
 Rules:
 - Always produce a complete answer (never empty)
@@ -23,3 +25,7 @@ LANGUAGE RULES:
   - "area for improvement" for 70–79
   - "moderate gap" for 60–69
 - Keep tone professional and balanced
+
+STYLE RULES:
+- Avoid generic phrases like "valuable asset", "strong foundation"
+- Use concrete, specific wording tied to evaluation data

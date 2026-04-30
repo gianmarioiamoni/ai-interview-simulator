@@ -123,7 +123,7 @@ class DecisionExplanationGenerator:
                 signal_strength = normalized_signals.get(dim_key)
 
                 # trigger only if meaningful
-                if dim_score < 80 or (signal_strength and signal_strength >= 0.5):
+                if dim_score < 75 or (signal_strength and signal_strength >= 0.7):
 
                     explanation = self._build_causal_explanation(
                         dim_name,
