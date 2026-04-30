@@ -37,22 +37,13 @@ class DecisionExplanationGenerator:
         print("🔥 USING NARRATIVE SERVICE:", type(self._narrative_service))
 
         # -----------------------------------------------------
-        # NORMALIZE OUTPUT (CRITICAL)
+        # NORMALIZE OUTPUT
         # -----------------------------------------------------
 
         raw_drivers = result.get("drivers") if isinstance(result, dict) else []
         raw_blockers = result.get("blockers") if isinstance(result, dict) else []
 
         drivers = self._normalize_items(raw_drivers)
-        existing_drivers_text = " ".join(drivers).lower()
-
-        filtered_drivers = [
-            d for d in enriched_drivers 
-            if d.lower() not in existing_drivers_text
-        ]
-
-        drivers = drivers + filtered_drivers[:2]
-
         blockers = self._normalize_items(raw_blockers)
 
         # -----------------------------------------------------
@@ -87,8 +78,11 @@ class DecisionExplanationGenerator:
             }
 
         # -----------------------------------------------------
-        # ENRICH WITH SIGNALS (CAUSAL + DEDUP)
+        # ENRICH WITH SIGNALS (SAFE)
         # -----------------------------------------------------
+
+        enriched_blockers: List[str] = []
+        enriched_drivers: List[str] = []
 
         if dimension_signals:
 
@@ -98,7 +92,7 @@ class DecisionExplanationGenerator:
             }
 
             # -------------------------------------------------
-            # DETECT COVERED DIMENSIONS (LLM already used)
+            # DETECT COVERED DIMENSIONS
             # -------------------------------------------------
 
             covered_dimensions = set()
@@ -114,9 +108,6 @@ class DecisionExplanationGenerator:
             # BUILD ENRICHMENT
             # -------------------------------------------------
 
-            enriched_blockers = []
-            enriched_drivers = []
-
             for dim in dimensions:
 
                 dim_name = dim.get("name")
@@ -127,22 +118,21 @@ class DecisionExplanationGenerator:
 
                 dim_key = dim_name.lower().replace(" ", "_")
 
-                # skip if already covered by LLM
                 if dim_name.lower() in covered_dimensions:
                     continue
 
                 signal_strength = normalized_signals.get(dim_key)
 
-                # -------------------------------------------------
-                # DRIVER ENRICHMENT 
-                # -------------------------------------------------
+                # DRIVER enrichment (solo per top performance reale)
                 if signal_strength and signal_strength >= 0.8 and dim_score >= 85:
                     enriched_drivers.append(
                         f"Consistent strong execution in {dim_name}"
                     )
 
-                # trigger only if meaningful
-                if dim_score < 75 or (signal_strength and signal_strength >= 0.7):
+                # BLOCKER enrichment (più restrittivo)
+                if dim_score < 75 or (
+                    signal_strength and signal_strength >= 0.7 and dim_score < 80
+                ):
 
                     explanation = self._build_causal_explanation(
                         dim_name,
@@ -152,25 +142,12 @@ class DecisionExplanationGenerator:
 
                     enriched_blockers.append(explanation)
 
+        # -----------------------------------------------------
+        # MERGE + DEDUP
+        # -----------------------------------------------------
 
-            # -------------------------------------------------
-            # FILTER DUPLICATES (TEXT LEVEL)
-            # -------------------------------------------------
-
-            existing_blockers_text = " ".join(blockers).lower()
-
-            filtered_blockers = [
-                b for b in enriched_blockers if b.lower() not in existing_blockers_text
-            ]
-
-            # -------------------------------------------------
-            # LIMIT (UX)
-            # -------------------------------------------------
-
-            filtered_blockers = filtered_blockers[:2]
-
-            if filtered_blockers:
-                blockers = blockers + filtered_blockers
+        drivers = self._dedupe(drivers + enriched_drivers)[:3]
+        blockers = self._dedupe(blockers + enriched_blockers)[:3]
 
         # -----------------------------------------------------
         # FINAL
@@ -203,6 +180,23 @@ class DecisionExplanationGenerator:
                     normalized.append(text)
 
         return normalized
+
+    # ---------------------------------------------------------
+    # DEDUP
+    # ---------------------------------------------------------
+
+    def _dedupe(self, items: List[str]) -> List[str]:
+
+        seen = set()
+        result = []
+
+        for item in items:
+            key = item.lower().strip()
+            if key not in seen:
+                seen.add(key)
+                result.append(item)
+
+        return result
 
     # ---------------------------------------------------------
     # CAUSAL EXPLANATION BUILDER
