@@ -4,7 +4,7 @@ from typing import Dict, Tuple, Optional
 import logging
 
 from domain.contracts.user.role import RoleType
-from domain.contracts.interview.hiring_decision import HiringDecision
+from domain.contracts.interview.hire_decision import HireDecision
 
 from services.decision_engine.decision_policy import POLICY
 
@@ -22,7 +22,7 @@ class DecisionEngine:
         dimension_scores: Dict,
         overall_score: float,
         role: RoleType,
-    ) -> Tuple[HiringDecision, float, bool, Optional[str]]:
+    ) -> Tuple[HireDecision, float, bool, Optional[str]]:
 
         thresholds = POLICY["decision_thresholds"]
         rules = POLICY["dimension_rules"]
@@ -89,29 +89,29 @@ class DecisionEngine:
         self,
         score: float,
         thresholds: Dict[str, float],
-    ) -> HiringDecision:
+    ) -> HireDecision:
 
         if score >= thresholds["HIRE"]:
-            return HiringDecision.HIRE
+            return HireDecision.HIRE
         elif score >= thresholds["LEAN_HIRE"]:
-            return HiringDecision.LEAN_HIRE
+            return HireDecision.LEAN_HIRE
         elif score >= thresholds["LEAN_NO_HIRE"]:
-            return HiringDecision.LEAN_NO_HIRE
+            return HireDecision.LEAN_NO_HIRE
         else:
-            return HiringDecision.NO_HIRE
+            return HireDecision.NO_HIRE
 
     # ---------------------------------------------------------
     # DOWNGRADE
     # ---------------------------------------------------------
 
-    def _downgrade(self, decision: HiringDecision) -> HiringDecision:
+    def _downgrade(self, decision: HireDecision) -> HireDecision:
 
-        if decision == HiringDecision.HIRE:
-            return HiringDecision.LEAN_HIRE
-        elif decision == HiringDecision.LEAN_HIRE:
-            return HiringDecision.LEAN_NO_HIRE
-        elif decision == HiringDecision.LEAN_NO_HIRE:
-            return HiringDecision.NO_HIRE
+        if decision == HireDecision.HIRE:
+            return HireDecision.LEAN_HIRE
+        elif decision == HireDecision.LEAN_HIRE:
+            return HireDecision.LEAN_NO_HIRE
+        elif decision == HireDecision.LEAN_NO_HIRE:
+            return HireDecision.NO_HIRE
 
         return decision
 
