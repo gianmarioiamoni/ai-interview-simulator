@@ -20,7 +20,7 @@ def render_overall(report):
 <tr>
 <td><strong>Overall Score</strong><br>{score_badge(report.overall_score)}</td>
 <td><strong>Hiring Decision</strong><br>{decision_badge}</td>
-<td><strong>Hiring Probability</strong><br>{score_badge(report.hiring_probability)}</td>
+<td><strong>Hiring Confidence Score</strong><br>{score_badge(report.hiring_probability)}</td>
 </tr>
 </table>
 

@@ -5,6 +5,16 @@ Decision: {{ decision }}
 Candidate performance by dimension:
 {{ dimensions }}
 
+Execution signals:
+{{ signals }}
+
+Tone: {{ tone }}
+
+Interpretation rules:
+- critical → emphasize blockers and risks
+- balanced → balanced analysis
+- positive → emphasize strengths
+
 TASK:
 Explain the hiring decision in terms of DRIVERS and BLOCKERS.
 
