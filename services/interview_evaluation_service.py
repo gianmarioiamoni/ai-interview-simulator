@@ -208,11 +208,19 @@ class InterviewEvaluationService:
         )
 
         if system_design_score is not None and system_design_score < 60:
-            logger.info(f"GATING TRIGGERED: system_design={system_design_score} < 60")
+            logger.info("SOFT GATING APPLIED: system_design penalty")
 
-            hire_decision = hire_decision.__class__.LEAN_NO_HIRE
+            # penalty
+            overall_score = round(overall_score * 0.85, 1)
+
+            # downgrade decision
+            if hire_decision.name.lower() == "hire":
+                hire_decision = hire_decision.__class__.LEAN_HIRE
+            elif hire_decision.name.lower() == "lean_hire":
+                hire_decision = hire_decision.__class__.LEAN_NO_HIRE
+
             gating_triggered = True
-            gating_reason = "system_design_below_threshold"
+            gating_reason = "systsystem_design_penalty"
 
         # -----------------------------------------------------
         # READABLE DIMENSIONS
