@@ -74,7 +74,7 @@ The candidate shows strong overall performance with minor variation across areas
 There is a noticeable gap between strongest and weakest areas.
 - Clearly highlight strengths and improvement areas
 """
-        
+        tone = self._derive_tone(decision)
         template = PromptLoader.load("narrative/executive_summary.txt")
 
         context = {
@@ -85,9 +85,9 @@ There is a noticeable gap between strongest and weakest areas.
             "weakest": weakest,
             "strongest_score": strongest_score,
             "weakest_score": weakest_score,
-            "balance_flag": balance_flag,
             "classification": classification_str,
             "balance_instruction": balance_instruction,
+            "tone": tone,
         }
 
         prompt = PromptRenderer.render(template, context)
