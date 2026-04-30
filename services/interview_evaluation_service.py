@@ -119,6 +119,7 @@ class InterviewEvaluationService:
                 for k, v in signals.items():
                     dimension_signals[k] = dimension_signals.get(k, 0.0) + v
 
+            # normalize
             dimension_signals = {
                 k: round(min(1.0, v), 2) for k, v in dimension_signals.items()
             }
@@ -134,7 +135,6 @@ class InterviewEvaluationService:
         # -----------------------------------------------------
 
         ENRICHMENT_ALPHA = 0.3
-
         enriched_scores = {}
 
         for dim, base_score in base_dimension_scores.items():
@@ -151,19 +151,32 @@ class InterviewEvaluationService:
         dimension_scores = enriched_scores
 
         # -----------------------------------------------------
-        # RECOMPUTE OVERALL SCORE
+        # FIX: NORMALIZED WEIGHTS
         # -----------------------------------------------------
 
         weights = ROLE_WEIGHTS[role]
+
+        valid_weights = {
+            dim: weight for dim, weight in weights.items() if dim in dimension_scores
+        }
+
+        total_weight = sum(valid_weights.values())
+
+        if total_weight == 0:
+            raise ValueError("Total weight is zero after filtering dimensions")
+
+        normalized_weights = {
+            dim: weight / total_weight for dim, weight in valid_weights.items()
+        }
 
         weighted_breakdown = {}
 
         for dim, score in dimension_scores.items():
 
-            if dim not in weights:
-                raise ValueError(f"Missing weight for dimension: {dim}")
+            if dim not in normalized_weights:
+                continue
 
-            weight = weights[dim]
+            weight = normalized_weights[dim]
             weighted_breakdown[dim] = round(score * weight, 2)
 
         overall_score = round(sum(weighted_breakdown.values()), 1)
@@ -179,7 +192,7 @@ class InterviewEvaluationService:
         )
 
         # -----------------------------------------------------
-        # 🔴 GATING RULE (EXPLICIT)
+        # GATING RULE (EXPLICIT)
         # -----------------------------------------------------
 
         gating_triggered = False
