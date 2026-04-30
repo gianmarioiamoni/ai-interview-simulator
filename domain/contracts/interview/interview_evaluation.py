@@ -13,6 +13,9 @@ from domain.contracts.interview.hire_decision import HireDecision
 class InterviewEvaluation(BaseModel):
 
     overall_score: float = Field(..., ge=0.0, le=100.0)
+    raw_score: float | None = None
+    adjusted_score: float | None = None
+    
     executive_summary: str = Field(..., min_length=1)
 
     performance_dimensions: List[PerformanceDimension]
