@@ -1,7 +1,6 @@
 # app/ui/builders/ui_response_builder.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.feedback.quality import Quality
 from domain.contracts.question.question import QuestionType
 
 from app.ui.dto.interview_session_dto import InterviewSessionDTO
@@ -14,9 +13,6 @@ from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from app.ui.response.sections.display_section import DisplaySection
 from app.ui.response.sections.feedback_section import FeedbackSection
 from app.ui.response.sections.counter_section import CounterSection
-
-from app.ui.response.config.visibility_mapper import VisibilityMapper
-from app.ui.response.config.editor_mapper import EditorMapper
 from app.ui.response.config.button_mapper import ButtonMapper
 
 MAX_ATTEMPTS = 3
@@ -24,15 +20,11 @@ MAX_ATTEMPTS = 3
 
 class UIResponseBuilder:
 
-    # =========================================================
-    # PUBLIC API
-    # =========================================================
-
     def build(self, state: InterviewState) -> UIResponse:
 
         mapper = InterviewStateMapper()
         session_dto = mapper.to_session_dto(state)
-        
+
         ui_state = UIStateMachine.resolve(state)
 
         if ui_state == UIState.SETUP:
@@ -49,18 +41,23 @@ class UIResponseBuilder:
 
         raise RuntimeError(f"Unsupported UI state: {ui_state}")
 
-    # =========================================================
-    # STATIC STATES
-    # =========================================================
+    # ---------------------------------------------------------
+    # SETUP
+    # ---------------------------------------------------------
 
     def _build_setup(self, state: InterviewState) -> UIResponse:
         return UIResponse(
             state=state,
-            ui_state=UIState.SETUP,
             show_submit=False,
             show_retry=False,
             show_next=False,
+            question_counter="",
+            feedback_markdown="",
         )
+
+    # ---------------------------------------------------------
+    # REPORT
+    # ---------------------------------------------------------
 
     def _build_report(self, state: InterviewState) -> UIResponse:
 
@@ -70,25 +67,27 @@ class UIResponseBuilder:
 
         return UIResponse(
             state=state,
-            ui_state=UIState.REPORT,
             report_output=report_md,
             show_submit=False,
             show_retry=False,
             show_next=False,
         )
 
+    # ---------------------------------------------------------
+    # COMPLETION
+    # ---------------------------------------------------------
+
     def _build_completion(self, state: InterviewState) -> UIResponse:
         return UIResponse(
             state=state,
-            ui_state=UIState.COMPLETION,
             show_submit=False,
             show_retry=False,
             show_next=False,
         )
 
-    # =========================================================
+    # ---------------------------------------------------------
     # QUESTION / FEEDBACK
-    # =========================================================
+    # ---------------------------------------------------------
 
     def _build_question(
         self,
@@ -100,67 +99,76 @@ class UIResponseBuilder:
         question = session_dto.current_question
 
         if question is None:
-            raise RuntimeError("UI attempted to render question but none exists")
+            raise RuntimeError("No question available")
 
         attempts = state.get_attempt_for_question(question.question_id)
-        has_previous_answer = attempts > 0
         can_retry = attempts < MAX_ATTEMPTS
 
         last_answer = state.get_latest_answer_for_question(question.question_id)
 
+        # -------------------------
+        # EDITOR VALUE
+        # -------------------------
+
         editor_value = ""
 
-        if last_answer and last_answer.question_id == question.question_id:
+        if last_answer:
             editor_value = last_answer.content
-
-        if not editor_value and question.type == QuestionType.CODING:
+        elif question.type == QuestionType.CODING:
             editor_value = "# Write your solution here"
+        elif question.type == QuestionType.DATABASE:
+            editor_value = "-- Write your SQL query here"
 
-        # -----------------------------------------------------
-        # FEEDBACK FIRST (important)
-        # -----------------------------------------------------
-
-        feedback_markdown = FeedbackSection.build(state)
-        feedback_bundle = getattr(state, "last_feedback_bundle", None)
-
-        if feedback_bundle:
-            print("QUALITY DEBUG:", feedback_bundle.overall_quality)
-
-        # -----------------------------------------------------
-        # OTHER SECTIONS
-        # -----------------------------------------------------
+        # -------------------------
+        # DISPLAY
+        # -------------------------
 
         display = DisplaySection.build(
             state,
             question,
             ui_state,
-            has_previous_answer,
+            attempts > 0,
         )
+
+        written_display = display.get("written_display", "")
+        coding_display = display.get("coding_display", "")
+        database_display = display.get("database_display", "")
+
+        # -------------------------
+        # FEEDBACK
+        # -------------------------
+
+        feedback_markdown = FeedbackSection.build(state)
+
+        # -------------------------
+        # COUNTER
+        # -------------------------
 
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
 
-        # -----------------------------------------------------
-        # CONFIG
-        # -----------------------------------------------------
+        # -------------------------
+        # BUTTONS
+        # -------------------------
 
-        visibility = VisibilityMapper.map(question)
-        editors = EditorMapper.map(question, ui_state)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
-
-        # -----------------------------------------------------
-        # RESPONSE
-        # -----------------------------------------------------
 
         return UIResponse(
             state=state,
+            # HEADER
             question_counter=counter,
+            # FEEDBACK
             feedback_markdown=feedback_markdown,
-            feedback_quality = feedback_bundle.overall_quality if feedback_bundle else None,
-            ui_state=ui_state,
-            **buttons,
-            **display,
-            **visibility,
-            **editors,
+            # DISPLAY
+            written_display=written_display,
+            coding_display=coding_display,
+            database_display=database_display,
+            # BUTTONS
+            show_submit=buttons["show_submit"],
+            show_submit_interactive=buttons["show_submit_interactive"],
+            show_retry=buttons["show_retry"],
+            show_next=buttons["show_next"],
+            next_label=buttons["next_label"],
+            # EDITORS
             written_editor_value=(
                 editor_value if question.type == QuestionType.WRITTEN else ""
             ),
