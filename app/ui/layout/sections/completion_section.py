@@ -5,7 +5,7 @@ import gradio as gr
 
 def render_completion_section():
 
-    with gr.Column(visible=False) as completion_section:
+    with gr.Group(visible=False) as completion_section:
 
         gr.Markdown("## Interview Completed")
 

@@ -5,7 +5,7 @@ import gradio as gr
 
 def render_report_section():
 
-    with gr.Column(visible=False) as report_section:
+    with gr.Group(visible=False) as report_section:
 
         report_output = gr.HTML("")
 
