@@ -74,6 +74,15 @@ class UIResponse:
     # OUTPUT MAPPING (STRICT CONTRACT)
     # ---------------------------------------------------------
     def to_gradio_outputs(self) -> List[Any]:
+        print("\n=== UI RESPONSE OUTPUT ===")
+        print("question_counter:", self.question_counter)
+        print("written_display:", bool(self.written_display))
+        print("coding_display:", bool(self.coding_display))
+        print("database_display:", bool(self.database_display))
+        print("show_submit:", self.show_submit)
+        print("show_retry:", self.show_retry)
+        print("show_next:", self.show_next)
+        print("==========================\n")
 
         return [
             # -------------------------------------------------
