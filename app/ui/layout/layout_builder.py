@@ -17,14 +17,14 @@ class UILayoutBuilder:
         state = gr.State()
 
         # ---------------------------------------------------------
-        # HEADER (ripristinato)
+        # HEADER
         # ---------------------------------------------------------
         gr.Markdown("# AI Interview Simulator")
         gr.Markdown("Build: 2026-03-16-A | Runtime: HuggingFace Spaces")
         gr.Markdown("---")
 
         # ---------------------------------------------------------
-        # SETUP INPUTS (CORRETTI E DINAMICI)
+        # SETUP
         # ---------------------------------------------------------
         gr.Markdown("## Configure Your Interview")
 
@@ -49,12 +49,13 @@ class UILayoutBuilder:
             label="Language",
         )
 
-        start_button = gr.Button("Start Interview")
+        # ✅ FIX: disabled di default
+        start_button = gr.Button("Start Interview", interactive=False)
 
         gr.Markdown("---")
 
         # ---------------------------------------------------------
-        # HEADER (QUESTION)
+        # QUESTION HEADER
         # ---------------------------------------------------------
         question_counter = gr.Markdown("")
         feedback_output = gr.Markdown("")
@@ -87,13 +88,13 @@ class UILayoutBuilder:
         report_output = gr.Markdown("")
 
         # ---------------------------------------------------------
-        # GLOBAL LOADER
+        # LOADER
         # ---------------------------------------------------------
         global_loader = gr.Markdown("", visible=False)
 
         return UILayoutComponents(
             state=state,
-            # SETUP INPUTS
+            # SETUP
             role_input=role_input,
             interview_type_input=interview_type_input,
             company_input=company_input,

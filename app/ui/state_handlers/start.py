@@ -1,4 +1,4 @@
-# app/ui/state_handlers/start.py
+## app/ui/state_handlers/start.py
 
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import RoleType
@@ -13,16 +13,14 @@ from services.question_intelligence.question_intelligence_provider import (
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
-from app.runtime.interview_runtime import run_interview_graph
-from app.runtime.interview_runtime import get_runtime_llm
-
+from app.runtime.interview_runtime import run_interview_graph, get_runtime_llm
 from app.settings.constants import QUESTIONS_PER_AREA
 
 
 def start_interview(role: str, interview_type: str, company: str, language: str):
 
     # -----------------------------------------------------
-    # SAFE ENUM MAPPING (FIX DEFINITIVO)
+    # SAFE ENUM MAPPING
     # -----------------------------------------------------
     try:
         role_type = RoleType(role)
@@ -83,11 +81,9 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     new_state = run_interview_graph(state)
 
     print("\n=== START INTERVIEW DEBUG ===")
-    print("current_question_id:", new_state.current_question.id)
+    print("current_question_id:", getattr(new_state.current_question, "id", None))
     print("allowed_actions:", new_state.allowed_actions)
     print("is_completed:", new_state.is_completed)
     print("================================\n")
 
-    response = build_ui_response_from_state(new_state)
-
-    return response
+    return build_ui_response_from_state(new_state)
