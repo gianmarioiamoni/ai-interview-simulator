@@ -43,17 +43,9 @@ class ButtonMapper:
 
         quality = ButtonMapper._get_quality(state)
 
-        # =====================================================
-        # QUALITY FLAGS
-        # =====================================================
-
         is_correct = quality.is_at_least(Quality.CORRECT)
         is_partial = quality == Quality.PARTIAL
         is_incorrect = quality == Quality.INCORRECT
-
-        # =====================================================
-        # BASE ACTION FLAGS (from graph)
-        # =====================================================
 
         can_next_action = (
             ActionType.NEXT in actions or ActionType.GENERATE_REPORT in actions
@@ -61,16 +53,13 @@ class ButtonMapper:
 
         can_retry_action = ActionType.RETRY in actions and can_retry
 
-        # =====================================================
-        # FINAL VISIBILITY
-        # =====================================================
-
         show_retry = False
         show_next = False
 
         if is_incorrect:
-            show_retry = ActionType.RETRY in actions and can_retry
-            show_next = ActionType.NEXT in actions or ActionType.GENERATE_REPORT in actions
+            show_retry = can_retry_action
+            show_next = can_next_action
+
         elif is_partial:
             show_retry = can_retry_action
             show_next = can_next_action
@@ -78,36 +67,22 @@ class ButtonMapper:
         elif is_correct:
             show_next = can_next_action
 
-            # allow retry if not perfect score
             score = ButtonMapper._get_score(state)
-            should_allow_retry = score < 100 and can_retry_action
-
-            if should_allow_retry:
+            if score < 100 and can_retry_action:
                 show_retry = True
 
         else:
-            # fallback safe behavior
             show_retry = can_retry_action
             show_next = can_next_action
 
-        # =====================================================
-        # LABEL LOGIC
-        # =====================================================
-
         if ActionType.GENERATE_REPORT in actions:
             next_label = "📊 Generate Final Report"
-
         elif show_next:
             next_label = ButtonMapper._next_label(quality)
-
         else:
             next_label = ""
 
         retry_label = ButtonMapper._retry_label(quality) if show_retry else ""
-
-        # =====================================================
-        # OUTPUT
-        # =====================================================
 
         return {
             "show_submit": False,
@@ -158,8 +133,6 @@ class ButtonMapper:
         return "Retry"
 
     # =========================================================
-    # SCORE EXTRACTION (METADATA FIRST)
-    # =========================================================
 
     @staticmethod
     def _get_score(state: InterviewState) -> float:
@@ -173,11 +146,9 @@ class ButtonMapper:
 
             if b.title == "Score":
 
-                # structured metadata (preferred)
                 if hasattr(b, "metadata") and b.metadata:
                     return float(b.metadata.get("score", 0.0))
 
-                # fallback (backward compatibility)
                 match = re.search(r"(\d+)", b.content)
                 if match:
                     return float(match.group(1))
