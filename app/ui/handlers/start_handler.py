@@ -1,40 +1,32 @@
 # app/ui/handlers/start_handler.py
 
-import gradio as gr
-
 from app.ui.state_handlers import start_interview
+from app.ui.utils.loading_utils import show_loader, hide_loader
 
 
 def start_handler(role, interview_type, company, language):
 
-    # STEP 1 → show loader WITHOUT changing view
-    yield (
-        None,
-        "",
-        "",
-        "",
-        "",
-        "",
-        gr.update(),
-        gr.update(),
-        gr.update(),
-        gr.update(visible=True),  # setup_section still visible
-        gr.update(visible=False),  # interview_section still hidden
-        gr.update(),
-        gr.update(),
-        "",
-        "",
-        gr.update(),
-        gr.update(),
-        gr.update(),
-        "",
-        "",
-        "",
-        # loader 
-        gr.update(value="⏳ Generating interview. It can takes a few minutes. Please wait...", visible=True),
+    # -------------------------------------------------
+    # STEP 1 — SHOW LOADER (NO UI CHANGES)
+    # -------------------------------------------------
+
+    # idle updates for all outputs
+    # (None = do not modify anything)
+    base = [None] * (len(response.to_gradio_outputs()) - 1)
+
+    yield tuple(
+        [
+            *base,
+            show_loader(
+                "⏳ Generating interview. It can take a few minutes. Please wait..."
+            ),
+        ]
     )
 
-    # STEP 2 → real logic
+    # -------------------------------------------------
+    # STEP 2 — EXECUTE LOGIC
+    # -------------------------------------------------
+
     response = start_interview(
         role=role,
         interview_type=interview_type,
@@ -42,9 +34,13 @@ def start_handler(role, interview_type, company, language):
         language=language,
     )
 
-    # STEP 3 → Final UI + hide loader
+    # -------------------------------------------------
+    # STEP 3 — FINAL UI + HIDE LOADER
+    # -------------------------------------------------
+
     outputs = list(response.to_gradio_outputs())
 
-    outputs.append(gr.update(value="", visible=False))
+    # loader è sempre ultimo
+    outputs[-1] = hide_loader()
 
     yield tuple(outputs)

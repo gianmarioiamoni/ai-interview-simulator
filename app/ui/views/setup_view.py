@@ -5,16 +5,17 @@ import gradio as gr
 from domain.contracts.user.role import RoleType
 from domain.contracts.interview.interview_type import InterviewType
 
+from app.ui.layout.assets.CSS import LOADER_STYLE
+
 
 class SetupView:
-    # Responsible ONLY for rendering setup UI.
-    # No controller logic here.
 
     def render(self):
 
         gr.Markdown("## Configure Your Interview")
 
-        # Role dropdown
+        gr.HTML(LOADER_STYLE)
+
         role_dropdown = gr.Dropdown(
             choices=[(r.name.replace("_", " "), r.name) for r in RoleType],
             label="Role",
@@ -38,7 +39,8 @@ class SetupView:
 
         start_button = gr.Button("Start Interview", interactive=False)
 
-        start_loading_text = gr.Markdown("", visible=False, elem_id="start-loading-text")
+        # now HTML instead of Markdown
+        start_loading_text = gr.HTML("", visible=False)
 
         return (
             role_dropdown,

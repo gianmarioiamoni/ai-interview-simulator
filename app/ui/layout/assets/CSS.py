@@ -25,3 +25,33 @@ FEEDBACK_BOX_STYLE = """
 }
 </style>
 """
+
+LOADER_STYLE = """
+<style>
+.loader-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.loader-bar {
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite linear;
+    border-radius: 4px;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.loader-text {
+    font-size: 14px;
+    color: #aaa;
+}
+</style>
+"""
