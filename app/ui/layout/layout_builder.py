@@ -4,40 +4,68 @@ import gradio as gr
 
 from app.ui.layout.ui_components import UILayoutComponents
 
-from .sections.header_section import render_header
-from .sections.setup_section import render_setup_section
-from .sections.interview_section import render_interview_section
-from .sections.completion_section import render_completion_section
-from .sections.report_section import render_report_section
-
 
 class UILayoutBuilder:
 
     def build(self):
 
-        render_header()
-
+        # ---------------------------------------------------------
         # STATE
+        # ---------------------------------------------------------
         state = gr.State()
 
-        # GLOBAL LOADER
-        global_loader = gr.Markdown(
-            "",
-            visible=False,
-            elem_id="global-loader",
-        )
+        # ---------------------------------------------------------
+        # HEADER
+        # ---------------------------------------------------------
+        question_counter = gr.Markdown("")
+        feedback_output = gr.Markdown("")
 
-        # SECTIONS
-        setup = render_setup_section()
-        interview = render_interview_section()
-        completion = render_completion_section()
-        report = render_report_section()
+        # ---------------------------------------------------------
+        # DISPLAY (UNIFIED)
+        # ---------------------------------------------------------
+        written_display = gr.Markdown("")
+        coding_display = gr.Code(language="python", interactive=False)
+        database_display = gr.Code(language="sql", interactive=False)
+
+        # ---------------------------------------------------------
+        # EDITORS
+        # ---------------------------------------------------------
+        written_box = gr.Textbox(label="Your Answer", lines=5)
+        coding_box = gr.Code(language="python", lines=20)
+        database_box = gr.Code(language="sql", lines=10)
+
+        # ---------------------------------------------------------
+        # BUTTONS
+        # ---------------------------------------------------------
+        submit_button = gr.Button("Submit", visible=False)
+        retry_button = gr.Button("Retry", visible=False)
+        next_button = gr.Button("Next", visible=False)
+
+        # ---------------------------------------------------------
+        # REPORT
+        # ---------------------------------------------------------
+        final_feedback = gr.Markdown("")
+        report_output = gr.Markdown("")
+
+        # ---------------------------------------------------------
+        # LOADER
+        # ---------------------------------------------------------
+        global_loader = gr.Markdown("", visible=False)
 
         return UILayoutComponents(
             state=state,
+            question_counter=question_counter,
+            feedback_output=feedback_output,
+            written_display=written_display,
+            coding_display=coding_display,
+            database_display=database_display,
+            written_box=written_box,
+            coding_box=coding_box,
+            database_box=database_box,
+            submit_button=submit_button,
+            retry_button=retry_button,
+            next_button=next_button,
+            final_feedback=final_feedback,
+            report_output=report_output,
             global_loader=global_loader,
-            **setup,
-            **interview,
-            **completion,
-            **report,
         )
