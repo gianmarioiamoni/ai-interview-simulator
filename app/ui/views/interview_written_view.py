@@ -5,21 +5,11 @@ import gradio as gr
 
 class InterviewWrittenView:
 
-    # Build UI components for written questions
-
     def build(self):
 
-        with gr.Column(visible=False) as container:
-
-            # ---------------------------------------------------------
-            # Display (question OR user answer)
-            # ---------------------------------------------------------
+        with gr.Group(visible=False) as container:  # ✅ FIX
 
             question_display = gr.Markdown("")
-
-            # ---------------------------------------------------------
-            # Input editor (only in QUESTION state)
-            # ---------------------------------------------------------
 
             answer_box = gr.Textbox(
                 label="Your Answer",
