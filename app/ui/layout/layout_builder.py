@@ -1,5 +1,3 @@
-# app/ui/layout/layout_builder.py
-
 import gradio as gr
 
 from app.ui.layout.ui_components import UILayoutComponents
@@ -17,15 +15,34 @@ class UILayoutBuilder:
 
         render_header()
 
+        # ---------------------------------------------------------
+        # STATE
+        # ---------------------------------------------------------
         state = gr.State()
 
+        # ---------------------------------------------------------
+        # GLOBAL LOADER (CENTRALIZED)
+        # ---------------------------------------------------------
+        global_loader = gr.Markdown(
+            "",
+            visible=False,
+            elem_id="global-loader",
+        )
+
+        # ---------------------------------------------------------
+        # SECTIONS
+        # ---------------------------------------------------------
         setup = render_setup_section()
         interview = render_interview_section()
         completion = render_completion_section()
         report = render_report_section()
 
+        # ---------------------------------------------------------
+        # COMPONENTS
+        # ---------------------------------------------------------
         return UILayoutComponents(
             state=state,
+            global_loader=global_loader,
             **setup,
             **interview,
             **completion,
