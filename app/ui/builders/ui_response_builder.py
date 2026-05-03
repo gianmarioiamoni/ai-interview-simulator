@@ -48,6 +48,10 @@ class UIResponseBuilder:
     def _build_setup(self, state: InterviewState) -> UIResponse:
         return UIResponse(
             state=state,
+            setup_visible=True,
+            interview_visible=False,
+            completion_visible=False,
+            report_visible=False,
             show_submit=False,
             show_retry=False,
             show_next=False,
@@ -67,6 +71,10 @@ class UIResponseBuilder:
 
         return UIResponse(
             state=state,
+            setup_visible=False,
+            interview_visible=False,
+            completion_visible=False,
+            report_visible=True,
             report_output=report_md,
             show_submit=False,
             show_retry=False,
@@ -80,6 +88,10 @@ class UIResponseBuilder:
     def _build_completion(self, state: InterviewState) -> UIResponse:
         return UIResponse(
             state=state,
+            setup_visible=False,
+            interview_visible=False,
+            completion_visible=True,
+            report_visible=False,
             show_submit=False,
             show_retry=False,
             show_next=False,
@@ -154,6 +166,11 @@ class UIResponseBuilder:
 
         return UIResponse(
             state=state,
+            # 🔥 CRUCIALE: SWITCH VIEW
+            setup_visible=False,
+            interview_visible=True,
+            completion_visible=False,
+            report_visible=False,
             # HEADER
             question_counter=counter,
             # FEEDBACK

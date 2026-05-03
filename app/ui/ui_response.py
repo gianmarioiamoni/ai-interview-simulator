@@ -16,6 +16,14 @@ class UIResponse:
     state: object
 
     # ---------------------------------------------------------
+    # SECTION VISIBILITY (CRUCIAL)
+    # ---------------------------------------------------------
+    setup_visible: bool = True
+    interview_visible: bool = False
+    completion_visible: bool = False
+    report_visible: bool = False
+
+    # ---------------------------------------------------------
     # HEADER
     # ---------------------------------------------------------
     question_counter: str = ""
@@ -72,6 +80,13 @@ class UIResponse:
             # STATE
             # -------------------------------------------------
             self.state,
+            # -------------------------------------------------
+            # SECTION VISIBILITY (ORDER MUST MATCH OUTPUTS BUILDER)
+            # -------------------------------------------------
+            gr.update(visible=self.setup_visible),
+            gr.update(visible=self.interview_visible),
+            gr.update(visible=self.completion_visible),
+            gr.update(visible=self.report_visible),
             # -------------------------------------------------
             # HEADER / FEEDBACK
             # -------------------------------------------------
