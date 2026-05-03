@@ -68,6 +68,12 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     # -----------------------------------------------------
 
     new_state = run_interview_graph(state)
+
+    print("\n=== START INTERVIEW DEBUG ===")
+    print("current_question_id:", new_state.current_question.id)
+    print("allowed_actions:", new_state.allowed_actions)
+    print("is_completed:", new_state.is_completed)
+    print("================================\n")
     response = build_ui_response_from_state(new_state)
 
     return response

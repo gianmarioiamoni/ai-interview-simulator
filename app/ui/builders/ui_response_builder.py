@@ -116,6 +116,12 @@ class UIResponseBuilder:
         attempts = state.get_attempt_for_question(question.question_id)
         can_retry = attempts < MAX_ATTEMPTS
 
+        print("\n=== BUILD QUESTION ===")
+        print("question type:", question.type)
+        print("attempts:", attempts)
+        print("can_retry:", can_retry)
+        print("========================\n")
+
         last_answer = state.get_latest_answer_for_question(question.question_id)
 
         # -------------------------
