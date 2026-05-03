@@ -94,67 +94,43 @@ class UIResponse:
         print("==========================\n")
 
         return [
-            # -------------------------------------------------
             # STATE
-            # -------------------------------------------------
             self.state,
-            # -------------------------------------------------
-            # SECTION VISIBILITY (ORDER MUST MATCH OUTPUTS BUILDER)
-            # -------------------------------------------------
+
+            # HEADER / FEEDBACK
+            self.question_counter,
+            gr.update(value=self.feedback_markdown),
+
+            # DISPLAY
+            self.written_display,
+            self.coding_display,
+            self.database_display,
+            
+            # REPORT
+            self.final_feedback,
+            self.report_output,
+            
+            # SECTION VISIBILITY 
             gr.update(visible=self.setup_visible),
             gr.update(visible=self.interview_visible),
             gr.update(visible=self.completion_visible),
             gr.update(visible=self.report_visible),
-            # -------------------------------------------------
-            # HEADER / FEEDBACK
-            # -------------------------------------------------
-            self.question_counter,
-            gr.update(value=self.feedback_markdown),
-            # -------------------------------------------------
-            # DISPLAY
-            # -------------------------------------------------
-            self.written_display,
-            self.coding_display,
-            self.database_display,
-            # -------------------------------------------------
-            # REPORT
-            # -------------------------------------------------
-            self.final_feedback,
-            self.report_output,
-            # -------------------------------------------------
-            # CONTAINERS VISIBILITY
-            # -------------------------------------------------
-            gr.update(visible=self.setup_visible),
-            gr.update(visible=self.interview_visible),
+
+            # QUESTION TYPE VISIBILITY
             gr.update(visible=self.written_visible),
             gr.update(visible=self.coding_visible),
             gr.update(visible=self.database_visible),
-            # -------------------------------------------------
+
             # BUTTONS
-            # -------------------------------------------------
-            gr.update(
-                visible=self.show_submit,
-                interactive=self.show_submit_interactive,
-            ),
-            gr.update(
-                visible=self.show_retry,
-                interactive=self.retry_interactive,
-            ),
-            gr.update(
-                visible=self.show_next,
-                value=self.next_label,
-            ),
-            # -------------------------------------------------
+            gr.update(visible=self.show_submit, interactive=self.show_submit_interactive),
+            gr.update(visible=self.show_retry, interactive=self.retry_interactive),
+            gr.update(visible=self.show_next, value=self.next_label),
+
             # EDITORS
-            # -------------------------------------------------
             gr.update(value=self.written_editor_value),
             gr.update(value=self.coding_editor_value),
             gr.update(value=self.database_editor_value),
-            # -------------------------------------------------
-            # GLOBAL LOADER (ALWAYS LAST)
-            # -------------------------------------------------
-            gr.update(
-                visible=self.loader_visible,
-                value=self.loader_value,
-            ),
+
+            # LOADER
+            gr.update(visible=self.loader_visible, value=self.loader_value),
         ]
