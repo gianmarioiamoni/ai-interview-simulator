@@ -48,6 +48,15 @@ class UIResponse:
     report_output: str = ""
 
     # ---------------------------------------------------------
+    # CONTAINERS VISIBILITY
+    # ---------------------------------------------------------
+    setup_visible: bool = True
+    interview_visible: bool = False
+    written_visible: bool = False
+    coding_visible: bool = False
+    database_visible: bool = False
+
+    # ---------------------------------------------------------
     # BUTTONS
     # ---------------------------------------------------------
     show_submit: bool = False
@@ -112,6 +121,14 @@ class UIResponse:
             # -------------------------------------------------
             self.final_feedback,
             self.report_output,
+            # -------------------------------------------------
+            # CONTAINERS VISIBILITY
+            # -------------------------------------------------
+            gr.update(visible=self.setup_visible),
+            gr.update(visible=self.interview_visible),
+            gr.update(visible=self.written_visible),
+            gr.update(visible=self.coding_visible),
+            gr.update(visible=self.database_visible),
             # -------------------------------------------------
             # BUTTONS
             # -------------------------------------------------
