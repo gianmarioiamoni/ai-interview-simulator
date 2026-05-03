@@ -17,7 +17,6 @@ from app.ui.state_handlers.export_handlers import (
 
 from app.ui.bindings.builders.ui_outputs_builder import UIOutputsBuilder
 from app.ui.bindings.factories.streaming_handler_factory import StreamingHandlerFactory
-from app.ui.bindings.validators.input_validator import InputValidator
 from app.ui.bindings.validators.submit_enabler import SubmitEnabler
 
 
@@ -32,7 +31,6 @@ class UIEventOrchestrator:
         self.handler_factory = StreamingHandlerFactory(self.outputs)
 
     def bind(self) -> None:
-        self._bind_validation()
         self._bind_start()
         self._bind_submit()
         self._bind_enable_submit()
@@ -41,82 +39,42 @@ class UIEventOrchestrator:
         self._bind_exports()
 
     # =========================================================
-    # VALIDATION
-    # =========================================================
-
-    def _bind_validation(self):
-        validator = InputValidator()
-
-        for component in [
-            self.c.role_dropdown,
-            self.c.interview_type_radio,
-            self.c.company_input,
-            self.c.language_dropdown,
-        ]:
-            component.change(
-                validator.validate,
-                inputs=[
-                    self.c.role_dropdown,
-                    self.c.interview_type_radio,
-                    self.c.company_input,
-                    self.c.language_dropdown,
-                ],
-                outputs=self.c.start_button,
-            )
-
-    # =========================================================
-    # START
+    # START (NO UI INPUT → CONFIG PASSED DIRECTLY)
     # =========================================================
 
     def _bind_start(self):
         start_handler_wrapper = self.handler_factory.create(
             start_handler,
-            "⏳ Generating interview. It can take a few minutes. Please wait...",
+            "⏳ Generating interview...",
             include_button=False,
         )
 
         self.c.start_button.click(
             start_handler_wrapper,
             inputs=[
-                self.c.role_dropdown,
-                self.c.interview_type_radio,
+                self.c.role_input,
+                self.c.interview_type_input,
                 self.c.company_input,
-                self.c.language_dropdown,
+                self.c.language_input,
             ],
             outputs=self.outputs,
-            show_progress=True,
         )
 
     # =========================================================
-    # SUBMIT (DISABLE BUTTON FIX)
+    # SUBMIT
     # =========================================================
 
     def _bind_submit(self):
         submit_handler = self.handler_factory.create(
-            submit_answer, 
+            submit_answer,
             "⏳ Evaluating answer...",
             include_button=True,
         )
 
-        # WRITTEN
-        self.c.written_submit.click(
+        self.c.submit_button.click(
             submit_handler,
             inputs=[self.state, self.c.written_box],
-            outputs=[self.c.written_submit, *self.outputs],
-        )
-
-        # CODING
-        self.c.coding_submit.click(
-            submit_handler,
-            inputs=[self.state, self.c.coding_box],
-            outputs=[self.c.coding_submit, *self.outputs],
-        )
-
-        # DATABASE
-        self.c.database_submit.click(
-            submit_handler,
-            inputs=[self.state, self.c.database_box],
-            outputs=[self.c.database_submit, *self.outputs],
+            outputs=[self.c.submit_button, *self.outputs],
         )
 
     # =========================================================
@@ -129,19 +87,19 @@ class UIEventOrchestrator:
         self.c.written_box.change(
             enabler.enable,
             inputs=[self.c.written_box],
-            outputs=self.c.written_submit,
+            outputs=self.c.submit_button,
         )
 
         self.c.coding_box.change(
             enabler.enable,
             inputs=[self.c.coding_box],
-            outputs=self.c.coding_submit,
+            outputs=self.c.submit_button,
         )
 
         self.c.database_box.change(
             enabler.enable,
             inputs=[self.c.database_box],
-            outputs=self.c.database_submit,
+            outputs=self.c.submit_button,
         )
 
     # =========================================================
@@ -155,8 +113,8 @@ class UIEventOrchestrator:
             next_question, "⏳ Loading next question..."
         )
 
-        new_interview_handler = self.handler_factory.create(
-            lambda *_: new_interview(), "⏳ Starting new interview..."
+        new_handler = self.handler_factory.create(
+            lambda *_: new_interview(), "⏳ Restarting..."
         )
 
         self.c.retry_button.click(
@@ -172,33 +130,25 @@ class UIEventOrchestrator:
         )
 
         self.c.new_interview_button.click(
-            new_interview_handler,
+            new_handler,
             inputs=[self.state],
             outputs=self.outputs,
         )
 
     # =========================================================
-    # REPORT (DISABLE BUTTON FIX)
+    # REPORT
     # =========================================================
 
     def _bind_report(self):
         report_handler = self.handler_factory.create(
-            view_report_handler, 
+            view_report_handler,
             "⏳ Loading report...",
-            include_button=True,
         )
 
         self.c.view_report_button.click(
             report_handler,
             inputs=[self.state],
-            outputs=[
-                self.c.setup_section,
-                self.c.interview_section,
-                self.c.completion_section,
-                self.c.report_section,
-                self.c.report_output,
-            ],
-            show_progress=True,
+            outputs=self.outputs,
         )
 
     # =========================================================
