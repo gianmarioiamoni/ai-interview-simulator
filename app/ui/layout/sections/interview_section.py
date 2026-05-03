@@ -9,7 +9,7 @@ from app.ui.layout.assets.scripts import FOCUS_OBSERVER_SCRIPT
 
 def render_interview_section():
 
-    with gr.Column(visible=False) as interview_section:
+    with gr.Group(visible=False) as interview_section:
 
         question_counter = gr.Markdown("", elem_id="question-counter")
 
