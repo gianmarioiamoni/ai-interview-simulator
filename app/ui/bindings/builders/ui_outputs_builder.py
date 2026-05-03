@@ -19,6 +19,12 @@ class UIOutputsBuilder:
             # REPORT
             self.c.final_feedback,
             self.c.report_output,
+            # CONTAINERS VISIBILITY
+            self.c.setup_section,
+            self.c.interview_section,
+            self.c.written_container,
+            self.c.coding_container,
+            self.c.database_container,
             # BUTTONS
             self.c.written_submit,
             self.c.retry_button,

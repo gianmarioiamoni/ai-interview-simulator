@@ -137,6 +137,9 @@ class UIResponseBuilder:
         elif question.type == QuestionType.DATABASE:
             editor_value = "-- Write your SQL query here"
 
+        is_written = question.type == QuestionType.WRITTEN
+        is_coding = question.type == QuestionType.CODING
+        is_database = question.type == QuestionType.DATABASE  
         # -------------------------
         # DISPLAY
         # -------------------------
@@ -172,25 +175,30 @@ class UIResponseBuilder:
 
         return UIResponse(
             state=state,
-            # 🔥 CRUCIALE: SWITCH VIEW
+            # ROUTING 
             setup_visible=False,
             interview_visible=True,
-            completion_visible=False,
-            report_visible=False,
-            # HEADER
+
+            # TYPE VISIBILITY
+            written_visible=is_written,
+            coding_visible=is_coding,
+            database_visible=is_database,
+            
+            # CONTENT
             question_counter=counter,
-            # FEEDBACK
             feedback_markdown=feedback_markdown,
-            # DISPLAY
+
             written_display=written_display,
             coding_display=coding_display,
             database_display=database_display,
+
             # BUTTONS
             show_submit=buttons["show_submit"],
             show_submit_interactive=buttons["show_submit_interactive"],
             show_retry=buttons["show_retry"],
             show_next=buttons["show_next"],
             next_label=buttons["next_label"],
+            
             # EDITORS
             written_editor_value=(
                 editor_value if question.type == QuestionType.WRITTEN else ""
