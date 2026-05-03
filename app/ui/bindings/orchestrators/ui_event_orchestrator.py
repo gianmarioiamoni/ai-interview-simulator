@@ -69,8 +69,14 @@ class UIEventOrchestrator:
     # =========================================================
 
     def _bind_start(self):
-        self.c.start_button.click(
+        start_handler_wrapper = self.handler_factory.create(
             start_handler,
+            "⏳ Generating interview. It can take a few minutes. Please wait...",
+            include_button=False,
+        )
+
+        self.c.start_button.click(
+            start_handler_wrapper,
             inputs=[
                 self.c.role_dropdown,
                 self.c.interview_type_radio,
@@ -78,6 +84,7 @@ class UIEventOrchestrator:
                 self.c.language_dropdown,
             ],
             outputs=self.outputs,
+            show_progress=True,
         )
 
     # =========================================================

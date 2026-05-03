@@ -1,7 +1,5 @@
-# app/ui/bindings/factories/streaming_handler_factory.py
-
 import gradio as gr
-from typing import Callable, Any, Generator, List, Optional
+from typing import Callable, Any, Generator, List
 
 from app.ui.ui_response import UIResponse
 from app.ui.utils.loading_utils import show_loader, hide_loader
@@ -10,14 +8,16 @@ from app.ui.utils.loading_utils import show_loader, hide_loader
 class StreamingHandlerFactory:
     def __init__(self, outputs: List[Any]):
         self.outputs = outputs
-        self.loader_index = len(outputs) - 1  # robust: loader sempre ultimo
+        self.output_count = len(outputs)
+        self.loader_index = self.output_count - 1  # loader sempre ultimo
 
     # ---------------------------------------------------------
     # IDLE STATE
     # ---------------------------------------------------------
 
     def _idle_updates(self) -> List[Any]:
-        return [gr.update() for _ in range(len(self.outputs))]
+        # None = non toccare nulla → fondamentale per non rompere UI
+        return [None for _ in range(self.output_count)]
 
     # ---------------------------------------------------------
     # NORMALIZATION
@@ -36,27 +36,24 @@ class StreamingHandlerFactory:
         self,
         action_fn: Callable[..., Any],
         loader_message: str,
-        include_button: bool = False, 
+        include_button: bool = False,
     ) -> Callable[..., Generator[Any, None, None]]:
 
         def handler(*args: Any):
 
             # -------------------------------------------------
-            # STEP 1 — INITIAL STATE (disable + loader)
+            # STEP 1 — SHOW LOADER
             # -------------------------------------------------
 
-            base_updates = self._idle_updates()
+            updates = self._idle_updates()
 
-            # Disable button if required
+            # disable button opzionale (PRIMA degli outputs)
             if include_button:
-                updates = [gr.update(interactive=False), *base_updates]
-            else:
-                updates = base_updates
+                updates = [gr.update(interactive=False), *updates]
 
-            # Show loader
-            updates[self.loader_index + (1 if include_button else 0)] = show_loader(
-                loader_message
-            )
+            loader_index = self.loader_index + (1 if include_button else 0)
+
+            updates[loader_index] = show_loader(loader_message)
 
             yield tuple(updates)
 
@@ -66,16 +63,24 @@ class StreamingHandlerFactory:
 
             response = action_fn(*args)
 
+            # support eventuale generator (future-proof)
+            if isinstance(response, Generator):
+                for chunk in response:
+                    out = self._normalize(chunk)
+                    yield tuple(out)
+                return
+
             out = self._normalize(response)
 
             # -------------------------------------------------
-            # STEP 3 — FINAL STATE (hide loader)
+            # STEP 3 — HIDE LOADER
             # -------------------------------------------------
 
-            out[self.loader_index] = hide_loader()
+            if len(out) == self.output_count:
+                out[self.loader_index] = hide_loader()
 
             if include_button:
-                out = [gr.update(interactive=True), *out]   
+                out = [gr.update(interactive=True), *out]
 
             yield tuple(out)
 
