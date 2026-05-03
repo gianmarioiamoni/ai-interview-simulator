@@ -21,12 +21,23 @@ from app.settings.constants import QUESTIONS_PER_AREA
 
 def start_interview(role: str, interview_type: str, company: str, language: str):
 
-    role_type = RoleType[role.replace(" ", "_")]
-    level_enum = SeniorityLevel.MID  # temporaneo
-    interview_type_enum = InterviewType[interview_type]
+    # -----------------------------------------------------
+    # SAFE ENUM MAPPING (FIX DEFINITIVO)
+    # -----------------------------------------------------
+    try:
+        role_type = RoleType(role)
+    except ValueError:
+        raise ValueError(f"Invalid role selected: {role}")
+
+    try:
+        interview_type_enum = InterviewType[interview_type]
+    except KeyError:
+        raise ValueError(f"Invalid interview type: {interview_type}")
+
+    level_enum = SeniorityLevel.MID  # TODO: rendere dinamico
 
     # -----------------------------------------------------
-    # Question generation
+    # QUESTION GENERATION
     # -----------------------------------------------------
     llm = get_runtime_llm()
 
@@ -54,6 +65,9 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
 
         enriched_questions.append(q)
 
+    # -----------------------------------------------------
+    # STATE INIT
+    # -----------------------------------------------------
     state = InterviewState.create_initial(
         role_type=role_type,
         interview_type=interview_type_enum,
@@ -66,7 +80,6 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     # -----------------------------------------------------
     # GRAPH EXECUTION
     # -----------------------------------------------------
-
     new_state = run_interview_graph(state)
 
     print("\n=== START INTERVIEW DEBUG ===")
@@ -74,6 +87,7 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     print("allowed_actions:", new_state.allowed_actions)
     print("is_completed:", new_state.is_completed)
     print("================================\n")
+
     response = build_ui_response_from_state(new_state)
 
     return response
