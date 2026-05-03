@@ -178,6 +178,8 @@ class UIResponseBuilder:
             # ROUTING 
             setup_visible=False,
             interview_visible=True,
+            completion_visible=False,
+            report_visible=False,
 
             # TYPE VISIBILITY
             written_visible=is_written,
