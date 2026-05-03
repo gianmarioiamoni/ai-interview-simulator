@@ -8,7 +8,6 @@ from app.ui.state_handlers import (
     submit_answer,
     retry_answer,
     next_question,
-    new_interview,
 )
 from app.ui.state_handlers.export_handlers import (
     export_pdf_handler,
@@ -39,7 +38,7 @@ class UIEventOrchestrator:
         self._bind_exports()
 
     # =========================================================
-    # START (NO UI INPUT → CONFIG PASSED DIRECTLY)
+    # START
     # =========================================================
 
     def _bind_start(self):
@@ -113,10 +112,6 @@ class UIEventOrchestrator:
             next_question, "⏳ Loading next question..."
         )
 
-        new_handler = self.handler_factory.create(
-            lambda *_: new_interview(), "⏳ Restarting..."
-        )
-
         self.c.retry_button.click(
             retry_handler,
             inputs=[self.state],
@@ -125,12 +120,6 @@ class UIEventOrchestrator:
 
         self.c.next_button.click(
             next_handler,
-            inputs=[self.state],
-            outputs=self.outputs,
-        )
-
-        self.c.new_interview_button.click(
-            new_handler,
             inputs=[self.state],
             outputs=self.outputs,
         )
@@ -145,7 +134,8 @@ class UIEventOrchestrator:
             "⏳ Loading report...",
         )
 
-        self.c.view_report_button.click(
+        # ⚠️ ora usiamo output standard (no più section routing)
+        self.c.next_button.click(
             report_handler,
             inputs=[self.state],
             outputs=self.outputs,
@@ -156,14 +146,8 @@ class UIEventOrchestrator:
     # =========================================================
 
     def _bind_exports(self):
-        self.c.pdf_button.click(
-            export_pdf_handler,
+        self.c.next_button.click(  # placeholder safe binding
+            lambda x: x,
             inputs=[self.state],
-            outputs=self.c.pdf_file,
-        )
-
-        self.c.json_button.click(
-            export_json_handler,
-            inputs=[self.state],
-            outputs=self.c.json_file,
+            outputs=self.state,
         )
