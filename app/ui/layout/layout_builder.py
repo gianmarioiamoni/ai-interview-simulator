@@ -3,6 +3,8 @@
 import gradio as gr
 
 from app.ui.layout.ui_components import UILayoutComponents
+from domain.contracts.user.role import RoleType
+from domain.contracts.interview.interview_type import InterviewType
 
 
 class UILayoutBuilder:
@@ -15,15 +17,24 @@ class UILayoutBuilder:
         state = gr.State()
 
         # ---------------------------------------------------------
-        # SETUP INPUTS (SEMPRE VISIBILI)
+        # HEADER (ripristinato)
         # ---------------------------------------------------------
+        gr.Markdown("# AI Interview Simulator")
+        gr.Markdown("Build: 2026-03-16-A | Runtime: HuggingFace Spaces")
+        gr.Markdown("---")
+
+        # ---------------------------------------------------------
+        # SETUP INPUTS (CORRETTI E DINAMICI)
+        # ---------------------------------------------------------
+        gr.Markdown("## Configure Your Interview")
+
         role_input = gr.Dropdown(
-            choices=["Software Engineer", "Data Engineer"],
+            choices=[(r.name.replace("_", " ").title(), r.value) for r in RoleType],
             label="Role",
         )
 
         interview_type_input = gr.Radio(
-            choices=["TECHNICAL", "HR"],
+            choices=[t.name for t in InterviewType],
             label="Interview Type",
         )
 
@@ -43,13 +54,13 @@ class UILayoutBuilder:
         gr.Markdown("---")
 
         # ---------------------------------------------------------
-        # HEADER
+        # HEADER (QUESTION)
         # ---------------------------------------------------------
         question_counter = gr.Markdown("")
         feedback_output = gr.Markdown("")
 
         # ---------------------------------------------------------
-        # DISPLAY (UNIFIED)
+        # DISPLAY
         # ---------------------------------------------------------
         written_display = gr.Markdown(visible=False)
         coding_display = gr.Code(language="python", interactive=False, visible=False)
