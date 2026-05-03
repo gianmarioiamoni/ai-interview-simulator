@@ -1,5 +1,3 @@
-# app/ui/layout/ui_components.py
-
 from dataclasses import dataclass
 
 
@@ -10,6 +8,11 @@ class UILayoutComponents:
     # STATE
     # ---------------------------------------------------------
     state: object
+
+    # ---------------------------------------------------------
+    # GLOBAL LOADER
+    # ---------------------------------------------------------
+    global_loader: object
 
     # ---------------------------------------------------------
     # SETUP
