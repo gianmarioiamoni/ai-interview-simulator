@@ -1,4 +1,4 @@
-# sections/setup_section.py
+# app/ui/layout/sections/setup_section.py
 
 import gradio as gr
 from app.ui.views.setup_view import SetupView
@@ -6,7 +6,7 @@ from app.ui.views.setup_view import SetupView
 
 def render_setup_section():
 
-    with gr.Column(visible=True) as setup_section:
+    with gr.Group(visible=True) as setup_section:  # ✅ FIX: Column → Group
 
         setup_view = SetupView()
 

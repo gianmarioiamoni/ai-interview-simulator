@@ -4,15 +4,10 @@ import gradio as gr
 
 
 class InterviewDatabaseView:
-    # Build UI components for database questions
 
     def build(self):
 
-        with gr.Column(visible=False) as container:
-
-            # ---------------------------------------------------------
-            # Display (read-only SQL)
-            # ---------------------------------------------------------
+        with gr.Group(visible=False) as container:  # ✅ FIX
 
             sql_display = gr.Code(
                 label="",
@@ -20,10 +15,6 @@ class InterviewDatabaseView:
                 interactive=False,
                 visible=True,
             )
-
-            # ---------------------------------------------------------
-            # Input editor (only in QUESTION state)
-            # ---------------------------------------------------------
 
             sql_box = gr.Code(
                 label="Your SQL",

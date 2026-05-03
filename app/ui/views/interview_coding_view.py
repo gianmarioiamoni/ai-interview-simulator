@@ -7,9 +7,8 @@ class InterviewCodingView:
 
     def build(self):
 
-        with gr.Column(visible=False) as container:
+        with gr.Group(visible=False) as container:  # ✅ FIX
 
-            # DISPLAY (read-only code)
             code_display = gr.Code(
                 label="",
                 language="python",
@@ -17,7 +16,6 @@ class InterviewCodingView:
                 visible=True,
             )
 
-            # EDITOR
             code_box = gr.Code(
                 label="Your Code",
                 language="python",
