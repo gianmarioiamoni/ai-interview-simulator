@@ -19,3 +19,4 @@ weasyprint==68.0
 langchain-chroma==0.1.4
 chromadb==0.5.3
 pydantic-settings==2.3.4
+pyaudioop==0.2.1
