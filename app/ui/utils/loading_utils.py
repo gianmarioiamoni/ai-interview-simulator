@@ -1,14 +1,18 @@
 # app/ui/utils/loading_utils.py
 
 import gradio as gr
-from app.ui.components.loader import build_loader_html
 
 
-def show_loader(message: str = "⏳ Processing..."):
-    return gr.update(
-        value=build_loader_html(message),
-        visible=True,
-    )
+def show_loader(message: str = "Processing..."):
+
+    html = f"""
+    <div class="loader-container">
+        <div class="loader-bar"></div>
+        <div class="loader-text">⏳ {message}</div>
+    </div>
+    """
+
+    return gr.update(value=html, visible=True)
 
 
 def hide_loader():

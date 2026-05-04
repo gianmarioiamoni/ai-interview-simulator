@@ -28,11 +28,24 @@ FEEDBACK_BOX_STYLE = """
 
 LOADER_STYLE = """
 <style>
+
+/* GLOBAL LOADER FIX (CRITICO) */
+#global-loader {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background-color: #111;
+    padding: 12px 16px;
+    border-radius: 8px;
+    z-index: 9999;
+    min-width: 250px;
+}
+
+/* loader content */
 .loader-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: 16px;
 }
 
 .loader-bar {
@@ -53,5 +66,6 @@ LOADER_STYLE = """
     font-size: 14px;
     color: #aaa;
 }
+
 </style>
 """
