@@ -1,9 +1,6 @@
-# app/ui/builders/ui_response_builder.py
-
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 
-from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.ui_response import UIResponse
 from app.ui.state_machine.ui_state_machine import UIStateMachine
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
@@ -32,10 +29,7 @@ class UIResponseBuilder:
         if ui_state.name == "SETUP":
             return UIResponse(
                 state=state,
-                setup_visible=True,  # ✅ esplicito
-                show_submit=False,
-                show_retry=False,
-                show_next=False,
+                setup_visible=True,
             )
 
         # -----------------------------------------------------
@@ -45,7 +39,7 @@ class UIResponseBuilder:
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
-                setup_visible=False,  # ✅ NASCONDI setup
+                setup_visible=False,
                 report_output="Report ready",
             )
 
@@ -58,7 +52,7 @@ class UIResponseBuilder:
         if question is None:
             return UIResponse(
                 state=state,
-                setup_visible=False,  # ✅ safety
+                setup_visible=False,
             )
 
         attempts = state.get_attempt_for_question(question.question_id)
@@ -102,37 +96,26 @@ class UIResponseBuilder:
             submit_label = "Submit Answer"
 
         # -----------------------------------------------------
-        # NEXT LABEL
-        # -----------------------------------------------------
-
-        next_label = buttons.get("next_label") or ""
-
-        # -----------------------------------------------------
         # FINAL RESPONSE
         # -----------------------------------------------------
 
         return UIResponse(
             state=state,
-            # 🔥 CRITICO
-            setup_visible=False,
-            # HEADER
+            setup_visible=False,  # 🔥 CRITICO
             question_counter=counter,
             feedback_markdown=feedback,
-            # DISPLAY
             written_display=written_display,
             coding_display=coding_display,
             database_display=database_display,
             written_visible=is_written,
             coding_visible=is_coding,
             database_visible=is_database,
-            # BUTTONS
             show_submit=buttons["show_submit"],
             show_submit_interactive=buttons["show_submit_interactive"],
             show_retry=buttons["show_retry"],
             show_next=buttons["show_next"],
-            next_label=next_label,
+            next_label=buttons.get("next_label") or "",
             submit_label=submit_label,
-            # EDITORS
             written_editor_value=editor_value if is_written else "",
             coding_editor_value=editor_value if is_coding else "",
             database_editor_value=editor_value if is_database else "",
