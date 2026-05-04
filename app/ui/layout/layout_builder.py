@@ -3,7 +3,7 @@
 import gradio as gr
 
 from app.ui.layout.ui_components import UILayoutComponents
-from app.ui.layout.assets.CSS import LOADER_STYLE
+from app.ui.layout.assets.css import LOADER_STYLE
 
 from domain.contracts.user.role import RoleType
 from domain.contracts.interview.interview_type import InterviewType
@@ -14,9 +14,9 @@ class UILayoutBuilder:
     def build(self):
 
         # ---------------------------------------------------------
-        # GLOBAL LOADER (TOP LEVEL — FIX DEFINITIVO)
+        # GLOBAL LOADER (FIX DEFINITIVO)
         # ---------------------------------------------------------
-        global_loader = gr.Markdown(
+        global_loader = gr.HTML(
             "",
             visible=False,
             elem_id="global-loader",
