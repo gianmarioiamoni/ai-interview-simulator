@@ -13,29 +13,72 @@ class StreamingHandlerFactory:
         self.output_count = len(outputs)
         self.loader_index = self.output_count - 1
 
-    def _idle_updates(self):
+    # ---------------------------------------------------------
+    # IDLE STATE
+    # ---------------------------------------------------------
+
+    def _idle_updates(self) -> List[Any]:
         return [None] * self.output_count
 
-    def _normalize(self, response):
+    # ---------------------------------------------------------
+    # NORMALIZATION
+    # ---------------------------------------------------------
+
+    def _normalize(self, response: Any) -> List[Any]:
         if isinstance(response, UIResponse):
-            return list(response.to_gradio_outputs())
+            out = list(response.to_gradio_outputs())
+
+            # 🔒 HARD SAFETY CHECK
+            if len(out) != self.output_count:
+                raise RuntimeError(
+                    f"UIResponse output length mismatch: "
+                    f"{len(out)} != {self.output_count}"
+                )
+
+            return out
+
         return response
 
-    def create(self, action_fn, loader_message):
+    # ---------------------------------------------------------
+    # FACTORY
+    # ---------------------------------------------------------
 
-        def handler(*args):
+    def create(
+        self,
+        action_fn: Callable[..., Any],
+        loader_message: str,
+    ) -> Callable[..., Generator[Any, None, None]]:
 
-            # STEP 1 — loader
+        def handler(*args: Any):
+
+            # -------------------------------------------------
+            # STEP 1 — SHOW LOADER
+            # -------------------------------------------------
+
             updates = self._idle_updates()
             updates[self.loader_index] = show_loader(loader_message)
+
             yield tuple(updates)
 
-            # STEP 2 — execute
+            # -------------------------------------------------
+            # STEP 2 — EXECUTE ACTION
+            # -------------------------------------------------
+
             response = action_fn(*args)
+
+            # support generator (future proof)
+            if isinstance(response, Generator):
+                for chunk in response:
+                    out = self._normalize(chunk)
+                    yield tuple(out)
+                return
 
             out = self._normalize(response)
 
-            # STEP 3 — hide loader
+            # -------------------------------------------------
+            # STEP 3 — HIDE LOADER
+            # -------------------------------------------------
+
             out[self.loader_index] = hide_loader()
 
             yield tuple(out)

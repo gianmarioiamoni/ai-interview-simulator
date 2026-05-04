@@ -4,7 +4,15 @@ import gradio as gr
 
 from app.ui.handlers.start_handler import start_handler
 from app.ui.handlers.report_handler import view_report_handler
-from app.ui.state_handlers import submit_answer, retry_answer, next_question
+from app.ui.state_handlers import (
+    submit_answer,
+    retry_answer,
+    next_question,
+)
+from app.ui.state_handlers.export_handlers import (
+    export_pdf_handler,
+    export_json_handler,
+)
 
 from app.ui.bindings.builders.ui_outputs_builder import UIOutputsBuilder
 from app.ui.bindings.factories.streaming_handler_factory import StreamingHandlerFactory
@@ -17,7 +25,24 @@ class UIEventOrchestrator:
         self.c = components
         self.state = components.state
 
-        self.outputs = UIOutputsBuilder(components).build()
+        self.outputs_builder = UIOutputsBuilder(components)
+        self.outputs = self.outputs_builder.build()
+
+        # ✅ DEBUG CRITICO
+        from app.ui.ui_response import UIResponse
+
+        dummy = UIResponse(state=None)
+        expected = len(self.outputs)
+        actual = len(dummy.to_gradio_outputs())
+
+        print("\n=== OUTPUT CONTRACT CHECK ===")
+        print("UIOutputsBuilder:", expected)
+        print("UIResponse:", actual)
+        print("=============================\n")
+
+        if expected != actual:
+            raise RuntimeError(f"❌ OUTPUT MISMATCH: {expected} != {actual}")
+
         self.handler_factory = StreamingHandlerFactory(self.outputs)
 
     def bind(self) -> None:
@@ -26,21 +51,22 @@ class UIEventOrchestrator:
         self._bind_submit()
         self._bind_enable_submit()
         self._bind_navigation()
+        self._bind_exports()
 
     # =========================================================
-    # VALIDATION (FIX)
+    # VALIDATION (START BUTTON)
     # =========================================================
 
     def _bind_validation(self):
         validator = InputValidator()
 
-        for comp in [
+        for component in [
             self.c.role_input,
             self.c.interview_type_input,
             self.c.company_input,
             self.c.language_input,
         ]:
-            comp.change(
+            component.change(
                 validator.validate,
                 inputs=[
                     self.c.role_input,
@@ -73,7 +99,7 @@ class UIEventOrchestrator:
         )
 
     # =========================================================
-    # SUBMIT (FIX CRITICO)
+    # SUBMIT
     # =========================================================
 
     def _bind_submit(self):
@@ -85,7 +111,7 @@ class UIEventOrchestrator:
         self.c.submit_button.click(
             handler,
             inputs=[self.state, self.c.written_box],
-            outputs=self.outputs,  # ✅ FIX: NO DUPLICAZIONE
+            outputs=self.outputs,
         )
 
     # =========================================================
@@ -97,19 +123,19 @@ class UIEventOrchestrator:
 
         self.c.written_box.change(
             enabler.enable,
-            inputs=self.c.written_box,
+            inputs=[self.c.written_box],
             outputs=self.c.submit_button,
         )
 
         self.c.coding_box.change(
             enabler.enable,
-            inputs=self.c.coding_box,
+            inputs=[self.c.coding_box],
             outputs=self.c.submit_button,
         )
 
         self.c.database_box.change(
             enabler.enable,
-            inputs=self.c.database_box,
+            inputs=[self.c.database_box],
             outputs=self.c.submit_button,
         )
 
@@ -138,4 +164,15 @@ class UIEventOrchestrator:
             next_handler,
             inputs=[self.state],
             outputs=self.outputs,
+        )
+
+    # =========================================================
+    # EXPORT
+    # =========================================================
+
+    def _bind_exports(self):
+        self.c.next_button.click(
+            lambda x: x,
+            inputs=[self.state],
+            outputs=self.state,
         )
