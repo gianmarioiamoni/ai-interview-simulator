@@ -14,14 +14,8 @@ class UILayoutBuilder:
     def build(self):
 
         # ---------------------------------------------------------
-        # GLOBAL LOADER (FIX DEFINITIVO)
+        # STYLE
         # ---------------------------------------------------------
-        global_loader = gr.HTML(
-            "",
-            visible=False,
-            elem_id="global-loader",
-        )
-
         gr.HTML(LOADER_STYLE)
 
         # ---------------------------------------------------------
@@ -34,6 +28,16 @@ class UILayoutBuilder:
         # ---------------------------------------------------------
         gr.Markdown("# AI Interview Simulator")
         gr.Markdown("Build: 2026-03-16-A | Runtime: HuggingFace Spaces")
+
+        # ---------------------------------------------------------
+        # GLOBAL LOADER (INLINE — FIX DEFINITIVO)
+        # ---------------------------------------------------------
+        global_loader = gr.Markdown(
+            "",
+            visible=False,
+            elem_id="global-loader",
+        )
+
         gr.Markdown("---")
 
         # ---------------------------------------------------------
@@ -51,22 +55,30 @@ class UILayoutBuilder:
             label="Interview Type",
         )
 
-        company_input = gr.Textbox(label="Company")
-        language_input = gr.Dropdown(choices=["en", "it"], value="en")
+        company_input = gr.Textbox(
+            label="Company",
+            placeholder="e.g. Google, Startup...",
+        )
+
+        language_input = gr.Dropdown(
+            choices=["en", "it"],
+            value="en",
+            label="Language",
+        )
 
         start_button = gr.Button("Start Interview", interactive=False)
 
         gr.Markdown("---")
 
         # ---------------------------------------------------------
-        # MAIN UI
+        # INTERVIEW AREA
         # ---------------------------------------------------------
         question_counter = gr.Markdown("")
         feedback_output = gr.Markdown("")
 
         written_display = gr.Markdown(visible=False)
-        coding_display = gr.Code(visible=False)
-        database_display = gr.Code(visible=False)
+        coding_display = gr.Code(language="python", visible=False)
+        database_display = gr.Code(language="sql", visible=False)
 
         written_box = gr.Textbox(visible=False)
         coding_box = gr.Code(visible=False)
@@ -76,6 +88,9 @@ class UILayoutBuilder:
         retry_button = gr.Button("Retry", visible=False)
         next_button = gr.Button("Next", visible=False)
 
+        # ---------------------------------------------------------
+        # REPORT
+        # ---------------------------------------------------------
         final_feedback = gr.Markdown("")
         report_output = gr.Markdown("")
 
