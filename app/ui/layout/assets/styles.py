@@ -1,4 +1,4 @@
-# app/ui/layout/assets/css.py
+# app/ui/layout/assets/styles.py
 
 LOADER_STYLE = """
 <style>
