@@ -43,7 +43,9 @@ class UILayoutBuilder:
         # ---------------------------------------------------------
         # SETUP
         # ---------------------------------------------------------
-        with gr.Column() as setup_container:
+        setup_container = gr.Markdown(visible=True) # Visibility controller
+        
+        with gr.Column(visible=True) as _setup_layout:
             gr.Markdown("## Configure Your Interview")
 
             role_input = gr.Dropdown(
