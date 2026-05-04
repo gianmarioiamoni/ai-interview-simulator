@@ -26,13 +26,16 @@ class UIResponseBuilder:
         ui_state = UIStateMachine.resolve(state)
 
         # -----------------------------------------------------
-        # SETUP
+        # SETUP (NO setup_visible anymore)
         # -----------------------------------------------------
 
         if ui_state.name == "SETUP":
             return UIResponse(
                 state=state,
-                setup_visible=True,
+                # tutto vuoto → UI resta in setup
+                show_submit=False,
+                show_retry=False,
+                show_next=False,
             )
 
         # -----------------------------------------------------
@@ -42,7 +45,6 @@ class UIResponseBuilder:
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
-                setup_visible=False,
                 report_output="Report ready",
             )
 
@@ -53,18 +55,20 @@ class UIResponseBuilder:
         question = session_dto.current_question
 
         if question is None:
-            return UIResponse(state=state, setup_visible=True)
+            return UIResponse(state=state)
 
         attempts = state.get_attempt_for_question(question.question_id)
         can_retry = attempts < MAX_ATTEMPTS
 
-        # BUILD SECTIONS
         display = DisplaySection.build(state, question, ui_state, attempts > 0)
         feedback = FeedbackSection.build(state)
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
-        # DISPLAY
+        # -----------------------------------------------------
+        # DISPLAY CONTENT
+        # -----------------------------------------------------
+
         written_display = display.get("written_display", "")
         coding_display = display.get("coding_display", "")
         database_display = display.get("database_display", "")
@@ -74,30 +78,7 @@ class UIResponseBuilder:
         is_database = bool(database_display)
 
         # -----------------------------------------------------
-        # BUTTON LOGIC (FIXED)
-        # -----------------------------------------------------
-
-        show_next = buttons["show_next"]
-        next_label = buttons.get("next_label") or ""
-
-        if not show_next:
-            next_label = ""
-
-        # -----------------------------------------------------
-        # SUBMIT LABEL (ENTERPRISE UX)
-        # -----------------------------------------------------
-
-        submit_label = "Submit"
-
-        if question.type == QuestionType.CODING:
-            submit_label = "Run Code"
-        elif question.type == QuestionType.DATABASE:
-            submit_label = "Run SQL"
-        elif question.type == QuestionType.WRITTEN:
-            submit_label = "Submit Answer"
-
-        # -----------------------------------------------------
-        # EDITOR DEFAULT
+        # EDITOR DEFAULTS
         # -----------------------------------------------------
 
         editor_value = ""
@@ -108,12 +89,30 @@ class UIResponseBuilder:
             editor_value = "-- Write your SQL query here"
 
         # -----------------------------------------------------
+        # SUBMIT LABEL (FIX "None")
+        # -----------------------------------------------------
+
+        submit_label = "Submit"
+
+        if question.type == QuestionType.CODING:
+            submit_label = "Run Code"
+        elif question.type == QuestionType.DATABASE:
+            submit_label = "Run Query"
+        elif question.type == QuestionType.WRITTEN:
+            submit_label = "Submit Answer"
+
+        # -----------------------------------------------------
+        # NEXT LABEL SAFE
+        # -----------------------------------------------------
+
+        next_label = buttons.get("next_label") or ""
+
+        # -----------------------------------------------------
         # FINAL RESPONSE
         # -----------------------------------------------------
 
         return UIResponse(
             state=state,
-            setup_visible=False,
             # HEADER
             question_counter=counter,
             feedback_markdown=feedback,
@@ -128,7 +127,7 @@ class UIResponseBuilder:
             show_submit=buttons["show_submit"],
             show_submit_interactive=buttons["show_submit_interactive"],
             show_retry=buttons["show_retry"],
-            show_next=show_next,
+            show_next=buttons["show_next"],
             next_label=next_label,
             submit_label=submit_label,
             # EDITORS
