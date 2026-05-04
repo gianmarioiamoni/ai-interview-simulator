@@ -8,50 +8,40 @@ from dataclasses import dataclass
 @dataclass
 class UIResponse:
 
-    # ---------------------------------------------------------
     # STATE
-    # ---------------------------------------------------------
     state: object
 
-    # ---------------------------------------------------------
+    # SETUP VISIBILITY
+    setup_visible: bool = False
+
     # HEADER / FEEDBACK
-    # ---------------------------------------------------------
     question_counter: str = ""
     feedback_markdown: str = ""
 
-    # ---------------------------------------------------------
     # DISPLAY
-    # ---------------------------------------------------------
     written_display: str = ""
     coding_display: str = ""
     database_display: str = ""
 
-    # ---------------------------------------------------------
-    # DISPLAY VISIBILITY (CRUCIAL)
-    # ---------------------------------------------------------
+    # DISPLAY VISIBILITY
     written_visible: bool = False
     coding_visible: bool = False
     database_visible: bool = False
 
-    # ---------------------------------------------------------
     # REPORT
-    # ---------------------------------------------------------
     final_feedback: str = ""
     report_output: str = ""
 
-    # ---------------------------------------------------------
     # BUTTONS
-    # ---------------------------------------------------------
     show_submit: bool = False
     show_submit_interactive: bool = False
     show_retry: bool = False
     retry_interactive: bool = True
     show_next: bool = False
-    next_label: str = "Next"
+    next_label: str = ""
+    submit_label: str = "Submit"
 
-    # ---------------------------------------------------------
     # EDITORS
-    # ---------------------------------------------------------
     written_editor_value: str = ""
     coding_editor_value: str = ""
     database_editor_value: str = ""
@@ -60,20 +50,17 @@ class UIResponse:
     coding_editor_visible: bool = False
     database_editor_visible: bool = False
 
-    # ---------------------------------------------------------
     # LOADER
-    # ---------------------------------------------------------
     loader_visible: bool = False
     loader_value: str = ""
 
-    # ---------------------------------------------------------
-    # OUTPUT CONTRACT (STRICT)
-    # ---------------------------------------------------------
     def to_gradio_outputs(self) -> List[Any]:
 
         return [
             # STATE
             self.state,
+            # SETUP VISIBILITY
+            gr.update(visible=self.setup_visible),
             # HEADER / FEEDBACK
             self.question_counter,
             gr.update(value=self.feedback_markdown),
@@ -88,6 +75,7 @@ class UIResponse:
             gr.update(
                 visible=self.show_submit,
                 interactive=self.show_submit_interactive,
+                value=self.submit_label,
             ),
             gr.update(
                 visible=self.show_retry,
@@ -110,7 +98,7 @@ class UIResponse:
                 value=self.database_editor_value,
                 visible=self.database_editor_visible,
             ),
-            # LOADER (ALWAYS LAST)
+            # LOADER (LAST)
             gr.update(
                 visible=self.loader_visible,
                 value=self.loader_value,
