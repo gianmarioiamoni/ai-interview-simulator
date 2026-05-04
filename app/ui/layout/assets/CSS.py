@@ -29,28 +29,31 @@ FEEDBACK_BOX_STYLE = """
 LOADER_STYLE = """
 <style>
 
-/* GLOBAL LOADER FIX (CRITICO) */
+/* GLOBAL LOADER FIX */
 #global-loader {
     position: fixed;
     bottom: 20px;
     left: 20px;
+
+    width: 260px;             
+    overflow: hidden;          
+    isolation: isolate;        
+
     background-color: #111;
     padding: 12px 16px;
     border-radius: 8px;
     z-index: 9999;
-    min-width: 250px;
 }
-
-/* loader content */
+/* LOADER CONTENT */
 .loader-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: block;
 }
 
 .loader-bar {
-    height: 4px;
-    width: 100%;
+    height: 4px; 
+    width: 100%; 
+    max-width: 100%;
+
     background: linear-gradient(90deg, #4f46e5, #06b6d4);
     background-size: 200% 100%;
     animation: loading 1.5s infinite linear;
