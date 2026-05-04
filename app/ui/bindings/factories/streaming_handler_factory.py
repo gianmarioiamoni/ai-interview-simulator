@@ -1,6 +1,7 @@
 # app/ui/bindings/factories/streaming_handler_factory.py
 
 import gradio as gr
+import time
 from typing import Callable, Any, Generator, List
 
 from app.ui.ui_response import UIResponse
@@ -18,6 +19,7 @@ class StreamingHandlerFactory:
     # ---------------------------------------------------------
 
     def _idle_updates(self) -> List[Any]:
+        # None = non toccare il componente
         return [None] * self.output_count
 
     # ---------------------------------------------------------
@@ -25,10 +27,10 @@ class StreamingHandlerFactory:
     # ---------------------------------------------------------
 
     def _normalize(self, response: Any) -> List[Any]:
+
         if isinstance(response, UIResponse):
             out = list(response.to_gradio_outputs())
 
-            # 🔒 HARD SAFETY CHECK
             if len(out) != self.output_count:
                 raise RuntimeError(
                     f"UIResponse output length mismatch: "
@@ -37,7 +39,11 @@ class StreamingHandlerFactory:
 
             return out
 
-        return response
+        # fallback safety
+        if isinstance(response, list):
+            return response
+
+        raise RuntimeError(f"Unsupported response type: {type(response)}")
 
     # ---------------------------------------------------------
     # FACTORY
@@ -46,19 +52,29 @@ class StreamingHandlerFactory:
     def create(
         self,
         action_fn: Callable[..., Any],
-        loader_message: str,
+        steps: List[str] | None = None,
     ) -> Callable[..., Generator[Any, None, None]]:
 
         def handler(*args: Any):
 
             # -------------------------------------------------
-            # STEP 1 — SHOW LOADER
+            # STEP 1 — MULTI-STEP LOADER (CONTROLLED TIMING)
             # -------------------------------------------------
 
-            updates = self._idle_updates()
-            updates[self.loader_index] = show_loader(loader_message)
+            if steps:
+                for step in steps:
+                    updates = self._idle_updates()
+                    updates[self.loader_index] = show_loader(step)
+                    yield tuple(updates)
 
-            yield tuple(updates)
+                    # 🔥 CRUCIALE: tempo minimo per UX
+                    time.sleep(0.35)
+
+            else:
+                # fallback loader base
+                updates = self._idle_updates()
+                updates[self.loader_index] = show_loader("Processing...")
+                yield tuple(updates)
 
             # -------------------------------------------------
             # STEP 2 — EXECUTE ACTION
@@ -66,12 +82,19 @@ class StreamingHandlerFactory:
 
             response = action_fn(*args)
 
-            # support generator (future proof)
+            # -------------------------------------------------
+            # STEP 2.1 — STREAM SUPPORT (FUTURE-PROOF)
+            # -------------------------------------------------
+
             if isinstance(response, Generator):
                 for chunk in response:
                     out = self._normalize(chunk)
                     yield tuple(out)
                 return
+
+            # -------------------------------------------------
+            # STEP 2.2 — NORMAL RESPONSE
+            # -------------------------------------------------
 
             out = self._normalize(response)
 

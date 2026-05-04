@@ -82,13 +82,20 @@ class UIEventOrchestrator:
     # =========================================================
 
     def _bind_start(self):
-        handler = self.handler_factory.create(
+        start_steps = [
+            "🧠 Generating interview structure...",
+            "📚 Creating questions...",
+            "🧪 Preparing test cases...",
+            "⚙️ Finalizing interview...",
+        ]
+        
+        start_handler_wrapper = self.handler_factory.create(
             start_handler,
-            "Generating interview...",
+            start_steps,
         )
 
         self.c.start_button.click(
-            handler,
+            start_handler_wrapper,
             inputs=[
                 self.c.role_input,
                 self.c.interview_type_input,
@@ -104,13 +111,18 @@ class UIEventOrchestrator:
     # =========================================================
 
     def _bind_submit(self):
-        handler = self.handler_factory.create(
+        submit_steps = [
+            "🔍 Evaluating answer...",
+            "📝 Providing feedback...",
+            "💡 Suggesting improvements...",
+        ]
+        submit_handler_wrapper = self.handler_factory.create(
             submit_answer,
-            "Evaluating answer...",
+            submit_steps,
         )
 
         self.c.submit_button.click(
-            handler,
+            submit_handler_wrapper,
             inputs=[self.state, self.c.written_box],
             outputs=self.outputs,
             show_progress=False,
@@ -146,25 +158,36 @@ class UIEventOrchestrator:
     # =========================================================
 
     def _bind_navigation(self):
-        retry_handler = self.handler_factory.create(
+        retry_steps = [
+            "🔄 Retrying...",
+            "💡 Suggesting improvements...",
+            "📝 Providing feedback...",
+        ]
+        retry_handler_wrapper = self.handler_factory.create(
             retry_answer,
-            "Retrying...",
+            retry_steps,
         )
 
-        next_handler = self.handler_factory.create(
+        next_steps = [
+            "🔄 Loading next question...",
+            "📝 Providing feedback...",
+            "💡 Suggesting improvements...",
+        ]
+        
+        next_handler_wrapper = self.handler_factory.create(
             next_question,
-            "Loading next question...",
+            next_steps,
         )
 
         self.c.retry_button.click(
-            retry_handler,
+            retry_handler_wrapper,
             inputs=[self.state],
             outputs=self.outputs,
             show_progress=False,
         )
 
         self.c.next_button.click(
-            next_handler,
+            next_handler_wrapper,
             inputs=[self.state],
             outputs=self.outputs,
             show_progress=False,

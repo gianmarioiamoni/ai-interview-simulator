@@ -1,4 +1,4 @@
-# domain/contracts/retry.py
+# app/ui/state_handlers/retry.py
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
