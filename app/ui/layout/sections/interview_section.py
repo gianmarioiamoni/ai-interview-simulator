@@ -3,7 +3,7 @@
 import gradio as gr
 
 from app.ui.layout.interview_layout_builder import build_interview_views
-from app.ui.layout.assets.CSS import FEEDBACK_BOX_STYLE
+from app.ui.layout.assets.css import FEEDBACK_BOX_STYLE
 from app.ui.layout.assets.scripts import FOCUS_OBSERVER_SCRIPT
 
 
