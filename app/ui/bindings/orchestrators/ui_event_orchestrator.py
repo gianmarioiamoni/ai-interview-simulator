@@ -84,7 +84,7 @@ class UIEventOrchestrator:
     def _bind_start(self):
         handler = self.handler_factory.create(
             start_handler,
-            "⏳ Generating interview...",
+            "Generating interview...",
         )
 
         self.c.start_button.click(
@@ -96,6 +96,7 @@ class UIEventOrchestrator:
                 self.c.language_input,
             ],
             outputs=self.outputs,
+            show_progress=False,
         )
 
     # =========================================================
@@ -105,13 +106,14 @@ class UIEventOrchestrator:
     def _bind_submit(self):
         handler = self.handler_factory.create(
             submit_answer,
-            "⏳ Evaluating answer...",
+            "Evaluating answer...",
         )
 
         self.c.submit_button.click(
             handler,
             inputs=[self.state, self.c.written_box],
             outputs=self.outputs,
+            show_progress=False,
         )
 
     # =========================================================
@@ -146,24 +148,26 @@ class UIEventOrchestrator:
     def _bind_navigation(self):
         retry_handler = self.handler_factory.create(
             retry_answer,
-            "⏳ Retrying...",
+            "Retrying...",
         )
 
         next_handler = self.handler_factory.create(
             next_question,
-            "⏳ Loading next question...",
+            "Loading next question...",
         )
 
         self.c.retry_button.click(
             retry_handler,
             inputs=[self.state],
             outputs=self.outputs,
+            show_progress=False,
         )
 
         self.c.next_button.click(
             next_handler,
             inputs=[self.state],
             outputs=self.outputs,
+            show_progress=False,
         )
 
     # =========================================================
@@ -175,4 +179,5 @@ class UIEventOrchestrator:
             lambda x: x,
             inputs=[self.state],
             outputs=self.state,
+            show_progress=False,
         )
