@@ -26,13 +26,13 @@ class UIResponseBuilder:
         ui_state = UIStateMachine.resolve(state)
 
         # -----------------------------------------------------
-        # SETUP (NO setup_visible anymore)
+        # SETUP
         # -----------------------------------------------------
 
         if ui_state.name == "SETUP":
             return UIResponse(
                 state=state,
-                # tutto vuoto → UI resta in setup
+                setup_visible=True,  # ✅ esplicito
                 show_submit=False,
                 show_retry=False,
                 show_next=False,
@@ -45,6 +45,7 @@ class UIResponseBuilder:
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
+                setup_visible=False,  # ✅ NASCONDI setup
                 report_output="Report ready",
             )
 
@@ -55,7 +56,10 @@ class UIResponseBuilder:
         question = session_dto.current_question
 
         if question is None:
-            return UIResponse(state=state)
+            return UIResponse(
+                state=state,
+                setup_visible=False,  # ✅ safety
+            )
 
         attempts = state.get_attempt_for_question(question.question_id)
         can_retry = attempts < MAX_ATTEMPTS
@@ -64,10 +68,6 @@ class UIResponseBuilder:
         feedback = FeedbackSection.build(state)
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
-
-        # -----------------------------------------------------
-        # DISPLAY CONTENT
-        # -----------------------------------------------------
 
         written_display = display.get("written_display", "")
         coding_display = display.get("coding_display", "")
@@ -89,7 +89,7 @@ class UIResponseBuilder:
             editor_value = "-- Write your SQL query here"
 
         # -----------------------------------------------------
-        # SUBMIT LABEL (FIX "None")
+        # SUBMIT LABEL
         # -----------------------------------------------------
 
         submit_label = "Submit"
@@ -102,7 +102,7 @@ class UIResponseBuilder:
             submit_label = "Submit Answer"
 
         # -----------------------------------------------------
-        # NEXT LABEL SAFE
+        # NEXT LABEL
         # -----------------------------------------------------
 
         next_label = buttons.get("next_label") or ""
@@ -113,6 +113,8 @@ class UIResponseBuilder:
 
         return UIResponse(
             state=state,
+            # 🔥 CRITICO
+            setup_visible=False,
             # HEADER
             question_counter=counter,
             feedback_markdown=feedback,

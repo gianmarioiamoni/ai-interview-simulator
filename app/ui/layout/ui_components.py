@@ -1,5 +1,3 @@
-# app/ui/layout/ui_components.py
-
 from dataclasses import dataclass
 
 
@@ -12,7 +10,12 @@ class UILayoutComponents:
     state: object
 
     # ---------------------------------------------------------
-    # SETUP INPUTS (INDIVIDUAL CONTROL)
+    # SETUP CONTAINER (CRITICO)
+    # ---------------------------------------------------------
+    setup_container: object
+
+    # ---------------------------------------------------------
+    # SETUP INPUTS
     # ---------------------------------------------------------
     role_input: object
     interview_type_input: object
