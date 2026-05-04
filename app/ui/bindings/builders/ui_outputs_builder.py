@@ -9,8 +9,12 @@ class UIOutputsBuilder:
         return [
             # STATE
             self.c.state,
-            # SETUP CONTAINER
-            self.c.setup_container,
+            # SETUP INPUTS (NO CONTAINER)
+            self.c.role_input,
+            self.c.interview_type_input,
+            self.c.company_input,
+            self.c.language_input,
+            self.c.start_button,
             # HEADER
             self.c.question_counter,
             self.c.feedback_output,

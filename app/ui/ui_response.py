@@ -12,7 +12,7 @@ class UIResponse:
     state: object
 
     # ---------------------------------------------------------
-    # SETUP CONTAINER (UNICO CONTROLLO)
+    # SETUP (INDIVIDUAL VISIBILITY)
     # ---------------------------------------------------------
     setup_visible: bool = True
 
@@ -69,19 +69,21 @@ class UIResponse:
     loader_value: str = ""
 
     # ---------------------------------------------------------
-    # OUTPUT CONTRACT (ALLINEATO A UIOutputsBuilder)
+    # OUTPUT CONTRACT (MATCH UIOutputsBuilder)
     # ---------------------------------------------------------
     def to_gradio_outputs(self) -> List[Any]:
 
         return [
-            # -------------------------------------------------
             # STATE
-            # -------------------------------------------------
             self.state,
             # -------------------------------------------------
-            # ✅ SETUP CONTAINER (UNICO CONTROLLO)
+            # SETUP INPUTS (5 elementi)
             # -------------------------------------------------
-            gr.update(visible=self.setup_visible),
+            gr.update(visible=self.setup_visible),  # role_input
+            gr.update(visible=self.setup_visible),  # interview_type_input
+            gr.update(visible=self.setup_visible),  # company_input
+            gr.update(visible=self.setup_visible),  # language_input
+            gr.update(visible=self.setup_visible),  # start_button
             # -------------------------------------------------
             # HEADER / FEEDBACK
             # -------------------------------------------------
@@ -130,7 +132,7 @@ class UIResponse:
                 visible=self.database_editor_visible,
             ),
             # -------------------------------------------------
-            # LOADER (ALWAYS LAST)
+            # LOADER (LAST)
             # -------------------------------------------------
             gr.update(
                 visible=self.loader_visible,
