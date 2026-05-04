@@ -1,5 +1,3 @@
-# app/ui/ui_response.py
-
 import gradio as gr
 from typing import List, Any
 from dataclasses import dataclass
@@ -14,9 +12,9 @@ class UIResponse:
     state: object
 
     # ---------------------------------------------------------
-    # SETUP VISIBILITY (INDIVIDUAL)
+    # SETUP CONTAINER (UNICO CONTROLLO)
     # ---------------------------------------------------------
-    setup_inputs_visible: bool = True
+    setup_visible: bool = True
 
     # ---------------------------------------------------------
     # HEADER / FEEDBACK
@@ -71,21 +69,19 @@ class UIResponse:
     loader_value: str = ""
 
     # ---------------------------------------------------------
-    # OUTPUT CONTRACT
+    # OUTPUT CONTRACT (ALLINEATO A UIOutputsBuilder)
     # ---------------------------------------------------------
     def to_gradio_outputs(self) -> List[Any]:
 
         return [
+            # -------------------------------------------------
             # STATE
+            # -------------------------------------------------
             self.state,
             # -------------------------------------------------
-            # SETUP COMPONENTS (INDIVIDUAL VISIBILITY)
+            # ✅ SETUP CONTAINER (UNICO CONTROLLO)
             # -------------------------------------------------
-            gr.update(visible=self.setup_inputs_visible),  # role_input
-            gr.update(visible=self.setup_inputs_visible),  # interview_type
-            gr.update(visible=self.setup_inputs_visible),  # company
-            gr.update(visible=self.setup_inputs_visible),  # language
-            gr.update(visible=self.setup_inputs_visible),  # start_button
+            gr.update(visible=self.setup_visible),
             # -------------------------------------------------
             # HEADER / FEEDBACK
             # -------------------------------------------------
@@ -134,7 +130,7 @@ class UIResponse:
                 visible=self.database_editor_visible,
             ),
             # -------------------------------------------------
-            # LOADER (LAST)
+            # LOADER (ALWAYS LAST)
             # -------------------------------------------------
             gr.update(
                 visible=self.loader_visible,
