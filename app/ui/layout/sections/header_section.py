@@ -3,7 +3,7 @@
 import gradio as gr
 from app.core.build_info import BuildInfo
 
-from app.ui.layout.assets.CSS import CODE_BLOCK_STYLE
+from app.ui.layout.assets.css import CODE_BLOCK_STYLE
 from app.ui.layout.assets.scripts import (
     FOCUS_EDITOR_SCRIPT,
     SCROLL_TOP_SCRIPT,
