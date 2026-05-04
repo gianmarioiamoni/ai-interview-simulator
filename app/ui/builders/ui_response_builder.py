@@ -30,7 +30,10 @@ class UIResponseBuilder:
         # -----------------------------------------------------
 
         if ui_state.name == "SETUP":
-            return UIResponse(state=state)
+            return UIResponse(
+                state=state,
+                setup_visible=True,
+            )
 
         # -----------------------------------------------------
         # REPORT
@@ -39,6 +42,7 @@ class UIResponseBuilder:
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
+                setup_visible=False,
                 report_output="Report ready",
             )
 
@@ -49,39 +53,51 @@ class UIResponseBuilder:
         question = session_dto.current_question
 
         if question is None:
-            # safety fallback
-            return UIResponse(state=state)
+            return UIResponse(state=state, setup_visible=True)
 
         attempts = state.get_attempt_for_question(question.question_id)
         can_retry = attempts < MAX_ATTEMPTS
 
-        # -----------------------------------------------------
         # BUILD SECTIONS
-        # -----------------------------------------------------
-
         display = DisplaySection.build(state, question, ui_state, attempts > 0)
         feedback = FeedbackSection.build(state)
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
-        # -----------------------------------------------------
-        # DISPLAY CONTENT
-        # -----------------------------------------------------
-
+        # DISPLAY
         written_display = display.get("written_display", "")
         coding_display = display.get("coding_display", "")
         database_display = display.get("database_display", "")
-
-        # -----------------------------------------------------
-        # VISIBILITY (CRITICO)
-        # -----------------------------------------------------
 
         is_written = bool(written_display)
         is_coding = bool(coding_display)
         is_database = bool(database_display)
 
         # -----------------------------------------------------
-        # EDITOR DEFAULTS
+        # BUTTON LOGIC (FIXED)
+        # -----------------------------------------------------
+
+        show_next = buttons["show_next"]
+        next_label = buttons.get("next_label") or ""
+
+        if not show_next:
+            next_label = ""
+
+        # -----------------------------------------------------
+        # SUBMIT LABEL (ENTERPRISE UX)
+        # -----------------------------------------------------
+
+        submit_label = "Submit"
+
+        if question.type == QuestionType.CODING:
+            submit_label = "Run Code"
+        elif question.type == QuestionType.DATABASE:
+            submit_label = "Run SQL"
+        elif question.type == QuestionType.WRITTEN:
+            submit_label = "Submit Answer"
+
+        # -----------------------------------------------------
+        # EDITOR DEFAULT
         # -----------------------------------------------------
 
         editor_value = ""
@@ -92,25 +108,12 @@ class UIResponseBuilder:
             editor_value = "-- Write your SQL query here"
 
         # -----------------------------------------------------
-        # DEBUG
-        # -----------------------------------------------------
-
-        print("\n=== DEBUG UI BUILD ===")
-        print("question type:", question.type)
-        print("written_display:", bool(written_display))
-        print("coding_display:", bool(coding_display))
-        print("database_display:", bool(database_display))
-        print("counter:", counter)
-        print("feedback:", feedback)
-        print("buttons:", buttons)
-        print("=======================\n")
-
-        # -----------------------------------------------------
         # FINAL RESPONSE
         # -----------------------------------------------------
 
         return UIResponse(
             state=state,
+            setup_visible=False,
             # HEADER
             question_counter=counter,
             feedback_markdown=feedback,
@@ -125,8 +128,9 @@ class UIResponseBuilder:
             show_submit=buttons["show_submit"],
             show_submit_interactive=buttons["show_submit_interactive"],
             show_retry=buttons["show_retry"],
-            show_next=buttons["show_next"],
-            next_label=buttons.get("next_label") or "Next",
+            show_next=show_next,
+            next_label=next_label,
+            submit_label=submit_label,
             # EDITORS
             written_editor_value=editor_value if is_written else "",
             coding_editor_value=editor_value if is_coding else "",

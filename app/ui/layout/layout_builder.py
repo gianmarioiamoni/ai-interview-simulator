@@ -43,30 +43,31 @@ class UILayoutBuilder:
         # ---------------------------------------------------------
         # SETUP
         # ---------------------------------------------------------
-        gr.Markdown("## Configure Your Interview")
+        with gr.Column() as setup_container:
+            gr.Markdown("## Configure Your Interview")
 
-        role_input = gr.Dropdown(
-            choices=[(r.name.replace("_", " ").title(), r.value) for r in RoleType],
-            label="Role",
-        )
+            role_input = gr.Dropdown(
+                choices=[(r.name.replace("_", " ").title(), r.value) for r in RoleType],
+                label="Role",
+            )
 
-        interview_type_input = gr.Radio(
-            choices=[t.name for t in InterviewType],
-            label="Interview Type",
-        )
+            interview_type_input = gr.Radio(
+                choices=[t.name for t in InterviewType],
+                label="Interview Type",
+            )
 
-        company_input = gr.Textbox(
-            label="Company",
-            placeholder="e.g. Google, Startup...",
-        )
+            company_input = gr.Textbox(
+                label="Company",
+                placeholder="e.g. Google, Startup...",
+            )
 
-        language_input = gr.Dropdown(
-            choices=["en", "it"],
-            value="en",
-            label="Language",
-        )
+            language_input = gr.Dropdown(
+                choices=["en", "it"],
+                value="en",
+                label="Language",
+            )
 
-        start_button = gr.Button("Start Interview", interactive=False)
+            start_button = gr.Button("Start Interview", interactive=False)
 
         gr.Markdown("---")
 
@@ -96,6 +97,7 @@ class UILayoutBuilder:
 
         return UILayoutComponents(
             state=state,
+            setup_container=setup_container,
             role_input=role_input,
             interview_type_input=interview_type_input,
             company_input=company_input,

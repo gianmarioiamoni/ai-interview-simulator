@@ -9,6 +9,8 @@ class UIOutputsBuilder:
         return [
             # STATE
             self.c.state,
+            # SETUP VISIBILITY
+            self.c.setup_container,
             # HEADER / FEEDBACK
             self.c.question_counter,
             self.c.feedback_output,
