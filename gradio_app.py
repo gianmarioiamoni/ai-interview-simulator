@@ -10,4 +10,4 @@ if not os.getenv("OPENAI_API_KEY"):
 print("BUILD VERSION: 2026-03-16-A")
 app = build_app()
 
-app.launch(server_name="0.0.0.0", server_port=7860, share=True, show_api=False, show_progress=False)
+app.launch(server_name="0.0.0.0", server_port=7860, share=True, show_api=False)
