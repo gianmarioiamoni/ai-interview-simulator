@@ -1,4 +1,6 @@
-## app/ui/state_handlers/start.py
+# app/ui/state_handlers/start.py
+
+from typing import Generator
 
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import RoleType
@@ -13,34 +15,51 @@ from services.question_intelligence.question_intelligence_provider import (
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 
-from app.runtime.interview_runtime import run_interview_graph, get_runtime_llm
+from app.runtime.interview_runtime import run_interview_graph
+from app.runtime.interview_runtime import get_runtime_llm
+
 from app.settings.constants import QUESTIONS_PER_AREA
 
+from app.ui.ui_response import UIResponse
 
-def start_interview(role: str, interview_type: str, company: str, language: str):
+
+def start_interview(
+    role: str,
+    interview_type: str,
+    company: str,
+    language: str,
+) -> Generator[UIResponse, None, None]:
 
     # -----------------------------------------------------
-    # SAFE ENUM MAPPING
+    # STEP 1 — ENUM RESOLUTION
     # -----------------------------------------------------
+
     try:
         role_type = RoleType(role)
-    except ValueError:
-        raise ValueError(f"Invalid role selected: {role}")
-
-    try:
         interview_type_enum = InterviewType[interview_type]
-    except KeyError:
-        raise ValueError(f"Invalid interview type: {interview_type}")
+    except Exception as e:
+        raise ValueError(f"Invalid input: {e}")
 
-    level_enum = SeniorityLevel.MID  # TODO: rendere dinamico
+    level_enum = SeniorityLevel.MID
 
     # -----------------------------------------------------
-    # QUESTION GENERATION
+    # STEP 2 — LLM INIT
     # -----------------------------------------------------
+
     llm = get_runtime_llm()
 
     question_intelligence = QuestionIntelligenceProvider(llm)
     test_generator = AITestGenerator(llm)
+
+    # -----------------------------------------------------
+    # STEP 3 — GENERATE QUESTIONS
+    # -----------------------------------------------------
+
+    yield UIResponse(
+        state=None,
+        loader_visible=True,
+        loader_value="🧠 Generating interview structure...",
+    )
 
     questions = question_intelligence.generate(
         role=role_type,
@@ -48,6 +67,16 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
         interview_type=interview_type_enum,
         areas=interview_type_enum.get_areas(),
         questions_per_area=QUESTIONS_PER_AREA,
+    )
+
+    # -----------------------------------------------------
+    # STEP 4 — GENERATE TESTS
+    # -----------------------------------------------------
+
+    yield UIResponse(
+        state=None,
+        loader_visible=True,
+        loader_value="🧪 Preparing test cases...",
     )
 
     enriched_questions = []
@@ -64,8 +93,15 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
         enriched_questions.append(q)
 
     # -----------------------------------------------------
-    # STATE INIT
+    # STEP 5 — BUILD STATE
     # -----------------------------------------------------
+
+    yield UIResponse(
+        state=None,
+        loader_visible=True,
+        loader_value="⚙️ Building interview state...",
+    )
+
     state = InterviewState.create_initial(
         role_type=role_type,
         interview_type=interview_type_enum,
@@ -76,14 +112,21 @@ def start_interview(role: str, interview_type: str, company: str, language: str)
     )
 
     # -----------------------------------------------------
-    # GRAPH EXECUTION
+    # STEP 6 — GRAPH EXECUTION
     # -----------------------------------------------------
+
+    yield UIResponse(
+        state=state,
+        loader_visible=True,
+        loader_value="🚀 Running interview engine...",
+    )
+
     new_state = run_interview_graph(state)
 
-    print("\n=== START INTERVIEW DEBUG ===")
-    print("current_question_id:", getattr(new_state.current_question, "id", None))
-    print("allowed_actions:", new_state.allowed_actions)
-    print("is_completed:", new_state.is_completed)
-    print("================================\n")
+    # -----------------------------------------------------
+    # STEP 7 — FINAL UI
+    # -----------------------------------------------------
 
-    return build_ui_response_from_state(new_state)
+    response = build_ui_response_from_state(new_state)
+
+    yield response

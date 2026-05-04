@@ -1,5 +1,7 @@
 # app/ui/state_handlers/navigation.py
 
+from typing import Generator
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
 
@@ -15,16 +17,22 @@ from app.runtime.interview_runtime import run_interview_graph
 # =========================================================
 
 
-def retry_answer(state: InterviewState):
+def retry_answer(state: InterviewState) -> Generator[UIResponse, None, None]:
 
     if state is None or state.current_question is None:
-        return UIResponse(
+        yield UIResponse(
             state=None,
-            ui_state=UIState.SETUP,
             show_submit=False,
             show_retry=False,
             show_next=False,
         )
+        return
+
+    yield UIResponse(
+        state=state,
+        loader_visible=True,
+        loader_value="🔄 Resetting attempt...",
+    )
 
     new_state = state.model_copy(deep=True)
 
@@ -37,10 +45,15 @@ def retry_answer(state: InterviewState):
     new_state.awaiting_user_input = True
     new_state.last_feedback_bundle = None
 
-    response = build_ui_response_from_state(new_state)
-    response.ui_state = UIState.QUESTION
+    yield UIResponse(
+        state=new_state,
+        loader_visible=True,
+        loader_value="🧠 Preparing new attempt...",
+    )
 
-    return response
+    response = build_ui_response_from_state(new_state)
+
+    yield response
 
 
 # =========================================================
@@ -48,22 +61,26 @@ def retry_answer(state: InterviewState):
 # =========================================================
 
 
-def next_question(state: InterviewState):
+def next_question(state: InterviewState) -> Generator[UIResponse, None, None]:
+
+    yield UIResponse(
+        state=state,
+        loader_visible=True,
+        loader_value="➡️ Moving to next step...",
+    )
 
     new_state = state.model_copy(deep=True)
-
-    # -----------------------------------------------------
-    # 🔥 CRITICAL FIX: distinguish NEXT vs GENERATE_REPORT
-    # -----------------------------------------------------
 
     if ActionType.GENERATE_REPORT in state.allowed_actions:
         new_state.last_action = ActionType.GENERATE_REPORT
     else:
         new_state.last_action = ActionType.NEXT
 
-    # -----------------------------------------------------
-    # RUN GRAPH
-    # -----------------------------------------------------
+    yield UIResponse(
+        state=new_state,
+        loader_visible=True,
+        loader_value="🧠 Running interview engine...",
+    )
 
     new_state = run_interview_graph(new_state)
 
@@ -72,17 +89,17 @@ def next_question(state: InterviewState):
     # -----------------------------------------------------
 
     if new_state.is_completed:
-
         response = build_ui_response_from_state(new_state)
-        response.ui_state = UIState.REPORT
-
-        return response.to_gradio_outputs()
+        yield response
+        return
 
     # -----------------------------------------------------
     # NORMAL FLOW
     # -----------------------------------------------------
 
-    return build_ui_response_from_state(new_state).to_gradio_outputs()
+    response = build_ui_response_from_state(new_state)
+
+    yield response
 
 
 # =========================================================
@@ -90,27 +107,22 @@ def next_question(state: InterviewState):
 # =========================================================
 
 
-def new_interview():
+def new_interview() -> Generator[UIResponse, None, None]:
 
-    return UIResponse(
+    yield UIResponse(
+        state=None,
+        loader_visible=True,
+        loader_value="🔄 Resetting interview...",
+    )
+
+    yield UIResponse(
         state=None,
         question_counter="",
         feedback_markdown="",
-        feedback_quality=None,
         written_display="",
         coding_display="",
         database_display="",
-        written_visible=False,
-        coding_visible=False,
-        database_visible=False,
-        written_editor_visible=False,
-        coding_editor_visible=False,
-        database_editor_visible=False,
-        ui_state=UIState.SETUP,
-        final_feedback="",
-        report_output="",
         show_submit=False,
-        show_submit_interactive=False,
         show_retry=False,
         show_next=False,
     )
