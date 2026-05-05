@@ -16,6 +16,10 @@ def submit_answer(
     state: InterviewState, answer: str
 ) -> Generator[UIResponse, None, None]:
 
+    # -----------------------------------------------------
+    # SAFETY
+    # -----------------------------------------------------
+
     if not state or not state.current_question:
         yield build_ui_response_from_state(state)
         return
@@ -24,11 +28,23 @@ def submit_answer(
     question_id = question.id
 
     # -----------------------------------------------------
-    # STEP 1 — VALIDATION / PREP
+    # STEP 0 — SWITCH TO PROCESSING (CRITICAL)
+    # -----------------------------------------------------
+
+    state.awaiting_user_input = False
+    state.allowed_actions = []
+
+    # -----------------------------------------------------
+    # STEP 1 — VALIDATION
     # -----------------------------------------------------
 
     yield UIResponse(
         state=state,
+        show_setup=False,
+        show_interview=True,
+        page_title="## Processing...",
+        show_submit=True,
+        show_submit_interactive=False,
         loader_visible=True,
         loader_value="🔍 Validating answer...",
     )
@@ -49,6 +65,11 @@ def submit_answer(
 
     yield UIResponse(
         state=state,
+        show_setup=False,
+        show_interview=True,
+        page_title="## Processing...",
+        show_submit=True,
+        show_submit_interactive=False,
         loader_visible=True,
         loader_value="⚙️ Processing answer...",
     )
@@ -64,13 +85,22 @@ def submit_answer(
 
     yield UIResponse(
         state=state,
+        show_setup=False,
+        show_interview=True,
+        page_title="## Processing...",
+        show_submit=True,
+        show_submit_interactive=False,
         loader_visible=True,
         loader_value="🧠 Evaluating response...",
     )
 
     # -----------------------------------------------------
-    # STEP 4 — FINAL UI
+    # STEP 4 — FINAL UI (FEEDBACK)
     # -----------------------------------------------------
+
+    # importante: il graph dovrebbe già riportare awaiting_user_input=True
+    # se non lo fa, fallback safety:
+    state.awaiting_user_input = True
 
     response = build_ui_response_from_state(state)
 

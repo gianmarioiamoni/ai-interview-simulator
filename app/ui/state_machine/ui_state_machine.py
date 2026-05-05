@@ -36,6 +36,16 @@ class UIStateMachine:
             return UIState.COMPLETION
 
         # -----------------------------------------------------
+        # PROCESSING
+        # -----------------------------------------------------
+        if (
+            state.current_question is not None
+            and not state.awaiting_user_input
+        ):
+            print("→ resolved UI state: PROCESSING\n")
+            return UIState.PROCESSING
+
+        # -----------------------------------------------------
         # SETUP
         # -----------------------------------------------------
         if not state.current_question:
