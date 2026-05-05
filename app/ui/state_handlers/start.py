@@ -124,6 +124,13 @@ def start_interview(
     new_state = run_interview_graph(state)
 
     # -----------------------------------------------------
+    # FIX STATE (CRITICO)
+    # -----------------------------------------------------
+
+    new_state.is_processing = False
+    new_state.awaiting_user_input = True
+
+    # -----------------------------------------------------
     # STEP 7 — FINAL UI
     # -----------------------------------------------------
 

@@ -24,15 +24,16 @@ def submit_answer(
         yield build_ui_response_from_state(state)
         return
 
-    question = state.current_question
-    question_id = question.id
-
     # -----------------------------------------------------
-    # STEP 0 — SWITCH TO PROCESSING (CRITICAL)
+    # STEP 0 — ENTER PROCESSING
     # -----------------------------------------------------
 
+    state.is_processing = True
     state.awaiting_user_input = False
     state.allowed_actions = []
+
+    question = state.current_question
+    question_id = question.id
 
     # -----------------------------------------------------
     # STEP 1 — VALIDATION
@@ -75,13 +76,20 @@ def submit_answer(
     )
 
     # -----------------------------------------------------
-    # STEP 3 — USE CASE (LLM)
+    # STEP 3 — USE CASE
     # -----------------------------------------------------
 
     llm = get_runtime_llm()
     use_case = EvaluateAnswerUseCase(llm=llm)
 
     state = use_case.execute(state)
+
+    # -----------------------------------------------------
+    # FIX STATE (CRITICO)
+    # -----------------------------------------------------
+
+    state.is_processing = False
+    state.awaiting_user_input = True
 
     yield UIResponse(
         state=state,
@@ -95,12 +103,8 @@ def submit_answer(
     )
 
     # -----------------------------------------------------
-    # STEP 4 — FINAL UI (FEEDBACK)
+    # STEP 4 — FINAL UI
     # -----------------------------------------------------
-
-    # importante: il graph dovrebbe già riportare awaiting_user_input=True
-    # se non lo fa, fallback safety:
-    state.awaiting_user_input = True
 
     response = build_ui_response_from_state(state)
 
