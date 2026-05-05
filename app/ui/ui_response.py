@@ -1,5 +1,3 @@
-# app/ui/ui_response.py
-
 import gradio as gr
 from typing import List, Any
 from dataclasses import dataclass
@@ -8,31 +6,21 @@ from dataclasses import dataclass
 @dataclass
 class UIResponse:
 
-    # ---------------------------------------------------------
     # STATE
-    # ---------------------------------------------------------
     state: object
 
-    # ---------------------------------------------------------
     # LAYOUT SWITCH
-    # ---------------------------------------------------------
     show_setup: bool = True
     show_interview: bool = False
 
-    # ---------------------------------------------------------
     # SETUP UI
-    # ---------------------------------------------------------
     page_title: str = "## Configure Your Interview"
 
-    # ---------------------------------------------------------
     # HEADER
-    # ---------------------------------------------------------
     question_counter: str = ""
     feedback_markdown: str = ""
 
-    # ---------------------------------------------------------
     # DISPLAY
-    # ---------------------------------------------------------
     written_display: str = ""
     coding_display: str = ""
     database_display: str = ""
@@ -41,15 +29,11 @@ class UIResponse:
     coding_visible: bool = False
     database_visible: bool = False
 
-    # ---------------------------------------------------------
     # REPORT
-    # ---------------------------------------------------------
     final_feedback: str = ""
     report_output: str = ""
 
-    # ---------------------------------------------------------
     # BUTTONS
-    # ---------------------------------------------------------
     show_submit: bool = False
     show_submit_interactive: bool = False
 
@@ -61,9 +45,7 @@ class UIResponse:
     next_label: str = ""
     submit_label: str = "Submit"
 
-    # ---------------------------------------------------------
     # EDITORS
-    # ---------------------------------------------------------
     written_editor_value: str = ""
     coding_editor_value: str = ""
     database_editor_value: str = ""
@@ -72,53 +54,36 @@ class UIResponse:
     coding_editor_visible: bool = False
     database_editor_visible: bool = False
 
-    # ---------------------------------------------------------
     # LOADER
-    # ---------------------------------------------------------
     loader_visible: bool = False
     loader_value: str = ""
 
-    # ---------------------------------------------------------
-    # OUTPUT CONTRACT (STRICT ORDER)
-    # ---------------------------------------------------------
     def to_gradio_outputs(self) -> List[Any]:
 
         return [
             # STATE
             self.state,
-            # -------------------------------------------------
-            # CONTAINER SWITCH (ONLY visible)
-            # -------------------------------------------------
+            # CONTAINER SWITCH (must match layout_builder)
             gr.update(visible=self.show_setup),  # setup_container
             gr.update(visible=self.show_interview),  # interview_container
-            # -------------------------------------------------
-            # SETUP INPUTS (preserve values, no reset)
-            # -------------------------------------------------
+            # SETUP INPUTS (NO reset)
             gr.update(),  # role_input
             gr.update(),  # interview_type_input
             gr.update(),  # company_input
             gr.update(),  # language_input
-            gr.update(value="Start Interview"),  # start_button (fix None)
+            gr.update(value="Start Interview"),  # start_button
             gr.update(value=self.page_title),  # page_title
-            # -------------------------------------------------
             # HEADER
-            # -------------------------------------------------
             self.question_counter,
             gr.update(value=self.feedback_markdown),
-            # -------------------------------------------------
             # DISPLAY
-            # -------------------------------------------------
             gr.update(value=self.written_display, visible=self.written_visible),
             gr.update(value=self.coding_display, visible=self.coding_visible),
             gr.update(value=self.database_display, visible=self.database_visible),
-            # -------------------------------------------------
             # REPORT
-            # -------------------------------------------------
             self.final_feedback,
             self.report_output,
-            # -------------------------------------------------
             # BUTTONS
-            # -------------------------------------------------
             gr.update(
                 visible=self.show_submit,
                 interactive=self.show_submit_interactive,
@@ -132,9 +97,7 @@ class UIResponse:
                 visible=self.show_next,
                 value=self.next_label,
             ),
-            # -------------------------------------------------
             # EDITORS
-            # -------------------------------------------------
             gr.update(
                 value=self.written_editor_value,
                 visible=self.written_editor_visible,
@@ -147,9 +110,7 @@ class UIResponse:
                 value=self.database_editor_value,
                 visible=self.database_editor_visible,
             ),
-            # -------------------------------------------------
-            # LOADER (always last)
-            # -------------------------------------------------
+            # LOADER (last)
             gr.update(
                 visible=self.loader_visible,
                 value=self.loader_value,

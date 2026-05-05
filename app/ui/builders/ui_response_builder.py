@@ -1,5 +1,3 @@
-# app/ui/builders/ui_response_builder.py
-
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 
@@ -32,6 +30,7 @@ class UIResponseBuilder:
                 show_interview=False,
                 page_title="## Configure Your Interview",
             )
+
         # PROCESSING
         if ui_state.name == "PROCESSING":
             return UIResponse(
@@ -43,11 +42,11 @@ class UIResponseBuilder:
                 show_submit_interactive=False,
                 show_retry=False,
                 show_next=False,
-                # editor blocked
                 written_editor_visible=False,
                 coding_editor_visible=False,
                 database_editor_visible=False,
             )
+
         # REPORT
         if ui_state.name == "REPORT":
             return UIResponse(
@@ -58,6 +57,7 @@ class UIResponseBuilder:
                 report_output="Report ready",
             )
 
+        # QUESTION FLOW
         question = session_dto.current_question
 
         if question is None:
@@ -83,11 +83,11 @@ class UIResponseBuilder:
         is_coding = bool(coding_display)
         is_database = bool(database_display)
 
-        area_label = (
-            question.area
-            if isinstance(question.area, str)
-            else question.area.name.replace("_", " ").title()
-        )
+        # area label safe
+        if isinstance(question.area, str):
+            area_label = question.area
+        else:
+            area_label = question.area.name.replace("_", " ").title()
 
         page_title = f"## {area_label}"
 
