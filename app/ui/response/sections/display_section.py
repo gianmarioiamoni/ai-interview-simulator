@@ -63,7 +63,7 @@ class DisplaySection:
             return ""
 
         # otherwise show question
-        return question.text
+        return question.text or ""
 
     # =========================================================
     # PREFIX
