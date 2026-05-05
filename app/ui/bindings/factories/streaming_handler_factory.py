@@ -1,5 +1,3 @@
-# app/ui/bindings/factories/streaming_handler_factory.py
-
 import gradio as gr
 import time
 from typing import Callable, Any, Generator, List
@@ -14,13 +12,23 @@ class StreamingHandlerFactory:
         self.output_count = len(outputs)
         self.loader_index = self.output_count - 1
 
+        # setup indices (aligned with UIOutputsBuilder)
+        self.setup_indices = [1, 2, 3, 4, 5]
+
     # ---------------------------------------------------------
-    # IDLE STATE (NO-OP SAFE)
+    # IDLE STATE (LOCK-AWARE)
     # ---------------------------------------------------------
 
-    def _idle_updates(self) -> List[Any]:
-        # 🔥 CRITICAL: preserve UI state
-        return [gr.update() for _ in range(self.output_count)]
+    def _idle_updates(self, lock_setup: bool = False) -> List[Any]:
+
+        updates = [gr.update() for _ in range(self.output_count)]
+
+        # keep setup locked during streaming
+        if lock_setup:
+            for idx in self.setup_indices:
+                updates[idx] = gr.update(interactive=False)
+
+        return updates
 
     # ---------------------------------------------------------
     # NORMALIZATION
@@ -57,17 +65,17 @@ class StreamingHandlerFactory:
         def handler(*args: Any):
 
             # -------------------------------------------------
-            # STEP 1 — LOADER
+            # STEP 1 — LOADER (LOCKED UI)
             # -------------------------------------------------
 
             if steps:
                 for step in steps:
-                    updates = self._idle_updates()
+                    updates = self._idle_updates(lock_setup=True)
                     updates[self.loader_index] = show_loader(step)
                     yield tuple(updates)
                     time.sleep(0.35)
             else:
-                updates = self._idle_updates()
+                updates = self._idle_updates(lock_setup=True)
                 updates[self.loader_index] = show_loader("Processing...")
                 yield tuple(updates)
 
@@ -77,7 +85,6 @@ class StreamingHandlerFactory:
 
             response = action_fn(*args)
 
-            # STREAM SUPPORT
             if isinstance(response, Generator):
                 for chunk in response:
                     out = self._normalize(chunk)
@@ -87,7 +94,7 @@ class StreamingHandlerFactory:
             out = self._normalize(response)
 
             # -------------------------------------------------
-            # 🔥 FIX: NEVER ALLOW value=None
+            # prevent value=None
             # -------------------------------------------------
 
             for i, v in enumerate(out):
