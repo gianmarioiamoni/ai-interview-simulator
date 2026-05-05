@@ -102,8 +102,15 @@ class StreamingHandlerFactory:
 
             for i, v in enumerate(out):
                 if isinstance(v, dict):
-                    if "value" in v and v["value"] is None:
+
+                    # remove None values
+                    if v.get("value") is None:
                         del v["value"]
+                    # remove interactive for non-interactive components
+                    if "interactive" in v:
+                        # leave interactive for buttons only
+                        if i not in [14, 15, 16]: # submit, retry, next
+                            del v["interactive"]
 
             # -------------------------------------------------
             # STEP 3 — HIDE LOADER
