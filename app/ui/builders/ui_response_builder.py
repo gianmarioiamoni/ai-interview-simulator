@@ -1,3 +1,5 @@
+# app/ui/builders/ui_response_builder.py
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 
@@ -22,12 +24,20 @@ class UIResponseBuilder:
 
         ui_state = UIStateMachine.resolve(state)
 
+        # -----------------------------------------------------
+        # SETUP
+        # -----------------------------------------------------
+
         if ui_state.name == "SETUP":
             return UIResponse(
                 state=state,
                 setup_visible=True,
                 page_title="## Configure Your Interview",
             )
+
+        # -----------------------------------------------------
+        # REPORT
+        # -----------------------------------------------------
 
         if ui_state.name == "REPORT":
             return UIResponse(
@@ -36,6 +46,10 @@ class UIResponseBuilder:
                 page_title="## Report",
                 report_output="Report ready",
             )
+
+        # -----------------------------------------------------
+        # QUESTION FLOW
+        # -----------------------------------------------------
 
         question = session_dto.current_question
 
@@ -61,12 +75,32 @@ class UIResponseBuilder:
         is_coding = bool(coding_display)
         is_database = bool(database_display)
 
+        # -----------------------------------------------------
+        # AREA TITLE (FIX DEFINITIVO)
+        # -----------------------------------------------------
+
+        if isinstance(question.area, str):
+            area_title = question.area.replace("_", " ").title()
+        else:
+            # fallback se in futuro torna enum
+            area_title = str(question.area).replace("_", " ").title()
+
+        page_title = f"## {area_title}"
+
+        # -----------------------------------------------------
+        # EDITOR DEFAULTS
+        # -----------------------------------------------------
+
         editor_value = ""
 
         if question.type == QuestionType.CODING:
             editor_value = "# Write your solution here"
         elif question.type == QuestionType.DATABASE:
             editor_value = "-- Write your SQL query here"
+
+        # -----------------------------------------------------
+        # SUBMIT LABEL
+        # -----------------------------------------------------
 
         submit_label = "Submit"
 
@@ -77,7 +111,9 @@ class UIResponseBuilder:
         elif question.type == QuestionType.WRITTEN:
             submit_label = "Submit Answer"
 
-        page_title = f"## {question.area.name.replace('_', ' ').title()}"
+        # -----------------------------------------------------
+        # FINAL RESPONSE
+        # -----------------------------------------------------
 
         return UIResponse(
             state=state,
