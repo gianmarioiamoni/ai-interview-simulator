@@ -12,6 +12,7 @@ class CounterSection:
         max_attempts: int,
     ) -> str:
 
+        
         return (
             "### Interview Progress\n\n"
             f"Question {question.index} / {question.total}\n\n"

@@ -72,13 +72,16 @@ class DisplaySection:
         has_previous_answer: bool,
     ) -> str:
 
+        # FEEDBACK
         if ui_state == UIState.FEEDBACK:
             return "### Your Answer\n\n"
 
+        # IMPROVE
         if has_previous_answer:
             return "### Improve Your Answer\n\n"
 
-        return "### Question\n\n"
+        # QUESTION
+        return ""
 
     @staticmethod
     def _map_by_question_type(
