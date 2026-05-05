@@ -1,28 +1,26 @@
-# app/ui/state_handlers/submit.py
-
 from typing import Generator
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview.answer import Answer
 
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
-from app.ui.state_handlers.ui_builder import build_ui_response_from_state
-
 from app.runtime.interview_runtime import get_runtime_llm
-from app.ui.ui_response import UIResponse
 
 
 def submit_answer(
     state: InterviewState, answer: str
-) -> Generator[UIResponse, None, None]:
+) -> Generator[InterviewState, None, None]:
 
     # -----------------------------------------------------
     # SAFETY
     # -----------------------------------------------------
 
     if not state or not state.current_question:
-        yield build_ui_response_from_state(state)
+        yield state
         return
+
+    question = state.current_question
+    question_id = question.id
 
     # -----------------------------------------------------
     # STEP 0 — ENTER PROCESSING
@@ -31,26 +29,13 @@ def submit_answer(
     state.awaiting_user_input = False
     state.allowed_actions = []
 
-    question = state.current_question
-    question_id = question.id
+    # 👉 opzionale: tracking fase (utile per loader dinamico)
+    state.current_step = "validating"
+
+    yield state
 
     # -----------------------------------------------------
-    # STEP 1 — VALIDATION
-    # -----------------------------------------------------
-
-    yield UIResponse(
-        state=state,
-        show_setup=False,
-        show_interview=True,
-        page_title="## Processing...",
-        show_submit=True,
-        show_submit_interactive=False,
-        loader_visible=True,
-        loader_value="🔍 Validating answer...",
-    )
-
-    # -----------------------------------------------------
-    # STEP 2 — BUILD ANSWER
+    # STEP 1 — BUILD ANSWER
     # -----------------------------------------------------
 
     attempt = state.get_attempt_for_question(question_id) + 1
@@ -63,19 +48,13 @@ def submit_answer(
 
     state = state.add_answer(new_answer)
 
-    yield UIResponse(
-        state=state,
-        show_setup=False,
-        show_interview=True,
-        page_title="## Processing...",
-        show_submit=True,
-        show_submit_interactive=False,
-        loader_visible=True,
-        loader_value="⚙️ Processing answer...",
-    )
+    state.awaiting_user_input = False
+    state.current_step = "processing"
+
+    yield state
 
     # -----------------------------------------------------
-    # STEP 3 — USE CASE
+    # STEP 2 — USE CASE (LLM)
     # -----------------------------------------------------
 
     llm = get_runtime_llm()
@@ -84,26 +63,10 @@ def submit_answer(
     state = use_case.execute(state)
 
     # -----------------------------------------------------
-    # FIX STATE (CRITICO)
+    # STEP 3 — FINALIZE STATE
     # -----------------------------------------------------
 
     state.awaiting_user_input = True
+    state.current_step = None
 
-    yield UIResponse(
-        state=state,
-        show_setup=False,
-        show_interview=True,
-        page_title="## Processing...",
-        show_submit=True,
-        show_submit_interactive=False,
-        loader_visible=True,
-        loader_value="🧠 Evaluating response...",
-    )
-
-    # -----------------------------------------------------
-    # STEP 4 — FINAL UI
-    # -----------------------------------------------------
-
-    response = build_ui_response_from_state(state)
-
-    yield response
+    yield state
