@@ -146,7 +146,7 @@ class UIResponseBuilder:
             coding_visible=is_coding,
             database_visible=is_database,
             show_submit=buttons["show_submit"],
-            show_submit_interactive=buttons["show_submit_interactive"],
+            show_submit_interactive=False,
             show_retry=buttons["show_retry"],
             show_next=buttons["show_next"],
             next_label=buttons.get("next_label") or "",
