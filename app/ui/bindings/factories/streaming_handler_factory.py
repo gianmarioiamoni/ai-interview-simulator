@@ -6,6 +6,7 @@ from typing import Callable, Any, Generator, List
 
 from app.ui.ui_response import UIResponse
 from app.ui.utils.loading_utils import show_loader, hide_loader
+from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 
 class StreamingHandlerFactory:
@@ -14,43 +15,68 @@ class StreamingHandlerFactory:
         self.output_count = len(outputs)
         self.loader_index = self.output_count - 1
 
-        # indici bottoni (SAFE interactive)
+        # indici bottoni (solo questi supportano interactive)
         self.button_indices = {14, 15, 16}
+
+    # ---------------------------------------------------------
+    # IDLE STATE
+    # ---------------------------------------------------------
 
     def _idle_updates(self) -> List[Any]:
         return [None] * self.output_count
 
+    # ---------------------------------------------------------
+    # NORMALIZATION
+    # ---------------------------------------------------------
+
     def _normalize(self, response: Any) -> List[Any]:
+
+        # -----------------------------------------------------
+        # NONE → NO UPDATE
+        # -----------------------------------------------------
 
         if response is None:
             return self._idle_updates()
 
-        if isinstance(response, UIResponse):
-            out = list(response.to_gradio_outputs())
+        # -----------------------------------------------------
+        # INTERVIEW STATE → BUILD UI RESPONSE
+        # -----------------------------------------------------
 
-            if len(out) != self.output_count:
-                raise RuntimeError(
-                    f"UIResponse output length mismatch: "
-                    f"{len(out)} != {self.output_count}"
-                )
+        if not isinstance(response, UIResponse):
+            response = build_ui_response_from_state(response)
 
-            for i, v in enumerate(out):
-                if isinstance(v, dict):
+        # -----------------------------------------------------
+        # NORMAL FLOW
+        # -----------------------------------------------------
 
-                    # remove None values
-                    if v.get("value") is None:
-                        v.pop("value", None)
+        out = list(response.to_gradio_outputs())
 
-                    # remove interactive if not button
-                    if "interactive" in v and i not in self.button_indices:
-                        v.pop("interactive", None)
+        if len(out) != self.output_count:
+            raise RuntimeError(
+                f"UIResponse output length mismatch: "
+                f"{len(out)} != {self.output_count}"
+            )
 
-            return out
+        # -----------------------------------------------------
+        # SAFETY CLEANUP
+        # -----------------------------------------------------
 
-        if isinstance(response, list):
-            return response
+        for i, v in enumerate(out):
+            if isinstance(v, dict):
 
-        raise RuntimeError(f"Unsupported response type: {type(response)}")
+                # evita reset value=None
+                if v.get("value") is None:
+                    v.pop("value", None)
+
+                # evita crash Markdown/Column
+                if "interactive" in v and i not in self.button_indices:
+                    v.pop("interactive", None)
+
+        return out
+
+    # ---------------------------------------------------------
+    # FACTORY
+    # ---------------------------------------------------------
 
     def create(
         self,
@@ -59,6 +85,10 @@ class StreamingHandlerFactory:
     ) -> Callable[..., Generator[Any, None, None]]:
 
         def handler(*args: Any):
+
+            # -------------------------------------------------
+            # LOADER STEPS
+            # -------------------------------------------------
 
             if steps:
                 for step in steps:
@@ -71,7 +101,15 @@ class StreamingHandlerFactory:
                 updates[self.loader_index] = show_loader("Processing...")
                 yield tuple(updates)
 
+            # -------------------------------------------------
+            # EXECUTE
+            # -------------------------------------------------
+
             response = action_fn(*args)
+
+            # -------------------------------------------------
+            # STREAMING
+            # -------------------------------------------------
 
             if isinstance(response, Generator):
                 for chunk in response:
@@ -79,8 +117,13 @@ class StreamingHandlerFactory:
                     yield tuple(out)
                 return
 
+            # -------------------------------------------------
+            # SINGLE RESPONSE
+            # -------------------------------------------------
+
             out = self._normalize(response)
 
+            # hide loader
             out[self.loader_index] = hide_loader()
 
             yield tuple(out)

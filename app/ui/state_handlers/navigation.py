@@ -4,6 +4,8 @@ from typing import Generator
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
+from domain.contracts.user.role import RoleType
+from domain.contracts.interview.interview_type import InterviewType
 
 from app.ui.ui_state import UIState
 from app.ui.ui_response import UIResponse
@@ -21,7 +23,7 @@ def retry_answer(state: InterviewState) -> Generator[UIResponse, None, None]:
 
     if state is None or state.current_question is None:
         yield UIResponse(
-            state=None,
+            state=state,
             show_submit=False,
             show_retry=False,
             show_next=False,
@@ -107,16 +109,19 @@ def next_question(state: InterviewState) -> Generator[UIResponse, None, None]:
 # =========================================================
 
 
-def new_interview() -> Generator[UIResponse, None, None]:
+def new_interview(state: InterviewState) -> Generator[UIResponse, None, None]:
 
     yield UIResponse(
-        state=None,
+        state=state,
         loader_visible=True,
         loader_value="🔄 Resetting interview...",
     )
 
     yield UIResponse(
-        state=None,
+        state=state,
+        show_setup=True,
+        show_interview=False,
+        page_title="## Configure Your Interview",
         question_counter="",
         feedback_markdown="",
         written_display="",
