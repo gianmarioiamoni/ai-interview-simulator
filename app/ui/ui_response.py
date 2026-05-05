@@ -11,18 +11,29 @@ class UIResponse:
     # STATE
     state: object
 
-    # SETUP VISIBILITY (temporaneo, verrà rimosso negli step successivi)
-    show_setup: bool = True
-    show_interview: bool = False
+    # -----------------------------
+    # SETUP COMPONENTS
+    # -----------------------------
+    role_visible: bool = True
+    interview_type_visible: bool = True
+    company_visible: bool = True
+    language_visible: bool = True
+    start_button_visible: bool = True
 
+    # -----------------------------
     # TITLE
+    # -----------------------------
     page_title: str = "## Configure Your Interview"
 
+    # -----------------------------
     # HEADER
+    # -----------------------------
     question_counter: str = ""
     feedback_markdown: str = ""
 
+    # -----------------------------
     # DISPLAY
+    # -----------------------------
     written_display: str = ""
     coding_display: str = ""
     database_display: str = ""
@@ -31,11 +42,15 @@ class UIResponse:
     coding_visible: bool = False
     database_visible: bool = False
 
+    # -----------------------------
     # REPORT
+    # -----------------------------
     final_feedback: str = ""
     report_output: str = ""
 
+    # -----------------------------
     # BUTTONS
+    # -----------------------------
     show_submit: bool = False
     submit_interactive: bool = False
 
@@ -47,7 +62,9 @@ class UIResponse:
     next_label: str = ""
     submit_label: str = "Submit"
 
+    # -----------------------------
     # EDITORS
+    # -----------------------------
     written_editor_value: str = ""
     coding_editor_value: str = ""
     database_editor_value: str = ""
@@ -56,26 +73,29 @@ class UIResponse:
     coding_editor_visible: bool = False
     database_editor_visible: bool = False
 
+    # -----------------------------
     # LOADER
+    # -----------------------------
     loader_visible: bool = False
     loader_value: str = ""
 
+    # -----------------------------
     # OUTPUT CONTRACT
+    # -----------------------------
     def to_gradio_outputs(self) -> List[Any]:
 
         return [
             # STATE
             self.state,
-            # CONTAINER SWITCH (temporaneo)
-            gr.update(visible=self.show_setup),
-            gr.update(visible=self.show_interview),
-            # SETUP INPUTS (no reset)
-            None,
-            None,
-            None,
-            None,
-            # START BUTTON (mai None)
-            gr.update(value="Start Interview"),
+            # SETUP INPUTS
+            gr.update(visible=self.role_visible),
+            gr.update(visible=self.interview_type_visible),
+            gr.update(visible=self.company_visible),
+            gr.update(visible=self.language_visible),
+            gr.update(
+                visible=self.start_button_visible,
+                value="Start Interview",
+            ),
             # TITLE
             gr.update(value=self.page_title),
             # HEADER
