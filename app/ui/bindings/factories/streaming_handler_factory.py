@@ -22,6 +22,9 @@ class StreamingHandlerFactory:
 
     def _normalize(self, response: Any) -> List[Any]:
 
+        if response is None:
+            return self._idle_updates()
+
         if isinstance(response, UIResponse):
             out = list(response.to_gradio_outputs())
 
@@ -31,7 +34,6 @@ class StreamingHandlerFactory:
                     f"{len(out)} != {self.output_count}"
                 )
 
-            # 🔥 FIX CRITICO
             for i, v in enumerate(out):
                 if isinstance(v, dict):
 
