@@ -24,40 +24,32 @@ class UIResponseBuilder:
 
         ui_state = UIStateMachine.resolve(state)
 
-        # =====================================================
         # SETUP
-        # =====================================================
-
         if ui_state.name == "SETUP":
             return UIResponse(
                 state=state,
-                setup_visible=True,
-                setup_interactive=True,
+                show_setup=True,
+                show_interview=False,
                 page_title="## Configure Your Interview",
             )
 
-        # =====================================================
         # REPORT
-        # =====================================================
-
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
-                setup_visible=False,  # ✅ FIX
+                show_setup=False,
+                show_interview=True,
                 page_title="## Final Report",
                 report_output="Report ready",
             )
-
-        # =====================================================
-        # QUESTION FLOW
-        # =====================================================
 
         question = session_dto.current_question
 
         if question is None:
             return UIResponse(
                 state=state,
-                setup_visible=False,  # ✅ FIX
+                show_setup=False,
+                show_interview=True,
             )
 
         attempts = state.get_attempt_for_question(question.question_id)
@@ -76,10 +68,6 @@ class UIResponseBuilder:
         is_coding = bool(coding_display)
         is_database = bool(database_display)
 
-        # -----------------------------------------------------
-        # PAGE TITLE
-        # -----------------------------------------------------
-
         area_label = (
             question.area
             if isinstance(question.area, str)
@@ -88,20 +76,12 @@ class UIResponseBuilder:
 
         page_title = f"## {area_label}"
 
-        # -----------------------------------------------------
-        # EDITOR DEFAULTS
-        # -----------------------------------------------------
-
         editor_value = ""
 
         if question.type == QuestionType.CODING:
             editor_value = "# Write your solution here"
         elif question.type == QuestionType.DATABASE:
             editor_value = "-- Write your SQL query here"
-
-        # -----------------------------------------------------
-        # SUBMIT LABEL
-        # -----------------------------------------------------
 
         submit_label = "Submit"
 
@@ -112,14 +92,10 @@ class UIResponseBuilder:
         elif question.type == QuestionType.WRITTEN:
             submit_label = "Submit Answer"
 
-        # =====================================================
-        # FINAL RESPONSE
-        # =====================================================
-
         return UIResponse(
             state=state,
-            # 🔥 FIX CRITICO
-            setup_visible=False,
+            show_setup=False,
+            show_interview=True,
             page_title=page_title,
             question_counter=counter,
             feedback_markdown=feedback,
