@@ -35,21 +35,6 @@ class UIResponseBuilder:
                 page_title="## Configure Your Interview",
             )
 
-        if ui_state.name == "PROCESSING":
-            return UIResponse(
-                state=state,
-                show_setup=False,
-                show_interview=True,
-                page_title="## Processing...",
-                show_submit=True,
-                show_submit_interactive=False,
-                show_retry=False,
-                show_next=False,
-                written_editor_visible=False,
-                coding_editor_visible=False,
-                database_editor_visible=False,
-            )
-
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
