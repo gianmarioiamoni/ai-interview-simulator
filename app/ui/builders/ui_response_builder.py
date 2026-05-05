@@ -79,9 +79,9 @@ class UIResponseBuilder:
         coding_display = display.get("coding_display", "")
         database_display = display.get("database_display", "")
 
-        is_written = bool(written_display)
-        is_coding = bool(coding_display)
-        is_database = bool(database_display)
+        is_written = question.type == QuestionType.WRITTEN
+        is_coding = question.type == QuestionType.CODING
+        is_database = question.type == QuestionType.DATABASE
 
         # area label safe
         if isinstance(question.area, str):
