@@ -8,11 +8,13 @@ from domain.contracts.question.question import QuestionType
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.user.seniority_level import SeniorityLevel
 
+
 from services.question_intelligence.question_intelligence_provider import (
     QuestionIntelligenceProvider,
 )
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
+from app.settings.constants import QUESTIONS_PER_AREA
 from app.runtime.interview_runtime import run_interview_graph, get_runtime_llm
 
 
