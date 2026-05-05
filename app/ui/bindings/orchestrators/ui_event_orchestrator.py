@@ -104,6 +104,9 @@ class UIEventOrchestrator:
             ],
             outputs=self.outputs,
             show_progress=False,
+        ).then(
+            lambda: gr.update(interactive=False, value="Start Interview"),
+            outputs=[self.c.start_button],
         )
 
     # =========================================================
