@@ -1,3 +1,6 @@
+# app/ui/bindings/builders/ui_outputs_builder.py
+
+
 class UIOutputsBuilder:
     def __init__(self, c):
         self.c = c
@@ -5,7 +8,7 @@ class UIOutputsBuilder:
     def build(self):
         return [
             self.c.state,
-            # SETUP
+            # SETUP INPUTS
             self.c.role_input,
             self.c.interview_type_input,
             self.c.company_input,
