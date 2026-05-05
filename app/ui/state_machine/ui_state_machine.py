@@ -21,44 +21,30 @@ class UIStateMachine:
         print("awaiting_input:", getattr(state, "awaiting_user_input", None))
         print("allowed_actions:", state.allowed_actions)
 
-        # -----------------------------------------------------
         # REPORT
-        # -----------------------------------------------------
         if state.interview_evaluation is not None:
             print("→ resolved UI state: REPORT\n")
             return UIState.REPORT
 
-        # -----------------------------------------------------
         # COMPLETION
-        # -----------------------------------------------------
         if state.is_completed:
             print("→ resolved UI state: COMPLETION\n")
             return UIState.COMPLETION
 
-        # -----------------------------------------------------
         # SETUP
-        # -----------------------------------------------------
         if not state.current_question:
             print("→ resolved UI state: SETUP\n")
             return UIState.SETUP
 
-        # -----------------------------------------------------
         # FEEDBACK
-        # -----------------------------------------------------
-        if state.last_feedback_bundle is not None and state.allowed_actions:
+        if (
+            state.awaiting_user_input
+            and state.allowed_actions
+            and state.last_feedback_bundle is not None
+        ):
             print("→ resolved UI state: FEEDBACK\n")
             return UIState.FEEDBACK
 
-        # -----------------------------------------------------
-        # PROCESSING (FIX)
-        # -----------------------------------------------------
-        # PROCESSING deve essere esplicito, non dedotto da awaiting_user_input
-        if getattr(state, "is_processing", False):
-            print("→ resolved UI state: PROCESSING\n")
-            return UIState.PROCESSING
-
-        # -----------------------------------------------------
         # DEFAULT = QUESTION
-        # -----------------------------------------------------
         print("→ resolved UI state: QUESTION\n")
         return UIState.QUESTION
