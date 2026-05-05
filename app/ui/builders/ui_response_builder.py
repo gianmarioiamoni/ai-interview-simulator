@@ -1,3 +1,5 @@
+# app/ui/builders/ui_response_builder.py
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 
@@ -22,7 +24,9 @@ class UIResponseBuilder:
 
         ui_state = UIStateMachine.resolve(state)
 
-        # SETUP
+        print("\n=== UI RESPONSE BUILDER DEBUG ===")
+        print("ui_state:", ui_state)
+
         if ui_state.name == "SETUP":
             return UIResponse(
                 state=state,
@@ -31,7 +35,6 @@ class UIResponseBuilder:
                 page_title="## Configure Your Interview",
             )
 
-        # PROCESSING
         if ui_state.name == "PROCESSING":
             return UIResponse(
                 state=state,
@@ -47,7 +50,6 @@ class UIResponseBuilder:
                 database_editor_visible=False,
             )
 
-        # REPORT
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
@@ -57,8 +59,9 @@ class UIResponseBuilder:
                 report_output="Report ready",
             )
 
-        # QUESTION FLOW
         question = session_dto.current_question
+
+        print("question:", question)
 
         if question is None:
             return UIResponse(
@@ -79,11 +82,16 @@ class UIResponseBuilder:
         coding_display = display.get("coding_display", "")
         database_display = display.get("database_display", "")
 
+        print("written_display:", written_display)
+        print("coding_display:", coding_display)
+        print("database_display:", database_display)
+
         is_written = question.type == QuestionType.WRITTEN
         is_coding = question.type == QuestionType.CODING
         is_database = question.type == QuestionType.DATABASE
 
-        # area label safe
+        print("visibility flags:", is_written, is_coding, is_database)
+
         if isinstance(question.area, str):
             area_label = question.area
         else:
@@ -117,9 +125,9 @@ class UIResponseBuilder:
             written_display=written_display,
             coding_display=coding_display,
             database_display=database_display,
-            written_visible=is_written,
-            coding_visible=is_coding,
-            database_visible=is_database,
+            written_visible=bool(written_display),
+            coding_visible=bool(coding_display),
+            database_visible=bool(database_display),
             show_submit=buttons["show_submit"],
             show_submit_interactive=buttons["show_submit_interactive"],
             show_retry=buttons["show_retry"],
