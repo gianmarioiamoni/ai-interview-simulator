@@ -1,20 +1,17 @@
-# app/ui/bindings/builders/ui_outputs_builder.py
-
-
 class UIOutputsBuilder:
     def __init__(self, c):
         self.c = c
 
     def build(self):
         return [
-            # STATE
             self.c.state,
-            # SETUP INPUTS (NO CONTAINER)
+            # SETUP
             self.c.role_input,
             self.c.interview_type_input,
             self.c.company_input,
             self.c.language_input,
             self.c.start_button,
+            self.c.page_title,
             # HEADER
             self.c.question_counter,
             self.c.feedback_output,

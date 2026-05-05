@@ -97,6 +97,10 @@ class StreamingHandlerFactory:
             # -------------------------------------------------
 
             out = self._normalize(response)
+            # avoid override value of buttons
+            for i, v in enumerate(out):
+                if isinstance(v, dict) and "value" in v and v["value"] is None:
+                    v.pop("value")
 
             # -------------------------------------------------
             # STEP 3 — HIDE LOADER
