@@ -1,3 +1,5 @@
+# app/ui/layout/layout_builder.py
+
 import gradio as gr
 
 from app.ui.layout.ui_components import UILayoutComponents
@@ -13,6 +15,7 @@ class UILayoutBuilder:
 
         gr.HTML(LOADER_STYLE)
 
+        # GLOBAL LOADER (always outside containers)
         global_loader = gr.Markdown(
             "",
             visible=False,
@@ -25,55 +28,65 @@ class UILayoutBuilder:
         gr.Markdown("Build: 2026-03-16-A | Runtime: HuggingFace Spaces")
         gr.Markdown("---")
 
-        # SETUP
-        page_title = gr.Markdown("## Configure Your Interview")
+        # =====================================================
+        # SETUP CONTAINER
+        # =====================================================
+        with gr.Column(visible=True) as setup_container:
 
-        role_input = gr.Dropdown(
-            choices=[(r.name.replace("_", " ").title(), r.value) for r in RoleType],
-            label="Role",
-        )
+            page_title = gr.Markdown("## Configure Your Interview")
 
-        interview_type_input = gr.Radio(
-            choices=[t.name for t in InterviewType],
-            label="Interview Type",
-        )
+            role_input = gr.Dropdown(
+                choices=[(r.name.replace("_", " ").title(), r.value) for r in RoleType],
+                label="Role",
+            )
 
-        company_input = gr.Textbox(label="Company")
+            interview_type_input = gr.Radio(
+                choices=[t.name for t in InterviewType],
+                label="Interview Type",
+            )
 
-        language_input = gr.Dropdown(
-            choices=["en", "it"],
-            value="en",
-            label="Language",
-        )
+            company_input = gr.Textbox(label="Company")
 
-        start_button = gr.Button(
-            "Start Interview",
-            interactive=False,
-        )
+            language_input = gr.Dropdown(
+                choices=["en", "it"],
+                value="en",
+                label="Language",
+            )
 
-        gr.Markdown("---")
+            start_button = gr.Button(
+                "Start Interview",
+                interactive=False,
+            )
 
-        # MAIN UI
-        question_counter = gr.Markdown("")
-        feedback_output = gr.Markdown("")
+        # =====================================================
+        # INTERVIEW CONTAINER
+        # =====================================================
+        with gr.Column(visible=False) as interview_container:
 
-        written_display = gr.Markdown(visible=False)
-        coding_display = gr.Code(language="python", interactive=False, visible=False)
-        database_display = gr.Code(language="sql", interactive=False, visible=False)
+            question_counter = gr.Markdown("")
+            feedback_output = gr.Markdown("")
 
-        written_box = gr.Textbox(label="Your Answer", lines=5, visible=False)
-        coding_box = gr.Code(language="python", lines=20, visible=False)
-        database_box = gr.Code(language="sql", lines=10, visible=False)
+            written_display = gr.Markdown(visible=False)
+            coding_display = gr.Code(
+                language="python", interactive=False, visible=False
+            )
+            database_display = gr.Code(language="sql", interactive=False, visible=False)
 
-        submit_button = gr.Button("Submit", visible=False)
-        retry_button = gr.Button("Retry", visible=False)
-        next_button = gr.Button("Next", visible=False)
+            written_box = gr.Textbox(label="Your Answer", lines=5, visible=False)
+            coding_box = gr.Code(language="python", lines=20, visible=False)
+            database_box = gr.Code(language="sql", lines=10, visible=False)
 
-        final_feedback = gr.Markdown("")
-        report_output = gr.Markdown("")
+            submit_button = gr.Button("Submit", visible=False)
+            retry_button = gr.Button("Retry", visible=False)
+            next_button = gr.Button("Next", visible=False)
+
+            final_feedback = gr.Markdown("")
+            report_output = gr.Markdown("")
 
         return UILayoutComponents(
             state=state,
+            setup_container=setup_container,
+            interview_container=interview_container,
             role_input=role_input,
             interview_type_input=interview_type_input,
             company_input=company_input,
