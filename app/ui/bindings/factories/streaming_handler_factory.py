@@ -13,7 +13,7 @@ class StreamingHandlerFactory:
         self.loader_index = self.output_count - 1
 
         # setup indices (aligned with UIOutputsBuilder)
-        self.setup_indices = [1, 2, 3, 4, 5]
+        self.setup_indices = [3, 4, 5, 6, 7]
 
     # ---------------------------------------------------------
     # IDLE STATE (LOCK-AWARE)
