@@ -38,6 +38,9 @@ class StreamingHandlerFactory:
     # ---------------------------------------------------------
 
     def _normalize(self, response: Any) -> List[Any]:
+        
+        if response is None:
+            return self._idle_updates()
 
         if not isinstance(response, UIResponse):
             response = build_ui_response_from_state(response)
