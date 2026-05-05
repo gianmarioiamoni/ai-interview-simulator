@@ -12,15 +12,8 @@ from services.question_intelligence.question_intelligence_provider import (
     QuestionIntelligenceProvider,
 )
 
-from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ai.test_generation.ai_test_generator import AITestGenerator
-
-from app.runtime.interview_runtime import run_interview_graph
-from app.runtime.interview_runtime import get_runtime_llm
-
-from app.settings.constants import QUESTIONS_PER_AREA
-
-from app.ui.ui_response import UIResponse
+from app.runtime.interview_runtime import run_interview_graph, get_runtime_llm
 
 
 def start_interview(
@@ -28,48 +21,52 @@ def start_interview(
     interview_type: str,
     company: str,
     language: str,
-) -> Generator[UIResponse, None, None]:
+) -> Generator[InterviewState | None, None, None]:
 
-    # -----------------------------------------
-    # INITIAL STATE
-    # -----------------------------------------
-    state = InterviewState.empty()
+    # -----------------------------------------------------
+    # STEP 0 — LOADING (NO STATE YET)
+    # -----------------------------------------------------
 
-    state.awaiting_user_input = False
-    yield state
+    yield None
 
-    # -----------------------------------------
-    # GENERATE QUESTIONS
-    # -----------------------------------------
-    questions = ...
+    # -----------------------------------------------------
+    # STEP 1 — ENUM RESOLUTION
+    # -----------------------------------------------------
 
-    yield state
+    try:
+        role_type = RoleType(role)
+        interview_type_enum = InterviewType[interview_type]
+    except Exception as e:
+        raise ValueError(f"Invalid input: {e}")
 
-    # -----------------------------------------
-    # BUILD FINAL STATE
-    # -----------------------------------------
-    state = InterviewState.create_initial(...)
+    level_enum = SeniorityLevel.MID
 
-    yield state
+    # -----------------------------------------------------
+    # STEP 2 — LLM INIT
+    # -----------------------------------------------------
 
-    # -----------------------------------------
-    # GRAPH
-    # -----------------------------------------
-    state = run_interview_graph(state)
+    llm = get_runtime_llm()
 
-    state.awaiting_user_input = True
+    question_intelligence = QuestionIntelligenceProvider(llm)
+    test_generator = AITestGenerator(llm)
 
-    yield state
+    # -----------------------------------------------------
+    # STEP 3 — GENERATE QUESTIONS
+    # -----------------------------------------------------
+
+    questions = question_intelligence.generate(
+        role=role_type,
+        level=level_enum,
+        interview_type=interview_type_enum,
+        areas=interview_type_enum.get_areas(),
+        questions_per_area=QUESTIONS_PER_AREA,
+    )
+
+    yield None
 
     # -----------------------------------------------------
     # STEP 4 — GENERATE TESTS
     # -----------------------------------------------------
-
-    yield UIResponse(
-        state=None,
-        loader_visible=True,
-        loader_value="🧪 Preparing test cases...",
-    )
 
     enriched_questions = []
 
@@ -84,15 +81,11 @@ def start_interview(
 
         enriched_questions.append(q)
 
+    yield None
+
     # -----------------------------------------------------
     # STEP 5 — BUILD STATE
     # -----------------------------------------------------
-
-    yield UIResponse(
-        state=None,
-        loader_visible=True,
-        loader_value="⚙️ Building interview state...",
-    )
 
     state = InterviewState.create_initial(
         role_type=role_type,
@@ -104,27 +97,12 @@ def start_interview(
     )
 
     # -----------------------------------------------------
-    # STEP 6 — GRAPH EXECUTION
+    # STEP 6 — GRAPH
     # -----------------------------------------------------
 
-    yield UIResponse(
-        state=state,
-        loader_visible=True,
-        loader_value="🚀 Running interview engine...",
-    )
+    state = run_interview_graph(state)
 
-    new_state = run_interview_graph(state)
+    # CRITICO
+    state.awaiting_user_input = True
 
-    # -----------------------------------------------------
-    # FIX STATE (CRITICO)
-    # -----------------------------------------------------
-
-    new_state.awaiting_user_input = True
-
-    # -----------------------------------------------------
-    # STEP 7 — FINAL UI
-    # -----------------------------------------------------
-
-    response = build_ui_response_from_state(new_state)
-
-    yield response
+    yield state
