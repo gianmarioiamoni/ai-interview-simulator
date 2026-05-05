@@ -18,7 +18,11 @@ class DisplaySection:
         has_previous_answer: bool,
     ) -> DisplayFields:
 
-        print("AREA DTO:", question.area)
+        print("\n=== DISPLAY SECTION DEBUG ===")
+        print("area:", question.area)
+        print("type:", question.type)
+        print("ui_state:", ui_state)
+        print("has_previous_answer:", has_previous_answer)
 
         content = DisplaySection._resolve_content(
             state,
@@ -32,16 +36,16 @@ class DisplaySection:
             has_previous_answer,
         )
 
-        display_text = prefix + content
+        display_text = prefix + (content or "")
+
+        print("content:", content)
+        print("display_text:", display_text)
+        print("=============================\n")
 
         return DisplaySection._map_by_question_type(
             question.type,
             display_text,
         )
-
-    # =========================================================
-    # CONTENT
-    # =========================================================
 
     @staticmethod
     def _resolve_content(
@@ -51,23 +55,16 @@ class DisplaySection:
         has_previous_answer: bool,
     ) -> str:
 
-        # ONLY get answer for current question
         last_answer = state.get_latest_answer_for_question(question.question_id)
 
         is_feedback = ui_state == UIState.FEEDBACK
 
-        # show answer only if it's for the current question
         if is_feedback or has_previous_answer:
             if last_answer:
                 return last_answer.content
             return ""
 
-        # otherwise show question
         return question.text or ""
-
-    # =========================================================
-    # PREFIX
-    # =========================================================
 
     @staticmethod
     def _resolve_prefix(
@@ -76,16 +73,12 @@ class DisplaySection:
     ) -> str:
 
         if ui_state == UIState.FEEDBACK:
-            return "### 🧾 Your Answer\n\n"
+            return "### Your Answer\n\n"
 
         if has_previous_answer:
-            return "### ✏️ Improve Your Answer\n\n"
+            return "### Improve Your Answer\n\n"
 
-        return "### 📌 Question\n\n"
-
-    # =========================================================
-    # MAPPING
-    # =========================================================
+        return "### Question\n\n"
 
     @staticmethod
     def _map_by_question_type(
