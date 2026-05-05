@@ -28,12 +28,12 @@ class UIEventOrchestrator:
         self.outputs_builder = UIOutputsBuilder(components)
         self.outputs = self.outputs_builder.build()
 
-        # DEBUG CONTRACT
+        # contract check
         from app.ui.ui_response import UIResponse
 
         dummy = UIResponse(state=None)
         if len(self.outputs) != len(dummy.to_gradio_outputs()):
-            raise RuntimeError("❌ OUTPUT CONTRACT MISMATCH")
+            raise RuntimeError("OUTPUT CONTRACT MISMATCH")
 
         self.handler_factory = StreamingHandlerFactory(self.outputs)
 
@@ -70,16 +70,16 @@ class UIEventOrchestrator:
             )
 
     # =========================================================
-    # 🔥 START (FIX DEFINITIVO)
+    # START
     # =========================================================
 
     def _bind_start(self):
 
         start_steps = [
-            "🧠 Generating interview structure...",
-            "📚 Creating questions...",
-            "🧪 Preparing test cases...",
-            "⚙️ Finalizing interview...",
+            "Generating interview structure...",
+            "Creating questions...",
+            "Preparing test cases...",
+            "Finalizing interview...",
         ]
 
         start_handler_wrapper = self.handler_factory.create(
@@ -87,32 +87,26 @@ class UIEventOrchestrator:
             start_steps,
         )
 
-        # 🔥 STEP 1 — IMMEDIATE LOCK (SYNC)
-        def lock_ui(*_):
+        def lock_setup_inputs():
             return [
-                gr.update(),  # state
-                # setup inputs (LOCKED, NOT HIDDEN)
                 gr.update(interactive=False),
                 gr.update(interactive=False),
                 gr.update(interactive=False),
                 gr.update(interactive=False),
                 gr.update(interactive=False, value="Start Interview"),
-                # title
-                gr.update(),
-                # rest untouched
-                *[gr.update() for _ in range(len(self.outputs) - 6)],
             ]
 
         self.c.start_button.click(
-            lock_ui,
-            inputs=[
+            lock_setup_inputs,
+            inputs=[],
+            outputs=[
                 self.c.role_input,
                 self.c.interview_type_input,
                 self.c.company_input,
                 self.c.language_input,
+                self.c.start_button,
             ],
-            outputs=self.outputs,
-            show_progress=False,
+            queue=False,
         ).then(
             start_handler_wrapper,
             inputs=[
@@ -131,9 +125,9 @@ class UIEventOrchestrator:
 
     def _bind_submit(self):
         submit_steps = [
-            "🔍 Evaluating answer...",
-            "📝 Providing feedback...",
-            "💡 Suggesting improvements...",
+            "Evaluating answer...",
+            "Providing feedback...",
+            "Suggesting improvements...",
         ]
 
         submit_handler_wrapper = self.handler_factory.create(
@@ -180,12 +174,12 @@ class UIEventOrchestrator:
     def _bind_navigation(self):
         retry_handler = self.handler_factory.create(
             retry_answer,
-            ["🔄 Retrying..."],
+            ["Retrying..."],
         )
 
         next_handler = self.handler_factory.create(
             next_question,
-            ["🔄 Loading next question..."],
+            ["Loading next question..."],
         )
 
         self.c.retry_button.click(
