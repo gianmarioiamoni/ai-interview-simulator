@@ -32,6 +32,7 @@ class UIResponseBuilder:
             return UIResponse(
                 state=state,
                 setup_visible=True,
+                setup_interactive=True,
                 page_title="## Configure Your Interview",
             )
 
@@ -42,8 +43,9 @@ class UIResponseBuilder:
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
-                setup_visible=False,
-                page_title="## Report",
+                setup_visible=True,
+                setup_interactive=False,
+                page_title="## Final Report",
                 report_output="Report ready",
             )
 
@@ -56,7 +58,8 @@ class UIResponseBuilder:
         if question is None:
             return UIResponse(
                 state=state,
-                setup_visible=False,
+                setup_visible=True,
+                setup_interactive=False,
             )
 
         attempts = state.get_attempt_for_question(question.question_id)
@@ -76,16 +79,16 @@ class UIResponseBuilder:
         is_database = bool(database_display)
 
         # -----------------------------------------------------
-        # AREA TITLE (FIX DEFINITIVO)
+        # PAGE TITLE (SAFE)
         # -----------------------------------------------------
 
-        if isinstance(question.area, str):
-            area_title = question.area.replace("_", " ").title()
-        else:
-            # fallback se in futuro torna enum
-            area_title = str(question.area).replace("_", " ").title()
+        area_label = (
+            question.area
+            if isinstance(question.area, str)
+            else question.area.name.replace("_", " ").title()
+        )
 
-        page_title = f"## {area_title}"
+        page_title = f"## {area_label}"
 
         # -----------------------------------------------------
         # EDITOR DEFAULTS
@@ -117,7 +120,9 @@ class UIResponseBuilder:
 
         return UIResponse(
             state=state,
-            setup_visible=False,
+            # 🔥 UX: lock setup instead of hiding
+            setup_visible=True,
+            setup_interactive=False,
             page_title=page_title,
             question_counter=counter,
             feedback_markdown=feedback,
