@@ -6,7 +6,6 @@ from typing import Callable, Any, Generator, List
 
 from app.ui.ui_response import UIResponse
 from app.ui.utils.loading_utils import show_loader, hide_loader
-from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 
 class StreamingHandlerFactory:
@@ -15,49 +14,41 @@ class StreamingHandlerFactory:
         self.output_count = len(outputs)
         self.loader_index = self.output_count - 1
 
-        # setup indices (aligned with UIOutputsBuilder)
-        self.setup_indices = [3, 4, 5, 6, 7]
+        # indici bottoni (SAFE interactive)
+        self.button_indices = {14, 15, 16}
 
-    # ---------------------------------------------------------
-    # IDLE STATE (LOCK-AWARE)
-    # ---------------------------------------------------------
-
-    def _idle_updates(self, lock_setup: bool = False) -> List[Any]:
-
-        updates = [gr.update() for _ in range(self.output_count)]
-
-        # keep setup locked during streaming
-        if lock_setup:
-            for idx in self.setup_indices:
-                updates[idx] = gr.update(interactive=False)
-
-        return updates
-
-    # ---------------------------------------------------------
-    # NORMALIZATION
-    # ---------------------------------------------------------
+    def _idle_updates(self) -> List[Any]:
+        return [None] * self.output_count
 
     def _normalize(self, response: Any) -> List[Any]:
-        
-        if response is None:
-            return self._idle_updates()
 
-        if not isinstance(response, UIResponse):
-            response = build_ui_response_from_state(response)
+        if isinstance(response, UIResponse):
+            out = list(response.to_gradio_outputs())
 
-        out = list(response.to_gradio_outputs())
+            if len(out) != self.output_count:
+                raise RuntimeError(
+                    f"UIResponse output length mismatch: "
+                    f"{len(out)} != {self.output_count}"
+                )
 
-        if len(out) != self.output_count:
-            raise RuntimeError(
-                f"UIResponse output length mismatch: "
-                f"{len(out)} != {self.output_count}"
-            )
+            # 🔥 FIX CRITICO
+            for i, v in enumerate(out):
+                if isinstance(v, dict):
 
-        return out
+                    # remove None values
+                    if v.get("value") is None:
+                        v.pop("value", None)
 
-    # ---------------------------------------------------------
-    # FACTORY
-    # ---------------------------------------------------------
+                    # remove interactive if not button
+                    if "interactive" in v and i not in self.button_indices:
+                        v.pop("interactive", None)
+
+            return out
+
+        if isinstance(response, list):
+            return response
+
+        raise RuntimeError(f"Unsupported response type: {type(response)}")
 
     def create(
         self,
@@ -67,24 +58,16 @@ class StreamingHandlerFactory:
 
         def handler(*args: Any):
 
-            # -------------------------------------------------
-            # STEP 1 — LOADER (LOCKED UI)
-            # -------------------------------------------------
-
             if steps:
                 for step in steps:
-                    updates = self._idle_updates(lock_setup=True)
+                    updates = self._idle_updates()
                     updates[self.loader_index] = show_loader(step)
                     yield tuple(updates)
                     time.sleep(0.35)
             else:
-                updates = self._idle_updates(lock_setup=True)
+                updates = self._idle_updates()
                 updates[self.loader_index] = show_loader("Processing...")
                 yield tuple(updates)
-
-            # -------------------------------------------------
-            # STEP 2 — EXECUTE
-            # -------------------------------------------------
 
             response = action_fn(*args)
 
@@ -95,26 +78,6 @@ class StreamingHandlerFactory:
                 return
 
             out = self._normalize(response)
-
-            # -------------------------------------------------
-            # prevent value=None
-            # -------------------------------------------------
-
-            for i, v in enumerate(out):
-                if isinstance(v, dict):
-
-                    # remove None values
-                    if v.get("value") is None:
-                        del v["value"]
-                    # remove interactive for non-interactive components
-                    if "interactive" in v:
-                        # leave interactive for buttons only
-                        if i not in [14, 15, 16]: # submit, retry, next
-                            del v["interactive"]
-
-            # -------------------------------------------------
-            # STEP 3 — HIDE LOADER
-            # -------------------------------------------------
 
             out[self.loader_index] = hide_loader()
 
