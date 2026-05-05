@@ -24,9 +24,9 @@ class UIResponseBuilder:
 
         ui_state = UIStateMachine.resolve(state)
 
-        # -----------------------------------------------------
+        # =====================================================
         # SETUP
-        # -----------------------------------------------------
+        # =====================================================
 
         if ui_state.name == "SETUP":
             return UIResponse(
@@ -36,30 +36,28 @@ class UIResponseBuilder:
                 page_title="## Configure Your Interview",
             )
 
-        # -----------------------------------------------------
+        # =====================================================
         # REPORT
-        # -----------------------------------------------------
+        # =====================================================
 
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
-                setup_visible=True,
-                setup_interactive=False,
+                setup_visible=False,  # ✅ FIX
                 page_title="## Final Report",
                 report_output="Report ready",
             )
 
-        # -----------------------------------------------------
+        # =====================================================
         # QUESTION FLOW
-        # -----------------------------------------------------
+        # =====================================================
 
         question = session_dto.current_question
 
         if question is None:
             return UIResponse(
                 state=state,
-                setup_visible=True,
-                setup_interactive=False,
+                setup_visible=False,  # ✅ FIX
             )
 
         attempts = state.get_attempt_for_question(question.question_id)
@@ -79,7 +77,7 @@ class UIResponseBuilder:
         is_database = bool(database_display)
 
         # -----------------------------------------------------
-        # PAGE TITLE (SAFE)
+        # PAGE TITLE
         # -----------------------------------------------------
 
         area_label = (
@@ -114,15 +112,14 @@ class UIResponseBuilder:
         elif question.type == QuestionType.WRITTEN:
             submit_label = "Submit Answer"
 
-        # -----------------------------------------------------
+        # =====================================================
         # FINAL RESPONSE
-        # -----------------------------------------------------
+        # =====================================================
 
         return UIResponse(
             state=state,
-            # 🔥 UX: lock setup instead of hiding
-            setup_visible=True,
-            setup_interactive=False,
+            # 🔥 FIX CRITICO
+            setup_visible=False,
             page_title=page_title,
             question_counter=counter,
             feedback_markdown=feedback,
