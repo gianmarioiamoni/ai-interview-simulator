@@ -31,8 +31,11 @@ class UIResponseBuilder:
         if ui_state.name == "SETUP":
             return UIResponse(
                 state=state,
-                show_setup=True,
-                show_interview=False,
+                role_visible=True,
+                interview_type_visible=True,
+                company_visible=True,
+                language_visible=True,
+                start_button_visible=True,
                 page_title="## Configure Your Interview",
             )
 
@@ -40,21 +43,25 @@ class UIResponseBuilder:
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
-                show_setup=False,
-                show_interview=True,
+                role_visible=False,
+                interview_type_visible=False,
+                company_visible=False,
+                language_visible=False,
+                start_button_visible=False,
                 page_title="## Final Report",
                 report_output="Report ready",
             )
 
         question = session_dto.current_question
 
-        print("question:", question)
-
         if question is None:
             return UIResponse(
                 state=state,
-                show_setup=False,
-                show_interview=True,
+                role_visible=False,
+                interview_type_visible=False,
+                company_visible=False,
+                language_visible=False,
+                start_button_visible=False,
             )
 
         attempts = state.get_attempt_for_question(question.question_id)
@@ -69,18 +76,10 @@ class UIResponseBuilder:
         coding_display = display.get("coding_display", "")
         database_display = display.get("database_display", "")
 
-        print("written_display:", written_display)
-        print("coding_display:", coding_display)
-        print("database_display:", database_display)
-
-        # TYPE → VISIBILITY
         is_written = question.type == QuestionType.WRITTEN
         is_coding = question.type == QuestionType.CODING
         is_database = question.type == QuestionType.DATABASE
 
-        print("visibility flags:", is_written, is_coding, is_database)
-
-        # TITLE
         if isinstance(question.area, str):
             area_label = question.area
         else:
@@ -88,7 +87,6 @@ class UIResponseBuilder:
 
         page_title = f"## {area_label}"
 
-        # EDITOR DEFAULT
         editor_value = ""
 
         if is_coding:
@@ -96,7 +94,6 @@ class UIResponseBuilder:
         elif is_database:
             editor_value = "-- Write your SQL query here"
 
-        # SUBMIT LABEL
         if is_coding:
             submit_label = "Run Code"
         elif is_database:
@@ -106,8 +103,11 @@ class UIResponseBuilder:
 
         return UIResponse(
             state=state,
-            show_setup=False,
-            show_interview=True,
+            role_visible=False,
+            interview_type_visible=False,
+            company_visible=False,
+            language_visible=False,
+            start_button_visible=False,
             page_title=page_title,
             question_counter=counter,
             feedback_markdown=feedback,
