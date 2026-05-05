@@ -11,11 +11,11 @@ class UIResponse:
     # STATE
     state: object
 
-    # LAYOUT SWITCH
+    # SETUP VISIBILITY (temporaneo, verrà rimosso negli step successivi)
     show_setup: bool = True
     show_interview: bool = False
 
-    # SETUP UI
+    # TITLE
     page_title: str = "## Configure Your Interview"
 
     # HEADER
@@ -37,7 +37,7 @@ class UIResponse:
 
     # BUTTONS
     show_submit: bool = False
-    show_submit_interactive: bool = False
+    submit_interactive: bool = False
 
     show_retry: bool = False
     retry_interactive: bool = True
@@ -66,17 +66,17 @@ class UIResponse:
         return [
             # STATE
             self.state,
-            # CONTAINER SWITCH
+            # CONTAINER SWITCH (temporaneo)
             gr.update(visible=self.show_setup),
             gr.update(visible=self.show_interview),
-            # SETUP INPUTS (NON RESETTARE → None)
-            None,  # role_input
-            None,  # interview_type_input
-            None,  # company_input
-            None,  # language_input
-            # start_button (fix value None + no reset)
+            # SETUP INPUTS (no reset)
+            None,
+            None,
+            None,
+            None,
+            # START BUTTON (mai None)
             gr.update(value="Start Interview"),
-            # title
+            # TITLE
             gr.update(value=self.page_title),
             # HEADER
             self.question_counter,
@@ -91,7 +91,7 @@ class UIResponse:
             # BUTTONS
             gr.update(
                 visible=self.show_submit,
-                interactive=self.show_submit_interactive,
+                interactive=self.submit_interactive,
                 value=self.submit_label,
             ),
             gr.update(

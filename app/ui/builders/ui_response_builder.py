@@ -27,10 +27,7 @@ class UIResponseBuilder:
         print("\n=== UI RESPONSE BUILDER DEBUG ===")
         print("ui_state:", ui_state)
 
-        # =====================================================
         # SETUP
-        # =====================================================
-
         if ui_state.name == "SETUP":
             return UIResponse(
                 state=state,
@@ -39,10 +36,7 @@ class UIResponseBuilder:
                 page_title="## Configure Your Interview",
             )
 
-        # =====================================================
         # REPORT
-        # =====================================================
-
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
@@ -51,10 +45,6 @@ class UIResponseBuilder:
                 page_title="## Final Report",
                 report_output="Report ready",
             )
-
-        # =====================================================
-        # QUESTION FLOW (covers QUESTION + FEEDBACK)
-        # =====================================================
 
         question = session_dto.current_question
 
@@ -83,20 +73,14 @@ class UIResponseBuilder:
         print("coding_display:", coding_display)
         print("database_display:", database_display)
 
-        # -----------------------------------------------------
-        # VISIBILITY (robusto, basato su TYPE)
-        # -----------------------------------------------------
-
+        # TYPE → VISIBILITY
         is_written = question.type == QuestionType.WRITTEN
         is_coding = question.type == QuestionType.CODING
         is_database = question.type == QuestionType.DATABASE
 
         print("visibility flags:", is_written, is_coding, is_database)
 
-        # -----------------------------------------------------
-        # TITLE (area)
-        # -----------------------------------------------------
-
+        # TITLE
         if isinstance(question.area, str):
             area_label = question.area
         else:
@@ -104,33 +88,21 @@ class UIResponseBuilder:
 
         page_title = f"## {area_label}"
 
-        # -----------------------------------------------------
         # EDITOR DEFAULT
-        # -----------------------------------------------------
-
         editor_value = ""
 
-        if question.type == QuestionType.CODING:
+        if is_coding:
             editor_value = "# Write your solution here"
-        elif question.type == QuestionType.DATABASE:
+        elif is_database:
             editor_value = "-- Write your SQL query here"
 
-        # -----------------------------------------------------
         # SUBMIT LABEL
-        # -----------------------------------------------------
-
-        submit_label = "Submit"
-
-        if question.type == QuestionType.CODING:
+        if is_coding:
             submit_label = "Run Code"
-        elif question.type == QuestionType.DATABASE:
+        elif is_database:
             submit_label = "Run Query"
-        elif question.type == QuestionType.WRITTEN:
+        else:
             submit_label = "Submit Answer"
-
-        # -----------------------------------------------------
-        # FINAL RESPONSE
-        # -----------------------------------------------------
 
         return UIResponse(
             state=state,
@@ -146,7 +118,7 @@ class UIResponseBuilder:
             coding_visible=is_coding,
             database_visible=is_database,
             show_submit=buttons["show_submit"],
-            show_submit_interactive=False,
+            submit_interactive=buttons["show_submit_interactive"],
             show_retry=buttons["show_retry"],
             show_next=buttons["show_next"],
             next_label=buttons.get("next_label") or "",
