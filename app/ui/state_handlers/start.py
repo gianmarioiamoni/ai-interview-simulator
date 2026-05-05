@@ -127,7 +127,6 @@ def start_interview(
     # FIX STATE (CRITICO)
     # -----------------------------------------------------
 
-    new_state.is_processing = False
     new_state.awaiting_user_input = True
 
     # -----------------------------------------------------

@@ -28,7 +28,6 @@ def submit_answer(
     # STEP 0 — ENTER PROCESSING
     # -----------------------------------------------------
 
-    state.is_processing = True
     state.awaiting_user_input = False
     state.allowed_actions = []
 
@@ -88,7 +87,6 @@ def submit_answer(
     # FIX STATE (CRITICO)
     # -----------------------------------------------------
 
-    state.is_processing = False
     state.awaiting_user_input = True
 
     yield UIResponse(
