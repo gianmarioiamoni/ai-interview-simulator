@@ -30,44 +30,36 @@ def start_interview(
     language: str,
 ) -> Generator[UIResponse, None, None]:
 
-    # -----------------------------------------------------
-    # STEP 1 — ENUM RESOLUTION
-    # -----------------------------------------------------
+    # -----------------------------------------
+    # INITIAL STATE
+    # -----------------------------------------
+    state = InterviewState.empty()
 
-    try:
-        role_type = RoleType(role)
-        interview_type_enum = InterviewType[interview_type]
-    except Exception as e:
-        raise ValueError(f"Invalid input: {e}")
+    state.awaiting_user_input = False
+    yield state
 
-    level_enum = SeniorityLevel.MID
+    # -----------------------------------------
+    # GENERATE QUESTIONS
+    # -----------------------------------------
+    questions = ...
 
-    # -----------------------------------------------------
-    # STEP 2 — LLM INIT
-    # -----------------------------------------------------
+    yield state
 
-    llm = get_runtime_llm()
+    # -----------------------------------------
+    # BUILD FINAL STATE
+    # -----------------------------------------
+    state = InterviewState.create_initial(...)
 
-    question_intelligence = QuestionIntelligenceProvider(llm)
-    test_generator = AITestGenerator(llm)
+    yield state
 
-    # -----------------------------------------------------
-    # STEP 3 — GENERATE QUESTIONS
-    # -----------------------------------------------------
+    # -----------------------------------------
+    # GRAPH
+    # -----------------------------------------
+    state = run_interview_graph(state)
 
-    yield UIResponse(
-        state=None,
-        loader_visible=True,
-        loader_value="🧠 Generating interview structure...",
-    )
+    state.awaiting_user_input = True
 
-    questions = question_intelligence.generate(
-        role=role_type,
-        level=level_enum,
-        interview_type=interview_type_enum,
-        areas=interview_type_enum.get_areas(),
-        questions_per_area=QUESTIONS_PER_AREA,
-    )
+    yield state
 
     # -----------------------------------------------------
     # STEP 4 — GENERATE TESTS

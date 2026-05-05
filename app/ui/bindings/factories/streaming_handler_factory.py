@@ -1,3 +1,5 @@
+# app/ui/bindings/factories/streaming_handler_factory.py
+
 import gradio as gr
 import time
 from typing import Callable, Any, Generator, List
@@ -36,21 +38,18 @@ class StreamingHandlerFactory:
 
     def _normalize(self, response: Any) -> List[Any]:
 
-        if isinstance(response, UIResponse):
-            out = list(response.to_gradio_outputs())
+        if not isinstance(response, UIResponse):
+            response = build_ui_response_from_state(response)
 
-            if len(out) != self.output_count:
-                raise RuntimeError(
-                    f"UIResponse output length mismatch: "
-                    f"{len(out)} != {self.output_count}"
-                )
+        out = list(response.to_gradio_outputs())
 
-            return out
+        if len(out) != self.output_count:
+            raise RuntimeError(
+                f"UIResponse output length mismatch: "
+                f"{len(out)} != {self.output_count}"
+            )
 
-        if isinstance(response, list):
-            return response
-
-        raise RuntimeError(f"Unsupported response type: {type(response)}")
+        return out
 
     # ---------------------------------------------------------
     # FACTORY
