@@ -8,7 +8,6 @@ from domain.contracts.question.question import QuestionType
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.user.seniority_level import SeniorityLevel
 
-
 from services.question_intelligence.question_intelligence_provider import (
     QuestionIntelligenceProvider,
 )
@@ -17,19 +16,28 @@ from app.ai.test_generation.ai_test_generator import AITestGenerator
 from app.settings.constants import QUESTIONS_PER_AREA
 from app.runtime.interview_runtime import run_interview_graph, get_runtime_llm
 
+from app.ui.ui_response import UIResponse
+from app.ui.state_handlers.ui_builder import build_ui_response_from_state
+
 
 def start_interview(
     role: str,
     interview_type: str,
     company: str,
     language: str,
-) -> Generator[InterviewState | None, None, None]:
+) -> Generator[UIResponse, None, None]:
 
     # -----------------------------------------------------
-    # STEP 0 — LOADING (NO STATE YET)
+    # STEP 0 — SAFE PLACEHOLDER STATE
     # -----------------------------------------------------
 
-    yield None
+    state = InterviewState.create_initial_placeholder()
+
+    yield UIResponse(
+        state=state,
+        loader_visible=True,
+        loader_value="🧠 Generating interview structure...",
+    )
 
     # -----------------------------------------------------
     # STEP 1 — ENUM RESOLUTION
@@ -64,7 +72,11 @@ def start_interview(
         questions_per_area=QUESTIONS_PER_AREA,
     )
 
-    yield None
+    yield UIResponse(
+        state=state,
+        loader_visible=True,
+        loader_value="📚 Creating questions...",
+    )
 
     # -----------------------------------------------------
     # STEP 4 — GENERATE TESTS
@@ -83,7 +95,11 @@ def start_interview(
 
         enriched_questions.append(q)
 
-    yield None
+    yield UIResponse(
+        state=state,
+        loader_visible=True,
+        loader_value="🧪 Preparing test cases...",
+    )
 
     # -----------------------------------------------------
     # STEP 5 — BUILD STATE
@@ -98,13 +114,23 @@ def start_interview(
         interview_id="session-1",
     )
 
+    yield UIResponse(
+        state=state,
+        loader_visible=True,
+        loader_value="⚙️ Finalizing interview...",
+    )
+
     # -----------------------------------------------------
-    # STEP 6 — GRAPH
+    # STEP 6 — GRAPH EXECUTION
     # -----------------------------------------------------
 
     state = run_interview_graph(state)
 
-    # CRITICO
+    # CRITICAL FLAG
     state.awaiting_user_input = True
 
-    yield state
+    # -----------------------------------------------------
+    # STEP 7 — FINAL UI
+    # -----------------------------------------------------
+
+    yield build_ui_response_from_state(state)
