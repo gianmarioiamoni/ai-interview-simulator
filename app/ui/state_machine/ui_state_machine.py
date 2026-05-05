@@ -36,16 +36,6 @@ class UIStateMachine:
             return UIState.COMPLETION
 
         # -----------------------------------------------------
-        # PROCESSING
-        # -----------------------------------------------------
-        if (
-            state.current_question is not None
-            and not state.awaiting_user_input
-        ):
-            print("→ resolved UI state: PROCESSING\n")
-            return UIState.PROCESSING
-
-        # -----------------------------------------------------
         # SETUP
         # -----------------------------------------------------
         if not state.current_question:
@@ -55,16 +45,20 @@ class UIStateMachine:
         # -----------------------------------------------------
         # FEEDBACK
         # -----------------------------------------------------
-        if (
-            state.awaiting_user_input
-            and state.allowed_actions
-            and state.last_feedback_bundle is not None
-        ):
+        if state.last_feedback_bundle is not None and state.allowed_actions:
             print("→ resolved UI state: FEEDBACK\n")
             return UIState.FEEDBACK
 
         # -----------------------------------------------------
-        # DEFAULT
+        # PROCESSING (FIX)
+        # -----------------------------------------------------
+        # PROCESSING deve essere esplicito, non dedotto da awaiting_user_input
+        if getattr(state, "is_processing", False):
+            print("→ resolved UI state: PROCESSING\n")
+            return UIState.PROCESSING
+
+        # -----------------------------------------------------
+        # DEFAULT = QUESTION
         # -----------------------------------------------------
         print("→ resolved UI state: QUESTION\n")
         return UIState.QUESTION
