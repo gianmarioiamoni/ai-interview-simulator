@@ -15,12 +15,12 @@ class StreamingHandlerFactory:
         self.loader_index = self.output_count - 1
 
     # ---------------------------------------------------------
-    # IDLE STATE
+    # IDLE STATE (NO-OP SAFE)
     # ---------------------------------------------------------
 
     def _idle_updates(self) -> List[Any]:
-        # None = non toccare il componente
-        return [None] * self.output_count
+        # 🔥 CRITICAL: preserve UI state
+        return [gr.update() for _ in range(self.output_count)]
 
     # ---------------------------------------------------------
     # NORMALIZATION
@@ -39,7 +39,6 @@ class StreamingHandlerFactory:
 
             return out
 
-        # fallback safety
         if isinstance(response, list):
             return response
 
@@ -58,7 +57,7 @@ class StreamingHandlerFactory:
         def handler(*args: Any):
 
             # -------------------------------------------------
-            # STEP 1 — MULTI-STEP LOADER (CONTROLLED TIMING)
+            # STEP 1 — LOADER
             # -------------------------------------------------
 
             if steps:
@@ -66,42 +65,35 @@ class StreamingHandlerFactory:
                     updates = self._idle_updates()
                     updates[self.loader_index] = show_loader(step)
                     yield tuple(updates)
-
-                    # 🔥 CRUCIALE: tempo minimo per UX
                     time.sleep(0.35)
-
             else:
-                # fallback loader base
                 updates = self._idle_updates()
                 updates[self.loader_index] = show_loader("Processing...")
                 yield tuple(updates)
 
             # -------------------------------------------------
-            # STEP 2 — EXECUTE ACTION
+            # STEP 2 — EXECUTE
             # -------------------------------------------------
 
             response = action_fn(*args)
 
-            # -------------------------------------------------
-            # STEP 2.1 — STREAM SUPPORT (FUTURE-PROOF)
-            # -------------------------------------------------
-
+            # STREAM SUPPORT
             if isinstance(response, Generator):
                 for chunk in response:
                     out = self._normalize(chunk)
                     yield tuple(out)
                 return
 
+            out = self._normalize(response)
+
             # -------------------------------------------------
-            # STEP 2.2 — NORMAL RESPONSE
+            # 🔥 FIX: NEVER ALLOW value=None
             # -------------------------------------------------
 
-            out = self._normalize(response)
-            # avoid override value of buttons
-            for v in enumerate(out):
+            for i, v in enumerate(out):
                 if isinstance(v, dict):
-                    if v.get("value") is None:
-                        v.pop("value")
+                    if "value" in v and v["value"] is None:
+                        del v["value"]
 
             # -------------------------------------------------
             # STEP 3 — HIDE LOADER
