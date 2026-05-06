@@ -99,15 +99,15 @@ class UIResponse:
             # TITLE
             gr.update(value=self.page_title),
             # HEADER
-            self.question_counter,
+            gr.update(value=self.question_counter),
             gr.update(value=self.feedback_markdown),
             # DISPLAY
             gr.update(value=self.written_display, visible=self.written_visible),
             gr.update(value=self.coding_display, visible=self.coding_visible),
             gr.update(value=self.database_display, visible=self.database_visible),
             # REPORT
-            self.final_feedback,
-            self.report_output,
+            gr.update(value=self.final_feedback),
+            gr.update(value=self.report_output),
             # BUTTONS
             gr.update(
                 visible=self.show_submit,
