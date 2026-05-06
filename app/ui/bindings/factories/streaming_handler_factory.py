@@ -76,18 +76,6 @@ class StreamingHandlerFactory:
 
                 if "interactive" in v and i not in self.button_indices:
                     v.pop("interactive", None)
-        # ---------------------------------------------------------
-        # DEBUG OUTPUT CONTRACT
-        # ---------------------------------------------------------
-
-        print("\n---- OUTPUT DEBUG ----")
-        for i, v in enumerate(out):
-            if isinstance(v, dict):
-                print(i, "UPDATE →", v.get("value"), "| visible:", v.get("visible"))
-            else:
-                print(i, "RAW →", type(v), v)
-        print("----------------------\n")
-        
         
         return out
 

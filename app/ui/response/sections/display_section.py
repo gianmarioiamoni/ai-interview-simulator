@@ -18,12 +18,6 @@ class DisplaySection:
         has_previous_answer: bool,
     ) -> DisplayFields:
 
-        print("\n=== DISPLAY SECTION DEBUG ===")
-        print("area:", question.area)
-        print("type:", question.type)
-        print("ui_state:", ui_state)
-        print("has_previous_answer:", has_previous_answer)
-
         content = DisplaySection._resolve_content(
             state,
             question,
@@ -37,10 +31,6 @@ class DisplaySection:
         )
 
         display_text = prefix + (content or "")
-
-        print("content:", content)
-        print("display_text:", display_text)
-        print("=============================\n")
 
         return DisplaySection._map_by_question_type(
             question.type,
@@ -64,7 +54,6 @@ class DisplaySection:
                 return last_answer.content
             return ""
 
-        print("QUESTION TEXT:", question.text)
         return question.text or ""
 
     @staticmethod
