@@ -68,7 +68,6 @@ class UIResponse:
             # 0 STATE
             self.state,
             # 1 SETUP INPUTS
-            gr.update(visible=self.setup_visible),
             gr.update(visible=self.role_visible),
             gr.update(visible=self.interview_type_visible),
             gr.update(visible=self.company_visible),
