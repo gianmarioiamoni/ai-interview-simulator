@@ -71,13 +71,13 @@ class UILayoutBuilder:
                 "",
                 language="python", 
                 interactive=False, 
-                visible=False
+                visible=True
             )
             database_display = gr.Code(
                 "",
                 language="sql", 
                 interactive=False, 
-                visible=False
+                visible=True
             )
 
             # DEBUG IDS
