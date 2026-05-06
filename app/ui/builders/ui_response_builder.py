@@ -20,106 +20,138 @@ class UIResponseBuilder:
 
     def build(self, state: InterviewState) -> UIResponse:
 
-        mapper = InterviewStateMapper()
-        session_dto = mapper.to_session_dto(state)
-
         ui_state = UIStateMachine.resolve(state)
 
         print("\n=== UI RESPONSE BUILDER DEBUG ===")
         print("ui_state:", ui_state)
 
-        # =====================================================
-        # SETUP
-        # =====================================================
         if ui_state.name == "SETUP":
-            return UIResponse(
-                state=state,
-                # SETUP COMPONENTS
-                role_visible=True,
-                interview_type_visible=True,
-                company_visible=True,
-                language_visible=True,
-                start_button_visible=True,
-                # TITLE
-                page_title="## Configure Your Interview",
-            )
+            return self._build_setup(state)
 
-        # =====================================================
-        # REPORT
-        # =====================================================
+        if ui_state.name == "QUESTION":
+            return self._build_question(state)
+
+        if ui_state.name == "FEEDBACK":
+            return self._build_feedback(state)
+
         if ui_state.name == "REPORT":
-            return UIResponse(
-                state=state,
-                # HIDE SETUP
-                role_visible=False,
-                interview_type_visible=False,
-                company_visible=False,
-                language_visible=False,
-                start_button_visible=False,
-                # CONTENT
-                page_title="## Final Report",
-                report_output="Report ready",
-            )
+            return self._build_report(state)
 
-        # =====================================================
-        # QUESTION / FEEDBACK FLOW
-        # =====================================================
+        # fallback safety
+        return self._build_setup(state)
+
+    # =====================================================
+    # SETUP
+    # =====================================================
+    def _build_setup(self, state: InterviewState) -> UIResponse:
+
+        return UIResponse(
+            state=state,
+            role_visible=True,
+            interview_type_visible=True,
+            company_visible=True,
+            language_visible=True,
+            start_button_visible=True,
+            page_title="## Configure Your Interview",
+        )
+
+    # =====================================================
+    # QUESTION
+    # =====================================================
+    def _build_question(self, state: InterviewState) -> UIResponse:
+
+        mapper = InterviewStateMapper()
+        session_dto = mapper.to_session_dto(state)
+
         question = session_dto.current_question
-
         if question is None:
-            return UIResponse(
-                state=state,
-                # HIDE SETUP
-                role_visible=False,
-                interview_type_visible=False,
-                company_visible=False,
-                language_visible=False,
-                start_button_visible=False,
-            )
+            return self._build_setup(state)
 
-        # =====================================================
-        # DOMAIN DATA
-        # =====================================================
         attempts = state.get_attempt_for_question(question.question_id)
         can_retry = attempts < MAX_ATTEMPTS
 
-        display = DisplaySection.build(state, question, ui_state, attempts > 0)
+        display = DisplaySection.build(state, question, "QUESTION", attempts > 0)
+        counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
+        buttons = ButtonMapper.map(state, "QUESTION", can_retry)
+
+        return self._build_base_question_ui(
+            state=state,
+            question=question,
+            display=display,
+            counter=counter,
+            feedback="",
+            buttons=buttons,
+        )
+
+    # =====================================================
+    # FEEDBACK
+    # =====================================================
+    def _build_feedback(self, state: InterviewState) -> UIResponse:
+
+        mapper = InterviewStateMapper()
+        session_dto = mapper.to_session_dto(state)
+
+        question = session_dto.current_question
+        if question is None:
+            return self._build_setup(state)
+
+        attempts = state.get_attempt_for_question(question.question_id)
+        can_retry = attempts < MAX_ATTEMPTS
+
+        display = DisplaySection.build(state, question, "FEEDBACK", attempts > 0)
         feedback = FeedbackSection.build(state)
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
-        buttons = ButtonMapper.map(state, ui_state, can_retry)
+        buttons = ButtonMapper.map(state, "FEEDBACK", can_retry)
 
-        # =====================================================
+        return self._build_base_question_ui(
+            state=state,
+            question=question,
+            display=display,
+            counter=counter,
+            feedback=feedback,
+            buttons=buttons,
+        )
+
+    # =====================================================
+    # REPORT
+    # =====================================================
+    def _build_report(self, state: InterviewState) -> UIResponse:
+
+        return UIResponse(
+            state=state,
+            role_visible=False,
+            interview_type_visible=False,
+            company_visible=False,
+            language_visible=False,
+            start_button_visible=False,
+            page_title="## Final Report",
+            report_output="Report ready",
+        )
+
+    # =====================================================
+    # SHARED QUESTION BUILDER
+    # =====================================================
+    def _build_base_question_ui(
+        self,
+        state: InterviewState,
+        question,
+        display,
+        counter,
+        feedback,
+        buttons,
+    ) -> UIResponse:
+
         # DISPLAY CONTENT
-        # =====================================================
         written_display = f"<div>{display.get('written_display', '')}</div>"
         coding_display = display.get("coding_display", "")
         database_display = display.get("database_display", "")
 
-        print("FINAL WRITTEN DISPLAY:", written_display)
-        print("FINAL CODING DISPLAY:", coding_display)
-        print("FINAL DATABASE DISPLAY:", database_display)
-
-        # =====================================================
         # TYPE FLAGS
-        # =====================================================
         is_written = question.type == QuestionType.WRITTEN
         is_coding = question.type == QuestionType.CODING
         is_database = question.type == QuestionType.DATABASE
 
-        print(
-            "VISIBILITY FLAGS → written:",
-            is_written,
-            "coding:",
-            is_coding,
-            "database:",
-            is_database,
-        )
-
-        print("QUESTION TYPE RAW:", question.type, type(question.type))
-
-        # =====================================================
         # TITLE
-        # =====================================================
         if isinstance(question.area, str):
             area_label = question.area
         else:
@@ -127,19 +159,14 @@ class UIResponseBuilder:
 
         page_title = f"## {area_label}"
 
-        # =====================================================
         # EDITOR DEFAULTS
-        # =====================================================
         editor_value = ""
-
         if is_coding:
             editor_value = "# Write your solution here"
         elif is_database:
             editor_value = "-- Write your SQL query here"
 
-        # =====================================================
         # BUTTON LABEL
-        # =====================================================
         if is_coding:
             submit_label = "Run Code"
         elif is_database:
@@ -147,9 +174,6 @@ class UIResponseBuilder:
         else:
             submit_label = "Submit Answer"
 
-        # =====================================================
-        # FINAL RESPONSE
-        # =====================================================
         return UIResponse(
             state=state,
             # HIDE SETUP
