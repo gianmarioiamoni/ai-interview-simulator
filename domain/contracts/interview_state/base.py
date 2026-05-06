@@ -1,7 +1,7 @@
 # domain/contracts/interview_state/base.py
 
 from pydantic import BaseModel, Field
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 from domain.contracts.question.question import Question
@@ -40,6 +40,8 @@ class InterviewStateBase(BaseModel):
     )
 
     current_question_index: int = 0
+    current_question: Optional[object] = None
+    allowed_actions: List = []
 
     awaiting_user_input: bool = False
 
@@ -65,3 +67,4 @@ class InterviewStateBase(BaseModel):
     model_config = {
         "extra": "forbid",
     }
+

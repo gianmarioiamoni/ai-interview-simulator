@@ -28,13 +28,11 @@ def start_interview(
 ) -> Generator[UIResponse, None, None]:
 
     # -----------------------------------------------------
-    # STEP 0 — SAFE PLACEHOLDER STATE
+    # STEP 0 — LOADING (NO STATE CHANGE)
     # -----------------------------------------------------
 
-    state = InterviewState.create_initial_placeholder()
-
     yield UIResponse(
-        state=state,
+        state=None,
         loader_visible=True,
         loader_value="🧠 Generating interview structure...",
     )
@@ -73,7 +71,7 @@ def start_interview(
     )
 
     yield UIResponse(
-        state=state,
+        state=None,
         loader_visible=True,
         loader_value="📚 Creating questions...",
     )
@@ -96,13 +94,13 @@ def start_interview(
         enriched_questions.append(q)
 
     yield UIResponse(
-        state=state,
+        state=None,
         loader_visible=True,
         loader_value="🧪 Preparing test cases...",
     )
 
     # -----------------------------------------------------
-    # STEP 5 — BUILD STATE
+    # STEP 5 — BUILD STATE (FIRST REAL STATE)
     # -----------------------------------------------------
 
     state = InterviewState.create_initial(
@@ -121,12 +119,11 @@ def start_interview(
     )
 
     # -----------------------------------------------------
-    # STEP 6 — GRAPH EXECUTION
+    # STEP 6 — GRAPH
     # -----------------------------------------------------
 
     state = run_interview_graph(state)
 
-    # CRITICAL FLAG
     state.awaiting_user_input = True
 
     # -----------------------------------------------------
