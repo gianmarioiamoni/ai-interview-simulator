@@ -22,9 +22,6 @@ class UIResponseBuilder:
 
         ui_state = UIStateMachine.resolve(state)
 
-        print("\n=== UI RESPONSE BUILDER DEBUG ===")
-        print("ui_state:", ui_state)
-
         if ui_state.name == "SETUP":
             return self._build_setup(state)
 
@@ -74,6 +71,9 @@ class UIResponseBuilder:
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, "QUESTION", can_retry)
 
+        # loader decision
+        loader_visible, loader_value = self._resolve_loader(state)
+
         return self._build_base_question_ui(
             state=state,
             question=question,
@@ -81,6 +81,8 @@ class UIResponseBuilder:
             counter=counter,
             feedback="",
             buttons=buttons,
+            loader_visible=loader_visible,
+            loader_value=loader_value,
         )
 
     # =====================================================
@@ -103,6 +105,9 @@ class UIResponseBuilder:
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, "FEEDBACK", can_retry)
 
+        # loader decision
+        loader_visible, loader_value = self._resolve_loader(state)
+
         return self._build_base_question_ui(
             state=state,
             question=question,
@@ -110,6 +115,8 @@ class UIResponseBuilder:
             counter=counter,
             feedback=feedback,
             buttons=buttons,
+            loader_visible=loader_visible,
+            loader_value=loader_value,
         )
 
     # =====================================================
@@ -139,6 +146,8 @@ class UIResponseBuilder:
         counter,
         feedback,
         buttons,
+        loader_visible,
+        loader_value,
     ) -> UIResponse:
 
         # DISPLAY CONTENT
@@ -207,4 +216,22 @@ class UIResponseBuilder:
             written_editor_visible=is_written,
             coding_editor_visible=is_coding,
             database_editor_visible=is_database,
+            # LOADER
+            loader_visible=loader_visible,
+            loader_value=loader_value,
         )
+
+    # =====================================================
+    # SHARED LOADER BUILDER
+    # =====================================================
+    def _resolve_loader(self, state):
+        if not getattr(state, "current_step", None):
+            return False, ""
+
+        step_map = {
+            "validating": "🔍 Validating...",
+            "processing": "🧠 Processing...",
+            "evaluating": "📊 Evaluating...",
+        }
+
+        return True, step_map.get(state.current_step, "Processing...")

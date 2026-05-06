@@ -2,39 +2,24 @@
 
 LOADER_STYLE = """
 <style>
-
 #global-loader {
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 
-/* container */
-.loader-container {
-    display: block;
-}
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
 
-/* SINGLE BAR (NO BUG) */
-.loader-bar {
-    height: 4px;
-    width: 100%;
-    background: linear-gradient(90deg, #4f46e5, #06b6d4);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite linear;
-    border-radius: 4px;
-}
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-/* animation */
-@keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+    font-size: 24px;
+    color: white;
 
-/* text */
-.loader-text {
-    font-size: 14px;
-    color: #aaa;
-    margin-top: 6px;
+    backdrop-filter: blur(4px);
 }
-
 </style>
 """
