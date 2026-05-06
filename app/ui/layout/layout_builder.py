@@ -66,7 +66,7 @@ class UILayoutBuilder:
             question_counter = gr.Markdown("")
             feedback_output = gr.Markdown("")
 
-            written_display = gr.Markdown("", visible=False)
+            written_display = gr.HTML("", visible=False)
             coding_display = gr.Code(
                 "",
                 language="python", 

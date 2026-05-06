@@ -72,9 +72,9 @@ class UIResponseBuilder:
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
-        written_display = str(display.get("written_display", ""))
-        coding_display = str(display.get("coding_display", ""))
-        database_display = str(display.get("database_display", ""))
+        written_display = f"<div>{display.get('written_display', '')}</div>"
+        coding_display = display.get("coding_display", "")
+        database_display = display.get("database_display", "")
 
         # DEBUG
         print("FINAL WRITTEN DISPLAY:", written_display)
