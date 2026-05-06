@@ -66,7 +66,7 @@ class UILayoutBuilder:
             question_counter = gr.Markdown("")
             feedback_output = gr.Markdown("")
 
-            written_display = gr.HTML("", visible=False)
+            written_display = gr.Markdown("", visible=False)
             coding_display = gr.Code(
                 "",
                 language="python", 
@@ -79,6 +79,11 @@ class UILayoutBuilder:
                 interactive=False, 
                 visible=False
             )
+
+            # DEBUG IDS
+            print("written_display ID:", written_display._id)
+            print("coding_display ID:", coding_display._id)
+            print("database_display ID:", database_display._id)
 
             written_box = gr.Textbox(label="Your Answer", lines=5, visible=False)
             coding_box = gr.Code(language="python", lines=20, visible=False)
