@@ -152,9 +152,6 @@ class UIResponseBuilder:
         # =====================================================
         return UIResponse(
             state=state,
-            # CONTAINERS (CRITICO)
-            setup_visible=False,
-            interview_visible=True,
             # HIDE SETUP
             role_visible=False,
             interview_type_visible=False,
