@@ -23,7 +23,7 @@ class StreamingHandlerFactory:
     # ---------------------------------------------------------
 
     def _idle_updates(self) -> List[Any]:
-        return [None] * self.output_count
+        return [gr.update() for _ in range(self.output_count)]
 
     # ---------------------------------------------------------
     # NORMALIZATION
