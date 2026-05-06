@@ -59,6 +59,9 @@ class UIResponse:
     coding_editor_visible: bool = False
     database_editor_visible: bool = False
 
+    # START BUTTON
+    start_button_interactive: bool = False
+
     # LOADER
     loader_visible: bool = False
     loader_value: str = ""
@@ -77,6 +80,7 @@ class UIResponse:
             gr.update(
                 visible=self.start_button_visible,
                 value="Start Interview",
+                interactive=self.start_button_interactive,
             ),
             # 8 TITLE
             gr.update(value=self.page_title),
@@ -119,12 +123,7 @@ class UIResponse:
             ),
             # 22 LOADER
             gr.update(
-                visible=True,
+                visible=self.loader_visible,
                 value=f"<span>{self.loader_value}</span>",
-                elem_classes=(
-                    ["loader-visible"] 
-                    if self.loader_visible 
-                    else ["loader-hidden"]
-                ),
             ),
         ]
