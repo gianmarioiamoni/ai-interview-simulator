@@ -64,6 +64,7 @@ class DisplaySection:
                 return last_answer.content
             return ""
 
+        print("QUESTION TEXT:", question.text)
         return question.text or ""
 
     @staticmethod
@@ -72,15 +73,15 @@ class DisplaySection:
         has_previous_answer: bool,
     ) -> str:
 
-        # FEEDBACK
+        # FEEDBACK
         if ui_state == UIState.FEEDBACK:
             return "### Your Answer\n\n"
 
-        # IMPROVE
+        # IMPROVE
         if has_previous_answer:
             return "### Improve Your Answer\n\n"
 
-        # QUESTION
+        # QUESTION
         return ""
 
     @staticmethod

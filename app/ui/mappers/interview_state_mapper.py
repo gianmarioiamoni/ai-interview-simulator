@@ -31,7 +31,7 @@ class InterviewStateMapper:
             question_dto = QuestionDTO(
                 question_id=question.id,
                 text=question.prompt,
-                type=question.type.value,
+                type=question.type,
                 area=area,
                 index=index,
                 total=total,

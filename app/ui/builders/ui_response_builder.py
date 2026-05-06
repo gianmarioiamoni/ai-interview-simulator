@@ -80,6 +80,8 @@ class UIResponseBuilder:
         is_coding = question.type == QuestionType.CODING
         is_database = question.type == QuestionType.DATABASE
 
+        print("QUESTION TYPE RAW:", question.type, type(question.type))
+
         if isinstance(question.area, str):
             area_label = question.area
         else:
