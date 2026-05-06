@@ -72,13 +72,27 @@ class UIResponseBuilder:
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
-        written_display = display.get("written_display", "")
-        coding_display = display.get("coding_display", "")
-        database_display = display.get("database_display", "")
+        written_display = str(display.get("written_display", ""))
+        coding_display = str(display.get("coding_display", ""))
+        database_display = str(display.get("database_display", ""))
+
+        # DEBUG
+        print("FINAL WRITTEN DISPLAY:", written_display)
+        print("FINAL CODING DISPLAY:", coding_display)
+        print("FINAL DATABASE DISPLAY:", database_display)
 
         is_written = question.type == QuestionType.WRITTEN
         is_coding = question.type == QuestionType.CODING
         is_database = question.type == QuestionType.DATABASE
+
+        print(
+            "VISIBILITY FLAGS → written:",
+            is_written,
+            "coding:",
+            is_coding,
+            "database:",
+            is_database,
+        )
 
         print("QUESTION TYPE RAW:", question.type, type(question.type))
 
