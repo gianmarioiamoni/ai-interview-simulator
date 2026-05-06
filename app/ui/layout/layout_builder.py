@@ -66,18 +66,19 @@ class UILayoutBuilder:
             question_counter = gr.Markdown("")
             feedback_output = gr.Markdown("")
 
-            written_display = gr.HTML("", visible=True)
+            gr.Markdown("DEBUG MARKER - SHOULD SEE THIS")
+            written_display = gr.HTML("", visible=False)
             coding_display = gr.Code(
                 "",
                 language="python", 
                 interactive=False, 
-                visible=True
+                visible=False
             )
             database_display = gr.Code(
                 "",
                 language="sql", 
                 interactive=False, 
-                visible=True
+                visible=False
             )
 
             # DEBUG IDS
