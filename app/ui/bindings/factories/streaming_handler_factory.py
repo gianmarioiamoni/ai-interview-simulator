@@ -61,25 +61,34 @@ class StreamingHandlerFactory:
         # STATE SAFETY (CRITICAL)
         # -----------------------------------------------------
 
-        # se state=None → non toccare lo state UI
         if out[0] is None:
             out[0] = gr.update()
 
         # -----------------------------------------------------
         # CLEANUP (GRADIO SAFETY)
         # -----------------------------------------------------
-
+        
         for i, v in enumerate(out):
             if isinstance(v, dict):
 
-                # evita reset value=None
                 if v.get("value") is None:
                     v.pop("value", None)
 
-                # evita crash su componenti non compatibili
                 if "interactive" in v and i not in self.button_indices:
                     v.pop("interactive", None)
+        # ---------------------------------------------------------
+        # DEBUG OUTPUT CONTRACT
+        # ---------------------------------------------------------
 
+        print("\n---- OUTPUT DEBUG ----")
+        for i, v in enumerate(out):
+            if isinstance(v, dict):
+                print(i, "UPDATE →", v.get("value"), "| visible:", v.get("visible"))
+            else:
+                print(i, "RAW →", type(v), v)
+        print("----------------------\n")
+        
+        
         return out
 
     # ---------------------------------------------------------
