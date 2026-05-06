@@ -7,6 +7,11 @@ from app.runtime.interview_runtime import run_interview_graph
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 
+# =========================================================
+# RETRY
+# =========================================================
+
+
 def retry_answer(state: InterviewState):
 
     if state is None or state.current_question is None:
@@ -26,6 +31,11 @@ def retry_answer(state: InterviewState):
     return build_ui_response_from_state(new_state).to_gradio_outputs()
 
 
+# =========================================================
+# NEXT
+# =========================================================
+
+
 def next_question(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
@@ -36,5 +46,31 @@ def next_question(state: InterviewState):
         new_state.last_action = ActionType.NEXT
 
     new_state = run_interview_graph(new_state)
+
+    return build_ui_response_from_state(new_state).to_gradio_outputs()
+
+
+# =========================================================
+# NEW INTERVIEW
+# =========================================================
+
+
+def new_interview(state: InterviewState):
+
+    # 👉 reset totale → stato iniziale minimale
+    new_state = InterviewState.create_initial(
+        role_type=None,
+        interview_type=None,
+        company="",
+        language="en",
+        questions=[],
+        interview_id="session-new",
+    )
+
+    # opzionale ma pulito
+    new_state.awaiting_user_input = False
+    new_state.allowed_actions = []
+    new_state.last_action = None
+    new_state.last_feedback_bundle = None
 
     return build_ui_response_from_state(new_state).to_gradio_outputs()
