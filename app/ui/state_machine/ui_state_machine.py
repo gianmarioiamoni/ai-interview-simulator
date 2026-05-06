@@ -9,17 +9,9 @@ class UIStateMachine:
     @staticmethod
     def resolve(state: InterviewState | None) -> UIState:
 
-        print("\n=== UI STATE RESOLVE ===")
 
         if state is None:
-            print("state is None → SETUP\n")
             return UIState.SETUP
-
-        print("has_question:", bool(state.current_question))
-        print("is_completed:", getattr(state, "is_completed", None))
-        print("has_feedback:", bool(state.last_feedback_bundle))
-        print("awaiting_input:", getattr(state, "awaiting_user_input", None))
-        print("allowed_actions:", state.allowed_actions)
 
         # REPORT
         if state.interview_evaluation is not None:
