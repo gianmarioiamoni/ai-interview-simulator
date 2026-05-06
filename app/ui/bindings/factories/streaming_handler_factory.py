@@ -15,7 +15,7 @@ class StreamingHandlerFactory:
         self.output_count = len(outputs)
         self.loader_index = self.output_count - 1
 
-        # indici bottoni (solo questi supportano interactive)
+        # solo questi componenti supportano interactive
         self.button_indices = {14, 15, 16}
 
     # ---------------------------------------------------------
@@ -39,14 +39,14 @@ class StreamingHandlerFactory:
             return self._idle_updates()
 
         # -----------------------------------------------------
-        # INTERVIEW STATE → BUILD UI RESPONSE
+        # ALWAYS RESOLVE TO UIResponse
         # -----------------------------------------------------
 
         if not isinstance(response, UIResponse):
             response = build_ui_response_from_state(response)
 
         # -----------------------------------------------------
-        # NORMAL FLOW
+        # BUILD OUTPUT ARRAY
         # -----------------------------------------------------
 
         out = list(response.to_gradio_outputs())
@@ -58,7 +58,15 @@ class StreamingHandlerFactory:
             )
 
         # -----------------------------------------------------
-        # SAFETY CLEANUP
+        # STATE SAFETY (CRITICAL)
+        # -----------------------------------------------------
+
+        # se state=None → non toccare lo state UI
+        if out[0] is None:
+            out[0] = gr.update()
+
+        # -----------------------------------------------------
+        # CLEANUP (GRADIO SAFETY)
         # -----------------------------------------------------
 
         for i, v in enumerate(out):
@@ -68,7 +76,7 @@ class StreamingHandlerFactory:
                 if v.get("value") is None:
                     v.pop("value", None)
 
-                # evita crash Markdown/Column
+                # evita crash su componenti non compatibili
                 if "interactive" in v and i not in self.button_indices:
                     v.pop("interactive", None)
 
@@ -108,7 +116,7 @@ class StreamingHandlerFactory:
             response = action_fn(*args)
 
             # -------------------------------------------------
-            # STREAMING
+            # STREAMING (generator)
             # -------------------------------------------------
 
             if isinstance(response, Generator):
@@ -123,7 +131,7 @@ class StreamingHandlerFactory:
 
             out = self._normalize(response)
 
-            # hide loader
+            # hide loader SOLO alla fine
             out[self.loader_index] = hide_loader()
 
             yield tuple(out)

@@ -2,8 +2,10 @@
 
 # follow-up count 0-2 range and minimal instantiation (without questions, answers, evaluations)
 
+
 import pytest
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
+from typing import List, Optional
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.user.role import Role, RoleType
