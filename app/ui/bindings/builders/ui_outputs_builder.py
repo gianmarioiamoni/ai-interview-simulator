@@ -9,6 +9,8 @@ class UIOutputsBuilder:
         print("=== OUTPUT ORDER ===")
         for i, c in enumerate([
             self.c.state,
+            self.c.setup_container,
+            self.c.interview_container,
             self.c.role_input,
             self.c.interview_type_input,
             self.c.company_input,
