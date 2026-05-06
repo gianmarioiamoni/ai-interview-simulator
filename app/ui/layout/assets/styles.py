@@ -3,8 +3,6 @@
 LOADER_STYLE = """
 <style>
 #global-loader {
-    display: none;  
-
     position: fixed;
     top: 0;
     left: 0;
@@ -14,6 +12,7 @@ LOADER_STYLE = """
     background: rgba(0, 0, 0, 0.6);
     z-index: 9999;
 
+    display: flex;
     align-items: center;
     justify-content: center;
 
@@ -29,13 +28,5 @@ LOADER_STYLE = """
     border-radius: 8px;
 }
 
-/* VISIBILITY CONTROL */
-.loader-hidden {
-    display: none !important;
-}
-
-.loader-visible {
-    display: flex !important;
-}
 </style>
 """

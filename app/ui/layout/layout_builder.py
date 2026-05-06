@@ -17,8 +17,8 @@ class UILayoutBuilder:
         gr.HTML(LOADER_STYLE)
 
         # GLOBAL LOADER (overlay style)
-        global_loader = gr.Markdown(
-            "",
+        global_loader = gr.HTML(
+            "<div id='global-loader'><span></span></div>",
             visible=False,
             elem_id="global-loader",
         )
@@ -97,11 +97,6 @@ class UILayoutBuilder:
             interactive=False,
             visible=False,
         )
-
-        # DEBUG IDS
-        print("written_display ID:", written_display._id)
-        print("coding_display ID:", coding_display._id)
-        print("database_display ID:", database_display._id)
 
         # =====================================================
         # EDITORS

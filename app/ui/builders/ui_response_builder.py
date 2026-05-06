@@ -71,6 +71,12 @@ class UIResponseBuilder:
         counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, "QUESTION", can_retry)
 
+        start_button_interactive = (
+            state.role is not None
+            and state.company
+            and state.interview_type is not None
+        )
+
         # loader decision
         loader_visible, loader_value = self._resolve_loader(state)
 
@@ -81,6 +87,7 @@ class UIResponseBuilder:
             counter=counter,
             feedback="",
             buttons=buttons,
+            start_button_interactive=start_button_interactive,
             loader_visible=loader_visible,
             loader_value=loader_value,
         )
@@ -115,6 +122,7 @@ class UIResponseBuilder:
             counter=counter,
             feedback=feedback,
             buttons=buttons,
+            start_button_interactive=start_button_interactive,
             loader_visible=loader_visible,
             loader_value=loader_value,
         )
@@ -146,6 +154,7 @@ class UIResponseBuilder:
         counter,
         feedback,
         buttons,
+        start_button_interactive,
         loader_visible,
         loader_value,
     ) -> UIResponse:
@@ -216,6 +225,8 @@ class UIResponseBuilder:
             written_editor_visible=is_written,
             coding_editor_visible=is_coding,
             database_editor_visible=is_database,
+            # START BUTTON
+            start_button_interactive=start_button_interactive,
             # LOADER
             loader_visible=loader_visible,
             loader_value=loader_value,
