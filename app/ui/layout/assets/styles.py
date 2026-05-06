@@ -3,7 +3,7 @@
 LOADER_STYLE = """
 <style>
 #global-loader {
-    display: none;
+    display: none;  
 
     position: fixed;
     top: 0;
@@ -14,7 +14,6 @@ LOADER_STYLE = """
     background: rgba(0, 0, 0, 0.6);
     z-index: 9999;
 
-    display: flex;
     align-items: center;
     justify-content: center;
 
@@ -23,6 +22,14 @@ LOADER_STYLE = """
 
     backdrop-filter: blur(4px);
 }
+
+#global-loader span {
+    background: rgba(0,0,0,0.7);
+    padding: 16px 24px;
+    border-radius: 8px;
+}
+
+/* VISIBILITY CONTROL */
 .loader-hidden {
     display: none !important;
 }
@@ -30,6 +37,5 @@ LOADER_STYLE = """
 .loader-visible {
     display: flex !important;
 }
-
 </style>
 """

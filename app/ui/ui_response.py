@@ -1,3 +1,5 @@
+# app/ui/ui_response.py
+
 import gradio as gr
 from typing import List, Any
 from dataclasses import dataclass
@@ -118,7 +120,7 @@ class UIResponse:
             # 22 LOADER
             gr.update(
                 visible=True,
-                value=self.loader_value,
+                value=f"<span>{self.loader_value}</span>",
                 elem_classes=(
                     ["loader-visible"] 
                     if self.loader_visible 
