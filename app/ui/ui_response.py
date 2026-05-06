@@ -1,5 +1,3 @@
-# app/ui/ui_response.py
-
 import gradio as gr
 from typing import List, Any
 from dataclasses import dataclass
@@ -15,29 +13,21 @@ class UIResponse:
     setup_visible: bool = True
     interview_visible: bool = False
 
-    # -----------------------------
     # SETUP COMPONENTS
-    # -----------------------------
     role_visible: bool = True
     interview_type_visible: bool = True
     company_visible: bool = True
     language_visible: bool = True
     start_button_visible: bool = True
 
-    # -----------------------------
     # TITLE
-    # -----------------------------
     page_title: str = "## Configure Your Interview"
 
-    # -----------------------------
     # HEADER
-    # -----------------------------
     question_counter: str = ""
     feedback_markdown: str = ""
 
-    # -----------------------------
     # DISPLAY
-    # -----------------------------
     written_display: str = ""
     coding_display: str = ""
     database_display: str = ""
@@ -46,15 +36,11 @@ class UIResponse:
     coding_visible: bool = False
     database_visible: bool = False
 
-    # -----------------------------
     # REPORT
-    # -----------------------------
     final_feedback: str = ""
     report_output: str = ""
 
-    # -----------------------------
     # BUTTONS
-    # -----------------------------
     show_submit: bool = False
     submit_interactive: bool = False
 
@@ -66,9 +52,7 @@ class UIResponse:
     next_label: str = ""
     submit_label: str = "Submit"
 
-    # -----------------------------
     # EDITORS
-    # -----------------------------
     written_editor_value: str = ""
     coding_editor_value: str = ""
     database_editor_value: str = ""
@@ -77,24 +61,20 @@ class UIResponse:
     coding_editor_visible: bool = False
     database_editor_visible: bool = False
 
-    # -----------------------------
     # LOADER
-    # -----------------------------
     loader_visible: bool = False
     loader_value: str = ""
 
-    # -----------------------------
     # OUTPUT CONTRACT
-    # -----------------------------
     def to_gradio_outputs(self) -> List[Any]:
 
         return [
-            # STATE
+            # 0 STATE
             self.state,
-            # CONTAINERS
+            # 1-2 CONTAINERS
             gr.update(visible=self.setup_visible),
             gr.update(visible=self.interview_visible),
-            # SETUP INPUTS
+            # 3-7 SETUP INPUTS
             gr.update(visible=self.role_visible),
             gr.update(visible=self.interview_type_visible),
             gr.update(visible=self.company_visible),
@@ -103,19 +83,19 @@ class UIResponse:
                 visible=self.start_button_visible,
                 value="Start Interview",
             ),
-            # TITLE
+            # 8 TITLE
             gr.update(value=self.page_title),
-            # HEADER
+            # 9-10 HEADER
             gr.update(value=self.question_counter),
             gr.update(value=self.feedback_markdown),
-            # DISPLAY
+            # 11-13 DISPLAY
             gr.update(value=self.written_display, visible=self.written_visible),
             gr.update(value=self.coding_display, visible=self.coding_visible),
             gr.update(value=self.database_display, visible=self.database_visible),
-            # REPORT
+            # 14-15 REPORT
             gr.update(value=self.final_feedback),
             gr.update(value=self.report_output),
-            # BUTTONS
+            # 16-18 BUTTONS
             gr.update(
                 visible=self.show_submit,
                 interactive=self.submit_interactive,
@@ -129,7 +109,7 @@ class UIResponse:
                 visible=self.show_next,
                 value=self.next_label,
             ),
-            # EDITORS
+            # 19-21 EDITORS
             gr.update(
                 value=self.written_editor_value,
                 visible=self.written_editor_visible,
@@ -142,7 +122,7 @@ class UIResponse:
                 value=self.database_editor_value,
                 visible=self.database_editor_visible,
             ),
-            # LOADER
+            # 22 LOADER
             gr.update(
                 visible=self.loader_visible,
                 value=self.loader_value,
