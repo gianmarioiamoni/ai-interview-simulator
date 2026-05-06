@@ -34,9 +34,6 @@ class UIResponseBuilder:
         if ui_state.name == "SETUP":
             return UIResponse(
                 state=state,
-                # CONTAINERS
-                setup_visible=True,
-                interview_visible=False,
                 # SETUP COMPONENTS
                 role_visible=True,
                 interview_type_visible=True,
@@ -53,9 +50,6 @@ class UIResponseBuilder:
         if ui_state.name == "REPORT":
             return UIResponse(
                 state=state,
-                # CONTAINERS
-                setup_visible=False,
-                interview_visible=True,
                 # HIDE SETUP
                 role_visible=False,
                 interview_type_visible=False,
@@ -75,9 +69,6 @@ class UIResponseBuilder:
         if question is None:
             return UIResponse(
                 state=state,
-                # CONTAINERS
-                setup_visible=False,
-                interview_visible=True,
                 # HIDE SETUP
                 role_visible=False,
                 interview_type_visible=False,

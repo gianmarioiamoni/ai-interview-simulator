@@ -10,9 +10,6 @@ class UIOutputsBuilder:
         outputs = [
             # 0 STATE
             self.c.state,
-            # 1-2 CONTAINERS (FONDAMENTALE)
-            self.c.setup_container,
-            self.c.interview_container,
             # 3-7 SETUP INPUTS
             self.c.role_input,
             self.c.interview_type_input,

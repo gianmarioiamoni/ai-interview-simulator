@@ -1,6 +1,7 @@
 # app/ui/layout/layout_builder.py
 
 import gradio as gr
+from datetime import datetime
 
 from app.ui.layout.ui_components import UILayoutComponents
 from app.ui.layout.assets.styles import LOADER_STYLE
@@ -15,7 +16,7 @@ class UILayoutBuilder:
 
         gr.HTML(LOADER_STYLE)
 
-        # GLOBAL LOADER (always outside containers)
+        # GLOBAL LOADER (overlay style)
         global_loader = gr.Markdown(
             "",
             visible=False,
@@ -24,83 +25,123 @@ class UILayoutBuilder:
 
         state = gr.State()
 
+        # =====================================================
+        # HEADER
+        # =====================================================
         gr.Markdown("# AI Interview Simulator")
         gr.Markdown("Build: 2026-03-16-A | Runtime: HuggingFace Spaces")
+        gr.Markdown(
+            "Current run date and time: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
         gr.Markdown("---")
 
         # =====================================================
-        # SETUP CONTAINER
+        # TITLE
         # =====================================================
-        with gr.Column(visible=True) as setup_container:
-
-            page_title = gr.Markdown("## Configure Your Interview")
-
-            role_input = gr.Dropdown(
-                choices=[(r.name.replace("_", " ").title(), r.value) for r in RoleType],
-                label="Role",
-            )
-
-            interview_type_input = gr.Radio(
-                choices=[t.name for t in InterviewType],
-                label="Interview Type",
-            )
-
-            company_input = gr.Textbox(label="Company")
-
-            language_input = gr.Dropdown(
-                choices=["en", "it"],
-                value="en",
-                label="Language",
-            )
-
-            start_button = gr.Button(
-                "Start Interview",
-                interactive=False,
-            )
+        page_title = gr.Markdown("## Configure Your Interview")
 
         # =====================================================
-        # INTERVIEW CONTAINER
+        # SETUP COMPONENTS
         # =====================================================
-        with gr.Column(visible=False) as interview_container:
+        role_input = gr.Dropdown(
+            choices=[(r.name.replace("_", " ").title(), r.value) for r in RoleType],
+            label="Role",
+            visible=True,
+        )
 
-            question_counter = gr.Markdown("")
-            feedback_output = gr.Markdown("")
+        interview_type_input = gr.Radio(
+            choices=[t.name for t in InterviewType],
+            label="Interview Type",
+            visible=True,
+        )
 
-            gr.Markdown("DEBUG MARKER - SHOULD SEE THIS")
-            written_display = gr.HTML("", visible=False)
-            coding_display = gr.Code(
-                "",
-                language="python", 
-                interactive=False, 
-                visible=False
-            )
-            database_display = gr.Code(
-                "",
-                language="sql", 
-                interactive=False, 
-                visible=False
-            )
+        company_input = gr.Textbox(
+            label="Company",
+            visible=True,
+        )
 
-            # DEBUG IDS
-            print("written_display ID:", written_display._id)
-            print("coding_display ID:", coding_display._id)
-            print("database_display ID:", database_display._id)
+        language_input = gr.Dropdown(
+            choices=["en", "it"],
+            value="en",
+            label="Language",
+            visible=True,
+        )
 
-            written_box = gr.Textbox(label="Your Answer", lines=5, visible=False)
-            coding_box = gr.Code(language="python", lines=20, visible=False)
-            database_box = gr.Code(language="sql", lines=10, visible=False)
+        start_button = gr.Button(
+            "Start Interview",
+            interactive=False,
+            visible=True,
+        )
 
-            submit_button = gr.Button("Submit", visible=False)
-            retry_button = gr.Button("Retry", visible=False)
-            next_button = gr.Button("Next", visible=False)
+        # =====================================================
+        # INTERVIEW HEADER
+        # =====================================================
+        question_counter = gr.Markdown("", visible=False)
+        feedback_output = gr.Markdown("", visible=False)
 
-            final_feedback = gr.Markdown("")
-            report_output = gr.Markdown("")
+        # =====================================================
+        # DISPLAY
+        # =====================================================
+        written_display = gr.HTML("", visible=False)
 
+        coding_display = gr.Code(
+            "",
+            language="python",
+            interactive=False,
+            visible=False,
+        )
+
+        database_display = gr.Code(
+            "",
+            language="sql",
+            interactive=False,
+            visible=False,
+        )
+
+        # DEBUG IDS
+        print("written_display ID:", written_display._id)
+        print("coding_display ID:", coding_display._id)
+        print("database_display ID:", database_display._id)
+
+        # =====================================================
+        # EDITORS
+        # =====================================================
+        written_box = gr.Textbox(
+            label="Your Answer",
+            lines=5,
+            visible=False,
+        )
+
+        coding_box = gr.Code(
+            language="python",
+            lines=20,
+            visible=False,
+        )
+
+        database_box = gr.Code(
+            language="sql",
+            lines=10,
+            visible=False,
+        )
+
+        # =====================================================
+        # BUTTONS
+        # =====================================================
+        submit_button = gr.Button("Submit", visible=False)
+        retry_button = gr.Button("Retry", visible=False)
+        next_button = gr.Button("Next", visible=False)
+
+        # =====================================================
+        # REPORT
+        # =====================================================
+        final_feedback = gr.Markdown("", visible=False)
+        report_output = gr.Markdown("", visible=False)
+
+        # =====================================================
+        # RETURN COMPONENTS
+        # =====================================================
         return UILayoutComponents(
             state=state,
-            setup_container=setup_container,
-            interview_container=interview_container,
             role_input=role_input,
             interview_type_input=interview_type_input,
             company_input=company_input,
