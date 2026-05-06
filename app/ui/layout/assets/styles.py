@@ -12,7 +12,6 @@ LOADER_STYLE = """
     background: rgba(0, 0, 0, 0.6);
     z-index: 9999;
 
-    display: flex;
     align-items: center;
     justify-content: center;
 
@@ -20,6 +19,10 @@ LOADER_STYLE = """
     color: white;
 
     backdrop-filter: blur(4px);
+}
+
+#global-loader[style*="display: block"] {
+    display: flex !important;
 }
 
 #global-loader span {
