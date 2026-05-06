@@ -1,40 +1,16 @@
 # app/ui/state_handlers/navigation.py
 
-from typing import Generator
-
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
-from domain.contracts.user.role import RoleType
-from domain.contracts.interview.interview_type import InterviewType
-
-from app.ui.ui_state import UIState
-from app.ui.ui_response import UIResponse
-from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 from app.runtime.interview_runtime import run_interview_graph
+from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 
-# =========================================================
-# RETRY
-# =========================================================
-
-
-def retry_answer(state: InterviewState) -> Generator[UIResponse, None, None]:
+def retry_answer(state: InterviewState):
 
     if state is None or state.current_question is None:
-        yield UIResponse(
-            state=state,
-            show_submit=False,
-            show_retry=False,
-            show_next=False,
-        )
-        return
-
-    yield UIResponse(
-        state=state,
-        loader_visible=True,
-        loader_value="🔄 Resetting attempt...",
-    )
+        return build_ui_response_from_state(state).to_gradio_outputs()
 
     new_state = state.model_copy(deep=True)
 
@@ -43,33 +19,14 @@ def retry_answer(state: InterviewState) -> Generator[UIResponse, None, None]:
     if q:
         new_state = new_state.clear_result_for_question(q.id)
 
-    new_state.last_action = ActionType.NONE
-    new_state.awaiting_user_input = True
-    new_state.last_feedback_bundle = None
+    new_state.last_action = ActionType.RETRY
 
-    yield UIResponse(
-        state=new_state,
-        loader_visible=True,
-        loader_value="🧠 Preparing new attempt...",
-    )
+    new_state = run_interview_graph(new_state)
 
-    response = build_ui_response_from_state(new_state)
-
-    yield response
+    return build_ui_response_from_state(new_state).to_gradio_outputs()
 
 
-# =========================================================
-# NEXT / GENERATE REPORT
-# =========================================================
-
-
-def next_question(state: InterviewState) -> Generator[UIResponse, None, None]:
-
-    yield UIResponse(
-        state=state,
-        loader_visible=True,
-        loader_value="➡️ Moving to next step...",
-    )
+def next_question(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
 
@@ -78,56 +35,6 @@ def next_question(state: InterviewState) -> Generator[UIResponse, None, None]:
     else:
         new_state.last_action = ActionType.NEXT
 
-    yield UIResponse(
-        state=new_state,
-        loader_visible=True,
-        loader_value="🧠 Running interview engine...",
-    )
-
     new_state = run_interview_graph(new_state)
 
-    # -----------------------------------------------------
-    # REPORT FLOW
-    # -----------------------------------------------------
-
-    if new_state.is_completed:
-        response = build_ui_response_from_state(new_state)
-        yield response
-        return
-
-    # -----------------------------------------------------
-    # NORMAL FLOW
-    # -----------------------------------------------------
-
-    response = build_ui_response_from_state(new_state)
-
-    yield response
-
-
-# =========================================================
-# NEW INTERVIEW
-# =========================================================
-
-
-def new_interview(state: InterviewState) -> Generator[UIResponse, None, None]:
-
-    yield UIResponse(
-        state=state,
-        loader_visible=True,
-        loader_value="🔄 Resetting interview...",
-    )
-
-    yield UIResponse(
-        state=state,
-        show_setup=True,
-        show_interview=False,
-        page_title="## Configure Your Interview",
-        question_counter="",
-        feedback_markdown="",
-        written_display="",
-        coding_display="",
-        database_display="",
-        show_submit=False,
-        show_retry=False,
-        show_next=False,
-    )
+    return build_ui_response_from_state(new_state).to_gradio_outputs()
