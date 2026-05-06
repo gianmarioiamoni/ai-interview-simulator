@@ -9,10 +9,6 @@ class UIResponse:
     # STATE
     state: object
 
-    # CONTAINERS
-    setup_visible: bool = True
-    interview_visible: bool = False
-
     # SETUP COMPONENTS
     role_visible: bool = True
     interview_type_visible: bool = True
@@ -71,10 +67,8 @@ class UIResponse:
         return [
             # 0 STATE
             self.state,
-            # 1-2 CONTAINERS
+            # 1 SETUP INPUTS
             gr.update(visible=self.setup_visible),
-            gr.update(visible=self.interview_visible),
-            # 3-7 SETUP INPUTS
             gr.update(visible=self.role_visible),
             gr.update(visible=self.interview_type_visible),
             gr.update(visible=self.company_visible),

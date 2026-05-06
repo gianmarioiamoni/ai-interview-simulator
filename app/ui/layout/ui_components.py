@@ -8,9 +8,6 @@ class UILayoutComponents:
 
     state: object
 
-    setup_container: object
-    interview_container: object
-
     role_input: object
     interview_type_input: object
     company_input: object
