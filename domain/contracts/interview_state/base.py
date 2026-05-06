@@ -56,6 +56,8 @@ class InterviewStateBase(BaseModel):
 
     is_completed: bool = False
 
+    current_step: str | None = None
+
     def with_current_question(self, question, index):
         return self.model_copy(
             update={
@@ -67,4 +69,3 @@ class InterviewStateBase(BaseModel):
     model_config = {
         "extra": "forbid",
     }
-
