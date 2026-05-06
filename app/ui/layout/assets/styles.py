@@ -3,6 +3,8 @@
 LOADER_STYLE = """
 <style>
 #global-loader {
+    display: none;
+
     position: fixed;
     top: 0;
     left: 0;
@@ -21,5 +23,13 @@ LOADER_STYLE = """
 
     backdrop-filter: blur(4px);
 }
+.loader-hidden {
+    display: none !important;
+}
+
+.loader-visible {
+    display: flex !important;
+}
+
 </style>
 """

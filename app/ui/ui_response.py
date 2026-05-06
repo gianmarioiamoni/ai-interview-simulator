@@ -117,7 +117,12 @@ class UIResponse:
             ),
             # 22 LOADER
             gr.update(
-                visible=self.loader_visible,
+                visible=True,
                 value=self.loader_value,
+                elem_classes=(
+                    ["loader-visible"] 
+                    if self.loader_visible 
+                    else ["loader-hidden"]
+                ),
             ),
         ]
