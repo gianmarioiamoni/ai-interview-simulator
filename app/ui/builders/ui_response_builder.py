@@ -45,6 +45,7 @@ class UIResponseBuilder:
 
         loader_visible = state.current_step is not None
         loader_value = map_loader_text(state.current_step)
+        progress = getattr(state, "current_progress", 0)
 
         return UIResponse(
             state=state,
@@ -55,7 +56,8 @@ class UIResponseBuilder:
             start_button_visible=True,
             page_title="## Configure Your Interview",
             loader_visible=True,
-            loader_value="TEST VALUE"
+            loader_value=loader_value,
+            current_progress=progress,
         )
 
     # =====================================================

@@ -12,6 +12,8 @@ from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.user.role import Role
 from domain.contracts.shared.action_type import ActionType
+
+from app.ui.constants.loader_steps import LoaderStep
 from app.contracts.feedback_bundle import FeedbackBundle
 
 
@@ -56,7 +58,8 @@ class InterviewStateBase(BaseModel):
 
     is_completed: bool = False
 
-    current_step: Optional[str] = None
+    current_step: Optional[LoaderStep] = None
+    current_progress: int = 0
 
     def with_current_question(self, question, index):
         return self.model_copy(

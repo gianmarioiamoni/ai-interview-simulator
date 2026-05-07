@@ -19,6 +19,7 @@ from domain.contracts.interview_state import InterviewState
 
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.constants.loader_steps import LoaderStep
+from app.ui.mappers.loader_mapper import map_loader_progress
 
 
 def start_interview(role, interview_type, company, language) -> Generator:
@@ -29,9 +30,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     state = InterviewState.create_empty()
     state.current_step = LoaderStep.GENERATING_STRUCTURE
-
-    print("[DEBUG] STEP:", state.current_step)
-    print("[DEBUG] loader should be visible = True")
+    state.current_progress = map_loader_progress(state.current_step)
 
     yield build_ui_response_from_state(state).to_gradio_outputs()
 
@@ -55,6 +54,8 @@ def start_interview(role, interview_type, company, language) -> Generator:
     # -----------------------------------------------------
 
     state.current_step = LoaderStep.GENERATING_QUESTIONS
+    state.current_progress = map_loader_progress(state.current_step)
+    
     yield build_ui_response_from_state(state).to_gradio_outputs()
     time.sleep(0.05)
 
@@ -71,6 +72,8 @@ def start_interview(role, interview_type, company, language) -> Generator:
     # -----------------------------------------------------
 
     state.current_step = LoaderStep.GENERATING_TESTS
+    state.current_progress = map_loader_progress(state.current_step)
+    
     yield build_ui_response_from_state(state).to_gradio_outputs()
     time.sleep(0.05)
 
@@ -88,6 +91,8 @@ def start_interview(role, interview_type, company, language) -> Generator:
     # -----------------------------------------------------
 
     state.current_step = LoaderStep.FINALIZING
+    state.current_progress = map_loader_progress(state.current_step)
+    
     yield build_ui_response_from_state(state).to_gradio_outputs()
     time.sleep(0.05)
 
@@ -111,7 +116,5 @@ def start_interview(role, interview_type, company, language) -> Generator:
     # -----------------------------------------------------
     # FINAL UI
     # -----------------------------------------------------
-    print("[DEBUG] STEP:", state.current_step)
-    print("[DEBUG] FINAL STATE → loader off")
 
     yield build_ui_response_from_state(state).to_gradio_outputs()
