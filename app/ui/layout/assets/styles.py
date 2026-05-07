@@ -3,7 +3,7 @@
 LOADER_STYLE = """
 <style>
 #global-loader {
-    display: none; /* 🔥 fondamentale */
+    display: none;
 
     position: fixed;
     top: 0;
@@ -20,10 +20,8 @@ LOADER_STYLE = """
     backdrop-filter: blur(4px);
 }
 
-/*  quando visibile */
-only when visible
 #global-loader.show {
-    display: flex;
+    display: flex !important;
 }
 
 .loader-box {
