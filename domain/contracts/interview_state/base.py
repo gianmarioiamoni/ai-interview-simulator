@@ -56,7 +56,7 @@ class InterviewStateBase(BaseModel):
 
     is_completed: bool = False
 
-    current_step: str | None = None
+    current_step: Optional[str] = None
 
     def with_current_question(self, question, index):
         return self.model_copy(

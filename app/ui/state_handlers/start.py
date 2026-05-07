@@ -16,35 +16,28 @@ from app.runtime.interview_runtime import run_interview_graph, get_runtime_llm
 
 from domain.contracts.interview_state import InterviewState
 
-from app.ui.ui_response import UIResponse
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
+from app.ui.constants.loader_steps import LoaderStep
 
 
 def start_interview(role, interview_type, company, language) -> Generator:
 
     # -----------------------------------------------------
-    # STEP 0 — PLACEHOLDER STATE (per attivare loader subito)
+    # STEP 0 — EMPTY STATE + LOADER
     # -----------------------------------------------------
 
     state = InterviewState.create_empty()
+    state.current_step = LoaderStep.GENERATING_STRUCTURE
 
-    yield UIResponse(
-        state=state,
-        loader_visible=True,
-        loader_value="🧠 Generating interview structure...",
-    ).to_gradio_outputs()
+    yield build_ui_response_from_state(state).to_gradio_outputs()
 
     # -----------------------------------------------------
-    # STEP 1 — ENUM RESOLUTION
+    # STEP 1 — ENUM
     # -----------------------------------------------------
 
     role_type = RoleType(role)
     interview_type_enum = InterviewType[interview_type]
     level_enum = SeniorityLevel.MID
-
-    # -----------------------------------------------------
-    # STEP 2 — INIT SERVICES
-    # -----------------------------------------------------
 
     llm = get_runtime_llm()
 
@@ -52,8 +45,11 @@ def start_interview(role, interview_type, company, language) -> Generator:
     test_generator = AITestGenerator(llm)
 
     # -----------------------------------------------------
-    # STEP 3 — GENERATE QUESTIONS
+    # STEP 2 — QUESTIONS
     # -----------------------------------------------------
+
+    state.current_step = LoaderStep.GENERATING_QUESTIONS
+    yield build_ui_response_from_state(state).to_gradio_outputs()
 
     questions = question_intelligence.generate(
         role=role_type,
@@ -63,15 +59,12 @@ def start_interview(role, interview_type, company, language) -> Generator:
         questions_per_area=QUESTIONS_PER_AREA,
     )
 
-    yield UIResponse(
-        state=state,
-        loader_visible=True,
-        loader_value="📚 Creating questions...",
-    ).to_gradio_outputs()
+    # -----------------------------------------------------
+    # STEP 3 — TESTS
+    # -----------------------------------------------------
 
-    # -----------------------------------------------------
-    # STEP 4 — GENERATE TESTS
-    # -----------------------------------------------------
+    state.current_step = LoaderStep.GENERATING_TESTS
+    yield build_ui_response_from_state(state).to_gradio_outputs()
 
     enriched_questions = []
 
@@ -82,15 +75,12 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
         enriched_questions.append(q)
 
-    yield UIResponse(
-        state=state,
-        loader_visible=True,
-        loader_value="🧪 Preparing test cases...",
-    ).to_gradio_outputs()
+    # -----------------------------------------------------
+    # STEP 4 — BUILD STATE
+    # -----------------------------------------------------
 
-    # -----------------------------------------------------
-    # STEP 5 — BUILD FINAL STATE
-    # -----------------------------------------------------
+    state.current_step = LoaderStep.FINALIZING
+    yield build_ui_response_from_state(state).to_gradio_outputs()
 
     state = InterviewState.create_initial(
         role_type=role_type,
@@ -101,18 +91,13 @@ def start_interview(role, interview_type, company, language) -> Generator:
         interview_id="session-1",
     )
 
-    yield UIResponse(
-        state=state,
-        loader_visible=True,
-        loader_value="⚙️ Finalizing interview...",
-    ).to_gradio_outputs()
-
     # -----------------------------------------------------
-    # STEP 6 — GRAPH EXECUTION
+    # STEP 5 — GRAPH
     # -----------------------------------------------------
 
     state = run_interview_graph(state)
     state.awaiting_user_input = True
+    state.current_step = None  
 
     # -----------------------------------------------------
     # FINAL UI

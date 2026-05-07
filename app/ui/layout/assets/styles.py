@@ -12,23 +12,43 @@ LOADER_STYLE = """
     background: rgba(0, 0, 0, 0.6);
     z-index: 9999;
 
+    display: none;
     align-items: center;
     justify-content: center;
-
-    font-size: 24px;
-    color: white;
 
     backdrop-filter: blur(4px);
 }
 
+/* attivazione via Gradio */
 #global-loader[style*="display: block"] {
     display: flex !important;
 }
 
-#global-loader span {
-    background: rgba(0,0,0,0.7);
-    padding: 16px 24px;
-    border-radius: 8px;
+/* contenuto */
+.loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
+    color: white;
+    font-size: 18px;
+}
+
+/* spinner */
+.loader-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255,255,255,0.2);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* animazione */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 </style>
