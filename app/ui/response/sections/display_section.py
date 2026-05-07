@@ -54,7 +54,7 @@ class DisplaySection:
                 return last_answer.content
             return ""
 
-        return question.text or ""
+        return question.prompt or ""
 
     @staticmethod
     def _resolve_prefix(
