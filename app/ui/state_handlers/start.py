@@ -23,6 +23,8 @@ from app.ui.mappers.loader_mapper import map_loader_progress
 
 
 def start_interview(role, interview_type, company, language) -> Generator:
+    def _smooth_progress(current, target):
+        return min(current + 3, target)
 
     # -----------------------------------------------------
     # STEP 0 — EMPTY STATE + LOADER
@@ -33,6 +35,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state.current_progress = map_loader_progress(state.current_step)
 
     yield build_ui_response_from_state(state).to_gradio_outputs()
+    state.current_progress = _smooth_progress(state.current_progress, map_loader_progress(LoaderStep.GENERATING_QUESTIONS))
 
     time.sleep(0.3)
 
@@ -55,8 +58,9 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     state.current_step = LoaderStep.GENERATING_QUESTIONS
     state.current_progress = map_loader_progress(state.current_step)
-    
+
     yield build_ui_response_from_state(state).to_gradio_outputs()
+    state.current_progress = _smooth_progress(state.current_progress, map_loader_progress(LoaderStep.GENERATING_TESTS))
     time.sleep(0.2)
 
     questions = question_intelligence.generate(
@@ -73,8 +77,9 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     state.current_step = LoaderStep.GENERATING_TESTS
     state.current_progress = map_loader_progress(state.current_step)
-    
+
     yield build_ui_response_from_state(state).to_gradio_outputs()
+    state.current_progress = _smooth_progress(state.current_progress, map_loader_progress(LoaderStep.FINALIZING))
     time.sleep(0.2)
 
     enriched_questions = []
@@ -92,8 +97,9 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     state.current_step = LoaderStep.FINALIZING
     state.current_progress = map_loader_progress(state.current_step)
-    
+
     yield build_ui_response_from_state(state).to_gradio_outputs()
+    state.current_progress = _smooth_progress(state.current_progress, 100)
     time.sleep(0.2)
 
     state = InterviewState.create_initial(
