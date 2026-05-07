@@ -1,4 +1,4 @@
-# app/ui/layout/assets/styles.py
+app/ui/layout/assets/styles.py
 
 LOADER_STYLE = """
 <style>
@@ -21,9 +21,19 @@ LOADER_STYLE = """
     margin: 0 auto 10px auto;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.loader-dots span {
+    animation: blink 1.4s infinite;
+    opacity: 0;
 }
+
+.loader-dots span:nth-child(1) { animation-delay: 0s; }
+.loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+    0%, 80%, 100% { opacity: 0; }
+    40% { opacity: 1; }
+}
+
 </style>
 """
