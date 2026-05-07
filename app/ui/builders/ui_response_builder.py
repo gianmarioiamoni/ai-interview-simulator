@@ -6,7 +6,6 @@ from domain.contracts.question.question import QuestionType
 from app.ui.ui_response import UIResponse
 from app.ui.state_machine.ui_state_machine import UIStateMachine
 
-from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from app.ui.mappers.loader_mapper import map_loader_text
 
 from app.ui.response.sections.display_section import DisplaySection
@@ -63,10 +62,7 @@ class UIResponseBuilder:
     # =====================================================
     def _build_question_like(self, state: InterviewState, mode: str) -> UIResponse:
 
-        mapper = InterviewStateMapper()
-        session_dto = mapper.to_session_dto(state)
-
-        question = session_dto.current_question
+        question = state.current_question
         if question is None:
             return self._build_setup(state)
 
