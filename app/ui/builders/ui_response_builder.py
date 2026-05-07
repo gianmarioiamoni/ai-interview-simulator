@@ -49,10 +49,6 @@ class UIResponseBuilder:
         loader_value = map_loader_text(state.current_step)
         progress = getattr(state, "current_progress", 0)
 
-        print(
-            "[DEBUG LOADER HTML]",
-            render_loader(self.loader_value, self.loader_progress),
-        )
 
         return UIResponse(
             state=state,
@@ -62,7 +58,7 @@ class UIResponseBuilder:
             language_visible=True,
             start_button_visible=True,
             page_title="## Configure Your Interview",
-            loader_visible=True,
+            loader_visible=loader_visible,
             loader_value=loader_value,
             current_progress=progress,
         )
