@@ -86,6 +86,8 @@ class UIResponse:
     loader_value: str = ""
     current_progress: int = 0
 
+    setup_inputs_interactive: bool = True
+
     # =========================================================
     # OUTPUT CONTRACT (CRITICO)
     # =========================================================
@@ -94,10 +96,10 @@ class UIResponse:
             # 0 STATE
             self.state,
             # 1-5 SETUP INPUTS
-            gr.update(visible=self.role_visible),
-            gr.update(visible=self.interview_type_visible),
-            gr.update(visible=self.company_visible),
-            gr.update(visible=self.language_visible),
+            gr.update(visible=self.role_visible, interactive=self.setup_inputs_interactive),
+            gr.update(visible=self.interview_type_visible, interactive=self.setup_inputs_interactive),
+            gr.update(visible=self.company_visible, interactive=self.setup_inputs_interactive),
+            gr.update(visible=self.language_visible, interactive=self.setup_inputs_interactive),
             gr.update(
                 visible=self.start_button_visible,
                 value="Start Interview",

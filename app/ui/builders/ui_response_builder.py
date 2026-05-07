@@ -48,6 +48,7 @@ class UIResponseBuilder:
         loader_visible = state.current_step is not None
         loader_value = map_loader_text(state.current_step)
         progress = getattr(state, "current_progress", 0)
+        setup_inputs_interactive = not loader_visible
 
 
         return UIResponse(
@@ -61,6 +62,7 @@ class UIResponseBuilder:
             loader_visible=loader_visible,
             loader_value=loader_value,
             current_progress=progress,
+            setup_inputs_interactive=setup_inputs_interactive,
         )
 
     # =====================================================
