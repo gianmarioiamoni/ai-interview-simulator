@@ -124,6 +124,15 @@ class UIResponse:
             # 22 LOADER
             gr.update(
                 visible=self.loader_visible,
-                value=f"<span>{self.loader_value}</span>",
+                value=(
+                    f"""
+                    <div class="loader-box">
+                        <div class="spinner"></div>
+                            {self.loader_value}
+                    </div>
+                    """
+                    if self.loader_visible
+                    else ""
+                ),
             ),
         ]
