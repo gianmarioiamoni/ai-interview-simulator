@@ -126,14 +126,39 @@ class UIResponse:
                 visible=self.loader_visible,
                 value=(
                     f"""
-                    <div class="loader-box">
-                        <div class="spinner"></div>
-                            {self.loader_value}
-                    </div>
-                    """
+        <div style="
+            position: fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.6);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            backdrop-filter: blur(4px);
+            z-index:9999;
+        ">
+            <div style="
+                background: rgba(0,0,0,0.75);
+                padding: 20px 30px;
+                border-radius: 10px;
+                color: white;
+                font-size: 18px;
+                text-align: center;
+            ">
+                <div style="
+                    border: 4px solid rgba(255,255,255,0.2);
+                    border-top: 4px solid white;
+                    border-radius: 50%;
+                    width: 28px;
+                    height: 28px;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 10px auto;
+                "></div>
+                {self.loader_value}
+            </div>
+        </div>
+        """
                     if self.loader_visible
                     else ""
                 ),
-                elem_classes=["show"] if self.loader_visible else [],
             ),
         ]

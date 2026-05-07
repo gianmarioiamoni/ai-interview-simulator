@@ -20,7 +20,10 @@ class InterviewAreaMapper:
 
     @classmethod
     def to_label(cls, area: InterviewArea) -> str:
-        return cls.LABELS.get(
-            area,
-            area.value.replace("_", " ").title(),
-        )
+        if area in cls.LABELS:
+            return cls.LABELS[area]
+
+        if isinstance(area.value, str):
+            return area.value.replace("_", " ").title()
+
+        return str(area)
