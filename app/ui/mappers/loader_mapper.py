@@ -1,18 +1,33 @@
+# app/ui/mappers/loader_mapper.py
+
 from app.ui.constants.loader_steps import LoaderStep
 
 
-LOADER_TEXT = {
-    LoaderStep.GENERATING_STRUCTURE: "🧠 Generating interview structure...",
-    LoaderStep.GENERATING_QUESTIONS: "📚 Creating questions...",
-    LoaderStep.GENERATING_TESTS: "🧪 Preparing test cases...",
-    LoaderStep.FINALIZING: "⚙️ Finalizing interview...",
-}
+def map_loader_text(step: LoaderStep | None) -> str:
 
-
-def map_loader_text(step: str | None) -> str:
-    if not step:
+    if step is None:
         return ""
-    try:
-        return LOADER_TEXT[LoaderStep(step)]
-    except Exception:
-        return "Processing..."
+
+    mapping = {
+        LoaderStep.GENERATING_STRUCTURE: "🧠 Designing interview structure...",
+        LoaderStep.GENERATING_QUESTIONS: "📚 Generating questions...",
+        LoaderStep.GENERATING_TESTS: "🧪 Preparing test cases...",
+        LoaderStep.FINALIZING: "⚙️ Finalizing interview...",
+    }
+
+    return mapping.get(step, "Processing...")
+
+
+def map_loader_progress(step: LoaderStep | None) -> int:
+
+    if step is None:
+        return 0
+
+    mapping = {
+        LoaderStep.GENERATING_STRUCTURE: 10,
+        LoaderStep.GENERATING_QUESTIONS: 40,
+        LoaderStep.GENERATING_TESTS: 70,
+        LoaderStep.FINALIZING: 90,
+    }
+
+    return mapping.get(step, 0)

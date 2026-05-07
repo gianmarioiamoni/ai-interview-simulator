@@ -81,13 +81,12 @@ class UIResponse:
     # =========================================================
     loader_visible: bool = False
     loader_value: str = ""
+    current_progress: int = 0
 
     # =========================================================
     # OUTPUT CONTRACT (CRITICO)
     # =========================================================
     def to_gradio_outputs(self) -> List[Any]:
-        print("[DEBUG UIResponse] loader_visible:", self.loader_visible)
-        print("[DEBUG UIResponse] loader_value:", self.loader_value[:50] if self.loader_value else "")
         return [
             # 0 STATE
             self.state,
@@ -159,28 +158,62 @@ class UIResponse:
         align-items: center;
         justify-content: center;
         background: rgba(0,0,0,0.6);
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(6px);
         z-index: 999999;
+        transition: all 0.3s ease;
     ">
         <div style="
             background: rgba(0,0,0,0.85);
-            padding: 24px 32px;
-            border-radius: 12px;
+            padding: 28px 36px;
+            border-radius: 14px;
             color: white;
-            font-size: 18px;
+            font-size: 16px;
             text-align: center;
-            min-width: 240px;
+            min-width: 280px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
         ">
+
+            <!-- SPINNER -->
             <div style="
                 border: 4px solid rgba(255,255,255,0.2);
                 border-top: 4px solid white;
                 border-radius: 50%;
-                width: 32px;
-                height: 32px;
+                width: 36px;
+                height: 36px;
                 animation: spin 1s linear infinite;
-                margin: 0 auto 12px auto;
+                margin: 0 auto 16px auto;
             "></div>
-            {self.loader_value}
+
+            <!-- TEXT -->
+            <div style="margin-bottom: 12px;">
+                {self.loader_value}
+            </div>
+
+            <!-- PROGRESS BAR -->
+            <div style="
+                width: 100%;
+                height: 8px;
+                background: rgba(255,255,255,0.1);
+                border-radius: 6px;
+                overflow: hidden;
+            ">
+                <div style="
+                    width: {self.current_progress}%;
+                    height: 100%;
+                    background: linear-gradient(90deg, #4ade80, #22c55e);
+                    transition: width 0.4s ease;
+                "></div>
+            </div>
+
+            <!-- PERCENT -->
+            <div style="
+                margin-top: 8px;
+                font-size: 12px;
+                opacity: 0.8;
+            ">
+                {self.current_progress}%
+            </div>
+
         </div>
     </div>
     """
