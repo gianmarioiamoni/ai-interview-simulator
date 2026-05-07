@@ -104,7 +104,7 @@ class UIResponse:
                 interactive=self.start_button_interactive,
             ),
             # 6 TITLE
-            gr.update(value=self._build_title_with_loader()),
+            gr.update(value=self._build_title_with_loader(self.state)),
             # 7-8 HEADER
             gr.update(value=self.question_counter),
             gr.update(value=self.feedback_markdown),
@@ -144,7 +144,7 @@ class UIResponse:
             ),
         ]
 
-    def _build_title_with_loader(self, state):
+    def _build_title_with_loader(self, state: object):
 
         if not getattr(state, "current_step", None):
             return "## Configure Your Interview"
