@@ -102,7 +102,12 @@ class UIEventOrchestrator:
     def _bind_submit(self):
         self.c.submit_button.click(
             submit_answer,
-            inputs=[self.state, self.c.written_box],
+            inputs=[
+                self.state,
+                self.c.written_box,
+                self.c.coding_box,
+                self.c.database_box,
+            ],
             outputs=self.outputs,
             show_progress=False,
         )
@@ -114,23 +119,27 @@ class UIEventOrchestrator:
     def _bind_enable_submit(self):
         enabler = SubmitEnabler()
 
-        self.c.written_box.change(
-            enabler.enable,
-            inputs=[self.c.written_box],
-            outputs=self.c.submit_button,
-        )
-
-        self.c.coding_box.change(
-            enabler.enable,
-            inputs=[self.c.coding_box],
-            outputs=self.c.submit_button,
-        )
-
-        self.c.database_box.change(
-            enabler.enable,
-            inputs=[self.c.database_box],
-            outputs=self.c.submit_button,
-        )
+        current_question_type = self.state.current_question.type
+        if current_question_type == "written":
+            self.c.written_box.change(
+                enabler.enable,
+                inputs=[self.c.written_box],
+                outputs=self.c.submit_button,
+            )
+        elif current_question_type == "coding":
+            self.c.coding_box.change(
+                enabler.enable,
+                inputs=[self.c.coding_box],
+                outputs=self.c.submit_button,
+            )
+        elif current_question_type == "database":
+            self.c.database_box.change(
+                enabler.enable,
+                inputs=[self.c.database_box],
+                outputs=self.c.submit_button,
+            )
+        else:
+            raise ValueError(f"Unsupported question type: {current_question_type}")
 
     # =========================================================
     # NAVIGATION (SYNC)
