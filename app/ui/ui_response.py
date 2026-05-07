@@ -104,7 +104,7 @@ class UIResponse:
                 interactive=self.start_button_interactive,
             ),
             # 6 TITLE
-            gr.update(value=self._build_title_with_loader(self.state)),
+            gr.update(value=self.page_title),
             # 7-8 HEADER
             gr.update(value=self.question_counter),
             gr.update(value=self.feedback_markdown),
@@ -141,6 +141,15 @@ class UIResponse:
             gr.update(
                 value=self.database_editor_value,
                 visible=self.database_editor_visible,
+            ),
+            # index 22 → global_loader
+            gr.update(
+                visible=self.loader_visible,
+                value=(
+                    render_loader(self.loader_value, self.current_progress)
+                    if self.loader_visible
+                    else ""
+                ),
             ),
         ]
 

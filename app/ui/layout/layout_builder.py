@@ -72,6 +72,8 @@ class UILayoutBuilder:
         final_feedback = gr.Markdown("", visible=False)
         report_output = gr.Markdown("", visible=False)
 
+        global_loader = gr.HTML("", visible=False, elem_id="global-loader")
+
         return UILayoutComponents(
             state=state,
             role_input=role_input,
@@ -93,4 +95,5 @@ class UILayoutBuilder:
             next_button=next_button,
             final_feedback=final_feedback,
             report_output=report_output,
+            global_loader=global_loader,
         )
