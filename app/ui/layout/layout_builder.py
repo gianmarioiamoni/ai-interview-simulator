@@ -16,18 +16,16 @@ class UILayoutBuilder:
 
         gr.HTML(LOADER_STYLE)
 
-        # GLOBAL LOADER (overlay style)
+        # 🔥 GLOBAL LOADER (HTML + ID)
         global_loader = gr.HTML(
             "",
-            visible=False,
+            visible=True,
             elem_id="global-loader",
         )
 
         state = gr.State()
 
-        # =====================================================
         # HEADER
-        # =====================================================
         gr.Markdown("# AI Interview Simulator")
         gr.Markdown("Build: 2026-03-16-A | Runtime: HuggingFace Spaces")
         gr.Markdown(
@@ -35,14 +33,8 @@ class UILayoutBuilder:
         )
         gr.Markdown("---")
 
-        # =====================================================
-        # TITLE
-        # =====================================================
         page_title = gr.Markdown("## Configure Your Interview")
 
-        # =====================================================
-        # SETUP COMPONENTS
-        # =====================================================
         role_input = gr.Dropdown(
             choices=[(r.name.replace("_", " ").title(), r.value) for r in RoleType],
             label="Role",
@@ -55,10 +47,7 @@ class UILayoutBuilder:
             visible=True,
         )
 
-        company_input = gr.Textbox(
-            label="Company",
-            visible=True,
-        )
+        company_input = gr.Textbox(label="Company", visible=True)
 
         language_input = gr.Dropdown(
             choices=["en", "it"],
@@ -67,74 +56,29 @@ class UILayoutBuilder:
             visible=True,
         )
 
-        start_button = gr.Button(
-            "Start Interview",
-            interactive=False,
-            visible=True,
-        )
+        start_button = gr.Button("Start Interview", interactive=False, visible=True)
 
-        # =====================================================
-        # INTERVIEW HEADER
-        # =====================================================
         question_counter = gr.Markdown("", visible=False)
         feedback_output = gr.Markdown("", visible=False)
 
-        # =====================================================
-        # DISPLAY
-        # =====================================================
         written_display = gr.HTML("", visible=False)
 
         coding_display = gr.Code(
-            "",
-            language="python",
-            interactive=False,
-            visible=False,
+            "", language="python", interactive=False, visible=False
         )
+        database_display = gr.Code("", language="sql", interactive=False, visible=False)
 
-        database_display = gr.Code(
-            "",
-            language="sql",
-            interactive=False,
-            visible=False,
-        )
+        written_box = gr.Textbox(label="Your Answer", lines=5, visible=False)
+        coding_box = gr.Code(language="python", lines=20, visible=False)
+        database_box = gr.Code(language="sql", lines=10, visible=False)
 
-        # =====================================================
-        # EDITORS
-        # =====================================================
-        written_box = gr.Textbox(
-            label="Your Answer",
-            lines=5,
-            visible=False,
-        )
-
-        coding_box = gr.Code(
-            language="python",
-            lines=20,
-            visible=False,
-        )
-
-        database_box = gr.Code(
-            language="sql",
-            lines=10,
-            visible=False,
-        )
-
-        # =====================================================
-        # BUTTONS
-        # =====================================================
         submit_button = gr.Button("Submit", visible=False)
         retry_button = gr.Button("Retry", visible=False)
         next_button = gr.Button("Next", visible=False)
 
-        # =====================================================
-        # REPORT
-        # =====================================================
         final_feedback = gr.Markdown("", visible=False)
         report_output = gr.Markdown("", visible=False)
 
-        # =====================================================
-        # RETURN COMPONENTS
-        # =====================================================
         return UILayoutComponents(
             state=state,
             role_input=role_input,
