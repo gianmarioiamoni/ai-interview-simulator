@@ -16,13 +16,6 @@ class UILayoutBuilder:
 
         gr.HTML(LOADER_STYLE)
 
-        # GLOBAL LOADER (HTML + ID)
-        global_loader = gr.HTML(
-            "",
-            visible=False,
-            elem_id="global-loader",
-        )
-
         state = gr.State()
 
         # HEADER
@@ -100,5 +93,4 @@ class UILayoutBuilder:
             next_button=next_button,
             final_feedback=final_feedback,
             report_output=report_output,
-            global_loader=global_loader,
         )

@@ -2,27 +2,6 @@
 
 LOADER_STYLE = """
 <style>
-#global-loader {
-    display: none;
-
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 9999;
-
-    align-items: center;
-    justify-content: center;
-
-    backdrop-filter: blur(4px);
-}
-
-#global-loader.show {
-    display: flex;
-}
 .loader-box {
     background: rgba(0,0,0,0.75);
     padding: 20px 30px;

@@ -33,4 +33,3 @@ class UILayoutComponents:
     final_feedback: object
     report_output: object
 
-    global_loader: object
