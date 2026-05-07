@@ -4,6 +4,9 @@ import gradio as gr
 from typing import List, Any
 from dataclasses import dataclass
 
+from app.ui.components.loader.loader_renderer import render_loader
+from app.ui.mappers.loader_mapper import map_loader_text, map_loader_progress
+
 
 @dataclass
 class UIResponse:
@@ -141,79 +144,14 @@ class UIResponse:
             ),
         ]
 
-    def _build_title_with_loader(self) -> str:
+    def _build_title_with_loader(self, state):
 
-        base = self.page_title or ""
+        if not getattr(state, "current_step", None):
+            return "## Configure Your Interview"
 
-        if not self.loader_visible:
-            return base
+        message = map_loader_text(state.current_step)
+        progress = map_loader_progress(state.current_step)
 
-        return f"""
-        {base}
+        loader_html = render_loader(message, progress)
 
-    <div style="
-        position: fixed;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0,0,0,0.6);
-        backdrop-filter: blur(6px);
-        z-index: 999999;
-        transition: all 0.3s ease;
-    ">
-        <div style="
-            background: rgba(0,0,0,0.85);
-            padding: 28px 36px;
-            border-radius: 14px;
-            color: white;
-            font-size: 16px;
-            text-align: center;
-            min-width: 280px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-        ">
-
-            <!-- SPINNER -->
-            <div style="
-                border: 4px solid rgba(255,255,255,0.2);
-                border-top: 4px solid white;
-                border-radius: 50%;
-                width: 36px;
-                height: 36px;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 16px auto;
-            "></div>
-
-            <!-- TEXT -->
-            <div style="margin-bottom: 12px;">
-                {self.loader_value}
-            </div>
-
-            <!-- PROGRESS BAR -->
-            <div style="
-                width: 100%;
-                height: 8px;
-                background: rgba(255,255,255,0.1);
-                border-radius: 6px;
-                overflow: hidden;
-            ">
-                <div style="
-                    width: {self.current_progress}%;
-                    height: 100%;
-                    background: linear-gradient(90deg, #4ade80, #22c55e);
-                    transition: width 0.4s ease;
-                "></div>
-            </div>
-
-            <!-- PERCENT -->
-            <div style="
-                margin-top: 8px;
-                font-size: 12px;
-                opacity: 0.8;
-            ">
-                {self.current_progress}%
-            </div>
-
-        </div>
-    </div>
-    """
+        return "## Configure Your Interview\n" f"{loader_html}"
