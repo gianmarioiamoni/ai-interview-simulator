@@ -54,8 +54,8 @@ class UIResponseBuilder:
             language_visible=True,
             start_button_visible=True,
             page_title="## Configure Your Interview",
-            loader_visible=loader_visible,
-            loader_value=loader_value,
+            loader_visible=True,
+            loader_value="TEST VALUE"
         )
 
     # =====================================================

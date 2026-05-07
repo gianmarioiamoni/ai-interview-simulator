@@ -1,3 +1,5 @@
+# app/ui/ui_response.py
+
 import gradio as gr
 from typing import List, Any
 from dataclasses import dataclass
@@ -84,7 +86,8 @@ class UIResponse:
     # OUTPUT CONTRACT (CRITICO)
     # =========================================================
     def to_gradio_outputs(self) -> List[Any]:
-
+        print("[DEBUG UIResponse] loader_visible:", self.loader_visible)
+        print("[DEBUG UIResponse] loader_value:", self.loader_value[:50] if self.loader_value else "")
         return [
             # 0 STATE
             self.state,
@@ -140,24 +143,7 @@ class UIResponse:
             # 22 GLOBAL LOADER
             gr.update(
                 visible=True,
-                value=(
-                    f"""
-                    <div style="
-                        position: fixed;
-                        top:0; left:0; right:0; bottom:0;
-                        display:{'flex' if self.loader_visible else 'none'};
-                        align-items:center;
-                        justify-content:center;
-                        background: rgba(0,0,0,0.6);
-                        backdrop-filter: blur(4px);
-                        z-index:9999;
-                    ">
-                        <div class="loader-box">
-                            <div class="spinner"></div>
-                            {self.loader_value}
-                        </div>
-                    </div>
-                    """
+                value="<div style='color:red'>LOADER TEST</div>"
+                    
                 ),
-            ),
         ]
