@@ -2,28 +2,44 @@
 
 import gradio as gr
 
+from domain.contracts.question.question import QuestionType
+
 
 class SubmitEnabler:
 
-    def enable(self, value):
-        # Enable submit button only if input contains real content.
-        # Works for:
-        # - Textbox (string)
-        # - Code editors (string)
+    def enable(self, state, written, coding, database):
+        # Enable submit button based on the current question type and the content of the corresponding input.
 
         # -----------------------------------------------------
-        # SAFETY: None → disabled
+        # SAFETY: invalid state
         # -----------------------------------------------------
-        if value is None:
+        if state is None or not getattr(state, "current_question", None):
+            return gr.update(interactive=False)
+
+        q = state.current_question
+
+        # -----------------------------------------------------
+        # DETERMINE ACTIVE INPUT
+        # -----------------------------------------------------
+
+        if q.is_written():
+            value = written
+        elif q.is_coding():
+            value = coding
+        elif q.is_database():
+            value = database
+        else:
             return gr.update(interactive=False)
 
         # -----------------------------------------------------
         # NORMALIZATION
         # -----------------------------------------------------
+        if value is None:
+            return gr.update(interactive=False)
+
         if isinstance(value, str):
             normalized = value.strip()
         else:
-            # fallback (future-proof, e.g. unexpected types)
             normalized = str(value).strip()
 
         # -----------------------------------------------------

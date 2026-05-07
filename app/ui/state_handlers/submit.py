@@ -2,6 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview.answer import Answer
+from domain.contracts.question.question import QuestionType
 
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.runtime.interview_runtime import get_runtime_llm
@@ -51,13 +52,13 @@ def _resolve_answer(state, written, coding, database) -> str:
     if not q:
         return ""
 
-    if q.type == "written":
+    if q.is_written():
         return written or ""
 
-    if q.type == "coding":
+    if q.is_coding():
         return coding or ""
 
-    if q.type == "database":
+    if q.is_database():
         return database or ""
 
     return ""

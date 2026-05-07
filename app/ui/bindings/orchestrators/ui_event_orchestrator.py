@@ -32,7 +32,7 @@ class UIEventOrchestrator:
         if len(self.outputs) != len(dummy.to_gradio_outputs()):
             raise RuntimeError("OUTPUT CONTRACT MISMATCH")
 
-        # 🔥 IMPORTANTE
+        # streaming handler factory
         self.handler_factory = StreamingHandlerFactory(self.outputs)
 
     def bind(self) -> None:
@@ -72,7 +72,6 @@ class UIEventOrchestrator:
 
     def _bind_start(self):
 
-        # 👇 wrapper per generator
         start_handler_wrapper = self.handler_factory.create(
             start_handler,
             [
@@ -113,33 +112,39 @@ class UIEventOrchestrator:
         )
 
     # =========================================================
-    # ENABLE SUBMIT
+    # ENABLE SUBMIT (REACTIVE - CORRETTO)
     # =========================================================
 
     def _bind_enable_submit(self):
         enabler = SubmitEnabler()
 
-        current_question_type = self.state.current_question.type
-        if current_question_type == "written":
-            self.c.written_box.change(
-                enabler.enable,
-                inputs=[self.c.written_box],
-                outputs=self.c.submit_button,
-            )
-        elif current_question_type == "coding":
-            self.c.coding_box.change(
-                enabler.enable,
-                inputs=[self.c.coding_box],
-                outputs=self.c.submit_button,
-            )
-        elif current_question_type == "database":
-            self.c.database_box.change(
-                enabler.enable,
-                inputs=[self.c.database_box],
-                outputs=self.c.submit_button,
-            )
-        else:
-            raise ValueError(f"Unsupported question type: {current_question_type}")
+        inputs = [
+            self.state,
+            self.c.written_box,
+            self.c.coding_box,
+            self.c.database_box,
+        ]
+
+        # scritto
+        self.c.written_box.change(
+            enabler.enable,
+            inputs=inputs,
+            outputs=self.c.submit_button,
+        )
+
+        # coding
+        self.c.coding_box.change(
+            enabler.enable,
+            inputs=inputs,
+            outputs=self.c.submit_button,
+        )
+
+        # sql
+        self.c.database_box.change(
+            enabler.enable,
+            inputs=inputs,
+            outputs=self.c.submit_button,
+        )
 
     # =========================================================
     # NAVIGATION (SYNC)
