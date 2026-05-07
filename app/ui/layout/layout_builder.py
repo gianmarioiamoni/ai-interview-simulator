@@ -16,10 +16,10 @@ class UILayoutBuilder:
 
         gr.HTML(LOADER_STYLE)
 
-        # 🔥 GLOBAL LOADER (HTML + ID)
+        # GLOBAL LOADER (HTML + ID)
         global_loader = gr.HTML(
             "",
-            visible=True,
+            visible=False,
             elem_id="global-loader",
         )
 

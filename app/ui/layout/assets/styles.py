@@ -21,9 +21,8 @@ LOADER_STYLE = """
 }
 
 #global-loader.show {
-    display: flex !important;
+    display: flex;
 }
-
 .loader-box {
     background: rgba(0,0,0,0.75);
     padding: 20px 30px;
