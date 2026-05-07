@@ -45,7 +45,7 @@ class DisplaySection:
         has_previous_answer: bool,
     ) -> str:
 
-        last_answer = state.get_latest_answer_for_question(question.question_id)
+        last_answer = state.get_latest_answer_for_question(question.id)
 
         is_feedback = ui_state == UIState.FEEDBACK
 
