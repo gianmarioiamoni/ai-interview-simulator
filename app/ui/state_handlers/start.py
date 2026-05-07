@@ -1,6 +1,7 @@
 # app/ui/state_handlers/start.py
 
 from typing import Generator
+import time
 
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import RoleType
@@ -31,6 +32,8 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     yield build_ui_response_from_state(state).to_gradio_outputs()
 
+    time.sleep(0.1)
+
     # -----------------------------------------------------
     # STEP 1 — ENUM
     # -----------------------------------------------------
@@ -50,6 +53,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     state.current_step = LoaderStep.GENERATING_QUESTIONS
     yield build_ui_response_from_state(state).to_gradio_outputs()
+    time.sleep(0.05)
 
     questions = question_intelligence.generate(
         role=role_type,
@@ -65,6 +69,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     state.current_step = LoaderStep.GENERATING_TESTS
     yield build_ui_response_from_state(state).to_gradio_outputs()
+    time.sleep(0.05)
 
     enriched_questions = []
 
@@ -81,6 +86,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     state.current_step = LoaderStep.FINALIZING
     yield build_ui_response_from_state(state).to_gradio_outputs()
+    time.sleep(0.05)
 
     state = InterviewState.create_initial(
         role_type=role_type,
