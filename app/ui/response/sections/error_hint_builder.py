@@ -27,7 +27,7 @@ class ErrorHintBuilder:
         ):
             return ""
 
-        result = state.get_result_for_question(question.question_id)
+        result = state.get_result_for_question(question.id)
 
         if not result or not result.execution:
             return ""
@@ -72,7 +72,7 @@ class ErrorHintBuilder:
         if not has_previous_answer:
             return False
 
-        result = state.get_result_for_question(question.question_id)
+        result = state.get_result_for_question(question.id)
 
         return bool(result and result.execution)
 
