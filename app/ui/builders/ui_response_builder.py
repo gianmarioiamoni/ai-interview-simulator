@@ -14,6 +14,8 @@ from app.ui.response.sections.feedback_section import FeedbackSection
 from app.ui.response.sections.counter_section import CounterSection
 from app.ui.response.config.button_mapper import ButtonMapper
 
+from app.ui.components.loader.loader_renderer import render_loader
+
 
 MAX_ATTEMPTS = 3
 
@@ -46,6 +48,11 @@ class UIResponseBuilder:
         loader_visible = state.current_step is not None
         loader_value = map_loader_text(state.current_step)
         progress = getattr(state, "current_progress", 0)
+
+        print(
+            "[DEBUG LOADER HTML]",
+            render_loader(self.loader_value, self.loader_progress),
+        )
 
         return UIResponse(
             state=state,
