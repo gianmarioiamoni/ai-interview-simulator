@@ -18,7 +18,7 @@ class UILayoutBuilder:
 
         # GLOBAL LOADER (overlay style)
         global_loader = gr.HTML(
-            "<div id='global-loader'><span></span></div>",
+            "",
             visible=False,
             elem_id="global-loader",
         )
