@@ -34,7 +34,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     yield build_ui_response_from_state(state).to_gradio_outputs()
 
-    time.sleep(0.1)
+    time.sleep(0.3)
 
     # -----------------------------------------------------
     # STEP 1 — ENUM
@@ -57,7 +57,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state.current_progress = map_loader_progress(state.current_step)
     
     yield build_ui_response_from_state(state).to_gradio_outputs()
-    time.sleep(0.05)
+    time.sleep(0.2)
 
     questions = question_intelligence.generate(
         role=role_type,
@@ -75,7 +75,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state.current_progress = map_loader_progress(state.current_step)
     
     yield build_ui_response_from_state(state).to_gradio_outputs()
-    time.sleep(0.05)
+    time.sleep(0.2)
 
     enriched_questions = []
 
@@ -94,7 +94,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state.current_progress = map_loader_progress(state.current_step)
     
     yield build_ui_response_from_state(state).to_gradio_outputs()
-    time.sleep(0.05)
+    time.sleep(0.2)
 
     state = InterviewState.create_initial(
         role_type=role_type,
