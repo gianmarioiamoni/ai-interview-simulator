@@ -30,6 +30,9 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state = InterviewState.create_empty()
     state.current_step = LoaderStep.GENERATING_STRUCTURE
 
+    print("[DEBUG] STEP:", state.current_step)
+    print("[DEBUG] loader should be visible = True")
+
     yield build_ui_response_from_state(state).to_gradio_outputs()
 
     time.sleep(0.1)
@@ -108,5 +111,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     # -----------------------------------------------------
     # FINAL UI
     # -----------------------------------------------------
+    print("[DEBUG] STEP:", state.current_step)
+    print("[DEBUG] FINAL STATE → loader off")
 
     yield build_ui_response_from_state(state).to_gradio_outputs()
