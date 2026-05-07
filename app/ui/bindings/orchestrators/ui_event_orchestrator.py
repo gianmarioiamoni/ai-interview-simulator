@@ -14,6 +14,7 @@ from app.ui.state_handlers import (
 from app.ui.bindings.builders.ui_outputs_builder import UIOutputsBuilder
 from app.ui.bindings.validators.input_validator import InputValidator
 from app.ui.bindings.validators.submit_enabler import SubmitEnabler
+from app.ui.bindings.factories.streaming_handler_factory import StreamingHandlerFactory
 
 
 class UIEventOrchestrator:
@@ -30,6 +31,9 @@ class UIEventOrchestrator:
         dummy = UIResponse(state=None)
         if len(self.outputs) != len(dummy.to_gradio_outputs()):
             raise RuntimeError("OUTPUT CONTRACT MISMATCH")
+
+        # 🔥 IMPORTANTE
+        self.handler_factory = StreamingHandlerFactory(self.outputs)
 
     def bind(self) -> None:
         self._bind_validation()
@@ -63,12 +67,24 @@ class UIEventOrchestrator:
             )
 
     # =========================================================
-    # START
+    # START (STREAMING)
     # =========================================================
 
     def _bind_start(self):
-        self.c.start_button.click(
+
+        # 👇 wrapper per generator
+        start_handler_wrapper = self.handler_factory.create(
             start_handler,
+            [
+                "Generating interview structure...",
+                "Creating questions...",
+                "Preparing test cases...",
+                "Finalizing interview...",
+            ],
+        )
+
+        self.c.start_button.click(
+            start_handler_wrapper,
             inputs=[
                 self.c.role_input,
                 self.c.interview_type_input,
@@ -80,7 +96,7 @@ class UIEventOrchestrator:
         )
 
     # =========================================================
-    # SUBMIT
+    # SUBMIT (SYNC)
     # =========================================================
 
     def _bind_submit(self):
@@ -117,7 +133,7 @@ class UIEventOrchestrator:
         )
 
     # =========================================================
-    # NAVIGATION
+    # NAVIGATION (SYNC)
     # =========================================================
 
     def _bind_navigation(self):
