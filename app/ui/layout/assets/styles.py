@@ -3,6 +3,8 @@
 LOADER_STYLE = """
 <style>
 #global-loader {
+    display: none; /* 🔥 fondamentale */
+
     position: fixed;
     top: 0;
     left: 0;
@@ -12,11 +14,16 @@ LOADER_STYLE = """
     background: rgba(0, 0, 0, 0.6);
     z-index: 9999;
 
-    display: flex;
     align-items: center;
     justify-content: center;
 
     backdrop-filter: blur(4px);
+}
+
+/*  quando visibile */
+only when visible
+#global-loader.show {
+    display: flex;
 }
 
 .loader-box {

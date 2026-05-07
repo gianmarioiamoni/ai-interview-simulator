@@ -134,5 +134,6 @@ class UIResponse:
                     if self.loader_visible
                     else ""
                 ),
+                elem_classes=["show"] if self.loader_visible else [],
             ),
         ]
