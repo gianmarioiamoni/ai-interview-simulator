@@ -102,8 +102,7 @@ class UIResponse:
                 interactive=self.start_button_interactive,
             ),
             # 6 TITLE
-            #gr.update(value=self.page_title),
-            gr.update(value="<h1 style='color:red'>LOADER TEST</h1>"),
+            gr.update(value=self._build_title_with_loader()),
             # 7-8 HEADER
             gr.update(value=self.question_counter),
             gr.update(value=self.feedback_markdown),
@@ -141,6 +140,47 @@ class UIResponse:
                 value=self.database_editor_value,
                 visible=self.database_editor_visible,
             ),
-            # 22 GLOBAL LOADER
-            gr.update(visible=True, value="<div style='color:red'>LOADER TEST</div>"),
         ]
+
+    def _build_title_with_loader(self) -> str:
+
+        base = self.page_title or ""
+
+        if not self.loader_visible:
+            return base
+
+        return f"""
+        {base}
+
+    <div style="
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        z-index: 999999;
+    ">
+        <div style="
+            background: rgba(0,0,0,0.85);
+            padding: 24px 32px;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            min-width: 240px;
+        ">
+            <div style="
+                border: 4px solid rgba(255,255,255,0.2);
+                border-top: 4px solid white;
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 12px auto;
+            "></div>
+            {self.loader_value}
+        </div>
+    </div>
+    """

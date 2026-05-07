@@ -36,8 +36,6 @@ class UIOutputsBuilder:
             self.c.written_box,
             self.c.coding_box,
             self.c.database_box,
-            # 22 LOADER
-            self.c.global_loader,
         ]
 
         print("=== OUTPUT ORDER ===")
