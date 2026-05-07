@@ -137,46 +137,27 @@ class UIResponse:
                 value=self.database_editor_value,
                 visible=self.database_editor_visible,
             ),
-            # =====================================================
-            # 20 LOADER (FIX STABILE)
-            # =====================================================
+            # 22 GLOBAL LOADER
             gr.update(
-                visible=True,  # sempre true → controlliamo via HTML
+                visible=True,
                 value=(
                     f"""
                     <div style="
                         position: fixed;
                         top:0; left:0; right:0; bottom:0;
-                        background: rgba(0,0,0,0.6);
-                        display:flex;
+                        display:{'flex' if self.loader_visible else 'none'};
                         align-items:center;
                         justify-content:center;
+                        background: rgba(0,0,0,0.6);
                         backdrop-filter: blur(4px);
                         z-index:9999;
                     ">
-                        <div style="
-                            background: rgba(0,0,0,0.75);
-                            padding: 20px 30px;
-                            border-radius: 10px;
-                            color: white;
-                            font-size: 18px;
-                            text-align: center;
-                        ">
-                            <div style="
-                                border: 4px solid rgba(255,255,255,0.2);
-                                border-top: 4px solid white;
-                                border-radius: 50%;
-                                width: 28px;
-                                height: 28px;
-                                animation: spin 1s linear infinite;
-                                margin: 0 auto 10px auto;
-                            "></div>
+                        <div class="loader-box">
+                            <div class="spinner"></div>
                             {self.loader_value}
                         </div>
                     </div>
                     """
-                    if self.loader_visible
-                    else ""
                 ),
             ),
         ]
