@@ -7,6 +7,7 @@ from app.ui.ui_response import UIResponse
 from app.ui.state_machine.ui_state_machine import UIStateMachine
 
 from app.ui.mappers.loader_mapper import map_loader_text
+from app.ui.mappers.interview_area_mapper import InterviewAreaMapper
 
 from app.ui.response.sections.display_section import DisplaySection
 from app.ui.response.sections.feedback_section import FeedbackSection
@@ -97,10 +98,7 @@ class UIResponseBuilder:
         # -----------------------------------------------------
         # TITLE
         # -----------------------------------------------------
-        if isinstance(question.area, str):
-            area_label = question.area
-        else:
-            area_label = question.area.name.replace("_", " ").title()
+        area_label = InterviewAreaMapper.to_label(question.area)
 
         # -----------------------------------------------------
         # EDITOR DEFAULTS
