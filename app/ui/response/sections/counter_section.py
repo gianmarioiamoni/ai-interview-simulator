@@ -1,21 +1,16 @@
 # app/ui/response/sections/counter_section.py
 
-from app.ui.dto.question_dto import QuestionDTO
+from domain.contracts.interview_state import InterviewState
 
 
 class CounterSection:
 
     @staticmethod
-    def build(
-        question: QuestionDTO,
-        attempts: int,
-        max_attempts: int,
-    ) -> str:
+    def build(state: InterviewState, question, attempts: int, max_attempts: int) -> str:
 
-        
+        total = len(state.questions)
+        index = state.current_question_index + 1
+
         return (
-            "### Interview Progress\n\n"
-            f"Question {question.index} / {question.total}\n\n"
-            f"Area: {question.area}\n\n"
-            f"Attempts: {attempts} / {max_attempts}"
+            f"Question {index} / {total}\n\n" f"Attempt {attempts + 1} / {max_attempts}"
         )

@@ -71,7 +71,7 @@ class UIResponseBuilder:
 
         display = DisplaySection.build(state, question, mode, attempts > 0)
         feedback = FeedbackSection.build(state) if mode == "FEEDBACK" else ""
-        counter = CounterSection.build(question, attempts, MAX_ATTEMPTS)
+        counter = CounterSection.build(state, question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, mode, can_retry)
 
         # -----------------------------------------------------
