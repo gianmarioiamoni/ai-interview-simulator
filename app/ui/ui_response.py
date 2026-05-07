@@ -102,7 +102,8 @@ class UIResponse:
                 interactive=self.start_button_interactive,
             ),
             # 6 TITLE
-            gr.update(value=self.page_title),
+            #gr.update(value=self.page_title),
+            gr.update(value="<h1 style='color:red'>LOADER TEST</h1>"),
             # 7-8 HEADER
             gr.update(value=self.question_counter),
             gr.update(value=self.feedback_markdown),
@@ -141,9 +142,5 @@ class UIResponse:
                 visible=self.database_editor_visible,
             ),
             # 22 GLOBAL LOADER
-            gr.update(
-                visible=True,
-                value="<div style='color:red'>LOADER TEST</div>"
-                    
-                ),
+            gr.update(visible=True, value="<div style='color:red'>LOADER TEST</div>"),
         ]
