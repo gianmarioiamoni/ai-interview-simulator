@@ -7,9 +7,7 @@ from domain.contracts.feedback.quality import Quality
 class FeedbackSection:
 
     @staticmethod
-    def build(
-        state: InterviewState,
-    ) -> str:
+    def build(state: InterviewState) -> str:
 
         current_q = state.current_question
         if not FeedbackSection._should_show(state, current_q):
@@ -21,6 +19,9 @@ class FeedbackSection:
 
         bundle = state.last_feedback_bundle
 
+        # -----------------------------------------------------
+        # SAFETY: no bundle → no feedback
+        # -----------------------------------------------------
         if not bundle or not bundle.blocks:
             return ""
 
@@ -32,13 +33,22 @@ class FeedbackSection:
         # -----------------------------------------------------
         # HEADER
         # -----------------------------------------------------
+        header = FeedbackSection._build_header(quality)
+        if header:
+            parts.append(header)
 
-        parts.append(FeedbackSection._build_header(quality))
+        # -----------------------------------------------------
+        # CONTEXT (🔥 FIX: tentativi + numero domanda)
+        # -----------------------------------------------------
+        attempts = state.get_attempt_for_question(current_q.id)
+        question_number = state.current_question_index + 1
+
+        parts.append(f"\n**Question:** {question_number}")
+        parts.append(f"**Attempt:** {attempts}")
 
         # -----------------------------------------------------
         # PRIORITIZE BLOCKS
         # -----------------------------------------------------
-
         priority_titles = ["Summary", "Score"]
 
         priority_blocks = [b for b in blocks if b.title in priority_titles]
@@ -49,7 +59,6 @@ class FeedbackSection:
         # -----------------------------------------------------
         # RENDER BLOCKS
         # -----------------------------------------------------
-
         for block in ordered_blocks:
 
             # -------------------------------
@@ -65,7 +74,7 @@ class FeedbackSection:
                 parts.append(block.content)
 
             # -------------------------------
-            # SIGNALS (🔥 FIX QUI)
+            # SIGNALS
             # -------------------------------
             if block.signals and block.severity in ["warning", "error"]:
                 parts.append("\n#### 🔍 Issues")
@@ -80,7 +89,10 @@ class FeedbackSection:
                 for l in block.learning:
                     parts.append(f"- {l.action}")
 
-        return "\n".join([p for p in parts if isinstance(p, str)])
+        # -----------------------------------------------------
+        # FINAL JOIN (robusto)
+        # -----------------------------------------------------
+        return "\n".join(p for p in parts if p)
 
     # =========================================================
     # UX HEADER
@@ -96,7 +108,9 @@ class FeedbackSection:
             return "### ✅ Correct Solution\nGreat job! All tests passed."
 
         if quality == Quality.INEFFICIENT:
-            return "### ⚠️ Inefficient Solution\nCorrect but performance can be improved."
+            return (
+                "### ⚠️ Inefficient Solution\nCorrect but performance can be improved."
+            )
 
         if quality == Quality.PARTIAL:
             return "### ⚠️ Partial Solution\nSome tests failed. You're close."
@@ -104,15 +118,15 @@ class FeedbackSection:
         if quality == Quality.INCORRECT:
             return "### ❌ Incorrect Solution\nYour solution has significant issues."
 
+        # SAFETY fallback
+        return "### 📊 Feedback"
+
     # =========================================================
     # POLICY
     # =========================================================
 
     @staticmethod
-    def _should_show(
-        state: InterviewState,
-        current_q,
-    ) -> bool:
+    def _should_show(state: InterviewState, current_q) -> bool:
 
         if not current_q:
             return False

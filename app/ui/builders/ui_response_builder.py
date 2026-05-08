@@ -50,7 +50,6 @@ class UIResponseBuilder:
         progress = getattr(state, "current_progress", 0)
         setup_inputs_interactive = not loader_visible
 
-
         return UIResponse(
             state=state,
             role_visible=True,
@@ -69,6 +68,10 @@ class UIResponseBuilder:
     # QUESTION + FEEDBACK (SHARED)
     # =====================================================
     def _build_question_like(self, state: InterviewState, mode: str) -> UIResponse:
+
+        is_feedback_mode = mode == "FEEDBACK"
+        latest_answer = state.get_latest_answer_for_question(question.id)
+        previous_value = latest_answer.content if latest_answer else ""
 
         question = state.current_question
         if question is None:
@@ -91,9 +94,16 @@ class UIResponseBuilder:
         # -----------------------------------------------------
         # DISPLAY
         # -----------------------------------------------------
-        written_display = f"<div>{display.get('written_display', '')}</div>"
-        coding_display = display.get("coding_display", "")
-        database_display = display.get("database_display", "")
+        if is_feedback_mode and previous_value:
+
+            written_display = f"<div><strong>Your previous answer:</strong><br>{previous_value}</div>" if question.is_written() else ""
+            coding_display = previous_value if is_coding else ""
+            database_display = previous_value if is_database else ""
+
+        else:
+            written_display = f"<div>{display.get('written_display', '')}</div>"
+            coding_display = display.get("coding_display", "")
+            database_display = display.get("database_display", "")
 
         # -----------------------------------------------------
         # TYPE FLAGS
@@ -108,14 +118,17 @@ class UIResponseBuilder:
         area_label = InterviewAreaMapper.to_label(question.area)
 
         # -----------------------------------------------------
-        # EDITOR DEFAULTS
+        # EDITOR VALUE
         # -----------------------------------------------------
-        editor_value = ""
-        if is_coding:
-            editor_value = "# Write your solution here"
-        elif is_database:
-            editor_value = "-- Write your SQL query here"
-
+        if is_feedback_mode:
+            written_editor_value = "" if is_written else ""
+            coding_editor_value = "" if is_coding else ""
+            database_editor_value = "" if is_database else ""
+        else:
+            written_editor_value = "" if is_written else ""
+            coding_editor_value = "# Write your solution here" if is_coding else ""
+            database_editor_value = "-- Write your SQL query here" if is_database else ""
+        
         # -----------------------------------------------------
         # BUTTON LABEL
         # -----------------------------------------------------
@@ -156,12 +169,12 @@ class UIResponseBuilder:
             next_label=buttons.get("next_label") or "",
             submit_label=submit_label,
             # EDITORS
-            written_editor_value=editor_value if is_written else "",
-            coding_editor_value=editor_value if is_coding else "",
-            database_editor_value=editor_value if is_database else "",
-            written_editor_visible=is_written,
-            coding_editor_visible=is_coding,
-            database_editor_visible=is_database,
+            written_editor_value=written_editor_value if is_written else "",
+            coding_editor_value=coding_editor_value if is_coding else "",
+            database_editor_value=database_editor_value if is_database else "",
+            written_editor_visible=is_written and not is_feedback_mode,
+            coding_editor_visible=is_coding and not is_feedback_mode,
+            database_editor_visible=is_database and not is_feedback_mode,
             # LOADER
             loader_visible=loader_visible,
             loader_value=loader_value,
