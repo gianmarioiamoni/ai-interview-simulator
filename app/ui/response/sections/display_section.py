@@ -1,9 +1,8 @@
 # app/ui/response/sections/display_section.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question.question import QuestionType
+from domain.contracts.question.question import Question, QuestionType
 
-from app.ui.dto.question_dto import QuestionDTO
 from app.ui.ui_state import UIState
 from app.ui.types.ui_fields import DisplayFields
 
@@ -13,65 +12,65 @@ class DisplaySection:
     @staticmethod
     def build(
         state: InterviewState,
-        question: QuestionDTO,
+        question: Question,
         ui_state: UIState,
         has_previous_answer: bool,
     ) -> DisplayFields:
 
-        content = DisplaySection._resolve_content(
+        display_text = DisplaySection._build_full_text(
             state,
             question,
             ui_state,
             has_previous_answer,
         )
 
-        prefix = DisplaySection._resolve_prefix(
-            ui_state,
-            has_previous_answer,
-        )
-
-        display_text = prefix + (content or "")
-
         return DisplaySection._map_by_question_type(
             question.type,
             display_text,
         )
 
+    # =========================================================
+    # CORE TEXT BUILDER (FIX ARCHITETTURALE)
+    # =========================================================
+
     @staticmethod
-    def _resolve_content(
+    def _build_full_text(
         state: InterviewState,
-        question: QuestionDTO,
+        question: Question,
         ui_state: UIState,
         has_previous_answer: bool,
     ) -> str:
+
+        parts: list[str] = []
+
+        # -----------------------------------------------------
+        # ALWAYS SHOW QUESTION
+        # -----------------------------------------------------
+
+        if question.prompt:
+            parts.append(f"### Question\n\n{question.prompt}")
 
         last_answer = state.get_latest_answer_for_question(question.id)
 
-        is_feedback = ui_state == UIState.FEEDBACK
+        # -----------------------------------------------------
+        # FEEDBACK → show submitted answer
+        # -----------------------------------------------------
 
-        if is_feedback or has_previous_answer:
-            if last_answer:
-                return last_answer.content
-            return ""
+        if ui_state == UIState.FEEDBACK and last_answer:
+            parts.append(f"\n\n### Your Answer\n\n{last_answer.content}")
 
-        return question.prompt or ""
+        # -----------------------------------------------------
+        # RETRY / IMPROVE → show previous answer
+        # -----------------------------------------------------
 
-    @staticmethod
-    def _resolve_prefix(
-        ui_state: UIState,
-        has_previous_answer: bool,
-    ) -> str:
+        elif has_previous_answer and last_answer:
+            parts.append(f"\n\n### Previous Answer\n\n{last_answer.content}")
 
-        # FEEDBACK
-        if ui_state == UIState.FEEDBACK:
-            return "### Your Answer\n\n"
+        return "\n".join(parts)
 
-        # IMPROVE
-        if has_previous_answer:
-            return "### Improve Your Answer\n\n"
-
-        # QUESTION
-        return ""
+    # =========================================================
+    # MAPPING BY TYPE
+    # =========================================================
 
     @staticmethod
     def _map_by_question_type(
