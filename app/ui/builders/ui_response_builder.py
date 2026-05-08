@@ -4,6 +4,7 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 
 from app.ui.ui_response import UIResponse
+from app.ui.ui_state import UIState
 from app.ui.state_machine.ui_state_machine import UIStateMachine
 
 from app.ui.mappers.loader_mapper import map_loader_text
@@ -26,16 +27,16 @@ class UIResponseBuilder:
 
         ui_state = UIStateMachine.resolve(state)
 
-        if ui_state.name == "SETUP":
+        if ui_state == UIState.SETUP:
             return self._build_setup(state)
 
-        if ui_state.name == "QUESTION":
-            return self._build_question_like(state, mode="QUESTION")
+        if ui_state == UIState.QUESTION:
+            return self._build_question_like(state, ui_state)
 
-        if ui_state.name == "FEEDBACK":
-            return self._build_question_like(state, mode="FEEDBACK")
+        if ui_state == UIState.FEEDBACK:
+            return self._build_question_like(state, ui_state)
 
-        if ui_state.name == "REPORT":
+        if ui_state == UIState.REPORT:
             return self._build_report(state)
 
         return self._build_setup(state)
@@ -67,9 +68,9 @@ class UIResponseBuilder:
     # =====================================================
     # QUESTION + FEEDBACK (SHARED)
     # =====================================================
-    def _build_question_like(self, state: InterviewState, mode: str) -> UIResponse:
+    def _build_question_like(self, state: InterviewState, ui_state: UIState) -> UIResponse:
 
-        is_feedback_mode = mode == "FEEDBACK"
+        is_feedback_mode = ui_state == UIState.FEEDBACK
         latest_answer = state.get_latest_answer_for_question(question.id)
         previous_value = latest_answer.content if latest_answer else ""
 
@@ -80,10 +81,10 @@ class UIResponseBuilder:
         attempts = state.get_attempt_for_question(question.id)
         can_retry = attempts < MAX_ATTEMPTS
 
-        display = DisplaySection.build(state, question, mode, attempts > 0)
-        feedback = FeedbackSection.build(state) if mode == "FEEDBACK" else ""
+        display = DisplaySection.build(state, question, ui_state, attempts > 0)
+        feedback = FeedbackSection.build(state) if ui_state == UIState.FEEDBACK else ""
         counter = CounterSection.build(state, question, attempts, MAX_ATTEMPTS)
-        buttons = ButtonMapper.map(state, mode, can_retry)
+        buttons = ButtonMapper.map(state, ui_state, can_retry)
 
         # -----------------------------------------------------
         # LOADER (UNIFICATO)
