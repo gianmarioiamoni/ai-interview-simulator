@@ -70,13 +70,17 @@ class UIResponseBuilder:
     # =====================================================
     def _build_question_like(self, state: InterviewState, ui_state: UIState) -> UIResponse:
 
+        if not state or not state.questions:
+            return self._build_setup(state)
+
+        question = state.current_question
+        
+        if question is None:
+            return self._build_setup(state)
+
         is_feedback_mode = ui_state == UIState.FEEDBACK
         latest_answer = state.get_latest_answer_for_question(question.id)
         previous_value = latest_answer.content if latest_answer else ""
-
-        question = state.current_question
-        if question is None:
-            return self._build_setup(state)
 
         attempts = state.get_attempt_for_question(question.id)
         can_retry = attempts < MAX_ATTEMPTS
