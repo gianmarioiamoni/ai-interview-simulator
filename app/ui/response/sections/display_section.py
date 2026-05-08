@@ -48,7 +48,7 @@ class DisplaySection:
         # -----------------------------------------------------
 
         if question.prompt:
-            parts.append(f"### Question\n\n{question.prompt}")
+            parts.append(f"### Question\n\n{question.prompt.strip()}")
 
         last_answer = state.get_latest_answer_for_question(question.id)
 

@@ -74,9 +74,16 @@ class UIResponseBuilder:
             return self._build_setup(state)
 
         question = state.current_question
-        
+
         if question is None:
             return self._build_setup(state)
+
+        # -----------------------------------------------------
+        # TYPE FLAGS
+        # -----------------------------------------------------
+        is_written = question.is_written()
+        is_coding = question.is_coding()
+        is_database = question.is_database()
 
         is_feedback_mode = ui_state == UIState.FEEDBACK
         latest_answer = state.get_latest_answer_for_question(question.id)
@@ -102,20 +109,13 @@ class UIResponseBuilder:
         if is_feedback_mode and previous_value:
 
             written_display = f"<div><strong>Your previous answer:</strong><br>{previous_value}</div>" if question.is_written() else ""
-            coding_display = previous_value if is_coding else ""
-            database_display = previous_value if is_database else ""
+            coding_display = display["coding_display"] if is_coding else ""
+            database_display = display["database_display"] if is_database else ""
 
         else:
             written_display = f"<div>{display.get('written_display', '')}</div>"
             coding_display = display.get("coding_display", "")
             database_display = display.get("database_display", "")
-
-        # -----------------------------------------------------
-        # TYPE FLAGS
-        # -----------------------------------------------------
-        is_written = question.type == QuestionType.WRITTEN
-        is_coding = question.type == QuestionType.CODING
-        is_database = question.type == QuestionType.DATABASE
 
         # -----------------------------------------------------
         # TITLE
@@ -133,7 +133,7 @@ class UIResponseBuilder:
             written_editor_value = "" if is_written else ""
             coding_editor_value = "# Write your solution here" if is_coding else ""
             database_editor_value = "-- Write your SQL query here" if is_database else ""
-        
+
         # -----------------------------------------------------
         # BUTTON LABEL
         # -----------------------------------------------------
