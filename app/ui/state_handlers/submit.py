@@ -2,7 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview.answer import Answer
-from domain.contracts.question.question import QuestionType
+from app.ui.constants.loader_steps import LoaderStep
 
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.runtime.interview_runtime import get_runtime_llm
@@ -23,7 +23,6 @@ def submit_answer(
 
     # START processing
     new_state = state.model_copy(deep=True)
-    new_state.current_step = "evaluating"
 
     question = new_state.current_question
     attempt = new_state.get_attempt_for_question(question.id) + 1
@@ -50,7 +49,6 @@ def submit_answer(
     new_state = use_case.execute(new_state)
 
     # END processing
-    new_state.current_step = None
     new_state.awaiting_user_input = True
 
     # 🔍 DEBUG

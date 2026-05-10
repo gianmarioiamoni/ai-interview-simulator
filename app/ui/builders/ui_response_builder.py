@@ -101,7 +101,7 @@ class UIResponseBuilder:
         loader_visible = state.current_step is not None
         loader_value = map_loader_text(state.current_step)
 
-        is_processing = state.current_step is not None
+        is_processing = not state.awaiting_user_input
 
         show_submit = buttons["show_submit"] and not is_processing
 
@@ -122,7 +122,7 @@ class UIResponseBuilder:
 
         submit_interactive = (
             buttons.get("show_submit_interactive", False)
-            and not loader_visible
+            and not is_processing
             and not is_feedback_mode
         )
 
