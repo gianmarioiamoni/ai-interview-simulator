@@ -108,8 +108,8 @@ class UIResponse:
             # 6 TITLE
             gr.update(value=self.page_title),
             # 7-8 HEADER
-            gr.update(value=self.question_counter),
-            gr.update(value=self.feedback_markdown),
+            gr.update(value=self.question_counter, visible=bool(self.question_counter)),
+            gr.update(value=self.feedback_markdown, visible=bool(self.feedback_markdown)),
             # 9-11 DISPLAY
             gr.update(value=self.written_display, visible=self.written_visible),
             gr.update(value=self.coding_display, visible=self.coding_visible),
