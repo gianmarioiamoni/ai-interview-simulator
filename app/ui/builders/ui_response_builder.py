@@ -17,6 +17,10 @@ from app.ui.response.config.button_mapper import ButtonMapper
 
 from app.ui.components.loader.loader_renderer import render_loader
 
+# 🔥 NEW IMPORTS (STEP 1)
+from app.ui.dto.final_report_dto import FinalReportDTO
+from app.ui.views.report.report_view import build_report_markdown
+
 
 MAX_ATTEMPTS = 3
 
@@ -168,13 +172,13 @@ class UIResponseBuilder:
         )
 
     # =====================================================
-    # REPORT (🔥 FIX QUI)
+    # REPORT (🔥 FIX CORRETTO)
     # =====================================================
     def _build_report(self, state: InterviewState) -> UIResponse:
 
-        report = state.interview_evaluation
+        final_eval = state.interview_evaluation
 
-        if report is None:
+        if final_eval is None:
             return UIResponse(
                 state=state,
                 role_visible=False,
@@ -183,55 +187,25 @@ class UIResponseBuilder:
                 language_visible=False,
                 start_button_visible=False,
                 page_title="## Final Report",
-                report_output="No report available.",
+                report_output="<i>No report available</i>",
             )
 
         # -----------------------------------------------------
-        # BUILD HTML REPORT
+        # 🔥 DTO (CRITICAL)
         # -----------------------------------------------------
-
-        dimensions_html = "".join(
-            [
-                f"<li><b>{d.name}</b>: {d.score:.1f}<br>{d.justification}</li>"
-                for d in report.performance_dimensions
-            ]
+        report_dto = FinalReportDTO.from_components(
+            state=state,
+            final_evaluation=final_eval,
         )
 
-        drivers = report.decision_explanation.get("drivers", [])
-        blockers = report.decision_explanation.get("blockers", [])
+        # -----------------------------------------------------
+        # 🔥 FULL RENDER (RADAR + ALL SECTIONS)
+        # -----------------------------------------------------
+        report_html = build_report_markdown(report_dto)
 
-        drivers_html = "".join([f"<li>{d}</li>" for d in drivers])
-        blockers_html = "".join([f"<li>{b}</li>" for b in blockers])
-
-        improvements_html = "".join(
-            [f"<li>{i}</li>" for i in report.improvement_suggestions]
-        )
-
-        html = f"""
-        <h2>Final Evaluation</h2>
-
-        <p><b>Score:</b> {report.overall_score:.1f}</p>
-        <p><b>Decision:</b> {report.hire_decision.value}</p>
-        <p><b>Level:</b> {report.level.value}</p>
-        <p><b>Hiring Probability:</b> {report.hiring_probability:.1f}%</p>
-        <p><b>Percentile:</b> {report.percentile_rank:.1f}%</p>
-
-        <h3>Executive Summary</h3>
-        <p>{report.executive_summary}</p>
-
-        <h3>Performance Dimensions</h3>
-        <ul>{dimensions_html}</ul>
-
-        <h3>Drivers</h3>
-        <ul>{drivers_html}</ul>
-
-        <h3>Blockers</h3>
-        <ul>{blockers_html}</ul>
-
-        <h3>Improvement Suggestions</h3>
-        <ul>{improvements_html}</ul>
-        """
-
+        # -----------------------------------------------------
+        # RESPONSE
+        # -----------------------------------------------------
         return UIResponse(
             state=state,
             role_visible=False,
@@ -240,5 +214,5 @@ class UIResponseBuilder:
             language_visible=False,
             start_button_visible=False,
             page_title="## Final Report",
-            report_output=html,
+            report_output=report_html,
         )
