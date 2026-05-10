@@ -35,7 +35,7 @@ class ButtonMapper:
                 "show_submit": True,
                 "show_retry": False,
                 "show_next": False,
-                "show_submit_interactive": True,
+                "show_submit_interactive": False,
                 "retry_interactive": False,
                 "next_label": "",
                 "retry_label": "",

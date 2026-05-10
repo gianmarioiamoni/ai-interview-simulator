@@ -21,13 +21,16 @@ def submit_answer(
     if not state or not state.current_question:
         return build_ui_response_from_state(state).to_gradio_outputs()
 
-    question = state.current_question
-    attempt = state.get_attempt_for_question(question.id) + 1
+    new_state = state.model_copy(deep=True)
+    new_state.current_step = "processing"
 
-    answer_content = _resolve_answer(state, written_answer, coding_answer, database_answer)
+    question = new_state.current_question
+    attempt = new_state.get_attempt_for_question(question.id) + 1
+
+    answer_content = _resolve_answer(new_state, written_answer, coding_answer, database_answer)
 
     if not answer_content.strip():
-        return build_ui_response_from_state(state).to_gradio_outputs()
+        return build_ui_response_from_state(new_state).to_gradio_outputs()
 
     new_answer = Answer(
         question_id=question.id,
@@ -35,24 +38,21 @@ def submit_answer(
         attempt=attempt,
     )
 
-    state = state.add_answer(new_answer)
+    new_state = new_state.add_answer(new_answer)
 
     llm = get_runtime_llm()
     use_case = EvaluateAnswerUseCase(llm=llm)
 
-    state = use_case.execute(state)
-
-    state = use_case.execute(state)
+    new_state = use_case.execute(new_state)
 
     # 🔍 DEBUG
-    print("FEEDBACK BUNDLE:", state.last_feedback_bundle is not None)
-    print("ALLOWED ACTIONS:", state.allowed_actions)
-    print("AWAITING USER INPUT:", state.awaiting_user_input)
-    print("UI STATE:", UIStateMachine.resolve(state))
+    print("FEEDBACK BUNDLE:", new_state.last_feedback_bundle is not None)
+    print("ALLOWED ACTIONS:", new_state.allowed_actions)
+    print("AWAITING USER INPUT:", new_state.awaiting_user_input)
+    print("UI STATE:", UIStateMachine.resolve(new_state))
 
-    # state.awaiting_user_input = True
 
-    return build_ui_response_from_state(state).to_gradio_outputs()
+    return build_ui_response_from_state(new_state).to_gradio_outputs()
 
 
 def _resolve_answer(state, written, coding, database) -> str:
