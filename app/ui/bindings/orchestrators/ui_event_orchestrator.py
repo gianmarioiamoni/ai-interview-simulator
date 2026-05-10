@@ -96,21 +96,12 @@ class UIEventOrchestrator:
         )
 
     # =========================================================
-    # SUBMIT (SYNC)
+    # SUBMIT
     # =========================================================
 
     def _bind_submit(self):
-        submit_handler_wrapper = self.handler_factory.create(
-            submit_answer,
-            [
-                "Evaluating answer...",
-                "Running execution...",
-                "Analyzing results...",
-                "Generating feedback...",
-            ],
-        )
         self.c.submit_button.click(
-            submit_handler_wrapper,
+            submit_answer,
             inputs=[
                 self.state,
                 self.c.written_box,
