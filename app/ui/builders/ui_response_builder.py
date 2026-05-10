@@ -101,6 +101,10 @@ class UIResponseBuilder:
         loader_visible = state.current_step is not None
         loader_value = map_loader_text(state.current_step)
 
+        is_processing = state.current_step is not None
+
+        show_submit = buttons["show_submit"] and not is_processing
+
         if is_feedback_mode and previous_value:
             written_display = (
                 f"<div><strong>Your previous answer:</strong><br>{previous_value}</div>"
@@ -138,7 +142,7 @@ class UIResponseBuilder:
             written_visible=is_written,
             coding_visible=is_coding,
             database_visible=is_database,
-            show_submit=buttons["show_submit"],
+            show_submit=show_submit,
             submit_interactive=submit_interactive,
             show_retry=buttons["show_retry"],
             show_next=buttons["show_next"],
