@@ -5,6 +5,7 @@ from datetime import datetime
 
 from app.ui.layout.ui_components import UILayoutComponents
 from app.ui.layout.assets.styles import LOADER_STYLE
+from app.ui.layout.sections.report_section import render_report_section
 
 from domain.contracts.user.role import RoleType
 from domain.contracts.interview.interview_type import InterviewType
@@ -71,8 +72,10 @@ class UILayoutBuilder:
 
         final_feedback = gr.Markdown("", visible=False)
         report_output = gr.Markdown("", visible=False)
+        report_components = render_report_section()
 
         global_loader = gr.HTML("", visible=False, elem_id="global-loader")
+
 
         return UILayoutComponents(
             state=state,

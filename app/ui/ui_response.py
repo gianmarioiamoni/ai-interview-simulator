@@ -53,6 +53,7 @@ class UIResponse:
     # =========================================================
     final_feedback: str = ""
     report_output: str = ""
+    report_section_visible: bool = False
 
     # =========================================================
     # BUTTONS
@@ -117,6 +118,7 @@ class UIResponse:
             # 12-13 REPORT
             gr.update(value=self.final_feedback, visible=bool(self.final_feedback)),
             gr.update(value=self.report_output, visible=bool(self.report_output)),
+            gr.update(visible=self.report_section_visible),
             # 14-16 BUTTONS
             gr.update(
                 visible=self.show_submit,

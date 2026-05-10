@@ -3,7 +3,7 @@
 import gradio as gr
 
 from app.ui.handlers.start_handler import start_handler
-from app.ui.handlers.report_handler import view_report_handler
+from app.ui.state_handlers import export_pdf, export_json, new_interview
 
 from app.ui.state_handlers import (
     submit_answer,
@@ -125,7 +125,6 @@ class UIEventOrchestrator:
             self.c.database_box,
         ]
 
-        # scritto
         self.c.written_box.change(
             enabler.enable,
             inputs=inputs,
@@ -163,4 +162,25 @@ class UIEventOrchestrator:
             inputs=[self.state],
             outputs=self.outputs,
             show_progress=False,
+        )
+
+        # PDF
+        self.c.report_section.pdf_button.click(
+            export_pdf,
+            inputs=[self.state],
+            outputs=self.c.report_section.pdf_file,
+        )
+
+        # JSON
+        self.c.report_section.json_button.click(
+            export_json,
+            inputs=[self.state],
+            outputs=self.c.json_file,
+        )
+
+        # NEW INTERVIEW
+        self.c.report_section.new_interview_button.click(
+            new_interview,
+            inputs=[self.state],
+            outputs=self.outputs,
         )

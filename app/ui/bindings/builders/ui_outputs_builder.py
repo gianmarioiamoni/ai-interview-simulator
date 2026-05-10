@@ -10,33 +10,34 @@ class UIOutputsBuilder:
         outputs = [
             # 0 STATE
             self.c.state,
-            # 3-7 SETUP INPUTS
+            # 1-5 SETUP INPUTS
             self.c.role_input,
             self.c.interview_type_input,
             self.c.company_input,
             self.c.language_input,
             self.c.start_button,
-            # 8 TITLE
+            # 6 TITLE
             self.c.page_title,
-            # 9-10 HEADER
+            # 7-8 HEADER
             self.c.question_counter,
             self.c.feedback_output,
-            # 11-13 DISPLAY
+            # 9-11 DISPLAY
             self.c.written_display,
             self.c.coding_display,
             self.c.database_display,
-            # 14-15 REPORT
+            # 12-14 REPORT
             self.c.final_feedback,
             self.c.report_output,
-            # 16-18 BUTTONS
+            self.c.report_section,
+            # 15-17 BUTTONS
             self.c.submit_button,
             self.c.retry_button,
             self.c.next_button,
-            # 19-21 EDITORS
+            # 18-20 EDITORS
             self.c.written_box,
             self.c.coding_box,
             self.c.database_box,
-            # 22 LOADER
+            # 21 LOADER
             self.c.global_loader,
         ]
 
