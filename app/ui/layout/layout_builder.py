@@ -72,13 +72,13 @@ class UILayoutBuilder:
 
         final_feedback = gr.Markdown("", visible=False)
         report_components = render_report_section()
-        report_output=report_components["report_output"],
-        report_section=report_components["report_section"],
-        pdf_button=report_components["pdf_button"],
-        json_button=report_components["json_button"],
-        pdf_file=report_components["pdf_file"],
-        json_file=report_components["json_file"],
-        new_interview_button=report_components["new_interview_button"],
+        report_output=report_components["report_output"]
+        report_section=report_components["report_section"]
+        pdf_button=report_components["pdf_button"]
+        json_button=report_components["json_button"]
+        pdf_file=report_components["pdf_file"]
+        json_file=report_components["json_file"]
+        new_interview_button=report_components["new_interview_button"]
 
         global_loader = gr.HTML("", visible=False, elem_id="global-loader")
 
