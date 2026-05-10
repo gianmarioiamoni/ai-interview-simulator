@@ -21,8 +21,9 @@ def submit_answer(
     if not state or not state.current_question:
         return build_ui_response_from_state(state).to_gradio_outputs()
 
+    # START processing
     new_state = state.model_copy(deep=True)
-    new_state.current_step = "processing"
+    new_state.current_step = "evaluating"
 
     question = new_state.current_question
     attempt = new_state.get_attempt_for_question(question.id) + 1
@@ -38,19 +39,25 @@ def submit_answer(
         attempt=attempt,
     )
 
+    # ADD answer
     new_state = new_state.add_answer(new_answer)
+    new_state.awaiting_user_input = False
 
+    # EVALUATE answer
     llm = get_runtime_llm()
     use_case = EvaluateAnswerUseCase(llm=llm)
 
     new_state = use_case.execute(new_state)
+
+    # END processing
+    new_state.current_step = None
+    new_state.awaiting_user_input = True
 
     # 🔍 DEBUG
     print("FEEDBACK BUNDLE:", new_state.last_feedback_bundle is not None)
     print("ALLOWED ACTIONS:", new_state.allowed_actions)
     print("AWAITING USER INPUT:", new_state.awaiting_user_input)
     print("UI STATE:", UIStateMachine.resolve(new_state))
-
 
     return build_ui_response_from_state(new_state).to_gradio_outputs()
 
