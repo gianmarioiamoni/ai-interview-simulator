@@ -8,6 +8,7 @@ from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.runtime.interview_runtime import get_runtime_llm
 
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
+from app.ui.state_machine.ui_state_machine import UIStateMachine
 
 
 def submit_answer(
@@ -41,7 +42,15 @@ def submit_answer(
 
     state = use_case.execute(state)
 
-    state.awaiting_user_input = True
+    state = use_case.execute(state)
+
+    # 🔍 DEBUG
+    print("FEEDBACK BUNDLE:", state.last_feedback_bundle is not None)
+    print("ALLOWED ACTIONS:", state.allowed_actions)
+    print("AWAITING USER INPUT:", state.awaiting_user_input)
+    print("UI STATE:", UIStateMachine.resolve(state))
+
+    # state.awaiting_user_input = True
 
     return build_ui_response_from_state(state).to_gradio_outputs()
 
