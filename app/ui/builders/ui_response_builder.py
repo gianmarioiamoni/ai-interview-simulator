@@ -116,6 +116,12 @@ class UIResponseBuilder:
 
         area_label = InterviewAreaMapper.to_label(question.area)
 
+        submit_interactive = (
+            buttons.get("show_submit_interactive", False)
+            and not loader_visible
+            and not is_feedback_mode
+        )
+
         return UIResponse(
             state=state,
             role_visible=False,
@@ -133,6 +139,7 @@ class UIResponseBuilder:
             coding_visible=is_coding,
             database_visible=is_database,
             show_submit=buttons["show_submit"],
+            submit_interactive=submit_interactive,
             show_retry=buttons["show_retry"],
             show_next=buttons["show_next"],
             next_label=buttons.get("next_label") or "",
