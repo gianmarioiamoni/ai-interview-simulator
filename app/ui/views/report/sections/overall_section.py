@@ -1,6 +1,7 @@
 # app/ui/views/report/sections/overall_section.py
 
 from app.ui.views.report.components.badges import score_badge, badge
+from app.ui.mappers.gating_reason_mapper import map_gating_reason
 
 
 def render_overall(report):
@@ -28,7 +29,7 @@ def render_overall(report):
     if report.gating_triggered:
         gating_block = f"""
         <div style='color:#dc2626;font-weight:bold;'>
-            Gating Applied: {report.gating_reason}
+            Gating Applied: {map_gating_reason(report.gating_reason)}
         </div>
         """
     else:
