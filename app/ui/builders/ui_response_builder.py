@@ -19,7 +19,7 @@ from app.ui.components.loader.loader_renderer import render_loader
 
 # 🔥 NEW IMPORTS (STEP 1)
 from app.ui.dto.final_report_dto import FinalReportDTO
-from app.ui.views.report.report_view import build_report_markdown
+from app.ui.views.report_view import build_report_markdown
 
 
 MAX_ATTEMPTS = 3
