@@ -69,9 +69,11 @@ class UIResponseBuilder:
         )
 
     # =====================================================
-    # QUESTION + FEEDBACK (SHARED)
+    # QUESTION + FEEDBACK (UNCHANGED)
     # =====================================================
-    def _build_question_like(self, state: InterviewState, ui_state: UIState) -> UIResponse:
+    def _build_question_like(
+        self, state: InterviewState, ui_state: UIState
+    ) -> UIResponse:
 
         if not state or not state.questions:
             return self._build_setup(state)
@@ -81,9 +83,6 @@ class UIResponseBuilder:
         if question is None:
             return self._build_setup(state)
 
-        # -----------------------------------------------------
-        # TYPE FLAGS
-        # -----------------------------------------------------
         is_written = question.is_written()
         is_coding = question.is_coding()
         is_database = question.is_database()
@@ -100,46 +99,35 @@ class UIResponseBuilder:
         counter = CounterSection.build(state, question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
-        # -----------------------------------------------------
-        # LOADER (UNIFICATO)
-        # -----------------------------------------------------
         loader_visible = state.current_step is not None
         loader_value = map_loader_text(state.current_step)
 
-        # -----------------------------------------------------
-        # DISPLAY
-        # -----------------------------------------------------
         if is_feedback_mode and previous_value:
-
-            written_display = f"<div><strong>Your previous answer:</strong><br>{previous_value}</div>" if question.is_written() else ""
+            written_display = (
+                f"<div><strong>Your previous answer:</strong><br>{previous_value}</div>"
+                if is_written
+                else ""
+            )
             coding_display = display["coding_display"] if is_coding else ""
             database_display = display["database_display"] if is_database else ""
-
         else:
             written_display = display.get("written_display", "")
             coding_display = display.get("coding_display", "")
             database_display = display.get("database_display", "")
 
-        # -----------------------------------------------------
-        # TITLE
-        # -----------------------------------------------------
         area_label = InterviewAreaMapper.to_label(question.area)
 
-        # -----------------------------------------------------
-        # EDITOR VALUE
-        # -----------------------------------------------------
         if is_feedback_mode:
-            written_editor_value = "" if is_written else ""
-            coding_editor_value = "" if is_coding else ""
-            database_editor_value = "" if is_database else ""
+            written_editor_value = ""
+            coding_editor_value = ""
+            database_editor_value = ""
         else:
-            written_editor_value = "" if is_written else ""
+            written_editor_value = ""
             coding_editor_value = "# Write your solution here" if is_coding else ""
-            database_editor_value = "-- Write your SQL query here" if is_database else ""
+            database_editor_value = (
+                "-- Write your SQL query here" if is_database else ""
+            )
 
-        # -----------------------------------------------------
-        # BUTTON LABEL
-        # -----------------------------------------------------
         if is_coding:
             submit_label = "Run Code"
         elif is_database:
@@ -147,51 +135,102 @@ class UIResponseBuilder:
         else:
             submit_label = "Submit Answer"
 
-        # -----------------------------------------------------
-        # FINAL UI RESPONSE
-        # -----------------------------------------------------
         return UIResponse(
             state=state,
-            # HIDE SETUP
             role_visible=False,
             interview_type_visible=False,
             company_visible=False,
             language_visible=False,
             start_button_visible=False,
-            # HEADER
             page_title=f"## {area_label}",
             question_counter=counter,
             feedback_markdown=feedback,
-            # DISPLAY
             written_display=written_display,
             coding_display=coding_display,
             database_display=database_display,
             written_visible=is_written,
             coding_visible=is_coding,
             database_visible=is_database,
-            # BUTTONS
             show_submit=buttons["show_submit"],
             submit_interactive=False,
             show_retry=buttons["show_retry"],
             show_next=buttons["show_next"],
             next_label=buttons.get("next_label") or "",
             submit_label=submit_label,
-            # EDITORS
             written_editor_value=written_editor_value if is_written else "",
             coding_editor_value=coding_editor_value if is_coding else "",
             database_editor_value=database_editor_value if is_database else "",
             written_editor_visible=is_written and not is_feedback_mode,
             coding_editor_visible=is_coding and not is_feedback_mode,
             database_editor_visible=is_database and not is_feedback_mode,
-            # LOADER
             loader_visible=loader_visible,
             loader_value=loader_value,
         )
 
     # =====================================================
-    # REPORT
+    # REPORT (🔥 FIX QUI)
     # =====================================================
     def _build_report(self, state: InterviewState) -> UIResponse:
+
+        report = state.interview_evaluation
+
+        if report is None:
+            return UIResponse(
+                state=state,
+                role_visible=False,
+                interview_type_visible=False,
+                company_visible=False,
+                language_visible=False,
+                start_button_visible=False,
+                page_title="## Final Report",
+                report_output="No report available.",
+            )
+
+        # -----------------------------------------------------
+        # BUILD HTML REPORT
+        # -----------------------------------------------------
+
+        dimensions_html = "".join(
+            [
+                f"<li><b>{d.name}</b>: {d.score:.1f}<br>{d.justification}</li>"
+                for d in report.performance_dimensions
+            ]
+        )
+
+        drivers = report.decision_explanation.get("drivers", [])
+        blockers = report.decision_explanation.get("blockers", [])
+
+        drivers_html = "".join([f"<li>{d}</li>" for d in drivers])
+        blockers_html = "".join([f"<li>{b}</li>" for b in blockers])
+
+        improvements_html = "".join(
+            [f"<li>{i}</li>" for i in report.improvement_suggestions]
+        )
+
+        html = f"""
+        <h2>Final Evaluation</h2>
+
+        <p><b>Score:</b> {report.overall_score:.1f}</p>
+        <p><b>Decision:</b> {report.hire_decision.value}</p>
+        <p><b>Level:</b> {report.level.value}</p>
+        <p><b>Hiring Probability:</b> {report.hiring_probability:.1f}%</p>
+        <p><b>Percentile:</b> {report.percentile_rank:.1f}%</p>
+
+        <h3>Executive Summary</h3>
+        <p>{report.executive_summary}</p>
+
+        <h3>Performance Dimensions</h3>
+        <ul>{dimensions_html}</ul>
+
+        <h3>Drivers</h3>
+        <ul>{drivers_html}</ul>
+
+        <h3>Blockers</h3>
+        <ul>{blockers_html}</ul>
+
+        <h3>Improvement Suggestions</h3>
+        <ul>{improvements_html}</ul>
+        """
 
         return UIResponse(
             state=state,
@@ -201,5 +240,5 @@ class UIResponseBuilder:
             language_visible=False,
             start_button_visible=False,
             page_title="## Final Report",
-            report_output="Report ready",
+            report_output=html,
         )

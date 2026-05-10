@@ -115,8 +115,8 @@ class UIResponse:
             gr.update(value=self.coding_display, visible=self.coding_visible),
             gr.update(value=self.database_display, visible=self.database_visible),
             # 12-13 REPORT
-            gr.update(value=self.final_feedback),
-            gr.update(value=self.report_output),
+            gr.update(value=self.final_feedback, visible=bool(self.final_feedback)),
+            gr.update(value=self.report_output, visible=bool(self.report_output)),
             # 14-16 BUTTONS
             gr.update(
                 visible=self.show_submit,
