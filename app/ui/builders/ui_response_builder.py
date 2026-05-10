@@ -27,6 +27,9 @@ class UIResponseBuilder:
 
         ui_state = UIStateMachine.resolve(state)
 
+        print(f"[DEBUG UI STATE] {ui_state}")
+        print(f"[DEBUG FEEDBACK BUNDLE] {state.last_feedback_bundle is not None}")
+
         if ui_state == UIState.SETUP:
             return self._build_setup(state)
 
@@ -113,7 +116,7 @@ class UIResponseBuilder:
             database_display = display["database_display"] if is_database else ""
 
         else:
-            written_display = f"<div>{display.get('written_display', '')}</div>"
+            written_display = display.get("written_display", "")
             coding_display = display.get("coding_display", "")
             database_display = display.get("database_display", "")
 
