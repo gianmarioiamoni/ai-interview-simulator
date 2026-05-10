@@ -165,21 +165,21 @@ class UIEventOrchestrator:
         )
 
         # PDF
-        self.c.report_section.pdf_button.click(
+        self.c.pdf_button.click(
             export_pdf,
             inputs=[self.state],
-            outputs=self.c.report_section.pdf_file,
+            outputs=self.c.pdf_file,
         )
 
         # JSON
-        self.c.report_section.json_button.click(
+        self.c.json_button.click(
             export_json,
             inputs=[self.state],
             outputs=self.c.json_file,
         )
 
         # NEW INTERVIEW
-        self.c.report_section.new_interview_button.click(
+        self.c.new_interview_button.click(
             new_interview,
             inputs=[self.state],
             outputs=self.outputs,
