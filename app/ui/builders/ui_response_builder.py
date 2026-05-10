@@ -1,7 +1,6 @@
 # app/ui/builders/ui_response_builder.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.question.question import QuestionType
 
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
@@ -15,9 +14,6 @@ from app.ui.response.sections.feedback_section import FeedbackSection
 from app.ui.response.sections.counter_section import CounterSection
 from app.ui.response.config.button_mapper import ButtonMapper
 
-from app.ui.components.loader.loader_renderer import render_loader
-
-# 🔥 NEW IMPORTS (STEP 1)
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.views.report_view import build_report_markdown
 
@@ -56,7 +52,6 @@ class UIResponseBuilder:
         loader_visible = state.current_step is not None
         loader_value = map_loader_text(state.current_step)
         progress = getattr(state, "current_progress", 0)
-        setup_inputs_interactive = not loader_visible
 
         return UIResponse(
             state=state,
@@ -69,11 +64,10 @@ class UIResponseBuilder:
             loader_visible=loader_visible,
             loader_value=loader_value,
             current_progress=progress,
-            setup_inputs_interactive=setup_inputs_interactive,
         )
 
     # =====================================================
-    # QUESTION + FEEDBACK (UNCHANGED)
+    # QUESTION + FEEDBACK
     # =====================================================
     def _build_question_like(
         self, state: InterviewState, ui_state: UIState
@@ -92,6 +86,7 @@ class UIResponseBuilder:
         is_database = question.is_database()
 
         is_feedback_mode = ui_state == UIState.FEEDBACK
+
         latest_answer = state.get_latest_answer_for_question(question.id)
         previous_value = latest_answer.content if latest_answer else ""
 
@@ -99,7 +94,7 @@ class UIResponseBuilder:
         can_retry = attempts < MAX_ATTEMPTS
 
         display = DisplaySection.build(state, question, ui_state, attempts > 0)
-        feedback = FeedbackSection.build(state) if ui_state == UIState.FEEDBACK else ""
+        feedback = FeedbackSection.build(state) if is_feedback_mode else ""
         counter = CounterSection.build(state, question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
@@ -121,24 +116,6 @@ class UIResponseBuilder:
 
         area_label = InterviewAreaMapper.to_label(question.area)
 
-        if is_feedback_mode:
-            written_editor_value = ""
-            coding_editor_value = ""
-            database_editor_value = ""
-        else:
-            written_editor_value = ""
-            coding_editor_value = "# Write your solution here" if is_coding else ""
-            database_editor_value = (
-                "-- Write your SQL query here" if is_database else ""
-            )
-
-        if is_coding:
-            submit_label = "Run Code"
-        elif is_database:
-            submit_label = "Run Query"
-        else:
-            submit_label = "Submit Answer"
-
         return UIResponse(
             state=state,
             role_visible=False,
@@ -156,14 +133,9 @@ class UIResponseBuilder:
             coding_visible=is_coding,
             database_visible=is_database,
             show_submit=buttons["show_submit"],
-            submit_interactive=False,
             show_retry=buttons["show_retry"],
             show_next=buttons["show_next"],
             next_label=buttons.get("next_label") or "",
-            submit_label=submit_label,
-            written_editor_value=written_editor_value if is_written else "",
-            coding_editor_value=coding_editor_value if is_coding else "",
-            database_editor_value=database_editor_value if is_database else "",
             written_editor_visible=is_written and not is_feedback_mode,
             coding_editor_visible=is_coding and not is_feedback_mode,
             database_editor_visible=is_database and not is_feedback_mode,
@@ -172,11 +144,14 @@ class UIResponseBuilder:
         )
 
     # =====================================================
-    # REPORT (🔥 FIX CORRETTO)
+    # REPORT
     # =====================================================
     def _build_report(self, state: InterviewState) -> UIResponse:
 
         final_eval = state.interview_evaluation
+
+        loader_visible = state.current_step is not None
+        loader_value = map_loader_text(state.current_step)
 
         if final_eval is None:
             return UIResponse(
@@ -188,24 +163,18 @@ class UIResponseBuilder:
                 start_button_visible=False,
                 page_title="## Final Report",
                 report_output="<i>No report available</i>",
+                report_section_visible=True,
+                loader_visible=loader_visible,
+                loader_value=loader_value,
             )
 
-        # -----------------------------------------------------
-        # 🔥 DTO (CRITICAL)
-        # -----------------------------------------------------
         report_dto = FinalReportDTO.from_components(
             state=state,
             final_evaluation=final_eval,
         )
 
-        # -----------------------------------------------------
-        # 🔥 FULL RENDER (RADAR + ALL SECTIONS)
-        # -----------------------------------------------------
         report_html = build_report_markdown(report_dto)
 
-        # -----------------------------------------------------
-        # RESPONSE
-        # -----------------------------------------------------
         return UIResponse(
             state=state,
             role_visible=False,
@@ -215,4 +184,13 @@ class UIResponseBuilder:
             start_button_visible=False,
             page_title="## Final Report",
             report_output=report_html,
+            report_section_visible=True,
+            show_submit=False,
+            show_retry=False,
+            show_next=False,
+            written_visible=False,
+            coding_visible=False,
+            database_visible=False,
+            loader_visible=loader_visible,
+            loader_value=loader_value,
         )
