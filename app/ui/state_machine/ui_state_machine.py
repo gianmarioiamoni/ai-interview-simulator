@@ -28,10 +28,10 @@ class UIStateMachine:
             print("→ resolved UI state: SETUP\n")
             return UIState.SETUP
 
-        # PROCESSING
-        if not state.awaiting_user_input:
-            print("→ resolved UI state: PROCESSING\n")
-            return UIState.PROCESSING
+        # # PROCESSING
+        # if not state.awaiting_user_input:
+        #     print("→ resolved UI state: PROCESSING\n")
+        #     return UIState.PROCESSING
 
         # FEEDBACK
         if (
