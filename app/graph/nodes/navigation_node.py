@@ -20,11 +20,17 @@ def navigation_node(state: InterviewState) -> InterviewState:
     # ---------------------------------------------------------
 
     if action == ActionType.RETRY:
-        return state.model_copy(
+        q = state.current_question
+        new_state = state
+        if q:
+            new_state = new_state.clear_result_for_question(q.id)
+
+        return new_state.model_copy(
             update={
                 "awaiting_user_input": True,
                 "last_action": ActionType.NONE,
-                # keep feedback + allowed_actions
+                "last_feedback_bundle": None,
+                "allowed_actions": [],
             }
         )
 
