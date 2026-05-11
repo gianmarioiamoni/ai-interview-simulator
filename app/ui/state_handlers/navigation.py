@@ -19,12 +19,9 @@ def retry_answer(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
 
-    q = new_state.current_question
-
-    if q:
-        new_state = new_state.clear_result_for_question(q.id)
-
     new_state.last_action = ActionType.RETRY
+
+    new_state = run_interview_graph(new_state)
 
     return build_ui_response_from_state(new_state).to_gradio_outputs()
 
