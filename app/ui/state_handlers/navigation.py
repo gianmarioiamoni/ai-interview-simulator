@@ -71,5 +71,13 @@ def next_question(state: InterviewState):
 def new_interview(state: InterviewState):
 
     new_state = InterviewState.create_empty()
+    response = build_ui_response_from_state(new_state)
 
-    return build_ui_response_from_state(new_state).to_gradio_outputs()
+    response.role_visible = True
+    response.interview_type_visible = True
+    response.company_visible = True
+    response.language_visible = True
+
+    response.state = new_state
+
+    return response.to_gradio_outputs()

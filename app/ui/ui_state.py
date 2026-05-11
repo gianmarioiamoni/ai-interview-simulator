@@ -11,6 +11,7 @@ class UIState(str, Enum):
     RETRY = "retry"
     COMPLETION = "completion"
     REPORT = "report"
+    PROCESSING = "processing"
 
     def is_interview_state(self) -> bool:
         return self in {UIState.QUESTION, UIState.FEEDBACK}
