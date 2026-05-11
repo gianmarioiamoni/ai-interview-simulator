@@ -5,20 +5,15 @@ from typing import List, Any
 from dataclasses import dataclass
 
 from app.ui.components.loader.loader_renderer import render_loader
-from app.ui.mappers.loader_mapper import map_loader_text, map_loader_progress
 
 
 @dataclass
 class UIResponse:
 
-    # =========================================================
     # STATE
-    # =========================================================
     state: object
 
-    # =========================================================
-    # SETUP COMPONENTS
-    # =========================================================
+    # SETUP
     role_visible: bool = True
     interview_type_visible: bool = True
     company_visible: bool = True
@@ -26,20 +21,14 @@ class UIResponse:
     start_button_visible: bool = True
     start_button_interactive: bool = False
 
-    # =========================================================
     # TITLE
-    # =========================================================
     page_title: str = "## Configure Your Interview"
 
-    # =========================================================
     # HEADER
-    # =========================================================
     question_counter: str = ""
     feedback_markdown: str = ""
 
-    # =========================================================
     # DISPLAY
-    # =========================================================
     written_display: str = ""
     coding_display: str = ""
     database_display: str = ""
@@ -48,21 +37,12 @@ class UIResponse:
     coding_visible: bool = False
     database_visible: bool = False
 
-    # =========================================================
     # REPORT
-    # =========================================================
     final_feedback: str = ""
     report_output: str = ""
     report_section_visible: bool = False
-    pdf_button_visible: bool = False
-    json_button_visible: bool = False
-    pdf_file_visible: bool = False
-    json_file_visible: bool = False
-    new_interview_button_visible: bool = False
 
-    # =========================================================
     # BUTTONS
-    # =========================================================
     show_submit: bool = False
     submit_interactive: bool = False
 
@@ -71,13 +51,10 @@ class UIResponse:
     retry_label: str = "Retry"
 
     show_next: bool = False
-
     next_label: str = ""
     submit_label: str = "Submit"
 
-    # =========================================================
     # EDITORS
-    # =========================================================
     written_editor_value: str = ""
     coding_editor_value: str = ""
     database_editor_value: str = ""
@@ -86,9 +63,7 @@ class UIResponse:
     coding_editor_visible: bool = False
     database_editor_visible: bool = False
 
-    # =========================================================
     # LOADER
-    # =========================================================
     loader_visible: bool = False
     loader_value: str = ""
     current_progress: int = 0
@@ -96,17 +71,26 @@ class UIResponse:
     setup_inputs_interactive: bool = True
 
     # =========================================================
-    # OUTPUT CONTRACT (CRITICO)
+    # OUTPUT CONTRACT (ALLINEATO)
     # =========================================================
     def to_gradio_outputs(self) -> List[Any]:
         return [
             # 0 STATE
             self.state,
             # 1-5 SETUP INPUTS
-            gr.update(visible=self.role_visible, value=None, interactive=self.setup_inputs_interactive),
-            gr.update(visible=self.interview_type_visible, value=None, interactive=self.setup_inputs_interactive),
-            gr.update(visible=self.company_visible, value=None, interactive=self.setup_inputs_interactive),
-            gr.update(visible=self.language_visible, value=None, interactive=self.setup_inputs_interactive),
+            gr.update(
+                visible=self.role_visible, interactive=self.setup_inputs_interactive
+            ),
+            gr.update(
+                visible=self.interview_type_visible,
+                interactive=self.setup_inputs_interactive,
+            ),
+            gr.update(
+                visible=self.company_visible, interactive=self.setup_inputs_interactive
+            ),
+            gr.update(
+                visible=self.language_visible, interactive=self.setup_inputs_interactive
+            ),
             gr.update(
                 visible=self.start_button_visible,
                 value="Start Interview",
@@ -116,21 +100,18 @@ class UIResponse:
             gr.update(value=self.page_title),
             # 7-8 HEADER
             gr.update(value=self.question_counter, visible=bool(self.question_counter)),
-            gr.update(value=self.feedback_markdown, visible=bool(self.feedback_markdown)),
+            gr.update(
+                value=self.feedback_markdown, visible=bool(self.feedback_markdown)
+            ),
             # 9-11 DISPLAY
             gr.update(value=self.written_display, visible=self.written_visible),
             gr.update(value=self.coding_display, visible=self.coding_visible),
             gr.update(value=self.database_display, visible=self.database_visible),
-            # 12-13 REPORT
+            # 12-14 REPORT
             gr.update(value=self.final_feedback, visible=bool(self.final_feedback)),
             gr.update(value=self.report_output, visible=bool(self.report_output)),
             gr.update(visible=self.report_section_visible),
-            gr.update(visible=self.pdf_button_visible),
-            gr.update(visible=self.json_button_visible),
-            gr.update(visible=self.pdf_file_visible),
-            gr.update(visible=self.json_file_visible),
-            gr.update(visible=self.new_interview_button_visible),
-            # 14-16 BUTTONS
+            # 15-17 BUTTONS
             gr.update(
                 visible=self.show_submit,
                 interactive=self.submit_interactive,
@@ -145,7 +126,7 @@ class UIResponse:
                 visible=self.show_next,
                 value=self.next_label,
             ),
-            # 17-19 EDITORS
+            # 18-20 EDITORS
             gr.update(
                 value=self.written_editor_value,
                 visible=self.written_editor_visible,
@@ -158,7 +139,7 @@ class UIResponse:
                 value=self.database_editor_value,
                 visible=self.database_editor_visible,
             ),
-            # index 22 → global_loader
+            # 21 LOADER
             gr.update(
                 visible=self.loader_visible,
                 value=(
@@ -168,15 +149,3 @@ class UIResponse:
                 ),
             ),
         ]
-
-    def _build_title_with_loader(self, state: object):
-
-        if not getattr(state, "current_step", None):
-            return "## Configure Your Interview"
-
-        message = map_loader_text(state.current_step)
-        progress = map_loader_progress(state.current_step)
-
-        loader_html = render_loader(message, progress)
-
-        return "## Configure Your Interview\n" f"{loader_html}"
