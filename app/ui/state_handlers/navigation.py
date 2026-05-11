@@ -35,6 +35,16 @@ def next_question(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
 
+    # ---------------------------------------------------------
+    # STEP 1 — LOCK UI
+    # ---------------------------------------------------------
+    new_state.awaiting_user_input = False
+
+    yield build_ui_response_from_state(new_state).to_gradio_outputs()
+
+    # ---------------------------------------------------------
+    # STEP 2 — ACTION
+    # ---------------------------------------------------------
     if ActionType.GENERATE_REPORT in state.allowed_actions:
         new_state.last_action = ActionType.GENERATE_REPORT
     else:
@@ -42,7 +52,12 @@ def next_question(state: InterviewState):
 
     new_state = run_interview_graph(new_state)
 
-    return build_ui_response_from_state(new_state).to_gradio_outputs()
+    # ---------------------------------------------------------
+    # STEP 3 — UNLOCK UI
+    # ---------------------------------------------------------
+    new_state.awaiting_user_input = True
+
+    yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
 
 # =========================================================
