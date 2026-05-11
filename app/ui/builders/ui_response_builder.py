@@ -104,7 +104,7 @@ class UIResponseBuilder:
 
         is_processing = not state.awaiting_user_input
 
-        show_submit = buttons["show_submit"] and not is_processing
+        show_submit = buttons["show_submit"]
 
         if is_feedback_mode and previous_value:
             formatted_answer = html.escape(previous_value).replace("\n", "<br>") 
