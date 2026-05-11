@@ -168,10 +168,9 @@ class UIResponseBuilder:
         counter = CounterSection.build(state, question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
-        loader_visible = state.current_step is not None
-        loader_value = map_loader_text(state.current_step)
-
-        is_processing = not state.awaiting_user_input
+        area_label = InterviewAreaMapper.to_label(question.area) if question else ""
+        loader_visible = not state.awaiting_user_input
+        loader_value = f"Evaluating your answer for {area_label}..." if loader_visible else ""
 
         show_submit = buttons["show_submit"]
 
@@ -190,11 +189,9 @@ class UIResponseBuilder:
             coding_display = display.get("coding_display", "")
             database_display = display.get("database_display", "")
 
-        area_label = InterviewAreaMapper.to_label(question.area)
-
         submit_interactive = (
             buttons.get("show_submit_interactive", False)
-            and not is_processing
+            and loader_visible
             and not is_feedback_mode
             and state.awaiting_user_input
         )
