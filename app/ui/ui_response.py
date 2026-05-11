@@ -54,6 +54,11 @@ class UIResponse:
     final_feedback: str = ""
     report_output: str = ""
     report_section_visible: bool = False
+    pdf_button_visible: bool = False
+    json_button_visible: bool = False
+    pdf_file_visible: bool = False
+    json_file_visible: bool = False
+    new_interview_button_visible: bool = False
 
     # =========================================================
     # BUTTONS
@@ -98,10 +103,10 @@ class UIResponse:
             # 0 STATE
             self.state,
             # 1-5 SETUP INPUTS
-            gr.update(visible=self.role_visible, interactive=self.setup_inputs_interactive),
-            gr.update(visible=self.interview_type_visible, interactive=self.setup_inputs_interactive),
-            gr.update(visible=self.company_visible, interactive=self.setup_inputs_interactive),
-            gr.update(visible=self.language_visible, interactive=self.setup_inputs_interactive),
+            gr.update(visible=self.role_visible, value=None, interactive=self.setup_inputs_interactive),
+            gr.update(visible=self.interview_type_visible, value=None, interactive=self.setup_inputs_interactive),
+            gr.update(visible=self.company_visible, value=None, interactive=self.setup_inputs_interactive),
+            gr.update(visible=self.language_visible, value=None, interactive=self.setup_inputs_interactive),
             gr.update(
                 visible=self.start_button_visible,
                 value="Start Interview",
@@ -120,6 +125,11 @@ class UIResponse:
             gr.update(value=self.final_feedback, visible=bool(self.final_feedback)),
             gr.update(value=self.report_output, visible=bool(self.report_output)),
             gr.update(visible=self.report_section_visible),
+            gr.update(visible=self.pdf_button_visible),
+            gr.update(visible=self.json_button_visible),
+            gr.update(visible=self.pdf_file_visible),
+            gr.update(visible=self.json_file_visible),
+            gr.update(visible=self.new_interview_button_visible),
             # 14-16 BUTTONS
             gr.update(
                 visible=self.show_submit,

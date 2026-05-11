@@ -19,6 +19,7 @@ from app.ui.response.config.button_mapper import ButtonMapper
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.views.report_view import build_report_markdown
 
+from app.ui.components.loader.loader_renderer import render_loader
 
 MAX_ATTEMPTS = 3
 
@@ -33,10 +34,13 @@ class UIResponseBuilder:
         print(f"[DEBUG FEEDBACK BUNDLE] {state.last_feedback_bundle is not None}")
 
         # ---------------------------------------------------------
-        # REPORT GENERATION TRANSIENT STATE 
+        # REPORT GENERATION TRANSIENT STATE
         # ---------------------------------------------------------
 
         if state.last_action == ActionType.GENERATE_REPORT and not state.is_completed:
+
+            loader_html = render_loader("Generating final report...", 90)
+
             return UIResponse(
                 state=state,
                 role_visible=False,
@@ -45,7 +49,7 @@ class UIResponseBuilder:
                 language_visible=False,
                 start_button_visible=False,
                 page_title="## Final Report",
-                report_output="Generating report...",
+                report_output=loader_html,
                 report_section_visible=True,
                 show_submit=False,
                 show_retry=False,
@@ -53,11 +57,20 @@ class UIResponseBuilder:
                 written_visible=False,
                 coding_visible=False,
                 database_visible=False,
+                pdf_button_visible=False,
+                json_button_visible=False,
+                pdf_file_visible=False,
+                json_file_visible=False,
+                new_interview_button_visible=False,
+                loader_visible=False,
             )
 
         # ---------------------------------------------------------
         if ui_state == UIState.SETUP:
             return self._build_setup(state)
+
+        if ui_state == UIState.PROCESSING:
+            return self._build_processing(state)
 
         if ui_state == UIState.QUESTION:
             return self._build_question_like(state, ui_state)
@@ -90,6 +103,42 @@ class UIResponseBuilder:
             loader_visible=loader_visible,
             loader_value=loader_value,
             current_progress=progress,
+        )
+
+    # =====================================================
+    # PROCESSING
+    # =====================================================
+    def _build_processing(self, state: InterviewState) -> UIResponse:
+
+        question = state.current_question
+        area_label = InterviewAreaMapper.to_label(question.area) if question else ""
+
+        loader_html = render_loader(f"Evaluating your answer for {area_label}...", 80)
+
+        return UIResponse(
+            state=state,
+            role_visible=False,
+            interview_type_visible=False,
+            company_visible=False,
+            language_visible=False,
+            start_button_visible=False,
+            page_title=f"## {area_label}",
+            feedback_markdown="",
+            written_display="",
+            coding_display="",
+            database_display="",
+            written_visible=False,
+            coding_visible=False,
+            database_visible=False,
+            show_submit=True,
+            submit_interactive=False,
+            show_retry=False,
+            show_next=False,
+            written_editor_visible=False,
+            coding_editor_visible=False,
+            database_editor_visible=False,
+            loader_visible=True,
+            loader_value=f"Evaluating your answer for {area_label}...",
         )
 
     # =====================================================
