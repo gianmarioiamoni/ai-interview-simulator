@@ -75,13 +75,11 @@ class UILayoutBuilder:
         report_components = render_report_section()
         report_output=report_components["report_output"]
         report_section=report_components["report_section"]
-        with gr.Row():
-            pdf_button=report_components["pdf_button"]
-            json_button=report_components["json_button"]
+        pdf_button=report_components["pdf_button"]
+        json_button=report_components["json_button"]
 
-        with gr.Row():
-            pdf_file=report_components["pdf_file"]
-            json_file=report_components["json_file"]
+        pdf_file=report_components["pdf_file"]
+        json_file=report_components["json_file"]
 
         new_interview_button=report_components["new_interview_button"]
 
