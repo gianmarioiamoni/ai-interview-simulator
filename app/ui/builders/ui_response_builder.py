@@ -108,7 +108,8 @@ class UIResponseBuilder:
         question = state.current_question
         area_label = InterviewAreaMapper.to_label(question.area) if question else ""
 
-        loader_html = render_loader(f"Evaluating your answer for {area_label}...", 80)
+        # loader_html = render_loader(f"Evaluating your answer for {area_label}...", 80)
+        loader_value = map_loader_text(state.current_step)
 
         return UIResponse(
             state=state,
@@ -133,7 +134,7 @@ class UIResponseBuilder:
             coding_editor_visible=False,
             database_editor_visible=False,
             loader_visible=True,
-            loader_value=f"Evaluating your answer for {area_label}...",
+            loader_value=loader_value,
         )
 
     # =====================================================
@@ -170,7 +171,7 @@ class UIResponseBuilder:
 
         area_label = InterviewAreaMapper.to_label(question.area) if question else ""
         loader_visible = not state.awaiting_user_input
-        loader_value = f"Evaluating your answer for {area_label}..." if loader_visible else ""
+        loader_value = map_loader_text(state.current_step)
 
         show_submit = buttons["show_submit"]
 
