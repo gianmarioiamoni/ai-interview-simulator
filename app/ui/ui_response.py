@@ -63,6 +63,7 @@ class UIResponse:
 
     show_retry: bool = False
     retry_interactive: bool = True
+    retry_label: str = "Retry"
 
     show_next: bool = False
 
@@ -128,6 +129,7 @@ class UIResponse:
             gr.update(
                 visible=self.show_retry,
                 interactive=self.retry_interactive,
+                value=self.retry_label,
             ),
             gr.update(
                 visible=self.show_next,
