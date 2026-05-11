@@ -57,11 +57,6 @@ class UIResponseBuilder:
                 written_visible=False,
                 coding_visible=False,
                 database_visible=False,
-                pdf_button_visible=False,
-                json_button_visible=False,
-                pdf_file_visible=False,
-                json_file_visible=False,
-                new_interview_button_visible=False,
                 loader_visible=False,
             )
 
