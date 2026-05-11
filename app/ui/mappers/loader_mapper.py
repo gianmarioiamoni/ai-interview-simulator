@@ -10,8 +10,8 @@ def map_loader_text(step: LoaderStep | None) -> str:
 
     mapping = {
         LoaderStep.GENERATING_STRUCTURE: "🧠 Designing interview structure...",
-        LoaderStep.GENERATING_QUESTIONS: "📚 Generating questions...",
-        LoaderStep.GENERATING_TESTS: "🧪 Preparing test cases...",
+        LoaderStep.GENERATING_QUESTIONS: "📚 Generating questions. This may take a while. Please wait...",
+        LoaderStep.GENERATING_TESTS: "🧪 Preparing test cases. This may take few seconds...",
         LoaderStep.FINALIZING: "⚙️ Finalizing interview...",
     }
 

@@ -19,18 +19,34 @@ def submit_answer(
 ):
 
     if not state or not state.current_question:
-        return build_ui_response_from_state(state).to_gradio_outputs()
+        yield build_ui_response_from_state(state).to_gradio_outputs()
+        return
 
-    # START processing
+    # ---------------------------------------------------------
+    # STEP 1 — LOCK UI (IMMEDIATE FEEDBACK)
+    # ---------------------------------------------------------
     new_state = state.model_copy(deep=True)
 
+    new_state.current_step = LoaderStep.GENERATING_FEEDBACK
+    new_state.awaiting_user_input = False
+
+    yield build_ui_response_from_state(new_state).to_gradio_outputs()
+
+    # ---------------------------------------------------------
+    # STEP 2 — PREPARE ANSWER
+    # ---------------------------------------------------------
     question = new_state.current_question
     attempt = new_state.get_attempt_for_question(question.id) + 1
 
-    answer_content = _resolve_answer(new_state, written_answer, coding_answer, database_answer)
+    answer_content = _resolve_answer(
+        new_state, written_answer, coding_answer, database_answer
+    )
 
     if not answer_content.strip():
-        return build_ui_response_from_state(new_state).to_gradio_outputs()
+        new_state.current_step = None
+        new_state.awaiting_user_input = True
+        yield build_ui_response_from_state(new_state).to_gradio_outputs()
+        return
 
     new_answer = Answer(
         question_id=question.id,
@@ -38,27 +54,23 @@ def submit_answer(
         attempt=attempt,
     )
 
-    # ADD answer
     new_state = new_state.add_answer(new_answer)
-    new_state.awaiting_user_input = False
 
-    # EVALUATE answer
+    # ---------------------------------------------------------
+    # STEP 3 — EVALUATION
+    # ---------------------------------------------------------
     llm = get_runtime_llm()
     use_case = EvaluateAnswerUseCase(llm=llm)
 
     new_state = use_case.execute(new_state)
 
-    # END processing
+    # ---------------------------------------------------------
+    # STEP 4 — UNLOCK UI
+    # ---------------------------------------------------------
+    new_state.current_step = None
     new_state.awaiting_user_input = True
 
-    # 🔍 DEBUG
-    print("FEEDBACK BUNDLE:", new_state.last_feedback_bundle is not None)
-    print("ALLOWED ACTIONS:", new_state.allowed_actions)
-    print("AWAITING USER INPUT:", new_state.awaiting_user_input)
-    print("UI STATE:", UIStateMachine.resolve(new_state))
-
-    return build_ui_response_from_state(new_state).to_gradio_outputs()
-
+    yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
 def _resolve_answer(state, written, coding, database) -> str:
     q = state.current_question
