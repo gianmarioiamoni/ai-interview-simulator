@@ -1,5 +1,6 @@
 # app/ui/builders/ui_response_builder.py
 
+import html
 from domain.contracts.interview_state import InterviewState
 
 from app.ui.ui_response import UIResponse
@@ -106,8 +107,10 @@ class UIResponseBuilder:
         show_submit = buttons["show_submit"] and not is_processing
 
         if is_feedback_mode and previous_value:
+            formatted_answer = html.escape(previous_value).replace("\n", "<br>") 
+
             written_display = (
-                f"<div><strong>Your previous answer:</strong><br>{previous_value}</div>"
+                f"<div><strong>Your previous answer:</strong><br>{formatted_answer}</div>"
                 if is_written
                 else ""
             )

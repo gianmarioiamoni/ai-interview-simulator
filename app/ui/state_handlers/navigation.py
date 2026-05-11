@@ -26,6 +26,9 @@ def retry_answer(state: InterviewState):
     new_state.awaiting_user_input = True
     new_state.last_feedback_bundle = None
 
+    new_state.allowed_actions = []
+    new_state.last_action = None
+
     return build_ui_response_from_state(new_state).to_gradio_outputs()
 
 
