@@ -26,8 +26,6 @@ def submit_answer(
     # STEP 1 — LOCK UI (IMMEDIATE FEEDBACK)
     # ---------------------------------------------------------
     new_state = state.model_copy(deep=True)
-
-    new_state.current_step = LoaderStep.GENERATING_FEEDBACK
     new_state.awaiting_user_input = False
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
@@ -43,7 +41,6 @@ def submit_answer(
     )
 
     if not answer_content.strip():
-        new_state.current_step = None
         new_state.awaiting_user_input = True
         yield build_ui_response_from_state(new_state).to_gradio_outputs()
         return
@@ -67,7 +64,6 @@ def submit_answer(
     # ---------------------------------------------------------
     # STEP 4 — UNLOCK UI
     # ---------------------------------------------------------
-    new_state.current_step = None
     new_state.awaiting_user_input = True
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
