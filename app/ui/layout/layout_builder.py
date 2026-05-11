@@ -67,21 +67,25 @@ class UILayoutBuilder:
         database_box = gr.Code(language="sql", lines=10, visible=False)
 
         submit_button = gr.Button("Submit", visible=False)
-        retry_button = gr.Button("Retry", visible=False)
-        next_button = gr.Button("Next", visible=False)
+        with gr.Row():
+            retry_button = gr.Button("Retry", visible=False)
+            next_button = gr.Button("Next", visible=False)
 
         final_feedback = gr.Markdown("", visible=False)
         report_components = render_report_section()
         report_output=report_components["report_output"]
         report_section=report_components["report_section"]
-        pdf_button=report_components["pdf_button"]
-        json_button=report_components["json_button"]
-        pdf_file=report_components["pdf_file"]
-        json_file=report_components["json_file"]
+        with gr.Row():
+            pdf_button=report_components["pdf_button"]
+            json_button=report_components["json_button"]
+
+        with gr.Row():
+            pdf_file=report_components["pdf_file"]
+            json_file=report_components["json_file"]
+
         new_interview_button=report_components["new_interview_button"]
 
         global_loader = gr.HTML("", visible=False, elem_id="global-loader")
-
 
         return UILayoutComponents(
             state=state,

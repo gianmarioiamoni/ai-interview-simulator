@@ -127,6 +127,7 @@ class UIResponseBuilder:
             buttons.get("show_submit_interactive", False)
             and not is_processing
             and not is_feedback_mode
+            and state.awaiting_user_input
         )
 
         return UIResponse(
@@ -148,6 +149,7 @@ class UIResponseBuilder:
             show_submit=show_submit,
             submit_interactive=submit_interactive,
             show_retry=buttons["show_retry"],
+            retry_label=buttons.get("retry_label") or "",
             show_next=buttons["show_next"],
             next_label=buttons.get("next_label") or "",
             written_editor_visible=is_written and not is_feedback_mode,

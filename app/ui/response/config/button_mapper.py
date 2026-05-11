@@ -125,12 +125,12 @@ class ButtonMapper:
     def _retry_label(quality: Quality) -> str:
 
         if quality == Quality.INCORRECT:
-            return "🔁 Try Again"
+            return "🔄 Try Again"
 
         if quality == Quality.PARTIAL:
-            return "🔧 Fix Issues"
+            return "🔧 Improve Answer"
 
-        return "Retry"
+        return "🔁 Retry"
 
     # =========================================================
 
