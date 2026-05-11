@@ -2,6 +2,7 @@
 
 import html
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.shared.action_type import ActionType
 
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
@@ -31,6 +32,30 @@ class UIResponseBuilder:
         print(f"[DEBUG UI STATE] {ui_state}")
         print(f"[DEBUG FEEDBACK BUNDLE] {state.last_feedback_bundle is not None}")
 
+        # ---------------------------------------------------------
+        # REPORT GENERATION TRANSIENT STATE 
+        # ---------------------------------------------------------
+
+        if state.last_action == ActionType.GENERATE_REPORT and not state.is_completed:
+            return UIResponse(
+                state=state,
+                role_visible=False,
+                interview_type_visible=False,
+                company_visible=False,
+                language_visible=False,
+                start_button_visible=False,
+                page_title="## Final Report",
+                report_output="Generating report...",
+                report_section_visible=True,
+                show_submit=False,
+                show_retry=False,
+                show_next=False,
+                written_visible=False,
+                coding_visible=False,
+                database_visible=False,
+            )
+
+        # ---------------------------------------------------------
         if ui_state == UIState.SETUP:
             return self._build_setup(state)
 
