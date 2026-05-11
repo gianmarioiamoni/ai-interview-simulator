@@ -1,3 +1,5 @@
+# app/ui/state_handlers/navigation.py
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
 
@@ -23,11 +25,6 @@ def retry_answer(state: InterviewState):
         new_state = new_state.clear_result_for_question(q.id)
 
     new_state.last_action = ActionType.RETRY
-    new_state.awaiting_user_input = True
-    new_state.last_feedback_bundle = None
-
-    new_state.allowed_actions = []
-    new_state.last_action = None
 
     return build_ui_response_from_state(new_state).to_gradio_outputs()
 
