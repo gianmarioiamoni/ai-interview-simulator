@@ -6,7 +6,7 @@ from domain.contracts.shared.action_type import ActionType
 
 def navigation_node(state: InterviewState) -> InterviewState:
 
-    action = state.last_action
+    action = state.intent
     questions = state.questions or []
     current_index = state.current_question_index or 0
 
@@ -18,26 +18,26 @@ def navigation_node(state: InterviewState) -> InterviewState:
     # ---------------------------------------------------------
     # RETRY
     # ---------------------------------------------------------
-
     if action == ActionType.RETRY:
+
         q = state.current_question
         new_state = state
+
         if q:
             new_state = new_state.clear_result_for_question(q.id)
 
         return new_state.model_copy(
             update={
                 "awaiting_user_input": True,
-                "last_action": ActionType.NONE,
                 "last_feedback_bundle": None,
                 "allowed_actions": [],
+                "intent": None,  
             }
         )
 
     # ---------------------------------------------------------
-    # NEXT (move to next question)
+    # NEXT
     # ---------------------------------------------------------
-
     if action == ActionType.NEXT:
 
         if current_index < last_index:
@@ -45,29 +45,29 @@ def navigation_node(state: InterviewState) -> InterviewState:
                 update={
                     "current_question_index": current_index + 1,
                     "awaiting_user_input": True,
-                    "last_action": ActionType.NONE,
                     "last_feedback_bundle": None,
-                    "allowed_actions": [],  # reset actions for new question
+                    "allowed_actions": [],
+                    "intent": None,  
                 }
             )
 
-        # LAST QUESTION → do nothing (stay here, wait for GENERATE_REPORT)
+        # LAST QUESTION → stay here
         return state.model_copy(
             update={
                 "awaiting_user_input": True,
-                "last_action": ActionType.NONE,
-                # keep feedback so user can still see it
+                "intent": None,  
             }
         )
 
     # ---------------------------------------------------------
     # GENERATE REPORT
     # ---------------------------------------------------------
-
     if action == ActionType.GENERATE_REPORT:
+
         return state.model_copy(
             update={
-                "awaiting_user_input": False,  # allow completion_node to trigger
+                "awaiting_user_input": False,
+                "intent": None,  
             }
         )
 

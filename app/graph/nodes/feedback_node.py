@@ -21,7 +21,7 @@ class FeedbackNode:
 
     def __call__(self, state: InterviewState) -> InterviewState:
 
-        if state.last_action == ActionType.GENERATE_REPORT:
+        if state.intent == ActionType.GENERATE_REPORT:
             return state
 
         working_state = state.model_copy(

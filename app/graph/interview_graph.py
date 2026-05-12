@@ -32,7 +32,7 @@ from app.ports.llm_port import LLMPort
 def route_entry(state: InterviewState) -> str:
 
     # navigation ONLY if user explicitly triggered it
-    if state.last_action in [
+    if state.intent in [
         ActionType.RETRY,
         ActionType.NEXT,
         ActionType.GENERATE_REPORT,
