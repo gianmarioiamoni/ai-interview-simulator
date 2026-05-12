@@ -2,8 +2,10 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
+
 from services.execution_engine import ExecutionEngine
 
+from app.ui.constants.loader_steps import LoaderStep
 
 class ExecutionNode:
 
@@ -20,14 +22,21 @@ class ExecutionNode:
         # ---------------------------------------------------------
 
         if question is None or answer is None:
-            return state
+            return working_state
 
         if question.type not in (QuestionType.CODING, QuestionType.DATABASE):
-            return state
+            return working_state
 
         existing = state.get_result_for_question(question.id)
         if existing and existing.execution:
-            return state
+            return working_state
+
+        # ---------------------------------------------------------
+        # Set loader step
+        # ---------------------------------------------------------
+        working_state = state.model_copy(
+            update={"current_step": LoaderStep.RUNNING_EXECUTION}
+        )
 
         # ---------------------------------------------------------
         # Execution
@@ -40,7 +49,7 @@ class ExecutionNode:
             )
 
             if execution_result is None:
-                return state
+                return working_state
 
             if getattr(execution_result, "question_id", None) is None:
                 try:
@@ -51,7 +60,7 @@ class ExecutionNode:
                     execution_result.question_id = question.id
 
         except Exception:
-            return state
+            return working_state
 
         # ---------------------------------------------------------
         # State update (IMMUTABLE SAFE)
@@ -76,4 +85,8 @@ class ExecutionNode:
 
         new_results[question.id] = result
 
-        return state.model_copy(update={"results_by_question": new_results})
+        return working_state.model_copy(
+            update={
+                "results_by_question": new_results,
+            }
+        )

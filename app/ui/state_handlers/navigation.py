@@ -45,11 +45,6 @@ def next_question(state: InterviewState):
     # ---------------------------------------------------------
     new_state.awaiting_user_input = False
 
-    if is_report:
-        new_state.current_step = LoaderStep.PREPARING_REPORT
-    else:
-        new_state.current_step = None
-
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
     # ---------------------------------------------------------
@@ -57,15 +52,12 @@ def next_question(state: InterviewState):
     # ---------------------------------------------------------
     if is_report:
 
-        new_state.current_step = LoaderStep.ANALYZING_RESULTS
         yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
-        new_state.current_step = LoaderStep.GENERATING_REPORT
         yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
         new_state = run_interview_graph(new_state)
 
-        new_state.current_step = LoaderStep.FINALIZING_REPORT
         yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
     else:
@@ -75,7 +67,6 @@ def next_question(state: InterviewState):
     # ---------------------------------------------------------
     # STEP 4 — UNLOCK UI
     # ---------------------------------------------------------
-    new_state.current_step = None
     new_state.awaiting_user_input = True
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()

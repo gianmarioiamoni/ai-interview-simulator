@@ -7,6 +7,7 @@ from services.score_calculator import ScoreCalculator
 from services.feedback.dimension_aggregator import FeedbackDimensionAggregator
 
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
+from app.ui.constants.loader_steps import LoaderStep
 from app.ports.llm_port import LLMPort
 
 
@@ -19,13 +20,17 @@ class FeedbackNode:
 
     def __call__(self, state: InterviewState) -> InterviewState:
 
+        working_state = state.model_copy(
+            update={"current_step": LoaderStep.GENERATING_FEEDBACK}
+        )
+
         question = state.current_question
         if question is None:
-            return state
+            return working_state
 
         result = state.get_result_for_question(question.id)
         if not result:
-            return state
+            return working_state
 
         execution = result.execution
         evaluation = result.evaluation
@@ -56,7 +61,7 @@ class FeedbackNode:
             quality = Quality.INCORRECT
 
         # -----------------------------------------------------
-        # BUILD BUNDLE (FIX)
+        # BUILD BUNDLE 
         # -----------------------------------------------------
 
         bundle = self._builder.build(
@@ -89,4 +94,8 @@ class FeedbackNode:
         )
         updated_bundle.dimension_signals = dimension_signals
 
-        return state.model_copy(update={"last_feedback_bundle": updated_bundle})
+        return working_state.model_copy(
+            update={
+                "last_feedback_bundle": updated_bundle,
+            }
+        )
