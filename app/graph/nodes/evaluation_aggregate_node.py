@@ -1,6 +1,7 @@
 # app/graph/nodes/evaluation_aggregate_node.py
 
 from services.interview_evaluation_service import InterviewEvaluationService
+from domain.contracts.shared.action_type import ActionType
 
 
 class EvaluationAggregateNode:
@@ -46,4 +47,9 @@ class EvaluationAggregateNode:
         # STATE UPDATE
         # ---------------------------------------------------------
 
-        return state.model_copy(update={"interview_evaluation": interview_eval})
+        return state.model_copy(
+            update={
+                "interview_evaluation": interview_eval,
+                "last_action": ActionType.NONE,
+            }
+        )
