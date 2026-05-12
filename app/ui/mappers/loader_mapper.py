@@ -15,11 +15,17 @@ def map_loader_text(step: LoaderStep | None) -> str:
         LoaderStep.GENERATING_TESTS: "🧪 Preparing test cases. This may take few seconds...",
         LoaderStep.FINALIZING: "⚙️ Finalizing interview...",
 
-        # RUNTIME
-        LoaderStep.SUBMITTING: "💬 Submitting answer...",
-        LoaderStep.RUNNING_EXECUTION: "🧪 Running execution...",
-        LoaderStep.ANALYZING: "📊 Analyzing results...",
+        # SUBMIT
+        LoaderStep.SUBMITTING: "👉 Submitting your answer...",
+        LoaderStep.RUNNING_EXECUTION: "💻 Running execution...",
+        LoaderStep.ANALYZING: "🧪 Analyzing results...",
         LoaderStep.GENERATING_FEEDBACK: "💬 Generating feedback...",
+
+        # REPORT
+        LoaderStep.PREPARING_REPORT: "📊 Preparing report data...",
+        LoaderStep.ANALYZING_RESULTS: "🧪 Analyzing interview performance...",
+        LoaderStep.GENERATING_REPORT: "📄 Generating final report...",
+        LoaderStep.FINALIZING_REPORT: "⚙️ Finalizing report...",
     }
 
     return mapping.get(step, "Processing...")
@@ -37,11 +43,17 @@ def map_loader_progress(step: LoaderStep | None) -> int:
         LoaderStep.GENERATING_TESTS: 70,
         LoaderStep.FINALIZING: 90,
 
-        # RUNTIME
+        # SUBMIT
         LoaderStep.SUBMITTING: 10,
         LoaderStep.RUNNING_EXECUTION: 40,
         LoaderStep.ANALYZING: 70,
         LoaderStep.GENERATING_FEEDBACK: 90,
+
+        # REPORT
+        LoaderStep.PREPARING_REPORT: 10,
+        LoaderStep.ANALYZING_RESULTS: 40,
+        LoaderStep.GENERATING_REPORT: 70,
+        LoaderStep.FINALIZING_REPORT: 90,
     }
 
     return mapping.get(step, 0)

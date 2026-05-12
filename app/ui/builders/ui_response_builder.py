@@ -2,13 +2,12 @@
 
 import html
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.shared.action_type import ActionType
 
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
 from app.ui.state_machine.ui_state_machine import UIStateMachine
 
-from app.ui.mappers.loader_mapper import map_loader_text
+from app.ui.mappers.loader_mapper import map_loader_text, map_loader_progress
 from app.ui.mappers.interview_area_mapper import InterviewAreaMapper
 
 from app.ui.response.sections.display_section import DisplaySection
@@ -18,8 +17,6 @@ from app.ui.response.config.button_mapper import ButtonMapper
 
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.views.report_view import build_report_markdown
-
-from app.ui.components.loader.loader_renderer import render_loader
 
 MAX_ATTEMPTS = 3
 
@@ -32,33 +29,6 @@ class UIResponseBuilder:
 
         print(f"[DEBUG UI STATE] {ui_state}")
         print(f"[DEBUG FEEDBACK BUNDLE] {state.last_feedback_bundle is not None}")
-
-        # ---------------------------------------------------------
-        # REPORT GENERATION TRANSIENT STATE
-        # ---------------------------------------------------------
-
-        if state.last_action == ActionType.GENERATE_REPORT and not state.is_completed:
-
-            loader_html = render_loader("Generating final report...", 90)
-
-            return UIResponse(
-                state=state,
-                role_visible=False,
-                interview_type_visible=False,
-                company_visible=False,
-                language_visible=False,
-                start_button_visible=False,
-                page_title="## Final Report",
-                report_output=loader_html,
-                report_section_visible=True,
-                show_submit=False,
-                show_retry=False,
-                show_next=False,
-                written_visible=False,
-                coding_visible=False,
-                database_visible=False,
-                loader_visible=False,
-            )
 
         # ---------------------------------------------------------
         if ui_state == UIState.SETUP:
@@ -85,7 +55,7 @@ class UIResponseBuilder:
 
         loader_visible = state.current_step is not None
         loader_value = map_loader_text(state.current_step)
-        progress = getattr(state, "current_progress", 0)
+        progress = map_loader_progress(state.current_step)
 
         return UIResponse(
             state=state,
@@ -101,15 +71,15 @@ class UIResponseBuilder:
         )
 
     # =====================================================
-    # PROCESSING
+    # PROCESSING (LOADER STATE)
     # =====================================================
     def _build_processing(self, state: InterviewState) -> UIResponse:
 
         question = state.current_question
         area_label = InterviewAreaMapper.to_label(question.area) if question else ""
 
-        # loader_html = render_loader(f"Evaluating your answer for {area_label}...", 80)
         loader_value = map_loader_text(state.current_step)
+        progress = map_loader_progress(state.current_step)
 
         return UIResponse(
             state=state,
@@ -135,6 +105,7 @@ class UIResponseBuilder:
             database_editor_visible=False,
             loader_visible=True,
             loader_value=loader_value,
+            current_progress=progress,
         )
 
     # =====================================================
@@ -169,14 +140,22 @@ class UIResponseBuilder:
         counter = CounterSection.build(state, question, attempts, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
-        area_label = InterviewAreaMapper.to_label(question.area) if question else ""
+        area_label = InterviewAreaMapper.to_label(question.area)
+
+        # ---------------------------------------------------------
+        # LOADER LOGIC (STATE-DRIVEN)
+        # ---------------------------------------------------------
         loader_visible = not state.awaiting_user_input
         loader_value = map_loader_text(state.current_step)
+        progress = map_loader_progress(state.current_step)
 
         show_submit = buttons["show_submit"]
 
+        # ---------------------------------------------------------
+        # DISPLAY PREVIOUS ANSWER (FORMATTED)
+        # ---------------------------------------------------------
         if is_feedback_mode and previous_value:
-            formatted_answer = html.escape(previous_value).replace("\n", "<br>") 
+            formatted_answer = html.escape(previous_value).replace("\n", "<br>")
 
             written_display = (
                 f"<div><strong>Your previous answer:</strong><br>{formatted_answer}</div>"
@@ -190,9 +169,12 @@ class UIResponseBuilder:
             coding_display = display.get("coding_display", "")
             database_display = display.get("database_display", "")
 
+        # ---------------------------------------------------------
+        # SUBMIT ENABLED ONLY WHEN READY
+        # ---------------------------------------------------------
         submit_interactive = (
             buttons.get("show_submit_interactive", False)
-            and loader_visible
+            and not loader_visible
             and not is_feedback_mode
             and state.awaiting_user_input
         )
@@ -224,6 +206,7 @@ class UIResponseBuilder:
             database_editor_visible=is_database and not is_feedback_mode,
             loader_visible=loader_visible,
             loader_value=loader_value,
+            current_progress=progress,
         )
 
     # =====================================================
@@ -235,6 +218,7 @@ class UIResponseBuilder:
 
         loader_visible = state.current_step is not None
         loader_value = map_loader_text(state.current_step)
+        progress = map_loader_progress(state.current_step)
 
         if final_eval is None:
             return UIResponse(
@@ -249,6 +233,7 @@ class UIResponseBuilder:
                 report_section_visible=True,
                 loader_visible=loader_visible,
                 loader_value=loader_value,
+                current_progress=progress,
             )
 
         report_dto = FinalReportDTO.from_components(
@@ -276,4 +261,5 @@ class UIResponseBuilder:
             database_visible=False,
             loader_visible=loader_visible,
             loader_value=loader_value,
+            current_progress=progress,
         )

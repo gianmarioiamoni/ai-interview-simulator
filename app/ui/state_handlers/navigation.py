@@ -6,12 +6,12 @@ from domain.contracts.shared.action_type import ActionType
 from app.runtime.interview_runtime import run_interview_graph
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
+from app.ui.constants.loader_steps import LoaderStep
+
 
 # =========================================================
 # RETRY
 # =========================================================
-
-
 def retry_answer(state: InterviewState):
 
     if state is None or state.current_question is None:
@@ -27,37 +27,55 @@ def retry_answer(state: InterviewState):
 
 
 # =========================================================
-# NEXT
+# NEXT / GENERATE REPORT
 # =========================================================
-
-
 def next_question(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
 
-    # ---------------------------------------------------------
-    # STEP 1 — ACTION
-    # ---------------------------------------------------------
-    if ActionType.GENERATE_REPORT in state.allowed_actions:
-        new_state.last_action = ActionType.GENERATE_REPORT
-    else:
-        new_state.last_action = ActionType.NEXT
+    is_report = ActionType.GENERATE_REPORT in state.allowed_actions
 
     # ---------------------------------------------------------
-    # STEP 2 — LOCK UI
+    # STEP 1 — SET ACTION
+    # ---------------------------------------------------------
+    new_state.last_action = ActionType.GENERATE_REPORT if is_report else ActionType.NEXT
+
+    # ---------------------------------------------------------
+    # STEP 2 — LOCK UI + INITIAL LOADER
     # ---------------------------------------------------------
     new_state.awaiting_user_input = False
+
+    if is_report:
+        new_state.current_step = LoaderStep.PREPARING_REPORT
+    else:
+        new_state.current_step = None
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
     # ---------------------------------------------------------
-    # STEP 3 — RUN GRAPH
+    # STEP 3 — REPORT PIPELINE (STREAMING)
     # ---------------------------------------------------------
-    new_state = run_interview_graph(new_state)
+    if is_report:
+
+        new_state.current_step = LoaderStep.ANALYZING_RESULTS
+        yield build_ui_response_from_state(new_state).to_gradio_outputs()
+
+        new_state.current_step = LoaderStep.GENERATING_REPORT
+        yield build_ui_response_from_state(new_state).to_gradio_outputs()
+
+        new_state = run_interview_graph(new_state)
+
+        new_state.current_step = LoaderStep.FINALIZING_REPORT
+        yield build_ui_response_from_state(new_state).to_gradio_outputs()
+
+    else:
+        # NORMAL NEXT
+        new_state = run_interview_graph(new_state)
 
     # ---------------------------------------------------------
     # STEP 4 — UNLOCK UI
     # ---------------------------------------------------------
+    new_state.current_step = None
     new_state.awaiting_user_input = True
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
@@ -66,13 +84,13 @@ def next_question(state: InterviewState):
 # =========================================================
 # NEW INTERVIEW
 # =========================================================
-
-
 def new_interview(state: InterviewState):
 
     new_state = InterviewState.create_empty()
+
     response = build_ui_response_from_state(new_state)
 
+    # RESET UI COMPLETO
     response.role_visible = True
     response.interview_type_visible = True
     response.company_visible = True
