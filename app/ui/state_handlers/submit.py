@@ -34,7 +34,6 @@ def submit_answer(
     # STEP 1 — LOCK UI (IMMEDIATE FEEDBACK)
     # ---------------------------------------------------------
     new_state.awaiting_user_input = False
-    new_state.current_step = LoaderStep.SUBMITTING
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
     time.sleep(0.15)
@@ -51,7 +50,6 @@ def submit_answer(
 
     if not answer_content.strip():
         new_state.awaiting_user_input = True
-        new_state.current_step = None
         yield build_ui_response_from_state(new_state).to_gradio_outputs()
         return
 
@@ -66,14 +64,12 @@ def submit_answer(
     # ---------------------------------------------------------
     # STEP 3 — EXECUTION (coding / SQL)
     # ---------------------------------------------------------
-    new_state.current_step = LoaderStep.RUNNING_EXECUTION
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
     time.sleep(0.15)
 
     # ---------------------------------------------------------
     # STEP 4 — EVALUATION (LLM + graph)
     # ---------------------------------------------------------
-    new_state.current_step = LoaderStep.ANALYZING
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
     time.sleep(0.15)
 
@@ -85,14 +81,12 @@ def submit_answer(
     # ---------------------------------------------------------
     # STEP 5 — FEEDBACK GENERATION
     # ---------------------------------------------------------
-    new_state.current_step = LoaderStep.GENERATING_FEEDBACK
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
     time.sleep(0.15)
 
     # ---------------------------------------------------------
     # STEP 6 — UNLOCK UI
     # ---------------------------------------------------------
-    new_state.current_step = None
     new_state.awaiting_user_input = True
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()

@@ -3,23 +3,32 @@
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
 
+from app.ui.constants.loader_steps import LoaderStep
+
 
 def completion_node(state: InterviewState) -> InterviewState:
 
-    questions = state.questions or []
-    current_index = state.current_question_index or 0
+    if state.last_action == ActionType.GENERATE_REPORT:
 
-    if not questions:
-        return state
+        working_state = state.model_copy(
+            update={
+                "current_step": LoaderStep.GENERATING_REPORT,
+                "awaiting_user_input": False,
+            }
+        )
 
-    last_index = len(questions) - 1
+        working_state = working_state.model_copy(
+            update={
+                "is_completed": True,
+            }
+        )
 
-    if (
-        current_index == last_index
-        and state.last_action == ActionType.NONE  
-        and not state.awaiting_user_input
-        and state.last_feedback_bundle is not None
-    ):
-        return state.model_copy(update={"is_completed": True})
+        return working_state.model_copy(
+            update={
+                "current_step": None,
+                "awaiting_user_input": True,
+                "last_action": ActionType.NONE,
+            }
+        )
 
     return state

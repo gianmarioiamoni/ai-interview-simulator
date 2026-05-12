@@ -5,24 +5,28 @@ from domain.contracts.question.question import QuestionType
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 
 from app.ui.dto.builders.dimension_mapper import DimensionMapper
-
+from app.ui.constants.loader_steps import LoaderStep
 
 class EvaluationNode:
 
     def __call__(self, state: InterviewState) -> InterviewState:
 
+        working_state = state.model_copy(
+            update={"current_step": LoaderStep.ANALYZING}
+        )
+
         question = state.current_question
 
         if question is None:
-            return state
+            return working_state
 
         if question.type not in (QuestionType.CODING, QuestionType.DATABASE):
-            return state
+            return working_state
 
         result = state.get_result_for_question(question.id)
 
         if result is None or result.execution is None:
-            return state
+            return working_state
 
         execution = result.execution
 
@@ -78,7 +82,7 @@ class EvaluationNode:
 
         new_results[question.id] = updated_result
 
-        return state.model_copy(
+        return working_state.model_copy(
             update={
                 "results_by_question": new_results,
                 "dimension_signals": current_signals,
