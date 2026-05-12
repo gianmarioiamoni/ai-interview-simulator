@@ -3,6 +3,8 @@
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
 
+from app.ui.constants.loader_steps import LoaderStep
+
 
 def navigation_node(state: InterviewState) -> InterviewState:
 
@@ -68,6 +70,7 @@ def navigation_node(state: InterviewState) -> InterviewState:
             update={
                 "awaiting_user_input": False,
                 "intent": None,  
+                "current_step": LoaderStep.GENERATING_REPORT,
             }
         )
 

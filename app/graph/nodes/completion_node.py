@@ -21,7 +21,6 @@ def completion_node(state: InterviewState) -> InterviewState:
         return state.model_copy(
             update={
                 "is_completed": True,
-                "current_step": LoaderStep.GENERATING_REPORT,
             }
         )
 
