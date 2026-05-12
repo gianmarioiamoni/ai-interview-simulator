@@ -145,7 +145,7 @@ class UIResponseBuilder:
         # ---------------------------------------------------------
         # LOADER LOGIC (STATE-DRIVEN)
         # ---------------------------------------------------------
-        loader_visible = not state.awaiting_user_input
+        loader_visible = state.is_processing
         loader_value = map_loader_text(state.current_step)
         progress = map_loader_progress(state.current_step)
 
@@ -174,7 +174,7 @@ class UIResponseBuilder:
         # ---------------------------------------------------------
         submit_interactive = (
             buttons.get("show_submit_interactive", False)
-            and not loader_visible
+            and not state.is_processing
             and not is_feedback_mode
             and state.awaiting_user_input
         )
