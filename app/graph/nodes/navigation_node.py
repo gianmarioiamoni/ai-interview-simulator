@@ -68,9 +68,6 @@ def navigation_node(state: InterviewState) -> InterviewState:
         return state.model_copy(
             update={
                 "awaiting_user_input": False,  # allow completion_node to trigger
-                "last_action": ActionType.NONE,
-                # keep index unchanged
-                # keep feedback (optional but useful)
             }
         )
 
