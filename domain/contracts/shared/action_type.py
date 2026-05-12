@@ -7,4 +7,5 @@ class ActionType(str, Enum):
     RETRY = "retry"
     NEXT = "next"
     GENERATE_REPORT = "generate_report"
+    SUBMIT = "submit"
     NONE = "none"

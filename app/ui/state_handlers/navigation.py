@@ -19,7 +19,7 @@ def retry_answer(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
 
-    new_state.last_action = ActionType.RETRY
+    new_state.intent = ActionType.RETRY
 
     new_state = run_interview_graph(new_state)
     new_state.is_processing = False
@@ -39,7 +39,7 @@ def next_question(state: InterviewState):
     # ---------------------------------------------------------
     # STEP 1 — SET ACTION
     # ---------------------------------------------------------
-    new_state.last_action = ActionType.GENERATE_REPORT if is_report else ActionType.NEXT
+    new_state.intent = ActionType.GENERATE_REPORT if is_report else ActionType.NEXT
 
     # ---------------------------------------------------------
     # STEP 2 — LOCK UI + INITIAL LOADER

@@ -4,8 +4,7 @@ import time
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview.answer import Answer
-
-from app.ui.constants.loader_steps import LoaderStep
+from domain.contracts.shared.action_type import ActionType
 
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.runtime.interview_runtime import get_runtime_llm
@@ -29,6 +28,8 @@ def submit_answer(
         return
 
     new_state = state.model_copy(deep=True)
+
+    new_state.intent = ActionType.SUBMIT
 
     # ---------------------------------------------------------
     # STEP 1 — LOCK UI (IMMEDIATE FEEDBACK)

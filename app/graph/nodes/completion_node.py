@@ -1,7 +1,6 @@
 # app/graph/nodes/completion_node.py
 
 from domain.contracts.interview_state import InterviewState
-from domain.contracts.shared.action_type import ActionType
 from app.ui.constants.loader_steps import LoaderStep
 
 
@@ -15,12 +14,10 @@ def completion_node(state: InterviewState) -> InterviewState:
 
     last_index = len(questions) - 1
 
-    if (
-        current_index == last_index
-        and state.last_action == ActionType.GENERATE_REPORT
-        and not state.awaiting_user_input
-        and state.last_feedback_bundle is not None
-    ):
+    # -----------------------------------------------------
+    # COMPLETE INTERVIEW
+    # -----------------------------------------------------
+    if current_index == last_index and not state.awaiting_user_input:
         return state.model_copy(
             update={
                 "is_completed": True,

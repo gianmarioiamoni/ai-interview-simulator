@@ -63,6 +63,8 @@ class InterviewStateBase(BaseModel):
     current_step: Optional[LoaderStep] = None
     current_progress: int = 0
 
+    intent: ActionType | None = None
+
     def with_current_question(self, question, index):
         return self.model_copy(
             update={
