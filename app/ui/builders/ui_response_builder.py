@@ -216,7 +216,8 @@ class UIResponseBuilder:
 
         final_eval = state.interview_evaluation
 
-        loader_visible = state.current_step is not None
+        # loader_visible = state.current_step is not None
+        loader_visible = False
         loader_value = map_loader_text(state.current_step)
         progress = map_loader_progress(state.current_step)
 

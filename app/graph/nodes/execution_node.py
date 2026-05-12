@@ -2,6 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
+from domain.contracts.shared.action_type import ActionType
 
 from services.execution_engine import ExecutionEngine
 
@@ -13,6 +14,9 @@ class ExecutionNode:
         self._execution_engine = execution_engine
 
     def __call__(self, state: InterviewState) -> InterviewState:
+
+        if state.last_action == ActionType.GENERATE_REPORT:
+            return state
 
         question = state.current_question
         answer = state.get_latest_answer_for_question(question.id)

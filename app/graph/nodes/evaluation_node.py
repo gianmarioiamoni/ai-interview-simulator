@@ -3,6 +3,7 @@
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 from domain.contracts.question.question_evaluation import QuestionEvaluation
+from domain.contracts.shared.action_type import ActionType
 
 from app.ui.dto.builders.dimension_mapper import DimensionMapper
 from app.ui.constants.loader_steps import LoaderStep
@@ -10,6 +11,9 @@ from app.ui.constants.loader_steps import LoaderStep
 class EvaluationNode:
 
     def __call__(self, state: InterviewState) -> InterviewState:
+
+        if state.last_action == ActionType.GENERATE_REPORT:
+            return state
 
         working_state = state.model_copy(
             update={"current_step": LoaderStep.ANALYZING}
