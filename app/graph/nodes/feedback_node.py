@@ -2,6 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.feedback.quality import Quality
+from domain.contracts.shared.action_type import ActionType
 
 from services.score_calculator import ScoreCalculator
 from services.feedback.dimension_aggregator import FeedbackDimensionAggregator
@@ -19,6 +20,9 @@ class FeedbackNode:
         self._dimension_aggregator = FeedbackDimensionAggregator()
 
     def __call__(self, state: InterviewState) -> InterviewState:
+
+        if state.last_action == ActionType.GENERATE_REPORT:
+            return state
 
         working_state = state.model_copy(
             update={"current_step": LoaderStep.GENERATING_FEEDBACK}

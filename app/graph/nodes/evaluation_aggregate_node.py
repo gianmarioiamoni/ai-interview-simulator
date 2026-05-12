@@ -51,5 +51,6 @@ class EvaluationAggregateNode:
             update={
                 "interview_evaluation": interview_eval,
                 "last_action": ActionType.NONE,
+                "current_step": None,
             }
         )
