@@ -16,20 +16,21 @@ class ExecutionNode:
 
         question = state.current_question
         answer = state.get_latest_answer_for_question(question.id)
+        
 
         # ---------------------------------------------------------
         # Safety guards
         # ---------------------------------------------------------
 
         if question is None or answer is None:
-            return working_state
+            return state
 
         if question.type not in (QuestionType.CODING, QuestionType.DATABASE):
-            return working_state
+            return state
 
         existing = state.get_result_for_question(question.id)
         if existing and existing.execution:
-            return working_state
+            return state
 
         # ---------------------------------------------------------
         # Set loader step

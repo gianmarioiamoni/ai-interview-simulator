@@ -13,22 +13,12 @@ def completion_node(state: InterviewState) -> InterviewState:
         working_state = state.model_copy(
             update={
                 "current_step": LoaderStep.GENERATING_REPORT,
-                "awaiting_user_input": False,
-            }
-        )
-
-        working_state = working_state.model_copy(
-            update={
                 "is_completed": True,
-            }
-        )
-
-        return working_state.model_copy(
-            update={
-                "current_step": None,
-                "awaiting_user_input": True,
+                "awaiting_user_input": False,
                 "last_action": ActionType.NONE,
             }
         )
+
+        return working_state
 
     return state
