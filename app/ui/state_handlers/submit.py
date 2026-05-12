@@ -33,6 +33,7 @@ def submit_answer(
     # ---------------------------------------------------------
     # STEP 1 — LOCK UI (IMMEDIATE FEEDBACK)
     # ---------------------------------------------------------
+    new_state.is_processing = True
     new_state.awaiting_user_input = False
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
@@ -88,6 +89,7 @@ def submit_answer(
     # STEP 6 — UNLOCK UI
     # ---------------------------------------------------------
     new_state.awaiting_user_input = True
+    new_state.is_processing = False
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
     time.sleep(0.15)

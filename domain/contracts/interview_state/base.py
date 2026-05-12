@@ -58,6 +58,8 @@ class InterviewStateBase(BaseModel):
 
     is_completed: bool = False
 
+    is_processing: bool = False
+
     current_step: Optional[LoaderStep] = None
     current_progress: int = 0
 

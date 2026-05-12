@@ -22,6 +22,7 @@ def retry_answer(state: InterviewState):
     new_state.last_action = ActionType.RETRY
 
     new_state = run_interview_graph(new_state)
+    new_state.is_processing = False
 
     return build_ui_response_from_state(new_state).to_gradio_outputs()
 
@@ -43,6 +44,7 @@ def next_question(state: InterviewState):
     # ---------------------------------------------------------
     # STEP 2 — LOCK UI + INITIAL LOADER
     # ---------------------------------------------------------
+    new_state.is_processing = True
     new_state.awaiting_user_input = False
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
@@ -68,6 +70,7 @@ def next_question(state: InterviewState):
     # STEP 4 — UNLOCK UI
     # ---------------------------------------------------------
     new_state.awaiting_user_input = True
+    new_state.is_processing = False
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
