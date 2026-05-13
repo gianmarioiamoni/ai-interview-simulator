@@ -2,6 +2,7 @@
 
 import html
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.shared.action_type import ActionType
 
 from app.ui.ui_response import UIResponse
 from app.ui.ui_state import UIState
@@ -76,7 +77,15 @@ class UIResponseBuilder:
     def _build_processing(self, state: InterviewState) -> UIResponse:
 
         question = state.current_question
-        area_label = InterviewAreaMapper.to_label(question.area) if question else ""
+
+        # set page title based on intent
+        is_report_processing = state.intent == ActionType.GENERATE_REPORT
+
+        area_label = (
+            "Generating Final Interview Evaluation" 
+            if is_report_processing 
+            else InterviewAreaMapper.to_label(question.area) if question else "Processing..."
+        )
 
         loader_value = map_loader_text(state.current_step)
         progress = map_loader_progress(state.current_step)
