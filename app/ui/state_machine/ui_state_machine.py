@@ -29,7 +29,7 @@ class UIStateMachine:
             return UIState.SETUP
 
         # PROCESSING
-        if not state.is_processing:
+        if state.is_processing:
             print("→ resolved UI state: PROCESSING\n")
             return UIState.PROCESSING
 

@@ -6,6 +6,7 @@ import time
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
+from domain.contracts.shared.action_type import ActionType
 
 from services.question_intelligence.question_intelligence_provider import (
     QuestionIntelligenceProvider,
@@ -116,8 +117,13 @@ def start_interview(role, interview_type, company, language) -> Generator:
     # -----------------------------------------------------
 
     state = run_interview_graph(state)
+    
     state.awaiting_user_input = True
-    state.current_step = None  
+    state.is_processing = False  
+
+    state.current_step = None
+    state.current_progress = 0
+    state.intent = ActionType.NONE  
 
     # -----------------------------------------------------
     # FINAL UI
