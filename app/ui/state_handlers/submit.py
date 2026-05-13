@@ -39,7 +39,6 @@ def submit_answer(
     new_state.is_processing = True
     new_state.awaiting_user_input = False
 
-    yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
     # ---------------------------------------------------------
     # PREPARE ANSWER
@@ -86,6 +85,12 @@ def submit_answer(
     use_case = EvaluateAnswerUseCase(llm=llm)
 
     new_state = use_case.execute(new_state)
+
+    # ---------------------------------------------------------
+    # RESET LOADER STATE
+    # ---------------------------------------------------------
+    new_state.current_step = None
+    new_state.current_progress = 0
 
     # ---------------------------------------------------------
     # UNLOCK UI
