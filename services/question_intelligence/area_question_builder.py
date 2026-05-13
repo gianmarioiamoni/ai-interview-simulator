@@ -8,11 +8,7 @@ from typing import List
 from domain.contracts.question.question import (
     Question,
     QuestionType,
-    QuestionDifficulty,
-    SQLTestCase,
 )
-from domain.contracts.question.generated_question import GeneratedQuestion
-from domain.contracts.question.question_bank_item import QuestionBankItem
 
 from domain.contracts.execution.coding_test_case import (
     CodingTestCase,
@@ -201,3 +197,22 @@ class AreaQuestionBuilder:
             )
 
         return questions
+    
+    # =========================================================
+    # VALIDATION
+    # =========================================================
+
+    def _validate_alignment(
+        self,
+        item: GeneratedCodingQuestion,
+        spec: CodingSpec,
+    ) -> None:
+
+        prompt = item.prompt
+
+        if spec.entrypoint not in prompt:
+            raise ValueError(f"Entrypoint '{spec.entrypoint}' not found in prompt")
+
+        for p in spec.parameters:
+            if p not in prompt:
+                raise ValueError(f"Parameter '{p}' not found in prompt")
