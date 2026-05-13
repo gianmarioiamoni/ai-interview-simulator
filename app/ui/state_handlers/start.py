@@ -21,6 +21,7 @@ from domain.contracts.interview_state import InterviewState
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.constants.loader_steps import LoaderStep
 from app.ui.mappers.loader_mapper import map_loader_progress
+from app.ui.adapters.ui_output_adapter import UIOutputAdapter
 
 
 def start_interview(role, interview_type, company, language) -> Generator:
@@ -35,7 +36,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state.current_step = LoaderStep.GENERATING_STRUCTURE
     state.current_progress = map_loader_progress(state.current_step)
 
-    yield build_ui_response_from_state(state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(state))
     state.current_progress = _smooth_progress(state.current_progress, map_loader_progress(LoaderStep.GENERATING_QUESTIONS))
 
     time.sleep(0.3)
@@ -60,7 +61,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state.current_step = LoaderStep.GENERATING_QUESTIONS
     state.current_progress = map_loader_progress(state.current_step)
 
-    yield build_ui_response_from_state(state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(state))
     state.current_progress = _smooth_progress(state.current_progress, map_loader_progress(LoaderStep.GENERATING_TESTS))
     time.sleep(0.2)
 
@@ -79,7 +80,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state.current_step = LoaderStep.GENERATING_TESTS
     state.current_progress = map_loader_progress(state.current_step)
 
-    yield build_ui_response_from_state(state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(state))
     state.current_progress = _smooth_progress(state.current_progress, map_loader_progress(LoaderStep.FINALIZING))
     time.sleep(0.2)
 
@@ -99,7 +100,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state.current_step = LoaderStep.FINALIZING
     state.current_progress = map_loader_progress(state.current_step)
 
-    yield build_ui_response_from_state(state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(state))
     state.current_progress = _smooth_progress(state.current_progress, 100)
     time.sleep(0.2)
 
@@ -129,4 +130,4 @@ def start_interview(role, interview_type, company, language) -> Generator:
     # FINAL UI
     # -----------------------------------------------------
 
-    yield build_ui_response_from_state(state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(state))

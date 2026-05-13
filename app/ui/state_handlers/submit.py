@@ -10,7 +10,7 @@ from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.runtime.interview_runtime import get_runtime_llm
 from app.ui.constants.loader_steps import LoaderStep
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
-
+from app.ui.adapters.ui_output_adapter import UIOutputAdapter
 
 def submit_answer(
     state: InterviewState,
@@ -23,7 +23,7 @@ def submit_answer(
     # SAFETY
     # ---------------------------------------------------------
     if not state or not state.current_question:
-        yield build_ui_response_from_state(state).to_gradio_outputs()
+        yield UIOutputAdapter.to_gradio(build_ui_response_from_state(state))
         return
 
     new_state = state.model_copy(deep=True)
@@ -41,7 +41,7 @@ def submit_answer(
     new_state.current_step = LoaderStep.SUBMITTING
     new_state.current_progress = 10
 
-    yield build_ui_response_from_state(new_state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(new_state))
 
     # ---------------------------------------------------------
     # PREPARE ANSWER
@@ -65,7 +65,7 @@ def submit_answer(
         new_state.awaiting_user_input = True
         new_state.is_processing = False
 
-        yield build_ui_response_from_state(new_state).to_gradio_outputs()
+        yield UIOutputAdapter.to_gradio(build_ui_response_from_state(new_state))
 
         return
 
@@ -102,7 +102,7 @@ def submit_answer(
     new_state.is_processing = False
     new_state.intent = ActionType.NONE
 
-    yield build_ui_response_from_state(new_state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(new_state))
 
 
 # =========================================================

@@ -9,6 +9,7 @@ from app.ui.state_handlers.ui_builder import (
     build_ui_response_from_state,
 )
 from app.ui.constants.loader_steps import LoaderStep
+from app.ui.adapters.ui_output_adapter import UIOutputAdapter
 
 
 # =========================================================
@@ -17,7 +18,7 @@ from app.ui.constants.loader_steps import LoaderStep
 def retry_answer(state: InterviewState):
 
     if state is None or state.current_question is None:
-        return build_ui_response_from_state(state).to_gradio_outputs()
+        return UIOutputAdapter.to_gradio(build_ui_response_from_state(state))
 
     new_state = state.model_copy(deep=True)
 
@@ -45,7 +46,7 @@ def retry_answer(state: InterviewState):
     new_state.awaiting_user_input = True
     new_state.intent = ActionType.NONE
 
-    yield build_ui_response_from_state(new_state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(new_state))
 
 
 # =========================================================
@@ -75,7 +76,7 @@ def next_question(state: InterviewState):
 
     new_state.current_progress = map_loader_progress(new_state.current_step)
 
-    yield build_ui_response_from_state(new_state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(new_state))
 
     # ---------------------------------------------------------
     # GRAPH
@@ -99,7 +100,7 @@ def next_question(state: InterviewState):
     if not is_report:
         new_state.awaiting_user_input = True
 
-    yield build_ui_response_from_state(new_state).to_gradio_outputs()
+    yield UIOutputAdapter.to_gradio(build_ui_response_from_state(new_state))
 
 
 # =========================================================
@@ -118,4 +119,4 @@ def new_interview(state: InterviewState):
 
     response.state = new_state
 
-    return response.to_gradio_outputs()
+    return UIOutputAdapter.to_gradio(response)
