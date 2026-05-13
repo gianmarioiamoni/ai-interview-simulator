@@ -16,49 +16,94 @@ from domain.contracts.user.seniority_level import (
 class RetrievalQueryBuilder:
 
     _AREA_HINTS = {
-        InterviewArea.TECH_FRONTEND: [
-            "React patterns",
-            "state management",
-            "rendering optimization",
-            "component architecture",
-            "frontend scalability",
-        ],
-        InterviewArea.TECH_BACKEND: [
-            "API architecture",
-            "distributed systems",
-            "backend scalability",
-            "caching",
-            "database performance",
-        ],
-        InterviewArea.TECH_SYSTEM_DESIGN: [
-            "high scalability",
-            "distributed systems",
-            "microservices",
-            "fault tolerance",
-            "load balancing",
-        ],
-        InterviewArea.TECH_DATABASE: [
-            "SQL joins",
-            "query optimization",
-            "indexing",
-            "data modeling",
-            "aggregation queries",
-        ],
-        InterviewArea.TECH_CODING: [
-            "algorithms",
-            "data structures",
-            "edge cases",
-            "performance optimization",
-            "problem solving",
-        ],
-        InterviewArea.BEHAVIORAL: [
-            "team collaboration",
-            "conflict resolution",
-            "leadership",
-            "ownership",
-            "communication",
-        ],
-    }
+
+    # =====================================================
+    # HR
+    # =====================================================
+
+    InterviewArea.HR_BACKGROUND: [
+        "career growth",
+        "past experience",
+        "technical ownership",
+        "project challenges",
+        "professional achievements",
+    ],
+
+    InterviewArea.HR_TECHNICAL_KNOWLEDGE: [
+        "technical communication",
+        "technology decisions",
+        "engineering practices",
+        "cross-functional collaboration",
+        "technical trade-offs",
+    ],
+
+    InterviewArea.HR_SITUATIONAL: [
+        "conflict resolution",
+        "team collaboration",
+        "leadership",
+        "stakeholder management",
+        "difficult situations",
+    ],
+
+    InterviewArea.HR_BRAIN_TEASER: [
+        "logical reasoning",
+        "problem decomposition",
+        "creative thinking",
+        "analytical thinking",
+        "edge-case reasoning",
+    ],
+
+    InterviewArea.HR_ANALYTICAL: [
+        "data-driven thinking",
+        "root cause analysis",
+        "decision making",
+        "critical thinking",
+        "structured reasoning",
+    ],
+
+    # =====================================================
+    # TECHNICAL
+    # =====================================================
+
+    InterviewArea.TECH_BACKGROUND: [
+        "past architecture decisions",
+        "production experience",
+        "scalability challenges",
+        "technical ownership",
+        "system evolution",
+    ],
+
+    InterviewArea.TECH_TECHNICAL_KNOWLEDGE: [
+        "backend architecture",
+        "frontend architecture",
+        "API design",
+        "performance optimization",
+        "engineering best practices",
+    ],
+
+    InterviewArea.TECH_CASE_STUDY: [
+        "distributed systems",
+        "system scalability",
+        "microservices",
+        "fault tolerance",
+        "high availability",
+    ],
+
+    InterviewArea.TECH_DATABASE: [
+        "SQL joins",
+        "query optimization",
+        "indexing",
+        "data modeling",
+        "aggregation queries",
+    ],
+
+    InterviewArea.TECH_CODING: [
+        "algorithms",
+        "data structures",
+        "edge cases",
+        "performance optimization",
+        "problem solving",
+    ]}
 
     # =====================================================
     # PUBLIC
