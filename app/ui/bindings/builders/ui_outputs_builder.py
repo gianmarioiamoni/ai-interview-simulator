@@ -41,8 +41,5 @@ class UIOutputsBuilder:
             self.c.global_loader,
         ]
 
-        print("=== OUTPUT ORDER ===")
-        for i, c in enumerate(outputs):
-            print(i, type(c), getattr(c, "_id", None))
 
         return outputs
