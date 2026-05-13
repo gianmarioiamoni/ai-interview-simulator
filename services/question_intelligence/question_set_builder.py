@@ -11,8 +11,9 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from services.question_intelligence.semantic_deduplicator import SemanticDeduplicator
-from services.question_intelligence.question_selection_service import (
-    QuestionSelectionService,
+
+from services.question_intelligence.area_question_builder import (
+    AreaQuestionBuilder,
 )
 
 from app.settings.constants import QUESTIONS_PER_AREA
@@ -23,10 +24,10 @@ logger = logging.getLogger(__name__)
 class QuestionSetBuilder:
     def __init__(
         self,
-        selection_service: QuestionSelectionService,
+        area_builder: AreaQuestionBuilder,
         deduplicator: SemanticDeduplicator,
     ) -> None:
-        self._selection_service = selection_service
+        self._area_builder = area_builder
         self._deduplicator = deduplicator
 
     # =========================================================
@@ -54,7 +55,7 @@ class QuestionSetBuilder:
 
         for area in shuffled_areas:
 
-            area_questions = self._selection_service.build_area_questions(
+            area_questions = self._area_builder.build(
                 role=role,
                 level=level,
                 interview_type=interview_type,
@@ -97,7 +98,7 @@ class QuestionSetBuilder:
                 if missing <= 0:
                     break
 
-                new_questions = self._selection_service.build_area_questions(
+                new_questions = self._area_builder.build(
                     role=role,
                     level=level,
                     interview_type=interview_type,

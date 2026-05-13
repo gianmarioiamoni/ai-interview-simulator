@@ -1,0 +1,364 @@
+# services/question_intelligence/area_question_builder.py
+
+import uuid
+import logging
+
+from typing import List
+
+from domain.contracts.question.question import (
+    Question,
+    QuestionType,
+    QuestionDifficulty,
+    SQLTestCase,
+)
+from domain.contracts.question.generated_question import GeneratedQuestion
+from domain.contracts.question.question_bank_item import QuestionBankItem
+
+from domain.contracts.execution.coding_test_case import (
+    CodingTestCase,
+)
+from domain.contracts.execution.coding_spec import CodingSpec
+
+from domain.contracts.interview.interview_area import (
+    InterviewArea,
+)
+from domain.contracts.interview.interview_type import (
+    InterviewType,
+)
+
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import (
+    SeniorityLevel,
+)
+
+from services.question_intelligence.question_retrieval_service import (
+    QuestionRetrievalService,
+)
+
+from services.question_intelligence.question_generator import (
+    QuestionGenerator,
+)
+
+from services.question_intelligence.coding_question_generator import (
+    CodingQuestionGenerator,
+    GeneratedCodingQuestion,
+)
+
+from services.question_intelligence.sql_question_generator import (
+    SQLQuestionGenerator,
+)
+
+from app.settings.constants import QUESTIONS_PER_AREA
+
+logger = logging.getLogger(__name__)
+
+
+class AreaQuestionBuilder:
+
+    def __init__(
+        self,
+        retrieval_service: QuestionRetrievalService,
+        generator: QuestionGenerator,
+        coding_generator: CodingQuestionGenerator,
+        sql_generator: SQLQuestionGenerator,
+    ) -> None:
+
+        self._retrieval_service = retrieval_service
+        self._generator = generator
+        self._coding_generator = coding_generator
+        self._sql_generator = sql_generator
+
+    # =====================================================
+    # PUBLIC
+    # =====================================================
+
+    def build(
+        self,
+        role: RoleType,
+        level: SeniorityLevel,
+        interview_type: InterviewType,
+        area: InterviewArea,
+        questions_per_area: int = QUESTIONS_PER_AREA,
+    ) -> List[Question]:
+
+        # -------------------------------------------------
+        # CODING
+        # -------------------------------------------------
+
+        if area == InterviewArea.TECH_CODING:
+            return self._build_coding_questions(
+                role=role,
+                level=level,
+                area=area,
+                questions_per_area=questions_per_area,
+            )
+
+        # -------------------------------------------------
+        # SQL
+        # -------------------------------------------------
+
+        if area == InterviewArea.TECH_DATABASE:
+            return self._build_sql_questions(
+                role=role,
+                level=level,
+                area=area,
+                questions_per_area=questions_per_area,
+            )
+
+        # -------------------------------------------------
+        # WRITTEN
+        # -------------------------------------------------
+
+        return self._build_written_questions(
+            role=role,
+            level=level,
+            interview_type=interview_type,
+            area=area,
+            questions_per_area=questions_per_area,
+        )
+
+    # =====================================================
+    # WRITTEN PIPELINE
+    # =====================================================
+
+    def _build_written_questions(
+        self,
+        role: RoleType,
+        level: SeniorityLevel,
+        interview_type: InterviewType,
+        area: InterviewArea,
+        questions_per_area: int,
+    ) -> List[Question]:
+
+        questions: List[Question] = []
+
+        retrieved = self._retrieval_service.retrieve(
+            query=self._build_retrieval_query(role, level, area),
+            k=questions_per_area,
+            role=role.value,
+            level=level.value,
+            interview_type=interview_type.value,
+            area=area.value,
+        )
+
+        for item in retrieved:
+            questions.append(self._map_bank_item(item))
+
+        remaining_slots = questions_per_area - len(questions)
+
+        if remaining_slots > 0:
+
+            generated = self._generator.generate(
+                role=role,
+                level=level,
+                interview_type=interview_type,
+                area=area,
+                n=remaining_slots,
+            )
+
+            for gen in generated:
+                questions.append(
+                    self._map_generated_question(
+                        gen,
+                        area=area,
+                    )
+                )
+
+        return self._select_by_difficulty(
+            questions,
+            questions_per_area,
+        )
+
+    # =====================================================
+    # SQL PIPELINE
+    # =====================================================
+
+    def _build_sql_questions(
+        self,
+        role: RoleType,
+        level: SeniorityLevel,
+        area: InterviewArea,
+        questions_per_area: int,
+    ) -> List[Question]:
+
+        questions = self._sql_generator.generate(
+            role=role,
+            level=level,
+            n=questions_per_area,
+        )
+
+        if len(questions) < questions_per_area:
+            logger.warning(
+                f"[SQL] Area {area.value} produced "
+                f"{len(questions)} questions, "
+                f"expected {questions_per_area}"
+            )
+
+        return questions
+
+    # =====================================================
+    # CODING PIPELINE
+    # =====================================================
+
+    def _build_coding_questions(
+        self,
+        role: RoleType,
+        level: SeniorityLevel,
+        area: InterviewArea,
+        questions_per_area: int,
+    ) -> List[Question]:
+
+        raw_items = self._coding_generator.generate(
+            role=role,
+            level=level,
+            n=questions_per_area,
+        )
+
+        questions: List[Question] = []
+
+        for item in raw_items:
+
+            coding_spec = item.coding_spec
+
+            self._validate_alignment(
+                item,
+                coding_spec,
+            )
+
+            question = Question(
+                id=str(uuid.uuid4()),
+                area=area,
+                type=QuestionType.CODING,
+                prompt=item.prompt,
+                coding_spec=coding_spec,
+                visible_tests=[
+                    CodingTestCase(**t.model_dump()) for t in item.visible_tests
+                ],
+            )
+
+            questions.append(question)
+
+        if len(questions) < questions_per_area:
+            logger.warning(
+                f"[CODING] Area {area.value} produced "
+                f"{len(questions)} questions, "
+                f"expected {questions_per_area}"
+            )
+
+        return questions
+
+    # =====================================================
+    # HELPERS
+    # =====================================================
+
+    def _build_retrieval_query(
+        self,
+        role: RoleType,
+        level: SeniorityLevel,
+        area: InterviewArea,
+    ) -> str:
+
+        return f"""
+        {role.value} {level.value} interview question
+        topic: {area.value}
+
+        Focus on:
+        - diverse concepts
+        - different problem types
+        - avoid repetition of API questions
+        - Ensure each question targets a DIFFERENT concept within the area
+        """
+
+    def _validate_alignment(
+        self,
+        item: GeneratedCodingQuestion,
+        spec: CodingSpec,
+    ) -> None:
+
+        prompt = item.prompt
+
+        if spec.entrypoint not in prompt:
+            raise ValueError(f"Entrypoint '{spec.entrypoint}' not found in prompt")
+
+        for p in spec.parameters:
+
+            if p not in prompt:
+                raise ValueError(f"Parameter '{p}' not found in prompt")
+
+    # =====================================================
+    # MAPPERS
+    # =====================================================
+
+    def _map_bank_item(
+        self,
+        item: QuestionBankItem,
+    ) -> Question:
+
+        return Question(
+            id=str(uuid.uuid4()),
+            area=item.area,
+            type=QuestionType.WRITTEN,
+            prompt=item.text,
+            difficulty=self._map_difficulty(item.difficulty),
+        )
+
+    def _map_generated_question(
+        self,
+        generated: GeneratedQuestion,
+        area: InterviewArea,
+    ) -> Question:
+
+        return Question(
+            id=str(uuid.uuid4()),
+            area=area,
+            type=QuestionType.WRITTEN,
+            prompt=generated.text,
+            difficulty=self._map_difficulty(generated.difficulty),
+        )
+
+    def _map_difficulty(
+        self,
+        value: int,
+    ) -> QuestionDifficulty:
+
+        if value <= 2:
+            return QuestionDifficulty.EASY
+
+        if value == 3:
+            return QuestionDifficulty.MEDIUM
+
+        return QuestionDifficulty.HARD
+
+    def _select_by_difficulty(
+        self,
+        questions: List[Question],
+        total: int,
+    ) -> List[Question]:
+
+        buckets = {
+            QuestionDifficulty.EASY: [],
+            QuestionDifficulty.MEDIUM: [],
+            QuestionDifficulty.HARD: [],
+        }
+
+        for q in questions:
+            buckets[q.difficulty].append(q)
+
+        target = {
+            QuestionDifficulty.EASY: int(total * 0.2),
+            QuestionDifficulty.MEDIUM: int(total * 0.6),
+            QuestionDifficulty.HARD: int(total * 0.2),
+        }
+
+        selected: List[Question] = []
+
+        for diff, count in target.items():
+            selected.extend(buckets[diff][:count])
+
+        if len(selected) < total:
+
+            remaining = [q for q in questions if q not in selected]
+
+            selected.extend(remaining[: total - len(selected)])
+
+        return selected[:total]
