@@ -5,6 +5,7 @@ from typing import List, Any
 from dataclasses import dataclass
 
 from app.ui.components.loader.loader_renderer import render_loader
+from app.ui.mappers.output_mapper import OutputMapper
 
 
 @dataclass
@@ -70,9 +71,115 @@ class UIResponse:
 
     setup_inputs_interactive: bool = True
 
+
     # =========================================================
-    # OUTPUT CONTRACT (ALLINEATO)
+    # DICT CONTRACT
     # =========================================================
+    def to_dict(self) -> dict:
+
+        return {
+            # 0
+            "state": self.state,
+            # 1-5 SETUP
+            "role_dropdown": gr.update(
+                visible=self.role_visible,
+                interactive=self.setup_inputs_interactive,
+            ),
+            "interview_type_radio": gr.update(
+                visible=self.interview_type_visible,
+                interactive=self.setup_inputs_interactive,
+            ),
+            "company_input": gr.update(
+                visible=self.company_visible,
+                interactive=self.setup_inputs_interactive,
+            ),
+            "language_dropdown": gr.update(
+                visible=self.language_visible,
+                interactive=self.setup_inputs_interactive,
+            ),
+            "start_button": gr.update(
+                visible=self.start_button_visible,
+                value="Start Interview",
+                interactive=self.start_button_interactive,
+            ),
+            # 6 TITLE
+            "page_title": gr.update(value=self.page_title),
+            # 7-8 HEADER
+            "question_counter": gr.update(
+                value=self.question_counter,
+                visible=bool(self.question_counter),
+            ),
+            "feedback_markdown": gr.update(
+                value=self.feedback_markdown,
+                visible=bool(self.feedback_markdown),
+            ),
+            # 9-11 DISPLAY
+            "written_display": gr.update(
+                value=self.written_display,
+                visible=self.written_visible,
+            ),
+            "coding_display": gr.update(
+                value=self.coding_display,
+                visible=self.coding_visible,
+            ),
+            "database_display": gr.update(
+                value=self.database_display,
+                visible=self.database_visible,
+            ),
+            # 12-14 REPORT
+            "final_feedback": gr.update(
+                value=self.final_feedback,
+                visible=bool(self.final_feedback),
+            ),
+            "report_output": gr.update(
+                value=self.report_output,
+                visible=bool(self.report_output),
+            ),
+            "report_group": gr.update(
+                visible=self.report_section_visible,
+            ),
+            # 15-17 BUTTONS
+            "submit_button": gr.update(
+                visible=self.show_submit,
+                interactive=self.submit_interactive,
+                value=self.submit_label,
+            ),
+            "retry_button": gr.update(
+                visible=self.show_retry,
+                interactive=self.retry_interactive,
+                value=self.retry_label,
+            ),
+            "next_button": gr.update(
+                visible=self.show_next,
+                value=self.next_label,
+            ),
+            # 18-20 EDITORS
+            "written_editor": gr.update(
+                value=self.written_editor_value,
+                visible=self.written_editor_visible,
+            ),
+            "coding_editor": gr.update(
+                value=self.coding_editor_value,
+                visible=self.coding_editor_visible,
+            ),
+            "database_editor": gr.update(
+                value=self.database_editor_value,
+                visible=self.database_editor_visible,
+            ),
+            # 21 LOADER
+            "loader_html": gr.update(
+                visible=self.loader_visible,
+                value=(
+                    render_loader(
+                        self.loader_value,
+                        self.current_progress,
+                    )
+                    if self.loader_visible
+                    else ""
+                ),
+            ),
+        }
+
     def to_gradio_outputs(self) -> List[Any]:
         return [
             # 0 STATE
