@@ -27,6 +27,10 @@ from services.question_intelligence.question_vector_store import (
     QuestionVectorStore,
 )
 
+from services.question_intelligence.area_question_builder import (
+    AreaQuestionBuilder,
+)
+
 from infrastructure.vector_store.chroma_question_store import (
     ChromaQuestionStore,
 )
@@ -52,14 +56,14 @@ class QuestionIntelligenceProvider:
         # Services (NO global LLM usage)
         # -----------------------------------------------------
 
-        retrieval_service = QuestionRetrievalService(vector_store)
+        area_builder = AreaQuestionBuilder(vector_store)
 
-        # 🔥 LLM injected everywhere needed
+        # LLM injected everywhere needed
         generator = QuestionGenerator(llm)
         coding_generator = CodingQuestionGenerator(llm)
         sql_generator = SQLQuestionGenerator(llm)
 
-        selection_service = QuestionSelectionService(
+        selection_service = AreaQuestionBuilder(
             retrieval_service=retrieval_service,
             generator=generator,
             coding_generator=coding_generator,
@@ -68,8 +72,9 @@ class QuestionIntelligenceProvider:
 
         deduplicator = SemanticDeduplicator(threshold=DEDUPLICATION_THRESHOLD)
 
+
         set_builder = QuestionSetBuilder(
-            selection_service,
+            area_builder,
             deduplicator,
         )
 
