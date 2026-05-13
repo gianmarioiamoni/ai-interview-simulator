@@ -19,6 +19,10 @@ from services.question_intelligence.retrieval.retrieval_role_hints import (
     ROLE_HINTS,
 )
 
+from services.question_intelligence.retrieval.retrieval_level_hints import (
+    LEVEL_HINTS,
+)
+
 class RetrievalQueryBuilder:
 
 
@@ -43,7 +47,12 @@ class RetrievalQueryBuilder:
             [],
         )
 
-        combined_hints = area_hints + role_hints
+        level_hints = LEVEL_HINTS.get(
+            level,
+            [],
+        )
+
+        combined_hints = area_hints + role_hints + level_hints
 
         sampled_hints = random.sample(
             combined_hints,
