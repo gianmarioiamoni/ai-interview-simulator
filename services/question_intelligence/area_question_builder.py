@@ -48,6 +48,10 @@ from services.question_intelligence.pipelines.written_question_pipeline import (
     WrittenQuestionPipeline,
 )
 
+from services.question_intelligence.pipelines.coding_question_pipeline import (
+    CodingQuestionPipeline,
+)
+
 from app.settings.constants import QUESTIONS_PER_AREA
 
 logger = logging.getLogger(__name__)
@@ -71,6 +75,9 @@ class AreaQuestionBuilder:
             retrieval_service=retrieval_service,
             generator=generator,
         )
+        self._coding_pipeline = CodingQuestionPipeline(
+            coding_generator=coding_generator,
+        )
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -89,7 +96,7 @@ class AreaQuestionBuilder:
         # -------------------------------------------------
 
         if area == InterviewArea.TECH_CODING:
-            return self._build_coding_questions(
+            return self._coding_pipeline.build(
                 role=role,
                 level=level,
                 area=area,
@@ -147,72 +154,4 @@ class AreaQuestionBuilder:
 
         return questions
 
-    # =====================================================
-    # CODING PIPELINE
-    # =====================================================
 
-    def _build_coding_questions(
-        self,
-        role: RoleType,
-        level: SeniorityLevel,
-        area: InterviewArea,
-        questions_per_area: int,
-    ) -> List[Question]:
-
-        raw_items = self._coding_generator.generate(
-            role=role,
-            level=level,
-            n=questions_per_area,
-        )
-
-        questions: List[Question] = []
-
-        for item in raw_items:
-
-            coding_spec = item.coding_spec
-
-            self._validate_alignment(
-                item,
-                coding_spec,
-            )
-
-            question = Question(
-                id=str(uuid.uuid4()),
-                area=area,
-                type=QuestionType.CODING,
-                prompt=item.prompt,
-                coding_spec=coding_spec,
-                visible_tests=[
-                    CodingTestCase(**t.model_dump()) for t in item.visible_tests
-                ],
-            )
-
-            questions.append(question)
-
-        if len(questions) < questions_per_area:
-            logger.warning(
-                f"[CODING] Area {area.value} produced "
-                f"{len(questions)} questions, "
-                f"expected {questions_per_area}"
-            )
-
-        return questions
-    
-    # =========================================================
-    # VALIDATION
-    # =========================================================
-
-    def _validate_alignment(
-        self,
-        item: GeneratedCodingQuestion,
-        spec: CodingSpec,
-    ) -> None:
-
-        prompt = item.prompt
-
-        if spec.entrypoint not in prompt:
-            raise ValueError(f"Entrypoint '{spec.entrypoint}' not found in prompt")
-
-        for p in spec.parameters:
-            if p not in prompt:
-                raise ValueError(f"Parameter '{p}' not found in prompt")
