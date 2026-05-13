@@ -24,37 +24,52 @@ def submit_answer(
     # ---------------------------------------------------------
     if not state or not state.current_question:
         yield build_ui_response_from_state(state).to_gradio_outputs()
-        time.sleep(0.15)
         return
 
     new_state = state.model_copy(deep=True)
 
+    # ---------------------------------------------------------
+    # INTENT
+    # ---------------------------------------------------------
     new_state.intent = ActionType.SUBMIT
 
     # ---------------------------------------------------------
-    # STEP 1 — LOCK UI (IMMEDIATE FEEDBACK)
+    # LOCK UI
     # ---------------------------------------------------------
     new_state.is_processing = True
     new_state.awaiting_user_input = False
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
-    time.sleep(0.15)
 
     # ---------------------------------------------------------
-    # STEP 2 — PREPARE ANSWER
+    # PREPARE ANSWER
     # ---------------------------------------------------------
     question = new_state.current_question
+
     attempt = new_state.get_attempt_for_question(question.id) + 1
 
     answer_content = _resolve_answer(
-        new_state, written_answer, coding_answer, database_answer
+        new_state,
+        written_answer,
+        coding_answer,
+        database_answer,
     )
 
+    # ---------------------------------------------------------
+    # EMPTY ANSWER
+    # ---------------------------------------------------------
     if not answer_content.strip():
+
         new_state.awaiting_user_input = True
+        new_state.is_processing = False
+
         yield build_ui_response_from_state(new_state).to_gradio_outputs()
+
         return
 
+    # ---------------------------------------------------------
+    # CREATE ANSWER
+    # ---------------------------------------------------------
     new_answer = Answer(
         question_id=question.id,
         content=answer_content,
@@ -64,44 +79,34 @@ def submit_answer(
     new_state = new_state.add_answer(new_answer)
 
     # ---------------------------------------------------------
-    # STEP 3 — EXECUTION (coding / SQL)
+    # GRAPH EXECUTION
     # ---------------------------------------------------------
-    yield build_ui_response_from_state(new_state).to_gradio_outputs()
-    time.sleep(0.15)
-
-    # ---------------------------------------------------------
-    # STEP 4 — EVALUATION (LLM + graph)
-    # ---------------------------------------------------------
-    yield build_ui_response_from_state(new_state).to_gradio_outputs()
-    time.sleep(0.15)
-
     llm = get_runtime_llm()
+
     use_case = EvaluateAnswerUseCase(llm=llm)
 
     new_state = use_case.execute(new_state)
 
     # ---------------------------------------------------------
-    # STEP 5 — FEEDBACK GENERATION
-    # ---------------------------------------------------------
-    yield build_ui_response_from_state(new_state).to_gradio_outputs()
-    time.sleep(0.15)
-
-    # ---------------------------------------------------------
-    # STEP 6 — UNLOCK UI
+    # UNLOCK UI
     # ---------------------------------------------------------
     new_state.awaiting_user_input = True
     new_state.is_processing = False
+    new_state.intent = ActionType.NONE
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
-    time.sleep(0.15)
 
 
 # =========================================================
 # HELPER
 # =========================================================
+def _resolve_answer(
+    state,
+    written,
+    coding,
+    database,
+) -> str:
 
-
-def _resolve_answer(state, written, coding, database) -> str:
     q = state.current_question
 
     if not q:

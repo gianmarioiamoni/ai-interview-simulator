@@ -4,9 +4,9 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
 
 from app.runtime.interview_runtime import run_interview_graph
-from app.ui.state_handlers.ui_builder import build_ui_response_from_state
-
-from app.ui.constants.loader_steps import LoaderStep
+from app.ui.state_handlers.ui_builder import (
+    build_ui_response_from_state,
+)
 
 
 # =========================================================
@@ -19,12 +19,32 @@ def retry_answer(state: InterviewState):
 
     new_state = state.model_copy(deep=True)
 
+    # ---------------------------------------------------------
+    # INTENT
+    # ---------------------------------------------------------
     new_state.intent = ActionType.RETRY
 
-    new_state = run_interview_graph(new_state)
-    new_state.is_processing = False
+    # ---------------------------------------------------------
+    # LOCK UI
+    # ---------------------------------------------------------
+    new_state.is_processing = True
+    new_state.awaiting_user_input = False
 
-    return build_ui_response_from_state(new_state).to_gradio_outputs()
+    yield build_ui_response_from_state(new_state).to_gradio_outputs()
+
+    # ---------------------------------------------------------
+    # GRAPH
+    # ---------------------------------------------------------
+    new_state = run_interview_graph(new_state)
+
+    # ---------------------------------------------------------
+    # UNLOCK UI
+    # ---------------------------------------------------------
+    new_state.is_processing = False
+    new_state.awaiting_user_input = True
+    new_state.intent = ActionType.NONE
+
+    yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
 
 # =========================================================
@@ -37,12 +57,12 @@ def next_question(state: InterviewState):
     is_report = ActionType.GENERATE_REPORT in state.allowed_actions
 
     # ---------------------------------------------------------
-    # STEP 1 — SET ACTION
+    # INTENT
     # ---------------------------------------------------------
     new_state.intent = ActionType.GENERATE_REPORT if is_report else ActionType.NEXT
 
     # ---------------------------------------------------------
-    # STEP 2 — LOCK UI + INITIAL LOADER
+    # LOCK UI
     # ---------------------------------------------------------
     new_state.is_processing = True
     new_state.awaiting_user_input = False
@@ -50,27 +70,20 @@ def next_question(state: InterviewState):
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
     # ---------------------------------------------------------
-    # STEP 3 — REPORT PIPELINE (STREAMING)
+    # GRAPH
     # ---------------------------------------------------------
-    if is_report:
-
-        yield build_ui_response_from_state(new_state).to_gradio_outputs()
-
-        yield build_ui_response_from_state(new_state).to_gradio_outputs()
-
-        new_state = run_interview_graph(new_state)
-
-        yield build_ui_response_from_state(new_state).to_gradio_outputs()
-
-    else:
-        # NORMAL NEXT
-        new_state = run_interview_graph(new_state)
+    new_state = run_interview_graph(new_state)
 
     # ---------------------------------------------------------
-    # STEP 4 — UNLOCK UI
+    # UNLOCK UI
     # ---------------------------------------------------------
-    new_state.awaiting_user_input = True
     new_state.is_processing = False
+    new_state.intent = ActionType.NONE
+
+    # IMPORTANT:
+    # report flow MUST stay non-interactive
+    if not is_report:
+        new_state.awaiting_user_input = True
 
     yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
@@ -84,7 +97,6 @@ def new_interview(state: InterviewState):
 
     response = build_ui_response_from_state(new_state)
 
-    # RESET UI COMPLETO
     response.role_visible = True
     response.interview_type_visible = True
     response.company_visible = True

@@ -2,6 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
+
 from app.ui.constants.loader_steps import LoaderStep
 
 
@@ -14,6 +15,7 @@ def start_processing_node(state: InterviewState) -> InterviewState:
 
     return state.model_copy(
         update={
+            "is_processing": True,
             "current_step": step,
         }
     )

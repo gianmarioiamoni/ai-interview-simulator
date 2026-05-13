@@ -53,7 +53,6 @@ class InterviewStateBase(BaseModel):
 
     last_feedback_bundle: Optional[FeedbackBundle] = None
 
-    last_action: Optional[ActionType] = None
     allowed_actions: list[ActionType] = Field(default_factory=list)
 
     is_completed: bool = False

@@ -50,7 +50,7 @@ class EvaluationAggregateNode:
         return state.model_copy(
             update={
                 "interview_evaluation": interview_eval,
-                "last_action": ActionType.NONE,
+                "intent": ActionType.NONE,
                 "current_step": None,
             }
         )

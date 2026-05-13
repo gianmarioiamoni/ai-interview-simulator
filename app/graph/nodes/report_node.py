@@ -42,5 +42,6 @@ def report_node(
     return state.model_copy(
         update={
             "interview_evaluation": interview_eval,
+            "is_processing": False,
         }
     )
