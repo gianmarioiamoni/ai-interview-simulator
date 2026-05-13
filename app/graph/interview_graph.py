@@ -16,6 +16,7 @@ from app.graph.nodes.navigation_node import navigation_node
 from app.graph.nodes.completion_node import completion_node
 from app.graph.nodes.report_node import report_node
 from app.graph.nodes.evaluation_aggregate_node import EvaluationAggregateNode
+from app.graph.nodes.start_processing_node import start_processing_node
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
@@ -104,6 +105,7 @@ def build_interview_graph(
     graph.add_node("written", WrittenEvaluationNode(llm))
     graph.add_node("completion", completion_node)
     graph.add_node("report", lambda state: report_node(state, evaluation_service))
+    graph.add_node("start_processing", start_processing_node)
 
     # -----------------------------------------------------
     # Entry
@@ -116,7 +118,7 @@ def build_interview_graph(
         "entry",
         route_entry,
         {
-            "navigation": "navigation",
+            "navigation": "start_processing",
             "router": "router",
         },
     )
@@ -175,6 +177,8 @@ def build_interview_graph(
     # Navigation flow
     # -----------------------------------------------------
 
+    graph.add_edge("start_processing", "navigation")
+    
     graph.add_edge("navigation", "completion")
     graph.add_edge("completion", "evaluation_aggregate")
 
