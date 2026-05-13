@@ -28,9 +28,10 @@ class UIEventOrchestrator:
 
         # contract check
         from app.ui.ui_response import UIResponse
+        from app.ui.adapters.ui_output_adapter import UIOutputAdapter
 
         dummy = UIResponse(state=None)
-        if len(self.outputs) != len(dummy.to_gradio_outputs()):
+        if len(self.outputs) != len(UIOutputAdapter.to_gradio(dummy)):
             raise RuntimeError("OUTPUT CONTRACT MISMATCH")
 
         # streaming handler factory
