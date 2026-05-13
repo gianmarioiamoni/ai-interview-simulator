@@ -10,11 +10,6 @@ from domain.contracts.question.question import (
     QuestionType,
 )
 
-from domain.contracts.execution.coding_test_case import (
-    CodingTestCase,
-)
-from domain.contracts.execution.coding_spec import CodingSpec
-
 from domain.contracts.interview.interview_area import (
     InterviewArea,
 )
@@ -37,7 +32,6 @@ from services.question_intelligence.question_generator import (
 
 from services.question_intelligence.coding_question_generator import (
     CodingQuestionGenerator,
-    GeneratedCodingQuestion,
 )
 
 from services.question_intelligence.sql_question_generator import (
@@ -50,6 +44,10 @@ from services.question_intelligence.pipelines.written_question_pipeline import (
 
 from services.question_intelligence.pipelines.coding_question_pipeline import (
     CodingQuestionPipeline,
+)
+
+from services.question_intelligence.pipelines.sql_question_pipeline import (
+    SQLQuestionPipeline,
 )
 
 from app.settings.constants import QUESTIONS_PER_AREA
@@ -77,6 +75,9 @@ class AreaQuestionBuilder:
         )
         self._coding_pipeline = CodingQuestionPipeline(
             coding_generator=coding_generator,
+        )
+        self._sql_pipeline = SQLQuestionPipeline(
+            sql_generator=sql_generator,
         )
     # =====================================================
     # PUBLIC
@@ -108,7 +109,7 @@ class AreaQuestionBuilder:
         # -------------------------------------------------
 
         if area == InterviewArea.TECH_DATABASE:
-            return self._build_sql_questions(
+            return self._sql_pipeline.build(
                 role=role,
                 level=level,
                 area=area,
@@ -127,31 +128,5 @@ class AreaQuestionBuilder:
             questions_per_area=questions_per_area,
         )
 
-    # =====================================================
-    # SQL PIPELINE
-    # =====================================================
-
-    def _build_sql_questions(
-        self,
-        role: RoleType,
-        level: SeniorityLevel,
-        area: InterviewArea,
-        questions_per_area: int,
-    ) -> List[Question]:
-
-        questions = self._sql_generator.generate(
-            role=role,
-            level=level,
-            n=questions_per_area,
-        )
-
-        if len(questions) < questions_per_area:
-            logger.warning(
-                f"[SQL] Area {area.value} produced "
-                f"{len(questions)} questions, "
-                f"expected {questions_per_area}"
-            )
-
-        return questions
 
 
