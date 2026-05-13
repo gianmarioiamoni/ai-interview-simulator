@@ -33,7 +33,6 @@ from services.question_intelligence.coding_question_generator import (
 )
 from services.question_intelligence.sql_question_generator import (
     SQLQuestionGenerator,
-    GeneratedSQLQuestion,
 )
 
 from app.settings.constants import QUESTIONS_PER_AREA

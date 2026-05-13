@@ -40,6 +40,10 @@ from services.question_intelligence.question_generator import (
     QuestionGenerator,
 )
 
+from services.question_intelligence.retrieval_query_builder import (
+    RetrievalQueryBuilder,
+)
+
 from app.settings.constants import QUESTIONS_PER_AREA
 
 
@@ -53,7 +57,7 @@ class WrittenQuestionPipeline:
 
         self._retrieval_service = retrieval_service
         self._generator = generator
-
+        self._retrieval_query_builder = RetrievalQueryBuilder()
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -74,10 +78,10 @@ class WrittenQuestionPipeline:
         # -------------------------------------------------
 
         retrieved = self._retrieval_service.retrieve(
-            query=self._build_retrieval_query(
-                role,
-                level,
-                area,
+            query=self._retrieval_query_builder.build(
+                role=role,
+                level=level,
+                area=area,
             ),
             k=questions_per_area,
             role=role.value,
@@ -122,27 +126,27 @@ class WrittenQuestionPipeline:
             total=questions_per_area,
         )
 
-    # =====================================================
-    # RETRIEVAL QUERY
-    # =====================================================
+    # # =====================================================
+    # # RETRIEVAL QUERY
+    # # =====================================================
 
-    def _build_retrieval_query(
-        self,
-        role: RoleType,
-        level: SeniorityLevel,
-        area: InterviewArea,
-    ) -> str:
+    # def _build_retrieval_query(
+    #     self,
+    #     role: RoleType,
+    #     level: SeniorityLevel,
+    #     area: InterviewArea,
+    # ) -> str:
 
-        return f"""
-        {role.value} {level.value} interview question
-        topic: {area.value}
+    #     return f"""
+    #     {role.value} {level.value} interview question
+    #     topic: {area.value}
 
-        Focus on:
-        - diverse concepts
-        - different problem types
-        - avoid repetition of API questions
-        - Ensure each question targets a DIFFERENT concept within the area
-        """
+    #     Focus on:
+    #     - diverse concepts
+    #     - different problem types
+    #     - avoid repetition of API questions
+    #     - Ensure each question targets a DIFFERENT concept within the area
+    #     """
 
     # =====================================================
     # MAPPERS
