@@ -8,7 +8,7 @@ from domain.contracts.shared.action_type import ActionType
 
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.runtime.interview_runtime import get_runtime_llm
-
+from app.ui.constants.loader_steps import LoaderStep
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 
 
@@ -38,7 +38,10 @@ def submit_answer(
     # ---------------------------------------------------------
     new_state.is_processing = True
     new_state.awaiting_user_input = False
+    new_state.current_step = LoaderStep.SUBMITTING
+    new_state.current_progress = 10
 
+    yield build_ui_response_from_state(new_state).to_gradio_outputs()
 
     # ---------------------------------------------------------
     # PREPARE ANSWER
