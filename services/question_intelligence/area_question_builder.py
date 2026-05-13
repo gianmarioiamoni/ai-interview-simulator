@@ -48,6 +48,10 @@ from services.question_intelligence.sql_question_generator import (
     SQLQuestionGenerator,
 )
 
+from services.question_intelligence.pipelines.written_question_pipeline import (
+    WrittenQuestionPipeline,
+)
+
 from app.settings.constants import QUESTIONS_PER_AREA
 
 logger = logging.getLogger(__name__)
@@ -67,7 +71,10 @@ class AreaQuestionBuilder:
         self._generator = generator
         self._coding_generator = coding_generator
         self._sql_generator = sql_generator
-
+        self._written_pipeline = WrittenQuestionPipeline(
+            retrieval_service=retrieval_service,
+            generator=generator,
+        )
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -109,7 +116,7 @@ class AreaQuestionBuilder:
         # WRITTEN
         # -------------------------------------------------
 
-        return self._build_written_questions(
+        return self._written_pipeline.build(
             role=role,
             level=level,
             interview_type=interview_type,
