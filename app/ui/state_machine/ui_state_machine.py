@@ -28,14 +28,14 @@ class UIStateMachine:
             print("→ resolved UI state: SETUP\n")
             return UIState.SETUP
 
-        # # PROCESSING
-        # if not state.awaiting_user_input:
-        #     print("→ resolved UI state: PROCESSING\n")
-        #     return UIState.PROCESSING
+        # PROCESSING
+        if not state.is_processing:
+            print("→ resolved UI state: PROCESSING\n")
+            return UIState.PROCESSING
 
         # FEEDBACK
         if (
-            state.awaiting_user_input
+            not state.is_processing
             and state.allowed_actions
             and state.last_feedback_bundle is not None
         ):

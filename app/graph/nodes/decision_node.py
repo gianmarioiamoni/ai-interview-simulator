@@ -66,6 +66,7 @@ class DecisionNode:
             update={
                 "awaiting_user_input": True,
                 "allowed_actions": allowed_actions,
-                "last_action": None,
+                "intent": ActionType.NONE,
+                "is_processing": False,
             }
         )

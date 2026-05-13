@@ -5,6 +5,7 @@ from domain.contracts.user.role import Role, RoleType
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.question.question import Question
 from domain.contracts.interview.interview_progress import InterviewProgress
+from domain.contracts.shared.action_type import ActionType
 
 
 class InterviewStateFactoryMixin:
@@ -79,5 +80,5 @@ class InterviewStateFactoryMixin:
             awaiting_user_input=False,
             allowed_actions=[],
             last_feedback_bundle=None,
-            last_action=None,
+            intent=ActionType.NONE,
         )
