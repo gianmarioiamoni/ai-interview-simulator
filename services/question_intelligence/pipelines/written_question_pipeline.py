@@ -42,7 +42,7 @@ from services.question_intelligence.question_generator import (
     QuestionGenerator,
 )
 
-from services.question_intelligence.retrieval.retrieval_query_builder import (
+from services.question_intelligence.retrieval_query_builder import (
     RetrievalQueryBuilder,
 )
 
