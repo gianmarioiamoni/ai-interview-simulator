@@ -2,7 +2,6 @@
 
 from typing import List
 import random
-import logging
 
 from domain.contracts.question.question import Question
 from domain.contracts.interview.interview_area import InterviewArea
@@ -22,7 +21,9 @@ from services.question_intelligence.quality.question_set_quality_analyzer import
 
 from app.settings.constants import QUESTIONS_PER_AREA
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class QuestionSetBuilder:

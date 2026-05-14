@@ -1,6 +1,5 @@
 # services/interview_evaluation/generators/narrative_generator.py
 
-import logging
 import json
 
 from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABELS
@@ -8,7 +7,9 @@ from domain.contracts.shared.performance_dimension_labels import DIMENSION_LABEL
 from app.prompts.prompt_loader import PromptLoader
 from app.prompts.prompt_renderer import PromptRenderer
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class NarrativeGenerator:

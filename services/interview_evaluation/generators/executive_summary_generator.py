@@ -1,8 +1,8 @@
 # services/interview_evaluation/generators/executive_summary_generator.py
 
-import logging
+from app.core.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ExecutiveSummaryGenerator:

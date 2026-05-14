@@ -1,6 +1,5 @@
 # services/question_intelligence/pipelines/sql_question_pipeline.py
 
-import logging
 
 from typing import List
 
@@ -22,7 +21,9 @@ from services.question_intelligence.sql_question_generator import (
     SQLQuestionGenerator,
 )
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SQLQuestionPipeline:

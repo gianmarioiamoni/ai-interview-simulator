@@ -3,7 +3,6 @@
 import sqlite3
 import time
 import traceback
-import logging
 
 from domain.contracts.question.question import Question
 from domain.contracts.execution.execution_result import (
@@ -19,7 +18,9 @@ from domain.contracts.execution.test_execution_result import (
 
 from services.sql_engine.sql_evaluator import SQLEvaluator
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SQLExecutor:

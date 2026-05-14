@@ -1,8 +1,8 @@
 # services/sql_engine/sql_evaluator.py
 
-import logging
+from app.core.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SQLEvaluator:

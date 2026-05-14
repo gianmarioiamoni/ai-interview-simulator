@@ -1,7 +1,6 @@
 # services/interview_evaluation_service.py
 
 from typing import List
-import logging
 
 from app.ports.llm_port import LLMPort
 
@@ -37,7 +36,9 @@ from services.interview_evaluation.generators.narrative_generator import (
 from services.feedback.signal_extractor import SignalExtractor
 from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class InterviewEvaluationService:

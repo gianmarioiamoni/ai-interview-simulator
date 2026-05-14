@@ -1,14 +1,15 @@
 # services/question_evaluation_service.py
 
 import json
-import logging
 import os
 
 from openai import OpenAI
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 MAX_RETRIES = 2
 

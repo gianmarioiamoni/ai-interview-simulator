@@ -1,7 +1,6 @@
 # services/question_intelligence/area_question_builder.py
 
 import uuid
-import logging
 
 from typing import List
 
@@ -52,7 +51,9 @@ from services.question_intelligence.pipelines.sql_question_pipeline import (
 
 from app.settings.constants import QUESTIONS_PER_AREA
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class AreaQuestionBuilder:
