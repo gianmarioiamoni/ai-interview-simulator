@@ -16,6 +16,10 @@ from services.question_intelligence.area_question_builder import (
     AreaQuestionBuilder,
 )
 
+from services.question_intelligence.quality.question_set_quality_analyzer import (
+    QuestionSetQualityAnalyzer,
+)
+
 from app.settings.constants import QUESTIONS_PER_AREA
 
 logger = logging.getLogger(__name__)
@@ -26,9 +30,11 @@ class QuestionSetBuilder:
         self,
         area_builder: AreaQuestionBuilder,
         deduplicator: SemanticDeduplicator,
+        quality_analyzer: QuestionSetQualityAnalyzer,
     ) -> None:
         self._area_builder = area_builder
         self._deduplicator = deduplicator
+        self._quality_analyzer = quality_analyzer
 
     # =========================================================
     # PUBLIC
@@ -133,6 +139,15 @@ class QuestionSetBuilder:
         # -----------------------------------------------------
 
         self._validate_no_duplicates(all_questions)
+
+        quality_report = self._quality_analyzer.analyze(all_questions)
+
+        logger.info(
+            f"[QUALITY] avg_similarity={quality_report.average_similarity:.2f} "
+            f"max_similarity={quality_report.max_similarity:.2f} "
+            f"duplicates={quality_report.duplicate_pairs} "
+            f"diversity={quality_report.diversity_score:.2f}"
+        )
 
         return all_questions
 
