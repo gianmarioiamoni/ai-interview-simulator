@@ -26,7 +26,9 @@ from domain.contracts.interview.interview_type import (
     InterviewType,
 )
 
-from domain.contracts.user.role import RoleType
+from domain.contracts.user.role import (
+    RoleType,
+)
 
 from domain.contracts.user.seniority_level import (
     SeniorityLevel,
@@ -40,11 +42,17 @@ from services.question_intelligence.question_generator import (
     QuestionGenerator,
 )
 
-from services.question_intelligence.retrieval_query_builder import (
+from services.question_intelligence.retrieval.retrieval_query_builder import (
     RetrievalQueryBuilder,
 )
 
-from app.settings.constants import QUESTIONS_PER_AREA
+from services.question_intelligence.retrieval.retrieval_strategy_resolver import (
+    RetrievalStrategyResolver,
+)
+
+from app.settings.constants import (
+    QUESTIONS_PER_AREA,
+)
 
 
 class WrittenQuestionPipeline:
@@ -57,7 +65,11 @@ class WrittenQuestionPipeline:
 
         self._retrieval_service = retrieval_service
         self._generator = generator
+
         self._retrieval_query_builder = RetrievalQueryBuilder()
+
+        self._retrieval_strategy_resolver = RetrievalStrategyResolver()
+
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -74,16 +86,32 @@ class WrittenQuestionPipeline:
         questions: List[Question] = []
 
         # -------------------------------------------------
+        # QUERY
+        # -------------------------------------------------
+
+        retrieval_query = self._retrieval_query_builder.build(
+            role=role,
+            level=level,
+            area=area,
+        )
+
+        # -------------------------------------------------
+        # STRATEGY
+        # -------------------------------------------------
+
+        retrieval_strategy = self._retrieval_strategy_resolver.resolve(
+            area=area,
+            level=level,
+            questions_per_area=questions_per_area,
+        )
+
+        # -------------------------------------------------
         # RETRIEVAL
         # -------------------------------------------------
 
         retrieved = self._retrieval_service.retrieve(
-            query=self._retrieval_query_builder.build(
-                role=role,
-                level=level,
-                area=area,
-            ),
-            k=questions_per_area,
+            query=retrieval_query,
+            retrieval_strategy=retrieval_strategy,
             role=role.value,
             level=level.value,
             interview_type=interview_type.value,
@@ -110,6 +138,7 @@ class WrittenQuestionPipeline:
             )
 
             for gen in generated:
+
                 questions.append(
                     self._map_generated_question(
                         generated=gen,
@@ -125,28 +154,6 @@ class WrittenQuestionPipeline:
             questions=questions,
             total=questions_per_area,
         )
-
-    # # =====================================================
-    # # RETRIEVAL QUERY
-    # # =====================================================
-
-    # def _build_retrieval_query(
-    #     self,
-    #     role: RoleType,
-    #     level: SeniorityLevel,
-    #     area: InterviewArea,
-    # ) -> str:
-
-    #     return f"""
-    #     {role.value} {level.value} interview question
-    #     topic: {area.value}
-
-    #     Focus on:
-    #     - diverse concepts
-    #     - different problem types
-    #     - avoid repetition of API questions
-    #     - Ensure each question targets a DIFFERENT concept within the area
-    #     """
 
     # =====================================================
     # MAPPERS
