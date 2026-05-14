@@ -148,7 +148,7 @@ class QuestionSetBuilder:
             f"avg_similarity={quality_report.similarity.average_similarity:.2f} "
             f"max_similarity={quality_report.similarity.max_similarity:.2f} "
             f"duplicates={quality_report.similarity.duplicate_pairs} "
-            f"diversity={quality_report.diversity.diversity_score:.2f}"
+            f"diversity={quality_report.diversity.diversity_score:.2f} "
             f"area_coverage={quality_report.coverage.area_coverage_score:.2f} "
             f"difficulty_balance={quality_report.coverage.difficulty_balance_score:.2f}"
         )
