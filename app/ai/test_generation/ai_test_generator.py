@@ -1,7 +1,6 @@
 # app/ai/test_generation/ai_test_generator.py
 
 import json
-import logging
 from typing import List, Any
 
 from pydantic import BaseModel, Field, ValidationError
@@ -15,8 +14,9 @@ from app.ai.test_generation.test_cache_service import TestCacheService
 from app.ai.test_generation.test_diversity_filter import TestDiversityFilter
 from app.prompts.prompt_loader import PromptLoader
 from app.prompts.prompt_renderer import PromptRenderer
+from app.core.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # =========================================================

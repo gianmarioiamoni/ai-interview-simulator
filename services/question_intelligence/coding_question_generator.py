@@ -1,7 +1,6 @@
 # services/question_intelligence/coding_question_generator.py
 
 import json
-import logging
 from typing import List
 from pydantic import BaseModel, Field, ValidationError
 
@@ -11,7 +10,9 @@ from domain.contracts.user.seniority_level import SeniorityLevel
 
 from app.ports.llm_port import LLMPort
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 # =========================================================

@@ -1,14 +1,15 @@
 # services/decision_engine/decision_engine.py
 
 from typing import Dict, Tuple, Optional
-import logging
 
 from domain.contracts.user.role import RoleType
 from domain.contracts.interview.hire_decision import HireDecision
 
 from services.decision_engine.decision_policy import POLICY
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class DecisionEngine:

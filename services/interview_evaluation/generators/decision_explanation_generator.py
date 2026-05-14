@@ -1,9 +1,10 @@
 # services/interview_evaluation/generators/decision_explanation_generator.py
 
-import logging
 from typing import Dict, List, Any
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class DecisionExplanationGenerator:

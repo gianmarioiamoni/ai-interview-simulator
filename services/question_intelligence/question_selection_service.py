@@ -1,7 +1,6 @@
 # services/question_intelligence/question_selection_service.py
 
 import uuid
-import logging
 
 from typing import List
 
@@ -37,7 +36,9 @@ from services.question_intelligence.sql_question_generator import (
 
 from app.settings.constants import QUESTIONS_PER_AREA
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class QuestionSelectionService:

@@ -1,7 +1,6 @@
 # services/question_intelligence/sql_question_generator.py
 
 import json
-import logging
 import uuid
 from typing import List
 from pydantic import BaseModel, Field, ValidationError
@@ -20,7 +19,9 @@ from app.ports.llm_port import LLMPort
 
 from services.sql_engine.sql_database import SQLDatabase
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 # =========================================================

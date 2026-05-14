@@ -1,7 +1,6 @@
 # services/narrative_service.py
 
 import json
-import logging
 from typing import List, Dict
 
 from app.ports.llm_port import LLMPort
@@ -15,7 +14,9 @@ from domain.contracts.feedback.decision_explanation_schema import (
     DecisionExplanationSchema,
 )
 
-logger = logging.getLogger(__name__)
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class NarrativeService:
