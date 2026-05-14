@@ -37,6 +37,10 @@ from infrastructure.vector_store.chroma_question_store import (
 
 from services.question_intelligence.semantic_deduplicator import SemanticDeduplicator
 
+from services.question_intelligence.quality.question_set_quality_analyzer import (
+    QuestionSetQualityAnalyzer,
+)
+
 from app.settings.constants import QUESTIONS_PER_AREA, DEDUPLICATION_THRESHOLD
 from app.ports.llm_port import LLMPort
 
@@ -53,6 +57,8 @@ class QuestionIntelligenceProvider:
         vector_store = QuestionVectorStore(chroma_store)
 
         retrieval_service = QuestionRetrievalService(vector_store)
+
+        quality_analyzer = QuestionSetQualityAnalyzer()
 
         # -----------------------------------------------------
         # Services (NO global LLM usage)
@@ -76,6 +82,7 @@ class QuestionIntelligenceProvider:
         question_set_builder = QuestionSetBuilder(
             area_builder=area_builder,
             deduplicator=deduplicator,
+            quality_analyzer=quality_analyzer,
         )
 
         self._service = QuestionIntelligenceService(question_set_builder=question_set_builder)
