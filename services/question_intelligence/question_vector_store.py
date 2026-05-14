@@ -40,10 +40,10 @@ class QuestionVectorStore:
             page_content=item.text,
             metadata={
                 "id": item.id,
-                "interview_type": item.interview_type,
-                "role": item.role,
-                "area": item.area,
-                "level": item.level,
+                "interview_type": item.interview_type.value,
+                "role": item.role.type.value,
+                "area": item.area.value,
+                "level": item.level.value,
                 "difficulty": item.difficulty,
             },
         )
