@@ -127,18 +127,18 @@ class QuestionRetrievalService:
     # MAPPER
     # =====================================================
 
-    def _to_domain(
-        self,
-        document: Document,
-    ) -> QuestionBankItem:
+    def _to_domain(self, document: Document) -> QuestionBankItem:
 
         metadata = document.metadata
 
+        
         return QuestionBankItem(
             id=metadata["id"],
             text=document.page_content,
             interview_type=metadata["interview_type"],
-            role=metadata["role"],
+            role={
+                "type": metadata["role"],
+            },
             area=metadata["area"],
             level=metadata["level"],
             difficulty=metadata["difficulty"],
