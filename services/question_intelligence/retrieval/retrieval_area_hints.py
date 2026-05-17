@@ -4,81 +4,80 @@ from domain.contracts.interview.interview_area import (
     InterviewArea,
 )
 
+
 AREA_HINTS = {
     # =====================================================
-    # HR
+    # TECHNICAL KNOWLEDGE
     # =====================================================
-    InterviewArea.HR_BACKGROUND: [
-        "career growth",
-        "past experience",
-        "technical ownership",
-        "project challenges",
-        "professional achievements",
-    ],
-    InterviewArea.HR_TECHNICAL_KNOWLEDGE: [
-        "technical communication",
-        "technology decisions",
-        "engineering practices",
-        "cross-functional collaboration",
-        "technical trade-offs",
-    ],
-    InterviewArea.HR_SITUATIONAL: [
-        "conflict resolution",
-        "team collaboration",
-        "leadership",
-        "stakeholder management",
-        "difficult situations",
-    ],
-    InterviewArea.HR_BRAIN_TEASER: [
-        "logical reasoning",
-        "problem decomposition",
-        "creative thinking",
-        "analytical thinking",
-        "edge-case reasoning",
-    ],
-    InterviewArea.HR_ANALYTICAL: [
-        "data-driven thinking",
-        "root cause analysis",
-        "decision making",
-        "critical thinking",
-        "structured reasoning",
-    ],
-    # =====================================================
-    # TECH
-    # =====================================================
-    InterviewArea.TECH_BACKGROUND: [
-        "past architecture decisions",
-        "production experience",
-        "scalability challenges",
-        "technical ownership",
-        "system evolution",
-    ],
     InterviewArea.TECH_TECHNICAL_KNOWLEDGE: [
-        "backend architecture",
-        "frontend architecture",
-        "API design",
-        "performance optimization",
-        "engineering best practices",
-    ],
-    InterviewArea.TECH_CASE_STUDY: [
-        "distributed systems",
-        "system scalability",
+        "rest",
+        "graphql",
+        "react",
+        "hooks",
+        "reconciliation",
+        "docker",
+        "kubernetes",
+        "authentication",
+        "authorization",
+        "ci/cd",
+        "websocket",
+        "redis",
         "microservices",
-        "fault tolerance",
-        "high availability",
+        "eventual consistency",
+        "cap theorem",
+        "message queues",
+        "api versioning",
+        "cdn",
+        "rate limiting",
+        "memoization",
     ],
+    # =====================================================
+    # DATABASE
+    # =====================================================
     InterviewArea.TECH_DATABASE: [
-        "SQL joins",
-        "query optimization",
+        "sql",
+        "database",
         "indexing",
+        "query optimization",
+        "joins",
+        "transactions",
+        "aggregation",
+        "normalization",
+        "sharding",
+        "connection pooling",
+        "locking",
+        "distributed transactions",
+        "query performance",
         "data modeling",
-        "aggregation queries",
     ],
+    # =====================================================
+    # CASE STUDY
+    # =====================================================
+    InterviewArea.TECH_CASE_STUDY: [
+        "design",
+        "scalable",
+        "architecture",
+        "system design",
+        "chat application",
+        "url shortener",
+        "notification system",
+        "load balancing",
+        "horizontal scaling",
+        "distributed systems",
+        "production systems",
+        "real-world scenario",
+    ],
+    # =====================================================
+    # CODING
+    # =====================================================
     InterviewArea.TECH_CODING: [
-        "algorithms",
-        "data structures",
-        "edge cases",
-        "performance optimization",
+        "algorithm",
+        "coding",
+        "implementation",
+        "function",
+        "complexity",
+        "leetcode",
         "problem solving",
+        "optimization",
     ],
 }

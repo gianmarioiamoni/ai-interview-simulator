@@ -2,14 +2,18 @@
 
 from pydantic import BaseModel
 
+from domain.contracts.user.role import RoleType
+from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.user.seniority_level import SeniorityLevel
+
 
 class NormalizedQuestionRecord(BaseModel):
 
     text: str
 
-    role_hint: str | None = None
-    area_hint: str | None = None
-    level_hint: str | None = None
+    role_hint: RoleType | None = None
+    area_hint: InterviewArea | None = None
+    level_hint: SeniorityLevel | None = None
 
     difficulty_hint: int | None = None
 

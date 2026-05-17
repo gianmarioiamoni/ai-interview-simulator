@@ -6,6 +6,30 @@ from services.question_ingestion.contracts import (
     NormalizedQuestionRecord,
 )
 
+from domain.contracts.user.role import (
+    RoleType,
+)
+
+from domain.contracts.interview.interview_area import (
+    InterviewArea,
+)
+
+from services.question_intelligence.retrieval.retrieval_role_hints import (
+    ROLE_HINTS,
+)
+
+from services.question_intelligence.retrieval.retrieval_area_hints import (
+    AREA_HINTS,
+)
+
+from services.question_intelligence.retrieval.retrieval_level_hints import (
+    LEVEL_HINTS,
+)
+
+from domain.contracts.user.seniority_level import (
+    SeniorityLevel,
+)
+
 
 class QuestionMetadataClassifier:
 
@@ -42,35 +66,28 @@ class QuestionMetadataClassifier:
     def _infer_role(
         self,
         text: str,
-    ) -> str | None:
+    ) -> RoleType | None:
 
         lower = text.lower()
 
-        if any(
-            k in lower
-            for k in [
-                "react",
-                "frontend",
-                "css",
-                "browser",
-                "ui",
-            ]
-        ):
-            return "frontend_engineer"
+        best_match = None
+        best_score = 0
 
-        if any(
-            k in lower
-            for k in [
-                "api",
-                "database",
-                "backend",
-                "microservice",
-                "sql",
-            ]
-        ):
-            return "backend_engineer"
+        for role, hints in ROLE_HINTS.items():
 
-        return None
+            score = sum(
+                1 for hint in hints
+                if hint.lower() in lower
+            )
+
+            if score > best_score:
+                best_score = score
+                best_match = role
+
+        if best_match is None:
+            return None
+
+        return best_match
 
     # =====================================================
     # AREA
@@ -79,44 +96,28 @@ class QuestionMetadataClassifier:
     def _infer_area(
         self,
         text: str,
-    ) -> str | None:
+    ) -> InterviewArea | None:
 
         lower = text.lower()
 
-        if any(
-            k in lower
-            for k in [
-                "database",
-                "sql",
-                "index",
-                "join",
-            ]
-        ):
-            return "technical_database"
+        best_match = None
+        best_score = 0
 
-        if any(
-            k in lower
-            for k in [
-                "architecture",
-                "scalability",
-                "distributed",
-                "microservice",
-            ]
-        ):
-            return "technical_case_study"
+        for area, hints in AREA_HINTS.items():
 
-        if any(
-            k in lower
-            for k in [
-                "react",
-                "api",
-                "rest",
-                "graphql",
-            ]
-        ):
-            return "technical_technical_knowledge"
+            score = sum(
+                1 for hint in hints
+                if hint.lower() in lower
+            )
 
-        return None
+            if score > best_score:
+                best_score = score
+                best_match = area
+
+        if best_match is None:
+            return None
+
+        return best_match
 
     # =====================================================
     # LEVEL
@@ -125,22 +126,20 @@ class QuestionMetadataClassifier:
     def _infer_level(
         self,
         text: str,
-    ) -> str | None:
+    ) -> SeniorityLevel | None:
 
         lower = text.lower()
 
-        advanced_terms = [
-            "distributed",
-            "scalability",
-            "optimization",
-            "performance",
-            "architecture",
-        ]
+        senior_score = sum(
+            1 for hint in LEVEL_HINTS[SeniorityLevel.SENIOR]
+            if hint.lower() in lower
+        )
 
-        if any(k in lower for k in advanced_terms):
-            return "senior"
 
-        return "mid"
+        if senior_score > 0:
+            return SeniorityLevel.SENIOR
+
+        return SeniorityLevel.MID
 
     # =====================================================
     # DIFFICULTY
