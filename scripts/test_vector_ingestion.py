@@ -28,6 +28,10 @@ from services.question_ingestion.indexers.question_vector_indexer import (
     QuestionVectorIndexer,
 )
 
+from services.question_ingestion.diagnostics.ingestion_diagnostics_builder import (
+    IngestionDiagnosticsBuilder,
+)
+
 
 def main():
 
@@ -95,13 +99,27 @@ def main():
     )
 
     # -------------------------------------------------
+    # DIAGNOSTICS
+    # -------------------------------------------------
+
+    diagnostics_builder = IngestionDiagnosticsBuilder()
+
+    diagnostics = diagnostics_builder.build(
+        raw_records=raw_records,
+        normalized_records=normalized,
+        classified_records=classified,
+        mapped_items=items,
+        indexed_records=indexed,
+    )
+
+    # -------------------------------------------------
     # OUTPUT
     # -------------------------------------------------
 
     print()
-
-    print("INDEXED DOCUMENTS:", indexed)
-
+    print("INGESTION DIAGNOSTICS")
+    print()
+    print(diagnostics.model_dump_json(indent=2))
     print()
 
 
