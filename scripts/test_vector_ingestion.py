@@ -38,8 +38,8 @@ def main():
     loader = JSONDatasetLoader()
 
     raw_records = loader.load(
-        dataset_path="datasets/sample_questions.json",
-        source="sample_dataset",
+        dataset_path="datasets/seed_questions.json",
+        source="seed_dataset",
     )
 
     # -------------------------------------------------
