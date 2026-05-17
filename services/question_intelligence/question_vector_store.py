@@ -23,6 +23,9 @@ class QuestionVectorStore:
         documents = [self._to_document(item) for item in items]
         self._vector_store.add_documents(documents)
 
+    def reset(self) -> None:
+        self._vector_store.reset_collection()
+
     def similarity_search(
         self,
         query: str,
