@@ -30,9 +30,22 @@ class ChromaQuestionStore:
             persist_directory=str(self.PERSIST_DIR),
         )
 
+    
     def add_documents(self, documents: list[Document]) -> None:
         self._store.add_documents(documents)
 
+    
+    def reset_collection(self) -> None:
+
+        self._store.delete_collection()
+
+        self._store = Chroma(
+            collection_name=self.COLLECTION_NAME,
+            embedding_function=self._embedding_model,
+            persist_directory=str(self.PERSIST_DIR),
+        )
+
+    
     def similarity_search(
         self,
         query: str,
