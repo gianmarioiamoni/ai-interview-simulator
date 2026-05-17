@@ -4,54 +4,140 @@ from domain.contracts.user.role import (
     RoleType,
 )
 
+
 ROLE_HINTS = {
+    # =====================================================
+    # BACKEND
+    # =====================================================
     RoleType.BACKEND_ENGINEER: [
-        "API design",
-        "distributed systems",
-        "database performance",
-        "backend scalability",
+        "backend",
+        "api",
+        "rest",
+        "graphql",
+        "database",
+        "sql",
+        "query",
+        "indexing",
+        "transactions",
+        "connection pooling",
         "microservices",
+        "distributed systems",
+        "eventual consistency",
+        "caching",
+        "redis",
+        "message queues",
+        "rate limiting",
+        "authentication",
+        "authorization",
+        "scalability",
+        "load balancing",
+        "websocket",
+        "server",
     ],
+    # =====================================================
+    # FRONTEND
+    # =====================================================
     RoleType.FRONTEND_ENGINEER: [
-        "React",
-        "rendering optimization",
+        "frontend",
+        "react",
+        "hooks",
+        "reconciliation",
+        "rendering",
+        "ui",
+        "ux",
+        "component",
         "state management",
-        "frontend architecture",
-        "browser performance",
+        "memoization",
+        "css",
+        "browser",
+        "dom",
+        "javascript",
+        "typescript",
+        "client-side",
+        "server-side rendering",
     ],
+    # =====================================================
+    # FULLSTACK
+    # =====================================================
     RoleType.FULLSTACK_ENGINEER: [
-        "frontend/backend integration",
-        "end-to-end architecture",
-        "API communication",
-        "fullstack scalability",
-        "cross-layer debugging",
+        "fullstack",
+        "web application",
+        "authentication",
+        "api",
+        "frontend",
+        "backend",
+        "database",
+        "deployment",
+        "integration",
+        "architecture",
     ],
+    # =====================================================
+    # DEVOPS
+    # =====================================================
     RoleType.DEVOPS_ENGINEER: [
-        "CI/CD",
-        "infrastructure as code",
+        "docker",
+        "kubernetes",
+        "deployment",
+        "ci/cd",
+        "pipeline",
+        "infrastructure",
+        "terraform",
+        "monitoring",
         "observability",
-        "Kubernetes",
-        "cloud infrastructure",
+        "container",
+        "orchestration",
+        "cloud",
+        "load balancing",
+        "autoscaling",
+        "devops",
     ],
+    # =====================================================
+    # DATA
+    # =====================================================
     RoleType.DATA_ENGINEER: [
-        "data pipelines",
-        "ETL systems",
-        "distributed processing",
-        "data warehousing",
-        "streaming systems",
+        "etl",
+        "data pipeline",
+        "data warehouse",
+        "spark",
+        "hadoop",
+        "batch processing",
+        "streaming",
+        "data modeling",
+        "aggregation",
+        "analytics",
+        "big data",
     ],
+    # =====================================================
+    # ML
+    # =====================================================
     RoleType.ML_ENGINEER: [
-        "ML pipelines",
-        "model deployment",
+        "machine learning",
+        "ml",
+        "training",
+        "inference",
+        "model serving",
         "feature engineering",
-        "training infrastructure",
-        "inference optimization",
+        "embeddings",
+        "neural network",
+        "llm",
+        "rag",
+        "vector database",
+        "fine-tuning",
     ],
+    # =====================================================
+    # QA
+    # =====================================================
     RoleType.QA_ENGINEER: [
+        "testing",
+        "qa",
         "test automation",
         "integration testing",
-        "quality engineering",
-        "test strategy",
-        "edge case validation",
+        "unit testing",
+        "e2e",
+        "selenium",
+        "cypress",
+        "playwright",
+        "quality assurance",
+        "regression testing",
     ],
 }
