@@ -38,7 +38,11 @@ class QuestionVectorStore:
             filter=metadata_filter,
         )
 
-    def _to_document(self, item: QuestionBankItem) -> Document:
+    def _to_document(
+        self,
+        item: QuestionBankItem,
+    ) -> Document:
+        
         return Document(
             page_content=item.text,
             metadata={
