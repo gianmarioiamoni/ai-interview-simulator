@@ -66,19 +66,12 @@ class RetrievalReranker:
                 )
             )
 
-            if final_score > 0.4:
-
-                selected.append(item)
-
-            if len(selected) >= target_count:
-                break
-
         results.sort(
             key=lambda r: r.final_score,
             reverse=True,
         )
 
-        return results[:target_count]
+        return results
 
     # =====================================================
     # INTERNALS

@@ -37,7 +37,7 @@ class CoverageConstrainedReranker:
         self,
         items: List[QuestionBankItem],
         target_count: int,
-        max_per_topic: int = DEFAULT_MAX_PER_TOPIC,
+        max_per_topic: int,
     ) -> List[RerankedResult]:
 
         reranked = self._base_reranker.rerank(
