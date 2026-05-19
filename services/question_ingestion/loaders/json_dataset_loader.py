@@ -40,6 +40,8 @@ class JSONDatasetLoader:
             records.append(
                 RawQuestionRecord(
                     source=source,
+                    source_type="json",
+                    dataset_version="v1",
                     raw_payload=item,
                 )
             )

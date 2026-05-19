@@ -43,6 +43,8 @@ class CSVDatasetLoader:
                 records.append(
                     RawQuestionRecord(
                         source=source,
+                        source_type="csv",
+                        dataset_version="v1",
                         raw_payload=dict(row),
                     )
                 )

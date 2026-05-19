@@ -54,6 +54,8 @@ class JSONLDatasetLoader:
                 records.append(
                     RawQuestionRecord(
                         source=source,
+                        source_type="jsonl",
+                        dataset_version="v1",
                         raw_payload=item,
                     )
                 )
