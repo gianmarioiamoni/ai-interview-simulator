@@ -110,6 +110,15 @@ def main():
             indent=2,
         )
     )
+    
+    print()
+    print("VALIDATION")
+    print()
+    print(
+        result.validation_result.model_dump_json(
+            indent=2,
+        )
+    )
 
     print()
 

@@ -14,6 +14,10 @@ from services.interview_selection.adaptive_interview_result import (
     AdaptiveInterviewResult,
 )
 
+from services.planning_validation.validation_result import (
+    ValidationResult,
+)
+
 
 class OrchestrationResult(BaseModel):
 
@@ -22,6 +26,8 @@ class OrchestrationResult(BaseModel):
     planning_result: PlanningResult
 
     assembly_result: AdaptiveInterviewResult
+
+    validation_result: ValidationResult
 
     model_config = {
         "frozen": True,
