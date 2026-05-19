@@ -8,7 +8,9 @@ from typing import List
 from services.question_ingestion.contracts import (
     RawQuestionRecord,
 )
-
+from services.question_ingestion.adapters.generic_dataset_adapter import (
+    GenericDatasetAdapter,
+)
 
 class CSVDatasetLoader:
 
@@ -30,6 +32,8 @@ class CSVDatasetLoader:
 
         records: List[RawQuestionRecord] = []
 
+        adapter = GenericDatasetAdapter()
+
         with open(
             path,
             "r",
@@ -41,11 +45,11 @@ class CSVDatasetLoader:
             for row in reader:
 
                 records.append(
-                    RawQuestionRecord(
+                    adapter.adapt(
+                        payload=dict(row),
                         source=source,
                         source_type="csv",
                         dataset_version="v1",
-                        raw_payload=dict(row),
                     )
                 )
 

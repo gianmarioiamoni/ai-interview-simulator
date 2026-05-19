@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import List
 
 from services.question_ingestion.contracts import RawQuestionRecord
+from services.question_ingestion.adapters.generic_dataset_adapter import (
+    GenericDatasetAdapter,
+)
 
 class JSONDatasetLoader:
 
@@ -30,6 +33,8 @@ class JSONDatasetLoader:
         if not isinstance(raw_data, list):
             raise ValueError("Dataset root must be a JSON array")
 
+        adapter = GenericDatasetAdapter()
+
         records: List[RawQuestionRecord] = []
 
         for item in raw_data:
@@ -38,11 +43,11 @@ class JSONDatasetLoader:
                 continue
 
             records.append(
-                RawQuestionRecord(
+                adapter.adapt(
+                    payload=item,
                     source=source,
                     source_type="json",
                     dataset_version="v1",
-                    raw_payload=item,
                 )
             )
 
