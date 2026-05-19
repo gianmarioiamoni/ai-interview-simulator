@@ -5,10 +5,7 @@ import json
 from pathlib import Path
 from typing import List
 
-from services.question_ingestion.contracts import (
-    RawQuestionRecord,
-)
-
+from services.question_ingestion.contracts import RawQuestionRecord
 
 class JSONDatasetLoader:
 

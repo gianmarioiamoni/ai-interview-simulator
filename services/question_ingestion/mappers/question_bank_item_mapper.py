@@ -113,6 +113,7 @@ class QuestionBankItemMapper:
             area=area,
             level=level,
             difficulty=difficulty,
+            ingestion_metadata=record.ingestion_metadata,
         )
 
     # =====================================================

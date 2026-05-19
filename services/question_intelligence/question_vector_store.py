@@ -42,7 +42,7 @@ class QuestionVectorStore:
         self,
         item: QuestionBankItem,
     ) -> Document:
-        
+
         return Document(
             page_content=item.text,
             metadata={
@@ -52,6 +52,9 @@ class QuestionVectorStore:
                 "area": item.area.value,
                 "level": item.level.value,
                 "difficulty": item.difficulty,
+                "source_name": (item.ingestion_metadata.source_name),
+                "source_type": (item.ingestion_metadata.source_type),
+                "dataset_version": (item.ingestion_metadata.dataset_version),
             },
         )
 
