@@ -1,6 +1,10 @@
-# services/question_quality/technical_question_filter.py
+# services/question_intelligence/technical_question_filter.py
 
 import re
+
+from services.question_intelligence.quality.contracts import (
+    TechnicalFilterResult,
+)
 
 class TechnicalQuestionFilter:
 
@@ -134,21 +138,65 @@ class TechnicalQuestionFilter:
     # PUBLIC
     # =====================================================
 
+    def evaluate(
+        self,
+        text: str,
+    ) -> TechnicalFilterResult:
+
+        normalized = self._normalize_text(text)
+
+        matched_categories = self.matching_categories(normalized)
+
+        matched_terms = [
+            term
+            for term in self.ALL_TERMS
+            if self._contains_term(
+                normalized,
+                term,
+            )
+        ]
+
+        # -------------------------------------------------
+        # SCORING
+        # -------------------------------------------------
+
+        category_score = len(matched_categories) * 0.25
+
+        term_score = min(
+            len(matched_terms) * 0.10,
+            0.5,
+        )
+
+        score = min(
+            category_score + term_score,
+            1.0,
+        )
+
+        return TechnicalFilterResult(
+            is_technical=(score >= 0.25),
+            score=round(
+                score,
+                2,
+            ),
+            matched_categories=(matched_categories),
+            matched_terms=(matched_terms),
+        )
+
+    
     def is_technical(
         self,
         text: str,
     ) -> bool:
 
-        normalized = text.lower()
-
-        return any(
-            self._contains_term(
-                normalized,
-                keyword,
-            )
-            for keyword in (self.ALL_TERMS)
+        result = self.evaluate(
+            text
         )
 
+        return (
+            result.is_technical
+        )
+
+    
     def matching_categories(
         self,
         text: str,
@@ -187,7 +235,7 @@ class TechnicalQuestionFilter:
 
         return categories
 
-    #    # =====================================================
+    # =====================================================
     # HELPERS
     # =====================================================
 

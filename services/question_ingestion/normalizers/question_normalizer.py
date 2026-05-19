@@ -32,7 +32,7 @@ from services.question_ingestion.contracts.normalization_diagnostics import (
     NormalizationDiagnostics,
 )
 
-from services.question_quality.technical_question_filter import (
+from services.question_intelligence.technical_question_filter import (
     TechnicalQuestionFilter,
 )
 
