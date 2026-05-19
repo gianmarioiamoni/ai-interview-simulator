@@ -1,4 +1,4 @@
-# services/question_ingestion/adapters/generic_dataset_adapter.py
+# services/question_ingestion/adapters/system_design_dataset_adapter.py
 
 from services.question_ingestion.adapters.dataset_adapter import (
     DatasetAdapter,
@@ -9,7 +9,7 @@ from services.question_ingestion.contracts import (
 )
 
 
-class GenericDatasetAdapter(DatasetAdapter):
+class SystemDesignDatasetAdapter(DatasetAdapter):
 
     # =====================================================
     # PUBLIC
@@ -23,14 +23,8 @@ class GenericDatasetAdapter(DatasetAdapter):
         dataset_version: str,
     ) -> RawQuestionRecord:
 
-        # TODO:
-        # add semantic tag normalization
-        # add skill extraction
-        # add taxonomy alignment
-        # add difficulty normalization
-
         canonical_payload = {
-            "text": (payload.get("prompt") or payload.get("question") or ""),
+            "text": payload.get("prompt"),
             "role": payload.get("role"),
             "area": payload.get("area"),
             "level": payload.get("level"),
