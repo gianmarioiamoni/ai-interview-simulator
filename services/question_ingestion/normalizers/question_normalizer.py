@@ -22,6 +22,10 @@ from services.question_ingestion.contracts import (
 
 from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
 
+from services.question_quality.technical_question_filter import (
+    TechnicalQuestionFilter,
+)
+
 class QuestionNormalizer:
 
     # =====================================================
@@ -34,10 +38,14 @@ class QuestionNormalizer:
     ) -> List[NormalizedQuestionRecord]:
 
         normalized: List[NormalizedQuestionRecord] = []
+        technical_filter = TechnicalQuestionFilter()
 
         for record in records:
 
-            item = self._normalize_record(record)
+            item = self._normalize_record(
+                record=record,
+                technical_filter=technical_filter,
+            )
 
             if item is not None:
                 normalized.append(item)
@@ -51,6 +59,7 @@ class QuestionNormalizer:
     def _normalize_record(
         self,
         record: RawQuestionRecord,
+        technical_filter: TechnicalQuestionFilter
     ) -> NormalizedQuestionRecord | None:
 
         payload = record.canonical_payload
@@ -59,11 +68,14 @@ class QuestionNormalizer:
         # TEXT EXTRACTION
         # -------------------------------------------------
 
-        # text = payload.get("question")
-        # text = self._extract_text(
-        #     payload,
-        # )
         text = payload.get("text")
+
+        # -------------------------------------------------
+        # TECHNICAL DOMAIN FILTER
+        # -------------------------------------------------
+
+        if not technical_filter.is_technical(text):
+            return None
         # TODO:
         # add structured normalization rejection reporting
         # to track why records are discarded
@@ -165,5 +177,3 @@ class QuestionNormalizer:
     ) -> str:
 
         return " ".join(text.split())
-
-    
