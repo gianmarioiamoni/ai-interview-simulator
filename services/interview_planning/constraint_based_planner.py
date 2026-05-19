@@ -1,0 +1,125 @@
+# services/interview_planning/constraint_based_planner.py
+
+from collections import defaultdict
+
+from domain.contracts.question.question_bank_item import (
+    QuestionBankItem,
+)
+
+from services.interview_planning.interview_constraints import (
+    InterviewConstraints,
+)
+
+from services.interview_planning.planning_result import (
+    PlanningResult,
+)
+
+
+class ConstraintBasedPlanner:
+
+    # =====================================================
+    # PUBLIC
+    # =====================================================
+
+    def plan(
+        self,
+        items: list[QuestionBankItem],
+        constraints: InterviewConstraints,
+    ) -> PlanningResult:
+
+        selected: list[QuestionBankItem] = []
+
+        area_counts = defaultdict(int)
+
+        # -------------------------------------------------
+        # REQUIRED AREAS FIRST
+        # -------------------------------------------------
+
+        for area in constraints.required_areas:
+
+            candidates = [item for item in items if (item.area.value == area)]
+
+            if not candidates:
+                continue
+
+            best = max(
+                candidates,
+                key=lambda q: (q.difficulty),
+            )
+
+            selected.append(best)
+
+            area_counts[area] += 1
+
+        # -------------------------------------------------
+        # FILL REMAINING
+        # -------------------------------------------------
+
+        remaining = sorted(
+            [item for item in items if (item.id not in {q.id for q in selected})],
+            key=lambda q: (q.difficulty),
+            reverse=True,
+        )
+
+        for item in remaining:
+
+            area = item.area.value
+
+            if area in constraints.excluded_areas:
+                continue
+
+            if area_counts[area] >= constraints.max_questions_per_area:
+                continue
+
+            selected.append(item)
+
+            area_counts[area] += 1
+
+            if len(selected) >= constraints.minimum_total_questions:
+                break
+
+        average_difficulty = sum(q.difficulty for q in selected) / max(
+            len(selected),
+            1,
+        )
+
+        satisfied = []
+        violated = []
+
+        # -------------------------------------------------
+        # REQUIRED AREAS
+        # -------------------------------------------------
+
+        selected_areas = {q.area.value for q in selected}
+
+        for area in constraints.required_areas:
+
+            if area in selected_areas:
+
+                satisfied.append(f"required_area:{area}")
+
+            else:
+
+                violated.append(f"required_area:{area}")
+
+        # -------------------------------------------------
+        # MIN DIFFICULTY
+        # -------------------------------------------------
+
+        if average_difficulty >= constraints.minimum_average_difficulty:
+
+            satisfied.append("minimum_average_difficulty")
+
+        else:
+
+            violated.append("minimum_average_difficulty")
+
+        return PlanningResult(
+            selected_questions=selected,
+            satisfied_constraints=satisfied,
+            violated_constraints=violated,
+            average_difficulty=round(
+                average_difficulty,
+                2,
+            ),
+        )
