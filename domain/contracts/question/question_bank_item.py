@@ -1,9 +1,13 @@
+# domain/contracts/question/question_bank_item.py
+
 from pydantic import BaseModel, Field
 
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import Role
 from domain.contracts.user.seniority_level import SeniorityLevel
+
+from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
 
 
 class QuestionBankItem(BaseModel):
@@ -16,6 +20,8 @@ class QuestionBankItem(BaseModel):
 
     level: SeniorityLevel
     difficulty: int = Field(..., ge=1, le=5)
+
+    ingestion_metadata: IngestionMetadata
 
     model_config = {
         "frozen": True,

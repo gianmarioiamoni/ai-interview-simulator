@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from domain.contracts.user.role import RoleType
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.user.seniority_level import SeniorityLevel
+from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
 
 
 class NormalizedQuestionRecord(BaseModel):
@@ -16,6 +17,8 @@ class NormalizedQuestionRecord(BaseModel):
     level_hint: SeniorityLevel | None = None
 
     difficulty_hint: int | None = None
+
+    ingestion_metadata: IngestionMetadata
 
     source: str
 
