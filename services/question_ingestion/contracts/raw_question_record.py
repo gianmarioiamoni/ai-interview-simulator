@@ -11,6 +11,7 @@ class RawQuestionRecord(BaseModel):
 
     dataset_version: str
 
+    canonical_payload: dict
     raw_payload: dict
 
     model_config = {

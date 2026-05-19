@@ -21,12 +21,45 @@ def main() -> None:
 
     dataset_path = "datasets/external/system_design_dataset.json"
 
-    loader = JSONDatasetLoader()
-
-    raw_records = loader.load(
-        dataset_path=dataset_path,
-        source="system_design_dataset",
+    from services.question_ingestion.adapters.system_design_dataset_adapter import (
+        SystemDesignDatasetAdapter,
     )
+
+    from services.question_ingestion.contracts import (
+        RawQuestionRecord,
+    )
+
+
+    # =====================================================
+    # LOAD RAW JSON
+    # =====================================================
+
+    with open(
+        dataset_path,
+        "r",
+        encoding="utf-8",
+    ) as f:
+
+        raw_data = json.load(f)
+
+    # =====================================================
+    # ADAPTER
+    # =====================================================
+
+    adapter = SystemDesignDatasetAdapter()
+
+    raw_records: list[RawQuestionRecord] = []
+
+    for item in raw_data:
+
+        raw_records.append(
+            adapter.adapt(
+                payload=item,
+                source="system_design_dataset",
+                source_type="json",
+                dataset_version="v1",
+            )
+        )
 
     print()
     print("RAW RECORDS")

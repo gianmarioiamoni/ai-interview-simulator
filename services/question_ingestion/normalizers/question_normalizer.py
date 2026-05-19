@@ -53,16 +53,17 @@ class QuestionNormalizer:
         record: RawQuestionRecord,
     ) -> NormalizedQuestionRecord | None:
 
-        payload = record.raw_payload
+        payload = record.canonical_payload
 
         # -------------------------------------------------
         # TEXT EXTRACTION
         # -------------------------------------------------
 
         # text = payload.get("question")
-        text = self._extract_text(
-            payload,
-        )
+        # text = self._extract_text(
+        #     payload,
+        # )
+        text = payload.get("text")
         # TODO:
         # add structured normalization rejection reporting
         # to track why records are discarded
@@ -165,27 +166,4 @@ class QuestionNormalizer:
 
         return " ".join(text.split())
 
-    def _extract_text(
-        self,
-        payload: dict,
-    ) -> str | None:
-
-        candidate_fields = [
-            "question",
-            "prompt",
-            "text",
-            "content",
-            "body",
-        ]
-
-        for field in candidate_fields:
-
-            value = payload.get(field)
-
-            if (
-                isinstance(value, str)
-                and value.strip()
-            ):
-                return value.strip()
-
-        return None
+    
