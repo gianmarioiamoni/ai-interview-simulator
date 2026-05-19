@@ -12,9 +12,26 @@ from services.question_ingestion.normalizers.question_normalizer import (
     QuestionNormalizer,
 )
 
+from services.question_ingestion.dataset_registry_loader import (
+    DatasetRegistryLoader,
+)
+
+from services.question_ingestion.adapters.adapter_registry import (
+    AdapterRegistry,
+)
+
 
 def main() -> None:
+    # =====================================================
+    # DATASET CONFIG
+    # =====================================================
 
+    dataset_name = "system_design_dataset"
+
+    dataset_path = (
+    "datasets/external/" 
+    "system_design_dataset.json"
+    )
     # =====================================================
     # LOAD DATASET
     # =====================================================
@@ -29,7 +46,36 @@ def main() -> None:
         RawQuestionRecord,
     )
 
+    # =====================================================
+    # LOAD DATASET REGISTRY
+    # =====================================================
 
+    registry_loader = DatasetRegistryLoader()
+
+    descriptors = registry_loader.load(path=("datasets/" "dataset_registry.json"))
+
+    descriptor = next(
+        (item for item in descriptors if item.name == dataset_name),
+        None,
+    )
+
+    if descriptor is None:
+
+        raise ValueError(
+            (
+                "Dataset descriptor " 
+                "not found: " 
+                f"{dataset_name}"
+            )
+        )
+    # =====================================================
+    # RESOLVE ADAPTER
+    # =====================================================
+
+    adapter_registry = AdapterRegistry()
+
+    adapter = adapter_registry.get(descriptor.adapter_name)
+    
     # =====================================================
     # LOAD RAW JSON
     # =====================================================
@@ -46,8 +92,6 @@ def main() -> None:
     # ADAPTER
     # =====================================================
 
-    adapter = SystemDesignDatasetAdapter()
-
     raw_records: list[RawQuestionRecord] = []
 
     for item in raw_data:
@@ -55,8 +99,8 @@ def main() -> None:
         raw_records.append(
             adapter.adapt(
                 payload=item,
-                source="system_design_dataset",
-                source_type="json",
+                source=descriptor.name,
+                source_type=descriptor.source_type,
                 dataset_version="v1",
             )
         )
