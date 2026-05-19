@@ -19,6 +19,8 @@ class DatasetDescriptor(BaseModel):
 
     trusted: bool
 
+    adapter_name: str
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
