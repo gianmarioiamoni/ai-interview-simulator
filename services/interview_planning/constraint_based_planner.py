@@ -31,6 +31,8 @@ class ConstraintBasedPlanner:
 
     AREA_SATURATION_BASE_PENALTY = 3.0
 
+    MINIMUM_CANDIDATE_SCORE = 0.0
+
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -215,6 +217,21 @@ class ConstraintBasedPlanner:
                 )
             )
 
+
+            # -------------------------------------------------
+            # QUALITY THRESHOLD
+            # -------------------------------------------------
+
+            if score < self.MINIMUM_CANDIDATE_SCORE:
+
+                print()
+
+                print(f"[PLANNER] " f"Rejected low-quality candidate: " f"{item.text}")
+
+                print(f"[PLANNER] " f"Score: {score}")
+
+                continue
+            
             print()
             print(
                 f"[PLANNER] "
@@ -281,14 +298,14 @@ class ConstraintBasedPlanner:
         )
 
         if overflow > 0:
-            
+
             saturation_penalty = (
                 overflow
                 * self.AREA_SATURATION_BASE_PENALTY
             )
 
             score -= saturation_penalty
-            
+
             print()
 
             print(
