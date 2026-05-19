@@ -18,10 +18,12 @@ from services.interview_selection.interview_stage import (
     InterviewStage,
 )
 
+from services.interview_policy.interview_policy import (
+    InterviewPolicy,
+)
+
 
 class AdaptiveInterviewAssembler:
-
-    MAX_PER_AREA = 2
 
     # =====================================================
     # PUBLIC
@@ -30,12 +32,19 @@ class AdaptiveInterviewAssembler:
     def assemble(
         self,
         items: list[QuestionBankItem],
+        policy: InterviewPolicy,
         max_questions: int = 5,
     ) -> AdaptiveInterviewResult:
 
         sorted_items = sorted(
             items,
-            key=lambda q: (q.difficulty),
+            key=lambda q: (
+                self._policy_score(
+                    q,
+                    policy,
+                ),
+                q.difficulty,
+            ),
         )
 
         selected: list[AssembledQuestion] = []
@@ -49,7 +58,7 @@ class AdaptiveInterviewAssembler:
 
             area = item.area.value
 
-            if area_counts[area] >= self.MAX_PER_AREA:
+            if area_counts[area] >= policy.max_questions_per_area:
                 continue
 
             stage = self._assign_stage(
@@ -103,6 +112,64 @@ class AdaptiveInterviewAssembler:
     # =====================================================
     # HELPERS
     # =====================================================
+    def _policy_score(
+        self,
+        item: QuestionBankItem,
+        policy: InterviewPolicy,
+    ) -> float:
+
+        score = 0.0
+
+        if (
+            item.area.value
+            in policy.preferred_areas
+        ):
+            score += 1.0
+
+        if (
+            policy.prioritize_architecture
+            and item.area.value
+            == "technical_case_study"
+        ):
+            score += 0.5
+
+        if (
+            policy.prioritize_scalability
+        ):
+
+            lower = item.text.lower()
+
+            if any(
+                k in lower
+                for k in [
+                    "scaling",
+                    "distributed",
+                    "replication",
+                    "sharding",
+                    "consistency",
+                ]
+            ):
+                score += 0.5
+
+        if (
+            policy.prioritize_production_experience
+        ):
+
+            lower = item.text.lower()
+
+            if any(
+                k in lower
+                for k in [
+                    "production",
+                    "deployment",
+                    "pipeline",
+                    "performance",
+                    "monitoring",
+                ]
+            ):
+                score += 0.5
+
+        return score
 
     def _assign_stage(
         self,
