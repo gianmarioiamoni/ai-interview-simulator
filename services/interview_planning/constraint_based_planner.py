@@ -169,7 +169,13 @@ class ConstraintBasedPlanner:
         # -------------------------------------------------
 
         remaining.sort(
-            key=lambda x: x.difficulty,
+            key=lambda candidate: (
+                self._calculate_candidate_score(
+                    candidate=candidate,
+                    selected=selected,
+                    constraints=constraints,
+                )
+            ),
             reverse=True,
         )
 
@@ -182,7 +188,89 @@ class ConstraintBasedPlanner:
             if len(selected) >= constraints.minimum_total_questions:
 
                 break
+            score = (
+                self._calculate_candidate_score(
+                    candidate=item,
+                    selected=selected,
+                    constraints=constraints,
+                )
+            )
+
+            print()
+            print(
+                f"[PLANNER] "
+                f"Selected fallback candidate: "
+                f"{item.text}"
+            )
+
+            print(
+                f"[PLANNER] "
+                f"Score: {score}"
+            )
 
             selected.append(item)
 
         return selected
+
+    # =====================================================
+    # SCORING
+    # =====================================================
+
+    def _calculate_candidate_score(
+        self,
+        candidate: QuestionBankItem,
+        selected: list[QuestionBankItem],
+        constraints: InterviewConstraints,
+    ) -> float:
+
+        score = 0.0
+
+        # -------------------------------------------------
+        # DIFFICULTY
+        # -------------------------------------------------
+
+        score += candidate.difficulty * 1.0
+
+        # -------------------------------------------------
+        # AREA DIVERSITY
+        # -------------------------------------------------
+
+        selected_areas = {item.area.value for item in selected}
+
+        if candidate.area.value not in selected_areas:
+
+            score += 2.0
+
+        # -------------------------------------------------
+        # AREA SATURATION
+        # -------------------------------------------------
+
+        area_count = len(
+            [item for item in selected if (item.area.value == candidate.area.value)]
+        )
+
+        if area_count >= constraints.max_questions_per_area:
+
+            score -= 3.0
+
+        # -------------------------------------------------
+        # ROLE DIVERSITY
+        # -------------------------------------------------
+
+        selected_roles = {item.role.type.value for item in selected}
+
+        if candidate.role.type.value not in selected_roles:
+
+            score += 1.0
+
+        # -------------------------------------------------
+        # REDUNDANCY
+        # -------------------------------------------------
+
+        similar_questions = len(
+            [item for item in selected if (item.text[:25] == candidate.text[:25])]
+        )
+
+        score -= similar_questions * 2.0
+
+        return round(score, 2)
