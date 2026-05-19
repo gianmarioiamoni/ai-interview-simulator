@@ -114,8 +114,18 @@ class ConstraintBasedPlanner:
 
             violated.append("minimum_average_difficulty")
 
+        # -------------------------------------------------
+        # FEASIBILITY COMPLETION
+        # -------------------------------------------------
+
+        selected_questions = self._fill_remaining_slots(
+            selected=selected,
+            available=items,
+            constraints=constraints,
+        )
+
         return PlanningResult(
-            selected_questions=selected,
+            selected_questions=selected_questions,
             satisfied_constraints=satisfied,
             violated_constraints=violated,
             average_difficulty=round(
@@ -123,3 +133,56 @@ class ConstraintBasedPlanner:
                 2,
             ),
         )
+
+    # =====================================================
+    # FEASIBILITY
+    # =====================================================
+
+    def _fill_remaining_slots(
+        self,
+        selected: list[QuestionBankItem],
+        available: list[QuestionBankItem],
+        constraints: InterviewConstraints,
+    ) -> list[QuestionBankItem]:
+
+        # -------------------------------------------------
+        # EARLY EXIT
+        # -------------------------------------------------
+
+        if len(selected) >= constraints.minimum_total_questions:
+
+            return selected
+
+        selected_ids = {item.id for item in selected}
+
+        remaining = []
+
+        for item in available:
+
+            if item.id in selected_ids:
+                continue
+
+            remaining.append(item)
+
+        # -------------------------------------------------
+        # SORT BY DIFFICULTY
+        # -------------------------------------------------
+
+        remaining.sort(
+            key=lambda x: x.difficulty,
+            reverse=True,
+        )
+
+        # -------------------------------------------------
+        # FILL
+        # -------------------------------------------------
+
+        for item in remaining:
+
+            if len(selected) >= constraints.minimum_total_questions:
+
+                break
+
+            selected.append(item)
+
+        return selected
