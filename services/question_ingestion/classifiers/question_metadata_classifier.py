@@ -49,10 +49,30 @@ class QuestionMetadataClassifier:
             enriched.append(
                 record.model_copy(
                     update={
-                        "role_hint": self._infer_role(record.text),
-                        "area_hint": self._infer_area(record.text),
-                        "level_hint": self._infer_level(record.text),
-                        "difficulty_hint": self._infer_difficulty(record.text),
+                        "role_hint": (
+                            record.role_hint
+                            or self._infer_role(
+                                record.text,
+                            )
+                        ),
+                        "area_hint": (
+                            record.area_hint
+                            or self._infer_area(
+                                record.text,
+                            )
+                        ),
+                        "level_hint": (
+                            record.level_hint
+                            or self._infer_level(
+                                record.text,
+                            )
+                        ),
+                        "difficulty_hint": (
+                            record.difficulty_hint
+                            or self._infer_difficulty(
+                                record.text,
+                            )
+                        ),
                     }
                 )
             )
@@ -134,7 +154,6 @@ class QuestionMetadataClassifier:
             1 for hint in LEVEL_HINTS[SeniorityLevel.SENIOR]
             if hint.lower() in lower
         )
-
 
         if senior_score > 0:
             return SeniorityLevel.SENIOR

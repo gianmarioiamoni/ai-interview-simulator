@@ -3,6 +3,18 @@
 from typing import List
 from datetime import datetime, timezone
 
+from domain.contracts.user.role import (
+    RoleType,
+)
+
+from domain.contracts.interview.interview_area import (
+    InterviewArea,
+)
+
+from domain.contracts.user.seniority_level import (
+    SeniorityLevel,
+)
+
 from services.question_ingestion.contracts import (
     RawQuestionRecord,
     NormalizedQuestionRecord,
@@ -84,8 +96,64 @@ class QuestionNormalizer:
                 dataset_version="v1",
                 ingestion_timestamp=datetime.now(timezone.utc),
             ),
+            role_hint=self._extract_role(
+                payload,
+            ),
+            area_hint=self._extract_area(
+                payload,
+            ),
+            level_hint=self._extract_level(
+                payload,
+            ),
+            difficulty_hint=payload.get(
+                "difficulty",
+            ),
         )
 
+    def _extract_role(
+        self,
+        payload: dict,
+    ) -> RoleType | None:
+
+        value = payload.get("role")
+
+        if not value:
+            return None
+
+        try:
+            return RoleType(value)
+        except Exception:
+            return None
+
+    def _extract_area(
+        self,
+        payload: dict,
+    ) -> InterviewArea | None:
+
+        value = payload.get("area")
+
+        if not value:
+            return None
+
+        try:
+            return InterviewArea(value)
+        except Exception:
+            return None
+
+    def _extract_level(
+        self,
+        payload: dict,
+    ) -> SeniorityLevel | None:
+
+        value = payload.get("level")
+
+        if not value:
+            return None
+
+        try:
+            return SeniorityLevel(value)
+        except Exception:
+            return None
     # =====================================================
     # HELPERS
     # =====================================================
