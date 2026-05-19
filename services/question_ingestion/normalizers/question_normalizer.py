@@ -92,8 +92,8 @@ class QuestionNormalizer:
             source=record.source,
             ingestion_metadata=IngestionMetadata(
                 source_name=record.source,
-                source_type="json",
-                dataset_version="v1",
+                source_type=record.source_type,
+                dataset_version=record.dataset_version,
                 ingestion_timestamp=datetime.now(timezone.utc),
             ),
             role_hint=self._extract_role(
