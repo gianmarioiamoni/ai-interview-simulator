@@ -1,0 +1,146 @@
+# services/replanning/recovery_replanner.py
+
+from copy import deepcopy
+
+from domain.contracts.question.question_bank_item import (
+    QuestionBankItem,
+)
+
+from services.interview_planning.interview_constraints import (
+    InterviewConstraints,
+)
+
+from services.interview_planning.constraint_based_planner import (
+    ConstraintBasedPlanner,
+)
+
+from services.planning_validation.planning_validator import (
+    PlanningValidator,
+)
+
+from services.planning_validation.recovery_action import (
+    RecoveryAction,
+)
+
+from services.replanning.replanning_result import (
+    ReplanningResult,
+)
+
+
+class RecoveryReplanner:
+
+    MAX_ATTEMPTS = 3
+
+    # =====================================================
+    # PUBLIC
+    # =====================================================
+
+    def replan(
+        self,
+        items: list[QuestionBankItem],
+        constraints: InterviewConstraints,
+    ) -> ReplanningResult:
+
+        planner = ConstraintBasedPlanner()
+
+        validator = PlanningValidator()
+
+        current_constraints = deepcopy(constraints)
+
+        applied_actions = []
+
+        final_planning = None
+
+        final_validation = None
+
+        for attempt in range(
+            1,
+            self.MAX_ATTEMPTS + 1,
+        ):
+
+            planning_result = planner.plan(
+                items=items,
+                constraints=(current_constraints),
+            )
+
+            validation_result = validator.validate(
+                result=planning_result,
+                constraints=(current_constraints),
+            )
+
+            final_planning = planning_result
+
+            final_validation = validation_result
+
+            # -------------------------------------------------
+            # SUCCESS
+            # -------------------------------------------------
+
+            if validation_result.is_valid:
+
+                break
+
+            # -------------------------------------------------
+            # RECOVERY
+            # -------------------------------------------------
+
+            for action in validation_result.suggested_recovery_actions:
+
+                if action in applied_actions:
+                    continue
+
+                self._apply_recovery_action(
+                    constraints=(current_constraints),
+                    action=action,
+                )
+
+                applied_actions.append(action)
+
+                break
+
+        return ReplanningResult(
+            final_planning_result=(final_planning),
+            final_validation_result=(final_validation),
+            applied_recovery_actions=(applied_actions),
+            total_attempts=attempt,
+        )
+
+    # =====================================================
+    # RECOVERY
+    # =====================================================
+
+    def _apply_recovery_action(
+        self,
+        constraints: InterviewConstraints,
+        action: RecoveryAction,
+    ) -> None:
+
+        # -------------------------------------------------
+        # RELAX DIFFICULTY
+        # -------------------------------------------------
+
+        if action == RecoveryAction.RELAX_DIFFICULTY:
+
+            constraints.minimum_average_difficulty = max(
+                1.0,
+                constraints.minimum_average_difficulty - 1.0,
+            )
+
+        # -------------------------------------------------
+        # REDUCE QUESTIONS
+        # -------------------------------------------------
+
+        elif action == RecoveryAction.REDUCE_REQUIRED_QUESTIONS:
+
+            constraints.minimum_total_questions = max(
+                1,
+                constraints.minimum_total_questions - 1,
+            )
+
+        # -------------------------------------------------
+        # RELAX AREA LIMITS
+        # -------------------------------------------------
+
+        elif action == RecoveryAction.RELAX_AREA_LIMITS:
+
+            constraints.max_questions_per_area += 1

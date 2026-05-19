@@ -40,6 +40,10 @@ from services.planning_validation.planning_validator import (
     PlanningValidator,
 )
 
+from services.replanning.recovery_replanner import (
+    RecoveryReplanner,
+)
+
 
 class InterviewOrchestrator:
 
@@ -91,26 +95,17 @@ class InterviewOrchestrator:
         )
 
         # -------------------------------------------------
-        # PLANNING
+        # REPLANNING
         # -------------------------------------------------
 
-        planner = ConstraintBasedPlanner()
+        replanner = RecoveryReplanner()
 
-        planning_result = planner.plan(
+        replanning_result = replanner.replan(
             items=pool.eligible_questions,
             constraints=constraints,
         )
 
-        # -------------------------------------------------
-        # VALIDATION
-        # -------------------------------------------------
 
-        validator = PlanningValidator()
-
-        validation_result = validator.validate(
-            result=planning_result,
-            constraints=constraints,
-        )
 
         # -------------------------------------------------
         # ASSEMBLY
@@ -119,7 +114,7 @@ class InterviewOrchestrator:
         assembler = AdaptiveInterviewAssembler()
 
         assembly_result = assembler.assemble(
-            items=planning_result.selected_questions,
+            items=replanning_result.final_planning_result.selected_questions,
             policy=policy,
             max_questions=max_questions,
         )
@@ -130,7 +125,16 @@ class InterviewOrchestrator:
 
         return OrchestrationResult(
             candidate_pool=pool,
-            planning_result=planning_result,
-            validation_result=validation_result,
+            planning_result=(
+                replanning_result
+                .final_planning_result
+            ),
+            validation_result=(
+                replanning_result
+                .final_validation_result
+            ),
+            replanning_result=(
+                replanning_result
+            ),
             assembly_result=assembly_result,
         )
