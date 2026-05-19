@@ -36,6 +36,10 @@ from services.interview_orchestration.orchestration_result import (
     OrchestrationResult,
 )
 
+from services.planning_validation.planning_validator import (
+    PlanningValidator,
+)
+
 
 class InterviewOrchestrator:
 
@@ -79,11 +83,11 @@ class InterviewOrchestrator:
         # -------------------------------------------------
 
         constraints = InterviewConstraints(
-            required_areas=(policy.preferred_areas),
+            required_areas=policy.preferred_areas,
             excluded_areas=[],
             max_questions_per_area=(policy.max_questions_per_area),
             minimum_average_difficulty=(policy.target_average_difficulty),
-            minimum_total_questions=(max_questions),
+            minimum_total_questions=max_questions,
         )
 
         # -------------------------------------------------
@@ -93,7 +97,18 @@ class InterviewOrchestrator:
         planner = ConstraintBasedPlanner()
 
         planning_result = planner.plan(
-            items=(pool.eligible_questions),
+            items=pool.eligible_questions,
+            constraints=constraints,
+        )
+
+        # -------------------------------------------------
+        # VALIDATION
+        # -------------------------------------------------
+
+        validator = PlanningValidator()
+
+        validation_result = validator.validate(
+            result=planning_result,
             constraints=constraints,
         )
 
@@ -104,7 +119,7 @@ class InterviewOrchestrator:
         assembler = AdaptiveInterviewAssembler()
 
         assembly_result = assembler.assemble(
-            items=(planning_result.selected_questions),
+            items=planning_result.selected_questions,
             policy=policy,
             max_questions=max_questions,
         )
@@ -116,5 +131,6 @@ class InterviewOrchestrator:
         return OrchestrationResult(
             candidate_pool=pool,
             planning_result=planning_result,
+            validation_result=validation_result,
             assembly_result=assembly_result,
         )
