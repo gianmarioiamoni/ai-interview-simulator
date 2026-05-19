@@ -18,6 +18,20 @@ from services.interview_planning.planning_result import (
 class ConstraintBasedPlanner:
 
     # =====================================================
+    # SCORING CONSTANTS
+    # =====================================================
+
+    DIFFICULTY_WEIGHT = 1.0
+
+    AREA_DIVERSITY_BONUS = 2.0
+
+    ROLE_DIVERSITY_BONUS = 1.0
+
+    REDUNDANCY_PENALTY = 2.0
+
+    AREA_SATURATION_BASE_PENALTY = 3.0
+
+    # =====================================================
     # PUBLIC
     # =====================================================
 
@@ -167,6 +181,11 @@ class ConstraintBasedPlanner:
         # -------------------------------------------------
         # SORT BY DIFFICULTY
         # -------------------------------------------------
+        print()
+        print(
+            "[PLANNER] "
+            "Evaluating fallback candidates..."
+        )
 
         remaining.sort(
             key=lambda candidate: (
@@ -229,7 +248,10 @@ class ConstraintBasedPlanner:
         # DIFFICULTY
         # -------------------------------------------------
 
-        score += candidate.difficulty * 1.0
+        score += (
+            candidate.difficulty
+            * self.DIFFICULTY_WEIGHT
+        )
 
         # -------------------------------------------------
         # AREA DIVERSITY
@@ -239,7 +261,7 @@ class ConstraintBasedPlanner:
 
         if candidate.area.value not in selected_areas:
 
-            score += 2.0
+            score += self.AREA_DIVERSITY_BONUS
 
         # -------------------------------------------------
         # AREA SATURATION
@@ -249,9 +271,43 @@ class ConstraintBasedPlanner:
             [item for item in selected if (item.area.value == candidate.area.value)]
         )
 
-        if area_count >= constraints.max_questions_per_area:
+        overflow = max(
+            0,
+            (
+                area_count
+                + 1
+                - constraints.max_questions_per_area
+            ),
+        )
 
-            score -= 3.0
+        if overflow > 0:
+            
+            saturation_penalty = (
+                overflow
+                * self.AREA_SATURATION_BASE_PENALTY
+            )
+
+            score -= saturation_penalty
+            
+            print()
+
+            print(
+                f"[PLANNER] "
+                f"Area saturation penalty "
+                f"applied: "
+                f"{candidate.area.value}"
+            )
+
+            print(
+                f"[PLANNER] "
+                f"Overflow: {overflow}"
+            )
+
+            print(
+                f"[PLANNER] "
+                f"Penalty: "
+                f"{saturation_penalty}"
+            )
 
         # -------------------------------------------------
         # ROLE DIVERSITY
@@ -261,7 +317,7 @@ class ConstraintBasedPlanner:
 
         if candidate.role.type.value not in selected_roles:
 
-            score += 1.0
+            score += self.ROLE_DIVERSITY_BONUS
 
         # -------------------------------------------------
         # REDUNDANCY
@@ -271,6 +327,9 @@ class ConstraintBasedPlanner:
             [item for item in selected if (item.text[:25] == candidate.text[:25])]
         )
 
-        score -= similar_questions * 2.0
+        score -= (
+            similar_questions
+            * self.REDUNDANCY_PENALTY
+        )
 
         return round(score, 2)
