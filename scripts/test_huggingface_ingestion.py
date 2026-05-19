@@ -51,7 +51,21 @@ def main() -> None:
 
     normalizer = QuestionNormalizer()
 
-    normalized = normalizer.normalize(raw_records)
+    result = normalizer.normalize(
+        raw_records,
+    )
+
+    normalized = result.records
+
+    print()
+    print("NORMALIZATION DIAGNOSTICS")
+    print()
+
+    print(
+        result.diagnostics.model_dump_json(
+            indent=2,
+        )
+    )
 
     print()
     print("NORMALIZED RECORDS")
