@@ -43,10 +43,6 @@ class QuestionNormalizer:
 
         payload = record.raw_payload
 
-        print()
-        print(f"PAYLOAD: {payload}")
-        print()
-
         # -------------------------------------------------
         # TEXT EXTRACTION
         # -------------------------------------------------
@@ -55,11 +51,9 @@ class QuestionNormalizer:
         text = self._extract_text(
             payload,
         )
-
-        print()
-        print(f"TEXT: {text}")
-        print()
-
+        # TODO:
+        # add structured normalization rejection reporting
+        # to track why records are discarded
         if not text:
             return None
 
