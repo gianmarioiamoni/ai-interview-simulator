@@ -122,6 +122,16 @@ def main():
 
     print()
 
+    print()
+    print("REPLANNING")
+    print()
+    print(
+        result.replanning_result.model_dump_json(
+            indent=2,
+        )
+    )
+    print()
+
     print("FINAL INTERVIEW")
     print()
 

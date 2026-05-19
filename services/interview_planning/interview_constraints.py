@@ -16,5 +16,5 @@ class InterviewConstraints(BaseModel):
     minimum_total_questions: int
 
     model_config = {
-        "frozen": True,
+        "frozen": False,
     }

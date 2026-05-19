@@ -18,6 +18,9 @@ from services.planning_validation.validation_result import (
     ValidationResult,
 )
 
+from services.replanning.replanning_result import (
+    ReplanningResult,
+)
 
 class OrchestrationResult(BaseModel):
 
@@ -28,6 +31,8 @@ class OrchestrationResult(BaseModel):
     assembly_result: AdaptiveInterviewResult
 
     validation_result: ValidationResult
+
+    replanning_result: ReplanningResult
 
     model_config = {
         "frozen": True,
