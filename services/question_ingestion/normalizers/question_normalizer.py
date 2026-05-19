@@ -20,11 +20,22 @@ from services.question_ingestion.contracts import (
     NormalizedQuestionRecord,
 )
 
-from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
+from services.question_ingestion.contracts.ingestion_metadata import (
+    IngestionMetadata,
+)
+
+from services.question_ingestion.contracts.normalization_result import (
+    NormalizationResult,
+)
+
+from services.question_ingestion.contracts.normalization_diagnostics import (
+    NormalizationDiagnostics,
+)
 
 from services.question_quality.technical_question_filter import (
     TechnicalQuestionFilter,
 )
+
 
 class QuestionNormalizer:
 
@@ -35,22 +46,53 @@ class QuestionNormalizer:
     def normalize(
         self,
         records: List[RawQuestionRecord],
-    ) -> List[NormalizedQuestionRecord]:
+    ) -> NormalizationResult:
 
         normalized: List[NormalizedQuestionRecord] = []
+
         technical_filter = TechnicalQuestionFilter()
+
+        diagnostics = NormalizationDiagnostics(
+            total_records=len(records),
+        )
 
         for record in records:
 
-            item = self._normalize_record(
+            result = self._normalize_record(
                 record=record,
                 technical_filter=technical_filter,
             )
 
-            if item is not None:
-                normalized.append(item)
+            # -------------------------------------------------
+            # REJECTED
+            # -------------------------------------------------
 
-        return normalized
+            if result is None:
+
+                diagnostics = diagnostics.model_copy(
+                    update={
+                        "filtered_non_technical": (
+                            diagnostics.filtered_non_technical + 1
+                        )
+                    }
+                )
+
+                continue
+
+            # -------------------------------------------------
+            # ACCEPTED
+            # -------------------------------------------------
+
+            normalized.append(result)
+
+            diagnostics = diagnostics.model_copy(
+                update={"normalized_records": (diagnostics.normalized_records + 1)}
+            )
+
+        return NormalizationResult(
+            records=normalized,
+            diagnostics=diagnostics,
+        )
 
     # =====================================================
     # INTERNALS
@@ -59,7 +101,7 @@ class QuestionNormalizer:
     def _normalize_record(
         self,
         record: RawQuestionRecord,
-        technical_filter: TechnicalQuestionFilter
+        technical_filter: TechnicalQuestionFilter,
     ) -> NormalizedQuestionRecord | None:
 
         payload = record.canonical_payload
@@ -70,15 +112,6 @@ class QuestionNormalizer:
 
         text = payload.get("text")
 
-        # -------------------------------------------------
-        # TECHNICAL DOMAIN FILTER
-        # -------------------------------------------------
-
-        if not technical_filter.is_technical(text):
-            return None
-        # TODO:
-        # add structured normalization rejection reporting
-        # to track why records are discarded
         if not text:
             return None
 
@@ -86,6 +119,13 @@ class QuestionNormalizer:
             return None
 
         text = text.strip()
+
+        # -------------------------------------------------
+        # TECHNICAL DOMAIN FILTER
+        # -------------------------------------------------
+
+        if not technical_filter.is_technical(text):
+            return None
 
         # -------------------------------------------------
         # MIN QUALITY
@@ -98,7 +138,9 @@ class QuestionNormalizer:
         # NORMALIZATION
         # -------------------------------------------------
 
-        text = self._normalize_whitespace(text)
+        text = self._normalize_whitespace(
+            text,
+        )
 
         return NormalizedQuestionRecord(
             text=text,
@@ -107,7 +149,11 @@ class QuestionNormalizer:
                 source_name=record.source,
                 source_type=record.source_type,
                 dataset_version=record.dataset_version,
-                ingestion_timestamp=datetime.now(timezone.utc),
+                ingestion_timestamp=(
+                    datetime.now(
+                        timezone.utc,
+                    )
+                ),
             ),
             role_hint=self._extract_role(
                 payload,
@@ -123,6 +169,10 @@ class QuestionNormalizer:
             ),
         )
 
+    # =====================================================
+    # ROLE EXTRACTION
+    # =====================================================
+
     def _extract_role(
         self,
         payload: dict,
@@ -135,8 +185,13 @@ class QuestionNormalizer:
 
         try:
             return RoleType(value)
+
         except Exception:
             return None
+
+    # =====================================================
+    # AREA EXTRACTION
+    # =====================================================
 
     def _extract_area(
         self,
@@ -150,8 +205,13 @@ class QuestionNormalizer:
 
         try:
             return InterviewArea(value)
+
         except Exception:
             return None
+
+    # =====================================================
+    # LEVEL EXTRACTION
+    # =====================================================
 
     def _extract_level(
         self,
@@ -165,8 +225,10 @@ class QuestionNormalizer:
 
         try:
             return SeniorityLevel(value)
+
         except Exception:
             return None
+
     # =====================================================
     # HELPERS
     # =====================================================
