@@ -8,7 +8,9 @@ from typing import List
 from services.question_ingestion.contracts import (
     RawQuestionRecord,
 )
-
+from services.question_ingestion.adapters.generic_dataset_adapter import (
+    GenericDatasetAdapter,
+)
 
 class JSONLDatasetLoader:
 
@@ -29,6 +31,8 @@ class JSONLDatasetLoader:
             raise FileNotFoundError(f"Dataset not found: {dataset_path}")
 
         records: List[RawQuestionRecord] = []
+
+        adapter = GenericDatasetAdapter()
 
         with open(
             path,
@@ -52,11 +56,11 @@ class JSONLDatasetLoader:
                     continue
 
                 records.append(
-                    RawQuestionRecord(
+                    adapter.adapt(
+                        payload=item,
                         source=source,
                         source_type="jsonl",
                         dataset_version="v1",
-                        raw_payload=item,
                     )
                 )
 
