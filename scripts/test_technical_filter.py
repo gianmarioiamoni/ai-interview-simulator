@@ -1,6 +1,6 @@
 # scripts/test_technical_filter.py
 
-from services.question_quality.technical_question_filter import (
+from services.question_intelligence.technical_question_filter import (
     TechnicalQuestionFilter,
 )
 
@@ -87,9 +87,10 @@ def main() -> None:
         expected,
     ) in samples:
 
-        result = filter_service.is_technical(text)
+        evaluation = filter_service.evaluate(text)
 
-        categories = filter_service.matching_categories(text)
+        result = evaluation.is_technical
+
 
         print(text)
 
@@ -99,7 +100,19 @@ def main() -> None:
 
         print(f"actual: " f"{result}")
 
-        print(f"categories: " f"{categories}")
+        print(
+            f"score: " f"{evaluation.score}"
+        )
+
+        print(
+            f"categories: "
+            f"{evaluation.matched_categories}"
+        )
+
+        print(
+            f"matched_terms: "
+            f"{evaluation.matched_terms}"
+        )
 
         print()
 
