@@ -12,6 +12,10 @@ from services.question_ingestion.adapters.system_design_dataset_adapter import (
     SystemDesignDatasetAdapter,
 )
 
+from services.question_ingestion.adapters.huggingface_qa_adapter import (
+    HuggingFaceQAAdapter,
+)
+
 
 class AdapterRegistry:
 
@@ -27,6 +31,7 @@ class AdapterRegistry:
         registry = {
             "generic": (GenericDatasetAdapter()),
             "system_design": (SystemDesignDatasetAdapter()),
+            "huggingface_qa": (HuggingFaceQAAdapter()),
         }
 
         adapter = registry.get(adapter_name)
