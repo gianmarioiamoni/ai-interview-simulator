@@ -47,6 +47,31 @@ class SemanticRetrievalEngine:
             ]
 
             # ---------------------------------------------
+            # SEMANTIC OVERLAP
+            # ---------------------------------------------
+
+            overlap_signals = len(matched_tags) + len(matched_categories)
+
+            required_matches = [
+                tag for tag in (query.required_tags) if (tag in record.retrieval_tags)
+            ]
+
+            overlap_signals += len(required_matches)
+
+            semantic_overlap = overlap_signals / 5
+
+            semantic_overlap = min(semantic_overlap, 1.0)
+
+            # ---------------------------------------------
+            # ADMISSIBILITY
+            # ---------------------------------------------
+
+            is_admissible = semantic_overlap >= 0.2
+
+            if not is_admissible:
+                continue
+
+            # ---------------------------------------------
             # SCORE
             # ---------------------------------------------
 
@@ -68,10 +93,6 @@ class SemanticRetrievalEngine:
             # REQUIRED TAGS BOOST
             # ---------------------------------------------
 
-            required_matches = [
-                tag for tag in (query.required_tags) if (tag in record.retrieval_tags)
-            ]
-
             score += len(required_matches) * 0.5
 
             results.append(
@@ -80,6 +101,13 @@ class SemanticRetrievalEngine:
                     final_score=(round(score, 2)),
                     matched_tags=(matched_tags),
                     matched_categories=(matched_categories),
+                    semantic_overlap=(
+                        round(
+                            semantic_overlap,
+                            2,
+                        )
+                    ),
+                    is_admissible=(is_admissible),
                 )
             )
 

@@ -17,6 +17,10 @@ class RetrievalResult(BaseModel):
 
     matched_categories: list[str]
 
+    semantic_overlap: float
+
+    is_admissible: bool
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
