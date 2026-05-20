@@ -66,6 +66,14 @@ def main() -> None:
 
         print()
 
+        print(f"semantic_overlap: " f"{result.semantic_overlap}")
+
+        print()
+
+        print(f"is_admissible: " f"{result.is_admissible}")
+
+        print()
+
         print(f"matched_tags: " f"{result.matched_tags}")
 
         print()
