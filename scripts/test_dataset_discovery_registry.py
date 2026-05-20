@@ -18,8 +18,14 @@ def main() -> None:
 
     print(f"TOTAL DATASETS: " f"{len(candidates)}")
 
-    for index, dataset in enumerate(
+    ranked = sorted(
         candidates,
+        key=lambda dataset: (dataset.semantic_density * dataset.estimated_quality),
+        reverse=True,
+    )
+
+    for index, dataset in enumerate(
+        ranked,
         start=1,
     ):
 
@@ -42,6 +48,21 @@ def main() -> None:
         print(f"status: " f"{dataset.ingestion_status}")
 
         print(f"adapter: " f"{dataset.adapter_name}")
+
+        print(
+            f"semantic_density: "
+            f"{dataset.semantic_density}"
+        )
+
+        print(
+            f"estimated_questions: "
+            f"{dataset.estimated_question_count}"
+        )
+
+        print(
+            f"domains: "
+            f"{dataset.technical_domains}"
+        )
 
         print()
 

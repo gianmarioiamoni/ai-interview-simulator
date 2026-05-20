@@ -23,6 +23,12 @@ class DatasetCandidate(BaseModel):
 
     notes: str | None = None
 
+    estimated_question_count: int
+
+    semantic_density: float
+
+    technical_domains: list[str]
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
