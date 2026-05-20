@@ -5,3 +5,4 @@ from .normalization_result import NormalizationResult
 from .normalization_diagnostics import NormalizationDiagnostics
 from .dataset_candidate import DatasetCandidate
 from .github_document import GitHubDocument
+from .corpus_validation_result import CorpusValidationResult
