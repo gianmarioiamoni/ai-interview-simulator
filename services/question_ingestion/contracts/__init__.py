@@ -3,3 +3,4 @@ from .normalized_question_record import NormalizedQuestionRecord
 from .ingestion_report import IngestionReport
 from .normalization_result import NormalizationResult
 from .normalization_diagnostics import NormalizationDiagnostics
+from .dataset_candidate import DatasetCandidate
