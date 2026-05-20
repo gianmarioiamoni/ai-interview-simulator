@@ -1,48 +1,18 @@
 # services/interview_orchestration/interview_orchestrator.py
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
-from domain.contracts.user.role import (
-    RoleType,
-)
-
-from domain.contracts.user.seniority_level import (
-    SeniorityLevel,
-)
-
-from services.candidate_pool.candidate_pool_builder import (
-    CandidatePoolBuilder,
-)
-
-from services.interview_policy.policy_factory import (
-    PolicyFactory,
-)
-
-from services.interview_planning.interview_constraints import (
-    InterviewConstraints,
-)
-
-from services.interview_planning.constraint_based_planner import (
-    ConstraintBasedPlanner,
-)
-
-from services.interview_selection.adaptive_interview_assembler import (
-    AdaptiveInterviewAssembler,
-)
-
-from services.interview_orchestration.orchestration_result import (
-    OrchestrationResult,
-)
-
-from services.planning_validation.planning_validator import (
-    PlanningValidator,
-)
-
-from services.replanning.recovery_replanner import (
-    RecoveryReplanner,
-)
+from services.candidate_pool.candidate_pool_builder import CandidatePoolBuilder
+from services.interview_policy.policy_factory import PolicyFactory
+from services.interview_planning.interview_constraints import InterviewConstraints
+from services.interview_selection.adaptive_interview_assembler import AdaptiveInterviewAssembler
+from services.interview_orchestration.orchestration_result import OrchestrationResult
+from services.replanning.recovery_replanner import RecoveryReplanner
+from services.interview_orchestration.orchestration_intent_builder import OrchestrationIntentBuilder
+from services.retrieval.planner_retrieval_service import PlannerRetrievalService
+from services.retrieval.retrieval_runtime_mapper import RetrievalRuntimeMapper
 
 
 class InterviewOrchestrator:
@@ -60,13 +30,54 @@ class InterviewOrchestrator:
     ) -> OrchestrationResult:
 
         # -------------------------------------------------
+        # RETRIEVAL INTENT
+        # -------------------------------------------------
+
+        intent_builder = OrchestrationIntentBuilder()
+
+        intent = intent_builder.build(
+            role=role,
+            level=level,
+        )
+
+        # -------------------------------------------------
+        # RUNTIME RETRIEVAL
+        # -------------------------------------------------
+
+        retrieval_service = PlannerRetrievalService()
+
+        retrieval_results = retrieval_service.retrieve_candidates(
+            intent=intent,
+            corpus_path="datasets/curated/tech_interview_handbook.json",
+        )
+
+        # -------------------------------------------------
+        # RETRIEVED NORMALIZED RECORDS
+        # -------------------------------------------------
+
+        retrieved_records = [
+            result.symbolic_result.record
+            for result in retrieval_results
+        ]
+
+        # -------------------------------------------------
+        # RUNTIME ITEM MAPPING
+        # -------------------------------------------------
+
+        mapper = RetrievalRuntimeMapper()
+
+        retrieved_questions = mapper.map(
+            records=retrieved_records,
+        )
+
+        # -------------------------------------------------
         # CANDIDATE POOL
         # -------------------------------------------------
 
         pool_builder = CandidatePoolBuilder()
 
         pool = pool_builder.build(
-            items=items,
+            items=retrieved_questions,
             role=role,
             level=level,
         )
