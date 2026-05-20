@@ -1,114 +1,128 @@
 # scripts/test_hybrid_retrieval.py
 
-from infrastructure.vector_store.chroma_question_store import (
-    ChromaQuestionStore,
+from services.retrieval.contracts import (
+    RetrievalQuery,
 )
 
-from services.question_intelligence.question_vector_store import (
-    QuestionVectorStore,
+from services.retrieval.corpus_retrieval_preparator import (
+    CorpusRetrievalPreparator,
 )
 
-from services.question_intelligence.question_retrieval_service import (
-    QuestionRetrievalService,
+from services.retrieval.semantic_retrieval_engine import (
+    SemanticRetrievalEngine,
 )
 
-from services.question_intelligence.hybrid.hybrid_retrieval_engine import (
-    HybridRetrievalEngine,
+from services.retrieval.embedding_generator import (
+    EmbeddingGenerator,
 )
 
-from services.question_intelligence.retrieval.retrieval_strategy import (
-    RetrievalStrategy,
-)
-
-from domain.contracts.interview.interview_area import (
-    InterviewArea,
-)
-
-from domain.contracts.interview.interview_type import (
-    InterviewType,
-)
-
-from domain.contracts.user.role import (
-    RoleType,
-)
-
-from domain.contracts.user.seniority_level import (
-    SeniorityLevel,
+from services.retrieval.hybrid_retrieval_fusion_engine import (
+    HybridRetrievalFusionEngine,
 )
 
 
-def main():
+def main() -> None:
 
-    chroma_store = ChromaQuestionStore()
+    # -------------------------------------------------
+    # PREPARE CORPUS
+    # -------------------------------------------------
 
-    vector_store = QuestionVectorStore(
-        chroma_store,
-    )
+    preparator = CorpusRetrievalPreparator()
 
-    retrieval_service = QuestionRetrievalService(
-        vector_store,
+    corpus = preparator.prepare(
+        corpus_path=("datasets/curated/" "tech_interview_handbook.json")
     )
 
     # -------------------------------------------------
-    # RETRIEVE CANDIDATES
+    # SYMBOLIC RETRIEVAL
     # -------------------------------------------------
 
-    candidates = retrieval_service.retrieve(
-        query="Explain SQL transactions and indexing",
-        retrieval_strategy=RetrievalStrategy(
-            k=20,
-            fetch_k=40,
-            use_mmr=True,
-            lambda_mult=0.5,
-        ),
-        role=RoleType.BACKEND_ENGINEER.value,
-        level=SeniorityLevel.MID.value,
-        interview_type=InterviewType.TECHNICAL.value,
-        area=InterviewArea.TECH_DATABASE.value,
-    )
+    retrieval_engine = SemanticRetrievalEngine()
 
-    # -------------------------------------------------
-    # HYBRID SEARCH
-    # -------------------------------------------------
-
-    engine = HybridRetrievalEngine(
-        candidates,
-    )
-
-    results = engine.search(
-        query="Explain SQL transactions and indexing",
+    query = RetrievalQuery(
+        text=("distributed systems " "consistency scaling"),
+        required_tags=[
+            "distributed_systems",
+        ],
+        preferred_categories=[
+            "distributed_systems",
+        ],
+        minimum_score=0.4,
         top_k=5,
     )
 
+    symbolic_results = retrieval_engine.retrieve(
+        query=query,
+        corpus=corpus,
+    )
+
     # -------------------------------------------------
-    # OUTPUT
+    # EMBEDDINGS
+    # -------------------------------------------------
+
+    generator = EmbeddingGenerator()
+
+    embedding_records = generator.generate(corpus)
+
+    # -------------------------------------------------
+    # HYBRID FUSION
+    # -------------------------------------------------
+
+    fusion_engine = HybridRetrievalFusionEngine()
+
+    fused_results = fusion_engine.fuse(
+        query=query.text,
+        symbolic_results=(symbolic_results),
+        embedding_records=(embedding_records),
+    )
+
+    # -------------------------------------------------
+    # DIAGNOSTICS
     # -------------------------------------------------
 
     print()
-    print("HYBRID RETRIEVAL RESULTS")
+    print("HYBRID RETRIEVAL")
+
     print()
 
-    for idx, result in enumerate(
-        results,
+    print(f"TOTAL RESULTS: " f"{len(fused_results)}")
+
+    for index, result in enumerate(
+        fused_results,
         start=1,
     ):
 
-        print(f"RANK #{idx}")
-        print()
-
-        print(result.text)
-        print()
-
-        print(f"semantic_score: " f"{result.semantic_score}")
-
-        print(f"keyword_score: " f"{result.keyword_score}")
-
-        print(f"final_score: " f"{result.final_score}")
+        symbolic = result.symbolic_result
 
         print()
+
+        print(f"RESULT #{index}")
+
+        print()
+
+        print(symbolic.record.content)
+
+        print()
+
+        print(f"symbolic_score: " f"{symbolic.final_score}")
+
+        print()
+
+        print(f"embedding_similarity: " f"{result.embedding_similarity}")
+
+        print()
+
+        print(f"semantic_overlap: " f"{symbolic.semantic_overlap}")
+
+        print()
+
+        print(f"fused_score: " f"{result.fused_score}")
+
+        print()
+
         print("-" * 80)
-        print()
 
 
 if __name__ == "__main__":
+
     main()
