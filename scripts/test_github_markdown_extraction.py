@@ -1,5 +1,7 @@
 # scripts/test_github_markdown_extraction.py
 
+from pathlib import Path
+
 from services.question_ingestion.contracts import (
     GitHubDocument,
 )
@@ -11,33 +13,39 @@ from services.question_ingestion.github_markdown_extractor import (
 
 def main() -> None:
 
-    content = """
-# System Design Questions
+    # -------------------------------------------------
+    # LOAD REAL MARKDOWN CORPUS
+    # -------------------------------------------------
 
-- How would you design a distributed cache?
-- Explain eventual consistency trade-offs.
-- What is database sharding?
-- Describe Kubernetes deployment strategies.
+    markdown_path = "datasets/raw/github/" "backend_scalability.md"
 
-# Non Technical
-
-Paris is the capital of France.
-
-The weather is sunny today.
-"""
+    content = Path(markdown_path).read_text(
+        encoding="utf-8",
+    )
 
     document = GitHubDocument(
-        path="README.md",
+        path=markdown_path,
         content=content,
-        repository=("tech_interview_handbook"),
+        repository=("backend_scalability"),
         branch="main",
     )
 
+    # -------------------------------------------------
+    # EXTRACTION
+    # -------------------------------------------------
+
     extractor = GitHubMarkdownExtractor()
 
-    questions = extractor.extract_questions(document)
+    questions = extractor.extract_questions(
+        document=document,
+    )
+
+    # -------------------------------------------------
+    # OUTPUT
+    # -------------------------------------------------
 
     print()
+
     print("GITHUB MARKDOWN EXTRACTION")
 
     print()
