@@ -3,6 +3,7 @@
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from services.planning.semantic_cluster_suppressor import SemanticClusterSuppressor
 from services.planning.semantic_novelty_bonus_engine import SemanticNoveltyBonusEngine
+from services.planning.category_rarity_bonus_engine import CategoryRarityBonusEngine
 
 
 class PlannerSelectionScoringEngine:
@@ -24,6 +25,8 @@ class PlannerSelectionScoringEngine:
         self._cluster_suppressor = SemanticClusterSuppressor()
 
         self._novelty_engine = SemanticNoveltyBonusEngine()
+
+        self._rarity_engine = CategoryRarityBonusEngine()
 
     # =====================================================
     # PUBLIC
@@ -61,7 +64,16 @@ class PlannerSelectionScoringEngine:
             current_score=adjusted_score,
         )
 
-        
+        # -------------------------------------------------
+        # CATEGORY RARITY BONUS
+        # -------------------------------------------------
+
+        adjusted_score = self._rarity_engine.apply_bonus(
+            candidate=candidate,
+            selected_questions=selected_questions,
+            current_score=adjusted_score,
+        )
+
         return round(
             adjusted_score,
             4,
