@@ -2,9 +2,7 @@
 
 from pydantic import BaseModel
 
-from services.interview_selection.selected_question import (
-    SelectedQuestion,
-)
+from services.interview_selection.selected_question import SelectedQuestion
 
 
 class InterviewSelectionResult(BaseModel):

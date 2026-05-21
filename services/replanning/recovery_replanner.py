@@ -2,29 +2,13 @@
 
 from copy import deepcopy
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from services.interview_planning.interview_constraints import (
-    InterviewConstraints,
-)
-
-from services.interview_planning.constraint_based_planner import (
-    ConstraintBasedPlanner,
-)
-
-from services.planning_validation.planning_validator import (
-    PlanningValidator,
-)
-
-from services.planning_validation.recovery_action import (
-    RecoveryAction,
-)
-
-from services.replanning.replanning_result import (
-    ReplanningResult,
-)
+from services.interview_planning.interview_constraints import InterviewConstraints
+from services.interview_planning.constraint_based_planner import ConstraintBasedPlanner
+from services.planning_validation.planning_validator import PlanningValidator
+from services.planning_validation.recovery_action import RecoveryAction
+from services.replanning.replanning_result import ReplanningResult
 
 
 class RecoveryReplanner:
@@ -99,7 +83,7 @@ class RecoveryReplanner:
                 break
 
         return ReplanningResult(
-            final_planning_result=(final_planning),
+            final_planning_result=final_planning,
             final_validation_result=(final_validation),
             applied_recovery_actions=(applied_actions),
             total_attempts=attempt,

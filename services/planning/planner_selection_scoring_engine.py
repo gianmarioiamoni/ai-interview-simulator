@@ -1,9 +1,11 @@
 # services/planning/planner_selection_scoring_engine.py
 
 from domain.contracts.question.question_bank_item import QuestionBankItem
+
 from services.planning.semantic_cluster_suppressor import SemanticClusterSuppressor
 from services.planning.semantic_novelty_bonus_engine import SemanticNoveltyBonusEngine
 from services.planning.category_rarity_bonus_engine import CategoryRarityBonusEngine
+from services.planning.contracts.planner_score_breakdown import PlannerScoreBreakdown
 
 
 class PlannerSelectionScoringEngine:
@@ -36,45 +38,100 @@ class PlannerSelectionScoringEngine:
         self,
         candidate: QuestionBankItem,
         selected_questions: list[QuestionBankItem],
-    ) -> float:
+    ) -> PlannerScoreBreakdown:
+
+        rationale: list[str] = []
 
         # -------------------------------------------------
-        # BASE SCORE
+        # DIFFICULTY SCORE
         # -------------------------------------------------
 
-        base_score = float(candidate.difficulty) * self._difficulty_weight
+        difficulty_score = float(candidate.difficulty) * self._difficulty_weight
+
+        rationale.append("difficulty_weighting")
+
+        adjusted_score = difficulty_score
 
         # -------------------------------------------------
-        # SEMANTIC BALANCING
+        # CLUSTER SUPPRESSION
         # -------------------------------------------------
 
-        adjusted_score = self._cluster_suppressor.apply_penalty(
+        suppressed_score = self._cluster_suppressor.apply_penalty(
             candidate=candidate,
             selected_questions=(selected_questions),
-            current_score=(base_score),
+            current_score=(adjusted_score),
         )
+
+        cluster_penalty = round(
+            suppressed_score - adjusted_score,
+            4,
+        )
+
+        if cluster_penalty < 0:
+
+            rationale.append("semantic_cluster_suppression")
+
+        adjusted_score = suppressed_score
 
         # -------------------------------------------------
         # NOVELTY BONUS
         # -------------------------------------------------
 
-        adjusted_score = self._novelty_engine.apply_bonus(
+        novelty_score = self._novelty_engine.apply_bonus(
             candidate=candidate,
-            selected_questions=selected_questions,
-            current_score=adjusted_score,
+            selected_questions=(selected_questions),
+            current_score=(adjusted_score),
         )
+
+        novelty_bonus = round(
+            novelty_score - adjusted_score,
+            4,
+        )
+
+        if novelty_bonus > 0:
+
+            rationale.append("semantic_novelty_bonus")
+
+        adjusted_score = novelty_score
 
         # -------------------------------------------------
         # CATEGORY RARITY BONUS
         # -------------------------------------------------
 
-        adjusted_score = self._rarity_engine.apply_bonus(
+        rarity_score = self._rarity_engine.apply_bonus(
             candidate=candidate,
-            selected_questions=selected_questions,
-            current_score=adjusted_score,
+            selected_questions=(selected_questions),
+            current_score=(adjusted_score),
         )
 
-        return round(
+        category_rarity_bonus = round(
+            rarity_score - adjusted_score,
+            4,
+        )
+
+        if category_rarity_bonus > 0:
+
+            rationale.append("category_rarity_bonus")
+
+        adjusted_score = rarity_score
+
+        # -------------------------------------------------
+        # FINAL SCORE
+        # -------------------------------------------------
+
+        final_score = round(
             adjusted_score,
             4,
+        )
+
+        return PlannerScoreBreakdown(
+            difficulty_score=round(
+                difficulty_score,
+                4,
+            ),
+            cluster_penalty=(cluster_penalty),
+            novelty_bonus=(novelty_bonus),
+            category_rarity_bonus=(category_rarity_bonus),
+            final_score=(final_score),
+            rationale=rationale,
         )

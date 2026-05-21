@@ -1,4 +1,4 @@
-## services/interview_selection/interview_question_selector.py
+# services/interview_selection/interview_question_selector.py
 
 from collections import defaultdict
 
@@ -7,6 +7,7 @@ from domain.contracts.question.question_bank_item import QuestionBankItem
 from services.interview_selection.selected_question import SelectedQuestion
 from services.interview_selection.interview_selection_result import InterviewSelectionResult
 from services.planning.planner_selection_scoring_engine import PlannerSelectionScoringEngine
+from services.planning.contracts.planner_score_breakdown import PlannerScoreBreakdown
 
 
 class InterviewQuestionSelector:
@@ -20,6 +21,7 @@ class InterviewQuestionSelector:
     ) -> None:
 
         self._scoring_engine = PlannerSelectionScoringEngine()
+
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -50,20 +52,24 @@ class InterviewQuestionSelector:
 
             best_score = -1.0
 
+            best_breakdown: PlannerScoreBreakdown | None = None
+
             current_selected = [s.item for s in selected]
 
             for question in questions:
 
                 base_score = float(question.difficulty)
 
-                adjusted_score = self._scoring_engine.score(
+                breakdown = self._scoring_engine.score(
                     candidate=question,
-                    selected_questions=current_selected,
+                    selected_questions=(current_selected),
                 )
+
+                adjusted_score = breakdown.final_score
 
                 print()
 
-                print("[PLANNER]" " semantic balancing")
+                print("[PLANNER] " "semantic balancing")
 
                 print(f"question: " f"{question.text}")
 
@@ -71,13 +77,17 @@ class InterviewQuestionSelector:
 
                 print(f"adjusted_score: " f"{adjusted_score}")
 
+                print(f"rationale: " f"{breakdown.rationale}")
+
                 if adjusted_score > best_score:
 
                     best = question
 
                     best_score = adjusted_score
 
-            if best is None:
+                    best_breakdown = breakdown
+
+            if best is None or best_breakdown is None:
                 continue
 
             selected.append(
@@ -85,6 +95,7 @@ class InterviewQuestionSelector:
                     item=best,
                     selection_score=(best_score),
                     selection_reason=("coverage_maximization"),
+                    score_breakdown=(best_breakdown),
                 )
             )
 
@@ -103,6 +114,7 @@ class InterviewQuestionSelector:
             tuple[
                 QuestionBankItem,
                 float,
+                PlannerScoreBreakdown,
             ]
         ] = []
 
@@ -110,14 +122,16 @@ class InterviewQuestionSelector:
 
             base_score = float(item.difficulty)
 
-            adjusted_score = self._scoring_engine.score(
+            breakdown = self._scoring_engine.score(
                 candidate=item,
-                selected_questions=current_selected,
+                selected_questions=(current_selected),
             )
+
+            adjusted_score = breakdown.final_score
 
             print()
 
-            print("[PLANNER]" " semantic balancing")
+            print("[PLANNER] " "semantic balancing")
 
             print(f"question: " f"{item.text}")
 
@@ -125,19 +139,26 @@ class InterviewQuestionSelector:
 
             print(f"adjusted_score: " f"{adjusted_score}")
 
+            print(f"rationale: " f"{breakdown.rationale}")
+
             scored_remaining.append(
                 (
                     item,
                     adjusted_score,
+                    breakdown,
                 )
             )
 
         scored_remaining.sort(
-            key=lambda x: x[1],
+            key=lambda x: (x[1]),
             reverse=True,
         )
 
-        for item, adjusted_score in scored_remaining:
+        for (
+            item,
+            adjusted_score,
+            breakdown,
+        ) in scored_remaining:
 
             if len(selected) >= max_questions:
                 break
@@ -147,6 +168,7 @@ class InterviewQuestionSelector:
                     item=item,
                     selection_score=(adjusted_score),
                     selection_reason=("semantic_balancing"),
+                    score_breakdown=(breakdown),
                 )
             )
 
@@ -162,7 +184,7 @@ class InterviewQuestionSelector:
 
         return InterviewSelectionResult(
             selected_questions=(selected),
-            total_questions=len(selected),
+            total_questions=(len(selected)),
             coverage_score=round(
                 coverage_score,
                 2,
@@ -180,9 +202,15 @@ class InterviewQuestionSelector:
     def _group_by_area(
         self,
         items: list[QuestionBankItem],
-    ) -> dict[str, list[QuestionBankItem]]:
+    ) -> dict[
+        str,
+        list[QuestionBankItem],
+    ]:
 
-        buckets = defaultdict(list)
+        buckets: dict[
+            str,
+            list[QuestionBankItem],
+        ] = defaultdict(list)
 
         for item in items:
 

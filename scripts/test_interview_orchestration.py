@@ -141,14 +141,36 @@ def main() -> None:
 
         print()
 
-    print()
+        print("SCORE BREAKDOWN: " )
+        print()
 
-    print("RETRIEVAL MEMORY")
-    print()
+        breakdown = question.score_breakdown
 
-    for question in orchestrator._retrieval_memory.get_recent_questions():
+        print(f"difficulty_score: " f"{breakdown.difficulty_score}")
 
-        print(question)
+        print(f"cluster_penalty: " f"{breakdown.cluster_penalty}")
+
+        print(f"novelty_bonus: " f"{breakdown.novelty_bonus}")
+
+        print(f"category_rarity_bonus: " f"{breakdown.category_rarity_bonus}")
+
+        print(f"final_score: " f"{breakdown.final_score}")
+
+        print(f"rationale: " f"{breakdown.rationale}")
+
+        print()
+        print("Retrieval memory questions:")
+        print()
+
+        for question in orchestrator._retrieval_memory.get_recent_questions():
+            print(question)
+
+        print()
+
+        print()
+        print("-" * 80)
+        print()
+
 
 if __name__ == "__main__":
 
