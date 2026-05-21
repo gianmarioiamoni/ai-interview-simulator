@@ -1,21 +1,25 @@
-# services/interview_selection/interview_question_selector.py
+## services/interview_selection/interview_question_selector.py
 
 from collections import defaultdict
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from services.interview_selection.selected_question import (
-    SelectedQuestion,
-)
-
-from services.interview_selection.interview_selection_result import (
-    InterviewSelectionResult,
-)
+from services.interview_selection.selected_question import SelectedQuestion
+from services.interview_selection.interview_selection_result import InterviewSelectionResult
+from services.planning.semantic_cluster_suppressor import SemanticClusterSuppressor
 
 
 class InterviewQuestionSelector:
+
+    # =====================================================
+    # CONSTRUCTOR
+    # =====================================================
+
+    def __init__(
+        self,
+    ) -> None:
+
+        self._cluster_suppressor = SemanticClusterSuppressor()
 
     # =====================================================
     # PUBLIC
@@ -29,8 +33,6 @@ class InterviewQuestionSelector:
 
         selected: list[SelectedQuestion] = []
 
-        used_areas: set[str] = set()
-
         area_buckets = self._group_by_area(
             candidates,
         )
@@ -40,39 +42,105 @@ class InterviewQuestionSelector:
         # maximize coverage
         # -------------------------------------------------
 
-        for area, questions in area_buckets.items():
+        for _, questions in area_buckets.items():
 
             if len(selected) >= max_questions:
                 break
 
-            best = max(
-                questions,
-                key=lambda q: (q.difficulty),
-            )
+            best: QuestionBankItem | None = None
+
+            best_score = -1.0
+
+            current_selected = [s.item for s in selected]
+
+            for question in questions:
+
+                base_score = float(question.difficulty)
+
+                adjusted_score = self._cluster_suppressor.apply_penalty(
+                    candidate=question,
+                    selected_questions=(current_selected),
+                    current_score=(base_score),
+                )
+
+                print()
+
+                print("[PLANNER]" " semantic balancing")
+
+                print(f"question: " f"{question.text}")
+
+                print(f"base_score: " f"{base_score}")
+
+                print(f"adjusted_score: " f"{adjusted_score}")
+
+                if adjusted_score > best_score:
+
+                    best = question
+
+                    best_score = adjusted_score
+
+            if best is None:
+                continue
 
             selected.append(
                 SelectedQuestion(
                     item=best,
-                    selection_score=1.0,
+                    selection_score=(best_score),
                     selection_reason=("coverage_maximization"),
                 )
             )
-
-            used_areas.add(area)
 
         # -------------------------------------------------
         # SECOND PASS
         # fill remaining slots
         # -------------------------------------------------
 
-        remaining = [q for q in candidates if q.id not in {s.item.id for s in selected}]
+        selected_ids = {s.item.id for s in selected}
 
-        remaining.sort(
-            key=lambda q: (q.difficulty),
+        remaining = [q for q in candidates if q.id not in selected_ids]
+
+        current_selected = [s.item for s in selected]
+
+        scored_remaining: list[
+            tuple[
+                QuestionBankItem,
+                float,
+            ]
+        ] = []
+
+        for item in remaining:
+
+            base_score = float(item.difficulty)
+
+            adjusted_score = self._cluster_suppressor.apply_penalty(
+                candidate=item,
+                selected_questions=(current_selected),
+                current_score=(base_score),
+            )
+
+            print()
+
+            print("[PLANNER]" " semantic balancing")
+
+            print(f"question: " f"{item.text}")
+
+            print(f"base_score: " f"{base_score}")
+
+            print(f"adjusted_score: " f"{adjusted_score}")
+
+            scored_remaining.append(
+                (
+                    item,
+                    adjusted_score,
+                )
+            )
+
+        scored_remaining.sort(
+            key=lambda x: x[1],
             reverse=True,
         )
 
-        for item in remaining:
+        for item, adjusted_score in scored_remaining:
 
             if len(selected) >= max_questions:
                 break
@@ -80,8 +148,8 @@ class InterviewQuestionSelector:
             selected.append(
                 SelectedQuestion(
                     item=item,
-                    selection_score=0.7,
-                    selection_reason=("difficulty_prioritization"),
+                    selection_score=(adjusted_score),
+                    selection_reason=("semantic_balancing"),
                 )
             )
 
@@ -115,7 +183,7 @@ class InterviewQuestionSelector:
     def _group_by_area(
         self,
         items: list[QuestionBankItem],
-    ):
+    ) -> dict[str, list[QuestionBankItem]]:
 
         buckets = defaultdict(list)
 
