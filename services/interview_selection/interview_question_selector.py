@@ -6,7 +6,7 @@ from domain.contracts.question.question_bank_item import QuestionBankItem
 
 from services.interview_selection.selected_question import SelectedQuestion
 from services.interview_selection.interview_selection_result import InterviewSelectionResult
-from services.planning.semantic_cluster_suppressor import SemanticClusterSuppressor
+from services.planning.planner_selection_scoring_engine import PlannerSelectionScoringEngine
 
 
 class InterviewQuestionSelector:
@@ -19,8 +19,7 @@ class InterviewQuestionSelector:
         self,
     ) -> None:
 
-        self._cluster_suppressor = SemanticClusterSuppressor()
-
+        self._scoring_engine = PlannerSelectionScoringEngine()
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -57,10 +56,9 @@ class InterviewQuestionSelector:
 
                 base_score = float(question.difficulty)
 
-                adjusted_score = self._cluster_suppressor.apply_penalty(
+                adjusted_score = self._scoring_engine.score(
                     candidate=question,
-                    selected_questions=(current_selected),
-                    current_score=(base_score),
+                    selected_questions=current_selected,
                 )
 
                 print()
@@ -112,10 +110,9 @@ class InterviewQuestionSelector:
 
             base_score = float(item.difficulty)
 
-            adjusted_score = self._cluster_suppressor.apply_penalty(
+            adjusted_score = self._scoring_engine.score(
                 candidate=item,
-                selected_questions=(current_selected),
-                current_score=(base_score),
+                selected_questions=current_selected,
             )
 
             print()
