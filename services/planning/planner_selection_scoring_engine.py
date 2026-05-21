@@ -2,6 +2,7 @@
 
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from services.planning.semantic_cluster_suppressor import SemanticClusterSuppressor
+from services.planning.semantic_novelty_bonus_engine import SemanticNoveltyBonusEngine
 
 
 class PlannerSelectionScoringEngine:
@@ -21,6 +22,8 @@ class PlannerSelectionScoringEngine:
         self._semantic_penalty_weight = semantic_penalty_weight
 
         self._cluster_suppressor = SemanticClusterSuppressor()
+
+        self._novelty_engine = SemanticNoveltyBonusEngine()
 
     # =====================================================
     # PUBLIC
@@ -48,6 +51,17 @@ class PlannerSelectionScoringEngine:
             current_score=(base_score),
         )
 
+        # -------------------------------------------------
+        # NOVELTY BONUS
+        # -------------------------------------------------
+
+        adjusted_score = self._novelty_engine.apply_bonus(
+            candidate=candidate,
+            selected_questions=selected_questions,
+            current_score=adjusted_score,
+        )
+
+        
         return round(
             adjusted_score,
             4,
