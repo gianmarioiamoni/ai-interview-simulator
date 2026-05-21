@@ -9,6 +9,7 @@ from services.interview_planning.planning_result import PlanningResult
 from services.interview_selection.selected_question import SelectedQuestion
 from services.planning.planner_selection_scoring_engine import PlannerSelectionScoringEngine
 from services.planning.contracts.planner_score_breakdown import PlannerScoreBreakdown
+from services.planning.planner_telemetry_builder import PlannerTelemetryBuilder
 
 
 class ConstraintBasedPlanner:
@@ -38,6 +39,8 @@ class ConstraintBasedPlanner:
     ) -> None:
 
         self._planner_scoring_engine = PlannerSelectionScoringEngine()
+
+        self._telemetry_builder = PlannerTelemetryBuilder()
 
     # =====================================================
     # PUBLIC
@@ -193,6 +196,15 @@ class ConstraintBasedPlanner:
             constraints=constraints,
         )
 
+        # -------------------------------------------------
+        # TELEMETRY
+        # -------------------------------------------------
+
+        telemetry = self._telemetry_builder.build(
+            selected_questions=selected_questions,
+            total_candidates=len(items),
+        )
+
         return PlanningResult(
             selected_questions=(selected_questions),
             satisfied_constraints=(satisfied),
@@ -201,6 +213,7 @@ class ConstraintBasedPlanner:
                 average_difficulty,
                 2,
             ),
+            telemetry=telemetry,
         )
 
     # =====================================================

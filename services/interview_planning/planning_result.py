@@ -2,9 +2,8 @@
 
 from pydantic import BaseModel
 
-from services.interview_selection.selected_question import (
-    SelectedQuestion,
-)
+from services.interview_selection.selected_question import SelectedQuestion
+from services.planning.contracts.planner_telemetry import PlannerTelemetry
 
 
 class PlanningResult(BaseModel):
@@ -16,6 +15,8 @@ class PlanningResult(BaseModel):
     violated_constraints: list[str]
 
     average_difficulty: float
+
+    telemetry: PlannerTelemetry
 
     model_config = {
         "frozen": True,
