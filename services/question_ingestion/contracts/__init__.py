@@ -8,3 +8,4 @@ from .github_document import GitHubDocument
 from .corpus_validation_result import CorpusValidationResult
 from .corpus_onboarding_result import CorpusOnboardingResult
 from .curated_corpus_record import CuratedCorpusRecord
+from .ingestion_metadata import IngestionMetadata

@@ -8,6 +8,7 @@ from domain.contracts.user.seniority_level import SeniorityLevel
 from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
 
 
+
 class NormalizedQuestionRecord(BaseModel):
 
     text: str
