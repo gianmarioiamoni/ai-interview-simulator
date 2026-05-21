@@ -72,6 +72,17 @@ def main() -> None:
 
     print()
 
+
+    print("PLANNER TELEMETRY")
+
+    print()
+
+    print(
+        result.planning_result.telemetry.model_dump_json(
+            indent=2,
+        )
+    )
+
     # -------------------------------------------------
     # VALIDATION
     # -------------------------------------------------
