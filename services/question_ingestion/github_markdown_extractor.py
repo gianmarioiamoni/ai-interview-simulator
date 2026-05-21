@@ -32,7 +32,7 @@ class GitHubMarkdownExtractor:
             if self._is_question(cleaned):
                 questions.append(cleaned)
 
-        return questions
+        return self._deduplicate(questions)
 
     # =====================================================
     # HELPERS
@@ -45,8 +45,38 @@ class GitHubMarkdownExtractor:
 
         cleaned = line.strip()
 
+        # -------------------------------------------------
+        # REMOVE COMMON MARKDOWN PREFIXES
+        # -------------------------------------------------
+
+        prefixes = [
+            "- ",
+            "* ",
+            "> ",
+        ]
+
+        for prefix in prefixes:
+
+            if cleaned.startswith(prefix):
+
+                cleaned = cleaned[len(prefix) :]
+
+        # -------------------------------------------------
+        # REMOVE HEADERS
+        # -------------------------------------------------
+
         cleaned = re.sub(
-            r"^[-*#>\d.\s]+",
+            r"^#+\s*",
+            "",
+            cleaned,
+        )
+
+        # -------------------------------------------------
+        # REMOVE ORDERED LIST PREFIXES
+        # -------------------------------------------------
+
+        cleaned = re.sub(
+            r"^\d+\.\s*",
             "",
             cleaned,
         )
@@ -61,18 +91,50 @@ class GitHubMarkdownExtractor:
         if len(text) < 15:
             return False
 
-        question_starters = [
-            "how",
-            "what",
-            "why",
-            "when",
-            "where",
-            "explain",
-            "describe",
-            "design",
-            "implement",
+        question_patterns = [
+            # direct questions
+            r"\?$",
+            # explanation prompts
+            r"^Explain\s",
+            r"^Describe\s",
+            r"^How\s",
+            r"^What\s",
+            r"^Why\s",
+            r"^When\s",
+            r"^Where\s",
+            r"^Design\s",
+            r"^Implement\s",
         ]
 
-        normalized = text.lower()
+        for pattern in question_patterns:
 
-        return any(normalized.startswith(starter) for starter in (question_starters))
+            if re.search(
+                pattern,
+                text,
+                flags=re.IGNORECASE,
+            ):
+                return True
+
+        return False
+
+    def _deduplicate(
+        self,
+        questions: list[str],
+    ) -> list[str]:
+
+        seen: set[str] = set()
+
+        unique_questions: list[str] = []
+
+        for question in questions:
+
+            normalized = question.strip().lower()
+
+            if normalized in seen:
+                continue
+
+            seen.add(normalized)
+
+            unique_questions.append(question)
+
+        return unique_questions
