@@ -35,7 +35,9 @@ class CorpusOnboardingService:
         # EXTRACTION
         # -------------------------------------------------
 
-        questions = extractor.extract_questions(document)
+        questions = extractor.extract_questions(
+            document=document,
+        )
 
         # -------------------------------------------------
         # VALIDATION
@@ -81,6 +83,10 @@ class CorpusOnboardingService:
             accepted_count=(len(accepted)),
             average_score=(average_score),
         )
+
+        # -------------------------------------------------
+        # RESULT
+        # -------------------------------------------------
 
         return CorpusOnboardingResult(
             repository_name=(document.repository),

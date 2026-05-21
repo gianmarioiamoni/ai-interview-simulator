@@ -1,72 +1,70 @@
 # scripts/test_real_corpus_onboarding.py
 
-from services.question_ingestion.github_markdown_extractor import (
-    GitHubMarkdownExtractor,
-)
+from pathlib import Path
 
-from services.question_ingestion.corpus_semantic_validator import (
-    CorpusSemanticValidator,
-)
-
-from services.question_ingestion.corpus_onboarding_service import (
-    CorpusOnboardingService,
-)
-
-from services.question_ingestion.curated_corpus_storage import (
-    CuratedCorpusStorage,
-)
+from services.question_ingestion.contracts import GitHubDocument
+from services.question_ingestion.github_markdown_extractor import GitHubMarkdownExtractor
+from services.question_ingestion.corpus_onboarding_service import CorpusOnboardingService
+from services.question_ingestion.curated_corpus_storage import CuratedCorpusStorage
 
 
 def main() -> None:
 
-    # -------------------------------------------------
-    # EXTRACT
-    # -------------------------------------------------
+    # =================================================
+    # LOAD REAL CORPUS
+    # =================================================
+
+    markdown_path = "datasets/raw/github/" "backend_scalability.md"
+
+    content = Path(markdown_path).read_text(
+        encoding="utf-8",
+    )
+
+    document = GitHubDocument(
+        path=markdown_path,
+        content=content,
+        repository=("backend_scalability"),
+        branch="main",
+    )
+
+    # =================================================
+    # EXTRACTION
+    # =================================================
 
     extractor = GitHubMarkdownExtractor()
 
     questions = extractor.extract_questions(
-        markdown_path=("datasets/raw/github/" "backend_scalability.md")
+        document=document,
     )
 
-    # -------------------------------------------------
-    # VALIDATE
-    # -------------------------------------------------
-
-    validator = CorpusSemanticValidator()
-
-    validated = validator.validate(
-        questions=questions,
-        source_name=("backend_scalability"),
-        source_type="github",
-        dataset_version="v1",
-    )
-
-    # -------------------------------------------------
-    # ONBOARD
-    # -------------------------------------------------
+    # =================================================
+    # ONBOARDING
+    # =================================================
 
     onboarding = CorpusOnboardingService()
 
-    result = onboarding.onboard(
-        repository_name=("backend_scalability"),
-        validated_records=(validated),
-    )
+    onboarding_result = onboarding.onboard(document=document)
 
-    # -------------------------------------------------
-    # STORE
-    # -------------------------------------------------
+    # =================================================
+    # STORAGE
+    # =================================================
 
     storage = CuratedCorpusStorage()
 
-    output_path = storage.store(
-        repository_name=("backend_scalability"),
-        records=(result.accepted_questions),
+    output_path = (
+        "datasets/curated/github/"
+        "backend_scalability.json"
     )
 
-    # -------------------------------------------------
+    storage.persist(
+        onboarding_result=(onboarding_result),
+        output_path=(output_path),
+        corpus_version="v1",
+    )
+
+    # =================================================
     # OUTPUT
-    # -------------------------------------------------
+    # =================================================
 
     print()
 
@@ -74,23 +72,23 @@ def main() -> None:
 
     print()
 
-    print(f"repository: " f"{result.repository_name}")
+    print(f"repository: " f"{onboarding_result.repository_name}")
 
     print()
 
-    print(f"total_questions: " f"{result.total_questions}")
+    print(f"total_questions: " f"{onboarding_result.total_questions}")
 
-    print(f"accepted_questions: " f"{result.accepted_questions_count}")
+    print(f"accepted_questions: " f"{onboarding_result.accepted_questions}")
 
-    print(f"rejected_questions: " f"{result.rejected_questions_count}")
-
-    print()
-
-    print(f"average_score: " f"{result.average_score}")
+    print(f"rejected_questions: " f"{onboarding_result.rejected_questions}")
 
     print()
 
-    print(f"decision: " f"{result.decision}")
+    print(f"average_score: " f"{onboarding_result.average_score}")
+
+    print()
+
+    print(f"decision: " f"{onboarding_result.onboarding_decision}")
 
     print()
 
@@ -103,7 +101,7 @@ def main() -> None:
     print()
 
     for index, question in enumerate(
-        result.accepted_questions[:5],
+        onboarding_result.accepted_results[:10],
         start=1,
     ):
 
@@ -111,15 +109,15 @@ def main() -> None:
 
         print()
 
-        print(question.content)
+        print(question.raw_question)
 
         print()
 
-        print(f"categories: " f"{question.semantic_categories}")
+        print(f"categories: " f"{question.filter_result.matched_categories}")
 
         print()
 
-        print(f"score: " f"{question.semantic_score}")
+        print(f"score: " f"{question.filter_result.score}")
 
         print()
 
