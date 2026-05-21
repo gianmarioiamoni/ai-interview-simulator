@@ -2,14 +2,14 @@
 
 from pydantic import BaseModel
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
+from services.interview_selection.selected_question import (
+    SelectedQuestion,
 )
 
 
 class PlanningResult(BaseModel):
 
-    selected_questions: list[QuestionBankItem]
+    selected_questions: list[SelectedQuestion]
 
     satisfied_constraints: list[str]
 
@@ -19,4 +19,5 @@ class PlanningResult(BaseModel):
 
     model_config = {
         "frozen": True,
+        "extra": "forbid",
     }

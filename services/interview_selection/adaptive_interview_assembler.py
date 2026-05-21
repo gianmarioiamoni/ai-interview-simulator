@@ -2,25 +2,13 @@
 
 from collections import defaultdict
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from services.interview_selection.assembled_question import (
-    AssembledQuestion,
-)
-
-from services.interview_selection.adaptive_interview_result import (
-    AdaptiveInterviewResult,
-)
-
-from services.interview_selection.interview_stage import (
-    InterviewStage,
-)
-
-from services.interview_policy.interview_policy import (
-    InterviewPolicy,
-)
+from services.interview_selection.assembled_question import AssembledQuestion
+from services.interview_selection.adaptive_interview_result import AdaptiveInterviewResult
+from services.interview_selection.interview_stage import InterviewStage
+from services.interview_policy.interview_policy import InterviewPolicy
+from services.interview_selection.selected_question import SelectedQuestion
 
 
 class AdaptiveInterviewAssembler:
@@ -31,7 +19,7 @@ class AdaptiveInterviewAssembler:
 
     def assemble(
         self,
-        items: list[QuestionBankItem],
+        items: list[SelectedQuestion],
         policy: InterviewPolicy,
         max_questions: int = 5,
     ) -> AdaptiveInterviewResult:
@@ -40,21 +28,24 @@ class AdaptiveInterviewAssembler:
             items,
             key=lambda q: (
                 self._policy_score(
-                    q,
+                    q.item,
                     policy,
                 ),
-                q.difficulty,
+                q.item.difficulty,
             ),
+            reverse=True,
         )
 
         selected: list[AssembledQuestion] = []
 
         area_counts = defaultdict(int)
 
-        for item in sorted_items:
+        for selected_question in sorted_items:
 
             if len(selected) >= max_questions:
                 break
+
+            item = selected_question.item
 
             area = item.area.value
 
@@ -74,13 +65,14 @@ class AdaptiveInterviewAssembler:
                             stage,
                         )
                     ),
+                    score_breakdown=(selected_question.score_breakdown),
                 )
             )
 
             area_counts[area] += 1
 
         coverage_score = len({q.item.area.value for q in selected}) / max(
-            len({i.area.value for i in items}),
+            len({i.item.area.value for i in items}),
             1,
         )
 
@@ -112,6 +104,7 @@ class AdaptiveInterviewAssembler:
     # =====================================================
     # HELPERS
     # =====================================================
+
     def _policy_score(
         self,
         item: QuestionBankItem,
@@ -120,22 +113,13 @@ class AdaptiveInterviewAssembler:
 
         score = 0.0
 
-        if (
-            item.area.value
-            in policy.preferred_areas
-        ):
+        if item.area.value in policy.preferred_areas:
             score += 1.0
 
-        if (
-            policy.prioritize_architecture
-            and item.area.value
-            == "technical_case_study"
-        ):
+        if policy.prioritize_architecture and item.area.value == "technical_case_study":
             score += 0.5
 
-        if (
-            policy.prioritize_scalability
-        ):
+        if policy.prioritize_scalability:
 
             lower = item.text.lower()
 
@@ -151,9 +135,7 @@ class AdaptiveInterviewAssembler:
             ):
                 score += 0.5
 
-        if (
-            policy.prioritize_production_experience
-        ):
+        if policy.prioritize_production_experience:
 
             lower = item.text.lower()
 

@@ -154,16 +154,8 @@ class InterviewOrchestrator:
 
         return OrchestrationResult(
             candidate_pool=pool,
-            planning_result=(
-                replanning_result
-                .final_planning_result
-            ),
-            validation_result=(
-                replanning_result
-                .final_validation_result
-            ),
-            replanning_result=(
-                replanning_result
-            ),
+            planning_result=replanning_result.final_planning_result,
+            validation_result=replanning_result.final_validation_result,
+            replanning_result=replanning_result,
             assembly_result=assembly_result,
         )
