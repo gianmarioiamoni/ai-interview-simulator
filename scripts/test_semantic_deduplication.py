@@ -1,125 +1,73 @@
 # scripts/test_semantic_deduplication.py
 
-from infrastructure.vector_store.chroma_question_store import (
-    ChromaQuestionStore,
-)
-
-from services.question_intelligence.question_vector_store import (
-    QuestionVectorStore,
-)
-
-from services.question_intelligence.question_retrieval_service import (
-    QuestionRetrievalService,
-)
-
-from services.question_intelligence.retrieval_query_builder import (
-    RetrievalQueryBuilder,
-)
-
-from services.question_intelligence.retrieval.retrieval_strategy_resolver import (
-    RetrievalStrategyResolver,
-)
-
-from services.question_intelligence.deduplication.semantic_duplicate_detector import (
+from services.question_intelligence.semantic_duplicate_detector import (
     SemanticDuplicateDetector,
 )
 
-from domain.contracts.interview.interview_area import (
-    InterviewArea,
-)
 
-from domain.contracts.interview.interview_type import (
-    InterviewType,
-)
+def main() -> None:
 
-from domain.contracts.user.role import (
-    RoleType,
-)
-
-from domain.contracts.user.seniority_level import (
-    SeniorityLevel,
-)
-
-
-def main():
-
-    chroma_store = ChromaQuestionStore()
-
-    vector_store = QuestionVectorStore(
-        chroma_store,
-    )
-
-    retrieval_service = QuestionRetrievalService(
-        vector_store,
-    )
-
-    query_builder = RetrievalQueryBuilder()
-
-    strategy_resolver = RetrievalStrategyResolver()
+    questions = [
+        # ---------------------------------------------
+        # DUPLICATES
+        # ---------------------------------------------
+        ("How would you design " "a distributed cache?"),
+        ("How would you architect " "a distributed caching system?"),
+        ("Explain distributed " "cache design."),
+        # ---------------------------------------------
+        # DIFFERENT
+        # ---------------------------------------------
+        ("Explain quorum-based " "replication."),
+        ("How would you " "design a CDN?"),
+        ("Explain eventual " "consistency trade-offs."),
+    ]
 
     detector = SemanticDuplicateDetector()
 
-    # -------------------------------------------------
-    # QUERY
-    # -------------------------------------------------
-
-    query = query_builder.build(
-        role=RoleType.BACKEND_ENGINEER,
-        level=SeniorityLevel.MID,
-        area=InterviewArea.TECH_DATABASE,
+    duplicates = detector.find_duplicates(
+        questions=questions,
     )
-
-    strategy = strategy_resolver.resolve(
-        area=InterviewArea.TECH_DATABASE,
-        level=SeniorityLevel.MID,
-        questions_per_area=10,
-    )
-
-    # -------------------------------------------------
-    # RETRIEVE
-    # -------------------------------------------------
-
-    results = retrieval_service.retrieve(
-        query=query,
-        retrieval_strategy=strategy,
-        role=RoleType.BACKEND_ENGINEER.value,
-        level=SeniorityLevel.MID.value,
-        interview_type=InterviewType.TECHNICAL.value,
-        area=InterviewArea.TECH_DATABASE.value,
-    )
-
-    # -------------------------------------------------
-    # DEDUP
-    # -------------------------------------------------
-
-    report = detector.detect(
-        results,
-    )
-
-    # -------------------------------------------------
-    # OUTPUT
-    # -------------------------------------------------
-
-    print()
-    print("SEMANTIC DUPLICATE REPORT")
-    print()
-
-    print(report.model_dump_json(indent=2))
 
     print()
 
-    if report.duplicate_pairs:
+    print("SEMANTIC DEDUPLICATION")
 
-        print("DUPLICATES")
+    print()
+
+    print(f"TOTAL DUPLICATES: " f"{len(duplicates)}")
+
+    for index, duplicate in enumerate(
+        duplicates,
+        start=1,
+    ):
+
+        q1, q2, similarity = duplicate
+
         print()
 
-        for pair in report.duplicate_pairs:
+        print(f"DUPLICATE #{index}")
 
-            print(f"SIMILARITY: {pair.similarity}")
-            print(f"A: {pair.left}")
-            print(f"B: {pair.right}")
-            print()
+        print()
+
+        print("QUESTION 1:")
+
+        print(q1)
+
+        print()
+
+        print("QUESTION 2:")
+
+        print(q2)
+
+        print()
+
+        print(f"similarity: " f"{similarity}")
+
+        print()
+
+        print("-" * 80)
 
 
 if __name__ == "__main__":
+
     main()
