@@ -141,6 +141,14 @@ def main() -> None:
 
         print()
 
+    print()
+
+    print("RETRIEVAL MEMORY")
+    print()
+
+    for question in orchestrator._retrieval_memory.get_recent_questions():
+
+        print(question)
 
 if __name__ == "__main__":
 
