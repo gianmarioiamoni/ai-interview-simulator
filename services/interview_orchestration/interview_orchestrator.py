@@ -5,17 +5,31 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from services.candidate_pool.candidate_pool_builder import CandidatePoolBuilder
+
 from services.interview_policy.policy_factory import PolicyFactory
 from services.interview_planning.interview_constraints import InterviewConstraints
 from services.interview_selection.adaptive_interview_assembler import AdaptiveInterviewAssembler
 from services.interview_orchestration.orchestration_result import OrchestrationResult
+
 from services.replanning.recovery_replanner import RecoveryReplanner
+
 from services.interview_orchestration.orchestration_intent_builder import OrchestrationIntentBuilder
+
 from services.retrieval.planner_retrieval_service import PlannerRetrievalService
 from services.retrieval.retrieval_runtime_mapper import RetrievalRuntimeMapper
+from services.retrieval.memory_aware_retrieval_pipeline import MemoryAwareRetrievalPipeline
+from services.retrieval.retrieval_session_memory import RetrievalSessionMemory
 
 
 class InterviewOrchestrator:
+
+    def __init__(self) -> None:
+
+        self._retrieval_memory = RetrievalSessionMemory()
+
+        self._retrieval_pipeline = MemoryAwareRetrievalPipeline(
+            memory=self._retrieval_memory,
+        )
 
     # =====================================================
     # PUBLIC
@@ -46,9 +60,13 @@ class InterviewOrchestrator:
 
         retrieval_service = PlannerRetrievalService()
 
-        retrieval_results = retrieval_service.retrieve_candidates(
+        symbolic_results = retrieval_service.retrieve_candidates(
             intent=intent,
             corpus_path="datasets/curated/tech_interview_handbook.json",
+        )
+
+        retrieval_results = self._retrieval_pipeline.process(
+            results=symbolic_results,
         )
 
         # -------------------------------------------------
