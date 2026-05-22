@@ -9,24 +9,17 @@ from services.interview_planning.planning_result import PlanningResult
 from services.interview_selection.selected_question import SelectedQuestion
 from services.planning.planner_selection_scoring_engine import PlannerSelectionScoringEngine
 from services.planning.contracts.planner_score_breakdown import PlannerScoreBreakdown
-from services.planning.planner_telemetry_builder import PlannerTelemetryBuilder
+from services.telemetry.planner.planner_telemetry_builder import PlannerTelemetryBuilder
+from services.interview_planning.contracts.planning_artifacts import PlanningArtifacts
+from services.planning.contracts.planner_candidate_evaluation import PlannerCandidateEvaluation
+
+
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ConstraintBasedPlanner:
-
-    # =====================================================
-    # SCORING CONSTANTS
-    # =====================================================
-
-    DIFFICULTY_WEIGHT = 1.0
-
-    AREA_DIVERSITY_BONUS = 2.0
-
-    ROLE_DIVERSITY_BONUS = 1.0
-
-    REDUNDANCY_PENALTY = 2.0
-
-    AREA_SATURATION_BASE_PENALTY = 3.0
 
     MINIMUM_CANDIDATE_SCORE = 0.0
 
@@ -67,7 +60,7 @@ class ConstraintBasedPlanner:
             if not candidates:
                 continue
 
-            best: QuestionBankItem | None = None
+            best_candidate: QuestionBankItem | None = None
 
             best_breakdown: PlannerScoreBreakdown | None = None
 
@@ -86,18 +79,18 @@ class ConstraintBasedPlanner:
 
                 if score > best_score:
 
-                    best = candidate
+                    best_candidate = candidate
 
                     best_breakdown = breakdown
 
                     best_score = score
 
-            if best is None or best_breakdown is None:
+            if best_candidate is None or best_breakdown is None:
                 continue
 
             selected.append(
                 SelectedQuestion(
-                    item=best,
+                    item=best_candidate,
                     selection_score=(best_score),
                     selection_reason=("required_area_selection"),
                     score_breakdown=(best_breakdown),
@@ -205,6 +198,12 @@ class ConstraintBasedPlanner:
             total_candidates=len(items),
         )
 
+        artifacts = PlanningArtifacts(
+            telemetry=telemetry,
+            planner_version="1.0.0",
+            optimization_strategy="constraint_based",
+        )
+
         return PlanningResult(
             selected_questions=(selected_questions),
             satisfied_constraints=(satisfied),
@@ -213,7 +212,7 @@ class ConstraintBasedPlanner:
                 average_difficulty,
                 2,
             ),
-            telemetry=telemetry,
+            artifacts=artifacts,
         )
 
     # =====================================================
@@ -250,19 +249,11 @@ class ConstraintBasedPlanner:
         # SORT BY SCORE
         # -------------------------------------------------
 
-        print()
-
-        print("[PLANNER] " "Evaluating fallback candidates...")
+        logger.info("Evaluating fallback candidates...")
 
         current_selected = [s.item for s in selected]
 
-        scored_remaining: list[
-            tuple[
-                QuestionBankItem,
-                float,
-                PlannerScoreBreakdown,
-            ]
-        ] = []
+        scored_remaining: list[PlannerCandidateEvaluation] = []
 
         for candidate in remaining:
 
@@ -272,15 +263,15 @@ class ConstraintBasedPlanner:
             )
 
             scored_remaining.append(
-                (
-                    candidate,
-                    breakdown.final_score,
-                    breakdown,
+                PlannerCandidateEvaluation(
+                    candidate=candidate,
+                    breakdown=breakdown,
+                    final_score=breakdown.final_score,
                 )
             )
 
         scored_remaining.sort(
-            key=lambda x: (x[1]),
+            key=lambda x: (x.final_score),
             reverse=True,
         )
 
@@ -288,11 +279,13 @@ class ConstraintBasedPlanner:
         # FILL
         # -------------------------------------------------
 
-        for (
-            item,
-            score,
-            breakdown,
-        ) in scored_remaining:
+        for evaluation in scored_remaining:
+
+            item = evaluation.candidate
+
+            score = evaluation.final_score
+
+            breakdown = evaluation.breakdown
 
             if len(selected) >= constraints.minimum_total_questions:
                 break
@@ -303,21 +296,15 @@ class ConstraintBasedPlanner:
 
             if score < self.MINIMUM_CANDIDATE_SCORE:
 
-                print()
+                logger.info(f"Rejected low-quality candidate: {item.text}")
 
-                print(
-                    f"[PLANNER] " f"Rejected low-quality " f"candidate: " f"{item.text}"
-                )
-
-                print(f"[PLANNER] " f"Score: {score}")
+                logger.info(f"Score: {score}")
 
                 continue
 
-            print()
+            logger.info(f"Selected fallback candidate: {item.text}")
 
-            print(f"[PLANNER] " f"Selected fallback " f"candidate: " f"{item.text}")
-
-            print(f"[PLANNER] " f"Score: {score}")
+            logger.info(f"Score: {score}")
 
             selected.append(
                 SelectedQuestion(
@@ -330,88 +317,3 @@ class ConstraintBasedPlanner:
 
         return selected
 
-    # =====================================================
-    # SCORING
-    # =====================================================
-
-    def _calculate_candidate_score(
-        self,
-        candidate: QuestionBankItem,
-        selected: list[QuestionBankItem],
-        constraints: InterviewConstraints,
-    ) -> float:
-
-        score = 0.0
-
-        # -------------------------------------------------
-        # DIFFICULTY
-        # -------------------------------------------------
-
-        score += candidate.difficulty * self.DIFFICULTY_WEIGHT
-
-        # -------------------------------------------------
-        # AREA DIVERSITY
-        # -------------------------------------------------
-
-        selected_areas = {item.area.value for item in selected}
-
-        if candidate.area.value not in selected_areas:
-
-            score += self.AREA_DIVERSITY_BONUS
-
-        # -------------------------------------------------
-        # AREA SATURATION
-        # -------------------------------------------------
-
-        area_count = len(
-            [item for item in selected if (item.area.value == candidate.area.value)]
-        )
-
-        overflow = max(
-            0,
-            (area_count + 1 - constraints.max_questions_per_area),
-        )
-
-        if overflow > 0:
-
-            saturation_penalty = overflow * self.AREA_SATURATION_BASE_PENALTY
-
-            score -= saturation_penalty
-
-            print()
-
-            print(
-                f"[PLANNER] "
-                f"Area saturation "
-                f"penalty applied: "
-                f"{candidate.area.value}"
-            )
-
-            print(f"[PLANNER] " f"Overflow: " f"{overflow}")
-
-            print(f"[PLANNER] " f"Penalty: " f"{saturation_penalty}")
-
-        # -------------------------------------------------
-        # ROLE DIVERSITY
-        # -------------------------------------------------
-
-        selected_roles = {item.role.type.value for item in selected}
-
-        if candidate.role.type.value not in selected_roles:
-
-            score += self.ROLE_DIVERSITY_BONUS
-
-        # -------------------------------------------------
-        # REDUNDANCY
-        # -------------------------------------------------
-
-        similar_questions = len(
-            [item for item in selected if (item.text[:25] == candidate.text[:25])]
-        )
-
-        score -= similar_questions * self.REDUNDANCY_PENALTY
-
-        return round(
-            score,
-            2,
-        )

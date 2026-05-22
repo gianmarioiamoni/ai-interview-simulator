@@ -3,7 +3,7 @@
 from pydantic import BaseModel
 
 from services.interview_selection.selected_question import SelectedQuestion
-from services.planning.contracts.planner_telemetry import PlannerTelemetry
+from services.telemetry.planner.planner_telemetry import PlannerTelemetry
 
 
 class PlanningResult(BaseModel):
