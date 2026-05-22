@@ -5,9 +5,17 @@ from statistics import mean
 
 from services.interview_selection.selected_question import SelectedQuestion
 from services.planning.contracts.planner_telemetry import PlannerTelemetry
+from services.planning.difficulty_progression_analyzer import DifficultyProgressionAnalyzer
+from services.planning.difficulty_spike_suppressor import DifficultySpikeSuppressor
 
 
 class PlannerTelemetryBuilder:
+
+
+    def __init__(self) -> None:
+        self._difficulty_progression_analyzer = DifficultyProgressionAnalyzer()
+        self._difficulty_spike_suppressor = DifficultySpikeSuppressor()
+
 
     # =====================================================
     # PUBLIC
@@ -49,6 +57,8 @@ class PlannerTelemetryBuilder:
 
         rarity_bonus_count = 0
 
+        difficulty_spike_penalty_count = 0
+
         # -------------------------------------------------
         # ITERATION
         # -------------------------------------------------
@@ -74,6 +84,9 @@ class PlannerTelemetryBuilder:
             if breakdown.category_rarity_bonus > 0:
                 rarity_bonus_count += 1
 
+            if breakdown.difficulty_spike_penalty < 0:
+                difficulty_spike_penalty_count += 1
+
         # -------------------------------------------------
         # AGGREGATIONS
         # -------------------------------------------------
@@ -86,6 +99,10 @@ class PlannerTelemetryBuilder:
         average_difficulty = round(
             mean(q.item.difficulty for q in selected_questions),
             4,
+        )
+
+        difficulty_progression_score = self._difficulty_progression_analyzer.calculate_progression_score(
+           [q.item for q in selected_questions],
         )
 
         # -------------------------------------------------
@@ -104,4 +121,6 @@ class PlannerTelemetryBuilder:
             unique_areas=(len(area_distribution)),
             area_distribution=dict(area_distribution),
             rationale_distribution=dict(rationale_distribution),
+            difficulty_spike_penalty_count=(difficulty_spike_penalty_count),
+            difficulty_progression_score=(difficulty_progression_score),
         )

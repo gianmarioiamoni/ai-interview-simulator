@@ -17,6 +17,8 @@ class PlannerScoreBreakdown(BaseModel):
 
     rationale: list[str]
 
+    difficulty_spike_penalty: float
+
     model_config = {
         "frozen": True,
         "extra": "forbid",

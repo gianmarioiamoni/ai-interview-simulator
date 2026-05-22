@@ -27,6 +27,10 @@ class PlannerTelemetry(BaseModel):
 
     rationale_distribution: dict[str, int]
 
+    difficulty_spike_penalty_count: int
+
+    difficulty_progression_score: float
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
