@@ -6,6 +6,7 @@ from services.planning.semantic_cluster_suppressor import SemanticClusterSuppres
 from services.planning.semantic_novelty_bonus_engine import SemanticNoveltyBonusEngine
 from services.planning.category_rarity_bonus_engine import CategoryRarityBonusEngine
 from services.planning.contracts.planner_score_breakdown import PlannerScoreBreakdown
+from services.planning.difficulty_spike_suppressor import DifficultySpikeSuppressor
 
 
 class PlannerSelectionScoringEngine:
@@ -29,6 +30,8 @@ class PlannerSelectionScoringEngine:
         self._novelty_engine = SemanticNoveltyBonusEngine()
 
         self._rarity_engine = CategoryRarityBonusEngine()
+
+        self._difficulty_spike_suppressor = DifficultySpikeSuppressor()
 
     # =====================================================
     # PUBLIC
@@ -100,8 +103,8 @@ class PlannerSelectionScoringEngine:
 
         rarity_score = self._rarity_engine.apply_bonus(
             candidate=candidate,
-            selected_questions=(selected_questions),
-            current_score=(adjusted_score),
+            selected_questions=selected_questions,
+            current_score=adjusted_score,
         )
 
         category_rarity_bonus = round(
@@ -114,6 +117,27 @@ class PlannerSelectionScoringEngine:
             rationale.append("category_rarity_bonus")
 
         adjusted_score = rarity_score
+
+        # -------------------------------------------------
+        # DIFFICULTY SPIKE PENALTY
+        # -------------------------------------------------
+
+        spike_score = self._difficulty_spike_suppressor.apply_penalty(
+            candidate=candidate,
+            selected_questions=selected_questions,
+            current_score=adjusted_score,
+        )
+
+        difficulty_spike_penalty = round(
+            spike_score - adjusted_score,
+            4,
+        )
+
+        if difficulty_spike_penalty < 0:
+
+            rationale.append("difficulty_spike_suppression")
+
+        adjusted_score = spike_score
 
         # -------------------------------------------------
         # FINAL SCORE
@@ -129,9 +153,10 @@ class PlannerSelectionScoringEngine:
                 difficulty_score,
                 4,
             ),
-            cluster_penalty=(cluster_penalty),
-            novelty_bonus=(novelty_bonus),
-            category_rarity_bonus=(category_rarity_bonus),
-            final_score=(final_score),
+            cluster_penalty=cluster_penalty,
+            novelty_bonus=novelty_bonus,
+            category_rarity_bonus=category_rarity_bonus,
+            final_score=final_score,
             rationale=rationale,
+            difficulty_spike_penalty=difficulty_spike_penalty,
         )
