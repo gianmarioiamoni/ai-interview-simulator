@@ -6,20 +6,31 @@ from domain.contracts.question.question_bank_item import QuestionBankItem
 
 from services.interview_planning.interview_constraints import InterviewConstraints
 from services.interview_planning.planning_result import PlanningResult
+
 from services.interview_selection.selected_question import SelectedQuestion
 
-from services.telemetry.planner.planner_telemetry_builder import PlannerTelemetryBuilder
+from services.telemetry.planner.planner_telemetry_builder import (
+    PlannerTelemetryBuilder,
+)
 
-from services.interview_planning.contracts.planning_artifacts import PlanningArtifacts
+from services.interview_planning.contracts.planning_artifacts import (
+    PlanningArtifacts,
+)
 
 from services.planning.contracts.planner_candidate_evaluation import (
     PlannerCandidateEvaluation,
 )
 
-from services.planning.planner_evaluation_factory import PlannerEvaluationFactory
+from services.planning.planner_evaluation_factory import (
+    PlannerEvaluationFactory,
+)
 
 from services.interview_planning.phases.required_area_selection_phase import (
     RequiredAreaSelectionPhase,
+)
+
+from services.interview_planning.phases.constraint_fill_phase import (
+    ConstraintFillPhase,
 )
 
 from app.core.logger import get_logger
@@ -45,6 +56,8 @@ class ConstraintBasedPlanner:
 
         self._required_area_phase = RequiredAreaSelectionPhase()
 
+        self._constraint_fill_phase = ConstraintFillPhase()
+
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -60,7 +73,7 @@ class ConstraintBasedPlanner:
         area_counts = defaultdict(int)
 
         # -------------------------------------------------
-        # REQUIRED AREAS FIRST
+        # REQUIRED AREA SELECTION
         # -------------------------------------------------
 
         self._required_area_phase.execute(
@@ -71,47 +84,15 @@ class ConstraintBasedPlanner:
         )
 
         # -------------------------------------------------
-        # FILL REMAINING
+        # CONSTRAINT FILL
         # -------------------------------------------------
 
-        selected_ids = {q.item.id for q in selected}
-
-        remaining = sorted(
-            [item for item in items if item.id not in selected_ids],
-            key=lambda q: q.difficulty,
-            reverse=True,
+        self._constraint_fill_phase.execute(
+            items=items,
+            constraints=constraints,
+            selected=selected,
+            area_counts=area_counts,
         )
-
-        for item in remaining:
-
-            area = item.area.value
-
-            if area in constraints.excluded_areas:
-                continue
-
-            if area_counts[area] >= constraints.max_questions_per_area:
-                continue
-
-            current_selected = [s.item for s in selected]
-
-            evaluation = self._evaluation_factory.build(
-                candidate=item,
-                selected_questions=current_selected,
-            )
-
-            selected.append(
-                SelectedQuestion(
-                    item=item,
-                    selection_score=evaluation.final_score,
-                    selection_reason="constraint_fill",
-                    score_breakdown=evaluation.breakdown,
-                )
-            )
-
-            area_counts[area] += 1
-
-            if len(selected) >= constraints.minimum_total_questions:
-                break
 
         average_difficulty = sum(q.item.difficulty for q in selected) / max(
             len(selected),
