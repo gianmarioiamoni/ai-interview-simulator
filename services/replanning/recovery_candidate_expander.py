@@ -1,14 +1,30 @@
 # services/replanning/recovery_candidate_expander.py
 
-from domain.contracts.question.question_bank_item import QuestionBankItem
-from domain.contracts.user.role import RoleType
-from domain.contracts.user.seniority_level import SeniorityLevel
+from domain.contracts.question.question_bank_item import (
+    QuestionBankItem,
+)
+from domain.contracts.user.role import (
+    RoleType,
+)
+from domain.contracts.user.seniority_level import (
+    SeniorityLevel,
+)
 
-from services.interview_planning.interview_constraints import InterviewConstraints
-from services.planning_validation.recovery_action import RecoveryAction
-from services.replanning.contracts.recovery_expansion_result import RecoveryExpansionResult
-from services.replanning.contracts.retrieval_expansion_telemetry import RetrievalExpansionTelemetry
-from services.replanning.retrieval_recovery_service import RetrievalRecoveryService
+from services.interview_planning.interview_constraints import (
+    InterviewConstraints,
+)
+from services.planning_validation.recovery_action import (
+    RecoveryAction,
+)
+from services.replanning.contracts.recovery_expansion_result import (
+    RecoveryExpansionResult,
+)
+from services.replanning.contracts.retrieval_expansion_telemetry import (
+    RetrievalExpansionTelemetry,
+)
+from services.replanning.retrieval_recovery_service import (
+    RetrievalRecoveryService,
+)
 
 
 class RecoveryCandidateExpander:
@@ -30,7 +46,6 @@ class RecoveryCandidateExpander:
     def expand(
         self,
         items: list[QuestionBankItem],
-        constraints: InterviewConstraints,
         action: RecoveryAction,
         role: RoleType,
         level: SeniorityLevel,
@@ -67,10 +82,10 @@ class RecoveryCandidateExpander:
             applied_action=action,
             added_candidates=0,
             telemetry=RetrievalExpansionTelemetry(
+                original_role=role,
                 expanded_roles=[],
-                retrieved_candidates=0,
-                added_candidates=0,
-                deduplicated_candidates=0,
+                recovered_candidates_count=0,
+                recovery_successful=False,
                 retrieval_duration_ms=0.0,
             ),
         )
