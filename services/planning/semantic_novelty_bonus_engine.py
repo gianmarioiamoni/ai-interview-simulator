@@ -1,16 +1,10 @@
 # services/planning/semantic_novelty_bonus_engine.py
 
-from sentence_transformers import (
-    SentenceTransformer,
-)
+from sentence_transformers.util import cos_sim
 
-from sentence_transformers.util import (
-    cos_sim,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from services.embedding.embedding_model_provider import EmbeddingModelProvider
 
 
 class SemanticNoveltyBonusEngine:
@@ -23,14 +17,13 @@ class SemanticNoveltyBonusEngine:
         self,
         novelty_threshold: float = 0.35,
         novelty_bonus: float = 0.30,
-        embedding_model: str = ("all-MiniLM-L6-v2"),
     ) -> None:
 
         self._threshold = novelty_threshold
 
         self._bonus = novelty_bonus
 
-        self._model = SentenceTransformer(embedding_model)
+        self._model = EmbeddingModelProvider.get_model()
 
     # =====================================================
     # PUBLIC

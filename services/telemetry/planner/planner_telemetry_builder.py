@@ -7,6 +7,7 @@ from services.interview_selection.selected_question import SelectedQuestion
 from services.telemetry.planner.planner_telemetry import PlannerTelemetry
 from services.planning.difficulty_progression_analyzer import DifficultyProgressionAnalyzer
 from services.planning.difficulty_spike_suppressor import DifficultySpikeSuppressor
+from services.embedding.embedding_model_provider import EmbeddingModelProvider
 
 
 class PlannerTelemetryBuilder:
@@ -109,6 +110,8 @@ class PlannerTelemetryBuilder:
         # BUILD
         # -------------------------------------------------
 
+        embedding_model=EmbeddingModelProvider.get_model_name()
+
         return PlannerTelemetry(
             total_candidates=(total_candidates),
             selected_candidates=(len(selected_questions)),
@@ -123,4 +126,5 @@ class PlannerTelemetryBuilder:
             rationale_distribution=dict(rationale_distribution),
             difficulty_spike_penalty_count=(difficulty_spike_penalty_count),
             difficulty_progression_score=(difficulty_progression_score),
+            embedding_model=(embedding_model),
         )

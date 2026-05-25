@@ -2,17 +2,11 @@
 
 from itertools import combinations
 
-from sentence_transformers import (
-    SentenceTransformer,
-)
+from sentence_transformers.util import cos_sim
 
-from sentence_transformers.util import (
-    cos_sim,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from services.embedding.embedding_model_provider import EmbeddingModelProvider
 
 
 class PairwiseSemanticDistanceEngine:
@@ -23,10 +17,9 @@ class PairwiseSemanticDistanceEngine:
 
     def __init__(
         self,
-        embedding_model: str = ("all-MiniLM-L6-v2"),
     ) -> None:
 
-        self._model = SentenceTransformer(embedding_model)
+        self._model = EmbeddingModelProvider.get_model()
 
     # =====================================================
     # PUBLIC
