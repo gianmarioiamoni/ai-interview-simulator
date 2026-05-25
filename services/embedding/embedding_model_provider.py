@@ -24,13 +24,40 @@ class EmbeddingModelProvider:
         cls,
     ) -> SentenceTransformer:
 
-        if cls._model is None:
+        # -------------------------------------------------
+        # RETURN CACHED MODEL
+        # -------------------------------------------------
+
+        if cls._model is not None:
+
+            return cls._model
+
+        # -------------------------------------------------
+        # LOAD MODEL
+        # -------------------------------------------------
+
+        try:
 
             cls._model = SentenceTransformer(
-                cls._model_name
+                cls._model_name,
             )
 
-        return cls._model
+            return cls._model
+
+        # -------------------------------------------------
+        # FALLBACK ERROR
+        # -------------------------------------------------
+
+        except Exception as exc:
+
+            raise RuntimeError(
+                (
+                    "Failed to load embedding model "
+                    f"'{cls._model_name}'. "
+                    "Ensure internet connectivity or preload "
+                    "the model locally before running offline."
+                )
+            ) from exc
 
     @classmethod
     def get_model_name(
