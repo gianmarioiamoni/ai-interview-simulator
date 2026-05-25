@@ -1,6 +1,7 @@
 # services/replanning/recovery_replanner.py
 
 from copy import deepcopy
+from re import I
 
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.user.role import RoleType
@@ -13,6 +14,7 @@ from services.planning_validation.recovery_action import RecoveryAction
 from services.replanning.replanning_result import ReplanningResult
 from services.replanning.recovery_candidate_expander import RecoveryCandidateExpander
 from services.replanning.contracts.replanning_artifacts import ReplanningArtifacts
+from services.replanning.contracts.replanning_context import ReplanningContext
 
 
 class RecoveryReplanner:
@@ -37,30 +39,30 @@ class RecoveryReplanner:
 
         expander = RecoveryCandidateExpander()
 
-        current_constraints = deepcopy(constraints)
-
-        applied_actions: list[RecoveryAction] = []
-
-        final_planning = None
-
-        final_validation = None
-
-        latest_expansion_telemetry = None
+        context = ReplanningContext(
+            items=items,
+            constraints=deepcopy(constraints),
+        )
 
         for attempt in range(
             1,
             self.MAX_ATTEMPTS + 1,
         ):
+            context.current_attempt = attempt
 
             planning_result = planner.plan(
-                items=items,
-                constraints=(current_constraints),
+                items=context.items,
+                constraints=context.constraints,
             )
+
+            context.planning_history.append(planning_result)
 
             validation_result = validator.validate(
                 result=planning_result,
-                constraints=(current_constraints),
+                constraints=context.constraints,
             )
+
+            context.validation_history.append(validation_result)
 
             final_planning = planning_result
 
@@ -80,7 +82,7 @@ class RecoveryReplanner:
 
             for action in validation_result.suggested_recovery_actions:
 
-                if action in applied_actions:
+                if action in context.applied_actions:
                     continue
 
                 # -------------------------------------------------
@@ -88,13 +90,13 @@ class RecoveryReplanner:
                 # -------------------------------------------------
 
                 expansion_result = expander.expand(
-                    items=items,
+                    items=context.items,
                     action=action,
                     role=role,
                     level=level,
                 )
 
-                items = expansion_result.expanded_items
+                context.items = expansion_result.expanded_items
 
                 # real telemetry is not overwritten if recovery is not successful
                 if (
@@ -102,18 +104,18 @@ class RecoveryReplanner:
                     and expansion_result.telemetry.recovery_successful
                 ):
 
-                    latest_expansion_telemetry = expansion_result.telemetry
+                    context.latest_expansion_telemetry = expansion_result.telemetry
 
                 # -------------------------------------------------
                 # APPLY RECOVERY ACTION
                 # -------------------------------------------------
 
                 self._apply_recovery_action(
-                    constraints=(current_constraints),
+                    constraints=context.constraints,
                     action=action,
                 )
 
-                applied_actions.append(action)
+                context.applied_actions.append(action)
 
                 break
 
@@ -122,17 +124,17 @@ class RecoveryReplanner:
         # -------------------------------------------------
 
         artifacts = ReplanningArtifacts(
-            planner_telemetry=(final_planning.telemetry),
-            retrieval_expansion_telemetry=(latest_expansion_telemetry),
-            recovery_attempts=attempt,
-            applied_actions=applied_actions,
+            planner_telemetry=final_planning.telemetry,
+            retrieval_expansion_telemetry=context.latest_expansion_telemetry,
+            recovery_attempts=context.current_attempt,
+            applied_actions=context.applied_actions,
         )
 
         return ReplanningResult(
             final_planning_result=final_planning,
-            final_validation_result=(final_validation),
-            applied_recovery_actions=(applied_actions),
-            total_attempts=attempt,
+            final_validation_result=final_validation,
+            applied_recovery_actions=context.applied_actions,
+            total_attempts=context.current_attempt,
             artifacts=artifacts,
         )
 
