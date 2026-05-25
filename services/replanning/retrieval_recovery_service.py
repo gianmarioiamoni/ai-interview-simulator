@@ -1,15 +1,20 @@
 # services/replanning/retrieval_recovery_service.py
 
+import time
+
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from services.interview_orchestration.orchestration_intent_builder import OrchestrationIntentBuilder
 from services.replanning.role_expansion_strategy import RoleExpansionStrategy
+from services.replanning.contracts.recovery_expansion_result import RecoveryExpansionResult
+from services.replanning.contracts.retrieval_expansion_telemetry import RetrievalExpansionTelemetry
 from services.retrieval.memory_aware_retrieval_pipeline import MemoryAwareRetrievalPipeline
 from services.retrieval.planner_retrieval_service import PlannerRetrievalService
 from services.retrieval.retrieval_runtime_mapper import RetrievalRuntimeMapper
 from services.retrieval.retrieval_session_memory import RetrievalSessionMemory
+from services.planning_validation.recovery_action import RecoveryAction
 
 
 class RetrievalRecoveryService:
@@ -43,7 +48,9 @@ class RetrievalRecoveryService:
         items: list[QuestionBankItem],
         role: RoleType,
         level: SeniorityLevel,
-    ) -> list[QuestionBankItem]:
+    ) -> RecoveryExpansionResult:
+
+        start_time = time.perf_counter()
 
         expanded_roles = self._role_strategy.expand(
             role=role,
@@ -75,9 +82,35 @@ class RetrievalRecoveryService:
 
             expanded_questions.extend(mapped)
 
-        return self._deduplicate(
+        deduplicated = self._deduplicate(
             original=items,
             expanded=expanded_questions,
+        )
+
+        duration_ms = (time.perf_counter() - start_time) * 1000
+
+        telemetry = RetrievalExpansionTelemetry(
+            original_role=role,
+            expanded_roles=expanded_roles,
+            recovered_candidates_count=max(
+                0,
+                len(deduplicated) - len(items),
+            ),
+            recovery_successful=(len(deduplicated) > len(items)),
+            retrieval_duration_ms=round(
+                duration_ms,
+                2,
+            ),
+        )
+
+        return RecoveryExpansionResult(
+            expanded_items=deduplicated,
+            applied_action=RecoveryAction.EXPAND_ROLE_SCOPE,
+            added_candidates=max(
+                0,
+                len(deduplicated) - len(items),
+            ),
+            telemetry=telemetry,
         )
 
     # =====================================================
