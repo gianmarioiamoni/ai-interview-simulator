@@ -96,7 +96,13 @@ class RecoveryReplanner:
 
                 items = expansion_result.expanded_items
 
-                latest_expansion_telemetry = expansion_result.telemetry
+                # real telemetry is not overwritten if recovery is not successful
+                if (
+                    expansion_result.telemetry is not None
+                    and expansion_result.telemetry.recovery_successful
+                ):
+
+                    latest_expansion_telemetry = expansion_result.telemetry
 
                 # -------------------------------------------------
                 # APPLY RECOVERY ACTION
