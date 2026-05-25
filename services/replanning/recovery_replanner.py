@@ -3,6 +3,8 @@
 from copy import deepcopy
 
 from domain.contracts.question.question_bank_item import QuestionBankItem
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 from services.interview_planning.interview_constraints import InterviewConstraints
 from services.interview_planning.constraint_based_planner import ConstraintBasedPlanner
@@ -24,6 +26,8 @@ class RecoveryReplanner:
         self,
         items: list[QuestionBankItem],
         constraints: InterviewConstraints,
+        role: RoleType,
+        level: SeniorityLevel,
     ) -> ReplanningResult:
 
         planner = ConstraintBasedPlanner()
@@ -83,6 +87,8 @@ class RecoveryReplanner:
                     items=items,
                     constraints=current_constraints,
                     action=action,
+                    role=role,
+                    level=level,
                 )
 
                 items = expansion_result.expanded_items
