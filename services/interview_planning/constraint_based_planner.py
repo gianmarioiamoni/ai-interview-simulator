@@ -4,37 +4,14 @@ from collections import defaultdict
 
 from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from services.interview_planning.interview_constraints import (
-    InterviewConstraints,
-)
-
-from services.interview_planning.planning_result import (
-    PlanningResult,
-)
-
-from services.interview_selection.selected_question import (
-    SelectedQuestion,
-)
-
-from services.interview_planning.phases.required_area_selection_phase import (
-    RequiredAreaSelectionPhase,
-)
-
-from services.interview_planning.phases.constraint_fill_phase import (
-    ConstraintFillPhase,
-)
-
-from services.interview_planning.phases.fallback_completion_phase import (
-    FallbackCompletionPhase,
-)
-
-from services.interview_planning.phases.planning_validation_phase import (
-    PlanningValidationPhase,
-)
-
-from services.interview_planning.builders.planning_artifacts_builder import (
-    PlanningArtifactsBuilder,
-)
+from services.interview_planning.interview_constraints import InterviewConstraints
+from services.interview_planning.planning_result import PlanningResult
+from services.interview_selection.selected_question import SelectedQuestion
+from services.interview_planning.phases.required_area_selection_phase import RequiredAreaSelectionPhase
+from services.interview_planning.phases.constraint_fill_phase import ConstraintFillPhase
+from services.interview_planning.phases.fallback_completion_phase import FallbackCompletionPhase
+from services.interview_planning.phases.planning_validation_phase import PlanningValidationPhase
+from services.interview_planning.builders.planning_artifacts_builder import PlanningArtifactsBuilder
 
 
 class ConstraintBasedPlanner:
