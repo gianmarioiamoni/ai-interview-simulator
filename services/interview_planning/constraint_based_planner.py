@@ -16,14 +16,6 @@ from services.interview_selection.selected_question import (
     SelectedQuestion,
 )
 
-from services.telemetry.planner.planner_telemetry_builder import (
-    PlannerTelemetryBuilder,
-)
-
-from services.interview_planning.contracts.planning_artifacts import (
-    PlanningArtifacts,
-)
-
 from services.interview_planning.phases.required_area_selection_phase import (
     RequiredAreaSelectionPhase,
 )
@@ -40,6 +32,10 @@ from services.interview_planning.phases.planning_validation_phase import (
     PlanningValidationPhase,
 )
 
+from services.interview_planning.builders.planning_artifacts_builder import (
+    PlanningArtifactsBuilder,
+)
+
 
 class ConstraintBasedPlanner:
 
@@ -51,8 +47,6 @@ class ConstraintBasedPlanner:
         self,
     ) -> None:
 
-        self._telemetry_builder = PlannerTelemetryBuilder()
-
         self._required_area_phase = RequiredAreaSelectionPhase()
 
         self._constraint_fill_phase = ConstraintFillPhase()
@@ -60,6 +54,8 @@ class ConstraintBasedPlanner:
         self._fallback_completion_phase = FallbackCompletionPhase()
 
         self._validation_phase = PlanningValidationPhase()
+
+        self._artifacts_builder = PlanningArtifactsBuilder()
 
     # =====================================================
     # PUBLIC
@@ -129,18 +125,12 @@ class ConstraintBasedPlanner:
         )
 
         # -------------------------------------------------
-        # TELEMETRY
+        # ARTIFACTS
         # -------------------------------------------------
 
-        telemetry = self._telemetry_builder.build(
+        artifacts = self._artifacts_builder.build(
             selected_questions=selected_questions,
             total_candidates=len(items),
-        )
-
-        artifacts = PlanningArtifacts(
-            telemetry=telemetry,
-            planner_version="1.0.0",
-            optimization_strategy="constraint_based",
         )
 
         # -------------------------------------------------
