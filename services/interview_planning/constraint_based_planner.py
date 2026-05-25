@@ -36,6 +36,10 @@ from services.interview_planning.phases.fallback_completion_phase import (
     FallbackCompletionPhase,
 )
 
+from services.interview_planning.phases.planning_validation_phase import (
+    PlanningValidationPhase,
+)
+
 
 class ConstraintBasedPlanner:
 
@@ -54,6 +58,8 @@ class ConstraintBasedPlanner:
         self._constraint_fill_phase = ConstraintFillPhase()
 
         self._fallback_completion_phase = FallbackCompletionPhase()
+
+        self._validation_phase = PlanningValidationPhase()
 
     # =====================================================
     # PUBLIC
@@ -102,6 +108,18 @@ class ConstraintBasedPlanner:
         )
 
         # -------------------------------------------------
+        # VALIDATION
+        # -------------------------------------------------
+
+        (
+            satisfied,
+            violated,
+        ) = self._validation_phase.execute(
+            selected_questions=selected_questions,
+            constraints=constraints,
+        )
+
+        # -------------------------------------------------
         # METRICS
         # -------------------------------------------------
 
@@ -109,38 +127,6 @@ class ConstraintBasedPlanner:
             len(selected_questions),
             1,
         )
-
-        satisfied = []
-
-        violated = []
-
-        # -------------------------------------------------
-        # REQUIRED AREAS
-        # -------------------------------------------------
-
-        selected_areas = {q.item.area.value for q in selected_questions}
-
-        for area in constraints.required_areas:
-
-            if area in selected_areas:
-
-                satisfied.append(f"required_area:{area}")
-
-            else:
-
-                violated.append(f"required_area:{area}")
-
-        # -------------------------------------------------
-        # MINIMUM DIFFICULTY
-        # -------------------------------------------------
-
-        if average_difficulty >= constraints.minimum_average_difficulty:
-
-            satisfied.append("minimum_average_difficulty")
-
-        else:
-
-            violated.append("minimum_average_difficulty")
 
         # -------------------------------------------------
         # TELEMETRY
