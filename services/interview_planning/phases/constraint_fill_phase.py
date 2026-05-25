@@ -3,12 +3,8 @@
 from domain.contracts.question.question_bank_item import QuestionBankItem
 
 from services.interview_planning.interview_constraints import InterviewConstraints
-
 from services.interview_selection.selected_question import SelectedQuestion
-
-from services.planning.planner_evaluation_factory import (
-    PlannerEvaluationFactory,
-)
+from services.planning.planner_evaluation_factory import PlannerEvaluationFactory
 
 
 class ConstraintFillPhase:

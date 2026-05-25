@@ -4,10 +4,17 @@ from collections import defaultdict
 
 from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from services.interview_planning.interview_constraints import InterviewConstraints
-from services.interview_planning.planning_result import PlanningResult
+from services.interview_planning.interview_constraints import (
+    InterviewConstraints,
+)
 
-from services.interview_selection.selected_question import SelectedQuestion
+from services.interview_planning.planning_result import (
+    PlanningResult,
+)
+
+from services.interview_selection.selected_question import (
+    SelectedQuestion,
+)
 
 from services.telemetry.planner.planner_telemetry_builder import (
     PlannerTelemetryBuilder,
@@ -15,14 +22,6 @@ from services.telemetry.planner.planner_telemetry_builder import (
 
 from services.interview_planning.contracts.planning_artifacts import (
     PlanningArtifacts,
-)
-
-from services.planning.contracts.planner_candidate_evaluation import (
-    PlannerCandidateEvaluation,
-)
-
-from services.planning.planner_evaluation_factory import (
-    PlannerEvaluationFactory,
 )
 
 from services.interview_planning.phases.required_area_selection_phase import (
@@ -33,14 +32,12 @@ from services.interview_planning.phases.constraint_fill_phase import (
     ConstraintFillPhase,
 )
 
-from app.core.logger import get_logger
-
-logger = get_logger(__name__)
+from services.interview_planning.phases.fallback_completion_phase import (
+    FallbackCompletionPhase,
+)
 
 
 class ConstraintBasedPlanner:
-
-    MINIMUM_CANDIDATE_SCORE = 0.0
 
     # =====================================================
     # CONSTRUCTOR
@@ -50,13 +47,13 @@ class ConstraintBasedPlanner:
         self,
     ) -> None:
 
-        self._evaluation_factory = PlannerEvaluationFactory()
-
         self._telemetry_builder = PlannerTelemetryBuilder()
 
         self._required_area_phase = RequiredAreaSelectionPhase()
 
         self._constraint_fill_phase = ConstraintFillPhase()
+
+        self._fallback_completion_phase = FallbackCompletionPhase()
 
     # =====================================================
     # PUBLIC
@@ -94,8 +91,22 @@ class ConstraintBasedPlanner:
             area_counts=area_counts,
         )
 
-        average_difficulty = sum(q.item.difficulty for q in selected) / max(
-            len(selected),
+        # -------------------------------------------------
+        # FALLBACK COMPLETION
+        # -------------------------------------------------
+
+        selected_questions = self._fallback_completion_phase.execute(
+            selected=selected,
+            available=items,
+            constraints=constraints,
+        )
+
+        # -------------------------------------------------
+        # METRICS
+        # -------------------------------------------------
+
+        average_difficulty = sum(q.item.difficulty for q in selected_questions) / max(
+            len(selected_questions),
             1,
         )
 
@@ -107,7 +118,7 @@ class ConstraintBasedPlanner:
         # REQUIRED AREAS
         # -------------------------------------------------
 
-        selected_areas = {q.item.area.value for q in selected}
+        selected_areas = {q.item.area.value for q in selected_questions}
 
         for area in constraints.required_areas:
 
@@ -120,7 +131,7 @@ class ConstraintBasedPlanner:
                 violated.append(f"required_area:{area}")
 
         # -------------------------------------------------
-        # MIN DIFFICULTY
+        # MINIMUM DIFFICULTY
         # -------------------------------------------------
 
         if average_difficulty >= constraints.minimum_average_difficulty:
@@ -130,16 +141,6 @@ class ConstraintBasedPlanner:
         else:
 
             violated.append("minimum_average_difficulty")
-
-        # -------------------------------------------------
-        # FEASIBILITY COMPLETION
-        # -------------------------------------------------
-
-        selected_questions = self._fill_remaining_slots(
-            selected=selected,
-            available=items,
-            constraints=constraints,
-        )
 
         # -------------------------------------------------
         # TELEMETRY
@@ -156,6 +157,10 @@ class ConstraintBasedPlanner:
             optimization_strategy="constraint_based",
         )
 
+        # -------------------------------------------------
+        # RESULT
+        # -------------------------------------------------
+
         return PlanningResult(
             selected_questions=selected_questions,
             satisfied_constraints=satisfied,
@@ -166,99 +171,3 @@ class ConstraintBasedPlanner:
             ),
             artifacts=artifacts,
         )
-
-    # =====================================================
-    # FEASIBILITY
-    # =====================================================
-
-    def _fill_remaining_slots(
-        self,
-        selected: list[SelectedQuestion],
-        available: list[QuestionBankItem],
-        constraints: InterviewConstraints,
-    ) -> list[SelectedQuestion]:
-
-        # -------------------------------------------------
-        # EARLY EXIT
-        # -------------------------------------------------
-
-        if len(selected) >= constraints.minimum_total_questions:
-
-            return selected
-
-        selected_ids = {item.item.id for item in selected}
-
-        remaining = []
-
-        for item in available:
-
-            if item.id in selected_ids:
-                continue
-
-            remaining.append(item)
-
-        # -------------------------------------------------
-        # SORT BY SCORE
-        # -------------------------------------------------
-
-        logger.info("Evaluating fallback candidates...")
-
-        current_selected = [s.item for s in selected]
-
-        scored_remaining: list[PlannerCandidateEvaluation] = []
-
-        for candidate in remaining:
-
-            evaluation = self._evaluation_factory.build(
-                candidate=candidate,
-                selected_questions=current_selected,
-            )
-
-            scored_remaining.append(evaluation)
-
-        scored_remaining.sort(
-            key=lambda x: x.final_score,
-            reverse=True,
-        )
-
-        # -------------------------------------------------
-        # FILL
-        # -------------------------------------------------
-
-        for evaluation in scored_remaining:
-
-            item = evaluation.candidate
-
-            score = evaluation.final_score
-
-            breakdown = evaluation.breakdown
-
-            if len(selected) >= constraints.minimum_total_questions:
-                break
-
-            # -------------------------------------------------
-            # QUALITY THRESHOLD
-            # -------------------------------------------------
-
-            if score < self.MINIMUM_CANDIDATE_SCORE:
-
-                logger.info(f"Rejected low-quality candidate: {item.text}")
-
-                logger.info(f"Score: {score}")
-
-                continue
-
-            logger.info(f"Selected fallback candidate: {item.text}")
-
-            logger.info(f"Score: {score}")
-
-            selected.append(
-                SelectedQuestion(
-                    item=item,
-                    selection_score=score,
-                    selection_reason="fallback_completion",
-                    score_breakdown=breakdown,
-                )
-            )
-
-        return selected
