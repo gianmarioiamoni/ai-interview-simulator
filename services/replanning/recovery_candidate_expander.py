@@ -7,6 +7,7 @@ from domain.contracts.user.seniority_level import SeniorityLevel
 from services.interview_planning.interview_constraints import InterviewConstraints
 from services.planning_validation.recovery_action import RecoveryAction
 from services.replanning.contracts.recovery_expansion_result import RecoveryExpansionResult
+from services.replanning.contracts.retrieval_expansion_telemetry import RetrievalExpansionTelemetry
 from services.replanning.retrieval_recovery_service import RetrievalRecoveryService
 
 
@@ -54,7 +55,7 @@ class RecoveryCandidateExpander:
                     0,
                     len(recovery_result.expanded_items) - len(items),
                 ),
-                telemetry=recovery_result.telemetry,
+                telemetry=(recovery_result.telemetry),
             )
 
         # -------------------------------------------------
@@ -65,5 +66,11 @@ class RecoveryCandidateExpander:
             expanded_items=items,
             applied_action=action,
             added_candidates=0,
-            telemetry=None,
+            telemetry=RetrievalExpansionTelemetry(
+                expanded_roles=[],
+                retrieved_candidates=0,
+                added_candidates=0,
+                deduplicated_candidates=0,
+                retrieval_duration_ms=0.0,
+            ),
         )
