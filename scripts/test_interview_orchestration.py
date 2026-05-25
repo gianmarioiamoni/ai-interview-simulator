@@ -1,16 +1,9 @@
 # scripts/test_interview_orchestration.py
 
-from domain.contracts.user.role import (
-    RoleType,
-)
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
-from domain.contracts.user.seniority_level import (
-    SeniorityLevel,
-)
-
-from services.interview_orchestration.interview_orchestrator import (
-    InterviewOrchestrator,
-)
+from services.interview_orchestration.interview_orchestrator import InterviewOrchestrator
 
 
 def main() -> None:
@@ -78,7 +71,7 @@ def main() -> None:
     print()
 
     print(
-        result.planning_result.artifacts.telemetry.model_dump_json(
+        result.planning_result.telemetry.model_dump_json(
             indent=2,
         )
     )
