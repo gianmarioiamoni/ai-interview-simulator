@@ -7,12 +7,20 @@ from domain.contracts.question.question_bank_item import QuestionBankItem
 from services.interview_planning.interview_constraints import InterviewConstraints
 from services.interview_planning.planning_result import PlanningResult
 from services.interview_selection.selected_question import SelectedQuestion
-from services.planning.planner_selection_scoring_engine import PlannerSelectionScoringEngine
-from services.planning.contracts.planner_score_breakdown import PlannerScoreBreakdown
-from services.telemetry.planner.planner_telemetry_builder import PlannerTelemetryBuilder
-from services.interview_planning.contracts.planning_artifacts import PlanningArtifacts
-from services.planning.contracts.planner_candidate_evaluation import PlannerCandidateEvaluation
 
+from services.telemetry.planner.planner_telemetry_builder import PlannerTelemetryBuilder
+
+from services.interview_planning.contracts.planning_artifacts import PlanningArtifacts
+
+from services.planning.contracts.planner_candidate_evaluation import (
+    PlannerCandidateEvaluation,
+)
+
+from services.planning.planner_evaluation_factory import PlannerEvaluationFactory
+
+from services.interview_planning.phases.required_area_selection_phase import (
+    RequiredAreaSelectionPhase,
+)
 
 from app.core.logger import get_logger
 
@@ -31,9 +39,11 @@ class ConstraintBasedPlanner:
         self,
     ) -> None:
 
-        self._planner_scoring_engine = PlannerSelectionScoringEngine()
+        self._evaluation_factory = PlannerEvaluationFactory()
 
         self._telemetry_builder = PlannerTelemetryBuilder()
+
+        self._required_area_phase = RequiredAreaSelectionPhase()
 
     # =====================================================
     # PUBLIC
@@ -53,51 +63,12 @@ class ConstraintBasedPlanner:
         # REQUIRED AREAS FIRST
         # -------------------------------------------------
 
-        for area in constraints.required_areas:
-
-            candidates = [item for item in items if (item.area.value == area)]
-
-            if not candidates:
-                continue
-
-            best_candidate: QuestionBankItem | None = None
-
-            best_breakdown: PlannerScoreBreakdown | None = None
-
-            best_score = -1.0
-
-            current_selected = [s.item for s in selected]
-
-            for candidate in candidates:
-
-                breakdown = self._planner_scoring_engine.score(
-                    candidate=candidate,
-                    selected_questions=(current_selected),
-                )
-
-                score = breakdown.final_score
-
-                if score > best_score:
-
-                    best_candidate = candidate
-
-                    best_breakdown = breakdown
-
-                    best_score = score
-
-            if best_candidate is None or best_breakdown is None:
-                continue
-
-            selected.append(
-                SelectedQuestion(
-                    item=best_candidate,
-                    selection_score=(best_score),
-                    selection_reason=("required_area_selection"),
-                    score_breakdown=(best_breakdown),
-                )
-            )
-
-            area_counts[area] += 1
+        self._required_area_phase.execute(
+            items=items,
+            constraints=constraints,
+            selected=selected,
+            area_counts=area_counts,
+        )
 
         # -------------------------------------------------
         # FILL REMAINING
@@ -106,8 +77,8 @@ class ConstraintBasedPlanner:
         selected_ids = {q.item.id for q in selected}
 
         remaining = sorted(
-            [item for item in items if (item.id not in selected_ids)],
-            key=lambda q: (q.difficulty),
+            [item for item in items if item.id not in selected_ids],
+            key=lambda q: q.difficulty,
             reverse=True,
         )
 
@@ -123,17 +94,17 @@ class ConstraintBasedPlanner:
 
             current_selected = [s.item for s in selected]
 
-            breakdown = self._planner_scoring_engine.score(
+            evaluation = self._evaluation_factory.build(
                 candidate=item,
-                selected_questions=(current_selected),
+                selected_questions=current_selected,
             )
 
             selected.append(
                 SelectedQuestion(
                     item=item,
-                    selection_score=(breakdown.final_score),
-                    selection_reason=("constraint_fill"),
-                    score_breakdown=(breakdown),
+                    selection_score=evaluation.final_score,
+                    selection_reason="constraint_fill",
+                    score_breakdown=evaluation.breakdown,
                 )
             )
 
@@ -205,9 +176,9 @@ class ConstraintBasedPlanner:
         )
 
         return PlanningResult(
-            selected_questions=(selected_questions),
-            satisfied_constraints=(satisfied),
-            violated_constraints=(violated),
+            selected_questions=selected_questions,
+            satisfied_constraints=satisfied,
+            violated_constraints=violated,
             average_difficulty=round(
                 average_difficulty,
                 2,
@@ -257,21 +228,15 @@ class ConstraintBasedPlanner:
 
         for candidate in remaining:
 
-            breakdown = self._planner_scoring_engine.score(
+            evaluation = self._evaluation_factory.build(
                 candidate=candidate,
-                selected_questions=(current_selected),
+                selected_questions=current_selected,
             )
 
-            scored_remaining.append(
-                PlannerCandidateEvaluation(
-                    candidate=candidate,
-                    breakdown=breakdown,
-                    final_score=breakdown.final_score,
-                )
-            )
+            scored_remaining.append(evaluation)
 
         scored_remaining.sort(
-            key=lambda x: (x.final_score),
+            key=lambda x: x.final_score,
             reverse=True,
         )
 
@@ -309,11 +274,10 @@ class ConstraintBasedPlanner:
             selected.append(
                 SelectedQuestion(
                     item=item,
-                    selection_score=(score),
-                    selection_reason=("fallback_completion"),
-                    score_breakdown=(breakdown),
+                    selection_score=score,
+                    selection_reason="fallback_completion",
+                    score_breakdown=breakdown,
                 )
             )
 
         return selected
-
