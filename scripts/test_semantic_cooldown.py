@@ -5,15 +5,8 @@ from services.retrieval.contracts import (
     RetrievalCorpusRecord,
     RetrievalResult,
 )
-
-from services.retrieval.retrieval_session_memory import (
-    RetrievalSessionMemory,
-)
-
-from services.retrieval.semantic_cooldown_reranker import (
-    SemanticCooldownReranker,
-)
-
+from services.retrieval.retrieval_session_memory import RetrievalSessionMemory
+from services.retrieval.semantic_cooldown_reranker import SemanticCooldownReranker
 from services.question_ingestion.contracts import (
     CuratedCorpusRecord,
     IngestionMetadata,

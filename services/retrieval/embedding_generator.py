@@ -1,13 +1,11 @@
 # services/retrieval/embedding_generator.py
 
-from sentence_transformers import (
-    SentenceTransformer,
-)
-
 from services.retrieval.contracts import (
-    RetrievalCorpusRecord,
+    RetrievalCorpusRecord, 
     EmbeddingRecord,
 )
+
+from services.embedding.embedding_model_provider import EmbeddingModelProvider
 
 
 class EmbeddingGenerator:
@@ -18,7 +16,7 @@ class EmbeddingGenerator:
 
     def __init__(self) -> None:
 
-        self._model = SentenceTransformer("all-MiniLM-L6-v2")
+        self._model = EmbeddingModelProvider.get_model()
 
     # =====================================================
     # PUBLIC

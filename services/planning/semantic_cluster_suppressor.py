@@ -1,16 +1,10 @@
 # services/planning/semantic_cluster_suppressor.py
 
-from sentence_transformers import (
-    SentenceTransformer,
-)
+from sentence_transformers.util import cos_sim
 
-from sentence_transformers.util import (
-    cos_sim,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from services.embedding.embedding_model_provider import EmbeddingModelProvider
 
 
 class SemanticClusterSuppressor:
@@ -23,14 +17,13 @@ class SemanticClusterSuppressor:
         self,
         similarity_threshold: float = 0.70,
         suppression_penalty: float = 0.40,
-        embedding_model: str = ("all-MiniLM-L6-v2"),
     ) -> None:
 
         self._threshold = similarity_threshold
 
         self._penalty = suppression_penalty
 
-        self._model = SentenceTransformer(embedding_model)
+        self._model = EmbeddingModelProvider.get_model()
 
     # =====================================================
     # PUBLIC

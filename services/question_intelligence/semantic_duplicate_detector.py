@@ -1,14 +1,10 @@
 # services/question_intelligence/semantic_duplicate_detector.py
 
-from sentence_transformers import (
-    SentenceTransformer,
-)
-
-from sklearn.metrics.pairwise import (
-    cosine_similarity,
-)
+from sklearn.metrics.pairwise import cosine_similarity
 
 import numpy as np
+
+from services.embedding.embedding_model_provider import EmbeddingModelProvider
 
 
 class SemanticDuplicateDetector:
@@ -24,7 +20,7 @@ class SemanticDuplicateDetector:
 
         self._threshold = similarity_threshold
 
-        self._model = SentenceTransformer("all-MiniLM-L6-v2")
+        self._model = EmbeddingModelProvider.get_model()
 
     # =====================================================
     # PUBLIC

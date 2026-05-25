@@ -31,6 +31,8 @@ class PlannerTelemetry(BaseModel):
 
     difficulty_progression_score: float
 
+    embedding_model: str
+
     model_config = {
         "frozen": True,
         "extra": "forbid",

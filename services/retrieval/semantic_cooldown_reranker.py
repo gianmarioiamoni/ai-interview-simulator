@@ -1,20 +1,10 @@
 # services/retrieval/semantic_cooldown_reranker.py
 
-from sentence_transformers import (
-    SentenceTransformer,
-)
+from sentence_transformers.util import cos_sim
 
-from sentence_transformers.util import (
-    cos_sim,
-)
-
-from services.retrieval.contracts import (
-    HybridRetrievalResult,
-)
-
-from services.retrieval.retrieval_session_memory import (
-    RetrievalSessionMemory,
-)
+from services.retrieval.contracts import HybridRetrievalResult
+from services.retrieval.retrieval_session_memory import RetrievalSessionMemory
+from services.embedding.embedding_model_provider import EmbeddingModelProvider
 
 
 class SemanticCooldownReranker:
@@ -28,7 +18,6 @@ class SemanticCooldownReranker:
         memory: RetrievalSessionMemory,
         similarity_threshold: float = 0.80,
         cooldown_penalty: float = 0.40,
-        embedding_model: str = ("all-MiniLM-L6-v2"),
     ) -> None:
 
         self._memory = memory
@@ -37,7 +26,7 @@ class SemanticCooldownReranker:
 
         self._penalty = cooldown_penalty
 
-        self._model = SentenceTransformer(embedding_model)
+        self._model = EmbeddingModelProvider.get_model()
 
     # =====================================================
     # PUBLIC

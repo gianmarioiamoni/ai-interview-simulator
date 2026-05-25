@@ -1,33 +1,17 @@
 # scripts/test_pairwise_semantic_distance.py
 
-from services.interview_orchestration.pairwise_semantic_distance_engine import (
-    PairwiseSemanticDistanceEngine,
-)
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
-
+from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.user.role import (
     Role,
     RoleType,
 )
+from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.user.seniority_level import SeniorityLevel
+from domain.contracts.interview.interview_type import InterviewType
 
-from domain.contracts.interview.interview_area import (
-    InterviewArea,
-)
-
-from domain.contracts.user.seniority_level import (
-    SeniorityLevel,
-)
-
-from domain.contracts.interview.interview_type import (
-    InterviewType,
-)
-
-from services.question_ingestion.contracts.ingestion_metadata import (
-    IngestionMetadata,
-)
+from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
+from services.interview_orchestration.pairwise_semantic_distance_engine import PairwiseSemanticDistanceEngine
 
 
 def build_question(

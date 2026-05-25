@@ -2,13 +2,8 @@
 
 import numpy as np
 
-from sentence_transformers import (
-    SentenceTransformer,
-)
-
-from services.retrieval.contracts import (
-    EmbeddingRecord,
-)
+from services.retrieval.contracts import EmbeddingRecord
+from services.embedding.embedding_model_provider import EmbeddingModelProvider
 
 
 class EmbeddingSimilarityEngine:
@@ -19,7 +14,7 @@ class EmbeddingSimilarityEngine:
 
     def __init__(self) -> None:
 
-        self._model = SentenceTransformer("all-MiniLM-L6-v2")
+        self._model = EmbeddingModelProvider.get_model()
 
     # =====================================================
     # PUBLIC
