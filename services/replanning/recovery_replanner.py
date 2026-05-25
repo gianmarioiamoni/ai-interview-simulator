@@ -89,7 +89,6 @@ class RecoveryReplanner:
 
                 expansion_result = expander.expand(
                     items=items,
-                    constraints=current_constraints,
                     action=action,
                     role=role,
                     level=level,
