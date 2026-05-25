@@ -1,22 +1,21 @@
-# services/interview_planning/planning_result.py
+# services/replanning/replanning_result.py
 
 from pydantic import BaseModel
 
-from services.interview_selection.selected_question import SelectedQuestion
-from services.interview_planning.contracts.planning_artifacts import PlanningArtifacts
+from services.interview_planning.planning_result import PlanningResult
+from services.planning_validation.validation_result import ValidationResult
+from services.planning_validation.recovery_action import RecoveryAction
 
 
-class PlanningResult(BaseModel):
+class ReplanningResult(BaseModel):
 
-    selected_questions: list[SelectedQuestion]
+    final_planning_result: PlanningResult
 
-    satisfied_constraints: list[str]
+    final_validation_result: ValidationResult
 
-    violated_constraints: list[str]
+    applied_recovery_actions: list[RecoveryAction]
 
-    average_difficulty: float
-
-    artifacts: PlanningArtifacts
+    total_attempts: int
 
     model_config = {
         "frozen": True,
