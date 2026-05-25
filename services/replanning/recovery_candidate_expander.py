@@ -1,23 +1,24 @@
 # services/replanning/recovery_candidate_expander.py
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
-from services.interview_planning.interview_constraints import (
-    InterviewConstraints,
-)
-
-from services.planning_validation.recovery_action import (
-    RecoveryAction,
-)
-
-from services.replanning.contracts.recovery_expansion_result import (
-    RecoveryExpansionResult,
-)
+from services.interview_planning.interview_constraints import InterviewConstraints
+from services.planning_validation.recovery_action import RecoveryAction
+from services.replanning.contracts.recovery_expansion_result import RecoveryExpansionResult
+from services.replanning.retrieval_recovery_service import RetrievalRecoveryService
+from services.replanning.role_expansion_strategy import RoleExpansionStrategy
 
 
 class RecoveryCandidateExpander:
+
+
+    def __init__(
+        self,
+    ) -> None:
+
+        self._retrieval_recovery_service = RetrievalRecoveryService()
 
     # =====================================================
     # PUBLIC
@@ -28,6 +29,8 @@ class RecoveryCandidateExpander:
         items: list[QuestionBankItem],
         constraints: InterviewConstraints,
         action: RecoveryAction,
+        role: RoleType,
+        level: SeniorityLevel,
     ) -> RecoveryExpansionResult:
 
         # -------------------------------------------------
@@ -36,8 +39,10 @@ class RecoveryCandidateExpander:
 
         if action == RecoveryAction.EXPAND_ROLE_SCOPE:
 
-            expanded = self._expand_role_scope(
+            expanded = self._retrieval_recovery_service.expand_role_scope(
                 items=items,
+                role=role,
+                level=level,
             )
 
             return RecoveryExpansionResult(

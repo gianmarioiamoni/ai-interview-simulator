@@ -132,6 +132,8 @@ class InterviewOrchestrator:
         replanning_result = replanner.replan(
             items=pool.eligible_questions,
             constraints=constraints,
+            role=role,
+            level=level,
         )
 
 
