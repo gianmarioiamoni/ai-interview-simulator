@@ -4,7 +4,7 @@ from collections import defaultdict
 from statistics import mean
 
 from services.interview_selection.selected_question import SelectedQuestion
-from services.planning.contracts.planner_telemetry import PlannerTelemetry
+from services.telemetry.planner.planner_telemetry import PlannerTelemetry
 from services.planning.difficulty_progression_analyzer import DifficultyProgressionAnalyzer
 from services.planning.difficulty_spike_suppressor import DifficultySpikeSuppressor
 
