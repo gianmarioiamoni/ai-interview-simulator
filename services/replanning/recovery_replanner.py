@@ -9,6 +9,7 @@ from services.interview_planning.constraint_based_planner import ConstraintBased
 from services.planning_validation.planning_validator import PlanningValidator
 from services.planning_validation.recovery_action import RecoveryAction
 from services.replanning.replanning_result import ReplanningResult
+from services.replanning.recovery_candidate_expander import RecoveryCandidateExpander
 
 
 class RecoveryReplanner:
@@ -28,6 +29,8 @@ class RecoveryReplanner:
         planner = ConstraintBasedPlanner()
 
         validator = PlanningValidator()
+
+        expander = RecoveryCandidateExpander()
 
         current_constraints = deepcopy(constraints)
 
@@ -72,7 +75,21 @@ class RecoveryReplanner:
 
                 if action in applied_actions:
                     continue
+                
+                # -------------------------------------------------
+                # EXPAND CANDIDATES
+                # -------------------------------------------------
+                expansion_result = expander.expand(
+                    items=items,
+                    constraints=current_constraints,
+                    action=action,
+                )
 
+                items = expansion_result.expanded_items
+
+                # -------------------------------------------------
+                # APPLY RECOVERY ACTION
+                # -------------------------------------------------
                 self._apply_recovery_action(
                     constraints=(current_constraints),
                     action=action,
