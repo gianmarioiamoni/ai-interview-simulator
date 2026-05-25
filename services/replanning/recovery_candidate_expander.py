@@ -8,11 +8,13 @@ from services.interview_planning.interview_constraints import InterviewConstrain
 from services.planning_validation.recovery_action import RecoveryAction
 from services.replanning.contracts.recovery_expansion_result import RecoveryExpansionResult
 from services.replanning.retrieval_recovery_service import RetrievalRecoveryService
-from services.replanning.role_expansion_strategy import RoleExpansionStrategy
 
 
 class RecoveryCandidateExpander:
 
+    # =====================================================
+    # CONSTRUCTOR
+    # =====================================================
 
     def __init__(
         self,
@@ -39,19 +41,20 @@ class RecoveryCandidateExpander:
 
         if action == RecoveryAction.EXPAND_ROLE_SCOPE:
 
-            expanded = self._retrieval_recovery_service.expand_role_scope(
+            recovery_result = self._retrieval_recovery_service.expand_role_scope(
                 items=items,
                 role=role,
                 level=level,
             )
 
             return RecoveryExpansionResult(
-                expanded_items=expanded,
+                expanded_items=(recovery_result.expanded_items),
                 applied_action=action,
                 added_candidates=max(
                     0,
-                    len(expanded) - len(items),
+                    len(recovery_result.expanded_items) - len(items),
                 ),
+                telemetry=recovery_result.telemetry,
             )
 
         # -------------------------------------------------
@@ -62,23 +65,5 @@ class RecoveryCandidateExpander:
             expanded_items=items,
             applied_action=action,
             added_candidates=0,
+            telemetry=None,
         )
-
-    # =====================================================
-    # ROLE EXPANSION
-    # =====================================================
-
-    def _expand_role_scope(
-        self,
-        items: list[QuestionBankItem],
-    ) -> list[QuestionBankItem]:
-
-        # -------------------------------------------------
-        # TEMPORARY PLACEHOLDER
-        # -------------------------------------------------
-
-        # In A.23 initial version we simply return the
-        # original pool. Future steps will integrate
-        # retrieval-aware expansion.
-
-        return items
