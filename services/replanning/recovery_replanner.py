@@ -12,6 +12,7 @@ from services.planning_validation.planning_validator import PlanningValidator
 from services.planning_validation.recovery_action import RecoveryAction
 from services.replanning.replanning_result import ReplanningResult
 from services.replanning.recovery_candidate_expander import RecoveryCandidateExpander
+from services.replanning.contracts.replanning_artifacts import ReplanningArtifacts
 
 
 class RecoveryReplanner:
@@ -38,11 +39,13 @@ class RecoveryReplanner:
 
         current_constraints = deepcopy(constraints)
 
-        applied_actions = []
+        applied_actions: list[RecoveryAction] = []
 
         final_planning = None
 
         final_validation = None
+
+        latest_expansion_telemetry = None
 
         for attempt in range(
             1,
@@ -79,10 +82,11 @@ class RecoveryReplanner:
 
                 if action in applied_actions:
                     continue
-                
+
                 # -------------------------------------------------
                 # EXPAND CANDIDATES
                 # -------------------------------------------------
+
                 expansion_result = expander.expand(
                     items=items,
                     constraints=current_constraints,
@@ -93,9 +97,12 @@ class RecoveryReplanner:
 
                 items = expansion_result.expanded_items
 
+                latest_expansion_telemetry = expansion_result.telemetry
+
                 # -------------------------------------------------
                 # APPLY RECOVERY ACTION
                 # -------------------------------------------------
+
                 self._apply_recovery_action(
                     constraints=(current_constraints),
                     action=action,
@@ -105,11 +112,23 @@ class RecoveryReplanner:
 
                 break
 
+        # -------------------------------------------------
+        # ARTIFACTS
+        # -------------------------------------------------
+
+        artifacts = ReplanningArtifacts(
+            planner_telemetry=(final_planning.telemetry),
+            retrieval_expansion_telemetry=(latest_expansion_telemetry),
+            recovery_attempts=attempt,
+            applied_actions=applied_actions,
+        )
+
         return ReplanningResult(
             final_planning_result=final_planning,
             final_validation_result=(final_validation),
             applied_recovery_actions=(applied_actions),
             total_attempts=attempt,
+            artifacts=artifacts,
         )
 
     # =====================================================
