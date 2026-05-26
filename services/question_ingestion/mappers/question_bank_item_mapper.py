@@ -4,30 +4,12 @@ import uuid
 
 from typing import List
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
-
-from domain.contracts.interview.interview_area import (
-    InterviewArea,
-)
-
-from domain.contracts.interview.interview_type import (
-    InterviewType,
-)
-
-from domain.contracts.user.role import (
-    Role,
-    RoleType,
-)
-
-from domain.contracts.user.seniority_level import (
-    SeniorityLevel,
-)
-
-from services.question_ingestion.contracts import (
-    NormalizedQuestionRecord,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
+from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.user.role import Role, RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
+from services.question_ingestion.contracts import NormalizedQuestionRecord
 
 
 class QuestionBankItemMapper:

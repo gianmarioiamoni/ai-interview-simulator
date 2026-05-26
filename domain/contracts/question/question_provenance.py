@@ -2,9 +2,7 @@
 
 from pydantic import BaseModel, Field
 
-from domain.contracts.question.question_origin_type import (
-    QuestionOriginType,
-)
+from domain.contracts.question.question_origin_type import QuestionOriginType
 
 
 class QuestionProvenance(BaseModel):
