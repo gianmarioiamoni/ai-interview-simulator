@@ -1,16 +1,16 @@
-# domain/contracts/question/question_origin_type.py
-
 from enum import Enum
 
 
 class QuestionOriginType(str, Enum):
 
-    RETRIEVED = "retrieved"
+    RETRIEVAL = "retrieval"
 
-    GENERATED = "generated"
+    LLM_GENERATED = "llm_generated"
 
     HYBRID = "hybrid"
 
+    FOLLOW_UP = "follow_up"
+
     HUMANIZED = "humanized"
 
-    MANUAL = "manual"
+    RECOVERY_EXPANSION = "recovery_expansion"

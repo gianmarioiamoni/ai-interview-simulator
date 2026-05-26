@@ -12,9 +12,13 @@ from typing import List, Optional
 from langchain_core.documents import Document
 
 from domain.contracts.question.question_bank_item import QuestionBankItem
+from domain.contracts.question.question_origin_type import QuestionOriginType
+from domain.contracts.question.question_provenance import QuestionProvenance
+from domain.contracts.user.role import Role, RoleType
 
 from services.question_intelligence.question_vector_store import QuestionVectorStore
 from services.question_intelligence.retrieval.retrieval_strategy import RetrievalStrategy
+from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
 
 
 class QuestionRetrievalService:
@@ -120,19 +124,48 @@ class QuestionRetrievalService:
     # MAPPER
     # =====================================================
 
-    def _to_domain(self, document: Document) -> QuestionBankItem:
+    def _to_domain(
+    self,
+    document: Document,
+) -> QuestionBankItem:
 
         metadata = document.metadata
 
-        
+        ingestion_metadata = IngestionMetadata(
+            source_name=metadata.get(
+                "source_name",
+                "vector_store",
+            ),
+            source_type=metadata.get(
+                "source_type",
+                "retrieval",
+            ),
+            dataset_version=metadata.get(
+                "dataset_version",
+                "unknown",
+            ),
+            ingestion_timestamp=metadata.get(
+                "ingestion_timestamp",
+                "",
+            ),
+        )
+
+        provenance = QuestionProvenance(
+            origin_type=QuestionOriginType.RETRIEVAL,
+            source_name=ingestion_metadata.source_name,
+            source_type=ingestion_metadata.source_type,
+            dataset_version=ingestion_metadata.dataset_version,
+        )
+
+
         return QuestionBankItem(
             id=metadata["id"],
             text=document.page_content,
             interview_type=metadata["interview_type"],
-            role={
-                "type": metadata["role"],
-            },
+            role=Role(type=RoleType(metadata["role"])),
             area=metadata["area"],
             level=metadata["level"],
             difficulty=metadata["difficulty"],
+            ingestion_metadata=ingestion_metadata,
+            provenance=provenance,
         )
