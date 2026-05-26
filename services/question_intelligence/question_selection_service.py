@@ -19,20 +19,13 @@ from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
+from domain.contracts.question.question_origin_type import QuestionOriginType
+from domain.contracts.question.question_provenance import QuestionProvenance
 
-from services.question_intelligence.question_retrieval_service import (
-    QuestionRetrievalService,
-)
-from services.question_intelligence.question_generator import (
-    QuestionGenerator,
-)
-from services.question_intelligence.coding_question_generator import (
-    CodingQuestionGenerator,
-    GeneratedCodingQuestion,
-)
-from services.question_intelligence.sql_question_generator import (
-    SQLQuestionGenerator,
-)
+from services.question_intelligence.question_retrieval_service import QuestionRetrievalService
+from services.question_intelligence.question_generator import QuestionGenerator
+from services.question_intelligence.coding_question_generator import CodingQuestionGenerator, GeneratedCodingQuestion
+from services.question_intelligence.sql_question_generator import SQLQuestionGenerator
 
 from app.settings.constants import QUESTIONS_PER_AREA
 
@@ -252,6 +245,7 @@ class QuestionSelectionService:
             type=QuestionType.WRITTEN,
             prompt=item.text,
             difficulty=self._map_difficulty(item.difficulty),
+            provenance=item.provenance,
         )
 
     def _map_generated_question(
@@ -260,14 +254,26 @@ class QuestionSelectionService:
         area: InterviewArea,
     ) -> Question:
 
+        provenance = QuestionProvenance(
+            origin_type=QuestionOriginType.GENERATED,
+            source_name="question_generator",
+            source_version="v1",
+            generator_model="question_generator",
+            humanized=False,
+            transformation_history=["question_generation"],
+        )
+
+        
         return Question(
             id=str(uuid.uuid4()),
             area=area,
             type=QuestionType.WRITTEN,
             prompt=generated.text,
             difficulty=self._map_difficulty(generated.difficulty),
+            provenance=provenance,
         )
 
+    
     def _map_difficulty(self, value: int) -> QuestionDifficulty:
         if value <= 2:
             return QuestionDifficulty.EASY

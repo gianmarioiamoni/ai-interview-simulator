@@ -19,6 +19,7 @@ class CandidatePool(BaseModel):
 
     rejected_count: int
 
+
     model_config = {
         "frozen": True,
     }

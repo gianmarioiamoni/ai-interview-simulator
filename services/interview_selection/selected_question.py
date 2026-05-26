@@ -17,6 +17,7 @@ class SelectedQuestion(BaseModel):
 
     selection_reason: str
 
+
     model_config = {
         "frozen": True,
     }
