@@ -17,8 +17,6 @@ class HumanizerInput(BaseModel):
 
     follow_up_count: int = 0
 
-    last_was_follow_up: bool = False
-
     language: str = "en"
 
     chat_history: list[str] = []

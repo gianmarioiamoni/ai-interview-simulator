@@ -33,7 +33,7 @@ class HumanizerPolicyEngine:
 
         if input_data.last_turn_was_follow_up:
 
-            return HumanizerDecision.REMARK_AND_QUESTION
+            return HumanizerDecision.REMARK_PLUS_QUESTION
 
         # -------------------------------------------------
         # NO SCORE AVAILABLE
@@ -55,4 +55,4 @@ class HumanizerPolicyEngine:
         # WEAK ANSWER
         # -------------------------------------------------
 
-        return HumanizerDecision.REMARK_AND_QUESTION
+        return HumanizerDecision.REMARK_PLUS_QUESTION
