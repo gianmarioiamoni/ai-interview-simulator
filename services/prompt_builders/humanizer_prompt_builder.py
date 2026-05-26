@@ -3,13 +3,13 @@
 from app.prompts.prompt_loader import PromptLoader
 from app.prompts.prompt_renderer import PromptRenderer
 
-from domain.contracts.question.question import Question
+from services.humanizer.contracts.humanizer_decision import HumanizerDecision
+from services.humanizer.contracts.humanizer_input import HumanizerInput
 
 
 def build_humanizer_prompt(
-    question: Question,
-    language: str,
-    chat_history: list[str],
+    input_data: HumanizerInput,
+    decision: HumanizerDecision,
 ) -> str:
 
     template = PromptLoader.load("transformation/humanizer.txt")
