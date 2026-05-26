@@ -23,6 +23,13 @@ class HumanizerInput(BaseModel):
 
     chat_history: list[str] = []
 
+    last_answer: str | None = None
+
+    last_answer_score: int | None = None
+
+    last_turn_was_follow_up: bool = False
+
+    
     model_config = {
         "frozen": True,
     }

@@ -1,14 +1,14 @@
-# services/humanizer/humanizer_policy_engine.py
+# services/humanizer/policy/humanizer_policy_engine.py
 
-from services.humanizer.contracts.humanizer_decision import HumanizerDecision
 from services.humanizer.contracts.humanizer_input import HumanizerInput
+from services.humanizer.contracts.humanizer_decision import HumanizerDecision
 
 
 class HumanizerPolicyEngine:
 
-    FOLLOW_UP_THRESHOLD = 5.0
-
     MAX_FOLLOW_UPS = 2
+
+    FOLLOW_UP_THRESHOLD = 5
 
     # =====================================================
     # PUBLIC
@@ -20,39 +20,39 @@ class HumanizerPolicyEngine:
     ) -> HumanizerDecision:
 
         # -------------------------------------------------
-        # Missing evaluation
-        # -------------------------------------------------
-
-        if input_data.previous_score is None:
-
-            return HumanizerDecision.PLAIN_QUESTION
-
-        # -------------------------------------------------
-        # Follow-up limit reached
+        # FOLLOW-UP LIMIT
         # -------------------------------------------------
 
         if input_data.follow_up_count >= self.MAX_FOLLOW_UPS:
 
-            return HumanizerDecision.REMARK_PLUS_QUESTION
+            return HumanizerDecision.DIRECT_QUESTION
 
         # -------------------------------------------------
-        # Prevent consecutive follow-ups
+        # NO CONSECUTIVE FOLLOW-UPS
         # -------------------------------------------------
 
-        if input_data.last_was_follow_up:
+        if input_data.last_turn_was_follow_up:
 
-            return HumanizerDecision.REMARK_PLUS_QUESTION
+            return HumanizerDecision.REMARK_AND_QUESTION
 
         # -------------------------------------------------
-        # Strong answer
+        # NO SCORE AVAILABLE
         # -------------------------------------------------
 
-        if input_data.previous_score >= self.FOLLOW_UP_THRESHOLD:
+        if input_data.last_answer_score is None:
+
+            return HumanizerDecision.DIRECT_QUESTION
+
+        # -------------------------------------------------
+        # GOOD ANSWER
+        # -------------------------------------------------
+
+        if input_data.last_answer_score >= self.FOLLOW_UP_THRESHOLD:
 
             return HumanizerDecision.FOLLOW_UP
 
         # -------------------------------------------------
-        # Weak answer
+        # WEAK ANSWER
         # -------------------------------------------------
 
-        return HumanizerDecision.REMARK_PLUS_QUESTION
+        return HumanizerDecision.REMARK_AND_QUESTION
