@@ -3,14 +3,15 @@
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 
-from services.humanizer.builders.humanizer_prompt_builder import HumanizerPromptBuilder
 from services.humanizer.contracts.humanizer_input import HumanizerInput
-from services.humanizer.contracts.humanizer_decision import HumanizerDecision
+from services.humanizer.humanizer_service import HumanizerService
 
 
 def build_question_node(llm):
 
-    prompt_builder = HumanizerPromptBuilder()
+    humanizer_service = HumanizerService(
+        llm=llm,
+    )
 
     def question_node(state: InterviewState) -> InterviewState:
 
@@ -55,7 +56,7 @@ def build_question_node(llm):
             )
 
         # ---------------------------------------------------------
-        # Build humanizer input
+        # INPUT
         # ---------------------------------------------------------
 
         input_data = HumanizerInput(
@@ -65,23 +66,18 @@ def build_question_node(llm):
         )
 
         # ---------------------------------------------------------
-        # Transitional plain-question mode
+        # HUMANIZE
         # ---------------------------------------------------------
 
-        prompt = prompt_builder.build(
+        output = humanizer_service.humanize(
             input_data=input_data,
-            decision=HumanizerDecision.PLAIN_QUESTION,
         )
 
         # ---------------------------------------------------------
-        # Invoke LLM
+        # UPDATE HISTORY
         # ---------------------------------------------------------
 
-        response = llm.invoke(prompt)
-
-        new_message = response.content.strip()
-
-        new_history = state.chat_history + [new_message]
+        new_history = state.chat_history + [output.message]
 
         return state.model_copy(
             update={
