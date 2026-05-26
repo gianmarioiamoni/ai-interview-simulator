@@ -10,16 +10,15 @@ from services.humanizer.humanizer_service import HumanizerService
 
 def build_question_node(llm):
 
-    humanizer_service = HumanizerService(llm=llm)
+    humanizer_service = HumanizerService(
+        llm=llm,
+    )
 
     def question_node(state: InterviewState) -> InterviewState:
 
         question = state.current_question
 
         if question is None:
-            return state
-
-        if not state.enable_humanizer:
             return state
 
         # ---------------------------------------------------------
@@ -58,16 +57,19 @@ def build_question_node(llm):
             )
 
         # ---------------------------------------------------------
-        # INPUT
+        # INPUT DATA
         # ---------------------------------------------------------
 
         last_answer = None
+
         last_score = None
 
         if state.answers:
+
             last_answer = state.answers[-1].content
 
         if state.last_feedback_bundle:
+
             last_score = int(state.last_feedback_bundle.overall_score)
 
         input_data = HumanizerInput(
@@ -77,7 +79,7 @@ def build_question_node(llm):
             last_answer=last_answer,
             last_answer_score=last_score,
             follow_up_count=state.follow_up_count,
-            last_turn_was_follow_up=state.last_humanizer_follow_up,
+            last_turn_was_follow_up=(state.last_humanizer_follow_up),
         )
 
         # ---------------------------------------------------------
@@ -89,10 +91,14 @@ def build_question_node(llm):
         )
 
         # ---------------------------------------------------------
-        # UPDATE STATE
+        # FOLLOW-UP TRACKING
         # ---------------------------------------------------------
+
         is_follow_up = output.decision == HumanizerDecision.FOLLOW_UP
-        follow_up_count = state.follow_up_count + 1 if is_follow_up else state.follow_up_count
+
+        follow_up_count = (
+            state.follow_up_count + 1 if is_follow_up else state.follow_up_count
+        )
 
         # ---------------------------------------------------------
         # UPDATE HISTORY
@@ -104,7 +110,7 @@ def build_question_node(llm):
             update={
                 "chat_history": new_history,
                 "follow_up_count": follow_up_count,
-                "last_humanizer_follow_up": is_follow_up,
+                "last_humanizer_follow_up": (is_follow_up),
             }
         )
 
