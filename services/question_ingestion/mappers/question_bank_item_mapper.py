@@ -9,6 +9,8 @@ from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.user.role import Role, RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
+from domain.contracts.question.question_origin_type import QuestionOriginType
+from domain.contracts.question.question_provenance import QuestionProvenance
 from services.question_ingestion.contracts import NormalizedQuestionRecord
 
 
@@ -83,6 +85,13 @@ class QuestionBankItemMapper:
 
         difficulty = record.difficulty_hint or 3
 
+        provenance=QuestionProvenance(
+            origin_type=QuestionOriginType.RETRIEVAL,
+            source_name=record.ingestion_metadata.source_name,
+            source_type=record.ingestion_metadata.source_type,
+            dataset_version=record.ingestion_metadata.dataset_version,
+        )
+
         # -------------------------------------------------
         # BUILD
         # -------------------------------------------------
@@ -96,6 +105,7 @@ class QuestionBankItemMapper:
             level=level,
             difficulty=difficulty,
             ingestion_metadata=record.ingestion_metadata,
+            provenance=provenance,
         )
 
     # =====================================================

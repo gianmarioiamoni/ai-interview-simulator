@@ -1,8 +1,8 @@
-# domain/contracts/question/question_provenance.py
+from pydantic import BaseModel
 
-from pydantic import BaseModel, Field
-
-from domain.contracts.question.question_origin_type import QuestionOriginType
+from domain.contracts.question.question_origin_type import (
+    QuestionOriginType,
+)
 
 
 class QuestionProvenance(BaseModel):
@@ -11,17 +11,17 @@ class QuestionProvenance(BaseModel):
 
     source_name: str | None = None
 
-    source_version: str | None = None
+    source_type: str | None = None
 
-    retrieval_strategy: str | None = None
+    dataset_version: str | None = None
 
-    generator_model: str | None = None
+    retrieval_query: str | None = None
 
-    humanized: bool = False
+    retrieval_score: float | None = None
 
-    transformation_history: list[str] = Field(
-        default_factory=list,
-    )
+    generated_by_model: str | None = None
+
+    recovery_expansion: bool = False
 
     model_config = {
         "frozen": True,

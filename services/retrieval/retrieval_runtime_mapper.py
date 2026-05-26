@@ -62,14 +62,11 @@ class RetrievalRuntimeMapper:
         )
 
         provenance = QuestionProvenance(
-            origin_type=QuestionOriginType.RETRIEVED,
+            origin_type=QuestionOriginType.RETRIEVAL,
             source_name="retrieval_runtime",
-            source_version="runtime_v1",
-            retrieval_strategy="semantic_memory_aware",
-            humanized=False,
-            transformation_history=[
-                "retrieval_runtime_mapping",
-            ],
+            source_type="semantic_retrieval",
+            dataset_version="runtime_v1",
+            retrieval_score=record.retrieval_score,
         )
 
 

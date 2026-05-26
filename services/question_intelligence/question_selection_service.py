@@ -255,15 +255,12 @@ class QuestionSelectionService:
     ) -> Question:
 
         provenance = QuestionProvenance(
-            origin_type=QuestionOriginType.GENERATED,
+            origin_type=QuestionOriginType.LLM_GENERATED,
             source_name="question_generator",
-            source_version="v1",
-            generator_model="question_generator",
-            humanized=False,
-            transformation_history=["question_generation"],
+            generated_by_model="question_generator",
         )
 
-        
+
         return Question(
             id=str(uuid.uuid4()),
             area=area,
@@ -273,7 +270,6 @@ class QuestionSelectionService:
             provenance=provenance,
         )
 
-    
     def _map_difficulty(self, value: int) -> QuestionDifficulty:
         if value <= 2:
             return QuestionDifficulty.EASY
