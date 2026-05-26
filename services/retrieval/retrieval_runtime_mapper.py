@@ -2,18 +2,15 @@
 
 from datetime import datetime, timezone
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
-
+from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.user.role import (
     Role,
     RoleType,
 )
-
-
 from domain.contracts.user.seniority_level import SeniorityLevel
 from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.question.question_origin_type import QuestionOriginType
+from domain.contracts.question.question_provenance import QuestionProvenance
 
 from services.retrieval.contracts import RetrievalCorpusRecord
 from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
@@ -64,6 +61,18 @@ class RetrievalRuntimeMapper:
             ingestion_timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
+        provenance = QuestionProvenance(
+            origin_type=QuestionOriginType.RETRIEVED,
+            source_name="retrieval_runtime",
+            source_version="runtime_v1",
+            retrieval_strategy="semantic_memory_aware",
+            humanized=False,
+            transformation_history=[
+                "retrieval_runtime_mapping",
+            ],
+        )
+
+
         return QuestionBankItem(
             id=(f"retrieval_" f"{abs(hash(record.content))}"),
             text=record.content,
@@ -73,6 +82,7 @@ class RetrievalRuntimeMapper:
             difficulty=difficulty,
             interview_type="technical",
             ingestion_metadata=ingestion_metadata,
+            provenance=provenance,
         )
 
     def _map_area(
