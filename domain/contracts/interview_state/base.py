@@ -47,7 +47,10 @@ class InterviewStateBase(BaseModel):
 
     awaiting_user_input: bool = False
 
+    # Humanizer
     enable_humanizer: bool = True
+    follow_up_count: int = 0
+    last_humanizer_follow_up: bool = False
 
     events: list = Field(default_factory=list)
 
