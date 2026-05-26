@@ -2,16 +2,18 @@
 
 from pydantic import BaseModel
 
+from services.humanizer.contracts.humanizer_decision import HumanizerDecision
+
 
 class HumanizerOutput(BaseModel):
 
-    humanized_question: str
+    decision: HumanizerDecision
 
-    remark: str | None = None
+    message: str
 
-    is_follow_up: bool = False
+    score: int | None = None
 
-    follow_up_reason: str | None = None
+    follow_up_used: bool = False
 
     model_config = {
         "frozen": True,
