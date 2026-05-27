@@ -1,11 +1,11 @@
 # services/question_ingestion/github_repository_downloader.py
 
+import shutil
 import subprocess
+
 from pathlib import Path
 
-from services.question_ingestion.contracts.github_corpus_source import (
-    GitHubCorpusSource,
-)
+from services.question_ingestion.contracts.github_corpus_source import GitHubCorpusSource
 
 
 class GitHubRepositoryDownloader:
@@ -35,26 +35,71 @@ class GitHubRepositoryDownloader:
         if target_path.exists():
 
             subprocess.run(
-                ["git", "-C", str(target_path), "pull"],
+                [
+                    "git",
+                    "-C",
+                    str(target_path),
+                    "pull",
+                ],
                 check=True,
             )
 
             return target_path
 
         # -------------------------------------------------
-        # CLONE
+        # CLONE WITH FALLBACK
         # -------------------------------------------------
 
-        subprocess.run(
-            [
-                "git",
-                "clone",
-                "--branch",
-                source.branch,
-                source.repository_url,
-                str(target_path),
-            ],
-            check=True,
-        )
+        branches_to_try = []
 
-        return target_path
+        if source.branch:
+            branches_to_try.append(source.branch)
+
+        for fallback in ["main", "master"]:
+
+            if fallback not in branches_to_try:
+                branches_to_try.append(fallback)
+
+        last_error = None
+
+        for branch in branches_to_try:
+
+            try:
+
+                subprocess.run(
+                    [
+                        "git",
+                        "clone",
+                        "--branch",
+                        branch,
+                        source.repository_url,
+                        str(target_path),
+                    ],
+                    check=True,
+                )
+
+                return target_path
+
+            except subprocess.CalledProcessError as e:
+
+                last_error = e
+
+                # -----------------------------------------
+                # CLEAN FAILED PARTIAL CLONE
+                # -----------------------------------------
+
+                if target_path.exists():
+
+                    shutil.rmtree(
+                        target_path,
+                        ignore_errors=True,
+                    )
+
+        # -------------------------------------------------
+        # FAILURE
+        # -------------------------------------------------
+
+        if last_error is not None:
+            raise last_error
+
+        raise RuntimeError(("Unable to clone repository: " f"{source.repository_url}"))

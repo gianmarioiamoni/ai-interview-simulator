@@ -4,21 +4,10 @@ from typing import List
 
 from domain.contracts.question.question import Question
 
-from services.question_intelligence.quality.similarity_engine import (
-    SimilarityEngine,
-)
-
-from services.question_intelligence.quality.diversity_analyzer import (
-    DiversityAnalyzer,
-)
-
-from services.question_intelligence.quality.coverage_analyzer import (
-    CoverageAnalyzer,
-)
-
-from services.question_intelligence.quality.contracts.question_set_quality_report import (
-    QuestionSetQualityReport,
-)
+from services.question_intelligence.quality.similarity_engine import SimilarityEngine
+from services.question_intelligence.quality.diversity_analyzer import DiversityAnalyzer
+from services.question_intelligence.quality.coverage_analyzer import CoverageAnalyzer
+from services.question_intelligence.quality.contracts.question_set_quality_report import QuestionSetQualityReport
 
 
 class QuestionSetQualityAnalyzer:

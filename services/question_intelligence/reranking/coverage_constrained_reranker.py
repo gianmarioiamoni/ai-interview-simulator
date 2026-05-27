@@ -2,21 +2,11 @@
 
 from typing import List
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from services.question_intelligence.coverage.topic_extractor import (
-    TopicExtractor,
-)
-
-from services.question_intelligence.reranking.reranked_result import (
-    RerankedResult,
-)
-
-from services.question_intelligence.reranking.retrieval_reranker import (
-    RetrievalReranker,
-)
+from services.question_intelligence.coverage.topic_extractor import TopicExtractor
+from services.question_intelligence.reranking.reranked_result import RerankedResult
+from services.question_intelligence.reranking.retrieval_reranker import RetrievalReranker
 
 
 class CoverageConstrainedReranker:
