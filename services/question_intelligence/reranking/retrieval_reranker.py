@@ -2,17 +2,10 @@
 
 from typing import List
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
-from services.question_intelligence.semantic.embedding_similarity_engine import (
-    EmbeddingSimilarityEngine,
-)
-
-from services.question_intelligence.reranking.reranked_result import (
-    RerankedResult,
-)
+from services.question_intelligence.semantic.embedding_similarity_engine import EmbeddingSimilarityEngine
+from services.question_intelligence.reranking.reranked_result import RerankedResult
 
 
 class RetrievalReranker:

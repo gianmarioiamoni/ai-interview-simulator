@@ -2,9 +2,7 @@
 
 from pydantic import BaseModel
 
-from domain.contracts.question.question_bank_item import (
-    QuestionBankItem,
-)
+from domain.contracts.question.question_bank_item import QuestionBankItem
 
 
 class RerankedResult(BaseModel):
