@@ -9,6 +9,7 @@ from services.question_ingestion.normalizers.question_normalizer import Question
 from services.question_intelligence.technical_question_filter import TechnicalQuestionFilter
 from services.question_intelligence.quality.interview_question_quality_filter import InterviewQuestionQualityFilter
 from services.question_intelligence.quality.contracts.quality_decision import QualityDecision
+from services.question_ingestion.contracts.extracted_question_candidate import ExtractedQuestionCandidate
 
 
 class CorpusSemanticValidator:
@@ -19,7 +20,7 @@ class CorpusSemanticValidator:
 
     def validate(
         self,
-        questions: list[str],
+        questions: list[ExtractedQuestionCandidate],
         source_name: str,
         source_type: str,
         dataset_version: str,
@@ -33,14 +34,14 @@ class CorpusSemanticValidator:
 
         results: list[CorpusValidationResult] = []
 
-        for question in questions:
+        for candidate in questions:
 
             # -------------------------------------------------
             # SEMANTIC EVALUATION
             # -------------------------------------------------
 
-            technical_result = technical_filter.evaluate(question)
-            interview_result = interview_filter.evaluate(question)
+            technical_result = technical_filter.evaluate(candidate.text)
+            interview_result = interview_filter.evaluate(candidate.text)
 
             is_accepted = (
                 technical_result.is_technical
@@ -56,10 +57,10 @@ class CorpusSemanticValidator:
                 source_type=(source_type),
                 dataset_version=(dataset_version),
                 raw_payload={
-                    "text": question,
+                    "text": candidate.text,
                 },
                 canonical_payload={
-                    "text": question,
+                    "text": candidate.text,
                 },
             )
 
@@ -76,7 +77,7 @@ class CorpusSemanticValidator:
 
             results.append(
                 CorpusValidationResult(
-                    raw_question=(question),
+                    raw_question=(candidate.text),
                     filter_result=(technical_result),
                     normalized_record=(normalized),
                 )
