@@ -23,6 +23,10 @@ class AssembledQuestion(BaseModel):
 
     score_breakdown: PlannerScoreBreakdown
 
+    selection_score: float | None = None
+
+    selection_reason: str | None = None
+
 
     model_config = {
         "frozen": True,

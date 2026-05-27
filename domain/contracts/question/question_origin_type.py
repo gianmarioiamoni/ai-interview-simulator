@@ -1,3 +1,5 @@
+# domain/contracts/question/question_origin_type.py
+
 from enum import Enum
 
 

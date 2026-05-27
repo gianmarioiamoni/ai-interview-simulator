@@ -66,6 +66,8 @@ class AdaptiveInterviewAssembler:
                         )
                     ),
                     score_breakdown=(selected_question.score_breakdown),
+                    selection_score=(selected_question.selection_score),
+                    selection_reason=(selected_question.selection_reason),
                 )
             )
 
