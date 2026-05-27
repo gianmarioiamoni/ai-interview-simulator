@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+# domain/contracts/question/question_runtime_lineage.py
+
+from pydantic import BaseModel, Field
 
 from services.interview_selection.interview_stage import (
     InterviewStage,
@@ -15,7 +17,7 @@ class QuestionRuntimeLineage(BaseModel):
 
     interview_stage: InterviewStage | None = None
 
-    planner_rationale: list[str] = []
+    planner_rationale: list[str] = Field(default_factory=list)
 
     recovery_applied: bool = False
 

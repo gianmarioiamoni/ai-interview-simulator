@@ -26,6 +26,9 @@ from services.question_intelligence.question_retrieval_service import QuestionRe
 from services.question_intelligence.question_generator import QuestionGenerator
 from services.question_intelligence.coding_question_generator import CodingQuestionGenerator, GeneratedCodingQuestion
 from services.question_intelligence.sql_question_generator import SQLQuestionGenerator
+from services.question_intelligence.mappers.runtime_question_mapper import RuntimeQuestionMapper
+from services.interview_selection.assembled_question import AssembledQuestion
+from services.interview_selection.interview_stage import InterviewStage
 
 from app.settings.constants import QUESTIONS_PER_AREA
 
@@ -46,6 +49,7 @@ class QuestionSelectionService:
         self._generator = generator
         self._coding_generator = coding_generator
         self._sql_generator = sql_generator
+        self._runtime_mapper = RuntimeQuestionMapper()
 
     # =========================================================
     # PUBLIC
@@ -101,9 +105,9 @@ class QuestionSelectionService:
         )
 
         for item in retrieved:
-            questions.append(self._map_bank_item(item))
+            questions.append(self._runtime_mapper.map_retrieved_bank_item(item))
 
-        # 2. GENERATE SOLO SE SERVE
+        # 2. GENERATE (ONLY IF NEEDED) 
         remaining_slots = questions_per_area - len(questions)
 
         if remaining_slots > 0:
@@ -234,77 +238,3 @@ class QuestionSelectionService:
             if p not in prompt:
                 raise ValueError(f"Parameter '{p}' not found in prompt")
 
-    # =========================================================
-    # MAPPERS
-    # =========================================================
-
-    def _map_bank_item(self, item: QuestionBankItem) -> Question:
-        return Question(
-            id=str(uuid.uuid4()),
-            area=item.area,
-            type=QuestionType.WRITTEN,
-            prompt=item.text,
-            difficulty=self._map_difficulty(item.difficulty),
-            provenance=item.provenance,
-        )
-
-    def _map_generated_question(
-        self,
-        generated: GeneratedQuestion,
-        area: InterviewArea,
-    ) -> Question:
-
-        provenance = QuestionProvenance(
-            origin_type=QuestionOriginType.LLM_GENERATED,
-            source_name="question_generator",
-            generated_by_model="question_generator",
-        )
-
-
-        return Question(
-            id=str(uuid.uuid4()),
-            area=area,
-            type=QuestionType.WRITTEN,
-            prompt=generated.text,
-            difficulty=self._map_difficulty(generated.difficulty),
-            provenance=provenance,
-        )
-
-    def _map_difficulty(self, value: int) -> QuestionDifficulty:
-        if value <= 2:
-            return QuestionDifficulty.EASY
-        if value == 3:
-            return QuestionDifficulty.MEDIUM
-        return QuestionDifficulty.HARD
-
-    def _select_by_difficulty(
-        self,
-        questions: List[Question],
-        total: int,
-    ) -> List[Question]:
-
-        buckets = {
-            QuestionDifficulty.EASY: [],
-            QuestionDifficulty.MEDIUM: [],
-            QuestionDifficulty.HARD: [],
-        }
-
-        for q in questions:
-            buckets[q.difficulty].append(q)
-
-        target = {
-            QuestionDifficulty.EASY: int(total * 0.2),
-            QuestionDifficulty.MEDIUM: int(total * 0.6),
-            QuestionDifficulty.HARD: int(total * 0.2),
-        }
-
-        selected: List[Question] = []
-
-        for diff, count in target.items():
-            selected.extend(buckets[diff][:count])
-
-        if len(selected) < total:
-            remaining = [q for q in questions if q not in selected]
-            selected.extend(remaining[: total - len(selected)])
-
-        return selected[:total]
