@@ -12,6 +12,7 @@ from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.user.role import Role
 from domain.contracts.shared.action_type import ActionType
+from domain.contracts.interview.interview_memory_context import InterviewMemoryContext
 
 from app.ui.constants.loader_steps import LoaderStep
 from app.contracts.feedback_bundle import FeedbackBundle
@@ -46,6 +47,8 @@ class InterviewStateBase(BaseModel):
     allowed_actions: List = []
 
     awaiting_user_input: bool = False
+
+    memory_context: InterviewMemoryContext = Field(default_factory=InterviewMemoryContext)
 
     # Humanizer
     enable_humanizer: bool = True

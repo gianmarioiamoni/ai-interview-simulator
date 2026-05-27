@@ -12,6 +12,7 @@ from domain.contracts.question.question_origin_type import QuestionOriginType
 from domain.contracts.question.question_provenance import QuestionProvenance
 from domain.contracts.question.question_runtime_lineage import QuestionRuntimeLineage
 from domain.contracts.question.question_bank_item import QuestionBankItem
+from domain.contracts.question.question_runtime_telemetry import QuestionRuntimeTelemetry
 
 from services.interview_selection.assembled_question import AssembledQuestion
 
@@ -37,6 +38,13 @@ class RuntimeQuestionMapper:
             planner_rationale=(assembled.score_breakdown.rationale),
         )
 
+        runtime_telemetry = QuestionRuntimeTelemetry(
+            novelty_bonus=assembled.score_breakdown.novelty_bonus,
+            rarity_bonus=assembled.score_breakdown.category_rarity_bonus,
+            cluster_penalty=assembled.score_breakdown.cluster_penalty,
+        )
+
+
         return Question(
             id=str(uuid.uuid4()),
             area=item.area,
@@ -47,6 +55,7 @@ class RuntimeQuestionMapper:
             ),
             provenance=item.provenance,
             runtime_lineage=runtime_lineage,
+            runtime_telemetry=runtime_telemetry,
         )
 
     # =====================================================
@@ -92,6 +101,10 @@ class RuntimeQuestionMapper:
             assembly_reason="legacy_runtime_mapping",
         )
 
+        runtime_telemetry = QuestionRuntimeTelemetry(
+            retrieval_score=float(item.difficulty),
+        )
+
         return Question(
             id=str(uuid.uuid4()),
             area=item.area,
@@ -100,6 +113,7 @@ class RuntimeQuestionMapper:
             difficulty=self._map_difficulty(item.difficulty),
             provenance=item.provenance,
             runtime_lineage=runtime_lineage,
+            runtime_telemetry=runtime_telemetry,
         )
     
     
