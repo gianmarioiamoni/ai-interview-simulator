@@ -30,7 +30,7 @@ class IngestionDiagnosticsReport(BaseModel):
     indexed_records: int = 0
 
     # =====================================================
-    # QUALITY / FILTERING
+    # QUALITY
     # =====================================================
 
     duplicate_records: int = 0
@@ -40,7 +40,7 @@ class IngestionDiagnosticsReport(BaseModel):
     average_similarity: float = 0.0
 
     # =====================================================
-    # SKIPS
+    # SKIPPED RECORDS
     # =====================================================
 
     skipped_missing_area: int = 0
@@ -65,7 +65,6 @@ class IngestionDiagnosticsReport(BaseModel):
 
     ingestion_duration_seconds: float = 0.0
 
-    
     model_config = {
         "frozen": True,
     }
