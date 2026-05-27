@@ -5,13 +5,10 @@ from services.question_ingestion.contracts import (
     CorpusValidationResult,
 )
 
-from services.question_ingestion.normalizers.question_normalizer import (
-    QuestionNormalizer,
-)
-
-from services.question_intelligence.technical_question_filter import (
-    TechnicalQuestionFilter,
-)
+from services.question_ingestion.normalizers.question_normalizer import QuestionNormalizer
+from services.question_intelligence.technical_question_filter import TechnicalQuestionFilter
+from services.question_intelligence.quality.interview_question_quality_filter import InterviewQuestionQualityFilter
+from services.question_intelligence.quality.contracts.quality_decision import QualityDecision
 
 
 class CorpusSemanticValidator:
@@ -28,7 +25,9 @@ class CorpusSemanticValidator:
         dataset_version: str,
     ) -> list[CorpusValidationResult]:
 
-        filter_service = TechnicalQuestionFilter()
+        technical_filter = TechnicalQuestionFilter()
+
+        interview_filter = InterviewQuestionQualityFilter()
 
         normalizer = QuestionNormalizer()
 
@@ -40,7 +39,13 @@ class CorpusSemanticValidator:
             # SEMANTIC EVALUATION
             # -------------------------------------------------
 
-            filter_result = filter_service.evaluate(question)
+            technical_result = technical_filter.evaluate(question)
+            interview_result = interview_filter.evaluate(question)
+
+            is_accepted = (
+                technical_result.is_technical
+                and interview_result.decision != QualityDecision.REJECT
+            )
 
             # -------------------------------------------------
             # RAW RECORD
@@ -66,13 +71,13 @@ class CorpusSemanticValidator:
 
             normalized = None
 
-            if normalization.records:
+            if normalization.records and is_accepted:
                 normalized = normalization.records[0]
 
             results.append(
                 CorpusValidationResult(
                     raw_question=(question),
-                    filter_result=(filter_result),
+                    filter_result=(technical_result),
                     normalized_record=(normalized),
                 )
             )
