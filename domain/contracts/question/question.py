@@ -11,6 +11,7 @@ from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.execution.coding_spec import CodingSpec
 from domain.contracts.question.question_provenance import QuestionProvenance
 from domain.contracts.question.question_runtime_lineage import QuestionRuntimeLineage
+from domain.contracts.question.question_runtime_telemetry import QuestionRuntimeTelemetry
 
 
 # =========================================================
@@ -60,6 +61,7 @@ class Question(BaseModel):
     db_seed_data: Optional[str] = None
     expected_rows: Optional[list[tuple]] = None
     expected_ordered: bool = Field(default=True)
+    runtime_telemetry: QuestionRuntimeTelemetry | None = None
 
     # =========================================================
     # SQL support

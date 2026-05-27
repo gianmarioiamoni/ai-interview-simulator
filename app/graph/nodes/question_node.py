@@ -6,6 +6,7 @@ from domain.contracts.question.question import QuestionType
 from services.humanizer.contracts.humanizer_input import HumanizerInput
 from services.humanizer.contracts.humanizer_decision import HumanizerDecision
 from services.humanizer.humanizer_service import HumanizerService
+from services.interview_memory.interview_memory_updater import InterviewMemoryUpdater
 
 
 def build_question_node(llm):
@@ -13,6 +14,8 @@ def build_question_node(llm):
     humanizer_service = HumanizerService(
         llm=llm,
     )
+
+    memory_updater = InterviewMemoryUpdater()
 
     def question_node(state: InterviewState) -> InterviewState:
 
@@ -106,11 +109,17 @@ def build_question_node(llm):
 
         new_history = state.chat_history + [output.message]
 
+        updated_memory = memory_updater.update_after_question(
+            memory=state.memory_context,
+            question=question,
+        )
+
         return state.model_copy(
             update={
                 "chat_history": new_history,
                 "follow_up_count": follow_up_count,
                 "last_humanizer_follow_up": (is_follow_up),
+                "memory_context": updated_memory,
             }
         )
 
