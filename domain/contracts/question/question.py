@@ -10,6 +10,7 @@ from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.execution.coding_test_case import CodingTestCase
 from domain.contracts.execution.coding_spec import CodingSpec
 from domain.contracts.question.question_provenance import QuestionProvenance
+from domain.contracts.question.question_runtime_lineage import QuestionRuntimeLineage
 
 
 # =========================================================
@@ -52,6 +53,7 @@ class Question(BaseModel):
     difficulty: QuestionDifficulty = Field(default=QuestionDifficulty.MEDIUM)
     humanized: bool = False
     provenance: QuestionProvenance | None = None
+    runtime_lineage: QuestionRuntimeLineage | None = None
     visible_tests: list[CodingTestCase] = Field(default_factory=list)
     hidden_tests: list[CodingTestCase] = Field(default_factory=list)
     db_schema: Optional[str] = None
