@@ -5,6 +5,20 @@ from pydantic import BaseModel, Field
 
 class IngestionDiagnosticsReport(BaseModel):
 
+    # =====================================================
+    # DATASET METADATA
+    # =====================================================
+
+    dataset_name: str
+
+    source_type: str
+
+    adapter_name: str
+
+    # =====================================================
+    # PIPELINE COUNTS
+    # =====================================================
+
     loaded_records: int = 0
 
     normalized_records: int = 0
@@ -15,6 +29,20 @@ class IngestionDiagnosticsReport(BaseModel):
 
     indexed_records: int = 0
 
+    # =====================================================
+    # QUALITY / FILTERING
+    # =====================================================
+
+    duplicate_records: int = 0
+
+    average_quality_score: float = 0.0
+
+    average_similarity: float = 0.0
+
+    # =====================================================
+    # SKIPS
+    # =====================================================
+
     skipped_missing_area: int = 0
 
     skipped_missing_level: int = 0
@@ -23,6 +51,21 @@ class IngestionDiagnosticsReport(BaseModel):
 
     skipped_unknown: int = 0
 
+    # =====================================================
+    # ERRORS
+    # =====================================================
+
+    errors: list[str] = Field(default_factory=list)
+
+    success: bool = True
+
+    # =====================================================
+    # TIMING
+    # =====================================================
+
+    ingestion_duration_seconds: float = 0.0
+
+    
     model_config = {
         "frozen": True,
     }
