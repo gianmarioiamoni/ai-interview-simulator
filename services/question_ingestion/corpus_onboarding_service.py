@@ -7,13 +7,8 @@ from services.question_ingestion.contracts import (
     CorpusOnboardingResult,
 )
 
-from services.question_ingestion.github_markdown_extractor import (
-    GitHubMarkdownExtractor,
-)
-
-from services.question_ingestion.corpus_semantic_validator import (
-    CorpusSemanticValidator,
-)
+from services.question_ingestion.github_markdown_extractor import GitHubMarkdownExtractor
+from services.question_ingestion.corpus_semantic_validator import CorpusSemanticValidator
 
 
 class CorpusOnboardingService:
