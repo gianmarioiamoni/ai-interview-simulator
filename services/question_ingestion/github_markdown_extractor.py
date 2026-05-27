@@ -4,6 +4,7 @@ import re
 
 from services.question_ingestion.contracts import (
     GitHubDocument,
+    ExtractedQuestionCandidate,
 )
 
 
@@ -16,26 +17,100 @@ class GitHubMarkdownExtractor:
     def extract_questions(
         self,
         document: GitHubDocument,
-    ) -> list[str]:
+    ) -> list[ExtractedQuestionCandidate]:
 
         lines = document.content.splitlines()
 
-        questions: list[str] = []
+        questions: list[ExtractedQuestionCandidate] = []
 
-        for line in lines:
+        current_section: str | None = None
 
-            cleaned = self._clean_line(line)
+        for index, line in enumerate(lines):
+
+            stripped = line.strip()
+
+            # -------------------------------------------------
+            # SECTION TRACKING
+            # -------------------------------------------------
+
+            if self._is_section_header(stripped):
+
+                current_section = self._clean_section_header(
+                    stripped,
+                )
+
+                continue
+
+            # -------------------------------------------------
+            # CLEAN LINE
+            # -------------------------------------------------
+
+            cleaned = self._clean_line(stripped)
 
             if not cleaned:
                 continue
 
-            if self._is_question(cleaned):
-                questions.append(cleaned)
+            # -------------------------------------------------
+            # QUESTION DETECTION
+            # -------------------------------------------------
 
-        return self._deduplicate(questions)
+            if not self._is_question(cleaned):
+                continue
+
+            # -------------------------------------------------
+            # CONTEXT ENRICHMENT
+            # -------------------------------------------------
+
+            enriched = self._enrich_question(
+                question=cleaned,
+                section_context=current_section,
+            )
+
+            questions.append(
+                ExtractedQuestionCandidate(
+                    text=enriched,
+                    section_context=current_section,
+                    repository_context=document.repository,
+                    source_file=document.path,
+                    line_number=index + 1,
+                )
+            )
+
+        return self._deduplicate(
+            questions,
+        )
 
     # =====================================================
-    # HELPERS
+    # SECTION HELPERS
+    # =====================================================
+
+    def _is_section_header(
+        self,
+        line: str,
+    ) -> bool:
+
+        return bool(
+            re.match(
+                r"^#+\s+",
+                line,
+            )
+        )
+
+    def _clean_section_header(
+        self,
+        line: str,
+    ) -> str:
+
+        cleaned = re.sub(
+            r"^#+\s*",
+            "",
+            line,
+        )
+
+        return cleaned.strip()
+
+    # =====================================================
+    # CLEANING
     # =====================================================
 
     def _clean_line(
@@ -44,10 +119,6 @@ class GitHubMarkdownExtractor:
     ) -> str:
 
         cleaned = line.strip()
-
-        # -------------------------------------------------
-        # REMOVE COMMON MARKDOWN PREFIXES
-        # -------------------------------------------------
 
         prefixes = [
             "- ",
@@ -61,20 +132,6 @@ class GitHubMarkdownExtractor:
 
                 cleaned = cleaned[len(prefix) :]
 
-        # -------------------------------------------------
-        # REMOVE HEADERS
-        # -------------------------------------------------
-
-        cleaned = re.sub(
-            r"^#+\s*",
-            "",
-            cleaned,
-        )
-
-        # -------------------------------------------------
-        # REMOVE ORDERED LIST PREFIXES
-        # -------------------------------------------------
-
         cleaned = re.sub(
             r"^\d+\.\s*",
             "",
@@ -82,6 +139,10 @@ class GitHubMarkdownExtractor:
         )
 
         return cleaned.strip()
+
+    # =====================================================
+    # QUESTION DETECTION
+    # =====================================================
 
     def _is_question(
         self,
@@ -91,10 +152,8 @@ class GitHubMarkdownExtractor:
         if len(text) < 15:
             return False
 
-        question_patterns = [
-            # direct questions
+        patterns = [
             r"\?$",
-            # explanation prompts
             r"^Explain\s",
             r"^Describe\s",
             r"^How\s",
@@ -106,7 +165,7 @@ class GitHubMarkdownExtractor:
             r"^Implement\s",
         ]
 
-        for pattern in question_patterns:
+        for pattern in patterns:
 
             if re.search(
                 pattern,
@@ -117,24 +176,64 @@ class GitHubMarkdownExtractor:
 
         return False
 
+    # =====================================================
+    # CONTEXT ENRICHMENT
+    # =====================================================
+
+    def _enrich_question(
+        self,
+        question: str,
+        section_context: str | None,
+    ) -> str:
+
+        normalized = question.strip()
+
+        # -------------------------------------------------
+        # CONTEXT-DEPENDENT FRAGMENTS
+        # -------------------------------------------------
+
+        weak_starts = [
+            "when to",
+            "when should",
+            "what about",
+            "how about",
+        ]
+
+        lowered = normalized.lower()
+
+        is_weak = any(lowered.startswith(prefix) for prefix in weak_starts)
+
+        if is_weak and section_context:
+
+            return (
+                f"In the context of {section_context}, "
+                f"{normalized[0].lower() + normalized[1:]}"
+            )
+
+        return normalized
+
+    # =====================================================
+    # DEDUPLICATION
+    # =====================================================
+
     def _deduplicate(
         self,
-        questions: list[str],
-    ) -> list[str]:
+        questions: list[ExtractedQuestionCandidate],
+    ) -> list[ExtractedQuestionCandidate]:
 
         seen: set[str] = set()
 
-        unique_questions: list[str] = []
+        unique: list[ExtractedQuestionCandidate] = []
 
         for question in questions:
 
-            normalized = question.strip().lower()
+            normalized = question.text.strip().lower()
 
             if normalized in seen:
                 continue
 
             seen.add(normalized)
 
-            unique_questions.append(question)
+            unique.append(question)
 
-        return unique_questions
+        return unique
