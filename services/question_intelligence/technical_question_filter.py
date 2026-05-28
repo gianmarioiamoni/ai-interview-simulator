@@ -12,111 +12,157 @@ class TechnicalQuestionFilter:
     # TECHNICAL TAXONOMY
     # =====================================================
 
-    BACKEND_TERMS = {
-        "api",
-        "backend",
+    STRONG_BACKEND_TERMS = {
         "microservice",
-        "rest",
-        "graphql",
         "authentication",
         "authorization",
         "jwt",
-        "session",
         "middleware",
-        "server",
+        "api gateway",
+        "rest api",
+        "graphql",
+        "backend architecture",
+        "service discovery",
+        "idempotency",
     }
 
-    DATABASE_TERMS = {
+    WEAK_BACKEND_TERMS = {
+        "api",
+        "server",
+        "endpoint",
+        "session",
+        "request",
+        "response",
+    }
+
+    STRONG_DATABASE_TERMS = {
         "sql",
-        "database",
-        "query",
-        "index",
         "transaction",
-        "join",
-        "normalization",
         "replication",
         "sharding",
-        "oltp",
-        "olap",
+        "database",
+        "normalization",
+        "acid",
+        "event sourcing",
+        "write amplification",
     }
 
-    DISTRIBUTED_SYSTEMS_TERMS = {
-        "distributed",
+    WEAK_DATABASE_TERMS = {
+        "index",
+        "schema",
+        "table",
         "consistency",
-        "partition",
-        "latency",
-        "throughput",
-        "scaling",
-        "load balancer",
-        "rate limiter",
-        "caching",
-        "cache",
-        "cdn",
-        "eventual consistency",
-        "consensus",
-        "cap theorem",
     }
 
-    FRONTEND_TERMS = {
-        "react",
-        "frontend",
-        "rendering",
-        "javascript",
-        "typescript",
-        "component",
-        "state management",
-        "dom",
-        "virtual dom",
+    STRONG_DISTRIBUTED_TERMS = {
+    "distributed systems",
+    "eventual consistency",
+    "cap theorem",
+    "consensus",
+    "quorum",
+    "leader election",
+    "load balancer",
+    "rate limiter",
+    "fault tolerance",
+    "high availability",
+    "replication",
     }
 
-    DEVOPS_TERMS = {
-        "docker",
+    WEAK_DISTRIBUTED_TERMS = {
+    "cache",
+    "latency",
+    "throughput",
+    "scaling",
+    "partitioning",
+    "cdn",
+    "failover",
+    }
+
+    STRONG_FRONTEND_TERMS = {
+    "react",
+    "virtual dom",
+    "state management",
+    "hydration",
+    "server side rendering",
+    "frontend architecture",
+    }
+
+    WEAK_FRONTEND_TERMS = {
+    "component",
+    "rendering",
+    "typescript",
+    "javascript",
+    "dom",
+    }
+
+    STRONG_DEVOPS_TERMS = {
         "kubernetes",
-        "deployment",
-        "ci/cd",
-        "pipeline",
-        "cloud",
         "terraform",
         "helm",
-        "monitoring",
+        "ci/cd",
         "observability",
+        "infrastructure as code",
+        "container orchestration",
     }
 
-    DATA_ENGINEERING_TERMS = {
+    WEAK_DEVOPS_TERMS = {
+        "docker",
+        "deployment",
+        "pipeline",
+        "cloud",
+        "monitoring",
+    }
+
+    STRONG_DATA_ENGINEERING_TERMS = {
         "etl",
-        "analytics",
-        "data pipeline",
-        "streaming",
-        "warehouse",
+        "stream processing",
+        "data warehouse",
         "lakehouse",
+        "data pipeline",
         "spark",
         "kafka",
     }
 
-    ML_TERMS = {
-        "machine learning",
-        "feature engineering",
-        "model serving",
-        "training",
-        "inference",
-        "embedding",
-        "rag",
-        "transformer",
-        "fine tuning",
+    WEAK_DATA_ENGINEERING_TERMS = {
+        "analytics",
+        "batch",
+        "streaming",
+        "warehouse",
     }
 
-    COMPUTER_SCIENCE_TERMS = {
-        "algorithm",
+    STRONG_ML_TERMS = {
+        "transformer",
+        "fine tuning",
+        "rag",
+        "embedding",
+        "model serving",
+        "feature engineering",
+    }
+
+    WEAK_ML_TERMS = {
+        "machine learning",
+        "training",
+        "inference",
+        "model",
+        "vector",
+    }
+
+    STRONG_CS_TERMS = {
         "time complexity",
         "space complexity",
-        "deadlock",
-        "mutex",
-        "thread",
+        "binary search",
+        "dynamic programming",
         "concurrency",
         "parallelism",
-        "memory management",
-        "binary search",
+        "deadlock",
+    }
+
+    WEAK_CS_TERMS = {
+        "algorithm",
+        "thread",
+        "mutex",
         "hash table",
+        "sorting",
     }
 
     # =====================================================
@@ -124,14 +170,22 @@ class TechnicalQuestionFilter:
     # =====================================================
 
     ALL_TERMS = (
-        BACKEND_TERMS
-        | DATABASE_TERMS
-        | DISTRIBUTED_SYSTEMS_TERMS
-        | FRONTEND_TERMS
-        | DEVOPS_TERMS
-        | DATA_ENGINEERING_TERMS
-        | ML_TERMS
-        | COMPUTER_SCIENCE_TERMS
+        STRONG_BACKEND_TERMS
+        | WEAK_BACKEND_TERMS
+        | STRONG_DATABASE_TERMS
+        | WEAK_DATABASE_TERMS
+        | STRONG_DISTRIBUTED_TERMS
+        | WEAK_DISTRIBUTED_TERMS
+        | STRONG_FRONTEND_TERMS
+        | WEAK_FRONTEND_TERMS
+        | STRONG_DEVOPS_TERMS
+        | WEAK_DEVOPS_TERMS
+        | STRONG_DATA_ENGINEERING_TERMS
+        | WEAK_DATA_ENGINEERING_TERMS
+        | STRONG_ML_TERMS
+        | WEAK_ML_TERMS
+        | STRONG_CS_TERMS
+        | WEAK_CS_TERMS
     )
 
     # =====================================================
@@ -182,7 +236,6 @@ class TechnicalQuestionFilter:
             matched_terms=(matched_terms),
         )
 
-    
     def is_technical(
         self,
         text: str,
@@ -196,7 +249,6 @@ class TechnicalQuestionFilter:
             result.is_technical
         )
 
-    
     def matching_categories(
         self,
         text: str,
@@ -207,14 +259,14 @@ class TechnicalQuestionFilter:
         categories: list[str] = []
 
         taxonomy = {
-            "backend": self.BACKEND_TERMS,
-            "database": self.DATABASE_TERMS,
-            "distributed_systems": (self.DISTRIBUTED_SYSTEMS_TERMS),
-            "frontend": self.FRONTEND_TERMS,
-            "devops": self.DEVOPS_TERMS,
-            "data_engineering": (self.DATA_ENGINEERING_TERMS),
-            "machine_learning": self.ML_TERMS,
-            "computer_science": (self.COMPUTER_SCIENCE_TERMS),
+            "backend": self.STRONG_BACKEND_TERMS | self.WEAK_BACKEND_TERMS,
+            "database": self.STRONG_DATABASE_TERMS | self.WEAK_DATABASE_TERMS,
+            "distributed_systems": self.STRONG_DISTRIBUTED_TERMS | self.WEAK_DISTRIBUTED_TERMS,
+            "frontend": self.STRONG_FRONTEND_TERMS | self.WEAK_FRONTEND_TERMS,
+            "devops": self.STRONG_DEVOPS_TERMS | self.WEAK_DEVOPS_TERMS,
+            "data_engineering": self.STRONG_DATA_ENGINEERING_TERMS | self.WEAK_DATA_ENGINEERING_TERMS,
+            "machine_learning": self.STRONG_ML_TERMS | self.WEAK_ML_TERMS,
+            "computer_science": self.STRONG_CS_TERMS | self.WEAK_CS_TERMS,
         }
 
         for (
@@ -288,3 +340,40 @@ class TechnicalQuestionFilter:
             )
 
         return normalized
+
+        
+    def _category_matches(
+        self,
+        normalized_text: str,
+        strong_terms: set[str],
+        weak_terms: set[str],
+    ) -> tuple[bool, list[str], list[str]]:
+
+        normalized_text = self._normalize_text(normalized_text)
+
+        strong_matches = [
+            term
+            for term in strong_terms
+            if self._contains_term(normalized_text, term)
+        ]
+
+        weak_matches = [
+            term
+            for term in weak_terms
+            if self._contains_term(normalized_text, term)
+        ]
+
+        # -------------------------------------------------
+        # MATCH RULES
+        # -------------------------------------------------
+
+        is_match = (
+            len(strong_matches) >= 1
+            or len(weak_matches) >= 2
+        )
+
+        return (
+            is_match,
+            strong_matches,
+            weak_matches,
+        )

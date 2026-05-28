@@ -13,6 +13,10 @@ class CandidateQuestion(BaseModel):
 
     surrounding_context: str | None = None
 
+    semantic_domains: list[str] = []
+    
+    quality_score: float | None = None
+
     
     model_config = {
         "frozen": True,
