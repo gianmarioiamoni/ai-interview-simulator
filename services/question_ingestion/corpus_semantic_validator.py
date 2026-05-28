@@ -78,7 +78,7 @@ class CorpusSemanticValidator:
             results.append(
                 CorpusValidationResult(
                     raw_question=(candidate.text),
-                    filter_result=(technical_result),
+                    technical_result=(technical_result),
                     normalized_record=(normalized),
                 )
             )

@@ -6,7 +6,6 @@ from services.question_ingestion.contracts import (
     GitHubDocument,
     CorpusOnboardingResult,
 )
-
 from services.question_ingestion.github_markdown_extractor import GitHubMarkdownExtractor
 from services.question_ingestion.corpus_semantic_validator import CorpusSemanticValidator
 
@@ -40,7 +39,7 @@ class CorpusOnboardingService:
 
         results = validator.validate(
             questions=questions,
-            source_name=(document.repository),
+            source_name=document.repository,
             source_type="github",
             dataset_version="v1",
         )
@@ -49,17 +48,19 @@ class CorpusOnboardingService:
         # SPLIT
         # -------------------------------------------------
 
-        accepted = [result for result in results if (result.filter_result.is_technical)]
+        accepted = [
+            result for result in results if result.technical_result.is_technical
+        ]
 
         rejected = [
-            result for result in results if not (result.filter_result.is_technical)
+            result for result in results if not result.technical_result.is_technical
         ]
 
         # -------------------------------------------------
         # SCORING
         # -------------------------------------------------
 
-        scores = [result.filter_result.score for result in accepted]
+        scores = [result.technical_result.score for result in accepted]
 
         average_score = 0.0
 
@@ -75,8 +76,8 @@ class CorpusOnboardingService:
         # -------------------------------------------------
 
         decision = self._make_decision(
-            accepted_count=(len(accepted)),
-            average_score=(average_score),
+            accepted_count=len(accepted),
+            average_score=average_score,
         )
 
         # -------------------------------------------------
@@ -84,14 +85,14 @@ class CorpusOnboardingService:
         # -------------------------------------------------
 
         return CorpusOnboardingResult(
-            repository_name=(document.repository),
-            total_questions=(len(results)),
-            accepted_questions=(len(accepted)),
-            rejected_questions=(len(rejected)),
-            average_score=(average_score),
-            accepted_results=(accepted),
-            rejected_results=(rejected),
-            onboarding_decision=(decision),
+            repository_name=document.repository,
+            total_questions=len(results),
+            accepted_questions=len(accepted),
+            rejected_questions=len(rejected),
+            average_score=average_score,
+            accepted_results=accepted,
+            rejected_results=rejected,
+            onboarding_decision=decision,
         )
 
     # =====================================================
