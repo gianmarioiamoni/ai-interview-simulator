@@ -26,11 +26,17 @@ def main() -> None:
 
         print(f"\nRESULT #{index + 1}\n")
 
-        print(result.page_content)
+        print(result.document.page_content)
+
+        print("\nSCORING")
+
+        print(f"Semantic: {result.semantic_score}")
+        print(f"Quality: {result.quality_score}")
+        print(f"Final: {result.final_score}")
 
         print("\nMETADATA")
 
-        for key, value in result.metadata.items():
+        for key, value in result.document.metadata.items():
 
             print(f"{key}: {value}")
 
