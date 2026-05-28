@@ -5,6 +5,7 @@ from services.question_corpus.contracts.retrieval_candidate import RetrievalCand
 from services.question_corpus.retrieval.chroma_retrieval_service import ChromaRetrievalService
 from services.question_corpus.retrieval.adaptive_retrieval_policy import AdaptiveRetrievalPolicy
 from services.question_corpus.retrieval.coverage_penalty_engine import CoveragePenaltyEngine
+from services.question_corpus.retrieval.weak_domain_boost_engine import WeakDomainBoostEngine
 
 
 class AdaptiveRetrievalService:
@@ -22,6 +23,8 @@ class AdaptiveRetrievalService:
         self._policy = AdaptiveRetrievalPolicy()
 
         self._coverage_engine = CoveragePenaltyEngine()
+
+        self._weak_domain_engine = WeakDomainBoostEngine()
 
     # =====================================================
     # PUBLIC
@@ -45,6 +48,11 @@ class AdaptiveRetrievalService:
 
         adjusted = self._coverage_engine.apply(
             candidates=candidates,
+            context=context,
+        )
+
+        adjusted = self._weak_domain_engine.apply(
+            candidates=adjusted,
             context=context,
         )
 
