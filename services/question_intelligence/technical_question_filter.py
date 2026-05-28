@@ -219,6 +219,10 @@ class TechnicalQuestionFilter:
 
         matched_terms: list[str] = []
 
+        all_strong_matches: list[str] = []
+
+        all_weak_matches: list[str] = []
+
         score = 0.0
 
         # -------------------------------------------------
@@ -246,10 +250,14 @@ class TechnicalQuestionFilter:
             if not is_match:
                 continue
 
+
             matched_categories.append(category)
 
             matched_terms.extend(strong_matches)
             matched_terms.extend(weak_matches)
+
+            all_strong_matches.extend(strong_matches)
+            all_weak_matches.extend(weak_matches)
 
             # -------------------------------------------------
             # WEIGHTED SCORING
@@ -283,6 +291,8 @@ class TechnicalQuestionFilter:
             score=round(score, 2),
             matched_categories=matched_categories,
             matched_terms=matched_terms,
+            strong_matches=sorted(list(set(all_strong_matches))),
+            weak_matches=sorted(list(set(all_weak_matches))),
         )
 
     def is_technical(
