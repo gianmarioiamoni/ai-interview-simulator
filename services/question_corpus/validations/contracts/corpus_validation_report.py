@@ -1,8 +1,8 @@
-# services/question_corpus/contracts/corpus_validation_report.py
+# services/question_corpus/validations/corpus_validation_report.py
 
 from pydantic import BaseModel
 
-from services.question_corpus.contracts.corpus_validation_issue import CorpusValidationIssue
+from services.question_corpus.validations.contracts.corpus_validation_issue import CorpusValidationIssue
 
 
 class CorpusValidationReport(BaseModel):

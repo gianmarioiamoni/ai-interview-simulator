@@ -3,7 +3,7 @@
 from itertools import combinations
 
 from services.question_corpus.contracts.curated_corpus import CuratedCorpus
-from services.question_corpus.contracts.corpus_validation_issue import CorpusValidationIssue
+from services.question_corpus.validations.contracts.corpus_validation_issue import CorpusValidationIssue
 
 
 class CorpusDuplicateDetector:
@@ -33,10 +33,10 @@ class CorpusDuplicateDetector:
 
             issues.append(
                 CorpusValidationIssue(
-                    question_id=q1.id,
-                    issue_type="duplicate",
-                    description=(f"Potential duplicate with {q2.id}"),
                     severity="warning",
+                    category="duplicate",
+                    message=(f"Potential duplicate with {q2.id}"),
+                    question_id=q1.id,
                 )
             )
 

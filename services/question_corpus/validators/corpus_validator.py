@@ -1,7 +1,7 @@
 # services/question_corpus/validators/corpus_validator.py
 
 from services.question_corpus.contracts.curated_corpus import CuratedCorpus
-from services.question_corpus.contracts.corpus_validation_report import CorpusValidationReport
+from services.question_corpus.validations.contracts.corpus_validation_report import CorpusValidationReport
 from services.question_corpus.validators.corpus_duplicate_detector import CorpusDuplicateDetector
 
 
