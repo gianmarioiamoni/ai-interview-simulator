@@ -9,6 +9,7 @@ from services.question_ingestion.contracts.candidate_question import CandidateQu
 class SemanticCandidateExtractor:
 
     MIN_LENGTH = 20
+
     MAX_LENGTH = 400
 
     # =====================================================
@@ -29,6 +30,27 @@ class SemanticCandidateExtractor:
             )
 
             candidates.extend(extracted)
+
+            # -------------------------------------------------
+            # HEADING-DERIVED PROMPT
+            # -------------------------------------------------
+
+            if not extracted:
+
+                generated = self._generate_heading_prompt(
+                    section.heading,
+                )
+
+                if generated:
+
+                    candidates.append(
+                        CandidateQuestion(
+                            text=generated,
+                            section_heading=section.heading,
+                            source_file=section.source_path,
+                            surrounding_context=section.content[:500],
+                        )
+                    )
 
         return self._deduplicate(candidates)
 
@@ -53,6 +75,11 @@ class SemanticCandidateExtractor:
                 continue
 
             if not self._is_candidate(cleaned):
+                continue
+
+            density = self._semantic_density(cleaned)
+
+            if density < 0.03:
                 continue
 
             candidates.append(
@@ -102,7 +129,7 @@ class SemanticCandidateExtractor:
         # QUESTION SIGNALS
         # -------------------------------------------------
 
-        patterns = [
+        question_patterns = [
             r"\?$",
             r"^How\s",
             r"^What\s",
@@ -114,16 +141,44 @@ class SemanticCandidateExtractor:
             r"^Compare\s",
         ]
 
-        for pattern in patterns:
+        semantic_patterns = [
+            r"trade[- ]?offs?",
+            r"bottlenecks?",
+            r"failure modes?",
+            r"latency",
+            r"throughput",
+            r"replication",
+            r"partitioning",
+            r"consistency",
+            r"scalability",
+            r"distributed",
+            r"architecture",
+            r"cache",
+            r"database",
+        ]
 
-            if re.search(
+        question_match = any(
+            re.search(
                 pattern,
                 text,
                 flags=re.IGNORECASE,
-            ):
-                return True
+            )
+            for pattern in question_patterns
+        )
 
-        return False
+        if question_match:
+            return True
+
+        semantic_match = any(
+            re.search(
+                pattern,
+                text,
+                flags=re.IGNORECASE,
+            )
+            for pattern in semantic_patterns
+        )
+
+        return semantic_match
 
     def _deduplicate(
         self,
@@ -146,3 +201,44 @@ class SemanticCandidateExtractor:
             unique.append(candidate)
 
         return unique
+
+    def _generate_heading_prompt(
+        self,
+        heading: str,
+    ) -> str | None:
+
+        normalized = heading.strip()
+
+        if len(normalized) < 4:
+            return None
+
+        return f"Explain {normalized}."
+
+    def _semantic_density(
+        self,
+        text: str,
+    ) -> float:
+
+        technical_terms = [
+            "cache",
+            "database",
+            "distributed",
+            "replication",
+            "latency",
+            "consistency",
+            "architecture",
+            "api",
+            "scaling",
+            "system",
+            "backend",
+            "throughput",
+        ]
+
+        normalized = text.lower()
+
+        matches = sum(1 for term in technical_terms if term in normalized)
+
+        return matches / max(
+            len(normalized.split()),
+            1,
+        )

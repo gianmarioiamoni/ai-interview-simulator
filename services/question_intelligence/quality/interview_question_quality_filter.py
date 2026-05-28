@@ -259,8 +259,20 @@ class InterviewQuestionQualityFilter:
         is_context_dependent: bool,
     ) -> QualityDecision:
 
+    # -------------------------------------------------
+    # CONTEXT DEPENDENT
+    # -------------------------------------------------
+
         if is_context_dependent:
+
+            if score >= 0.25:
+                return QualityDecision.REVIEW
+
             return QualityDecision.REJECT
+
+        # -------------------------------------------------
+        # STANDARD SCORING
+        # -------------------------------------------------
 
         if score >= self.APPROVE_THRESHOLD:
             return QualityDecision.APPROVE
@@ -268,4 +280,5 @@ class InterviewQuestionQualityFilter:
         if score >= self.REVIEW_THRESHOLD:
             return QualityDecision.REVIEW
 
+        
         return QualityDecision.REJECT

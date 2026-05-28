@@ -13,6 +13,10 @@ class TechnicalFilterResult(BaseModel):
 
     matched_terms: list[str]
 
+    strong_matches: list[str]
+    
+    weak_matches: list[str]
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
