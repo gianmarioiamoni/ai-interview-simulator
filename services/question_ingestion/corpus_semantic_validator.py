@@ -92,11 +92,13 @@ class CorpusSemanticValidator:
             # ENRICH CANDIDATE
             # -------------------------------------------------
 
-            candidate.semantic_domains = technical_result.matched_categories
-
-            candidate.contextualized_text = rewritten
-
-            candidate.quality_score = interview_result.score
+            enriched_candidate = candidate.model_copy(
+                update={
+                    "semantic_domains": technical_result.matched_categories,
+                    "contextualized_text": rewritten,
+                    "quality_score": interview_result.score,
+                }
+            )
 
             # -------------------------------------------------
             # RESULT
@@ -104,9 +106,10 @@ class CorpusSemanticValidator:
 
             results.append(
                 CorpusValidationResult(
-                    raw_question=rewritten,
+                    raw_question=candidate.text,
                     technical_result=technical_result,
                     normalized_record=normalized,
+                    candidate=enriched_candidate,
                 )
             )
 
