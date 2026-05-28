@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from services.question_ingestion.contracts import NormalizedQuestionRecord
 from services.question_intelligence.quality.contracts import TechnicalFilterResult
+from services.question_ingestion.contracts.candidate_question import CandidateQuestion
 
 
 class CorpusValidationResult(BaseModel):
@@ -14,7 +15,9 @@ class CorpusValidationResult(BaseModel):
 
     normalized_record: NormalizedQuestionRecord | None
 
-    
+    candidate: CandidateQuestion
+
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
