@@ -1,3 +1,5 @@
+# services/question_ingestion/contracts/markdown_section.py
+
 from pydantic import BaseModel
 
 
@@ -11,7 +13,7 @@ class MarkdownSection(BaseModel):
 
     source_path: str
 
-    
     model_config = {
         "frozen": True,
+        "extra": "forbid",
     }
