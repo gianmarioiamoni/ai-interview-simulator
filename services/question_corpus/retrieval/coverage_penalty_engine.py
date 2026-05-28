@@ -1,0 +1,83 @@
+# services/question_corpus/retrieval/coverage_penalty_engine.py
+
+from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
+from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
+
+
+class CoveragePenaltyEngine:
+
+    # =====================================================
+    # CONSTANTS
+    # =====================================================
+
+    DOMAIN_REPEAT_PENALTY = 0.15
+
+    # =====================================================
+    # PUBLIC
+    # =====================================================
+
+    def apply(
+        self,
+        candidates: list[RetrievalCandidate],
+        context: AdaptiveRetrievalContext,
+    ) -> list[RetrievalCandidate]:
+
+        adjusted: list[RetrievalCandidate] = []
+
+        used_domains = set(
+            context.already_used_domains,
+        )
+
+        for candidate in candidates:
+
+            candidate_domains = self._extract_domains(
+                candidate,
+            )
+
+            overlap = used_domains.intersection(
+                candidate_domains,
+            )
+
+            penalty = len(overlap) * self.DOMAIN_REPEAT_PENALTY
+
+            adjusted_score = max(
+                0.0,
+                candidate.diversity_score - penalty,
+            )
+
+            adjusted_candidate = candidate.model_copy(
+                update={
+                    "diversity_score": round(
+                        adjusted_score,
+                        3,
+                    )
+                }
+            )
+
+            adjusted.append(adjusted_candidate)
+
+        adjusted.sort(
+            key=lambda c: c.diversity_score,
+            reverse=True,
+        )
+
+        return adjusted
+
+    # =====================================================
+    # INTERNALS
+    # =====================================================
+
+    def _extract_domains(
+        self,
+        candidate: RetrievalCandidate,
+    ) -> list[str]:
+
+        domains = candidate.document.metadata.get(
+            "domains",
+            "",
+        )
+
+        if not domains:
+            return []
+
+        return [d.strip() for d in domains.split(",")]

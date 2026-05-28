@@ -53,24 +53,30 @@ class ChromaFilterBuilder:
             )
 
         # -------------------------------------------------
-        # DIFFICULTY
+        # MIN DIFFICULTY
         # -------------------------------------------------
 
-        if filters.min_difficulty is not None or filters.max_difficulty is not None:
-
-            difficulty_filter = {}
-
-            if filters.min_difficulty is not None:
-
-                difficulty_filter["$gte"] = filters.min_difficulty
-
-            if filters.max_difficulty is not None:
-
-                difficulty_filter["$lte"] = filters.max_difficulty
+        if filters.min_difficulty is not None:
 
             conditions.append(
                 {
-                    "difficulty": difficulty_filter,
+                    "difficulty": {
+                        "$gte": filters.min_difficulty,
+                    }
+                }
+            )
+
+        # -------------------------------------------------
+        # MAX DIFFICULTY
+        # -------------------------------------------------
+
+        if filters.max_difficulty is not None:
+
+            conditions.append(
+                {
+                    "difficulty": {
+                        "$lte": filters.max_difficulty,
+                    }
                 }
             )
 
