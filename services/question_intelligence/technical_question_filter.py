@@ -2,9 +2,8 @@
 
 import re
 
-from services.question_intelligence.quality.contracts import (
-    TechnicalFilterResult,
-)
+from services.question_intelligence.quality.contracts import TechnicalFilterResult
+
 
 class TechnicalQuestionFilter:
 
@@ -51,48 +50,49 @@ class TechnicalQuestionFilter:
         "index",
         "schema",
         "table",
+        "query",
         "consistency",
     }
 
     STRONG_DISTRIBUTED_TERMS = {
-    "distributed systems",
-    "eventual consistency",
-    "cap theorem",
-    "consensus",
-    "quorum",
-    "leader election",
-    "load balancer",
-    "rate limiter",
-    "fault tolerance",
-    "high availability",
-    "replication",
+        "distributed system",
+        "eventual consistency",
+        "cap theorem",
+        "consensus",
+        "quorum",
+        "leader election",
+        "load balancer",
+        "rate limiter",
+        "fault tolerance",
+        "high availability",
+        "replication",
     }
 
     WEAK_DISTRIBUTED_TERMS = {
-    "cache",
-    "latency",
-    "throughput",
-    "scaling",
-    "partitioning",
-    "cdn",
-    "failover",
+        "cache",
+        "latency",
+        "throughput",
+        "scaling",
+        "partitioning",
+        "cdn",
+        "failover",
     }
 
     STRONG_FRONTEND_TERMS = {
-    "react",
-    "virtual dom",
-    "state management",
-    "hydration",
-    "server side rendering",
-    "frontend architecture",
+        "react",
+        "virtual dom",
+        "state management",
+        "hydration",
+        "server side rendering",
+        "frontend architecture",
     }
 
     WEAK_FRONTEND_TERMS = {
-    "component",
-    "rendering",
-    "typescript",
-    "javascript",
-    "dom",
+        "component",
+        "rendering",
+        "typescript",
+        "javascript",
+        "dom",
     }
 
     STRONG_DEVOPS_TERMS = {
@@ -166,27 +166,43 @@ class TechnicalQuestionFilter:
     }
 
     # =====================================================
-    # AGGREGATED TAXONOMY
+    # CATEGORY MAP
     # =====================================================
 
-    ALL_TERMS = (
-        STRONG_BACKEND_TERMS
-        | WEAK_BACKEND_TERMS
-        | STRONG_DATABASE_TERMS
-        | WEAK_DATABASE_TERMS
-        | STRONG_DISTRIBUTED_TERMS
-        | WEAK_DISTRIBUTED_TERMS
-        | STRONG_FRONTEND_TERMS
-        | WEAK_FRONTEND_TERMS
-        | STRONG_DEVOPS_TERMS
-        | WEAK_DEVOPS_TERMS
-        | STRONG_DATA_ENGINEERING_TERMS
-        | WEAK_DATA_ENGINEERING_TERMS
-        | STRONG_ML_TERMS
-        | WEAK_ML_TERMS
-        | STRONG_CS_TERMS
-        | WEAK_CS_TERMS
-    )
+    CATEGORY_MAP = {
+        "backend": (
+            STRONG_BACKEND_TERMS,
+            WEAK_BACKEND_TERMS,
+        ),
+        "database": (
+            STRONG_DATABASE_TERMS,
+            WEAK_DATABASE_TERMS,
+        ),
+        "distributed_systems": (
+            STRONG_DISTRIBUTED_TERMS,
+            WEAK_DISTRIBUTED_TERMS,
+        ),
+        "frontend": (
+            STRONG_FRONTEND_TERMS,
+            WEAK_FRONTEND_TERMS,
+        ),
+        "devops": (
+            STRONG_DEVOPS_TERMS,
+            WEAK_DEVOPS_TERMS,
+        ),
+        "data_engineering": (
+            STRONG_DATA_ENGINEERING_TERMS,
+            WEAK_DATA_ENGINEERING_TERMS,
+        ),
+        "machine_learning": (
+            STRONG_ML_TERMS,
+            WEAK_ML_TERMS,
+        ),
+        "computer_science": (
+            STRONG_CS_TERMS,
+            WEAK_CS_TERMS,
+        ),
+    }
 
     # =====================================================
     # PUBLIC
@@ -199,41 +215,74 @@ class TechnicalQuestionFilter:
 
         normalized = self._normalize_text(text)
 
-        matched_categories = self.matching_categories(normalized)
+        matched_categories: list[str] = []
 
-        matched_terms = [
-            term
-            for term in self.ALL_TERMS
-            if self._contains_term(
-                normalized,
-                term,
+        matched_terms: list[str] = []
+
+        score = 0.0
+
+        # -------------------------------------------------
+        # CATEGORY MATCHING
+        # -------------------------------------------------
+
+        for (
+            category,
+            (
+                strong_terms,
+                weak_terms,
+            ),
+        ) in self.CATEGORY_MAP.items():
+
+            (
+                is_match,
+                strong_matches,
+                weak_matches,
+            ) = self._category_matches(
+                normalized_text=normalized,
+                strong_terms=strong_terms,
+                weak_terms=weak_terms,
             )
-        ]
+
+            if not is_match:
+                continue
+
+            matched_categories.append(category)
+
+            matched_terms.extend(strong_matches)
+            matched_terms.extend(weak_matches)
+
+            # -------------------------------------------------
+            # WEIGHTED SCORING
+            # -------------------------------------------------
+
+            score += len(strong_matches) * 0.25
+            score += len(weak_matches) * 0.08
 
         # -------------------------------------------------
-        # SCORING
+        # MULTI-DOMAIN BONUS
         # -------------------------------------------------
 
-        category_score = len(matched_categories) * 0.25
+        if len(matched_categories) >= 2:
+            score += 0.15
 
-        term_score = min(
-            len(matched_terms) * 0.10,
-            0.5,
-        )
+        if len(matched_categories) >= 3:
+            score += 0.10
 
-        score = min(
-            category_score + term_score,
-            1.0,
-        )
+        # -------------------------------------------------
+        # FINAL NORMALIZATION
+        # -------------------------------------------------
+
+        score = min(score, 1.0)
+
+        matched_terms = sorted(list(set(matched_terms)))
+
+        matched_categories = sorted(list(set(matched_categories)))
 
         return TechnicalFilterResult(
-            is_technical=(score >= 0.25),
-            score=round(
-                score,
-                2,
-            ),
-            matched_categories=(matched_categories),
-            matched_terms=(matched_terms),
+            is_technical=(score >= 0.30),
+            score=round(score, 2),
+            matched_categories=matched_categories,
+            matched_terms=matched_terms,
         )
 
     def is_technical(
@@ -241,48 +290,38 @@ class TechnicalQuestionFilter:
         text: str,
     ) -> bool:
 
-        result = self.evaluate(
-            text
-        )
+        result = self.evaluate(text)
 
-        return (
-            result.is_technical
-        )
+        return result.is_technical
 
     def matching_categories(
         self,
         text: str,
     ) -> list[str]:
 
-        normalized = text.lower()
+        normalized = self._normalize_text(text)
 
         categories: list[str] = []
 
-        taxonomy = {
-            "backend": self.STRONG_BACKEND_TERMS | self.WEAK_BACKEND_TERMS,
-            "database": self.STRONG_DATABASE_TERMS | self.WEAK_DATABASE_TERMS,
-            "distributed_systems": self.STRONG_DISTRIBUTED_TERMS | self.WEAK_DISTRIBUTED_TERMS,
-            "frontend": self.STRONG_FRONTEND_TERMS | self.WEAK_FRONTEND_TERMS,
-            "devops": self.STRONG_DEVOPS_TERMS | self.WEAK_DEVOPS_TERMS,
-            "data_engineering": self.STRONG_DATA_ENGINEERING_TERMS | self.WEAK_DATA_ENGINEERING_TERMS,
-            "machine_learning": self.STRONG_ML_TERMS | self.WEAK_ML_TERMS,
-            "computer_science": self.STRONG_CS_TERMS | self.WEAK_CS_TERMS,
-        }
-
         for (
             category,
-            keywords,
-        ) in taxonomy.items():
+            (
+                strong_terms,
+                weak_terms,
+            ),
+        ) in self.CATEGORY_MAP.items():
 
-            matched = any(
-                self._contains_term(
-                    normalized,
-                    keyword,
-                )
-                for keyword in keywords
+            (
+                is_match,
+                _strong,
+                _weak,
+            ) = self._category_matches(
+                normalized_text=normalized,
+                strong_terms=strong_terms,
+                weak_terms=weak_terms,
             )
 
-            if matched:
+            if is_match:
                 categories.append(category)
 
         return categories
@@ -290,6 +329,43 @@ class TechnicalQuestionFilter:
     # =====================================================
     # HELPERS
     # =====================================================
+
+    def _category_matches(
+        self,
+        normalized_text: str,
+        strong_terms: set[str],
+        weak_terms: set[str],
+    ) -> tuple[bool, list[str], list[str]]:
+
+        strong_matches = [
+            term
+            for term in strong_terms
+            if self._contains_term(
+                normalized_text,
+                term,
+            )
+        ]
+
+        weak_matches = [
+            term
+            for term in weak_terms
+            if self._contains_term(
+                normalized_text,
+                term,
+            )
+        ]
+
+        # -------------------------------------------------
+        # MATCH RULES
+        # -------------------------------------------------
+
+        is_match = len(strong_matches) >= 1 or len(weak_matches) >= 2
+
+        return (
+            is_match,
+            strong_matches,
+            weak_matches,
+        )
 
     def _contains_term(
         self,
@@ -327,6 +403,8 @@ class TechnicalQuestionFilter:
             "transactions": "transaction",
             "deployments": "deployment",
             "systems": "system",
+            "services": "service",
+            "servers": "server",
         }
 
         for (
@@ -340,40 +418,3 @@ class TechnicalQuestionFilter:
             )
 
         return normalized
-
-        
-    def _category_matches(
-        self,
-        normalized_text: str,
-        strong_terms: set[str],
-        weak_terms: set[str],
-    ) -> tuple[bool, list[str], list[str]]:
-
-        normalized_text = self._normalize_text(normalized_text)
-
-        strong_matches = [
-            term
-            for term in strong_terms
-            if self._contains_term(normalized_text, term)
-        ]
-
-        weak_matches = [
-            term
-            for term in weak_terms
-            if self._contains_term(normalized_text, term)
-        ]
-
-        # -------------------------------------------------
-        # MATCH RULES
-        # -------------------------------------------------
-
-        is_match = (
-            len(strong_matches) >= 1
-            or len(weak_matches) >= 2
-        )
-
-        return (
-            is_match,
-            strong_matches,
-            weak_matches,
-        )
