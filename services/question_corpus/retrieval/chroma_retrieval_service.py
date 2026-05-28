@@ -12,6 +12,7 @@ from services.question_corpus.contracts.retrieval_filters import RetrievalFilter
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
 from services.question_corpus.retrieval.chroma_filter_builder import ChromaFilterBuilder
 from services.question_corpus.retrieval.hybrid_retrieval_scorer import HybridRetrievalScorer
+from services.question_corpus.retrieval.diversity_reranker import DiversityReranker
 
 
 class ChromaRetrievalService:
@@ -33,6 +34,8 @@ class ChromaRetrievalService:
         self._filter_builder = ChromaFilterBuilder()
 
         self._scorer = HybridRetrievalScorer()
+
+        self._diversity_reranker = DiversityReranker()
 
     # =====================================================
     # PUBLIC
@@ -99,4 +102,9 @@ class ChromaRetrievalService:
             reverse=True,
         )
 
-        return candidates
+        reranked = self._diversity_reranker.rerank(
+            candidates=candidates,
+            top_k=len(candidates),
+        )
+
+        return reranked
