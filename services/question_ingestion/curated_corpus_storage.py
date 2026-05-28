@@ -32,13 +32,13 @@ class CuratedCorpusStorage:
 
             records.append(
                 CuratedCorpusRecord(
-                    question=(result.normalized_record),
-                    semantic_score=(result.filter_result.score),
-                    matched_categories=(result.filter_result.matched_categories),
-                    matched_terms=(result.filter_result.matched_terms),
-                    source_repository=(onboarding_result.repository_name),
-                    onboarding_decision=(onboarding_result.onboarding_decision),
-                    corpus_version=(corpus_version),
+                    question=result.normalized_record,
+                    semantic_score=result.technical_result.score,
+                    matched_categories=result.technical_result.matched_categories,
+                    matched_terms=result.technical_result.matched_terms,
+                    source_repository=onboarding_result.repository_name,
+                    onboarding_decision=onboarding_result.onboarding_decision,
+                    corpus_version=corpus_version,
                 )
             )
 

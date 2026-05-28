@@ -48,7 +48,11 @@ class GitHubCorpusOnboardingPipeline:
                 document=document,
             )
 
-            if onboarding_result.onboarding_decision == "reject":
+            # -------------------------------------------------
+            # SKIP EMPTY RESULTS ONLY
+            # -------------------------------------------------
+
+            if not onboarding_result.accepted_results:
                 continue
 
             output_path = self._build_output_path(
