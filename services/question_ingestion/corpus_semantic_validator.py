@@ -9,7 +9,7 @@ from services.question_ingestion.normalizers.question_normalizer import Question
 from services.question_intelligence.technical_question_filter import TechnicalQuestionFilter
 from services.question_intelligence.quality.interview_question_quality_filter import InterviewQuestionQualityFilter
 from services.question_intelligence.quality.contracts.quality_decision import QualityDecision
-from services.question_ingestion.contracts.extracted_question_candidate import ExtractedQuestionCandidate
+from services.question_ingestion.contracts.candidate_question import CandidateQuestion
 
 
 class CorpusSemanticValidator:
@@ -20,7 +20,7 @@ class CorpusSemanticValidator:
 
     def validate(
         self,
-        questions: list[ExtractedQuestionCandidate],
+        questions: list[CandidateQuestion],
         source_name: str,
         source_type: str,
         dataset_version: str,
