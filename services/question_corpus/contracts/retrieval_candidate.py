@@ -15,6 +15,8 @@ class RetrievalCandidate(BaseModel):
 
     final_score: float
 
+    diversity_score: float = 0.0
+
     
     model_config = {
         "arbitrary_types_allowed": True,
