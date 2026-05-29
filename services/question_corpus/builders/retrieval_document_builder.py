@@ -2,10 +2,15 @@
 
 from domain.contracts.corpus import CuratedQuestion
 
+from infrastructure.embeddings.embedding_factory import get_embedding_model
+
 from services.question_corpus.contracts.retrieval_document import RetrievalDocument
 
 
 class RetrievalDocumentBuilder:
+
+    def __init__(self) -> None:
+        self._embedding_model = get_embedding_model()
 
     # =====================================================
     # PUBLIC
@@ -20,6 +25,10 @@ class RetrievalDocumentBuilder:
             question,
         )
 
+        embedding = self._embedding_model.embed_query(
+            retrieval_text,
+        )
+
         metadata = self._build_metadata(
             question,
         )
@@ -28,6 +37,7 @@ class RetrievalDocumentBuilder:
             document_id=question.id,
             text=retrieval_text,
             metadata=metadata,
+            embedding=embedding,
         )
 
     # =====================================================

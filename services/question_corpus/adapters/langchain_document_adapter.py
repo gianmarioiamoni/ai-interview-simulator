@@ -41,6 +41,4 @@ class LangChainDocumentAdapter:
             metadata=metadata,
         )
 
-        document.embedding = retrieval_document.embedding
-
         return document
