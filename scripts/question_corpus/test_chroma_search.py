@@ -18,7 +18,8 @@ def main() -> None:
 
         print(f"\nRESULT #{index + 1}\n")
 
-        print(result.page_content)
+        print(result.document.page_content)
+        print(result.final_score)
 
         print("\nMETADATA")
 
