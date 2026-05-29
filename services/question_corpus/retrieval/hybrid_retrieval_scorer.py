@@ -44,7 +44,7 @@ class HybridRetrievalScorer:
             semantic_score * self.SEMANTIC_WEIGHT + quality_score * self.QUALITY_WEIGHT
         )
 
-        return RetrievalCandidate(
+        candidate = RetrievalCandidate(
             document=document,
             semantic_score=round(
                 semantic_score,
@@ -68,3 +68,5 @@ class HybridRetrievalScorer:
             ),
             embedding=embedding,
         )
+
+        return candidate
