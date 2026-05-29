@@ -42,22 +42,24 @@ class CoveragePenaltyEngine:
 
             adjusted_score = max(
                 0.0,
-                candidate.diversity_score - penalty,
+                candidate.adaptive_score - penalty,
             )
 
             adjusted_candidate = candidate.model_copy(
                 update={
-                    "diversity_score": round(
+                    "adaptive_score": round(
                         adjusted_score,
                         3,
                     )
                 }
             )
 
-            adjusted.append(adjusted_candidate)
+            adjusted.append(
+                adjusted_candidate,
+            )
 
         adjusted.sort(
-            key=lambda c: c.diversity_score,
+            key=lambda c: c.adaptive_score,
             reverse=True,
         )
 

@@ -11,6 +11,7 @@ class DiversityReranker:
     # =====================================================
 
     REDUNDANCY_WEIGHT = 0.45
+
     REDUNDANCY_CAP = 0.25
 
     # =====================================================
@@ -67,12 +68,20 @@ class DiversityReranker:
                         best_score,
                         3,
                     ),
+                    "adaptive_score": round(
+                        best_score,
+                        3,
+                    ),
                 },
             )
 
-            selected.append(adjusted_candidate)
+            selected.append(
+                adjusted_candidate,
+            )
 
-            remaining.remove(best_candidate)
+            remaining.remove(
+                best_candidate,
+            )
 
         return selected
 
@@ -98,13 +107,13 @@ class DiversityReranker:
                 existing.document.page_content,
             )
 
-            similarities.append(similarity)
+            similarities.append(
+                similarity,
+            )
 
-        max_similarity = max(similarities)
-
-        # -------------------------------------------------
-        # SOFT CAPPED REDUNDANCY PENALTY
-        # -------------------------------------------------
+        max_similarity = max(
+            similarities,
+        )
 
         soft_redundancy_penalty = min(
             max_similarity * self.REDUNDANCY_WEIGHT,
