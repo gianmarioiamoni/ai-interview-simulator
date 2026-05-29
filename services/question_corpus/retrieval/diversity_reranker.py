@@ -141,9 +141,15 @@ class DiversityReranker:
 
         for existing in selected:
 
+            if (
+                candidate.embedding is None
+                or existing.embedding is None
+            ):
+                continue
+
             similarity = self._similarity_engine.similarity(
-                candidate.document.page_content,
-                existing.document.page_content,
+                candidate.embedding,
+                existing.embedding,
             )
 
             similarities.append(
