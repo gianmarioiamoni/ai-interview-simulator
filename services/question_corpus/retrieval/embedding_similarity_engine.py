@@ -1,6 +1,8 @@
 # services/question_corpus/retrieval/embedding_similarity_engine.py
 
-from langchain_openai import OpenAIEmbeddings
+from infrastructure.embeddings.embedding_factory import (
+    get_embedding_model,
+)
 
 
 class EmbeddingSimilarityEngine:
@@ -13,7 +15,7 @@ class EmbeddingSimilarityEngine:
         self,
     ) -> None:
 
-        self._embeddings = OpenAIEmbeddings()
+        self._embedding_model = get_embedding_model()
 
     # =====================================================
     # PUBLIC
@@ -21,21 +23,20 @@ class EmbeddingSimilarityEngine:
 
     def similarity(
         self,
-        text_a: str,
-        text_b: str,
+        left: str,
+        right: str,
     ) -> float:
 
-        embedding_a = self._embeddings.embed_query(
-            text_a,
-        )
-
-        embedding_b = self._embeddings.embed_query(
-            text_b,
+        embeddings = self._embedding_model.embed_documents(
+            [
+                left,
+                right,
+            ]
         )
 
         return self._cosine_similarity(
-            embedding_a,
-            embedding_b,
+            embeddings[0],
+            embeddings[1],
         )
 
     # =====================================================
@@ -44,18 +45,23 @@ class EmbeddingSimilarityEngine:
 
     def _cosine_similarity(
         self,
-        vector_a: list[float],
-        vector_b: list[float],
+        a: list[float],
+        b: list[float],
     ) -> float:
 
-        dot_product = sum(a * b for a, b in zip(vector_a, vector_b))
+        dot_product = sum(
+            x * y
+            for x, y in zip(
+                a,
+                b,
+            )
+        )
 
-        magnitude_a = sum(a * a for a in vector_a) ** 0.5
+        norm_a = sum(x * x for x in a) ** 0.5
 
-        magnitude_b = sum(b * b for b in vector_b) ** 0.5
+        norm_b = sum(y * y for y in b) ** 0.5
 
-        if magnitude_a == 0 or magnitude_b == 0:
+        if norm_a == 0 or norm_b == 0:
             return 0.0
 
-        
-        return dot_product / (magnitude_a * magnitude_b)
+        return dot_product / (norm_a * norm_b)

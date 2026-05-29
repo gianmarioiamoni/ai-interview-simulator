@@ -25,6 +25,7 @@ class HybridRetrievalScorer:
         self,
         document: Document,
         semantic_distance: float,
+        embedding: list[float] | None = None,
     ) -> RetrievalCandidate:
 
         semantic_score = max(
@@ -65,4 +66,5 @@ class HybridRetrievalScorer:
                 final_score,
                 3,
             ),
+            embedding=embedding,
         )

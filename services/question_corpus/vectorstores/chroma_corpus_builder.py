@@ -12,24 +12,29 @@ from services.question_corpus.constants.vector_store_constants import (
 
 class ChromaCorpusBuilder:
 
-    # =====================================================
-    # CONSTRUCTOR
-    # =====================================================
-
     def __init__(
         self,
     ) -> None:
 
         self._embeddings = OpenAIEmbeddings()
 
-    # =====================================================
-    # PUBLIC
-    # =====================================================
-
     def build(
         self,
         documents: list[Document],
     ) -> Chroma:
+
+        try:
+
+            existing = Chroma(
+                collection_name=CHROMA_COLLECTION_NAME,
+                embedding_function=self._embeddings,
+                persist_directory=CHROMA_PERSIST_DIRECTORY,
+            )
+
+            existing.delete_collection()
+
+        except Exception:
+            pass
 
         vectorstore = Chroma.from_documents(
             documents=documents,

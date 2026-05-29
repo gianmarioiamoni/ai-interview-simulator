@@ -89,6 +89,45 @@ class DiversityReranker:
     # INTERNALS
     # =====================================================
 
+    # def _compute_redundancy_penalty(
+    #     self,
+    #     candidate: RetrievalCandidate,
+    #     selected: list[RetrievalCandidate],
+    # ) -> float:
+
+    #     if not selected:
+    #         return 0.0
+
+    #     similarities = []
+
+    #     for existing in selected:
+
+    #         if (
+    #             candidate.embedding is None
+    #             or existing.embedding is None
+    #         ):
+    #             continue
+
+    #         similarity = self._similarity_engine.similarity(
+    #             candidate.embedding,
+    #             existing.embedding,
+    #         )
+
+    #         similarities.append(
+    #             similarity,
+    #         )
+
+    #     max_similarity = max(
+    #         similarities,
+    #     )
+
+    #     soft_redundancy_penalty = min(
+    #         max_similarity * self.REDUNDANCY_WEIGHT,
+    #         self.REDUNDANCY_CAP,
+    #     )
+
+    #     return soft_redundancy_penalty
+
     def _compute_redundancy_penalty(
         self,
         candidate: RetrievalCandidate,
@@ -110,6 +149,9 @@ class DiversityReranker:
             similarities.append(
                 similarity,
             )
+
+        if not similarities:
+            return 0.0
 
         max_similarity = max(
             similarities,

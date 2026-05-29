@@ -47,6 +47,7 @@ class ChromaRetrievalService:
         k: int = 5,
     ) -> list[RetrievalCandidate]:
 
+
         results = self._vectorstore.similarity_search_with_score(
             query=query,
             k=k,

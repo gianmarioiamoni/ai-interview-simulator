@@ -2,6 +2,8 @@
 
 from pydantic import BaseModel
 
+from services.question_corpus.contracts.interview_retrieval_memory import InterviewRetrievalMemory
+
 
 class AdaptiveRetrievalContext(BaseModel):
 
@@ -23,7 +25,9 @@ class AdaptiveRetrievalContext(BaseModel):
 
     target_difficulty: int | None = None
 
-    
+    memory: InterviewRetrievalMemory
+
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
