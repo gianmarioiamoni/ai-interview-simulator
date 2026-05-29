@@ -1,10 +1,7 @@
 # services/question_corpus/retrieval/hybrid_retrieval_scorer.py
 
-from langchain_core.documents import Document
-
-from services.question_corpus.contracts.retrieval_candidate import (
-    RetrievalCandidate,
-)
+from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
+from services.question_corpus.contracts.retrieval_result import RetrievalResult
 
 
 class HybridRetrievalScorer:
@@ -23,35 +20,22 @@ class HybridRetrievalScorer:
 
     def score(
         self,
-        document: Document,
-        semantic_distance: float,
-        embedding: list[float] | None = None,
+        result: RetrievalResult,
     ) -> RetrievalCandidate:
 
-        semantic_score = max(
-            0.0,
-            1.0 - semantic_distance,
-        )
-
-        quality_score = float(
-            document.metadata.get(
-                "quality_score",
-                0.5,
-            )
-        )
-
         final_score = (
-            semantic_score * self.SEMANTIC_WEIGHT + quality_score * self.QUALITY_WEIGHT
+            result.semantic_score * self.SEMANTIC_WEIGHT
+            + result.quality_score * self.QUALITY_WEIGHT
         )
 
-        candidate = RetrievalCandidate(
-            document=document,
+        return RetrievalCandidate(
+            document=result.document,
             semantic_score=round(
-                semantic_score,
+                result.semantic_score,
                 3,
             ),
             quality_score=round(
-                quality_score,
+                result.quality_score,
                 3,
             ),
             final_score=round(
@@ -66,7 +50,5 @@ class HybridRetrievalScorer:
                 final_score,
                 3,
             ),
-            embedding=embedding,
+            embedding=result.embedding,
         )
-
-        return candidate
