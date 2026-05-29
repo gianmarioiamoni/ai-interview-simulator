@@ -1,6 +1,8 @@
 # scripts/question_corpus/test_chroma_search.py
 
-from services.question_corpus.retrieval.chroma_retrieval_service import ChromaRetrievalService
+from services.question_corpus.retrieval.chroma_retrieval_service import (
+    ChromaRetrievalService,
+)
 
 
 def main() -> None:
@@ -18,21 +20,33 @@ def main() -> None:
 
         print(f"\nRESULT #{index + 1}\n")
 
-        print(result.document.page_content)
-        print(result.final_score)
+        print(
+            result.document.page_content,
+        )
+
+        print(f"\nFinal Score: {result.final_score}")
 
         print("\nMETADATA")
 
-        for key, value in result.metadata.items():
+        for key, value in result.document.metadata.items():
 
             print(f"{key}: {value}")
 
         print("\nEMBEDDING")
-        print(
-            len(
-                results[0].embedding,
+
+        if result.embedding is None:
+
+            print("None")
+
+        else:
+
+            print(
+                len(
+                    result.embedding,
+                )
             )
-        )
+
+
 if __name__ == "__main__":
 
     main()
