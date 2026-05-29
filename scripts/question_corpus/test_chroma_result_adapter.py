@@ -7,8 +7,6 @@ from services.question_corpus.adapters.chroma_result_adapter import (
 
 def main() -> None:
 
-    adapter = ChromaResultAdapter()
-
     raw_results = {
         "documents": [
             [
@@ -30,17 +28,26 @@ def main() -> None:
         ],
         "embeddings": [
             [
-                [0.1, 0.2, 0.3],
+                [
+                    0.1,
+                    0.2,
+                    0.3,
+                ]
             ]
         ],
     }
+
+    adapter = ChromaResultAdapter()
 
     results = adapter.adapt(
         raw_results,
     )
 
-    print(results[0])
+    print(
+        results[0],
+    )
 
 
 if __name__ == "__main__":
+
     main()
