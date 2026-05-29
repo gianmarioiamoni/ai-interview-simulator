@@ -1,32 +1,20 @@
 # services/question_corpus/retrieval/diversity_reranker.py
 
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
-from services.question_corpus.retrieval.embedding_similarity_engine import EmbeddingSimilarityEngine
+from infrastructure.embeddings.embedding_similarity_engine import EmbeddingSimilarityEngine
 
 
 class DiversityReranker:
 
-    # =====================================================
-    # CONSTANTS
-    # =====================================================
-
     REDUNDANCY_WEIGHT = 0.45
 
     REDUNDANCY_CAP = 0.25
-
-    # =====================================================
-    # CONSTRUCTOR
-    # =====================================================
 
     def __init__(
         self,
     ) -> None:
 
         self._similarity_engine = EmbeddingSimilarityEngine()
-
-    # =====================================================
-    # PUBLIC
-    # =====================================================
 
     def rerank(
         self,
@@ -62,21 +50,19 @@ class DiversityReranker:
             if best_candidate is None:
                 break
 
-            adjusted_candidate = best_candidate.model_copy(
-                update={
-                    "diversity_score": round(
-                        best_score,
-                        3,
-                    ),
-                    "adaptive_score": round(
-                        best_score,
-                        3,
-                    ),
-                },
-            )
-
             selected.append(
-                adjusted_candidate,
+                best_candidate.model_copy(
+                    update={
+                        "diversity_score": round(
+                            best_score,
+                            3,
+                        ),
+                        "adaptive_score": round(
+                            best_score,
+                            3,
+                        ),
+                    }
+                )
             )
 
             remaining.remove(
@@ -84,49 +70,6 @@ class DiversityReranker:
             )
 
         return selected
-
-    # =====================================================
-    # INTERNALS
-    # =====================================================
-
-    # def _compute_redundancy_penalty(
-    #     self,
-    #     candidate: RetrievalCandidate,
-    #     selected: list[RetrievalCandidate],
-    # ) -> float:
-
-    #     if not selected:
-    #         return 0.0
-
-    #     similarities = []
-
-    #     for existing in selected:
-
-    #         if (
-    #             candidate.embedding is None
-    #             or existing.embedding is None
-    #         ):
-    #             continue
-
-    #         similarity = self._similarity_engine.similarity(
-    #             candidate.embedding,
-    #             existing.embedding,
-    #         )
-
-    #         similarities.append(
-    #             similarity,
-    #         )
-
-    #     max_similarity = max(
-    #         similarities,
-    #     )
-
-    #     soft_redundancy_penalty = min(
-    #         max_similarity * self.REDUNDANCY_WEIGHT,
-    #         self.REDUNDANCY_CAP,
-    #     )
-
-    #     return soft_redundancy_penalty
 
     def _compute_redundancy_penalty(
         self,
@@ -141,10 +84,7 @@ class DiversityReranker:
 
         for existing in selected:
 
-            if (
-                candidate.embedding is None
-                or existing.embedding is None
-            ):
+            if candidate.embedding is None or existing.embedding is None:
                 continue
 
             similarity = self._similarity_engine.similarity(
@@ -163,9 +103,7 @@ class DiversityReranker:
             similarities,
         )
 
-        soft_redundancy_penalty = min(
+        return min(
             max_similarity * self.REDUNDANCY_WEIGHT,
             self.REDUNDANCY_CAP,
         )
-
-        return soft_redundancy_penalty

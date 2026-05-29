@@ -2,7 +2,6 @@
 
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
-from langchain_core.documents import Document
 
 from services.question_corpus.constants.vector_store_constants import (
     CHROMA_COLLECTION_NAME,
@@ -10,9 +9,11 @@ from services.question_corpus.constants.vector_store_constants import (
 )
 from services.question_corpus.contracts.retrieval_filters import RetrievalFilters
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
+from services.question_corpus.contracts.retrieval_result import RetrievalResult
 from services.question_corpus.retrieval.chroma_filter_builder import ChromaFilterBuilder
 from services.question_corpus.retrieval.hybrid_retrieval_scorer import HybridRetrievalScorer
 from services.question_corpus.retrieval.diversity_reranker import DiversityReranker
+from services.question_corpus.adapters.chroma_result_adapter import ChromaResultAdapter
 
 
 class ChromaRetrievalService:
@@ -33,6 +34,8 @@ class ChromaRetrievalService:
 
         self._filter_builder = ChromaFilterBuilder()
 
+        self._result_adapter = ChromaResultAdapter()
+
         self._scorer = HybridRetrievalScorer()
 
         self._diversity_reranker = DiversityReranker()
@@ -47,10 +50,14 @@ class ChromaRetrievalService:
         k: int = 5,
     ) -> list[RetrievalCandidate]:
 
-
-        results = self._vectorstore.similarity_search_with_score(
+        raw_results = self._query_chroma(
             query=query,
             k=k,
+            where=None,
+        )
+
+        results = self._result_adapter.adapt(
+            raw_results,
         )
 
         return self._score_results(
@@ -68,10 +75,14 @@ class ChromaRetrievalService:
             filters,
         )
 
-        results = self._vectorstore.similarity_search_with_score(
+        raw_results = self._query_chroma(
             query=query,
             k=k,
-            filter=where,
+            where=where,
+        )
+
+        results = self._result_adapter.adapt(
+            raw_results,
         )
 
         return self._score_results(
@@ -82,21 +93,45 @@ class ChromaRetrievalService:
     # INTERNALS
     # =====================================================
 
+    def _query_chroma(
+        self,
+        query: str,
+        k: int,
+        where: dict | None,
+    ) -> dict:
+
+        collection = self._vectorstore._collection
+
+        return collection.query(
+            query_texts=[
+                query,
+            ],
+            n_results=k,
+            where=where,
+            include=[
+                "documents",
+                "metadatas",
+                "distances",
+                "embeddings",
+            ],
+        )
+
     def _score_results(
         self,
-        results: list[tuple[Document, float]],
+        results: list[RetrievalResult],
     ) -> list[RetrievalCandidate]:
 
         candidates: list[RetrievalCandidate] = []
 
-        for document, distance in results:
+        for result in results:
 
             candidate = self._scorer.score(
-                document=document,
-                semantic_distance=distance,
+                result,
             )
 
-            candidates.append(candidate)
+            candidates.append(
+                candidate,
+            )
 
         candidates.sort(
             key=lambda c: c.final_score,
