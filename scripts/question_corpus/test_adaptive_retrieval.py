@@ -17,6 +17,9 @@ def main() -> None:
             "distributed_systems",
             "caching",
         ],
+        weak_domains=[
+            "distributed_systems",
+        ],
         target_difficulty=5,
     )
 

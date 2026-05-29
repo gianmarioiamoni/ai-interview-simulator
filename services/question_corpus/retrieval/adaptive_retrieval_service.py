@@ -56,4 +56,9 @@ class AdaptiveRetrievalService:
             context=context,
         )
 
+        adjusted.sort(
+            key=lambda c: c.adaptive_score,
+            reverse=True,
+        )
+
         return adjusted[: context.target_question_count]

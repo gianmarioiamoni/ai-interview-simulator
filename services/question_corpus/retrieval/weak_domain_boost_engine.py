@@ -42,17 +42,19 @@ class WeakDomainBoostEngine:
 
             updated = candidate.model_copy(
                 update={
-                    "diversity_score": round(
-                        candidate.diversity_score + boost,
+                    "adaptive_score": round(
+                        candidate.adaptive_score + boost,
                         3,
                     )
                 }
             )
 
-            boosted.append(updated)
+            boosted.append(
+                updated,
+            )
 
         boosted.sort(
-            key=lambda c: c.diversity_score,
+            key=lambda c: c.adaptive_score,
             reverse=True,
         )
 

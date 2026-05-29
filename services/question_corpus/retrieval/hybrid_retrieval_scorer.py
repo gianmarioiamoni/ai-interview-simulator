@@ -2,7 +2,9 @@
 
 from langchain_core.documents import Document
 
-from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
+from services.question_corpus.contracts.retrieval_candidate import (
+    RetrievalCandidate,
+)
 
 
 class HybridRetrievalScorer:
@@ -52,6 +54,14 @@ class HybridRetrievalScorer:
                 3,
             ),
             final_score=round(
+                final_score,
+                3,
+            ),
+            diversity_score=round(
+                final_score,
+                3,
+            ),
+            adaptive_score=round(
                 final_score,
                 3,
             ),
