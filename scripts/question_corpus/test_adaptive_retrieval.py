@@ -40,6 +40,7 @@ def main() -> None:
 
         print(f"Final: {result.final_score}")
         print(f"Diversity: {result.diversity_score}")
+        print(f"Adaptive: {result.adaptive_score}")
 
 
 if __name__ == "__main__":
