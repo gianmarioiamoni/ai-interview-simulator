@@ -26,7 +26,12 @@ def main() -> None:
 
             print(f"{key}: {value}")
 
-
+        print("\nEMBEDDING")
+        print(
+            len(
+                results[0].embedding,
+            )
+        )
 if __name__ == "__main__":
 
     main()

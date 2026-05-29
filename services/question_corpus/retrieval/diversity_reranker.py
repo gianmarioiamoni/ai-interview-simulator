@@ -41,6 +41,18 @@ class DiversityReranker:
 
                 diversity_score = candidate.final_score - redundancy_penalty
 
+                print(
+                    candidate.document.metadata.get(
+                        "document_id",
+                        "unknown",
+                    ),
+                    "penalty:",
+                    round(
+                        redundancy_penalty,
+                        3,
+                    ),
+                )
+
                 if diversity_score > best_score:
 
                     best_candidate = candidate
@@ -95,6 +107,8 @@ class DiversityReranker:
             similarities.append(
                 similarity,
             )
+
+            print(f"SIMILARITY: {round(similarity, 4)}")
 
         if not similarities:
             return 0.0
