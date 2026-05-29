@@ -36,7 +36,11 @@ class LangChainDocumentAdapter:
 
         metadata["document_id"] = retrieval_document.document_id
 
-        return Document(
+        document = Document(
             page_content=retrieval_document.text,
             metadata=metadata,
         )
+
+        document.embedding = retrieval_document.embedding
+
+        return document

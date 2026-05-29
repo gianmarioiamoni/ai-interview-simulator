@@ -11,6 +11,8 @@ class RetrievalDocument(BaseModel):
 
     metadata: dict[str, str | int | float | list[str]]
 
+    embedding: list[float]
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
