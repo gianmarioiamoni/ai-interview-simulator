@@ -41,6 +41,16 @@ class HybridRetrievalScorer:
             semantic_score * self.SEMANTIC_WEIGHT + quality_score * self.QUALITY_WEIGHT
         )
 
+        print(
+            "EMBEDDING:",
+            getattr(
+                document,
+                "embedding",
+                None,
+            )
+            is not None,
+        )
+
         return RetrievalCandidate(
             document=document,
             semantic_score=round(
