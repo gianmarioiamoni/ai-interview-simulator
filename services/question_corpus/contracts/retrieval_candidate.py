@@ -19,6 +19,8 @@ class RetrievalCandidate(BaseModel):
 
     adaptive_score: float | None = None
 
+    embedding: list[float] | None = None
+
 
     model_config = {
         "arbitrary_types_allowed": True,
