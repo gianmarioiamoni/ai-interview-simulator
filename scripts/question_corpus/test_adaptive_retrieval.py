@@ -2,6 +2,8 @@
 
 from services.question_corpus.retrieval.adaptive_retrieval_service import AdaptiveRetrievalService
 from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
+from services.question_corpus.contracts.interview_retrieval_memory import InterviewRetrievalMemory
+
 
 
 def main() -> None:
@@ -21,6 +23,7 @@ def main() -> None:
             "distributed_systems",
         ],
         target_difficulty=5,
+        memory=InterviewRetrievalMemory(),
     )
 
     results = retrieval.retrieve(
