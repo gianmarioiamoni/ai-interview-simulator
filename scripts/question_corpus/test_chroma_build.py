@@ -31,6 +31,18 @@ def main() -> None:
     chroma_builder.build(
         langchain_documents,
     )
+    from langchain_chroma import Chroma
+    from langchain_openai import OpenAIEmbeddings
+
+    db = Chroma(
+        collection_name="interview_questions",
+        embedding_function=OpenAIEmbeddings(),
+        persist_directory="storage/chroma/interview_corpus",
+    )
+
+    print(
+        db._collection.count(),
+    )
 
     print("\nCHROMA BUILD COMPLETED\n")
 
