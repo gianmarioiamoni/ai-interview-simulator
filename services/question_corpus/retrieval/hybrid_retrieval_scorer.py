@@ -3,6 +3,7 @@
 from langchain_core.documents import Document
 
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
+from services.question_corpus.repositories.retrieval_embedding_repository import RetrievalEmbeddingRepository
 
 
 class HybridRetrievalScorer:
@@ -41,14 +42,21 @@ class HybridRetrievalScorer:
             semantic_score * self.SEMANTIC_WEIGHT + quality_score * self.QUALITY_WEIGHT
         )
 
+        document_id = document.metadata.get(
+            "document_id",
+        )
+
+        embedding = None 
+
+        if document_id:
+
+            embedding = RetrievalEmbeddingRepository.get(
+                document_id=document_id,
+            )
+
         print(
             "EMBEDDING:",
-            getattr(
-                document,
-                "embedding",
-                None,
-            )
-            is not None,
+            embedding is not None,
         )
 
         return RetrievalCandidate(
@@ -73,9 +81,5 @@ class HybridRetrievalScorer:
                 final_score,
                 3,
             ),
-            embedding=getattr(
-                document,
-                "embedding",
-                None,
-            ),
+            embedding=embedding,
         )
