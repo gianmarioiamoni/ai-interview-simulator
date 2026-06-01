@@ -1,15 +1,13 @@
 # scripts/question_corpus/test_chroma_search.py
 
-from services.question_corpus.retrieval.chroma_retrieval_service import (
-    ChromaRetrievalService,
-)
+from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
 
 
 def main() -> None:
 
-    retrieval = ChromaRetrievalService()
+    runtime = QuestionRetrievalRuntime()
 
-    results = retrieval.search(
+    results = runtime.search(
         "distributed cache invalidation",
         k=3,
     )

@@ -1,12 +1,12 @@
 # scripts/question_corpus/test_filtered_retrieval.py
 
-from services.question_corpus.retrieval.chroma_retrieval_service import ChromaRetrievalService
 from services.question_corpus.contracts.retrieval_filters import RetrievalFilters
+from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
 
 
 def main() -> None:
 
-    retrieval = ChromaRetrievalService()
+    runtime = QuestionRetrievalRuntime()
 
     filters = RetrievalFilters(
         role="backend_engineer",
@@ -14,7 +14,7 @@ def main() -> None:
         area="technical_case_study",
     )
 
-    results = retrieval.search_with_filters(
+    results = runtime.search_with_filters(
         query="distributed systems scalability",
         filters=filters,
         k=5,
