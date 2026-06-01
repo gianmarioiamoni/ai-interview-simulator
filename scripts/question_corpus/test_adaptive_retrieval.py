@@ -1,14 +1,13 @@
 # scripts/question_corpus/test_adaptive_retrieval.py
 
-from services.question_corpus.retrieval.adaptive_retrieval_service import AdaptiveRetrievalService
 from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
 from services.question_corpus.contracts.interview_retrieval_memory import InterviewRetrievalMemory
-
+from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
 
 
 def main() -> None:
 
-    retrieval = AdaptiveRetrievalService()
+    runtime = QuestionRetrievalRuntime()
 
     context = AdaptiveRetrievalContext(
         current_role="backend_engineer",
@@ -26,7 +25,7 @@ def main() -> None:
         memory=InterviewRetrievalMemory(),
     )
 
-    results = retrieval.retrieve(
+    results = runtime.retrieve_questions(
         query="distributed systems scalability",
         context=context,
     )

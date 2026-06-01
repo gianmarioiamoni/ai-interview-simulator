@@ -1,4 +1,7 @@
 # services/question_corpus/retrieval/chroma_retrieval_service.py
+#
+# Internal implementation detail. External callers must use
+# QuestionRetrievalRuntime instead of importing this module directly.
 
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings

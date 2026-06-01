@@ -1,4 +1,7 @@
 # services/question_corpus/retrieval/adaptive_retrieval_service.py
+#
+# Internal implementation detail. External callers must use
+# QuestionRetrievalRuntime instead of importing this module directly.
 
 from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate

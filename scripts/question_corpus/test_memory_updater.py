@@ -1,15 +1,15 @@
 # scripts/question_corpus/test_memory_updater.py
 
-from services.question_corpus.retrieval.chroma_retrieval_service import ChromaRetrievalService
 from services.question_corpus.contracts.interview_retrieval_memory import InterviewRetrievalMemory
+from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
 from services.question_corpus.retrieval.interview_memory_updater import InterviewMemoryUpdater
 
 
 def main() -> None:
 
-    retrieval = ChromaRetrievalService()
+    runtime = QuestionRetrievalRuntime()
 
-    results = retrieval.search(
+    results = runtime.search(
         query="distributed systems",
         k=1,
     )
