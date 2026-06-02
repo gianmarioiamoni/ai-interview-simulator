@@ -43,7 +43,3 @@ indexing
 query_optimization
 
 sono domains.
-
-Per ora va bene.
-
-Ma metterei già un TODO.
