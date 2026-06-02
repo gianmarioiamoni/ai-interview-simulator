@@ -14,9 +14,12 @@ class RetrievalCorpusBuilder:
 
     def __init__(
         self,
+        skip_embedding: bool = False,
     ) -> None:
 
-        self._document_builder = RetrievalDocumentBuilder()
+        self._document_builder = RetrievalDocumentBuilder(
+            skip_embedding=skip_embedding,
+        )
 
     # =====================================================
     # PUBLIC
