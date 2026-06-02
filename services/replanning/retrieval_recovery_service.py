@@ -17,10 +17,6 @@ from services.question_corpus.mappers.retrieval_candidate_mapper import (
     RetrievalCandidateMapper,
 )
 from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
-from services.retrieval.memory_aware_retrieval_pipeline import MemoryAwareRetrievalPipeline
-from services.retrieval.planner_retrieval_service import PlannerRetrievalService
-from services.retrieval.retrieval_runtime_mapper import RetrievalRuntimeMapper
-from services.retrieval.retrieval_session_memory import RetrievalSessionMemory
 from services.planning_validation.recovery_action import RecoveryAction
 
 
@@ -37,14 +33,6 @@ class RetrievalRecoveryService:
         self._role_strategy = RoleExpansionStrategy()
 
         self._intent_builder = OrchestrationIntentBuilder()
-
-        self._retrieval_service = PlannerRetrievalService()
-
-        self._runtime_mapper = RetrievalRuntimeMapper()
-
-        self._retrieval_pipeline = MemoryAwareRetrievalPipeline(
-            memory=RetrievalSessionMemory(),
-        )
 
         self._intent_adapter = OrchestrationIntentAdapter()
 
