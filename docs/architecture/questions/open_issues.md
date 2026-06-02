@@ -10,3 +10,8 @@ Duplicate RetrievalDocument contracts.
 TD-004
 Legacy services/retrieval still owns orchestrator path.
 
+TD-005
+
+Extract TargetAreaResolver
+
+services/question_corpus/resolvers/target_area_resolver.py
