@@ -9,3 +9,4 @@ from .corpus_onboarding_result import CorpusOnboardingResult
 from .curated_corpus_record import CuratedCorpusRecord
 from .ingestion_metadata import IngestionMetadata
 from .extracted_question_candidate import ExtractedQuestionCandidate
+from .question_metadata import QuestionMetadata

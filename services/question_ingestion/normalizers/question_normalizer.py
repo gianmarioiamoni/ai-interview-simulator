@@ -32,10 +32,6 @@ from services.question_ingestion.contracts.normalization_diagnostics import (
     NormalizationDiagnostics,
 )
 
-from services.question_intelligence.technical_question_filter import (
-    TechnicalQuestionFilter,
-)
-
 
 class QuestionNormalizer:
 
@@ -50,38 +46,28 @@ class QuestionNormalizer:
 
         normalized: List[NormalizedQuestionRecord] = []
 
-        technical_filter = TechnicalQuestionFilter()
-
         diagnostics = NormalizationDiagnostics(
             total_records=len(records),
         )
 
         for record in records:
 
-            result = self._normalize_record(
+            result, rejection_reason = self._normalize_record(
                 record=record,
-                technical_filter=technical_filter,
             )
-
-            # -------------------------------------------------
-            # REJECTED
-            # -------------------------------------------------
 
             if result is None:
 
-                diagnostics = diagnostics.model_copy(
-                    update={
-                        "filtered_non_technical": (
-                            diagnostics.filtered_non_technical + 1
-                        )
-                    }
-                )
+                if rejection_reason is not None:
+                    diagnostics = diagnostics.model_copy(
+                        update={
+                            rejection_reason: (
+                                getattr(diagnostics, rejection_reason) + 1
+                            ),
+                        },
+                    )
 
                 continue
-
-            # -------------------------------------------------
-            # ACCEPTED
-            # -------------------------------------------------
 
             normalized.append(result)
 
@@ -101,8 +87,7 @@ class QuestionNormalizer:
     def _normalize_record(
         self,
         record: RawQuestionRecord,
-        technical_filter: TechnicalQuestionFilter,
-    ) -> NormalizedQuestionRecord | None:
+    ) -> tuple[NormalizedQuestionRecord | None, str | None]:
 
         payload = record.canonical_payload
 
@@ -113,26 +98,19 @@ class QuestionNormalizer:
         text = payload.get("text")
 
         if not text:
-            return None
+            return None, "rejected_missing_text"
 
         if not isinstance(text, str):
-            return None
+            return None, "rejected_invalid_text"
 
         text = text.strip()
-
-        # -------------------------------------------------
-        # TECHNICAL DOMAIN FILTER
-        # -------------------------------------------------
-
-        if not technical_filter.is_technical(text):
-            return None
 
         # -------------------------------------------------
         # MIN QUALITY
         # -------------------------------------------------
 
         if len(text) < 15:
-            return None
+            return None, "rejected_too_short"
 
         # -------------------------------------------------
         # NORMALIZATION
@@ -142,31 +120,34 @@ class QuestionNormalizer:
             text,
         )
 
-        return NormalizedQuestionRecord(
-            text=text,
-            source=record.source,
-            ingestion_metadata=IngestionMetadata(
-                source_name=record.source,
-                source_type=record.source_type,
-                dataset_version=record.dataset_version,
-                ingestion_timestamp=(
-                    datetime.now(
-                        timezone.utc,
-                    )
+        return (
+            NormalizedQuestionRecord(
+                text=text,
+                source=record.source,
+                ingestion_metadata=IngestionMetadata(
+                    source_name=record.source,
+                    source_type=record.source_type,
+                    dataset_version=record.dataset_version,
+                    ingestion_timestamp=(
+                        datetime.now(
+                            timezone.utc,
+                        )
+                    ),
+                ),
+                role_hint=self._extract_role(
+                    payload,
+                ),
+                area_hint=self._extract_area(
+                    payload,
+                ),
+                level_hint=self._extract_level(
+                    payload,
+                ),
+                difficulty_hint=payload.get(
+                    "difficulty",
                 ),
             ),
-            role_hint=self._extract_role(
-                payload,
-            ),
-            area_hint=self._extract_area(
-                payload,
-            ),
-            level_hint=self._extract_level(
-                payload,
-            ),
-            difficulty_hint=payload.get(
-                "difficulty",
-            ),
+            None,
         )
 
     # =====================================================
