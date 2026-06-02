@@ -64,11 +64,6 @@ def _import_recovery_service_module_with_stubs():
 def test_retrieval_recovery_service_uses_runtime_adapter_and_mapper(monkeypatch) -> None:
     module = _import_recovery_service_module_with_stubs()
 
-    monkeypatch.setattr(module, "PlannerRetrievalService", lambda: MagicMock())
-    monkeypatch.setattr(module, "RetrievalRuntimeMapper", lambda: MagicMock())
-    monkeypatch.setattr(module, "RetrievalSessionMemory", lambda: object())
-    monkeypatch.setattr(module, "MemoryAwareRetrievalPipeline", lambda memory: MagicMock())
-
     role_strategy = MagicMock()
     role_strategy.expand.return_value = [RoleType.BACKEND_ENGINEER]
     monkeypatch.setattr(module, "RoleExpansionStrategy", lambda: role_strategy)

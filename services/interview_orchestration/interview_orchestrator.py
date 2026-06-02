@@ -23,25 +23,10 @@ from services.question_corpus.mappers.retrieval_candidate_mapper import (
 )
 from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
 
-from services.retrieval.planner_retrieval_service import PlannerRetrievalService
-from services.retrieval.retrieval_runtime_mapper import RetrievalRuntimeMapper
-from services.retrieval.memory_aware_retrieval_pipeline import MemoryAwareRetrievalPipeline
-from services.retrieval.retrieval_session_memory import RetrievalSessionMemory
-
 
 class InterviewOrchestrator:
 
     def __init__(self) -> None:
-
-        self._retrieval_memory = RetrievalSessionMemory()
-
-        self._retrieval_pipeline = MemoryAwareRetrievalPipeline(
-            memory=self._retrieval_memory,
-        )
-
-        # Legacy dependencies kept available during Phase 2B.
-        self._legacy_planner_retrieval_service = PlannerRetrievalService()
-        self._legacy_retrieval_runtime_mapper = RetrievalRuntimeMapper()
 
         self._intent_adapter = OrchestrationIntentAdapter()
         self._question_retrieval_runtime = QuestionRetrievalRuntime()

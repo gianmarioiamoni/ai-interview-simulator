@@ -75,10 +75,6 @@ def test_orchestrator_uses_runtime_adapter_and_candidate_mapper(monkeypatch) -> 
     runtime.retrieve_questions.return_value = [object()]
     mapper.map.return_value = mapped_questions
 
-    monkeypatch.setattr(module, "RetrievalSessionMemory", lambda: object())
-    monkeypatch.setattr(module, "MemoryAwareRetrievalPipeline", lambda memory: MagicMock())
-    monkeypatch.setattr(module, "PlannerRetrievalService", lambda: MagicMock())
-    monkeypatch.setattr(module, "RetrievalRuntimeMapper", lambda: MagicMock())
     monkeypatch.setattr(module, "OrchestrationIntentAdapter", lambda: adapter)
     monkeypatch.setattr(module, "QuestionRetrievalRuntime", lambda: runtime)
     monkeypatch.setattr(module, "RetrievalCandidateMapper", lambda: mapper)
