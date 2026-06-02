@@ -9,8 +9,16 @@ from services.question_corpus.repositories.retrieval_embedding_repository import
 
 class RetrievalDocumentBuilder:
 
-    def __init__(self) -> None:
-        self._embedding_model = get_embedding_model()
+    def __init__(
+        self,
+        skip_embedding: bool = False,
+    ) -> None:
+
+        self._skip_embedding = skip_embedding
+
+        self._embedding_model = (
+            None if skip_embedding else get_embedding_model()
+        )
 
     # =====================================================
     # PUBLIC
@@ -25,14 +33,20 @@ class RetrievalDocumentBuilder:
             question,
         )
 
-        embedding = self._embedding_model.embed_query(
-            retrieval_text,
-        )
+        if self._skip_embedding:
 
-        RetrievalEmbeddingRepository.store(
-            document_id=question.id,
-            embedding=embedding,
-        )
+            embedding: list[float] = []
+
+        else:
+
+            embedding = self._embedding_model.embed_query(
+                retrieval_text,
+            )
+
+            RetrievalEmbeddingRepository.store(
+                document_id=question.id,
+                embedding=embedding,
+            )
 
         metadata = self._build_metadata(
             question,
