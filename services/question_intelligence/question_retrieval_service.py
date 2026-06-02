@@ -5,7 +5,7 @@
 # Responsibility:
 # Executes semantic retrieval over the Question Bank.
 # Applies metadata filtering and returns domain objects.
-# Does not expose vector store internals.
+# Public API is preserved; retrieval backend is routed through question_corpus runtime.
 
 from typing import List, Optional
 
@@ -15,9 +15,15 @@ from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.question.question_origin_type import QuestionOriginType
 from domain.contracts.question.question_provenance import QuestionProvenance
 from domain.contracts.user.role import Role, RoleType
-
+from services.question_intelligence.adapters.retrieval_strategy_context_adapter import (
+    RetrievalStrategyContextAdapter,
+)
 from services.question_intelligence.question_vector_store import QuestionVectorStore
 from services.question_intelligence.retrieval.retrieval_strategy import RetrievalStrategy
+from services.question_corpus.mappers.retrieval_candidate_mapper import (
+    RetrievalCandidateMapper,
+)
+from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
 from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
 
 
@@ -25,10 +31,32 @@ class QuestionRetrievalService:
 
     def __init__(
         self,
-        vector_store: QuestionVectorStore,
+        vector_store: QuestionVectorStore | None = None,
+        context_adapter: RetrievalStrategyContextAdapter | None = None,
+        question_retrieval_runtime: QuestionRetrievalRuntime | None = None,
+        retrieval_candidate_mapper: RetrievalCandidateMapper | None = None,
     ) -> None:
 
+        # Legacy vector store dependency retained for compatibility; not used by retrieve().
         self._vector_store = vector_store
+
+        self._context_adapter = (
+            context_adapter
+            if context_adapter is not None
+            else RetrievalStrategyContextAdapter()
+        )
+
+        self._question_retrieval_runtime = (
+            question_retrieval_runtime
+            if question_retrieval_runtime is not None
+            else QuestionRetrievalRuntime()
+        )
+
+        self._retrieval_candidate_mapper = (
+            retrieval_candidate_mapper
+            if retrieval_candidate_mapper is not None
+            else RetrievalCandidateMapper()
+        )
 
     # =====================================================
     # PUBLIC API
@@ -44,53 +72,26 @@ class QuestionRetrievalService:
         area: Optional[str] = None,
     ) -> List[QuestionBankItem]:
 
-        metadata_filter = self._build_filter(
+        context = self._context_adapter.adapt(
+            query=query,
+            retrieval_strategy=retrieval_strategy,
             role=role,
             level=level,
             interview_type=interview_type,
             area=area,
         )
 
-        # -------------------------------------------------
-        # MMR
-        # -------------------------------------------------
+        candidates = self._question_retrieval_runtime.retrieve_questions(
+            query=query,
+            context=context,
+        )
 
-        try:
-
-            if retrieval_strategy.use_mmr:
-
-                documents = self._vector_store.max_marginal_relevance_search(
-                    query=query,
-                    k=retrieval_strategy.k,
-                    fetch_k=retrieval_strategy.fetch_k,
-                    lambda_mult=retrieval_strategy.lambda_mult,
-                    metadata_filter=metadata_filter,
-                )
-
-            else:
-
-                documents = self._vector_store.similarity_search(
-                    query=query,
-                    k=retrieval_strategy.k,
-                    metadata_filter=metadata_filter,
-                )
-
-        except Exception:
-
-            # ---------------------------------------------
-            # FALLBACK
-            # ---------------------------------------------
-
-            documents = self._vector_store.similarity_search(
-                query=query,
-                k=retrieval_strategy.k,
-                metadata_filter=metadata_filter,
-            )
-
-        return [self._to_domain(doc) for doc in documents]
+        return self._retrieval_candidate_mapper.map(
+            candidates=candidates,
+        )
 
     # =====================================================
-    # FILTER BUILDER
+    # LEGACY — FILTER BUILDER (question_bank / ChromaQuestionStore path)
     # =====================================================
 
     def _build_filter(
@@ -121,13 +122,13 @@ class QuestionRetrievalService:
         return {"$and": [{k: v} for k, v in filters.items()]}
 
     # =====================================================
-    # MAPPER
+    # LEGACY — MAPPER (question_bank / ChromaQuestionStore path)
     # =====================================================
 
     def _to_domain(
-    self,
-    document: Document,
-) -> QuestionBankItem:
+        self,
+        document: Document,
+    ) -> QuestionBankItem:
 
         metadata = document.metadata
 
@@ -156,7 +157,6 @@ class QuestionRetrievalService:
             source_type=ingestion_metadata.source_type,
             dataset_version=ingestion_metadata.dataset_version,
         )
-
 
         return QuestionBankItem(
             id=metadata["id"],
