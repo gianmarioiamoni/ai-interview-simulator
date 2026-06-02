@@ -15,6 +15,14 @@ from services.replanning.recovery_replanner import RecoveryReplanner
 
 from services.interview_orchestration.orchestration_intent_builder import OrchestrationIntentBuilder
 
+from services.question_corpus.adapters.orchestration_intent_adapter import (
+    OrchestrationIntentAdapter,
+)
+from services.question_corpus.mappers.retrieval_candidate_mapper import (
+    RetrievalCandidateMapper,
+)
+from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
+
 from services.retrieval.planner_retrieval_service import PlannerRetrievalService
 from services.retrieval.retrieval_runtime_mapper import RetrievalRuntimeMapper
 from services.retrieval.memory_aware_retrieval_pipeline import MemoryAwareRetrievalPipeline
@@ -30,6 +38,14 @@ class InterviewOrchestrator:
         self._retrieval_pipeline = MemoryAwareRetrievalPipeline(
             memory=self._retrieval_memory,
         )
+
+        # Legacy dependencies kept available during Phase 2B.
+        self._legacy_planner_retrieval_service = PlannerRetrievalService()
+        self._legacy_retrieval_runtime_mapper = RetrievalRuntimeMapper()
+
+        self._intent_adapter = OrchestrationIntentAdapter()
+        self._question_retrieval_runtime = QuestionRetrievalRuntime()
+        self._retrieval_candidate_mapper = RetrievalCandidateMapper()
 
     # =====================================================
     # PUBLIC
@@ -58,34 +74,21 @@ class InterviewOrchestrator:
         # RUNTIME RETRIEVAL
         # -------------------------------------------------
 
-        retrieval_service = PlannerRetrievalService()
-
-        symbolic_results = retrieval_service.retrieve_candidates(
+        context = self._intent_adapter.adapt(
             intent=intent,
-            corpus_path="datasets/curated/tech_interview_handbook.json",
+            role=role,
+            target_area=self._resolve_target_area(
+                role=role,
+            ),
         )
 
-        retrieval_results = self._retrieval_pipeline.process(
-            results=symbolic_results,
+        retrieved_candidates = self._question_retrieval_runtime.retrieve_questions(
+            query=intent.query_text,
+            context=context,
         )
 
-        # -------------------------------------------------
-        # RETRIEVED NORMALIZED RECORDS
-        # -------------------------------------------------
-
-        retrieved_records = [
-            result.symbolic_result.record
-            for result in retrieval_results
-        ]
-
-        # -------------------------------------------------
-        # RUNTIME ITEM MAPPING
-        # -------------------------------------------------
-
-        mapper = RetrievalRuntimeMapper()
-
-        retrieved_questions = mapper.map(
-            records=retrieved_records,
+        retrieved_questions = self._retrieval_candidate_mapper.map(
+            candidates=retrieved_candidates,
         )
 
         # -------------------------------------------------
@@ -160,4 +163,22 @@ class InterviewOrchestrator:
             validation_result=replanning_result.final_validation_result,
             replanning_result=replanning_result,
             assembly_result=assembly_result,
+        )
+
+    def _resolve_target_area(
+        self,
+        role: RoleType,
+    ) -> str:
+
+        role_to_area = {
+            RoleType.BACKEND_ENGINEER: "technical_case_study",
+            RoleType.DEVOPS_ENGINEER: "technical_technical_knowledge",
+            RoleType.DATA_ENGINEER: "technical_database",
+            RoleType.FRONTEND_ENGINEER: "technical_technical_knowledge",
+            RoleType.FULLSTACK_ENGINEER: "technical_case_study",
+        }
+
+        return role_to_area.get(
+            role,
+            "technical_technical_knowledge",
         )
