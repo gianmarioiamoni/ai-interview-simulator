@@ -7,6 +7,7 @@ from infrastructure.embeddings.embedding_factory import get_embedding_model
 from services.question_corpus.contracts.retrieval_document import RetrievalDocument
 from services.question_corpus.repositories.retrieval_embedding_repository import RetrievalEmbeddingRepository
 
+
 class RetrievalDocumentBuilder:
 
     def __init__(
@@ -29,7 +30,11 @@ class RetrievalDocumentBuilder:
         question: CuratedQuestion,
     ) -> RetrievalDocument:
 
-        retrieval_text = self._build_retrieval_text(
+        display_text = self._build_display_text(
+            question,
+        )
+
+        embedding_text = self._build_embedding_text(
             question,
         )
 
@@ -40,7 +45,7 @@ class RetrievalDocumentBuilder:
         else:
 
             embedding = self._embedding_model.embed_query(
-                retrieval_text,
+                embedding_text,
             )
 
             RetrievalEmbeddingRepository.store(
@@ -54,7 +59,7 @@ class RetrievalDocumentBuilder:
 
         return RetrievalDocument(
             document_id=question.id,
-            text=retrieval_text,
+            text=display_text,
             metadata=metadata,
             embedding=embedding,
         )
@@ -63,7 +68,14 @@ class RetrievalDocumentBuilder:
     # INTERNALS
     # =====================================================
 
-    def _build_retrieval_text(
+    def _build_display_text(
+        self,
+        question: CuratedQuestion,
+    ) -> str:
+
+        return question.question.strip()
+
+    def _build_embedding_text(
         self,
         question: CuratedQuestion,
     ) -> str:
