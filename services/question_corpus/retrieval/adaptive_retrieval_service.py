@@ -3,8 +3,14 @@
 # Internal implementation detail. External callers must use
 # QuestionRetrievalRuntime instead of importing this module directly.
 
-from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
+from services.question_corpus.contracts.adaptive_retrieval_context import (
+    AdaptiveRetrievalContext,
+)
+from services.question_corpus.contracts.interview_retrieval_memory import (
+    InterviewRetrievalMemory,
+)
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
+from services.question_corpus.contracts.retrieval_filters import RetrievalFilters
 from services.question_corpus.retrieval.chroma_retrieval_service import ChromaRetrievalService
 from services.question_corpus.retrieval.adaptive_retrieval_policy import AdaptiveRetrievalPolicy
 from services.question_corpus.retrieval.coverage_penalty_engine import CoveragePenaltyEngine
@@ -20,17 +26,34 @@ class AdaptiveRetrievalService:
 
     def __init__(
         self,
+        retrieval: ChromaRetrievalService | None = None,
+        policy: AdaptiveRetrievalPolicy | None = None,
+        coverage_engine: CoveragePenaltyEngine | None = None,
+        weak_domain_engine: WeakDomainBoostEngine | None = None,
+        repetition_filter: QuestionRepetitionFilter | None = None,
     ) -> None:
 
-        self._retrieval = ChromaRetrievalService()
+        self._retrieval = (
+            retrieval if retrieval is not None else ChromaRetrievalService()
+        )
 
-        self._policy = AdaptiveRetrievalPolicy()
+        self._policy = policy if policy is not None else AdaptiveRetrievalPolicy()
 
-        self._coverage_engine = CoveragePenaltyEngine()
+        self._coverage_engine = (
+            coverage_engine if coverage_engine is not None else CoveragePenaltyEngine()
+        )
 
-        self._weak_domain_engine = WeakDomainBoostEngine()
+        self._weak_domain_engine = (
+            weak_domain_engine
+            if weak_domain_engine is not None
+            else WeakDomainBoostEngine()
+        )
 
-        self._repetition_filter = QuestionRepetitionFilter()
+        self._repetition_filter = (
+            repetition_filter
+            if repetition_filter is not None
+            else QuestionRepetitionFilter()
+        )
 
     # =====================================================
     # PUBLIC
@@ -42,61 +65,31 @@ class AdaptiveRetrievalService:
         context: AdaptiveRetrievalContext,
     ) -> list[RetrievalCandidate]:
 
-        filters = self._policy.build_filters(
+        filter_stages = self._policy.build_relaxation_stages(
             context,
         )
 
-        candidates = self._retrieval.search_with_filters(
+        fetch_k = context.target_question_count * 3
+
+        candidates = self._retrieve_with_staged_filters(
             query=query,
-            filters=filters,
-            k=context.target_question_count * 3,
-        )
-
-        print("\nAFTER RETRIEVAL\n")
-
-        for c in candidates:
-
-            print(c.document.metadata.get("document_id"))
-
-        candidates = self._repetition_filter.apply(
-            candidates=candidates,
+            filter_stages=filter_stages,
+            fetch_k=fetch_k,
             memory=context.memory,
         )
 
-        print("\nAFTER REPETITION FILTER\n")
-
-        for c in candidates:
-
-            print(c.document.metadata.get("document_id"))
-
         if not candidates:
-
-            candidates = self._retrieval.search(
-                query=query,
-                k=context.target_question_count * 5,
-            )
+            return []
 
         adjusted = self._coverage_engine.apply(
             candidates=candidates,
             context=context,
         )
 
-        print("\nAFTER COVERAGE PENALTY\n")
-
-        for c in adjusted:
-
-            print(c.document.metadata.get("document_id"))
-
         adjusted = self._weak_domain_engine.apply(
             candidates=adjusted,
             context=context,
         )
-
-        print("\nAFTER WEAK DOMAIN BOOST\n")
-
-        for c in adjusted:
-
-            print(c.document.metadata.get("document_id"))
 
         adjusted.sort(
             key=lambda c: c.adaptive_score,
@@ -104,3 +97,33 @@ class AdaptiveRetrievalService:
         )
 
         return adjusted[: context.target_question_count]
+
+    # =====================================================
+    # INTERNALS
+    # =====================================================
+
+    def _retrieve_with_staged_filters(
+        self,
+        query: str,
+        filter_stages: list[RetrievalFilters],
+        fetch_k: int,
+        memory: InterviewRetrievalMemory,
+    ) -> list[RetrievalCandidate]:
+
+        for stage_filters in filter_stages:
+
+            stage_candidates = self._retrieval.search_with_filters(
+                query=query,
+                filters=stage_filters,
+                k=fetch_k,
+            )
+
+            filtered = self._repetition_filter.apply(
+                candidates=stage_candidates,
+                memory=memory,
+            )
+
+            if filtered:
+                return filtered
+
+        return []
