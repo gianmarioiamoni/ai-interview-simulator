@@ -156,3 +156,33 @@ def test_map_one_fails_when_seniority_is_invalid() -> None:
 
     with pytest.raises(CorpusCandidateMappingError):
         mapper.map_one(candidate)
+
+
+def test_map_one_strips_legacy_metadata_lines_from_page_content() -> None:
+    mapper = RetrievalCandidateMapper()
+
+    legacy_page_content = (
+        "Explain CAP theorem.\n"
+        "Role: fullstack_engineer\n"
+        "Area: technical_technical_knowledge\n"
+        "Seniority: mid\n"
+        "Domains: technical_technical_knowledge\n"
+        "Topics: \n"
+    )
+
+    candidate = _build_candidate(page_content=legacy_page_content)
+
+    item = mapper.map_one(candidate)
+
+    assert item.text == "Explain CAP theorem."
+
+
+def test_map_one_leaves_clean_page_content_unchanged() -> None:
+    mapper = RetrievalCandidateMapper()
+    candidate = _build_candidate(
+        page_content="How would you design a distributed cache?",
+    )
+
+    item = mapper.map_one(candidate)
+
+    assert item.text == "How would you design a distributed cache?"

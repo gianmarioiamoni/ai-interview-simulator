@@ -99,3 +99,50 @@ def test_build_skip_embedding_does_not_call_embed(
 
     assert document.metadata["area"] == "technical_case_study"
     assert document.document_id == "test_doc_id_001"
+
+
+@patch(
+    "services.question_corpus.builders.retrieval_document_builder.get_embedding_model",
+)
+def test_build_display_text_is_question_only(
+    mock_get_embedding_model: MagicMock,
+) -> None:
+
+    mock_embedding_model = MagicMock()
+    mock_embedding_model.embed_query.return_value = [0.1]
+    mock_get_embedding_model.return_value = mock_embedding_model
+
+    question = _build_question()
+    builder = RetrievalDocumentBuilder(skip_embedding=False)
+
+    document = builder.build(question)
+
+    assert document.text == question.question
+    assert "Role:" not in document.text
+    assert "Area:" not in document.text
+
+
+@patch(
+    "services.question_corpus.builders.retrieval_document_builder.get_embedding_model",
+)
+def test_build_embedding_text_contains_metadata(
+    mock_get_embedding_model: MagicMock,
+) -> None:
+
+    mock_embedding_model = MagicMock()
+    mock_embedding_model.embed_query.return_value = [0.1]
+    mock_get_embedding_model.return_value = mock_embedding_model
+
+    question = _build_question()
+    builder = RetrievalDocumentBuilder(skip_embedding=False)
+
+    builder.build(question)
+
+    embedding_input = mock_embedding_model.embed_query.call_args[0][0]
+
+    assert question.question in embedding_input
+    assert f"Role: {question.role.value}" in embedding_input
+    assert f"Area: {question.area.value}" in embedding_input
+    assert f"Seniority: {question.seniority.value}" in embedding_input
+    assert "Domains: technical_case_study" in embedding_input
+    assert "Topics: rate limiting" in embedding_input

@@ -23,6 +23,22 @@ UNAVAILABLE_INDEX_INGESTION_TIMESTAMP_SENTINEL = datetime(
 
 CORPUS_INDEX_DATASET_VERSION = "corpus_index_unversioned"
 
+LEGACY_PAGE_CONTENT_MARKERS = (
+    "Role:",
+    "Area:",
+    "Seniority:",
+    "Domains:",
+    "Topics:",
+)
+
+LEGACY_METADATA_LINE_PREFIXES = (
+    "Role:",
+    "Area:",
+    "Seniority:",
+    "Domains:",
+    "Topics:",
+)
+
 
 class CorpusCandidateMappingError(ValueError):
     pass
@@ -48,7 +64,9 @@ class RetrievalCandidateMapper:
 
         metadata = candidate.document.metadata
 
-        text = candidate.document.page_content
+        text = self._clean_page_content(
+            candidate.document.page_content,
+        )
 
         if not text or not text.strip():
             raise CorpusCandidateMappingError("Empty candidate page_content.")
@@ -152,6 +170,32 @@ class RetrievalCandidateMapper:
     # =====================================================
     # INTERNALS
     # =====================================================
+
+    def _clean_page_content(
+        self,
+        page_content: str,
+    ) -> str:
+
+        if not any(
+            marker in page_content for marker in LEGACY_PAGE_CONTENT_MARKERS
+        ):
+            return page_content.strip()
+
+        cleaned_lines: list[str] = []
+
+        for line in page_content.splitlines():
+
+            stripped = line.strip()
+
+            if any(
+                stripped.startswith(prefix)
+                for prefix in LEGACY_METADATA_LINE_PREFIXES
+            ):
+                continue
+
+            cleaned_lines.append(line)
+
+        return "\n".join(cleaned_lines).strip()
 
     def _required_str(
         self,

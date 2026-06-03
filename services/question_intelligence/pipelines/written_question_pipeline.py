@@ -214,6 +214,7 @@ class WrittenQuestionPipeline:
             type=QuestionType.WRITTEN,
             prompt=item.text,
             difficulty=self._map_difficulty(item.difficulty),
+            provenance=item.provenance,
         )
 
     def _map_generated_question(
