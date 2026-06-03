@@ -31,10 +31,10 @@ from services.question_intelligence.question_retrieval_service import (
 )
 from services.question_intelligence.question_vector_store import QuestionVectorStore
 from services.question_intelligence.sql_question_generator import SQLQuestionGenerator
-from services.question_intelligence.coding_question_generator import (
-    CodingQuestionGenerator,
-)
-from app.settings.constants import QUESTIONS_PER_AREA
+
+QUESTIONS_PER_AREA = 1
+
+LEGACY_PROMPT_MARKERS = ("Role:", "Area:", "Seniority:", "Domains:", "Topics:")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CORPUS_ROOTS = [
@@ -97,63 +97,6 @@ def format_memory(memory: InterviewRetrievalMemory) -> str:
         f"covered_domains={memory.covered_domains} "
         f"difficulty_history={memory.difficulty_history}"
     )
-
-
-def resolve_origin(
-    question,
-    memory_before: InterviewRetrievalMemory,
-    memory_after: InterviewRetrievalMemory,
-    corpus_index: dict[str, dict],
-) -> tuple[str, str | None, float | None, str | None, str]:
-
-    new_ids = [
-        qid
-        for qid in memory_after.asked_question_ids
-        if qid not in memory_before.asked_question_ids
-    ]
-
-    provenance = question.provenance
-
-    if provenance is not None:
-        corpus_id = new_ids[-1] if new_ids else None
-        entry = corpus_index.get(corpus_id) if corpus_id else None
-        seed = entry.get("question", "")[:80] if entry else ""
-
-        return (
-            provenance.origin_type.value.upper(),
-            provenance.source_name,
-            provenance.retrieval_score,
-            corpus_id,
-            seed,
-        )
-
-    if new_ids:
-        doc_id = new_ids[-1]
-        entry = corpus_index.get(doc_id, {})
-
-        return (
-            QuestionOriginType.RETRIEVAL.value.upper(),
-            entry.get("source"),
-            None,
-            doc_id,
-            (entry.get("question") or "")[:80],
-        )
-
-    prompt_key = question.prompt.split("\n")[0].strip().lower()
-
-    for doc_id, entry in corpus_index.items():
-        corpus_q = (entry.get("question") or "").strip().lower()
-
-        if corpus_q and (corpus_q in prompt_key or prompt_key.startswith(corpus_q)):
-            return (
-                QuestionOriginType.RETRIEVAL.value.upper(),
-                entry.get("source"),
-                None,
-                doc_id,
-                entry.get("question", "")[:80],
-            )
-
-    return "GENERATED", None, None, None, ""
 
 
 def question_type_label(question) -> str:
@@ -220,47 +163,60 @@ def main() -> None:
 
         for idx, question in enumerate(questions, start=1):
 
-            origin, source, score, corpus_id, corpus_seed = resolve_origin(
-                question,
-                memory_before,
-                memory,
-                corpus_index,
+            provenance = question.provenance
+            origin_type = (
+                provenance.origin_type.value if provenance else "n/a"
+            )
+            source_name = provenance.source_name if provenance else "n/a"
+            retrieval_score = (
+                provenance.retrieval_score if provenance else None
+            )
+            generated_by_model = (
+                provenance.generated_by_model if provenance else None
             )
 
-            if origin == QuestionOriginType.RETRIEVAL.value.upper():
+            if provenance and provenance.origin_type == QuestionOriginType.RETRIEVAL:
                 retrieval_count += 1
-            else:
+            elif provenance is None:
                 generated_count += 1
+            else:
+                retrieval_count += 1
 
-            score_str = f"{score:.3f}" if score is not None else "n/a"
-
-            prompt_preview = question.prompt.replace("\n", " ")
-            if len(prompt_preview) > 120:
-                prompt_preview = prompt_preview[:117] + "..."
+            leaked = [
+                marker
+                for marker in LEGACY_PROMPT_MARKERS
+                if marker in question.prompt
+            ]
 
             print()
             print(f"  Question {idx} [{question_type_label(question)}]")
-            print(f"    Prompt: {prompt_preview}")
-            print(f"    Origin: {origin}")
-            print(f"    Corpus source: {source or 'n/a'}")
-            print(f"    Corpus document_id: {corpus_id or 'n/a'}")
-            if corpus_seed:
-                print(f"    Corpus seed: {corpus_seed}")
-            print(f"    Retrieval score: {score_str}")
-
-            if question.provenance and question.provenance.generated_by_model:
-                print(
-                    f"    Enrichment model: {question.provenance.generated_by_model}",
-                )
+            print(f"    area: {question.area.value}")
+            print(f"    prompt: {question.prompt}")
+            print(f"    provenance.origin_type: {origin_type}")
+            print(f"    provenance.source_name: {source_name}")
+            score_str = (
+                f"{retrieval_score:.3f}"
+                if retrieval_score is not None
+                else "n/a"
+            )
+            print(f"    provenance.retrieval_score: {score_str}")
+            print(
+                f"    generated_by_model: "
+                f"{generated_by_model or 'n/a'}"
+            )
+            print(
+                f"    metadata_leak: "
+                f"{', '.join(leaked) if leaked else 'none'}"
+            )
 
             if question.type == QuestionType.CODING and question.coding_spec:
                 print(
-                    f"    Coding entrypoint: {question.coding_spec.entrypoint} "
-                    f"tests={len(question.visible_tests)}",
+                    f"    coding_entrypoint: {question.coding_spec.entrypoint} "
+                    f"visible_tests={len(question.visible_tests)}"
                 )
 
             if question.type == QuestionType.DATABASE:
-                print(f"    SQL test cases: {len(question.sql_test_cases)}")
+                print(f"    sql_test_cases: {len(question.sql_test_cases)}")
 
         print()
         print(f"  Memory after area: {format_memory(memory)}")
@@ -268,8 +224,8 @@ def main() -> None:
     print()
     print("=" * 80)
     print("SUMMARY")
-    print(f"  Retrieval-sourced questions: {retrieval_count}")
-    print(f"  Generated (no retrieval provenance): {generated_count}")
+    print(f"  Questions with RETRIEVAL provenance: {retrieval_count}")
+    print(f"  Questions with no provenance (LLM fallback): {generated_count}")
     print(f"  Final memory asked_ids ({len(memory.asked_question_ids)}): ")
     print(f"    {memory.asked_question_ids}")
     print("=" * 80)
