@@ -27,6 +27,45 @@ class AdaptiveRetrievalPolicy:
             ),
         )
 
+    def build_relaxation_stages(
+        self,
+        context: AdaptiveRetrievalContext,
+    ) -> list[RetrievalFilters]:
+
+        min_difficulty = self._min_difficulty(
+            context,
+        )
+
+        max_difficulty = self._max_difficulty(
+            context,
+        )
+
+        target_area = context.target_area
+
+        return [
+            RetrievalFilters(
+                role=context.current_role,
+                seniority=context.seniority,
+                area=target_area,
+                min_difficulty=min_difficulty,
+                max_difficulty=max_difficulty,
+            ),
+            RetrievalFilters(
+                seniority=context.seniority,
+                area=target_area,
+                min_difficulty=min_difficulty,
+                max_difficulty=max_difficulty,
+            ),
+            RetrievalFilters(
+                area=target_area,
+                min_difficulty=min_difficulty,
+                max_difficulty=max_difficulty,
+            ),
+            RetrievalFilters(
+                area=target_area,
+            ),
+        ]
+
     # =====================================================
     # INTERNALS
     # =====================================================
