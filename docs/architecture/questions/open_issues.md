@@ -82,6 +82,3 @@ write a query...
 
 Quindi io la considererei una soluzione temporanea.
 
-Non la toccherei ora.
-
-Ma la segnerei come debito tecnico.

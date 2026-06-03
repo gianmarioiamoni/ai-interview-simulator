@@ -6,7 +6,6 @@ from typing import List
 
 from domain.contracts.question.question import (
     Question,
-    QuestionType,
 )
 
 from domain.contracts.interview.interview_area import (
@@ -79,6 +78,7 @@ class AreaQuestionBuilder:
             generator=generator,
         )
         self._coding_pipeline = CodingQuestionPipeline(
+            retrieval_service=retrieval_service,
             coding_generator=coding_generator,
         )
         self._sql_pipeline = SQLQuestionPipeline(
@@ -111,9 +111,11 @@ class AreaQuestionBuilder:
             return self._coding_pipeline.build(
                 role=role,
                 level=level,
+                interview_type=interview_type,
                 area=area,
                 questions_per_area=questions_per_area,
-            ), session_memory
+                memory=session_memory,
+            )
 
         # -------------------------------------------------
         # SQL
