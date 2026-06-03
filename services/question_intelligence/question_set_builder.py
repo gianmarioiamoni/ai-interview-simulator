@@ -19,6 +19,10 @@ from services.question_intelligence.quality.question_set_quality_analyzer import
     QuestionSetQualityAnalyzer,
 )
 
+from services.question_corpus.contracts.interview_retrieval_memory import (
+    InterviewRetrievalMemory,
+)
+
 from app.settings.constants import QUESTIONS_PER_AREA
 
 from app.core.logger import get_logger
@@ -54,6 +58,8 @@ class QuestionSetBuilder:
 
         all_questions: List[Question] = []
 
+        retrieval_memory = InterviewRetrievalMemory()
+
         # -----------------------------------------------------
         # INITIAL GENERATION
         # -----------------------------------------------------
@@ -62,12 +68,13 @@ class QuestionSetBuilder:
 
         for area in shuffled_areas:
 
-            area_questions = self._area_builder.build(
+            area_questions, retrieval_memory = self._area_builder.build(
                 role=role,
                 level=level,
                 interview_type=interview_type,
                 area=area,
                 questions_per_area=questions_per_area,
+                memory=retrieval_memory,
             )
 
             if len(area_questions) < questions_per_area:
@@ -105,12 +112,13 @@ class QuestionSetBuilder:
                 if missing <= 0:
                     break
 
-                new_questions = self._area_builder.build(
+                new_questions, retrieval_memory = self._area_builder.build(
                     role=role,
                     level=level,
                     interview_type=interview_type,
                     area=area,
                     questions_per_area=1,
+                    memory=retrieval_memory,
                 )
 
                 all_questions.extend(new_questions)

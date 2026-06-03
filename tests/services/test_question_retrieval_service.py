@@ -83,6 +83,7 @@ def test_retrieve_delegates_to_runtime_and_mapper() -> None:
         level="mid",
         interview_type="technical",
         area="technical_case_study",
+        memory=None,
     )
     runtime.retrieve_questions.assert_called_once_with(
         query="distributed cache",

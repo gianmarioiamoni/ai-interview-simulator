@@ -49,6 +49,10 @@ from services.question_intelligence.pipelines.sql_question_pipeline import (
     SQLQuestionPipeline,
 )
 
+from services.question_corpus.contracts.interview_retrieval_memory import (
+    InterviewRetrievalMemory,
+)
+
 from app.settings.constants import QUESTIONS_PER_AREA
 
 from app.core.logger import get_logger
@@ -78,6 +82,7 @@ class AreaQuestionBuilder:
             coding_generator=coding_generator,
         )
         self._sql_pipeline = SQLQuestionPipeline(
+            retrieval_service=retrieval_service,
             sql_generator=sql_generator,
         )
     # =====================================================
@@ -91,7 +96,12 @@ class AreaQuestionBuilder:
         interview_type: InterviewType,
         area: InterviewArea,
         questions_per_area: int = QUESTIONS_PER_AREA,
-    ) -> List[Question]:
+        memory: InterviewRetrievalMemory | None = None,
+    ) -> tuple[List[Question], InterviewRetrievalMemory]:
+
+        session_memory = (
+            memory if memory is not None else InterviewRetrievalMemory()
+        )
 
         # -------------------------------------------------
         # CODING
@@ -103,7 +113,7 @@ class AreaQuestionBuilder:
                 level=level,
                 area=area,
                 questions_per_area=questions_per_area,
-            )
+            ), session_memory
 
         # -------------------------------------------------
         # SQL
@@ -113,8 +123,10 @@ class AreaQuestionBuilder:
             return self._sql_pipeline.build(
                 role=role,
                 level=level,
+                interview_type=interview_type,
                 area=area,
                 questions_per_area=questions_per_area,
+                memory=session_memory,
             )
 
         # -------------------------------------------------
@@ -127,6 +139,7 @@ class AreaQuestionBuilder:
             interview_type=interview_type,
             area=area,
             questions_per_area=questions_per_area,
+            memory=session_memory,
         )
 
 

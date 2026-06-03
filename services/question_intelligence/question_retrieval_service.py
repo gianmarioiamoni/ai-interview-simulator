@@ -23,6 +23,9 @@ from services.question_intelligence.retrieval.retrieval_strategy import Retrieva
 from services.question_corpus.mappers.retrieval_candidate_mapper import (
     RetrievalCandidateMapper,
 )
+from services.question_corpus.contracts.interview_retrieval_memory import (
+    InterviewRetrievalMemory,
+)
 from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
 from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
 
@@ -70,6 +73,7 @@ class QuestionRetrievalService:
         level: Optional[str] = None,
         interview_type: Optional[str] = None,
         area: Optional[str] = None,
+        memory: InterviewRetrievalMemory | None = None,
     ) -> List[QuestionBankItem]:
 
         context = self._context_adapter.adapt(
@@ -79,6 +83,7 @@ class QuestionRetrievalService:
             level=level,
             interview_type=interview_type,
             area=area,
+            memory=memory,
         )
 
         candidates = self._question_retrieval_runtime.retrieve_questions(

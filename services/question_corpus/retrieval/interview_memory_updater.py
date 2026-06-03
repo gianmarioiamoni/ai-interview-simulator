@@ -1,5 +1,7 @@
 # services/question_corpus/retrieval/interview_memory_updater.py
 
+from domain.contracts.question.question_bank_item import QuestionBankItem
+
 from services.question_corpus.contracts.interview_retrieval_memory import InterviewRetrievalMemory
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
 
@@ -9,6 +11,43 @@ class InterviewMemoryUpdater:
     # =====================================================
     # PUBLIC
     # =====================================================
+
+    def record_bank_item_selection(
+        self,
+        memory: InterviewRetrievalMemory,
+        item: QuestionBankItem,
+    ) -> InterviewRetrievalMemory:
+
+        question_id = item.id.strip()
+
+        if not question_id or question_id in memory.asked_question_ids:
+            return memory
+
+        domains = [item.area.value]
+
+        return InterviewRetrievalMemory(
+            asked_question_ids=[
+                *memory.asked_question_ids,
+                question_id,
+            ],
+            covered_domains=list(
+                set(
+                    memory.covered_domains + domains,
+                ),
+            ),
+            weak_domains=list(
+                memory.weak_domains,
+            ),
+            strong_domains=list(
+                memory.strong_domains,
+            ),
+            difficulty_history=[
+                *memory.difficulty_history,
+                item.difficulty,
+            ],
+            average_score=memory.average_score,
+            question_count=memory.question_count,
+        )
 
     def update(
         self,
