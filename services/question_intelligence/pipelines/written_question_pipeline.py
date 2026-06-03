@@ -50,6 +50,13 @@ from services.question_intelligence.retrieval.retrieval_strategy_resolver import
     RetrievalStrategyResolver,
 )
 
+from services.question_corpus.contracts.interview_retrieval_memory import (
+    InterviewRetrievalMemory,
+)
+from services.question_corpus.retrieval.interview_memory_updater import (
+    InterviewMemoryUpdater,
+)
+
 from app.settings.constants import (
     QUESTIONS_PER_AREA,
 )
@@ -70,6 +77,8 @@ class WrittenQuestionPipeline:
 
         self._retrieval_strategy_resolver = RetrievalStrategyResolver()
 
+        self._memory_updater = InterviewMemoryUpdater()
+
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -81,9 +90,16 @@ class WrittenQuestionPipeline:
         interview_type: InterviewType,
         area: InterviewArea,
         questions_per_area: int = QUESTIONS_PER_AREA,
-    ) -> List[Question]:
+        memory: InterviewRetrievalMemory | None = None,
+    ) -> tuple[List[Question], InterviewRetrievalMemory]:
+
+        session_memory = (
+            memory if memory is not None else InterviewRetrievalMemory()
+        )
 
         questions: List[Question] = []
+
+        retrieved_pairs: list[tuple[QuestionBankItem, Question]] = []
 
         # -------------------------------------------------
         # QUERY
@@ -116,10 +132,22 @@ class WrittenQuestionPipeline:
             level=level.value,
             interview_type=interview_type.value,
             area=area.value,
+            memory=session_memory,
         )
 
         for item in retrieved:
-            questions.append(self._map_bank_item(item))
+
+            mapped = self._map_bank_item(
+                item,
+            )
+
+            retrieved_pairs.append(
+                (item, mapped),
+            )
+
+            questions.append(
+                mapped,
+            )
 
         # -------------------------------------------------
         # GENERATION
@@ -150,10 +178,26 @@ class WrittenQuestionPipeline:
         # BALANCING
         # -------------------------------------------------
 
-        return self._select_by_difficulty(
+        selected = self._select_by_difficulty(
             questions=questions,
             total=questions_per_area,
         )
+
+        selected_prompts = {
+            question.prompt for question in selected
+        }
+
+        for bank_item, mapped_question in retrieved_pairs:
+
+            if mapped_question.prompt not in selected_prompts:
+                continue
+
+            session_memory = self._memory_updater.record_bank_item_selection(
+                memory=session_memory,
+                item=bank_item,
+            )
+
+        return selected, session_memory
 
     # =====================================================
     # MAPPERS

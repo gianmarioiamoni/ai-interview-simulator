@@ -1,14 +1,26 @@
 # services/question_intelligence/pipelines/sql_question_pipeline.py
 
-
+import re
 from typing import List
 
 from domain.contracts.question.question import (
     Question,
 )
+from domain.contracts.question.question_bank_item import (
+    QuestionBankItem,
+)
+from domain.contracts.question.question_origin_type import (
+    QuestionOriginType,
+)
+from domain.contracts.question.question_provenance import (
+    QuestionProvenance,
+)
 
 from domain.contracts.interview.interview_area import (
     InterviewArea,
+)
+from domain.contracts.interview.interview_type import (
+    InterviewType,
 )
 
 from domain.contracts.user.role import RoleType
@@ -21,19 +33,48 @@ from services.question_intelligence.sql_question_generator import (
     SQLQuestionGenerator,
 )
 
+from services.question_intelligence.question_retrieval_service import (
+    QuestionRetrievalService,
+)
+
+from services.question_intelligence.retrieval_query_builder import (
+    RetrievalQueryBuilder,
+)
+
+from services.question_intelligence.retrieval.retrieval_strategy_resolver import (
+    RetrievalStrategyResolver,
+)
+
+from services.question_corpus.contracts.interview_retrieval_memory import (
+    InterviewRetrievalMemory,
+)
+from services.question_corpus.retrieval.interview_memory_updater import (
+    InterviewMemoryUpdater,
+)
+
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
+
+_ACTIONABLE_SQL_PATTERN = re.compile(
+    r"\b(write|query|select|join|aggregate|count|group\s+by|where)\b",
+    re.IGNORECASE,
+)
 
 
 class SQLQuestionPipeline:
 
     def __init__(
         self,
+        retrieval_service: QuestionRetrievalService,
         sql_generator: SQLQuestionGenerator,
     ) -> None:
 
+        self._retrieval_service = retrieval_service
         self._sql_generator = sql_generator
+        self._retrieval_query_builder = RetrievalQueryBuilder()
+        self._retrieval_strategy_resolver = RetrievalStrategyResolver()
+        self._memory_updater = InterviewMemoryUpdater()
 
     # =====================================================
     # PUBLIC
@@ -43,15 +84,78 @@ class SQLQuestionPipeline:
         self,
         role: RoleType,
         level: SeniorityLevel,
+        interview_type: InterviewType,
         area: InterviewArea,
         questions_per_area: int,
-    ) -> List[Question]:
+        memory: InterviewRetrievalMemory | None = None,
+    ) -> tuple[List[Question], InterviewRetrievalMemory]:
 
-        questions = self._sql_generator.generate(
+        session_memory = (
+            memory if memory is not None else InterviewRetrievalMemory()
+        )
+
+        questions: List[Question] = []
+        enriched_pairs: list[tuple[QuestionBankItem, Question]] = []
+
+        retrieval_query = self._retrieval_query_builder.build(
             role=role,
             level=level,
-            n=questions_per_area,
+            area=area,
         )
+
+        retrieval_strategy = self._retrieval_strategy_resolver.resolve(
+            area=area,
+            level=level,
+            questions_per_area=questions_per_area,
+        )
+
+        retrieved = self._retrieval_service.retrieve(
+            query=retrieval_query,
+            retrieval_strategy=retrieval_strategy,
+            role=role.value,
+            level=level.value,
+            interview_type=interview_type.value,
+            area=area.value,
+            memory=session_memory,
+        )
+
+        for item in retrieved:
+
+            if len(questions) >= questions_per_area:
+                break
+
+            if not self._is_actionable_sql_prompt(item.text):
+                logger.debug(
+                    f"[SQL] Skipping non-actionable retrieved prompt: {item.id}",
+                )
+                continue
+
+            provenance = self._build_enrichment_provenance(item)
+
+            enriched = self._sql_generator.enrich_from_prompt(
+                seed_prompt=item.text,
+                role=role,
+                level=level,
+                provenance=provenance,
+            )
+
+            if enriched is None:
+                continue
+
+            enriched_pairs.append((item, enriched))
+            questions.append(enriched)
+
+        remaining_slots = questions_per_area - len(questions)
+
+        if remaining_slots > 0:
+
+            generated = self._sql_generator.generate(
+                role=role,
+                level=level,
+                n=remaining_slots,
+            )
+
+            questions.extend(generated)
 
         if len(questions) < questions_per_area:
 
@@ -61,4 +165,61 @@ class SQLQuestionPipeline:
                 f"(expected {questions_per_area})"
             )
 
-        return questions
+        final_questions = questions[:questions_per_area]
+        final_prompts = {q.prompt for q in final_questions}
+
+        for bank_item, mapped_question in enriched_pairs:
+
+            if mapped_question.prompt not in final_prompts:
+                continue
+
+            session_memory = self._memory_updater.record_bank_item_selection(
+                memory=session_memory,
+                item=bank_item,
+            )
+
+        return final_questions, session_memory
+
+    # =====================================================
+    # INTERNALS
+    # =====================================================
+
+    def _is_actionable_sql_prompt(self, text: str) -> bool:
+
+        return bool(_ACTIONABLE_SQL_PATTERN.search(text))
+
+    def _build_enrichment_provenance(
+        self,
+        item: QuestionBankItem,
+    ) -> QuestionProvenance:
+
+        base = item.provenance
+
+        source_name = (
+            base.source_name
+            if base and base.source_name
+            else item.ingestion_metadata.source_name
+        )
+
+        source_type = (
+            base.source_type
+            if base and base.source_type
+            else item.ingestion_metadata.source_type
+        )
+
+        dataset_version = (
+            base.dataset_version
+            if base and base.dataset_version
+            else item.ingestion_metadata.dataset_version
+        )
+
+        retrieval_score = base.retrieval_score if base else None
+
+        return QuestionProvenance(
+            origin_type=QuestionOriginType.RETRIEVAL,
+            source_name=source_name,
+            source_type=source_type,
+            dataset_version=dataset_version,
+            retrieval_score=retrieval_score,
+            generated_by_model="sql_question_enrichment",
+        )

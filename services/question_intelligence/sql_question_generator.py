@@ -3,6 +3,7 @@
 import json
 import uuid
 from typing import List
+
 from pydantic import BaseModel, Field, ValidationError
 
 from domain.contracts.question.question import (
@@ -11,6 +12,7 @@ from domain.contracts.question.question import (
     QuestionDifficulty,
     SQLTestCase,
 )
+from domain.contracts.question.question_provenance import QuestionProvenance
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
@@ -62,7 +64,7 @@ class SQLQuestionGenerator:
 
         schema_summary = self._build_schema_summary()
 
-        prompt = self._build_prompt(
+        prompt = self._build_generation_prompt(
             role=role.value,
             level=level.value,
             n=n,
@@ -72,9 +74,70 @@ class SQLQuestionGenerator:
         response = self._llm.invoke(prompt)
 
         try:
-            raw_data = json.loads(response.content)
+            validated_items = self._parse_llm_response(response.content)
+        except ValueError as e:
+            raise ValueError(str(e)) from e
+
+        executable_items = self._filter_executable_items(validated_items)
+
+        return [
+            self._map_to_question(item)
+            for item in executable_items
+        ]
+
+    # -----------------------------------------------------
+
+    def enrich_from_prompt(
+        self,
+        seed_prompt: str,
+        role: RoleType,
+        level: SeniorityLevel,
+        provenance: QuestionProvenance | None = None,
+    ) -> Question | None:
+
+        schema_summary = self._build_schema_summary()
+
+        prompt = self._build_enrichment_prompt(
+            seed_prompt=seed_prompt,
+            role=role.value,
+            level=level.value,
+            schema_summary=schema_summary,
+        )
+
+        try:
+            response = self._llm.invoke(prompt)
+            validated_items = self._parse_llm_response(response.content)
+        except (ValueError, Exception) as e:
+            logger.warning(f"[SQL enrich] Failed to parse enrichment response: {e}")
+            return None
+
+        executable_items = self._filter_executable_items(validated_items)
+
+        if not executable_items:
+            logger.warning("[SQL enrich] No executable SQL after enrichment validation")
+            return None
+
+        return self._map_to_question(
+            executable_items[0],
+            provenance=provenance,
+        )
+
+    # =========================================================
+    # INTERNALS
+    # =========================================================
+
+    def _parse_llm_response(
+        self,
+        content: str,
+    ) -> List[GeneratedSQLQuestion]:
+
+        try:
+            raw_data = json.loads(content)
         except Exception as e:
-            raise ValueError(f"Invalid JSON from LLM: {e}")
+            raise ValueError(f"Invalid JSON from LLM: {e}") from e
+
+        if not isinstance(raw_data, list):
+            raise ValueError("LLM response must be a JSON array")
 
         validated_items: List[GeneratedSQLQuestion] = []
 
@@ -87,28 +150,30 @@ class SQLQuestionGenerator:
 
                 validated_items.append(validated)
 
-            except ValidationError as e:
-                raise ValueError(f"Invalid SQL question structure: {e}")
+            except (ValidationError, ValueError) as e:
+                raise ValueError(f"Invalid SQL question structure: {e}") from e
 
-        # --------------------------
-        # VALIDATE GENERATED QUERIES
-        # --------------------------
-        for item in validated_items:
+        return validated_items
 
+    def _filter_executable_items(
+        self,
+        items: List[GeneratedSQLQuestion],
+    ) -> List[GeneratedSQLQuestion]:
+
+        executable: List[GeneratedSQLQuestion] = []
+
+        for item in items:
             try:
                 conn = self._db.get_fresh_connection()
                 cursor = conn.cursor()
                 cursor.execute(item.reference_query)
+                for test_case in item.test_cases:
+                    cursor.execute(test_case.expected_query)
+                executable.append(item)
             except Exception as e:
                 logger.warning(f"Invalid generated SQL: {e}")
-                continue
 
-        
-        return [self._map_to_question(item) for item in validated_items]
-
-    # =========================================================
-    # INTERNALS
-    # =========================================================
+        return executable
 
     def _build_schema_summary(self) -> str:
         return """
@@ -121,7 +186,11 @@ class SQLQuestionGenerator:
 
     # -----------------------------------------------------
 
-    def _map_to_question(self, item: GeneratedSQLQuestion) -> Question:
+    def _map_to_question(
+        self,
+        item: GeneratedSQLQuestion,
+        provenance: QuestionProvenance | None = None,
+    ) -> Question:
 
         return Question(
             id=str(uuid.uuid4()),
@@ -131,14 +200,14 @@ class SQLQuestionGenerator:
             difficulty=QuestionDifficulty.MEDIUM,
             reference_solution=item.reference_query,
             expected_ordered=False,
-            # 🔥 CRITICAL: shared DB
             db_schema=self._db.get_schema_sql(),
             db_seed_data=self._db.get_seed_sql(),
+            provenance=provenance,
             sql_test_cases=[
                 SQLTestCase(
                     id=f"tc_{i}",
                     expected_query=tc.expected_query,
-                    ordered=False,
+                    ordered=tc.ordered,
                 )
                 for i, tc in enumerate(item.test_cases)
             ],
@@ -146,7 +215,7 @@ class SQLQuestionGenerator:
 
     # -----------------------------------------------------
 
-    def _build_prompt(
+    def _build_generation_prompt(
         self,
         role: str,
         level: str,
@@ -169,20 +238,7 @@ Each question MUST include:
 2. A correct reference SQL query
 3. At least 2 test cases (query variations)
 
-Return STRICT JSON array:
-
-[
-  {{
-    "prompt": "...",
-    "reference_query": "SELECT ...",
-    "test_cases": [
-      {{
-        "expected_query": "...",
-        "ordered": true
-      }}
-    ]
-  }}
-]
+{self._json_output_contract()}
 
 Rules:
 - Use ONLY tables and columns from the schema
@@ -210,4 +266,69 @@ Test cases:
   - aliases
   - ordering
 
+"""
+
+    def _build_enrichment_prompt(
+        self,
+        seed_prompt: str,
+        role: str,
+        level: str,
+        schema_summary: str,
+    ) -> str:
+
+        return f"""
+You are a senior SQL interviewer.
+
+Database schema:
+
+{schema_summary}
+
+Reframe the following interview question into ONE executable SQLite problem
+for a {level} {role} candidate.
+
+Seed question (conceptual — adapt to the schema above):
+{seed_prompt}
+
+Each output item MUST include:
+
+1. A clear and unambiguous problem description (rewritten for this schema only)
+2. A correct reference SQL query runnable on the schema
+3. At least 2 test cases (query variations)
+
+{self._json_output_contract()}
+
+Rules:
+- Use ONLY tables and columns from the schema
+- Use SQLite-compatible SQL (not PostgreSQL-specific syntax)
+- Queries MUST be executable on the provided schema and seed data
+- Do NOT reference tables outside: employees, departments, projects, employee_projects
+- Do NOT generate schema or data
+- No markdown
+- Only valid JSON
+- Return exactly 1 question in the array
+
+Test cases:
+- Must represent equivalent queries
+- Must return the SAME result as reference
+- Allowed variations: JOIN syntax, aliases, ordering
+
+"""
+
+    def _json_output_contract(self) -> str:
+
+        return """
+Return STRICT JSON array:
+
+[
+  {
+    "prompt": "...",
+    "reference_query": "SELECT ...",
+    "test_cases": [
+      {
+        "expected_query": "...",
+        "ordered": true
+      }
+    ]
+  }
+]
 """

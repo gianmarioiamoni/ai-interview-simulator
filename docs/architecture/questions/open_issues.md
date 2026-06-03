@@ -43,3 +43,45 @@ indexing
 query_optimization
 
 sono domains.
+
+
+TD-007
+Osservazione sul filtro "_ACTIONABLE_SQL_PATTERN"
+
+Qui farei attenzione.
+
+Attualmente:
+
+_ACTIONABLE_SQL_PATTERN
+
+cerca parole come:
+
+write
+query
+select
+join
+aggregate
+count
+group by
+where
+
+Funziona.
+
+Però rischia di escludere parecchie domande database utili.
+
+Esempio:
+
+What is the difference between a primary key and a unique index?
+
+verrebbe scartata.
+
+Mentre un LLM potrebbe tranquillamente trasformarla in:
+
+Using the employees table...
+write a query...
+
+Quindi io la considererei una soluzione temporanea.
+
+Non la toccherei ora.
+
+Ma la segnerei come debito tecnico.
