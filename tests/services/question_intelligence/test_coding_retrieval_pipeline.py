@@ -17,6 +17,7 @@ from services.question_corpus.contracts.interview_retrieval_memory import (
 from services.question_intelligence.coding_question_generator import (
     CodingQuestionGenerator,
     GeneratedCodingQuestion,
+    MAX_INVALID_JSON_ATTEMPTS,
 )
 from services.question_intelligence.pipelines.coding_question_pipeline import (
     CodingQuestionPipeline,
@@ -182,7 +183,7 @@ def test_enrich_from_prompt_success() -> None:
 
 def test_enrich_from_prompt_failure_returns_none() -> None:
 
-    llm = _mock_llm_with_responses(["not-json"])
+    llm = _mock_llm_with_responses(["not-json"] * MAX_INVALID_JSON_ATTEMPTS)
     generator = CodingQuestionGenerator(llm)
 
     enriched = generator.enrich_from_prompt(
@@ -192,6 +193,7 @@ def test_enrich_from_prompt_failure_returns_none() -> None:
     )
 
     assert enriched is None
+    assert llm.invoke.call_count == MAX_INVALID_JSON_ATTEMPTS
 
 
 def test_coding_pipeline_retrieval_and_enrichment_success() -> None:
@@ -231,10 +233,8 @@ def test_coding_pipeline_enrichment_failure_falls_back_to_generate() -> None:
     retrieval_service.retrieve.return_value = [_build_coding_bank_item()]
 
     llm = _mock_llm_with_responses(
-        [
-            "invalid-json",
-            GENERATED_FALLBACK_JSON,
-        ],
+        ["invalid-json"] * MAX_INVALID_JSON_ATTEMPTS
+        + [GENERATED_FALLBACK_JSON],
     )
 
     pipeline = CodingQuestionPipeline(
@@ -255,7 +255,7 @@ def test_coding_pipeline_enrichment_failure_falls_back_to_generate() -> None:
     assert questions[0].provenance is None
     _assert_coding_contract(questions[0])
 
-    assert llm.invoke.call_count == 2
+    assert llm.invoke.call_count == MAX_INVALID_JSON_ATTEMPTS + 1
     assert CORPUS_QUESTION_ID not in memory.asked_question_ids
 
 

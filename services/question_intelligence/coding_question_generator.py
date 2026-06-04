@@ -14,7 +14,13 @@ from app.ports.llm_port import LLMPort
 
 from app.core.logger import get_logger
 
+from services.question_intelligence.coding_llm_json_repair import repair_llm_json_text
+
 logger = get_logger(__name__)
+
+MAX_INVALID_JSON_ATTEMPTS = 3
+
+INVALID_JSON_PREFIX = "Invalid JSON from LLM:"
 
 
 # =========================================================
@@ -58,12 +64,18 @@ class CodingQuestionGenerator:
             n=n,
         )
 
-        response = self._llm.invoke(prompt)
+        parsed = self._invoke_parse_with_retry(
+            prompt=prompt,
+            log_prefix="[Coding generate]",
+        )
 
-        try:
-            return self._parse_llm_response(response.content)
-        except ValueError as e:
-            raise ValueError(str(e)) from e
+        if not parsed:
+            logger.warning(
+                "[Coding generate] No coding questions produced after parse/retry",
+            )
+            return []
+
+        return parsed
 
     # -----------------------------------------------------
 
@@ -83,32 +95,72 @@ class CodingQuestionGenerator:
             level=level.value,
         )
 
-        try:
-            response = self._llm.invoke(prompt)
-            validated_items = self._parse_llm_response(response.content)
-        except (ValueError, Exception) as e:
-            logger.warning(f"[Coding enrich] Failed to parse enrichment response: {e}")
+        parsed = self._invoke_parse_with_retry(
+            prompt=prompt,
+            log_prefix="[Coding enrich]",
+        )
+
+        if not parsed:
+            logger.warning(
+                "[Coding enrich] Failed to parse enrichment response after retry",
+            )
             return None
 
-        if not validated_items:
-            logger.warning("[Coding enrich] No coding questions after enrichment")
-            return None
-
-        return validated_items[0]
+        return parsed[0]
 
     # =========================================================
     # INTERNALS
     # =========================================================
+
+    def _invoke_parse_with_retry(
+        self,
+        prompt: str,
+        log_prefix: str,
+    ) -> List[GeneratedCodingQuestion]:
+
+        for attempt in range(1, MAX_INVALID_JSON_ATTEMPTS + 1):
+
+            response = self._llm.invoke(prompt)
+
+            try:
+                return self._parse_llm_response(response.content)
+
+            except ValueError as exc:
+
+                if _is_invalid_json_error(exc):
+
+                    if attempt < MAX_INVALID_JSON_ATTEMPTS:
+                        logger.warning(
+                            f"{log_prefix} Invalid JSON "
+                            f"(attempt {attempt}/{MAX_INVALID_JSON_ATTEMPTS}), "
+                            f"retrying: {exc}",
+                        )
+                        continue
+
+                    logger.warning(
+                        f"{log_prefix} Invalid JSON after "
+                        f"{MAX_INVALID_JSON_ATTEMPTS} attempts: {exc}",
+                    )
+                    return []
+
+                logger.warning(
+                    f"{log_prefix} Parse/validation failed (no retry): {exc}",
+                )
+                return []
+
+        return []
 
     def _parse_llm_response(
         self,
         content: str,
     ) -> List[GeneratedCodingQuestion]:
 
+        repaired = repair_llm_json_text(content)
+
         try:
-            raw_data = json.loads(content)
-        except Exception as e:
-            raise ValueError(f"Invalid JSON from LLM: {e}") from e
+            raw_data = json.loads(repaired)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{INVALID_JSON_PREFIX} {exc}") from exc
 
         if not isinstance(raw_data, list):
             raise ValueError("LLM response must be a JSON array")
@@ -120,12 +172,16 @@ class CodingQuestionGenerator:
                 validated = GeneratedCodingQuestion.model_validate(item)
 
                 if not validated.visible_tests:
-                    raise ValueError("Coding question must include at least one test case")
+                    raise ValueError(
+                        "Coding question must include at least one test case",
+                    )
 
                 validated_items.append(validated)
 
-            except (ValidationError, ValueError) as e:
-                raise ValueError(f"Invalid coding question structure: {e}") from e
+            except (ValidationError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid coding question structure: {exc}",
+                ) from exc
 
         return validated_items
 
@@ -156,6 +212,7 @@ Rules:
 - Avoid ambiguous descriptions
 - No markdown
 - Only valid JSON
+- Use JSON arrays only in visible_tests (no Python tuples)
 """
 
     def _build_enrichment_prompt(
@@ -191,6 +248,7 @@ Rules:
 - No markdown
 - Only valid JSON
 - Return exactly 1 question in the array
+- Use JSON arrays only in visible_tests (no Python tuples)
 
 """
 
@@ -218,3 +276,7 @@ Return STRICT JSON array:
   }
 ]
 """
+
+
+def _is_invalid_json_error(exc: ValueError) -> bool:
+    return str(exc).startswith(INVALID_JSON_PREFIX)
