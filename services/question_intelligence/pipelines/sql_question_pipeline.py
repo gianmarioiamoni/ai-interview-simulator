@@ -57,7 +57,10 @@ from app.core.logger import get_logger
 logger = get_logger(__name__)
 
 _ACTIONABLE_SQL_PATTERN = re.compile(
-    r"\b(write|query|select|join|aggregate|count|group\s+by|where)\b",
+    r"\b(write|query|select|join|aggregate|count|group\s+by|where|"
+    r"retrieve|fetch|find|list|filter|having|sum|avg|min|max|"
+    r"index|indexing|optimiz|optimization|normaliz|normalization|"
+    r"transaction|commit|rollback|isolation)\b",
     re.IGNORECASE,
 )
 

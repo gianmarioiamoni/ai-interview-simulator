@@ -268,7 +268,7 @@ def test_sql_pipeline_skips_non_actionable_retrieved_prompt() -> None:
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
     retrieval_service.retrieve.return_value = [
         _build_database_bank_item(
-            text="Explain the difference between a primary key and a unique index.",
+            text="What is a view in SQL?",
             question_id="theory-only-id",
         ),
     ]

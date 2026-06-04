@@ -25,6 +25,21 @@ from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+_SANDBOX_TABLES = (
+    "employees, departments, projects, employee_projects"
+)
+
+_SANDBOX_EXECUTION_RULES = f"""
+EXECUTION CONSTRAINTS (mandatory):
+- reference_query and every test case expected_query MUST be a single SELECT only
+- Use ONLY sandbox tables: {_SANDBOX_TABLES}
+- Use ONLY columns that exist on those tables in the provided schema
+- Use SQLite-compatible SQL (not PostgreSQL-specific syntax)
+- Do NOT use CREATE, ALTER, DROP, VIEW, TRIGGER, or any DDL
+- Do NOT use INSERT, UPDATE, DELETE, or multi-statement SQL (no semicolon-separated statements)
+- Do NOT invent tables, views, or column names
+"""
+
 
 # =========================================================
 # DTOs
@@ -249,14 +264,7 @@ Rules:
 - No markdown
 - Only valid JSON
 
-CRITICAL RULES:
-- You MUST use EXACT table names from schema
-- Do NOT invent tables
-- Do NOT rename tables
-- Do NOT singularize/pluralize table names
-- DO NOT assume columns
-- Use ONLY:
-  employees, departments, projects, employee_projects
+{_SANDBOX_EXECUTION_RULES}
 
 Test cases:
 - Must represent equivalent queries
@@ -298,14 +306,13 @@ Each output item MUST include:
 {self._json_output_contract()}
 
 Rules:
-- Use ONLY tables and columns from the schema
-- Use SQLite-compatible SQL (not PostgreSQL-specific syntax)
 - Queries MUST be executable on the provided schema and seed data
-- Do NOT reference tables outside: employees, departments, projects, employee_projects
 - Do NOT generate schema or data
 - No markdown
 - Only valid JSON
 - Return exactly 1 question in the array
+
+{_SANDBOX_EXECUTION_RULES}
 
 Test cases:
 - Must represent equivalent queries
