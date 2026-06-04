@@ -64,6 +64,8 @@ _ACTIONABLE_SQL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_SQL_CANDIDATE_SCAN_K = 10
+
 
 class SQLQuestionPipeline:
 
@@ -106,10 +108,15 @@ class SQLQuestionPipeline:
             area=area,
         )
 
+        candidate_scan_k = max(
+            questions_per_area,
+            _SQL_CANDIDATE_SCAN_K,
+        )
+
         retrieval_strategy = self._retrieval_strategy_resolver.resolve(
             area=area,
             level=level,
-            questions_per_area=questions_per_area,
+            questions_per_area=candidate_scan_k,
         )
 
         retrieved = self._retrieval_service.retrieve(
@@ -143,6 +150,9 @@ class SQLQuestionPipeline:
             )
 
             if enriched is None:
+                logger.debug(
+                    f"[SQL] Enrichment failed for actionable prompt: {item.id}",
+                )
                 continue
 
             enriched_pairs.append((item, enriched))

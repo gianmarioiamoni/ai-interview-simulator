@@ -1,0 +1,32 @@
+---
+description: Concise task-completion reports — structured output only, no narrative
+alwaysApply: true
+---
+
+# Concise Task Report
+
+When finishing implementation, fixes, audits, or multi-step work, return **only** this structure:
+
+1. **Modified files** — paths changed (brief list)
+2. **Test results** — pass/fail counts or key failures
+3. **Before/After metrics** — only when relevant (numbers, not prose)
+4. **Final outcome** — one or two sentences: done or blocked
+5. **Open issues** — bullets, or `None`
+
+## Do NOT include
+
+- Reasoning or thought process
+- Analysis walkthrough
+- Intermediate calculations
+- Large tables
+- Detailed code examples or long snippets
+
+## Length
+
+- Keep the full report **under 30 lines** whenever possible.
+- Prefer bullets over paragraphs.
+- Omit sections with nothing to report (e.g. skip metrics if N/A).
+
+## Exceptions
+
+- If the user explicitly asks for explanation, design rationale, or examples, provide that instead of this template for that reply.

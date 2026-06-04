@@ -263,12 +263,114 @@ def test_sql_pipeline_enrichment_failure_falls_back_to_generate() -> None:
     assert CORPUS_QUESTION_ID not in memory.asked_question_ids
 
 
-def test_sql_pipeline_skips_non_actionable_retrieved_prompt() -> None:
+def test_sql_pipeline_selects_first_actionable_candidate() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    retrieval_service.retrieve.return_value = [_build_database_bank_item()]
+
+    llm = _mock_llm_with_responses([ENRICHED_SQL_JSON])
+    pipeline = SQLQuestionPipeline(
+        retrieval_service=retrieval_service,
+        sql_generator=SQLQuestionGenerator(llm),
+    )
+
+    questions, memory = pipeline.build(
+        role=RoleType.BACKEND_ENGINEER,
+        level=SeniorityLevel.MID,
+        interview_type=InterviewType.TECHNICAL,
+        area=InterviewArea.TECH_DATABASE,
+        questions_per_area=1,
+    )
+
+    assert len(questions) == 1
+    assert questions[0].provenance is not None
+    assert CORPUS_QUESTION_ID in memory.asked_question_ids
+    llm.invoke.assert_called_once()
+
+
+def test_sql_pipeline_selects_second_when_first_non_actionable() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
     retrieval_service.retrieve.return_value = [
         _build_database_bank_item(
             text="What is a view in SQL?",
+            question_id="theory-only-id",
+        ),
+        _build_database_bank_item(
+            text=RETRIEVED_DATABASE_PROMPT,
+            question_id="actionable-second-id",
+        ),
+    ]
+
+    llm = _mock_llm_with_responses([ENRICHED_SQL_JSON])
+    pipeline = SQLQuestionPipeline(
+        retrieval_service=retrieval_service,
+        sql_generator=SQLQuestionGenerator(llm),
+    )
+
+    questions, memory = pipeline.build(
+        role=RoleType.BACKEND_ENGINEER,
+        level=SeniorityLevel.MID,
+        interview_type=InterviewType.TECHNICAL,
+        area=InterviewArea.TECH_DATABASE,
+        questions_per_area=1,
+    )
+
+    assert len(questions) == 1
+    assert questions[0].provenance is not None
+    assert "actionable-second-id" in memory.asked_question_ids
+    assert "theory-only-id" not in memory.asked_question_ids
+    llm.invoke.assert_called_once()
+
+
+def test_sql_pipeline_selects_second_when_first_enrichment_fails() -> None:
+
+    second_prompt = (
+        "Write a SQL query to list employees who are assigned to "
+        "more than one project using a join."
+    )
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    retrieval_service.retrieve.return_value = [
+        _build_database_bank_item(question_id="first-actionable-id"),
+        _build_database_bank_item(
+            text=second_prompt,
+            question_id="second-actionable-id",
+        ),
+    ]
+
+    llm = _mock_llm_with_responses(
+        [
+            "invalid-json",
+            ENRICHED_SQL_JSON,
+        ],
+    )
+    pipeline = SQLQuestionPipeline(
+        retrieval_service=retrieval_service,
+        sql_generator=SQLQuestionGenerator(llm),
+    )
+
+    questions, memory = pipeline.build(
+        role=RoleType.BACKEND_ENGINEER,
+        level=SeniorityLevel.MID,
+        interview_type=InterviewType.TECHNICAL,
+        area=InterviewArea.TECH_DATABASE,
+        questions_per_area=1,
+    )
+
+    assert len(questions) == 1
+    assert questions[0].provenance is not None
+    assert "second-actionable-id" in memory.asked_question_ids
+    assert "first-actionable-id" not in memory.asked_question_ids
+    assert llm.invoke.call_count == 2
+
+
+def test_sql_pipeline_skips_non_actionable_retrieved_prompt() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    retrieval_service.retrieve.return_value = [
+        _build_database_bank_item(
+            text="What is database replication?",
             question_id="theory-only-id",
         ),
     ]
@@ -296,6 +398,10 @@ def test_sql_pipeline_memory_update_only_for_enriched_selection() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
     retrieval_service.retrieve.return_value = [
+        _build_database_bank_item(
+            text="What is a view in SQL?",
+            question_id="skipped-id",
+        ),
         _build_database_bank_item(question_id="enriched-id"),
         _build_database_bank_item(
             text=(
@@ -322,6 +428,7 @@ def test_sql_pipeline_memory_update_only_for_enriched_selection() -> None:
 
     assert len(questions) == 1
     assert "enriched-id" in memory.asked_question_ids
+    assert "skipped-id" not in memory.asked_question_ids
     assert "overflow-id" not in memory.asked_question_ids
 
 
