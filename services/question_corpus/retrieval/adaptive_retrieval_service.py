@@ -16,6 +16,9 @@ from services.question_corpus.retrieval.adaptive_retrieval_policy import Adaptiv
 from services.question_corpus.retrieval.coverage_penalty_engine import CoveragePenaltyEngine
 from services.question_corpus.retrieval.weak_domain_boost_engine import WeakDomainBoostEngine
 from services.question_corpus.retrieval.question_repetition_filter import QuestionRepetitionFilter
+from services.question_intelligence.performance_responsive_candidate_selector import (
+    PerformanceResponsiveCandidateSelector,
+)
 
 
 class AdaptiveRetrievalService:
@@ -31,6 +34,7 @@ class AdaptiveRetrievalService:
         coverage_engine: CoveragePenaltyEngine | None = None,
         weak_domain_engine: WeakDomainBoostEngine | None = None,
         repetition_filter: QuestionRepetitionFilter | None = None,
+        performance_selector: PerformanceResponsiveCandidateSelector | None = None,
     ) -> None:
 
         self._retrieval = (
@@ -53,6 +57,12 @@ class AdaptiveRetrievalService:
             repetition_filter
             if repetition_filter is not None
             else QuestionRepetitionFilter()
+        )
+
+        self._performance_selector = (
+            performance_selector
+            if performance_selector is not None
+            else PerformanceResponsiveCandidateSelector()
         )
 
     # =====================================================
@@ -92,11 +102,14 @@ class AdaptiveRetrievalService:
         )
 
         adjusted.sort(
-            key=lambda c: c.adaptive_score,
+            key=lambda c: c.adaptive_score or c.final_score,
             reverse=True,
         )
 
-        return adjusted[: context.target_question_count]
+        return self._performance_selector.select(
+            pool=adjusted,
+            context=context,
+        )
 
     # =====================================================
     # INTERNALS

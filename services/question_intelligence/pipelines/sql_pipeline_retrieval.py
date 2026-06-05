@@ -25,6 +25,9 @@ from services.question_intelligence.adapters.retrieval_strategy_context_adapter 
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
 )
+from services.question_intelligence.performance_responsive_candidate_selector import (
+    PerformanceResponsiveCandidateSelector,
+)
 from services.question_intelligence.retrieval.retrieval_strategy import (
     RetrievalStrategy,
 )
@@ -50,6 +53,7 @@ class SqlPipelineRetrievalHelper:
         weak_domain_engine: WeakDomainBoostEngine | None = None,
         repetition_filter: QuestionRepetitionFilter | None = None,
         candidate_mapper: RetrievalCandidateMapper | None = None,
+        performance_selector: PerformanceResponsiveCandidateSelector | None = None,
     ) -> None:
 
         self._context_adapter = (
@@ -82,6 +86,11 @@ class SqlPipelineRetrievalHelper:
             candidate_mapper
             if candidate_mapper is not None
             else RetrievalCandidateMapper()
+        )
+        self._performance_selector = (
+            performance_selector
+            if performance_selector is not None
+            else PerformanceResponsiveCandidateSelector()
         )
 
     def retrieve_candidates(
@@ -154,7 +163,11 @@ class SqlPipelineRetrievalHelper:
             reverse=True,
         )
 
-        top_candidates = adjusted[: context.target_question_count]
+        prioritized = self._performance_selector.prioritize(
+            pool=adjusted,
+            context=context,
+        )
+        top_candidates = prioritized[: context.target_question_count]
 
         return self._mapper.map(candidates=top_candidates)
 
