@@ -75,6 +75,7 @@ class SQLQuestionGenerator:
         role: RoleType,
         level: SeniorityLevel,
         n: int = 1,
+        theme_guidance: str | None = None,
     ) -> List[Question]:
 
         schema_summary = self._build_schema_summary()
@@ -84,6 +85,7 @@ class SQLQuestionGenerator:
             level=level.value,
             n=n,
             schema_summary=schema_summary,
+            theme_guidance=theme_guidance,
         )
 
         response = self._llm.invoke(prompt)
@@ -108,6 +110,7 @@ class SQLQuestionGenerator:
         role: RoleType,
         level: SeniorityLevel,
         provenance: QuestionProvenance | None = None,
+        theme_guidance: str | None = None,
     ) -> Question | None:
 
         schema_summary = self._build_schema_summary()
@@ -117,6 +120,7 @@ class SQLQuestionGenerator:
             role=role.value,
             level=level.value,
             schema_summary=schema_summary,
+            theme_guidance=theme_guidance,
         )
 
         try:
@@ -236,7 +240,13 @@ class SQLQuestionGenerator:
         level: str,
         n: int,
         schema_summary: str,
+        theme_guidance: str | None = None,
     ) -> str:
+
+        theme_block = ""
+
+        if theme_guidance:
+            theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
         return f"""
 You are a senior SQL interviewer.
@@ -246,6 +256,7 @@ Database schema:
 {schema_summary}
 
 Generate {n} SQL interview questions for a {level} {role}.
+{theme_block}
 
 Each question MUST include:
 
@@ -282,7 +293,13 @@ Test cases:
         role: str,
         level: str,
         schema_summary: str,
+        theme_guidance: str | None = None,
     ) -> str:
+
+        theme_block = ""
+
+        if theme_guidance:
+            theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
         return f"""
 You are a senior SQL interviewer.
@@ -293,6 +310,7 @@ Database schema:
 
 Reframe the following interview question into ONE executable SQLite problem
 for a {level} {role} candidate.
+{theme_block}
 
 Seed question (conceptual — adapt to the schema above):
 {seed_prompt}

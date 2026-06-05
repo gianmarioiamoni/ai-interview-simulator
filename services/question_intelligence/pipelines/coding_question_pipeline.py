@@ -61,6 +61,12 @@ from services.question_intelligence.retrieval.retrieval_strategy_resolver import
 from services.question_corpus.contracts.interview_retrieval_memory import (
     InterviewRetrievalMemory,
 )
+from services.question_intelligence.interview_theme_guidance import (
+    build_theme_guidance,
+)
+from services.question_intelligence.interview_theme_memory import (
+    get_interview_theme_anchor,
+)
 from services.question_corpus.retrieval.interview_memory_updater import (
     InterviewMemoryUpdater,
 )
@@ -115,10 +121,17 @@ class CodingQuestionPipeline:
         questions: List[Question] = []
         enriched_pairs: list[tuple[QuestionBankItem, Question]] = []
 
+        theme_anchor = get_interview_theme_anchor(session_memory)
+        theme_guidance = build_theme_guidance(
+            theme_anchor=theme_anchor,
+            area=area,
+        )
+
         retrieval_query = self._retrieval_query_builder.build(
             role=role,
             level=level,
             area=area,
+            theme_anchor=theme_anchor,
         )
 
         candidate_scan_k = max(
@@ -162,6 +175,7 @@ class CodingQuestionPipeline:
                 role=role,
                 level=level,
                 provenance=provenance,
+                theme_guidance=theme_guidance,
             )
 
             if enriched is None:
@@ -191,6 +205,7 @@ class CodingQuestionPipeline:
                     role=role,
                     level=level,
                     n=remaining_slots,
+                    theme_guidance=theme_guidance,
                 ),
             )
 
@@ -200,6 +215,7 @@ class CodingQuestionPipeline:
                     role=role,
                     level=level,
                     n=max(1, questions_per_area),
+                    theme_guidance=theme_guidance,
                 ),
             )
 
@@ -217,6 +233,7 @@ class CodingQuestionPipeline:
                 role=role,
                 level=level,
                 n=max(1, questions_per_area),
+                theme_guidance=theme_guidance,
             )[:questions_per_area]
 
         final_prompts = {q.prompt for q in final_questions}
@@ -242,6 +259,7 @@ class CodingQuestionPipeline:
         role: RoleType,
         level: SeniorityLevel,
         n: int,
+        theme_guidance: str | None = None,
     ) -> List[Question]:
 
         area = InterviewArea.TECH_CODING
@@ -253,6 +271,7 @@ class CodingQuestionPipeline:
                 role=role,
                 level=level,
                 n=n,
+                theme_guidance=theme_guidance,
             )
 
             mapped: List[Question] = []

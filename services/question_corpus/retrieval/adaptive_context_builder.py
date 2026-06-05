@@ -31,6 +31,7 @@ class AdaptiveContextBuilder:
             target_question_count=question_count,
             already_used_domains=memory.covered_domains,
             weak_domains=memory.weak_domains,
+            strong_domains=memory.strong_domains,
             target_difficulty=target_difficulty,
             memory=memory,
         )

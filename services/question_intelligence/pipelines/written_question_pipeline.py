@@ -53,6 +53,12 @@ from services.question_intelligence.retrieval.retrieval_strategy_resolver import
 from services.question_corpus.contracts.interview_retrieval_memory import (
     InterviewRetrievalMemory,
 )
+from services.question_intelligence.interview_theme_guidance import (
+    build_theme_guidance,
+)
+from services.question_intelligence.interview_theme_memory import (
+    get_interview_theme_anchor,
+)
 from services.question_corpus.retrieval.interview_memory_updater import (
     InterviewMemoryUpdater,
 )
@@ -105,10 +111,13 @@ class WrittenQuestionPipeline:
         # QUERY
         # -------------------------------------------------
 
+        theme_anchor = get_interview_theme_anchor(session_memory)
+
         retrieval_query = self._retrieval_query_builder.build(
             role=role,
             level=level,
             area=area,
+            theme_anchor=theme_anchor,
         )
 
         # -------------------------------------------------
@@ -163,6 +172,10 @@ class WrittenQuestionPipeline:
                 interview_type=interview_type,
                 area=area,
                 n=remaining_slots,
+                theme_guidance=build_theme_guidance(
+                    theme_anchor=theme_anchor,
+                    area=area,
+                ),
             )
 
             for gen in generated:

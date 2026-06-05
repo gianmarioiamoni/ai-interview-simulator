@@ -31,6 +31,7 @@ class QuestionGenerator:
         interview_type: InterviewType,
         area: InterviewArea,
         n: int = 2,
+        theme_guidance: str | None = None,
     ) -> List[GeneratedQuestion]:
 
         VARIATION_SEEDS = [
@@ -49,6 +50,7 @@ class QuestionGenerator:
             area=area,
             n=n,
             variation=variation,
+            theme_guidance=theme_guidance,
         )
 
         response = self._llm.invoke(prompt)
@@ -65,7 +67,13 @@ class QuestionGenerator:
         area: InterviewArea,
         n: int,
         variation: str,
+        theme_guidance: str | None = None,
     ) -> str:
+
+        theme_block = ""
+
+        if theme_guidance:
+            theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
         return f"""
             You are an expert technical interviewer.
@@ -78,7 +86,7 @@ class QuestionGenerator:
              - Questions MUST be diverse and different in topic and structure
              - DO NOT repeat similar questions
              - Each question must be different in topic and structure
-
+            {theme_block}
             CONTEXT:
             {variation}
 

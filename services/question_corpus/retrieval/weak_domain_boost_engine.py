@@ -2,6 +2,7 @@
 
 from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
+from services.question_intelligence.interview_theme_memory import get_interview_theme_anchor
 
 
 class WeakDomainBoostEngine:
@@ -11,6 +12,7 @@ class WeakDomainBoostEngine:
     # =====================================================
 
     DOMAIN_BOOST = 0.10
+    THEME_AFFINITY_BOOST = 0.08
 
     # =====================================================
     # PUBLIC
@@ -28,6 +30,10 @@ class WeakDomainBoostEngine:
             context.weak_domains,
         )
 
+        theme_anchor = get_interview_theme_anchor(
+            context.memory,
+        )
+
         for candidate in candidates:
 
             domains = self._extract_domains(
@@ -39,6 +45,13 @@ class WeakDomainBoostEngine:
             )
 
             boost = len(overlap) * self.DOMAIN_BOOST
+
+            if theme_anchor:
+                boost += self._theme_affinity_boost(
+                    candidate=candidate,
+                    domains=domains,
+                    theme_anchor=theme_anchor,
+                )
 
             updated = candidate.model_copy(
                 update={
@@ -78,3 +91,21 @@ class WeakDomainBoostEngine:
             return []
 
         return [d.strip() for d in domains.split(",")]
+
+    def _theme_affinity_boost(
+        self,
+        candidate: RetrievalCandidate,
+        domains: list[str],
+        theme_anchor: str,
+    ) -> float:
+
+        if theme_anchor in domains:
+            return self.THEME_AFFINITY_BOOST
+
+        readable_theme = theme_anchor.replace("_", " ")
+        lower_text = candidate.document.page_content.lower()
+
+        if theme_anchor in lower_text or readable_theme in lower_text:
+            return self.THEME_AFFINITY_BOOST * 0.5
+
+        return 0.0
