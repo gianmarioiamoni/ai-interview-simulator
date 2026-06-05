@@ -56,12 +56,14 @@ class CodingQuestionGenerator:
         role: RoleType,
         level: SeniorityLevel,
         n: int = 1,
+        theme_guidance: str | None = None,
     ) -> List[GeneratedCodingQuestion]:
 
         prompt = self._build_generation_prompt(
             role=role.value,
             level=level.value,
             n=n,
+            theme_guidance=theme_guidance,
         )
 
         parsed = self._invoke_parse_with_retry(
@@ -85,6 +87,7 @@ class CodingQuestionGenerator:
         role: RoleType,
         level: SeniorityLevel,
         provenance: QuestionProvenance | None = None,
+        theme_guidance: str | None = None,
     ) -> GeneratedCodingQuestion | None:
 
         _ = provenance
@@ -93,6 +96,7 @@ class CodingQuestionGenerator:
             seed_prompt=seed_prompt,
             role=role.value,
             level=level.value,
+            theme_guidance=theme_guidance,
         )
 
         parsed = self._invoke_parse_with_retry(
@@ -190,12 +194,19 @@ class CodingQuestionGenerator:
         role: str,
         level: str,
         n: int,
+        theme_guidance: str | None = None,
     ) -> str:
+
+        theme_block = ""
+
+        if theme_guidance:
+            theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
         return f"""
 You are a senior technical interviewer.
 
 Generate {n} Python coding interview questions for a {level} {role}.
+{theme_block}
 
 Each question MUST include:
 
@@ -220,14 +231,20 @@ Rules:
         seed_prompt: str,
         role: str,
         level: str,
+        theme_guidance: str | None = None,
     ) -> str:
+
+        theme_block = ""
+
+        if theme_guidance:
+            theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
         return f"""
 You are a senior technical interviewer.
 
 Reframe the following interview seed into ONE Python coding problem
 for a {level} {role} candidate.
-
+{theme_block}
 Seed question:
 {seed_prompt}
 

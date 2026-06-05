@@ -37,6 +37,15 @@ from services.question_intelligence.interview_difficulty_ordering import (
     calculate_progression_score,
     order_questions_for_interview_progression,
 )
+from services.question_intelligence.interview_coherence_metrics import (
+    InterviewCoherenceMetrics,
+)
+from services.question_intelligence.interview_theme_memory import (
+    with_interview_theme_anchor,
+)
+from services.question_intelligence.interview_theme_selector import (
+    InterviewThemeSelector,
+)
 
 from app.settings.constants import QUESTIONS_PER_AREA
 
@@ -51,10 +60,20 @@ class QuestionSetBuilder:
         area_builder: AreaQuestionBuilder,
         deduplicator: SemanticDeduplicator,
         quality_analyzer: QuestionSetQualityAnalyzer,
+        theme_selector: InterviewThemeSelector | None = None,
+        coherence_metrics: InterviewCoherenceMetrics | None = None,
     ) -> None:
         self._area_builder = area_builder
         self._deduplicator = deduplicator
         self._quality_analyzer = quality_analyzer
+        self._theme_selector = (
+            theme_selector if theme_selector is not None else InterviewThemeSelector()
+        )
+        self._coherence_metrics = (
+            coherence_metrics
+            if coherence_metrics is not None
+            else InterviewCoherenceMetrics()
+        )
 
     # =========================================================
     # PUBLIC
@@ -76,10 +95,28 @@ class QuestionSetBuilder:
         retrieval_memory = InterviewRetrievalMemory()
 
         # -----------------------------------------------------
-        # INITIAL GENERATION
+        # THEME ANCHOR
         # -----------------------------------------------------
 
         ordered_areas = order_areas_by_derived_difficulty(areas)
+        first_area = ordered_areas[0]
+        theme_anchor = self._theme_selector.select_anchor(
+            role=role,
+            level=level,
+            first_area=first_area,
+        )
+        retrieval_memory = with_interview_theme_anchor(
+            retrieval_memory,
+            theme_anchor,
+        )
+
+        logger.info(
+            f"[QuestionSetBuilder] Theme anchor selected: {theme_anchor}",
+        )
+
+        # -----------------------------------------------------
+        # INITIAL GENERATION
+        # -----------------------------------------------------
 
         for area in ordered_areas:
 
@@ -186,6 +223,10 @@ class QuestionSetBuilder:
 
         quality_report = self._quality_analyzer.analyze(all_questions)
         progression_score = calculate_progression_score(all_questions)
+        coherence = self._coherence_metrics.compute(
+            questions=all_questions,
+            memory=retrieval_memory,
+        )
 
         logger.info(
             f"[QUALITY] "
@@ -195,7 +236,11 @@ class QuestionSetBuilder:
             f"diversity={quality_report.diversity.diversity_score:.2f} "
             f"area_coverage={quality_report.coverage.area_coverage_score:.2f} "
             f"difficulty_balance={quality_report.coverage.difficulty_balance_score:.2f} "
-            f"difficulty_progression_score={progression_score:.2f}"
+            f"difficulty_progression_score={progression_score:.2f} "
+            f"coherence_score={coherence['coherence_score']} "
+            f"theme_anchor={coherence['theme_anchor']} "
+            f"theme_consistency={coherence['theme_consistency']} "
+            f"domain_continuity={coherence['domain_continuity']}"
         )
 
         return all_questions

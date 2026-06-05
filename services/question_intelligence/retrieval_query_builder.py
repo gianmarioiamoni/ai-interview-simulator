@@ -35,6 +35,7 @@ class RetrievalQueryBuilder:
         role: RoleType,
         level: SeniorityLevel,
         area: InterviewArea,
+        theme_anchor: str | None = None,
     ) -> str:
 
         area_hints = AREA_HINTS.get(
@@ -61,6 +62,15 @@ class RetrievalQueryBuilder:
 
         hints_text = ", ".join(sampled_hints)
 
+        theme_line = ""
+
+        if theme_anchor:
+            readable_theme = theme_anchor.replace("_", " ")
+            theme_line = (
+                f"\nSoft interview theme anchor: {readable_theme}\n"
+                "- prefer naturally related candidates when quality is comparable\n"
+            )
+
         return f"""
 You are retrieving high-quality interview questions.
 
@@ -68,7 +78,7 @@ Candidate profile:
 - Role: {role.value}
 - Seniority: {level.value}
 - Area: {area.value}
-
+{theme_line}
 Retrieval goals:
 - maximize conceptual diversity
 - avoid repetitive questions
