@@ -1,7 +1,7 @@
 # tests/services/question_intelligence/test_coding_retrieval_pipeline.py
 
 import json
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
@@ -21,6 +21,11 @@ from services.question_intelligence.coding_question_generator import (
 )
 from services.question_intelligence.pipelines.coding_question_pipeline import (
     CodingQuestionPipeline,
+)
+
+RETRIEVE_CODING_CANDIDATES = (
+    "services.question_intelligence.pipelines.coding_question_pipeline."
+    "retrieve_coding_candidates"
 )
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
@@ -55,6 +60,23 @@ ENRICHED_CODING_JSON = json.dumps(
                     "args": [[3, 3], 6],
                     "expected": [0, 1],
                 },
+            ],
+        },
+    ],
+)
+
+MISALIGNED_ENRICH_JSON = json.dumps(
+    [
+        {
+            "prompt": "Return indices of two numbers that add to a target.",
+            "coding_spec": {
+                "type": "function",
+                "entrypoint": "two_sum",
+                "parameters": ["nums", "target"],
+            },
+            "visible_tests": [
+                {"args": [[2, 7, 11, 15], 9], "expected": [0, 1]},
+                {"args": [[3, 3], 6], "expected": [0, 1]},
             ],
         },
     ],
@@ -199,21 +221,23 @@ def test_enrich_from_prompt_failure_returns_none() -> None:
 def test_coding_pipeline_retrieval_and_enrichment_success() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [_build_coding_bank_item()]
-
     llm = _mock_llm_with_responses([ENRICHED_CODING_JSON])
     pipeline = CodingQuestionPipeline(
         retrieval_service=retrieval_service,
         coding_generator=CodingQuestionGenerator(llm),
     )
 
-    questions, memory = pipeline.build(
-        role=RoleType.FULLSTACK_ENGINEER,
-        level=SeniorityLevel.JUNIOR,
-        interview_type=InterviewType.TECHNICAL,
-        area=InterviewArea.TECH_CODING,
-        questions_per_area=1,
-    )
+    with patch(
+        RETRIEVE_CODING_CANDIDATES,
+        return_value=[_build_coding_bank_item()],
+    ):
+        questions, memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
 
     assert len(questions) == 1
     assert questions[0].provenance is not None
@@ -222,7 +246,6 @@ def test_coding_pipeline_retrieval_and_enrichment_success() -> None:
     assert questions[0].function_name == "two_sum"
     _assert_coding_contract(questions[0])
 
-    retrieval_service.retrieve.assert_called_once()
     assert CORPUS_QUESTION_ID in memory.asked_question_ids
     llm.invoke.assert_called_once()
 
@@ -230,8 +253,6 @@ def test_coding_pipeline_retrieval_and_enrichment_success() -> None:
 def test_coding_pipeline_enrichment_failure_falls_back_to_generate() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [_build_coding_bank_item()]
-
     llm = _mock_llm_with_responses(
         ["invalid-json"] * MAX_INVALID_JSON_ATTEMPTS
         + [GENERATED_FALLBACK_JSON],
@@ -242,13 +263,17 @@ def test_coding_pipeline_enrichment_failure_falls_back_to_generate() -> None:
         coding_generator=CodingQuestionGenerator(llm),
     )
 
-    questions, memory = pipeline.build(
-        role=RoleType.FULLSTACK_ENGINEER,
-        level=SeniorityLevel.JUNIOR,
-        interview_type=InterviewType.TECHNICAL,
-        area=InterviewArea.TECH_CODING,
-        questions_per_area=1,
-    )
+    with patch(
+        RETRIEVE_CODING_CANDIDATES,
+        return_value=[_build_coding_bank_item()],
+    ):
+        questions, memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
 
     assert len(questions) == 1
     assert questions[0].coding_spec.entrypoint == "max_of_two"
@@ -262,26 +287,28 @@ def test_coding_pipeline_enrichment_failure_falls_back_to_generate() -> None:
 def test_coding_pipeline_skips_non_actionable_retrieved_prompt() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [
-        _build_coding_bank_item(
-            text="Explain binary search.",
-            question_id="theory-only-id",
-        ),
-    ]
-
     llm = _mock_llm_with_responses([GENERATED_FALLBACK_JSON])
     pipeline = CodingQuestionPipeline(
         retrieval_service=retrieval_service,
         coding_generator=CodingQuestionGenerator(llm),
     )
 
-    questions, _memory = pipeline.build(
-        role=RoleType.FULLSTACK_ENGINEER,
-        level=SeniorityLevel.JUNIOR,
-        interview_type=InterviewType.TECHNICAL,
-        area=InterviewArea.TECH_CODING,
-        questions_per_area=1,
-    )
+    with patch(
+        RETRIEVE_CODING_CANDIDATES,
+        return_value=[
+            _build_coding_bank_item(
+                text="Explain binary search.",
+                question_id="theory-only-id",
+            ),
+        ],
+    ):
+        questions, _memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
 
     assert len(questions) == 1
     assert questions[0].coding_spec.entrypoint == "max_of_two"
@@ -291,31 +318,207 @@ def test_coding_pipeline_skips_non_actionable_retrieved_prompt() -> None:
 def test_coding_pipeline_memory_update_only_for_enriched_selection() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [
-        _build_coding_bank_item(question_id="enriched-id"),
-        _build_coding_bank_item(
-            text="How would you solve Valid Parentheses?",
-            question_id="overflow-id",
-        ),
-    ]
-
     llm = _mock_llm_with_responses([ENRICHED_CODING_JSON])
     pipeline = CodingQuestionPipeline(
         retrieval_service=retrieval_service,
         coding_generator=CodingQuestionGenerator(llm),
     )
 
-    questions, memory = pipeline.build(
-        role=RoleType.FULLSTACK_ENGINEER,
-        level=SeniorityLevel.JUNIOR,
-        interview_type=InterviewType.TECHNICAL,
-        area=InterviewArea.TECH_CODING,
-        questions_per_area=1,
-    )
+    with patch(
+        RETRIEVE_CODING_CANDIDATES,
+        return_value=[
+            _build_coding_bank_item(question_id="enriched-id"),
+            _build_coding_bank_item(
+                text="How would you solve Valid Parentheses?",
+                question_id="overflow-id",
+            ),
+        ],
+    ):
+        questions, memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
 
     assert len(questions) == 1
     assert "enriched-id" in memory.asked_question_ids
     assert "overflow-id" not in memory.asked_question_ids
+
+
+def test_coding_pipeline_selects_second_when_first_alignment_fails() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses(
+        [MISALIGNED_ENRICH_JSON, ENRICHED_CODING_JSON],
+    )
+    pipeline = CodingQuestionPipeline(
+        retrieval_service=retrieval_service,
+        coding_generator=CodingQuestionGenerator(llm),
+    )
+
+    with patch(
+        RETRIEVE_CODING_CANDIDATES,
+        return_value=[
+            _build_coding_bank_item(question_id="first-actionable-id"),
+            _build_coding_bank_item(
+                text="How would you implement merge sort?",
+                question_id="second-actionable-id",
+            ),
+        ],
+    ):
+        questions, memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
+
+    assert len(questions) == 1
+    assert questions[0].provenance is not None
+    assert "second-actionable-id" in memory.asked_question_ids
+    assert "first-actionable-id" not in memory.asked_question_ids
+    assert llm.invoke.call_count == 2
+
+
+def test_coding_pipeline_selects_third_after_two_enrich_failures() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses(
+        [
+            MISALIGNED_ENRICH_JSON,
+            *["invalid-json"] * MAX_INVALID_JSON_ATTEMPTS,
+            ENRICHED_CODING_JSON,
+        ],
+    )
+    pipeline = CodingQuestionPipeline(
+        retrieval_service=retrieval_service,
+        coding_generator=CodingQuestionGenerator(llm),
+    )
+
+    with patch(
+        RETRIEVE_CODING_CANDIDATES,
+        return_value=[
+            _build_coding_bank_item(question_id="first-id"),
+            _build_coding_bank_item(
+                text="How would you solve Valid Parentheses?",
+                question_id="second-id",
+            ),
+            _build_coding_bank_item(
+                text="Implement a function to reverse a linked list.",
+                question_id="third-id",
+            ),
+        ],
+    ):
+        questions, memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
+
+    assert len(questions) == 1
+    assert questions[0].provenance is not None
+    assert "third-id" in memory.asked_question_ids
+
+
+def test_coding_pipeline_all_candidates_fail_then_fallback() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses(
+        ["invalid-json"] * MAX_INVALID_JSON_ATTEMPTS
+        + [MISALIGNED_ENRICH_JSON]
+        + ["invalid-json"] * MAX_INVALID_JSON_ATTEMPTS
+        + [GENERATED_FALLBACK_JSON],
+    )
+    pipeline = CodingQuestionPipeline(
+        retrieval_service=retrieval_service,
+        coding_generator=CodingQuestionGenerator(llm),
+    )
+
+    with patch(
+        RETRIEVE_CODING_CANDIDATES,
+        return_value=[
+            _build_coding_bank_item(question_id="first-id"),
+            _build_coding_bank_item(
+                text="How would you implement binary search?",
+                question_id="second-id",
+            ),
+        ],
+    ):
+        questions, memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
+
+    assert len(questions) == 1
+    assert questions[0].coding_spec.entrypoint == "max_of_two"
+    assert questions[0].provenance is None
+    assert CORPUS_QUESTION_ID not in memory.asked_question_ids
+
+
+def test_coding_pipeline_generate_retry_after_first_failure() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses(
+        [
+            "invalid-json",
+            GENERATED_FALLBACK_JSON,
+        ],
+    )
+    pipeline = CodingQuestionPipeline(
+        retrieval_service=retrieval_service,
+        coding_generator=CodingQuestionGenerator(llm),
+    )
+
+    with patch(RETRIEVE_CODING_CANDIDATES, return_value=[]):
+        questions, _memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
+
+    assert len(questions) == 1
+    assert questions[0].coding_spec.entrypoint == "max_of_two"
+    assert llm.invoke.call_count == 2
+
+
+def test_coding_pipeline_never_returns_empty_list() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses([GENERATED_FALLBACK_JSON])
+    pipeline = CodingQuestionPipeline(
+        retrieval_service=retrieval_service,
+        coding_generator=CodingQuestionGenerator(llm),
+    )
+
+    with patch(
+        RETRIEVE_CODING_CANDIDATES,
+        return_value=[
+            _build_coding_bank_item(
+                text="Explain binary search.",
+                question_id="theory-only-id",
+            ),
+        ],
+    ):
+        questions, _memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
+
+    assert len(questions) >= 1
+    _assert_coding_contract(questions[0])
 
 
 def test_example_enriched_generated_coding_question_model() -> None:

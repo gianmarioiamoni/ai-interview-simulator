@@ -42,6 +42,10 @@ from services.question_intelligence.coding_question_generator import (
     GeneratedCodingQuestion,
 )
 
+from services.question_intelligence.pipelines.coding_pipeline_retrieval import (
+    CodingPipelineRetrievalHelper,
+    retrieve_coding_candidates,
+)
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
 )
@@ -70,6 +74,9 @@ _ACTIONABLE_CODING_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_CODING_CANDIDATE_SCAN_K = 10
+_CODING_GENERATE_MAX_ATTEMPTS = 2
+
 
 class CodingQuestionPipeline:
 
@@ -77,10 +84,12 @@ class CodingQuestionPipeline:
         self,
         retrieval_service: QuestionRetrievalService,
         coding_generator: CodingQuestionGenerator,
+        coding_retrieval_helper: CodingPipelineRetrievalHelper | None = None,
     ) -> None:
 
         self._retrieval_service = retrieval_service
         self._coding_generator = coding_generator
+        self._coding_retrieval_helper = coding_retrieval_helper
         self._retrieval_query_builder = RetrievalQueryBuilder()
         self._retrieval_strategy_resolver = RetrievalStrategyResolver()
         self._memory_updater = InterviewMemoryUpdater()
@@ -112,13 +121,19 @@ class CodingQuestionPipeline:
             area=area,
         )
 
+        candidate_scan_k = max(
+            questions_per_area,
+            _CODING_CANDIDATE_SCAN_K,
+        )
+
         retrieval_strategy = self._retrieval_strategy_resolver.resolve(
             area=area,
             level=level,
-            questions_per_area=questions_per_area,
+            questions_per_area=candidate_scan_k,
         )
 
-        retrieved = self._retrieval_service.retrieve(
+        retrieved = retrieve_coding_candidates(
+            retrieval_service=self._retrieval_service,
             query=retrieval_query,
             retrieval_strategy=retrieval_strategy,
             role=role.value,
@@ -126,6 +141,7 @@ class CodingQuestionPipeline:
             interview_type=interview_type.value,
             area=area.value,
             memory=session_memory,
+            coding_retrieval_helper=self._coding_retrieval_helper,
         )
 
         for item in retrieved:
@@ -149,6 +165,9 @@ class CodingQuestionPipeline:
             )
 
             if enriched is None:
+                logger.debug(
+                    f"[CODING] Enrichment failed for actionable prompt: {item.id}",
+                )
                 continue
 
             try:
@@ -157,8 +176,8 @@ class CodingQuestionPipeline:
                     area=area,
                     provenance=provenance,
                 )
-            except ValueError as e:
-                logger.warning(f"[CODING enrich] Alignment failed: {e}")
+            except ValueError as exc:
+                logger.warning(f"[CODING enrich] Alignment failed: {exc}")
                 continue
 
             enriched_pairs.append((item, mapped))
@@ -167,34 +186,39 @@ class CodingQuestionPipeline:
         remaining_slots = questions_per_area - len(questions)
 
         if remaining_slots > 0:
-
-            raw_items = self._coding_generator.generate(
-                role=role,
-                level=level,
-                n=remaining_slots,
+            questions.extend(
+                self._generate_with_retry(
+                    role=role,
+                    level=level,
+                    n=remaining_slots,
+                ),
             )
 
-            for raw_item in raw_items:
-
-                try:
-                    questions.append(
-                        self._map_item(
-                            item=raw_item,
-                            area=area,
-                        ),
-                    )
-                except ValueError as e:
-                    logger.warning(f"[CODING generate] Alignment failed: {e}")
+        if not questions:
+            questions.extend(
+                self._generate_with_retry(
+                    role=role,
+                    level=level,
+                    n=max(1, questions_per_area),
+                ),
+            )
 
         if len(questions) < questions_per_area:
-
             logger.warning(
                 f"[CODING] Area {area.value} produced "
                 f"{len(questions)} questions "
-                f"(expected {questions_per_area})"
+                f"(expected {questions_per_area})",
             )
 
         final_questions = questions[:questions_per_area]
+
+        if not final_questions:
+            final_questions = self._generate_with_retry(
+                role=role,
+                level=level,
+                n=max(1, questions_per_area),
+            )[:questions_per_area]
+
         final_prompts = {q.prompt for q in final_questions}
 
         for bank_item, mapped_question in enriched_pairs:
@@ -212,6 +236,47 @@ class CodingQuestionPipeline:
     # =====================================================
     # MAPPING
     # =====================================================
+
+    def _generate_with_retry(
+        self,
+        role: RoleType,
+        level: SeniorityLevel,
+        n: int,
+    ) -> List[Question]:
+
+        area = InterviewArea.TECH_CODING
+        last_result: List[Question] = []
+
+        for attempt in range(1, _CODING_GENERATE_MAX_ATTEMPTS + 1):
+
+            raw_items = self._coding_generator.generate(
+                role=role,
+                level=level,
+                n=n,
+            )
+
+            mapped: List[Question] = []
+
+            for raw_item in raw_items:
+                try:
+                    mapped.append(
+                        self._map_item(
+                            item=raw_item,
+                            area=area,
+                        ),
+                    )
+                except ValueError as exc:
+                    logger.warning(
+                        f"[CODING generate] Alignment failed "
+                        f"(attempt {attempt}/{_CODING_GENERATE_MAX_ATTEMPTS}): {exc}",
+                    )
+
+            last_result = mapped
+
+            if last_result:
+                return last_result
+
+        return last_result
 
     def _map_item(
         self,

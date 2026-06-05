@@ -11,6 +11,10 @@ from domain.contracts.user.seniority_level import SeniorityLevel
 
 from services.question_intelligence.semantic_deduplicator import SemanticDeduplicator
 
+from services.question_intelligence.question_set_coding_dedup import (
+    prioritize_corpus_coding_for_dedup,
+)
+
 from services.question_intelligence.area_question_builder import (
     AreaQuestionBuilder,
 )
@@ -90,6 +94,7 @@ class QuestionSetBuilder:
         # -----------------------------------------------------
 
         all_questions = self._remove_exact_duplicates(all_questions)
+        all_questions = prioritize_corpus_coding_for_dedup(all_questions)
         all_questions = self._deduplicator.deduplicate(all_questions)
 
         # -----------------------------------------------------
@@ -126,6 +131,7 @@ class QuestionSetBuilder:
 
             # re-dedup dopo refill
             all_questions = self._remove_exact_duplicates(all_questions)
+            all_questions = prioritize_corpus_coding_for_dedup(all_questions)
             all_questions = self._deduplicator.deduplicate(all_questions)
 
             attempt += 1
