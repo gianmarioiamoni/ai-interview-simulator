@@ -1,7 +1,12 @@
 # tests/services/question_intelligence/test_sql_retrieval_pipeline.py
 
 import json
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+RETRIEVE_SQL_CANDIDATES = (
+    "services.question_intelligence.pipelines.sql_question_pipeline."
+    "retrieve_sql_candidates"
+)
 
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
@@ -203,28 +208,30 @@ def test_enrich_from_prompt_failure_returns_none() -> None:
 def test_sql_pipeline_retrieval_and_enrichment_success() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [_build_database_bank_item()]
-
     llm = _mock_llm_with_responses([ENRICHED_SQL_JSON])
     pipeline = SQLQuestionPipeline(
         retrieval_service=retrieval_service,
         sql_generator=SQLQuestionGenerator(llm),
     )
 
-    questions, memory = pipeline.build(
-        role=RoleType.BACKEND_ENGINEER,
-        level=SeniorityLevel.MID,
-        interview_type=InterviewType.TECHNICAL,
-        area=InterviewArea.TECH_DATABASE,
-        questions_per_area=1,
-    )
+    with patch(
+        RETRIEVE_SQL_CANDIDATES,
+        return_value=[_build_database_bank_item()],
+    ) as mock_retrieve:
+        questions, memory = pipeline.build(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_DATABASE,
+            questions_per_area=1,
+        )
 
     assert len(questions) == 1
     assert questions[0].provenance is not None
     assert questions[0].provenance.origin_type == QuestionOriginType.RETRIEVAL
     _assert_database_contract(questions[0])
 
-    retrieval_service.retrieve.assert_called_once()
+    mock_retrieve.assert_called_once()
     assert CORPUS_QUESTION_ID in memory.asked_question_ids
     llm.invoke.assert_called_once()
 
@@ -232,8 +239,6 @@ def test_sql_pipeline_retrieval_and_enrichment_success() -> None:
 def test_sql_pipeline_enrichment_failure_falls_back_to_generate() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [_build_database_bank_item()]
-
     llm = _mock_llm_with_responses(
         [
             "invalid-json",
@@ -246,13 +251,17 @@ def test_sql_pipeline_enrichment_failure_falls_back_to_generate() -> None:
         sql_generator=SQLQuestionGenerator(llm),
     )
 
-    questions, memory = pipeline.build(
-        role=RoleType.BACKEND_ENGINEER,
-        level=SeniorityLevel.MID,
-        interview_type=InterviewType.TECHNICAL,
-        area=InterviewArea.TECH_DATABASE,
-        questions_per_area=1,
-    )
+    with patch(
+        RETRIEVE_SQL_CANDIDATES,
+        return_value=[_build_database_bank_item()],
+    ):
+        questions, memory = pipeline.build(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_DATABASE,
+            questions_per_area=1,
+        )
 
     assert len(questions) == 1
     assert questions[0].prompt == "List all department names."
@@ -266,15 +275,17 @@ def test_sql_pipeline_enrichment_failure_falls_back_to_generate() -> None:
 def test_sql_pipeline_selects_first_actionable_candidate() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [_build_database_bank_item()]
-
     llm = _mock_llm_with_responses([ENRICHED_SQL_JSON])
     pipeline = SQLQuestionPipeline(
         retrieval_service=retrieval_service,
         sql_generator=SQLQuestionGenerator(llm),
     )
 
-    questions, memory = pipeline.build(
+    with patch(
+        RETRIEVE_SQL_CANDIDATES,
+        return_value=[_build_database_bank_item()],
+    ):
+        questions, memory = pipeline.build(
         role=RoleType.BACKEND_ENGINEER,
         level=SeniorityLevel.MID,
         interview_type=InterviewType.TECHNICAL,
@@ -291,24 +302,26 @@ def test_sql_pipeline_selects_first_actionable_candidate() -> None:
 def test_sql_pipeline_selects_second_when_first_non_actionable() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [
-        _build_database_bank_item(
-            text="What is a view in SQL?",
-            question_id="theory-only-id",
-        ),
-        _build_database_bank_item(
-            text=RETRIEVED_DATABASE_PROMPT,
-            question_id="actionable-second-id",
-        ),
-    ]
-
     llm = _mock_llm_with_responses([ENRICHED_SQL_JSON])
     pipeline = SQLQuestionPipeline(
         retrieval_service=retrieval_service,
         sql_generator=SQLQuestionGenerator(llm),
     )
 
-    questions, memory = pipeline.build(
+    with patch(
+        RETRIEVE_SQL_CANDIDATES,
+        return_value=[
+            _build_database_bank_item(
+                text="What is a view in SQL?",
+                question_id="theory-only-id",
+            ),
+            _build_database_bank_item(
+                text=RETRIEVED_DATABASE_PROMPT,
+                question_id="actionable-second-id",
+            ),
+        ],
+    ):
+        questions, memory = pipeline.build(
         role=RoleType.BACKEND_ENGINEER,
         level=SeniorityLevel.MID,
         interview_type=InterviewType.TECHNICAL,
@@ -331,14 +344,6 @@ def test_sql_pipeline_selects_second_when_first_enrichment_fails() -> None:
     )
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [
-        _build_database_bank_item(question_id="first-actionable-id"),
-        _build_database_bank_item(
-            text=second_prompt,
-            question_id="second-actionable-id",
-        ),
-    ]
-
     llm = _mock_llm_with_responses(
         [
             "invalid-json",
@@ -350,7 +355,17 @@ def test_sql_pipeline_selects_second_when_first_enrichment_fails() -> None:
         sql_generator=SQLQuestionGenerator(llm),
     )
 
-    questions, memory = pipeline.build(
+    with patch(
+        RETRIEVE_SQL_CANDIDATES,
+        return_value=[
+            _build_database_bank_item(question_id="first-actionable-id"),
+            _build_database_bank_item(
+                text=second_prompt,
+                question_id="second-actionable-id",
+            ),
+        ],
+    ):
+        questions, memory = pipeline.build(
         role=RoleType.BACKEND_ENGINEER,
         level=SeniorityLevel.MID,
         interview_type=InterviewType.TECHNICAL,
@@ -368,20 +383,22 @@ def test_sql_pipeline_selects_second_when_first_enrichment_fails() -> None:
 def test_sql_pipeline_skips_non_actionable_retrieved_prompt() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [
-        _build_database_bank_item(
-            text="What is database replication?",
-            question_id="theory-only-id",
-        ),
-    ]
-
     llm = _mock_llm_with_responses([GENERATED_FALLBACK_JSON])
     pipeline = SQLQuestionPipeline(
         retrieval_service=retrieval_service,
         sql_generator=SQLQuestionGenerator(llm),
     )
 
-    questions, _memory = pipeline.build(
+    with patch(
+        RETRIEVE_SQL_CANDIDATES,
+        return_value=[
+            _build_database_bank_item(
+                text="What is database replication?",
+                question_id="theory-only-id",
+            ),
+        ],
+    ):
+        questions, _memory = pipeline.build(
         role=RoleType.BACKEND_ENGINEER,
         level=SeniorityLevel.MID,
         interview_type=InterviewType.TECHNICAL,
@@ -397,28 +414,30 @@ def test_sql_pipeline_skips_non_actionable_retrieved_prompt() -> None:
 def test_sql_pipeline_memory_update_only_for_enriched_selection() -> None:
 
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
-    retrieval_service.retrieve.return_value = [
-        _build_database_bank_item(
-            text="What is a view in SQL?",
-            question_id="skipped-id",
-        ),
-        _build_database_bank_item(question_id="enriched-id"),
-        _build_database_bank_item(
-            text=(
-                "Write a SQL query to list employees who are assigned to "
-                "more than one project using a join."
-            ),
-            question_id="overflow-id",
-        ),
-    ]
-
     llm = _mock_llm_with_responses([ENRICHED_SQL_JSON])
     pipeline = SQLQuestionPipeline(
         retrieval_service=retrieval_service,
         sql_generator=SQLQuestionGenerator(llm),
     )
 
-    questions, memory = pipeline.build(
+    with patch(
+        RETRIEVE_SQL_CANDIDATES,
+        return_value=[
+            _build_database_bank_item(
+                text="What is a view in SQL?",
+                question_id="skipped-id",
+            ),
+            _build_database_bank_item(question_id="enriched-id"),
+            _build_database_bank_item(
+                text=(
+                    "Write a SQL query to list employees who are assigned to "
+                    "more than one project using a join."
+                ),
+                question_id="overflow-id",
+            ),
+        ],
+    ):
+        questions, memory = pipeline.build(
         role=RoleType.BACKEND_ENGINEER,
         level=SeniorityLevel.MID,
         interview_type=InterviewType.TECHNICAL,
@@ -430,6 +449,64 @@ def test_sql_pipeline_memory_update_only_for_enriched_selection() -> None:
     assert "enriched-id" in memory.asked_question_ids
     assert "skipped-id" not in memory.asked_question_ids
     assert "overflow-id" not in memory.asked_question_ids
+
+
+def test_sql_pipeline_generate_retry_after_first_failure() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses(
+        [
+            "invalid-json",
+            GENERATED_FALLBACK_JSON,
+        ],
+    )
+    pipeline = SQLQuestionPipeline(
+        retrieval_service=retrieval_service,
+        sql_generator=SQLQuestionGenerator(llm),
+    )
+
+    with patch(RETRIEVE_SQL_CANDIDATES, return_value=[]):
+        questions, _memory = pipeline.build(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_DATABASE,
+            questions_per_area=1,
+        )
+
+    assert len(questions) == 1
+    assert questions[0].prompt == "List all department names."
+    assert llm.invoke.call_count == 2
+
+
+def test_sql_pipeline_never_returns_empty_list() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses([GENERATED_FALLBACK_JSON])
+    pipeline = SQLQuestionPipeline(
+        retrieval_service=retrieval_service,
+        sql_generator=SQLQuestionGenerator(llm),
+    )
+
+    with patch(
+        RETRIEVE_SQL_CANDIDATES,
+        return_value=[
+            _build_database_bank_item(
+                text="What is database replication?",
+                question_id="theory-only-id",
+            ),
+        ],
+    ):
+        questions, _memory = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.MID,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_DATABASE,
+            questions_per_area=1,
+        )
+
+    assert len(questions) >= 1
+    _assert_database_contract(questions[0])
 
 
 def test_example_enriched_generated_sql_question_model() -> None:

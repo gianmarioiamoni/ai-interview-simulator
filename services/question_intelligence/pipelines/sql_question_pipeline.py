@@ -33,6 +33,10 @@ from services.question_intelligence.sql_question_generator import (
     SQLQuestionGenerator,
 )
 
+from services.question_intelligence.pipelines.sql_pipeline_retrieval import (
+    SqlPipelineRetrievalHelper,
+    retrieve_sql_candidates,
+)
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
 )
@@ -65,6 +69,7 @@ _ACTIONABLE_SQL_PATTERN = re.compile(
 )
 
 _SQL_CANDIDATE_SCAN_K = 10
+_SQL_GENERATE_MAX_ATTEMPTS = 2
 
 
 class SQLQuestionPipeline:
@@ -73,10 +78,12 @@ class SQLQuestionPipeline:
         self,
         retrieval_service: QuestionRetrievalService,
         sql_generator: SQLQuestionGenerator,
+        sql_retrieval_helper: SqlPipelineRetrievalHelper | None = None,
     ) -> None:
 
         self._retrieval_service = retrieval_service
         self._sql_generator = sql_generator
+        self._sql_retrieval_helper = sql_retrieval_helper
         self._retrieval_query_builder = RetrievalQueryBuilder()
         self._retrieval_strategy_resolver = RetrievalStrategyResolver()
         self._memory_updater = InterviewMemoryUpdater()
@@ -119,7 +126,8 @@ class SQLQuestionPipeline:
             questions_per_area=candidate_scan_k,
         )
 
-        retrieved = self._retrieval_service.retrieve(
+        retrieved = retrieve_sql_candidates(
+            retrieval_service=self._retrieval_service,
             query=retrieval_query,
             retrieval_strategy=retrieval_strategy,
             role=role.value,
@@ -127,6 +135,7 @@ class SQLQuestionPipeline:
             interview_type=interview_type.value,
             area=area.value,
             memory=session_memory,
+            sql_retrieval_helper=self._sql_retrieval_helper,
         )
 
         for item in retrieved:
@@ -161,17 +170,24 @@ class SQLQuestionPipeline:
         remaining_slots = questions_per_area - len(questions)
 
         if remaining_slots > 0:
-
-            generated = self._sql_generator.generate(
-                role=role,
-                level=level,
-                n=remaining_slots,
+            questions.extend(
+                self._generate_with_retry(
+                    role=role,
+                    level=level,
+                    n=remaining_slots,
+                ),
             )
 
-            questions.extend(generated)
+        if not questions:
+            questions.extend(
+                self._generate_with_retry(
+                    role=role,
+                    level=level,
+                    n=max(1, questions_per_area),
+                ),
+            )
 
         if len(questions) < questions_per_area:
-
             logger.warning(
                 f"[SQL] Area {area.value} produced "
                 f"{len(questions)} questions "
@@ -179,6 +195,13 @@ class SQLQuestionPipeline:
             )
 
         final_questions = questions[:questions_per_area]
+
+        if not final_questions:
+            final_questions = self._generate_with_retry(
+                role=role,
+                level=level,
+                n=max(1, questions_per_area),
+            )[:questions_per_area]
         final_prompts = {q.prompt for q in final_questions}
 
         for bank_item, mapped_question in enriched_pairs:
@@ -196,6 +219,35 @@ class SQLQuestionPipeline:
     # =====================================================
     # INTERNALS
     # =====================================================
+
+    def _generate_with_retry(
+        self,
+        role: RoleType,
+        level: SeniorityLevel,
+        n: int,
+    ) -> List[Question]:
+
+        last_result: List[Question] = []
+
+        for attempt in range(1, _SQL_GENERATE_MAX_ATTEMPTS + 1):
+
+            try:
+                last_result = self._sql_generator.generate(
+                    role=role,
+                    level=level,
+                    n=n,
+                )
+            except ValueError as exc:
+                logger.warning(
+                    f"[SQL generate] Attempt {attempt}/{_SQL_GENERATE_MAX_ATTEMPTS} "
+                    f"failed: {exc}",
+                )
+                last_result = []
+
+            if last_result:
+                return last_result
+
+        return last_result
 
     def _is_actionable_sql_prompt(self, text: str) -> bool:
 
