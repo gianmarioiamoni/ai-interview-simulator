@@ -14,6 +14,10 @@ from domain.contracts.user.role import Role
 from domain.contracts.shared.action_type import ActionType
 from domain.contracts.interview.interview_memory_context import InterviewMemoryContext
 
+from services.question_corpus.contracts.interview_retrieval_memory import (
+    InterviewRetrievalMemory,
+)
+
 from app.ui.constants.loader_steps import LoaderStep
 from app.contracts.feedback_bundle import FeedbackBundle
 
@@ -49,6 +53,14 @@ class InterviewStateBase(BaseModel):
     awaiting_user_input: bool = False
 
     memory_context: InterviewMemoryContext = Field(default_factory=InterviewMemoryContext)
+
+    retrieval_memory: InterviewRetrievalMemory = Field(
+        default_factory=InterviewRetrievalMemory,
+    )
+
+    planned_areas: list[str] = Field(default_factory=list)
+
+    adaptive_interview_enabled: bool = False
 
     # Humanizer
     enable_humanizer: bool = True

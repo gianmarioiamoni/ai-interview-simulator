@@ -2,6 +2,8 @@
 
 QUESTIONS_PER_AREA = 1 # Number of questions per area
 
+USE_BATCH_QUESTION_GENERATION = False
+
 DEDUPLICATION_THRESHOLD = 0.85 # 85% similarity threshold for deduplication
 
 # ------------------------------------------------------------

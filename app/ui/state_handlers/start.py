@@ -13,8 +13,9 @@ from services.question_intelligence.question_intelligence_provider import (
 )
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
-from app.settings.constants import QUESTIONS_PER_AREA
+from app.settings.constants import QUESTIONS_PER_AREA, USE_BATCH_QUESTION_GENERATION
 from app.runtime.interview_runtime import run_interview_graph, get_runtime_llm
+from app.graph.nodes.navigation_node import configure_navigation_node
 
 from domain.contracts.interview_state import InterviewState
 
@@ -65,13 +66,38 @@ def start_interview(role, interview_type, company, language) -> Generator:
     state.current_progress = _smooth_progress(state.current_progress, map_loader_progress(LoaderStep.GENERATING_TESTS))
     time.sleep(0.2)
 
-    questions = question_intelligence.generate(
-        role=role_type,
-        level=level_enum,
-        interview_type=interview_type_enum,
-        areas=interview_type_enum.get_areas(),
-        questions_per_area=QUESTIONS_PER_AREA,
-    )
+    retrieval_memory = None
+    planned_areas: list[str] = []
+    adaptive_enabled = not USE_BATCH_QUESTION_GENERATION
+
+    if USE_BATCH_QUESTION_GENERATION:
+        questions = question_intelligence.generate(
+            role=role_type,
+            level=level_enum,
+            interview_type=interview_type_enum,
+            areas=interview_type_enum.get_areas(),
+            questions_per_area=QUESTIONS_PER_AREA,
+        )
+    else:
+
+        def _enrich_question(question):
+            if question.type.name == "CODING":
+                hidden_tests = test_generator.generate_tests(question, num_tests=3)
+                return question.model_copy(update={"hidden_tests": hidden_tests})
+            return question
+
+        configure_navigation_node(
+            lazy_service=question_intelligence.lazy_adaptive_service,
+            question_enricher=_enrich_question,
+        )
+
+        questions, retrieval_memory, planned_areas = (
+            question_intelligence.generate_first_question(
+                role=role_type,
+                level=level_enum,
+                interview_type=interview_type_enum,
+            )
+        )
 
     # -----------------------------------------------------
     # STEP 3 — TESTS
@@ -112,6 +138,15 @@ def start_interview(role, interview_type, company, language) -> Generator:
         questions=enriched_questions,
         interview_id="session-1",
     )
+
+    if adaptive_enabled and retrieval_memory is not None:
+        state = state.model_copy(
+            update={
+                "retrieval_memory": retrieval_memory,
+                "planned_areas": planned_areas,
+                "adaptive_interview_enabled": True,
+            }
+        )
 
     # -----------------------------------------------------
     # STEP 5 — GRAPH
