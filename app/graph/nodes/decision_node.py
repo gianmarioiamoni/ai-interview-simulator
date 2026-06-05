@@ -35,7 +35,13 @@ class DecisionNode:
         # LAST QUESTION DETECTION
         # -----------------------------------------------------
 
-        is_last_question = state.current_question_index == len(state.questions) - 1
+        planned_total = (
+            len(state.planned_areas)
+            if state.adaptive_interview_enabled and state.planned_areas
+            else len(state.questions)
+        )
+
+        is_last_question = state.current_question_index >= max(planned_total - 1, 0)
 
         # -----------------------------------------------------
         # ALLOWED ACTIONS

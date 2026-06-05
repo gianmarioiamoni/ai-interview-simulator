@@ -5,8 +5,41 @@ from domain.contracts.shared.action_type import ActionType
 
 from app.ui.constants.loader_steps import LoaderStep
 
+from typing import Callable
+
+from domain.contracts.question.question import Question
+
+from services.question_intelligence.lazy_adaptive_interview_service import (
+    LazyAdaptiveInterviewService,
+)
+
+_default_navigation_node: "AdaptiveNavigationNode | None" = None
+
+
+def configure_navigation_node(
+    lazy_service: LazyAdaptiveInterviewService | None = None,
+    question_enricher: Callable[[Question], Question] | None = None,
+) -> None:
+
+    global _default_navigation_node
+
+    from app.graph.nodes.adaptive_navigation_node import AdaptiveNavigationNode
+
+    _default_navigation_node = AdaptiveNavigationNode(
+        lazy_service=lazy_service,
+        question_enricher=question_enricher,
+    )
+
 
 def navigation_node(state: InterviewState) -> InterviewState:
+
+    if _default_navigation_node is not None:
+        return _default_navigation_node(state)
+
+    return _legacy_navigation_node(state)
+
+
+def _legacy_navigation_node(state: InterviewState) -> InterviewState:
 
     action = state.intent
     questions = state.questions or []
