@@ -14,6 +14,9 @@ from services.question_intelligence.semantic_deduplicator import SemanticDedupli
 from services.question_intelligence.question_set_coding_dedup import (
     prioritize_corpus_coding_for_dedup,
 )
+from services.question_intelligence.question_set_knowledge_dedup import (
+    prioritize_technical_knowledge_for_dedup,
+)
 
 from services.question_intelligence.area_question_builder import (
     AreaQuestionBuilder,
@@ -93,9 +96,7 @@ class QuestionSetBuilder:
         # DEDUP (INITIAL)
         # -----------------------------------------------------
 
-        all_questions = self._remove_exact_duplicates(all_questions)
-        all_questions = prioritize_corpus_coding_for_dedup(all_questions)
-        all_questions = self._deduplicator.deduplicate(all_questions)
+        all_questions = self._deduplicate_for_set(all_questions)
 
         # -----------------------------------------------------
         # REFILL LOOP (STEP 2.4)
@@ -103,6 +104,7 @@ class QuestionSetBuilder:
 
         max_attempts = 3
         attempt = 0
+        refill_areas = self._refill_area_order(areas)
 
         while len(all_questions) < expected_total and attempt < max_attempts:
 
@@ -112,10 +114,15 @@ class QuestionSetBuilder:
                 f"[QuestionSetBuilder] Refill attempt {attempt+1} → missing {missing}"
             )
 
-            for area in areas:
+            for area in refill_areas:
 
                 if missing <= 0:
                     break
+
+                area_count = sum(1 for q in all_questions if q.area == area)
+
+                if area_count >= questions_per_area:
+                    continue
 
                 new_questions, retrieval_memory = self._area_builder.build(
                     role=role,
@@ -129,10 +136,7 @@ class QuestionSetBuilder:
                 all_questions.extend(new_questions)
                 missing -= len(new_questions)
 
-            # re-dedup dopo refill
-            all_questions = self._remove_exact_duplicates(all_questions)
-            all_questions = prioritize_corpus_coding_for_dedup(all_questions)
-            all_questions = self._deduplicator.deduplicate(all_questions)
+            all_questions = self._deduplicate_for_set(all_questions)
 
             attempt += 1
 
@@ -172,6 +176,41 @@ class QuestionSetBuilder:
     # =========================================================
     # HELPERS
     # =========================================================
+
+    def _deduplicate_for_set(self, questions: List[Question]) -> List[Question]:
+
+        questions = self._remove_exact_duplicates(questions)
+
+        if not questions:
+            return questions
+
+        area_order: list[InterviewArea] = []
+        for question in questions:
+            if question.area not in area_order:
+                area_order.append(question.area)
+
+        deduped: List[Question] = []
+
+        for area in area_order:
+            area_questions = [q for q in questions if q.area == area]
+
+            if area == InterviewArea.TECH_TECHNICAL_KNOWLEDGE:
+                area_questions = prioritize_technical_knowledge_for_dedup(
+                    area_questions,
+                )
+            elif area == InterviewArea.TECH_CODING:
+                area_questions = prioritize_corpus_coding_for_dedup(area_questions)
+
+            deduped.extend(self._deduplicator.deduplicate(area_questions))
+
+        return deduped
+
+    def _refill_area_order(self, areas: List[InterviewArea]) -> List[InterviewArea]:
+
+        knowledge = InterviewArea.TECH_TECHNICAL_KNOWLEDGE
+        prioritized = [a for a in areas if a == knowledge]
+        prioritized.extend(a for a in areas if a != knowledge)
+        return prioritized
 
     def _remove_exact_duplicates(self, questions: List[Question]) -> List[Question]:
 
