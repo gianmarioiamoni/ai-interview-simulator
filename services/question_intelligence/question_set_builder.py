@@ -1,7 +1,6 @@
 # services/question_intelligence/question_set_builder.py
 
 from typing import List
-import random
 
 from domain.contracts.question.question import Question
 from domain.contracts.interview.interview_area import InterviewArea
@@ -28,6 +27,15 @@ from services.question_intelligence.quality.question_set_quality_analyzer import
 
 from services.question_corpus.contracts.interview_retrieval_memory import (
     InterviewRetrievalMemory,
+)
+
+from services.question_intelligence.interview_area_difficulty_profile import (
+    order_areas_by_derived_difficulty,
+)
+from services.question_intelligence.interview_difficulty_ordering import (
+    append_difficulty_to_memory_history,
+    calculate_progression_score,
+    order_questions_for_interview_progression,
 )
 
 from app.settings.constants import QUESTIONS_PER_AREA
@@ -71,9 +79,9 @@ class QuestionSetBuilder:
         # INITIAL GENERATION
         # -----------------------------------------------------
 
-        shuffled_areas = random.sample(areas, len(areas))
+        ordered_areas = order_areas_by_derived_difficulty(areas)
 
-        for area in shuffled_areas:
+        for area in ordered_areas:
 
             area_questions, retrieval_memory = self._area_builder.build(
                 role=role,
@@ -90,7 +98,22 @@ class QuestionSetBuilder:
                     f"{len(area_questions)} questions (expected {questions_per_area})"
                 )
 
-            all_questions.extend(area_questions[:questions_per_area])
+            selected = area_questions[:questions_per_area]
+            all_questions.extend(selected)
+
+            for question in selected:
+                retrieval_memory = InterviewRetrievalMemory(
+                    asked_question_ids=retrieval_memory.asked_question_ids,
+                    covered_domains=retrieval_memory.covered_domains,
+                    weak_domains=retrieval_memory.weak_domains,
+                    strong_domains=retrieval_memory.strong_domains,
+                    difficulty_history=append_difficulty_to_memory_history(
+                        retrieval_memory.difficulty_history,
+                        question,
+                    ),
+                    average_score=retrieval_memory.average_score,
+                    question_count=retrieval_memory.question_count,
+                )
 
         # -----------------------------------------------------
         # DEDUP (INITIAL)
@@ -153,6 +176,8 @@ class QuestionSetBuilder:
         # trimming finale (importante)
         all_questions = all_questions[:expected_total]
 
+        all_questions = order_questions_for_interview_progression(all_questions)
+
         # -----------------------------------------------------
         # FINAL VALIDATION
         # -----------------------------------------------------
@@ -160,6 +185,7 @@ class QuestionSetBuilder:
         self._validate_no_duplicates(all_questions)
 
         quality_report = self._quality_analyzer.analyze(all_questions)
+        progression_score = calculate_progression_score(all_questions)
 
         logger.info(
             f"[QUALITY] "
@@ -168,7 +194,8 @@ class QuestionSetBuilder:
             f"duplicates={quality_report.similarity.duplicate_pairs} "
             f"diversity={quality_report.diversity.diversity_score:.2f} "
             f"area_coverage={quality_report.coverage.area_coverage_score:.2f} "
-            f"difficulty_balance={quality_report.coverage.difficulty_balance_score:.2f}"
+            f"difficulty_balance={quality_report.coverage.difficulty_balance_score:.2f} "
+            f"difficulty_progression_score={progression_score:.2f}"
         )
 
         return all_questions
