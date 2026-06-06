@@ -8,9 +8,23 @@ from services.question_corpus.contracts.retrieval_candidate import RetrievalCand
 from services.question_intelligence.question_difficulty_mapper import (
     question_difficulty_to_corpus_int,
 )
+from services.question_intelligence.session_variety_memory import (
+    SessionVarietyMemoryHelper,
+)
 
 
 class InterviewMemoryUpdater:
+
+    def __init__(
+        self,
+        variety_memory_helper: SessionVarietyMemoryHelper | None = None,
+    ) -> None:
+
+        self._variety_memory = (
+            variety_memory_helper
+            if variety_memory_helper is not None
+            else SessionVarietyMemoryHelper()
+        )
 
     # =====================================================
     # PUBLIC
@@ -29,7 +43,7 @@ class InterviewMemoryUpdater:
 
         domains = [item.area.value]
 
-        return InterviewRetrievalMemory(
+        updated = InterviewRetrievalMemory(
             asked_question_ids=[
                 *memory.asked_question_ids,
                 question_id,
@@ -51,6 +65,13 @@ class InterviewMemoryUpdater:
             ],
             average_score=memory.average_score,
             question_count=memory.question_count,
+            session_selected_prompts=list(memory.session_selected_prompts),
+            session_used_topics=list(memory.session_used_topics),
+        )
+
+        return self._variety_memory.record_bank_item(
+            memory=updated,
+            item=item,
         )
 
     def update_from_question_evaluation(
@@ -88,7 +109,7 @@ class InterviewMemoryUpdater:
 
         difficulty_int = question_difficulty_to_corpus_int(question.difficulty)
 
-        return InterviewRetrievalMemory(
+        updated = InterviewRetrievalMemory(
             asked_question_ids=asked_question_ids,
             covered_domains=list(set(memory.covered_domains + domains)),
             weak_domains=weak_domains,
@@ -96,6 +117,13 @@ class InterviewMemoryUpdater:
             difficulty_history=[*memory.difficulty_history, difficulty_int],
             average_score=round(new_average, 3),
             question_count=new_count,
+            session_selected_prompts=list(memory.session_selected_prompts),
+            session_used_topics=list(memory.session_used_topics),
+        )
+
+        return self._variety_memory.record_question(
+            memory=updated,
+            question=question,
         )
 
     def update(
@@ -171,6 +199,8 @@ class InterviewMemoryUpdater:
                 3,
             ),
             question_count=new_count,
+            session_selected_prompts=list(memory.session_selected_prompts),
+            session_used_topics=list(memory.session_used_topics),
         )
 
     # =====================================================

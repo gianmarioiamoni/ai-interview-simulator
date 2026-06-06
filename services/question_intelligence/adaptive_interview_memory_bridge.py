@@ -11,6 +11,9 @@ from services.question_corpus.retrieval.interview_memory_updater import (
 from services.question_intelligence.question_difficulty_mapper import (
     question_difficulty_to_corpus_int,
 )
+from services.question_intelligence.session_variety_memory import (
+    SessionVarietyMemoryHelper,
+)
 
 
 class AdaptiveInterviewMemoryBridge:
@@ -26,6 +29,7 @@ class AdaptiveInterviewMemoryBridge:
         self._memory_updater = (
             memory_updater if memory_updater is not None else InterviewMemoryUpdater()
         )
+        self._variety_memory = SessionVarietyMemoryHelper()
 
     def update_from_question_result(
         self,
@@ -77,7 +81,7 @@ class AdaptiveInterviewMemoryBridge:
 
         difficulty_int = question_difficulty_to_corpus_int(question.difficulty)
 
-        return memory.model_copy(
+        updated = memory.model_copy(
             update={
                 "asked_question_ids": [*memory.asked_question_ids, question.id],
                 "covered_domains": list(
@@ -85,4 +89,9 @@ class AdaptiveInterviewMemoryBridge:
                 ),
                 "difficulty_history": [*memory.difficulty_history, difficulty_int],
             },
+        )
+
+        return self._variety_memory.record_question(
+            memory=updated,
+            question=question,
         )

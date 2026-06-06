@@ -1,10 +1,12 @@
 # services/question_intelligence/performance_responsive_candidate_selector.py
 
+from domain.contracts.question.question_bank_item import QuestionBankItem
 from services.question_corpus.contracts.adaptive_retrieval_context import (
     AdaptiveRetrievalContext,
 )
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
 from services.planning.difficulty_spike_suppressor import DifficultySpikeSuppressor
+from services.question_intelligence.session_variety_scorer import SessionVarietyScorer
 
 
 class PerformanceResponsiveCandidateSelector:
@@ -13,6 +15,7 @@ class PerformanceResponsiveCandidateSelector:
         self,
         spike_suppressor: DifficultySpikeSuppressor | None = None,
         max_allowed_jump: int = 2,
+        variety_scorer: SessionVarietyScorer | None = None,
     ) -> None:
 
         self._max_allowed_jump = max_allowed_jump
@@ -20,6 +23,11 @@ class PerformanceResponsiveCandidateSelector:
             spike_suppressor
             if spike_suppressor is not None
             else DifficultySpikeSuppressor(max_allowed_jump=max_allowed_jump)
+        )
+        self._variety_scorer = (
+            variety_scorer
+            if variety_scorer is not None
+            else SessionVarietyScorer()
         )
 
     # =====================================================
@@ -45,8 +53,14 @@ class PerformanceResponsiveCandidateSelector:
         if target is None:
             return pool[:count]
 
+        pool = self._variety_scorer.filter_session_duplicates(
+            pool=pool,
+            memory=context.memory,
+        )
+
         rank_index = {id(candidate): index for index, candidate in enumerate(pool)}
         selected: list[RetrievalCandidate] = []
+        selected_bank_items: list[QuestionBankItem] = []
         remaining = list(pool)
         selected_difficulties: list[int] = []
 
@@ -57,6 +71,7 @@ class PerformanceResponsiveCandidateSelector:
                 selected_difficulties=selected_difficulties,
                 context=context,
                 rank_index=rank_index,
+                selected_bank_items=selected_bank_items,
             )
 
             if pick is None:
@@ -64,6 +79,7 @@ class PerformanceResponsiveCandidateSelector:
 
             selected.append(pick)
             remaining.remove(pick)
+            selected_bank_items.append(self._variety_scorer.to_bank_item(pick))
 
             difficulty = self._candidate_difficulty(pick)
 
@@ -86,7 +102,13 @@ class PerformanceResponsiveCandidateSelector:
         if target is None:
             return list(pool)
 
+        pool = self._variety_scorer.filter_session_duplicates(
+            pool=pool,
+            memory=context.memory,
+        )
+
         previous = self._previous_difficulty([], context)
+        selected_bank_items: list[QuestionBankItem] = []
 
         indexed = list(enumerate(pool))
         indexed.sort(
@@ -95,6 +117,8 @@ class PerformanceResponsiveCandidateSelector:
                 rank=pair[0],
                 target=target,
                 previous_difficulty=previous,
+                context=context,
+                selected_bank_items=selected_bank_items,
             ),
         )
 
@@ -111,6 +135,7 @@ class PerformanceResponsiveCandidateSelector:
         selected_difficulties: list[int],
         context: AdaptiveRetrievalContext,
         rank_index: dict[int, int],
+        selected_bank_items: list[QuestionBankItem],
     ) -> RetrievalCandidate | None:
 
         viable = [
@@ -130,6 +155,8 @@ class PerformanceResponsiveCandidateSelector:
                 rank=rank_index[id(candidate)],
                 target=target,
                 previous_difficulty=previous,
+                context=context,
+                selected_bank_items=selected_bank_items,
             ),
         )
 
@@ -141,12 +168,14 @@ class PerformanceResponsiveCandidateSelector:
         rank: int,
         target: int,
         previous_difficulty: int | None,
-    ) -> tuple[int, int, int]:
+        context: AdaptiveRetrievalContext,
+        selected_bank_items: list[QuestionBankItem],
+    ) -> tuple[int, int, int, int, int, int, int]:
 
         difficulty = self._candidate_difficulty(candidate)
 
         if difficulty is None:
-            return (999, 1, rank)
+            return (999, 1, 1, 1, 1, 1, rank)
 
         target_distance = abs(difficulty - target)
         jump = (
@@ -156,7 +185,13 @@ class PerformanceResponsiveCandidateSelector:
         )
         spike = 0 if jump <= self._max_allowed_jump else 1
 
-        return (target_distance, spike, rank)
+        variety = self._variety_scorer.variety_penalty_tuple(
+            candidate=candidate,
+            context=context,
+            selected_bank_items=selected_bank_items,
+        )
+
+        return (target_distance, spike, *variety, rank)
 
     def _previous_difficulty(
         self,

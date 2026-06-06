@@ -19,7 +19,10 @@ class InterviewRetrievalMemory(BaseModel):
 
     question_count: int = 0
 
-    
+    session_selected_prompts: list[str] = []
+
+    session_used_topics: list[str] = []
+
     model_config = {
         "frozen": True,
         "extra": "forbid",
