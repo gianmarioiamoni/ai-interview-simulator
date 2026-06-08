@@ -13,6 +13,7 @@ DECONVERGENCE_AREAS: frozenset[str] = frozenset(
         "technical_technical_knowledge",
         "technical_case_study",
         "technical_coding",
+        "technical_database",
     }
 )
 
