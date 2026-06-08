@@ -6,6 +6,9 @@ from services.question_corpus.contracts.adaptive_retrieval_context import (
 )
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
 from services.planning.difficulty_spike_suppressor import DifficultySpikeSuppressor
+from services.question_intelligence.constrained_equivalence_band import (
+    ConstrainedEquivalenceBand,
+)
 from services.question_intelligence.session_variety_scorer import SessionVarietyScorer
 
 
@@ -16,6 +19,7 @@ class PerformanceResponsiveCandidateSelector:
         spike_suppressor: DifficultySpikeSuppressor | None = None,
         max_allowed_jump: int = 2,
         variety_scorer: SessionVarietyScorer | None = None,
+        equivalence_band: ConstrainedEquivalenceBand | None = None,
     ) -> None:
 
         self._max_allowed_jump = max_allowed_jump
@@ -28,6 +32,14 @@ class PerformanceResponsiveCandidateSelector:
             variety_scorer
             if variety_scorer is not None
             else SessionVarietyScorer()
+        )
+        self._equivalence_band = (
+            equivalence_band
+            if equivalence_band is not None
+            else ConstrainedEquivalenceBand(
+                variety_scorer=self._variety_scorer,
+                max_allowed_jump=max_allowed_jump,
+            )
         )
 
     # =====================================================
@@ -122,7 +134,17 @@ class PerformanceResponsiveCandidateSelector:
             ),
         )
 
-        return [candidate for _, candidate in indexed]
+        ordered = [candidate for _, candidate in indexed]
+        rank_index = {id(candidate): index for index, candidate in enumerate(pool)}
+
+        return self._apply_equivalence_diversification(
+            ordered=ordered,
+            target=target,
+            previous_difficulty=previous,
+            context=context,
+            rank_index=rank_index,
+            selected_bank_items=selected_bank_items,
+        )
 
     # =====================================================
     # INTERNALS
@@ -160,7 +182,46 @@ class PerformanceResponsiveCandidateSelector:
             ),
         )
 
-        return viable[0]
+        best = viable[0]
+
+        return self._equivalence_band.diversify_pick(
+            pool=viable,
+            best=best,
+            target=target,
+            previous_difficulty=previous,
+            context=context,
+            rank_index=rank_index,
+            selected_bank_items=selected_bank_items,
+        )
+
+    def _apply_equivalence_diversification(
+        self,
+        ordered: list[RetrievalCandidate],
+        target: int,
+        previous_difficulty: int | None,
+        context: AdaptiveRetrievalContext,
+        rank_index: dict[int, int],
+        selected_bank_items: list[QuestionBankItem],
+    ) -> list[RetrievalCandidate]:
+
+        if not ordered:
+            return ordered
+
+        diverse_pick = self._equivalence_band.diversify_pick(
+            pool=ordered,
+            best=ordered[0],
+            target=target,
+            previous_difficulty=previous_difficulty,
+            context=context,
+            rank_index=rank_index,
+            selected_bank_items=selected_bank_items,
+        )
+
+        if diverse_pick is ordered[0]:
+            return ordered
+
+        rest = [candidate for candidate in ordered if candidate is not diverse_pick]
+        return [diverse_pick, *rest]
 
     def _sort_key(
         self,
