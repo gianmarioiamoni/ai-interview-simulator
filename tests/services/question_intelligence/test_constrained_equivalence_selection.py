@@ -78,9 +78,9 @@ def test_equivalence_band_uses_five_percent_threshold() -> None:
     assert floor == 0.855
 
 
-def test_deconvergence_areas_exclude_database() -> None:
+def test_deconvergence_areas_include_database() -> None:
 
-    assert "technical_database" not in DECONVERGENCE_AREAS
+    assert "technical_database" in DECONVERGENCE_AREAS
     assert "technical_coding" in DECONVERGENCE_AREAS
 
 
@@ -149,33 +149,34 @@ def test_preserves_progression_constraints() -> None:
     assert selected[0].document.metadata["document_id"] in {"smooth-a", "smooth-b"}
 
 
-def test_database_area_skips_deconvergence() -> None:
+def test_database_area_applies_deconvergence_via_prioritize() -> None:
 
     selector = PerformanceResponsiveCandidateSelector()
     pool = [
         _candidate(
-            "top-ranked",
+            "used",
             difficulty=4,
             score=0.95,
-            prompt="SELECT users",
+            prompt="SELECT users FROM employees",
             area="technical_database",
         ),
         _candidate(
             "fresh",
             difficulty=4,
             score=0.94,
-            prompt="JOIN orders",
+            prompt="JOIN orders ON customers",
             area="technical_database",
         ),
     ]
     context = _context(
         target_area="technical_database",
         target_difficulty=4,
+        asked_question_ids=["used"],
     )
 
-    selected = selector.select(pool=pool, context=context)
+    prioritized = selector.prioritize(pool=pool, context=context)
 
-    assert selected[0].document.metadata["document_id"] == "top-ranked"
+    assert prioritized[0].document.metadata["document_id"] == "fresh"
 
 
 def test_coding_area_applies_deconvergence_via_prioritize() -> None:
