@@ -27,6 +27,15 @@ EQUIVALENCE_BAND_PCT = 0.05
 
 FRESH_START_MAX_TARGET_DISTANCE = 1
 
+KNOWLEDGE_FRESH_START_AREA = "technical_technical_knowledge"
+
+_CROSS_INTERVIEW_PICK_COUNTS: dict[str, int] = {}
+
+
+def reset_cross_interview_pick_counts() -> None:
+
+    _CROSS_INTERVIEW_PICK_COUNTS.clear()
+
 
 class ConstrainedEquivalenceBand:
 
@@ -69,15 +78,29 @@ class ConstrainedEquivalenceBand:
         if not self.is_eligible(context.target_area):
             return best
 
+        band_anchor = best
+
+        if (
+            self._is_fresh_start(
+                context=context,
+                selected_bank_items=selected_bank_items,
+            )
+            and context.target_area == KNOWLEDGE_FRESH_START_AREA
+        ):
+            band_anchor = max(
+                pool,
+                key=lambda candidate: self._candidate_score(candidate),
+            )
+
         best_tier = self._adaptive_tier(
-            candidate=best,
+            candidate=band_anchor,
             target=target,
             previous_difficulty=previous_difficulty,
         )
 
         equivalents = self._collect_equivalents(
             pool=pool,
-            best=best,
+            best=band_anchor,
             best_tier=best_tier,
             target=target,
             previous_difficulty=previous_difficulty,
@@ -238,44 +261,99 @@ class ConstrainedEquivalenceBand:
         context: AdaptiveRetrievalContext,
     ) -> RetrievalCandidate:
 
-        ordered = sorted(
-            equivalents,
-            key=lambda candidate: (
-                -self._candidate_score(candidate),
-                str(candidate.document.metadata.get("document_id", "")),
-            ),
-        )
+        if len(equivalents) == 1:
+            return equivalents[0]
 
         theme = get_interview_theme_anchor(context.memory) or ""
         query = context.retrieval_query or ""
-        seed = (
-            f"{context.current_role}|{context.seniority}|{theme}|{query}"
+        seed = f"{context.current_role}|{context.seniority}|{theme}|{query}"
+        used_ids = self._historical_usage_ids(context)
+        target = context.target_difficulty or 3
+        previous_difficulty = (
+            context.memory.difficulty_history[-1]
+            if context.memory.difficulty_history
+            else None
         )
 
-        topics = [
-            (
-                candidate,
-                self._topic_extractor.extract(
-                    candidate.document.page_content.strip(),
+        def prefix_key(candidate: RetrievalCandidate) -> tuple:
+
+            document_id = str(candidate.document.metadata.get("document_id", ""))
+            tier = self._adaptive_tier(
+                candidate=candidate,
+                target=target,
+                previous_difficulty=previous_difficulty,
+            )
+            historical = 1 if document_id in used_ids else 0
+            variety = self._variety_scorer.variety_penalty_tuple(
+                candidate=candidate,
+                context=context,
+                selected_bank_items=[],
+            )
+
+            return (
+                historical,
+                tier[0],
+                tier[1],
+                *variety,
+            )
+
+        best_prefix = min(prefix_key(candidate) for candidate in equivalents)
+        bucket = [
+            candidate
+            for candidate in equivalents
+            if prefix_key(candidate) == best_prefix
+        ]
+
+        if (
+            len(bucket) > 1
+            and context.target_area != KNOWLEDGE_FRESH_START_AREA
+        ):
+            topics_in_bucket = list(
+                dict.fromkeys(
+                    self._topic_extractor.extract(
+                        candidate.document.page_content.strip(),
+                    )
+                    for candidate in bucket
                 ),
             )
-            for candidate in ordered
-        ]
-        unique_topics = list(dict.fromkeys(topic for _, topic in topics))
 
-        if len(unique_topics) > 1:
-            topic_index = self._rotation_index(seed, len(unique_topics))
-            target_topic = unique_topics[topic_index]
-            bucket = [
-                candidate
-                for candidate, topic in topics
-                if topic == target_topic
-            ]
-            pick_index = self._rotation_index(f"{seed}|topic", len(bucket))
-            return bucket[pick_index]
+            if len(topics_in_bucket) > 1:
+                topic_index = self._rotation_index(seed, len(topics_in_bucket))
+                target_topic = topics_in_bucket[topic_index]
+                bucket = [
+                    candidate
+                    for candidate in bucket
+                    if self._topic_extractor.extract(
+                        candidate.document.page_content.strip(),
+                    )
+                    == target_topic
+                ]
 
-        pick_index = self._rotation_index(seed, len(ordered))
-        return ordered[pick_index]
+        def spread_key(candidate: RetrievalCandidate) -> tuple:
+
+            document_id = str(candidate.document.metadata.get("document_id", ""))
+            cross_interview_reuse = (
+                _CROSS_INTERVIEW_PICK_COUNTS.get(document_id, 0)
+                if context.target_area == KNOWLEDGE_FRESH_START_AREA
+                else 0
+            )
+
+            return (
+                cross_interview_reuse,
+                self._rotation_index(f"{seed}|{document_id}", 10_000),
+                -self._candidate_score(candidate),
+                document_id,
+            )
+
+        pick = min(bucket, key=spread_key)
+        document_id = str(pick.document.metadata.get("document_id", ""))
+
+        if context.target_area == KNOWLEDGE_FRESH_START_AREA and document_id:
+            _CROSS_INTERVIEW_PICK_COUNTS[document_id] = (
+                _CROSS_INTERVIEW_PICK_COUNTS.get(document_id, 0) + 1
+            )
+
+        return pick
 
     def _rotation_index(
         self,
