@@ -35,12 +35,13 @@ from services.question_ingestion.contracts.ingestion_metadata import IngestionMe
 def _context(
     target_difficulty: int = 4,
     memory: InterviewRetrievalMemory | None = None,
+    target_area: str = "technical_technical_knowledge",
 ) -> AdaptiveRetrievalContext:
 
     return AdaptiveRetrievalContext(
         current_role="backend_engineer",
         seniority="mid",
-        target_area="technical_technical_knowledge",
+        target_area=target_area,
         target_question_count=1,
         target_difficulty=target_difficulty,
         memory=memory or InterviewRetrievalMemory(),
@@ -220,7 +221,10 @@ def test_adaptive_difficulty_still_beats_variety() -> None:
         _candidate("aligned", "Standard caching strategy question.", difficulty=4, score=0.70),
     ]
 
-    selected = selector.select(pool=pool, context=_context(target_difficulty=4))
+    selected = selector.select(
+        pool=pool,
+        context=_context(target_difficulty=4, target_area="technical_background"),
+    )
 
     assert selected[0].document.metadata["document_id"] == "aligned"
 

@@ -19,12 +19,13 @@ def _context(
     difficulty_history: list[int] | None = None,
     target_question_count: int = 1,
     asked_question_ids: list[str] | None = None,
+    target_area: str = "technical_technical_knowledge",
 ) -> AdaptiveRetrievalContext:
 
     return AdaptiveRetrievalContext(
         current_role="backend_engineer",
         seniority="mid",
-        target_area="technical_technical_knowledge",
+        target_area=target_area,
         target_question_count=target_question_count,
         target_difficulty=target_difficulty,
         memory=InterviewRetrievalMemory(
@@ -60,7 +61,10 @@ def test_selects_closest_difficulty_over_top_ranked() -> None:
         _candidate("far", difficulty=5, score=0.80),
     ]
 
-    selected = selector.select(pool=pool, context=_context(target_difficulty=4))
+    selected = selector.select(
+        pool=pool,
+        context=_context(target_difficulty=4, target_area="technical_background"),
+    )
 
     assert len(selected) == 1
     assert selected[0].document.metadata["document_id"] == "closest"
@@ -133,7 +137,10 @@ def test_prioritize_reorders_scan_pool_for_coding_sql_paths() -> None:
         _candidate("other", difficulty=5, score=0.80),
     ]
 
-    prioritized = selector.prioritize(pool=pool, context=_context(target_difficulty=4))
+    prioritized = selector.prioritize(
+        pool=pool,
+        context=_context(target_difficulty=4, target_area="technical_background"),
+    )
 
     assert prioritized[0].document.metadata["document_id"] == "target"
 
