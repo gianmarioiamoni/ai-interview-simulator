@@ -253,6 +253,7 @@ class ConstrainedEquivalenceBand:
             not memory.asked_question_ids
             and not memory.session_selected_prompts
             and not memory.session_used_topics
+            and not memory.difficulty_history
         )
 
     def _pick_fresh_start_equivalent(
@@ -302,23 +303,10 @@ class ConstrainedEquivalenceBand:
             def knowledge_tie_break_key(candidate: RetrievalCandidate) -> tuple:
 
                 document_id = str(candidate.document.metadata.get("document_id", ""))
-                tier = self._adaptive_tier(
-                    candidate=candidate,
-                    target=target,
-                    previous_difficulty=previous_difficulty,
-                )
                 historical = 1 if document_id in used_ids else 0
-                variety = self._variety_scorer.variety_penalty_tuple(
-                    candidate=candidate,
-                    context=context,
-                    selected_bank_items=[],
-                )
 
                 return (
                     historical,
-                    tier[0],
-                    tier[1],
-                    *variety,
                     _CROSS_INTERVIEW_PICK_COUNTS.get(document_id, 0),
                     -self._candidate_score(candidate),
                     document_id,
