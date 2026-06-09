@@ -25,6 +25,8 @@ DECONVERGENCE_AREAS: frozenset[str] = frozenset(
 
 EQUIVALENCE_BAND_PCT = 0.05
 
+FRESH_START_MAX_TARGET_DISTANCE = 1
+
 
 class ConstrainedEquivalenceBand:
 
@@ -107,12 +109,14 @@ class ConstrainedEquivalenceBand:
         tier_matches = [
             candidate
             for candidate in pool
-            if self._adaptive_tier(
+            if self._matches_adaptive_tier(
                 candidate=candidate,
+                best_tier=best_tier,
                 target=target,
                 previous_difficulty=previous_difficulty,
+                context=context,
+                selected_bank_items=selected_bank_items,
             )
-            == best_tier
         ]
 
         if not tier_matches:
@@ -129,6 +133,12 @@ class ConstrainedEquivalenceBand:
         else:
             anchor_score = self._candidate_score(best)
 
+        if self._is_fresh_start(
+            context=context,
+            selected_bank_items=selected_bank_items,
+        ):
+            return tier_matches
+
         floor = self._score_floor(anchor_score)
 
         return [
@@ -136,6 +146,33 @@ class ConstrainedEquivalenceBand:
             for candidate in tier_matches
             if self._candidate_score(candidate) >= floor
         ]
+
+    def _matches_adaptive_tier(
+        self,
+        candidate: RetrievalCandidate,
+        best_tier: tuple[int, int],
+        target: int,
+        previous_difficulty: int | None,
+        context: AdaptiveRetrievalContext,
+        selected_bank_items: list[QuestionBankItem],
+    ) -> bool:
+
+        tier = self._adaptive_tier(
+            candidate=candidate,
+            target=target,
+            previous_difficulty=previous_difficulty,
+        )
+
+        if self._is_fresh_start(
+            context=context,
+            selected_bank_items=selected_bank_items,
+        ):
+            return (
+                tier[0] <= FRESH_START_MAX_TARGET_DISTANCE
+                and tier[1] == best_tier[1]
+            )
+
+        return tier == best_tier
 
     def _pick_diversity_best(
         self,
