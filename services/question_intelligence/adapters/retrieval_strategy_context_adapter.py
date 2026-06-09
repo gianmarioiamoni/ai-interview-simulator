@@ -57,6 +57,7 @@ class RetrievalStrategyContextAdapter:
             seniority=level or "mid",
             area=target_area,
             question_count=retrieval_strategy.k,
+            retrieval_query=query,
         )
 
     # =====================================================

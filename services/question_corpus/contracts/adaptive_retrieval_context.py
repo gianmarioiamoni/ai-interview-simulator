@@ -25,6 +25,8 @@ class AdaptiveRetrievalContext(BaseModel):
 
     target_difficulty: int | None = None
 
+    retrieval_query: str | None = None
+
     memory: InterviewRetrievalMemory
 
 
