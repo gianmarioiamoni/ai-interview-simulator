@@ -137,3 +137,66 @@ def test_sql_retrieval_merges_next_stage_when_pool_shallow() -> None:
 
     assert len(result) == 4
     assert chroma.search_with_filters.call_count == 2
+    assert all(call.kwargs["k"] == 50 for call in chroma.search_with_filters.call_args_list)
+
+
+def test_sql_retrieval_uses_expanded_fetch_depth() -> None:
+
+    chroma = MagicMock()
+    chroma.search_with_filters.return_value = [
+        _candidate("sql-1", "Write a query to select employees."),
+        _candidate("sql-2", "Find rows using a join."),
+        _candidate("sql-3", "List departments with indexing."),
+    ]
+
+    repetition_filter = MagicMock()
+    repetition_filter.apply.side_effect = lambda candidates, memory: candidates
+
+    policy = MagicMock()
+    policy.build_relaxation_stages.return_value = [
+        RetrievalFilters(area="technical_database"),
+    ]
+
+    context_adapter = MagicMock()
+    context_adapter.adapt.return_value = MagicMock(
+        target_question_count=10,
+        memory=InterviewRetrievalMemory(),
+    )
+
+    coverage = MagicMock()
+    coverage.apply.side_effect = lambda candidates, context: candidates
+
+    weak = MagicMock()
+    weak.apply.side_effect = lambda candidates, context: candidates
+
+    mapper = MagicMock()
+    mapper.map.side_effect = lambda candidates: [
+        _bank_item(
+            candidate.document.metadata["document_id"],
+            candidate.document.page_content,
+        )
+        for candidate in candidates
+    ]
+
+    helper = SqlPipelineRetrievalHelper(
+        context_adapter=context_adapter,
+        policy=policy,
+        chroma_retrieval=chroma,
+        coverage_engine=coverage,
+        weak_domain_engine=weak,
+        repetition_filter=repetition_filter,
+        candidate_mapper=mapper,
+    )
+
+    helper.retrieve_candidates(
+        query="database sql",
+        retrieval_strategy=RetrievalStrategy(k=10, fetch_k=40),
+        role="fullstack_engineer",
+        level="mid",
+        interview_type="technical",
+        area="technical_database",
+        memory=InterviewRetrievalMemory(),
+    )
+
+    chroma.search_with_filters.assert_called_once()
+    assert chroma.search_with_filters.call_args.kwargs["k"] == 50

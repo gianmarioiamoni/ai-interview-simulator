@@ -38,6 +38,7 @@ from services.question_corpus.contracts.interview_retrieval_memory import (
 )
 
 _SQL_MIN_CANDIDATE_POOL = 3
+_SQL_FETCH_DEPTH_MULTIPLIER = 5
 
 
 class SqlPipelineRetrievalHelper:
@@ -115,7 +116,7 @@ class SqlPipelineRetrievalHelper:
         )
 
         filter_stages = self._policy.build_relaxation_stages(context)
-        fetch_k = context.target_question_count * 3
+        fetch_k = context.target_question_count * _SQL_FETCH_DEPTH_MULTIPLIER
 
         merged_pool: list[RetrievalCandidate] = []
         seen_document_ids: set[str] = set()
