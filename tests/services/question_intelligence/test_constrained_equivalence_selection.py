@@ -27,6 +27,7 @@ def _context(
     asked_question_ids: list[str] | None = None,
     session_selected_prompts: list[str] | None = None,
     session_used_topics: list[str] | None = None,
+    retrieval_query: str | None = None,
 ) -> AdaptiveRetrievalContext:
 
     return AdaptiveRetrievalContext(
@@ -35,6 +36,7 @@ def _context(
         target_area=target_area,
         target_question_count=1,
         target_difficulty=target_difficulty,
+        retrieval_query=retrieval_query,
         memory=InterviewRetrievalMemory(
             difficulty_history=difficulty_history or [],
             asked_question_ids=asked_question_ids or [],
@@ -248,6 +250,75 @@ def test_single_candidate_fallback_unchanged() -> None:
     selected = selector.select(pool=pool, context=_context(target_difficulty=4))
 
     assert selected == pool
+
+
+def test_fresh_start_rotates_among_equivalents_by_role_and_query() -> None:
+
+    band = ConstrainedEquivalenceBand()
+    equivalents = [
+        _candidate("doc-a", difficulty=4, score=0.95, prompt="SELECT from users"),
+        _candidate("doc-b", difficulty=4, score=0.94, prompt="JOIN orders on customers"),
+        _candidate("doc-c", difficulty=4, score=0.93, prompt="GROUP BY department"),
+    ]
+    roles = [
+        "backend_engineer",
+        "data_engineer",
+        "frontend_engineer",
+        "devops_engineer",
+        "ml_engineer",
+    ]
+    picks = set()
+
+    for index, role in enumerate(roles):
+        context = _context(
+            target_area="technical_database",
+            target_difficulty=4,
+        ).model_copy(
+            update={
+                "current_role": role,
+                "seniority": ["junior", "mid", "senior"][index % 3],
+                "retrieval_query": f"{role} SQL interview question variant {index}",
+            },
+        )
+        pick = band._pick_fresh_start_equivalent(
+            equivalents=equivalents,
+            context=context,
+        )
+        picks.add(pick.document.metadata["document_id"])
+
+    assert picks.issubset({"doc-a", "doc-b", "doc-c"})
+    assert len(picks) >= 2
+
+
+def test_fresh_start_falls_back_to_session_behavior_when_memory_populated() -> None:
+
+    selector = PerformanceResponsiveCandidateSelector()
+    pool = [
+        _candidate(
+            "used-before",
+            difficulty=4,
+            score=0.95,
+            prompt="Explain indexing strategies",
+            area="technical_database",
+        ),
+        _candidate(
+            "fresh-topic",
+            difficulty=4,
+            score=0.94,
+            prompt="Describe transaction isolation levels",
+            area="technical_database",
+        ),
+    ]
+    context = _context(
+        target_area="technical_database",
+        target_difficulty=4,
+        asked_question_ids=["used-before"],
+        retrieval_query="SQL transactions interview question",
+    )
+
+    selected = selector.select(pool=pool, context=context)
+
+    assert selected[0].document.metadata["document_id"] == "fresh-topic"
 
 
 def test_missing_target_difficulty_preserves_rank_order() -> None:

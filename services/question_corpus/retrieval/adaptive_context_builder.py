@@ -18,6 +18,7 @@ class AdaptiveContextBuilder:
         seniority: str,
         area: str,
         question_count: int,
+        retrieval_query: str | None = None,
     ) -> AdaptiveRetrievalContext:
 
         target_difficulty = self._compute_target_difficulty(
@@ -33,6 +34,7 @@ class AdaptiveContextBuilder:
             weak_domains=memory.weak_domains,
             strong_domains=memory.strong_domains,
             target_difficulty=target_difficulty,
+            retrieval_query=retrieval_query,
             memory=memory,
         )
 
