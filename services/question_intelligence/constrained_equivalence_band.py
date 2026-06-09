@@ -297,55 +297,75 @@ class ConstrainedEquivalenceBand:
                 *variety,
             )
 
-        best_prefix = min(prefix_key(candidate) for candidate in equivalents)
-        bucket = [
-            candidate
-            for candidate in equivalents
-            if prefix_key(candidate) == best_prefix
-        ]
+        if context.target_area == KNOWLEDGE_FRESH_START_AREA:
 
-        if (
-            len(bucket) > 1
-            and context.target_area != KNOWLEDGE_FRESH_START_AREA
-        ):
-            topics_in_bucket = list(
-                dict.fromkeys(
-                    self._topic_extractor.extract(
-                        candidate.document.page_content.strip(),
-                    )
-                    for candidate in bucket
-                ),
-            )
+            def knowledge_tie_break_key(candidate: RetrievalCandidate) -> tuple:
 
-            if len(topics_in_bucket) > 1:
-                topic_index = self._rotation_index(seed, len(topics_in_bucket))
-                target_topic = topics_in_bucket[topic_index]
-                bucket = [
-                    candidate
-                    for candidate in bucket
-                    if self._topic_extractor.extract(
-                        candidate.document.page_content.strip(),
-                    )
-                    == target_topic
-                ]
+                document_id = str(candidate.document.metadata.get("document_id", ""))
+                tier = self._adaptive_tier(
+                    candidate=candidate,
+                    target=target,
+                    previous_difficulty=previous_difficulty,
+                )
+                historical = 1 if document_id in used_ids else 0
+                variety = self._variety_scorer.variety_penalty_tuple(
+                    candidate=candidate,
+                    context=context,
+                    selected_bank_items=[],
+                )
 
-        def spread_key(candidate: RetrievalCandidate) -> tuple:
+                return (
+                    historical,
+                    tier[0],
+                    tier[1],
+                    *variety,
+                    _CROSS_INTERVIEW_PICK_COUNTS.get(document_id, 0),
+                    -self._candidate_score(candidate),
+                    document_id,
+                )
 
-            document_id = str(candidate.document.metadata.get("document_id", ""))
-            cross_interview_reuse = (
-                _CROSS_INTERVIEW_PICK_COUNTS.get(document_id, 0)
-                if context.target_area == KNOWLEDGE_FRESH_START_AREA
-                else 0
-            )
+            pick = min(equivalents, key=knowledge_tie_break_key)
+        else:
+            best_prefix = min(prefix_key(candidate) for candidate in equivalents)
+            bucket = [
+                candidate
+                for candidate in equivalents
+                if prefix_key(candidate) == best_prefix
+            ]
 
-            return (
-                cross_interview_reuse,
-                self._rotation_index(f"{seed}|{document_id}", 10_000),
-                -self._candidate_score(candidate),
-                document_id,
-            )
+            if len(bucket) > 1:
+                topics_in_bucket = list(
+                    dict.fromkeys(
+                        self._topic_extractor.extract(
+                            candidate.document.page_content.strip(),
+                        )
+                        for candidate in bucket
+                    ),
+                )
 
-        pick = min(bucket, key=spread_key)
+                if len(topics_in_bucket) > 1:
+                    topic_index = self._rotation_index(seed, len(topics_in_bucket))
+                    target_topic = topics_in_bucket[topic_index]
+                    bucket = [
+                        candidate
+                        for candidate in bucket
+                        if self._topic_extractor.extract(
+                            candidate.document.page_content.strip(),
+                        )
+                        == target_topic
+                    ]
+
+            def tie_break_key(candidate: RetrievalCandidate) -> tuple:
+
+                document_id = str(candidate.document.metadata.get("document_id", ""))
+
+                return (
+                    self._rotation_index(f"{seed}|{document_id}", 10_000),
+                    -self._candidate_score(candidate),
+                    document_id,
+                )
+
+            pick = min(bucket, key=tie_break_key)
         document_id = str(pick.document.metadata.get("document_id", ""))
 
         if context.target_area == KNOWLEDGE_FRESH_START_AREA and document_id:
