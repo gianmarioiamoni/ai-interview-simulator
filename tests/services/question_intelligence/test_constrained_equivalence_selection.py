@@ -13,7 +13,15 @@ from services.question_intelligence.constrained_equivalence_band import (
     DECONVERGENCE_AREAS,
     EQUIVALENCE_BAND_PCT,
     ConstrainedEquivalenceBand,
+    reset_cross_interview_pick_counts,
 )
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _reset_cross_interview_pick_counts() -> None:
+
+    reset_cross_interview_pick_counts()
 from services.question_intelligence.performance_responsive_candidate_selector import (
     PerformanceResponsiveCandidateSelector,
 )
@@ -357,6 +365,78 @@ def test_fresh_start_rotates_among_equivalents_by_role_and_query() -> None:
 
     assert picks.issubset({"doc-a", "doc-b", "doc-c"})
     assert len(picks) >= 2
+
+
+def test_fresh_start_knowledge_spreads_across_many_role_query_profiles() -> None:
+
+    band = ConstrainedEquivalenceBand()
+    equivalents = [
+        _candidate(
+            f"knowledge-{index}",
+            difficulty=3,
+            score=0.95 - index * 0.01,
+            prompt=f"Explain distributed systems concept variant {index}",
+            area="technical_technical_knowledge",
+        )
+        for index in range(8)
+    ]
+    roles = [
+        "backend_engineer",
+        "frontend_engineer",
+        "devops_engineer",
+        "data_engineer",
+        "fullstack_engineer",
+        "ml_engineer",
+        "mobile_engineer",
+    ]
+    picks: set[str] = set()
+
+    for index in range(21):
+        role = roles[index % len(roles)]
+        context = _context(
+            target_area="technical_technical_knowledge",
+            target_difficulty=3,
+        ).model_copy(
+            update={
+                "current_role": role,
+                "seniority": ["junior", "mid", "senior"][index % 3],
+                "retrieval_query": (
+                    f"{role} technical knowledge interview question {index}"
+                ),
+            },
+        )
+        pick = band._pick_fresh_start_equivalent(
+            equivalents=equivalents,
+            context=context,
+        )
+        picks.add(pick.document.metadata["document_id"])
+
+    assert len(picks) >= 5
+
+
+def test_fresh_start_prefers_unused_cross_interview_document_ids() -> None:
+
+    band = ConstrainedEquivalenceBand()
+    equivalents = [
+        _candidate("hot-doc", difficulty=3, score=0.95, prompt="Explain caching"),
+        _candidate("fresh-doc", difficulty=3, score=0.94, prompt="Explain queues"),
+    ]
+    context = _context(
+        target_area="technical_technical_knowledge",
+        target_difficulty=3,
+        retrieval_query="backend caching interview",
+    ).model_copy(
+        update={
+            "already_used_question_ids": ["hot-doc"],
+        },
+    )
+
+    pick = band._pick_fresh_start_equivalent(
+        equivalents=equivalents,
+        context=context,
+    )
+
+    assert pick.document.metadata["document_id"] == "fresh-doc"
 
 
 def test_fresh_start_falls_back_to_session_behavior_when_memory_populated() -> None:
