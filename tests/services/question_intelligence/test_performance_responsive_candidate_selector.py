@@ -18,6 +18,7 @@ def _context(
     target_difficulty: int | None = 4,
     difficulty_history: list[int] | None = None,
     target_question_count: int = 1,
+    asked_question_ids: list[str] | None = None,
 ) -> AdaptiveRetrievalContext:
 
     return AdaptiveRetrievalContext(
@@ -28,6 +29,7 @@ def _context(
         target_difficulty=target_difficulty,
         memory=InterviewRetrievalMemory(
             difficulty_history=difficulty_history or [],
+            asked_question_ids=asked_question_ids or [],
         ),
     )
 
@@ -88,7 +90,10 @@ def test_uses_ranking_as_tie_breaker_for_equal_target_distance() -> None:
         _candidate("rank-1", difficulty=3, score=0.95),
         _candidate("rank-2", difficulty=5, score=0.70),
     ]
-    context = _context(target_difficulty=4)
+    context = _context(
+        target_difficulty=4,
+        asked_question_ids=["prior"],
+    )
 
     selected = selector.select(pool=pool, context=context)
 
@@ -141,7 +146,11 @@ def test_written_path_selects_multiple_with_progression() -> None:
         _candidate("q2", difficulty=4, score=0.90),
         _candidate("q3", difficulty=5, score=0.85),
     ]
-    context = _context(target_difficulty=4, target_question_count=2)
+    context = _context(
+        target_difficulty=4,
+        target_question_count=2,
+        asked_question_ids=["prior"],
+    )
 
     selected = selector.select(pool=pool, context=context)
 

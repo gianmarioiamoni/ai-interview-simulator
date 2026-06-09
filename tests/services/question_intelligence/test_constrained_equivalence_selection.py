@@ -95,7 +95,13 @@ def test_selects_adaptive_best_when_no_equivalents() -> None:
         _candidate("far-diff", difficulty=2, score=0.94),
     ]
 
-    selected = selector.select(pool=pool, context=_context(target_difficulty=4))
+    selected = selector.select(
+        pool=pool,
+        context=_context(
+            target_difficulty=4,
+            asked_question_ids=["prior"],
+        ),
+    )
 
     assert selected[0].document.metadata["document_id"] == "best"
 
@@ -250,6 +256,69 @@ def test_single_candidate_fallback_unchanged() -> None:
     selected = selector.select(pool=pool, context=_context(target_difficulty=4))
 
     assert selected == pool
+
+
+def test_fresh_start_relaxes_adaptive_tier_to_target_distance_one() -> None:
+
+    band = ConstrainedEquivalenceBand()
+    pool = [
+        _candidate("target-diff", difficulty=3, score=0.95, area="technical_database"),
+        _candidate("near-diff", difficulty=2, score=0.94, area="technical_database"),
+        _candidate("far-diff", difficulty=5, score=0.96, area="technical_database"),
+    ]
+    context = _context(
+        target_area="technical_database",
+        target_difficulty=3,
+    )
+    best = pool[0]
+    best_tier = band._adaptive_tier(best, target=3, previous_difficulty=None)
+    equivalents = band._collect_equivalents(
+        pool=pool,
+        best=best,
+        best_tier=best_tier,
+        target=3,
+        previous_difficulty=None,
+        context=context,
+        selected_bank_items=[],
+    )
+    equivalent_ids = {
+        candidate.document.metadata["document_id"] for candidate in equivalents
+    }
+
+    assert "target-diff" in equivalent_ids
+    assert "near-diff" in equivalent_ids
+    assert "far-diff" not in equivalent_ids
+    assert len(equivalents) == 2
+
+
+def test_session_memory_keeps_strict_adaptive_tier_matching() -> None:
+
+    band = ConstrainedEquivalenceBand()
+    pool = [
+        _candidate("target-diff", difficulty=3, score=0.95, area="technical_database"),
+        _candidate("near-diff", difficulty=2, score=0.94, area="technical_database"),
+    ]
+    context = _context(
+        target_area="technical_database",
+        target_difficulty=3,
+        asked_question_ids=["prior"],
+    )
+    best = pool[0]
+    best_tier = band._adaptive_tier(best, target=3, previous_difficulty=None)
+    equivalents = band._collect_equivalents(
+        pool=pool,
+        best=best,
+        best_tier=best_tier,
+        target=3,
+        previous_difficulty=None,
+        context=context,
+        selected_bank_items=[],
+    )
+    equivalent_ids = {
+        candidate.document.metadata["document_id"] for candidate in equivalents
+    }
+
+    assert equivalent_ids == {"target-diff"}
 
 
 def test_fresh_start_rotates_among_equivalents_by_role_and_query() -> None:
