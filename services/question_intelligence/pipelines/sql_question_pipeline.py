@@ -126,6 +126,7 @@ class SQLQuestionPipeline:
             level=level,
             area=area,
             theme_anchor=theme_anchor,
+            memory=session_memory,
         )
 
         candidate_scan_k = max(
