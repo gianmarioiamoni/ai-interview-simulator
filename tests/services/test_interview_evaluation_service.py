@@ -1,561 +1,252 @@
 # tests/services/test_interview_evaluation_service.py
 
+# Behavioral tests for the CURRENT InterviewEvaluationService architecture:
+# deterministic scoring engine + decision engine + signal enrichment,
+# with LLM used only for narrative generation (with deterministic fallbacks).
+#
+# The legacy suite targeted a removed LLM-JSON evaluation contract
+# (per_question_evaluations kwarg, JSON retry loops, dimension-set guards)
+# and was classified obsolete in Phase 7B-Z.
+
 import pytest
-import json
 
 from unittest.mock import Mock
 
-from services.interview_evaluation_service import (
-    InterviewEvaluationService,
+from domain.contracts.execution.execution_result import (
+    ExecutionResult,
+    ExecutionStatus,
+    ExecutionType,
 )
-from domain.contracts.question.question_evaluation import QuestionEvaluation
+from domain.contracts.interview.hire_decision import HireDecision
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
-from domain.contracts.shared.performance_dimension import PerformanceDimension
+from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.question.question_evaluation import QuestionEvaluation
+from domain.contracts.question.question_result import QuestionResult
+from domain.contracts.user.role import RoleType
 
-# ------------------------------------------------------------------
-# Helpers
-# ------------------------------------------------------------------
+from services.interview_evaluation_service import InterviewEvaluationService
+
+from tests.factories.interview_state_factory import build_question
 
 
-def build_question_evaluations():
+# ---------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------
 
-    return [
-        QuestionEvaluation(
-            question_id="q1",
-            score=80,
-            max_score=100,
-            feedback="Good answer",
-            strengths=["clarity"],
-            weaknesses=["depth"],
-            passed=True,
-        ),
-        QuestionEvaluation(
-            question_id="q2",
-            score=60,
-            max_score=100,
-            feedback="Average answer",
-            strengths=["structure"],
-            weaknesses=["accuracy"],
-            passed=True,
-        ),
+
+class FakeLLMResponse(str):
+    """String response that also exposes .content like provider payloads."""
+
+    @property
+    def content(self) -> str:
+        return str(self)
+
+
+def build_llm(summary: str = "Solid performance overall.") -> Mock:
+    llm = Mock()
+    llm.invoke.return_value = FakeLLMResponse(summary)
+    llm.invoke_json.side_effect = ValueError("structured output unavailable")
+    return llm
+
+
+def build_evaluation(qid: str, score: float) -> QuestionEvaluation:
+    return QuestionEvaluation(
+        question_id=qid,
+        score=score,
+        max_score=100.0,
+        feedback=f"Feedback for {qid}",
+        strengths=["clarity"],
+        weaknesses=["depth"],
+        passed=score >= 60,
+    )
+
+
+def build_execution(qid: str, *, passed_tests: int, total_tests: int) -> ExecutionResult:
+    success = total_tests > 0 and passed_tests == total_tests
+    return ExecutionResult(
+        question_id=qid,
+        execution_type=ExecutionType.CODING,
+        status=ExecutionStatus.SUCCESS if success else ExecutionStatus.FAILED_TESTS,
+        success=success,
+        output="",
+        error=None if success else "Some tests failed",
+        passed_tests=passed_tests,
+        total_tests=total_tests,
+        execution_time_ms=10,
+        test_results=[],
+    )
+
+
+def build_result(
+    qid: str,
+    *,
+    score: float = 80.0,
+    with_evaluation: bool = True,
+    execution: ExecutionResult | None = None,
+) -> QuestionResult:
+    return QuestionResult(
+        question_id=qid,
+        execution=execution,
+        evaluation=build_evaluation(qid, score) if with_evaluation else None,
+        ai_hint=None,
+        hint_level=None,
+    )
+
+
+def evaluate(service: InterviewEvaluationService, results, questions):
+    return service.evaluate(
+        question_results=results,
+        questions=questions,
+        interview_type=InterviewType.TECHNICAL,
+        role=RoleType.BACKEND_ENGINEER,
+    )
+
+
+# ---------------------------------------------------------
+# GUARDS
+# ---------------------------------------------------------
+
+
+def test_evaluate_raises_without_question_results():
+
+    service = InterviewEvaluationService(build_llm())
+
+    with pytest.raises(ValueError, match="without question results"):
+        evaluate(service, [], [])
+
+
+def test_evaluate_raises_without_evaluations():
+
+    service = InterviewEvaluationService(build_llm())
+
+    results = [build_result("q1", with_evaluation=False)]
+    questions = [build_question(qid="q1")]
+
+    with pytest.raises(ValueError, match="No question evaluations available"):
+        evaluate(service, results, questions)
+
+
+# ---------------------------------------------------------
+# HAPPY PATH
+# ---------------------------------------------------------
+
+
+def test_evaluate_returns_complete_interview_evaluation():
+
+    service = InterviewEvaluationService(build_llm())
+
+    questions = [build_question(qid="q1"), build_question(qid="q2")]
+    results = [
+        build_result("q1", score=80.0),
+        build_result("q2", score=60.0),
     ]
 
+    evaluation = evaluate(service, results, questions)
 
-def valid_llm_payload():
-
-    return {
-        "overall_score": 7.0,
-        "performance_dimensions": [
-            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
-            {"name": "Communication", "score": 8, "justification": "Clear"},
-            {"name": "Problem Solving", "score": 6, "justification": "Decent"},
-            {"name": "System Design", "score": 7, "justification": "Good"},
-        ],
-        "hiring_probability": 75,
-        "per_question_assessment": [],
-        "improvement_suggestions": ["Improve depth"],
-        "confidence": 0.9,
-    }
+    assert isinstance(evaluation, InterviewEvaluation)
+    assert 0.0 <= evaluation.overall_score <= 100.0
+    assert 0.0 <= evaluation.hiring_probability <= 100.0
+    assert 0.0 <= evaluation.percentile_rank <= 100.0
+    assert evaluation.hire_decision in HireDecision
+    assert evaluation.executive_summary.strip()
+    assert evaluation.per_question_assessment == [r.evaluation for r in results]
+    assert evaluation.dimension_scores
+    assert evaluation.weighted_breakdown
 
 
-# ------------------------------------------------------------------
-# Happy Path
-# ------------------------------------------------------------------
+def test_overall_score_is_decision_adjusted_and_bounded():
+
+    service = InterviewEvaluationService(build_llm())
+
+    questions = [build_question(qid="q1")]
+    results = [build_result("q1", score=100.0)]
+
+    evaluation = evaluate(service, results, questions)
+
+    assert 0.0 <= evaluation.overall_score <= 100.0
+    assert evaluation.adjusted_score == evaluation.overall_score
+    assert evaluation.raw_score is not None
 
 
-def test_evaluation_success():
+def test_low_scores_produce_negative_leaning_decision():
 
-    llm = Mock()
+    service = InterviewEvaluationService(build_llm())
 
-    payload = valid_llm_payload()
-    # llm.invoke.return_value.content = __import__("json").dumps(payload)
-    llm.invoke.return_value = Mock(content=json.dumps(payload))
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        per_question_evaluations=build_question_evaluations(),
-        interview_type="technical",
-        role="backend engineer",
-    )
-
-    assert isinstance(result, InterviewEvaluation)
-    assert result.overall_score == 7.0
-    assert result.hiring_probability == 70.0
-    assert len(result.performance_dimensions) == 4
-
-
-# ------------------------------------------------------------------
-# Retry on malformed JSON
-# ------------------------------------------------------------------
-
-
-def test_retry_on_invalid_json():
-
-    llm = Mock()
-
-    llm.invoke.side_effect = [
-        Mock(content="INVALID_JSON"),
-        Mock(content=__import__("json").dumps(valid_llm_payload())),
-        Mock(content=__import__("json").dumps(valid_llm_payload())),
+    questions = [build_question(qid="q1"), build_question(qid="q2")]
+    results = [
+        build_result("q1", score=5.0),
+        build_result("q2", score=10.0),
     ]
 
-    service = InterviewEvaluationService(llm)
+    evaluation = evaluate(service, results, questions)
 
-    result = service.evaluate(
-        per_question_evaluations=build_question_evaluations(),
-        interview_type="technical",
-        role="backend engineer",
+    assert evaluation.hire_decision in (
+        HireDecision.NO_HIRE,
+        HireDecision.LEAN_NO_HIRE,
     )
 
-    assert result.overall_score == 7.0
-    assert llm.invoke.call_count == 3
+
+# ---------------------------------------------------------
+# SIGNAL ENRICHMENT
+# ---------------------------------------------------------
 
 
-# ------------------------------------------------------------------
-# Inconsistent overall score triggers retry
-# ------------------------------------------------------------------
+def test_dimension_signals_extracted_from_executions():
 
+    service = InterviewEvaluationService(build_llm())
 
-def test_retry_on_inconsistent_score():
-
-    llm = Mock()
-
-    inconsistent_payload = valid_llm_payload()
-    inconsistent_payload["overall_score"] = 2.0
-
-    llm.invoke.side_effect = [
-        Mock(content=__import__("json").dumps(inconsistent_payload)),
-        Mock(content=__import__("json").dumps(valid_llm_payload())),
-        Mock(content=__import__("json").dumps(valid_llm_payload())),
+    questions = [build_question(qid="q1")]
+    results = [
+        build_result(
+            "q1",
+            score=50.0,
+            execution=build_execution("q1", passed_tests=1, total_tests=4),
+        )
     ]
 
-    service = InterviewEvaluationService(llm)
+    evaluation = evaluate(service, results, questions)
 
-    result = service.evaluate(
-        per_question_evaluations=build_question_evaluations(),
-        interview_type="technical",
-        role="backend engineer",
-    )
+    assert isinstance(evaluation.dimension_signals, dict)
 
-    assert result.overall_score == 7.0
-    assert llm.invoke.call_count == 3
+    for key, value in evaluation.dimension_signals.items():
+        assert isinstance(key, str)
+        assert 0.0 <= value <= 1.0
 
 
-# ------------------------------------------------------------------
-# Fail after max retries
-# ------------------------------------------------------------------
+# ---------------------------------------------------------
+# CONFIDENCE
+# ---------------------------------------------------------
 
 
-def test_fail_after_max_retries():
+def test_confidence_within_bounds():
 
-    llm = Mock()
-    llm.invoke.return_value.content = "INVALID_JSON"
+    service = InterviewEvaluationService(build_llm())
 
-    service = InterviewEvaluationService(llm)
-
-  
-    result = service.evaluate(
-        per_question_evaluations=build_question_evaluations(),
-        interview_type="technical",
-        role="backend engineer",
-    )
-    # Should fallback after retries
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-    assert result.improvement_suggestions == ["Manual review recommended"]
-
-
-def test_fail_after_inconsistent_score_retries():
-
-    llm = Mock()
-
-    inconsistent_payload = {
-        "overall_score": 1.0,
-        "performance_dimensions": [
-            {"name": "Technical Depth", "score": 8, "justification": "Solid"},
-            {"name": "Communication", "score": 8, "justification": "Clear"},
-            {"name": "Problem Solving", "score": 8, "justification": "Good"},
-            {"name": "System Design", "score": 8, "justification": "Good"},
-        ],
-        "hiring_probability": 10,
-        "per_question_assessment": [],
-        "improvement_suggestions": ["Improve"],
-        "confidence": 0.8,
-    }
-
-    llm.invoke.return_value.content = __import__("json").dumps(inconsistent_payload)
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        per_question_evaluations=build_question_evaluations(),
-        interview_type="technical",
-        role="backend engineer",
-    )
-
-    # Should fallback after retries
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-    assert result.improvement_suggestions == ["Manual review recommended"]
-    assert llm.invoke.call_count == 3
-
-
-def test_retry_when_extra_field_in_root():
-
-    llm = Mock()
-
-    invalid_payload = {
-        "overall_score": 7.0,
-        "performance_dimensions": [
-            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
-            {"name": "Communication", "score": 7, "justification": "Clear"},
-            {"name": "Problem Solving", "score": 7, "justification": "Good"},
-            {"name": "System Design", "score": 7, "justification": "Good"},
-        ],
-        "hiring_probability": 70,
-        "per_question_assessment": [],
-        "improvement_suggestions": [],
-        "confidence": 0.9,
-        "unexpected_field": "hallucination",  # <-- extra
-    }
-
-    llm.invoke.return_value.content = __import__("json").dumps(invalid_payload)
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        per_question_evaluations=build_question_evaluations(),
-        interview_type="technical",
-        role="backend engineer",
-    )
-
-    # Should fallback after retries
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-    assert result.improvement_suggestions == ["Manual review recommended"]
-
-
-def test_retry_when_extra_field_in_dimension():
-
-    llm = Mock()
-
-    invalid_payload = {
-        "overall_score": 7.0,
-        "performance_dimensions": [
-            {
-                "name": "Technical Depth",
-                "score": 7,
-                "justification": "Solid",
-                "extra": "invalid",  # <-- extra
-            },
-            {"name": "Communication", "score": 7, "justification": "Clear"},
-            {"name": "Problem Solving", "score": 7, "justification": "Good"},
-            {"name": "System Design", "score": 7, "justification": "Good"},
-        ],
-        "hiring_probability": 70,
-        "per_question_assessment": [],
-        "improvement_suggestions": [],
-        "confidence": 0.9,
-    }
-
-    llm.invoke.return_value.content = __import__("json").dumps(invalid_payload)
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        per_question_evaluations=build_question_evaluations(),
-        interview_type="technical",
-        role="backend engineer",
-    )
-
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-
-
-def test_retry_when_required_field_missing():
-
-    llm = Mock()
-
-    invalid_payload = {
-        # missing overall_score
-        "performance_dimensions": [
-            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
-            {"name": "Communication", "score": 7, "justification": "Clear"},
-            {"name": "Problem Solving", "score": 7, "justification": "Good"},
-            {"name": "System Design", "score": 7, "justification": "Good"},
-        ],
-        "hiring_probability": 70,
-        "per_question_assessment": [],
-        "improvement_suggestions": [],
-        "confidence": 0.9,
-    }
-
-    llm.invoke.return_value.content = __import__("json").dumps(invalid_payload)
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        per_question_evaluations=build_question_evaluations(),
-        interview_type="technical",
-        role="backend engineer",
-    )
-
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-
-
-def test_invalid_dimension_count_triggers_fallback():
-
-    llm = Mock()
-
-    invalid_payload = {
-        "overall_score": 7.0,
-        "performance_dimensions": [  # only 3
-            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
-            {"name": "Communication", "score": 7, "justification": "Clear"},
-            {"name": "Problem Solving", "score": 7, "justification": "Good"},
-        ],
-        "hiring_probability": 70,
-        "per_question_assessment": [],
-        "improvement_suggestions": [],
-        "confidence": 0.8,
-    }
-
-    llm.invoke.return_value.content = json.dumps(invalid_payload)
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        build_question_evaluations(),
-        "technical",
-        "backend engineer",
-    )
-
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-
-
-def test_duplicate_dimension_names_triggers_fallback():
-
-    llm = Mock()
-
-    invalid_payload = {
-        "overall_score": 7.0,
-        "performance_dimensions": [
-            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
-            {"name": "Technical Depth", "score": 7, "justification": "Duplicate"},
-            {"name": "Problem Solving", "score": 7, "justification": "Good"},
-            {"name": "System Design", "score": 7, "justification": "Good"},
-        ],
-        "hiring_probability": 70,
-        "per_question_assessment": [],
-        "improvement_suggestions": [],
-        "confidence": 0.8,
-    }
-
-    llm.invoke.return_value.content = json.dumps(invalid_payload)
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        build_question_evaluations(),
-        "technical",
-        "backend engineer",
-    )
-
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-
-
-def test_invalid_dimension_set_triggers_fallback():
-
-    llm = Mock()
-
-    invalid_payload = {
-        "overall_score": 7.0,
-        "performance_dimensions": [
-            {"name": "Leadership", "score": 7, "justification": "Invalid"},
-            {"name": "Communication", "score": 7, "justification": "Clear"},
-            {"name": "Problem Solving", "score": 7, "justification": "Good"},
-            {"name": "System Design", "score": 7, "justification": "Good"},
-        ],
-        "hiring_probability": 70,
-        "per_question_assessment": [],
-        "improvement_suggestions": [],
-        "confidence": 0.8,
-    }
-
-    llm.invoke.return_value.content = json.dumps(invalid_payload)
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        build_question_evaluations(),
-        "technical",
-        "backend engineer",
-    )
-
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-
-
-def test_invalid_confidence_triggers_fallback():
-
-    llm = Mock()
-
-    invalid_payload = {
-        "overall_score": 7.0,
-        "performance_dimensions": [
-            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
-            {"name": "Communication", "score": 7, "justification": "Clear"},
-            {"name": "Problem Solving", "score": 7, "justification": "Good"},
-            {"name": "System Design", "score": 7, "justification": "Good"},
-        ],
-        "hiring_probability": 70,
-        "per_question_assessment": [],
-        "improvement_suggestions": [],
-        "confidence": 5.0,  # invalid
-    }
-
-    llm.invoke.return_value.content = json.dumps(invalid_payload)
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        build_question_evaluations(),
-        "technical",
-        "backend engineer",
-    )
-
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
-
-
-def test_confidence_with_single_dimension():
-
-    service = InterviewEvaluationService(Mock())
-
-    dimensions = [
-        PerformanceDimension(name="Technical Depth", score=7, justification="Only one")
+    questions = [build_question(qid="q1"), build_question(qid="q2")]
+    results = [
+        build_result("q1", score=95.0),
+        build_result("q2", score=20.0),
     ]
 
-    confidence = service._compute_confidence(dimensions)
+    evaluation = evaluate(service, results, questions)
 
-    assert confidence == 0.5
-
-
-def test_invalid_confidence_value_branch():
-
-    llm = Mock()
-
-    valid_except_confidence = {
-        "overall_score": 7.0,
-        "performance_dimensions": [
-            {"name": "Technical Depth", "score": 7, "justification": "Solid"},
-            {"name": "Communication", "score": 7, "justification": "Clear"},
-            {"name": "Problem Solving", "score": 7, "justification": "Good"},
-            {"name": "System Design", "score": 7, "justification": "Good"},
-        ],
-        "hiring_probability": 70,
-        "per_question_assessment": [],
-        "improvement_suggestions": [],
-        "confidence": -1.0,  # invalid but passes JSON validation
-    }
-
-    llm.invoke.return_value.content = json.dumps(valid_except_confidence)
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        build_question_evaluations(),
-        "technical",
-        "backend engineer",
-    )
-
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
+    assert 0.0 <= evaluation.confidence.base <= 1.0
+    assert 0.0 <= evaluation.confidence.final <= 1.0
 
 
-def test_guard_final_fallback_branch(monkeypatch):
-
-    service = InterviewEvaluationService(Mock())
-
-    monkeypatch.setattr(
-        "services.interview_evaluation_service.MAX_RETRIES",
-        -1,
-    )
-
-    result = service.evaluate(
-        build_question_evaluations(),
-        "technical",
-        "backend engineer",
-    )
-
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
+# ---------------------------------------------------------
+# NARRATIVE FALLBACKS
+# ---------------------------------------------------------
 
 
-def test_json_with_prefix_text():
+def test_executive_summary_falls_back_when_llm_returns_empty():
 
-    llm = Mock()
+    service = InterviewEvaluationService(build_llm(summary=""))
 
-    payload = valid_llm_payload()
+    questions = [build_question(qid="q1")]
+    results = [build_result("q1", score=70.0)]
 
-    dirty_response = f"""
-    Sure! Here is your evaluation:
+    evaluation = evaluate(service, results, questions)
 
-    {json.dumps(payload)}
-
-    Let me know if you need more details.
-    """
-
-    llm.invoke.return_value.content = dirty_response
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        build_question_evaluations(),
-        "technical",
-        "backend engineer",
-    )
-
-    assert result.overall_score == 7.0
-
-
-def test_json_with_suffix_text():
-
-    llm = Mock()
-
-    payload = valid_llm_payload()
-
-    dirty_response = json.dumps(payload) + "\n\nThanks!"
-
-    llm.invoke.return_value.content = dirty_response
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        build_question_evaluations(),
-        "technical",
-        "backend engineer",
-    )
-
-    assert result.overall_score == 7.0
-
-
-def test_no_json_triggers_fallback():
-
-    llm = Mock()
-    llm.invoke.return_value.content = "Completely invalid output"
-
-    service = InterviewEvaluationService(llm)
-
-    result = service.evaluate(
-        build_question_evaluations(),
-        "technical",
-        "backend engineer",
-    )
-
-    assert result.confidence.base == 0.3
-    assert result.confidence.final == 0.3
+    assert evaluation.executive_summary.strip()
+    assert "overall score" in evaluation.executive_summary.lower()

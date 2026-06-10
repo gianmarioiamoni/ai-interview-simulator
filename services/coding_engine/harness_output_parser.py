@@ -78,8 +78,13 @@ class HarnessOutputParser:
         # =========================================================
 
         if test_results:
-            total_tests = len(test_results)
-            total_passed = sum(1 for t in test_results if t.status == TestStatus.PASSED)
+            # Structured __TEST_RESULT__ lines cover visible tests only;
+            # hidden tests are reported via the __HIDDEN__ aggregate marker.
+            total_tests = len(test_results) + hidden_total
+            total_passed = (
+                sum(1 for t in test_results if t.status == TestStatus.PASSED)
+                + hidden_passed
+            )
         else:
             total_passed = visible_passed + hidden_passed
             total_tests = visible_total + hidden_total

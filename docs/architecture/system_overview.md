@@ -355,19 +355,20 @@ Loader groups:
 ## Question Intelligence
 
 Hybrid generation system:
-- retrieval
-- semantic selection
+- retrieval (`QuestionRetrievalService`)
+- per-area assembly (`AreaQuestionBuilder`)
+- set orchestration (`QuestionSetBuilder`, `LazyAdaptiveInterviewService`)
 - LLM generation
 
 ---
 
-## Evaluation Engine
+## Evaluation
 
 Combines:
 - execution
-- semantic evaluation
-- scoring
-- aggregation
+- semantic evaluation (WrittenEvaluationNode / QuestionEvaluationService)
+- scoring (InterviewScoringEngine)
+- aggregation (EvaluationAggregateNode / InterviewEvaluationService)
 
 ---
 

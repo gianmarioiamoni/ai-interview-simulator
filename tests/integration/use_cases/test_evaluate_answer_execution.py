@@ -7,10 +7,18 @@ from unittest.mock import Mock
 from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 from app.graph.interview_graph import build_interview_graph
 
+from domain.contracts.ai.ai_hint import AIHint
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.shared.action_type import ActionType
 
-from tests.factories.interview_state_factory import build_interview_state
+from tests.factories.interview_state_factory import (
+    build_interview_state,
+    build_state_with_execution,
+)
+
+
+TEST_HINT = AIHint(explanation="test hint", suggestion="check your function name")
 
 
 def test_execution_via_graph_updates_state():
@@ -44,7 +52,7 @@ def test_hint_is_generated():
     llm = Mock()
 
     mock_hint_service = Mock()
-    mock_hint_service.generate_hint.return_value = "test hint"
+    mock_hint_service.generate_hint.return_value = TEST_HINT
 
     graph = build_interview_graph(llm=llm, hint_service=mock_hint_service)
 
@@ -60,7 +68,7 @@ def test_hint_is_generated():
 
     result = new_state.get_result_for_question("q1")
 
-    assert result.ai_hint == "test hint"
+    assert result.ai_hint == TEST_HINT
     assert result.hint_level is not None
 
 
@@ -69,7 +77,7 @@ def test_hint_not_generated_twice():
     llm = Mock()
 
     mock_hint_service = Mock()
-    mock_hint_service.generate_hint.return_value = "hint"
+    mock_hint_service.generate_hint.return_value = TEST_HINT
 
     graph = build_interview_graph(llm=llm, hint_service=mock_hint_service)
 
@@ -91,7 +99,7 @@ def test_pipeline_is_idempotent():
 
     llm = Mock()
     mock_hint_service = Mock()
-    mock_hint_service.generate_hint.return_value = "hint"
+    mock_hint_service.generate_hint.return_value = TEST_HINT
 
     graph = build_interview_graph(llm=llm, hint_service=mock_hint_service)
 
@@ -114,12 +122,22 @@ def test_pipeline_is_idempotent():
     assert result1.ai_hint == result2.ai_hint
 
     if first_state.is_completed:
-        assert first_state.report_output == second_state.report_output
+        assert first_state.interview_evaluation == second_state.interview_evaluation
+
+
+class FakeLLMResponse(str):
+    """String response that also exposes .content like provider payloads."""
+
+    @property
+    def content(self) -> str:
+        return str(self)
 
 
 def test_report_generated_when_completed():
 
     llm = Mock()
+    llm.invoke.return_value = FakeLLMResponse("Executive summary of the interview.")
+    llm.invoke_json.side_effect = ValueError("structured output unavailable")
     mock_hint_service = Mock()
 
     graph = build_interview_graph(llm=llm, hint_service=mock_hint_service)
@@ -130,11 +148,35 @@ def test_report_generated_when_completed():
         hint_service=mock_hint_service,
     )
 
-    state = build_interview_state()
+    state = build_state_with_execution(passed_tests=2, total_tests=2)
 
-    # forza stato finale
-    state.current_question_index = len(state.questions) - 1
-    state.last_action = ActionType.NEXT
+    # attach an evaluation to the executed question
+    result = state.get_result_for_question("q1")
+    evaluated = result.model_copy(
+        update={
+            "evaluation": QuestionEvaluation(
+                question_id="q1",
+                score=100.0,
+                max_score=100.0,
+                feedback="All tests passed.",
+                passed=True,
+            )
+        }
+    )
+    state = state.model_copy(
+        update={
+            "results_by_question": {**state.results_by_question, "q1": evaluated}
+        }
+    )
+
+    # final state: last question reached, user requested the report
+    state = state.model_copy(
+        update={
+            "current_question_index": len(state.questions) - 1,
+            "intent": ActionType.GENERATE_REPORT,
+            "awaiting_user_input": False,
+        }
+    )
 
     graph_result = graph.invoke(state)
 
@@ -144,5 +186,5 @@ def test_report_generated_when_completed():
         new_state = graph_result
 
     assert new_state.is_completed is True
-    assert hasattr(new_state, "report_output")
+    assert new_state.is_processing is False
     assert hasattr(new_state, "interview_evaluation")
