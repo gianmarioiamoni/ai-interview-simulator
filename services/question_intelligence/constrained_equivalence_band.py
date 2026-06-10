@@ -33,6 +33,7 @@ CANONICAL_FRESH_START_AREAS: frozenset[str] = frozenset(
     {
         "technical_technical_knowledge",
         "technical_background",
+        "technical_database",
     }
 )
 
