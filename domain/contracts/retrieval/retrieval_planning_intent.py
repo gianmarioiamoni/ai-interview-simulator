@@ -1,4 +1,4 @@
-# services/retrieval/contracts/retrieval_planning_intent.py
+# domain/contracts/retrieval/retrieval_planning_intent.py
 
 from pydantic import BaseModel
 

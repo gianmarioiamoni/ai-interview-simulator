@@ -1,4 +1,4 @@
-# services/retrieval/contracts/retrieval_adaptation_signal.py
+# domain/contracts/interview/retrieval_adaptation_signal.py
 
 from pydantic import BaseModel, Field
 
@@ -18,7 +18,6 @@ class RetrievalAdaptationSignal(BaseModel):
 
     repeated_failures: bool = False
 
-    
     model_config = {
         "frozen": True,
     }
