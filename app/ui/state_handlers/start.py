@@ -14,7 +14,11 @@ from services.question_intelligence.question_intelligence_provider import (
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
 from app.settings.constants import QUESTIONS_PER_AREA, USE_BATCH_QUESTION_GENERATION
-from app.runtime.interview_runtime import run_interview_graph, get_runtime_llm
+from app.runtime.interview_runtime import (
+    run_interview_graph,
+    get_runtime_llm,
+    get_runtime_metrics_collector,
+)
 from app.graph.nodes.navigation_node import configure_navigation_node
 
 from domain.contracts.interview_state import InterviewState
@@ -50,6 +54,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
     interview_type_enum = InterviewType[interview_type]
     level_enum = SeniorityLevel.MID
 
+    get_runtime_metrics_collector().start_session()
     llm = get_runtime_llm()
 
     question_intelligence = QuestionIntelligenceProvider(llm)

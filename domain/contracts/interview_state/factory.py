@@ -62,6 +62,7 @@ class InterviewStateFactoryMixin:
             # -------------------------------------------------
             report_output=None,
             interview_evaluation=None,
+            interview_metrics=None,
             results_by_question={},
             dimension_signals={},
             # -------------------------------------------------

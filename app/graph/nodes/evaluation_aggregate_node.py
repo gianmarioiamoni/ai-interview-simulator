@@ -1,13 +1,17 @@
 # app/graph/nodes/evaluation_aggregate_node.py
 
-from services.interview_evaluation_service import InterviewEvaluationService
 from domain.contracts.shared.action_type import ActionType
+from infrastructure.llm.metrics.interview_metrics_aggregator import (
+    InterviewMetricsAggregator,
+)
+from services.interview_evaluation_service import InterviewEvaluationService
 
 
 class EvaluationAggregateNode:
 
     def __init__(self, service: InterviewEvaluationService):
         self._service = service
+        self._metrics_aggregator = InterviewMetricsAggregator()
 
     def __call__(self, state):
 
@@ -44,12 +48,22 @@ class EvaluationAggregateNode:
         )
 
         # ---------------------------------------------------------
+        # LLM METRICS SNAPSHOT
+        # ---------------------------------------------------------
+
+        from app.runtime.interview_runtime import get_runtime_metrics_collector
+
+        raw_metrics = get_runtime_metrics_collector().get_metrics()
+        interview_metrics = self._metrics_aggregator.aggregate(raw_metrics)
+
+        # ---------------------------------------------------------
         # STATE UPDATE
         # ---------------------------------------------------------
 
         return state.model_copy(
             update={
                 "interview_evaluation": interview_eval,
+                "interview_metrics": interview_metrics,
                 "intent": ActionType.NONE,
                 "current_step": None,
             }
