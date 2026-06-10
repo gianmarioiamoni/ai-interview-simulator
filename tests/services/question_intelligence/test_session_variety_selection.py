@@ -223,7 +223,7 @@ def test_adaptive_difficulty_still_beats_variety() -> None:
 
     selected = selector.select(
         pool=pool,
-        context=_context(target_difficulty=4, target_area="technical_background"),
+        context=_context(target_difficulty=4, target_area="technical_case_study"),
     )
 
     assert selected[0].document.metadata["document_id"] == "aligned"
