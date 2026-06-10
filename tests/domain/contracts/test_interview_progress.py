@@ -44,7 +44,7 @@ def test_in_progress_without_questions_fails() -> None:
 def test_completed_without_evaluations_fails() -> None:
     from pydantic import ValidationError
 
-    with pytest.raises(ValidationError, match="Cannot complete interview without evaluations"):
+    with pytest.raises(ValidationError, match="Cannot complete interview without results"):
         InterviewState(
             interview_id="int-1",
             role=Role(type=RoleType.BACKEND_ENGINEER),

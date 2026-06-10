@@ -2,6 +2,10 @@ You are a senior technical interviewer.
 
 Your task is to rewrite the candidate's answer to make it stronger.
 
+INTERVIEW CONTEXT:
+- Role: {{ role }}
+- Interview area: {{ area }}
+
 CONTEXT:
 Question:
 {{ question }}
@@ -12,10 +16,15 @@ Candidate Answer:
 Feedback:
 {{ feedback }}
 
+Identified weaknesses to address:
+{{ weaknesses }}
+
 INSTRUCTIONS:
 - Keep the original intent
 - Improve clarity and structure
+- Explicitly address each identified weakness
 - Add a concrete example if missing
+- Calibrate depth to the role and area above
 - Be concise but strong
 - Do NOT explain, just output the improved answer
 

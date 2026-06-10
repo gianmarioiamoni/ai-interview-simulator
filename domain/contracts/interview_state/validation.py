@@ -10,6 +10,10 @@ class InterviewStateValidationMixin:
     @model_validator(mode="after")
     def validate_progress_consistency(self):
 
+        if self.progress == InterviewProgress.IN_PROGRESS:
+            if not self.questions:
+                raise ValueError("Cannot be in progress without questions")
+
         if self.progress == InterviewProgress.COMPLETED:
             if not self.results_by_question:
                 raise ValueError("Cannot complete interview without results")

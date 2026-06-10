@@ -9,23 +9,9 @@ from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 
 
-def test_report_node_builds_report():
+def test_report_node_preserves_interview_evaluation():
 
     mock_service = Mock()
-
-    mock_eval = Mock()
-    mock_eval.overall_score = 80
-    mock_eval.hiring_probability = 75
-    mock_eval.percentile_rank = 85
-
-    mock_eval.confidence = Mock()
-    mock_eval.confidence.final = 0.9
-
-    mock_eval.performance_dimensions = []
-    mock_eval.improvement_suggestions = []
-    mock_eval.executive_summary = "Good candidate"
-
-    mock_service.evaluate.return_value = mock_eval
 
     state = build_interview_state()
 
@@ -50,7 +36,15 @@ def test_report_node_builds_report():
         evaluation=evaluation,
     )
 
-    state = state.model_copy(update={"results_by_question": {question.id: result}})
+    interview_eval = Mock()
+
+    state = state.model_copy(
+        update={
+            "results_by_question": {question.id: result},
+            "interview_evaluation": interview_eval,
+            "is_processing": True,
+        }
+    )
 
     # ---------------------------------------------------------
     # Execute node
@@ -62,10 +56,23 @@ def test_report_node_builds_report():
     # Assertions
     # ---------------------------------------------------------
 
-    assert new_state.report_output is not None
-    assert new_state.report_output["overall_score"] == 80
+    assert new_state.interview_evaluation is interview_eval
+    assert new_state.is_processing is False
 
-    assert hasattr(new_state, "interview_evaluation")
-    assert new_state.interview_evaluation is not None
 
-    mock_service.evaluate.assert_called_once()
+def test_report_node_without_evaluations_clears_interview_evaluation():
+
+    mock_service = Mock()
+
+    state = build_interview_state()
+
+    state = state.model_copy(
+        update={
+            "results_by_question": {},
+            "interview_evaluation": Mock(),
+        }
+    )
+
+    new_state = report_node(state, mock_service)
+
+    assert new_state.interview_evaluation is None

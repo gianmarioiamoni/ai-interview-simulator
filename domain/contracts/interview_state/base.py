@@ -62,9 +62,9 @@ class InterviewStateBase(BaseModel):
 
     adaptive_interview_enabled: bool = False
 
-    # Humanizer
+    # Humanizer (bound aligned with HumanizerPolicyEngine.MAX_FOLLOW_UPS)
     enable_humanizer: bool = True
-    follow_up_count: int = 0
+    follow_up_count: int = Field(default=0, ge=0, le=2)
     last_humanizer_follow_up: bool = False
 
     events: list = Field(default_factory=list)

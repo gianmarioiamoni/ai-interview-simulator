@@ -29,6 +29,8 @@ class WrittenBlock:
 
         score = evaluation.score if evaluation else 0
         feedback = evaluation.feedback if evaluation else ""
+        strengths = list(evaluation.strengths) if evaluation else []
+        weaknesses = list(evaluation.weaknesses) if evaluation else []
 
         question = getattr(result, "question", None)
         question_text = question.prompt if question else ""
@@ -38,6 +40,16 @@ class WrittenBlock:
         )
 
         user_answer = latest_answer.content if latest_answer else ""
+
+        # -----------------------------------------------------
+        # CONTEXT (role / area)
+        # -----------------------------------------------------
+
+        role = getattr(_state, "role", None)
+        role_label = (
+            (role.custom_name or role.type.value) if role else "unspecified"
+        )
+        area_label = question.area.value if question else "unspecified"
 
         # -----------------------------------------------------
         # AI Improved Answer
@@ -51,6 +63,9 @@ class WrittenBlock:
                     question_text,
                     user_answer,
                     feedback,
+                    role=role_label,
+                    area=area_label,
+                    weaknesses=weaknesses,
                 )
         except Exception:
             improved_answer = ""
@@ -73,10 +88,18 @@ class WrittenBlock:
         ]
 
         # -----------------------------------------------------
-        # Learning
+        # Learning (weakness-driven when available)
         # -----------------------------------------------------
 
-        if score < 50:
+        if weaknesses:
+            learning = [
+                LearningSuggestion(
+                    topic=area_label,
+                    action=f"Address: {weakness}",
+                )
+                for weakness in weaknesses[:3]
+            ]
+        elif score < 50:
             learning = [
                 LearningSuggestion(
                     topic="Fundamentals",
@@ -110,6 +133,14 @@ class WrittenBlock:
             feedback,
         ]
 
+        if strengths:
+            content_lines.extend(["", "### ✅ Strengths"])
+            content_lines.extend(f"- {s}" for s in strengths)
+
+        if weaknesses:
+            content_lines.extend(["", "### ⚠️ Areas to Improve"])
+            content_lines.extend(f"- {w}" for w in weaknesses)
+
         if improved_answer:
             content_lines.extend(
                 [
@@ -121,6 +152,21 @@ class WrittenBlock:
 
         content = "\n".join(content_lines)
 
+        # -----------------------------------------------------
+        # Dimension metadata (reused by FeedbackDimensionAggregator)
+        # -----------------------------------------------------
+
+        metadata = None
+        dimension_signals = dict(getattr(_state, "dimension_signals", {}) or {})
+
+        if dimension_signals:
+            top_dimension = max(
+                dimension_signals,
+                key=dimension_signals.get,
+            )
+            dim_value = getattr(top_dimension, "value", top_dimension)
+            metadata = {"dimension": dim_value}
+
         return FeedbackBlockResult(
             title="Written Answer Evaluation",
             content=content,
@@ -129,6 +175,7 @@ class WrittenBlock:
             signals=signals,
             learning=learning,
             quality=None,
+            metadata=metadata,
         )
 
     def _map_score_to_feedback(self, score: float) -> tuple[Severity, str]:

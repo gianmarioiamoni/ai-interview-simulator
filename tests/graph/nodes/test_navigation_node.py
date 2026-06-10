@@ -12,14 +12,15 @@ def test_navigation_next_moves_forward():
     state = state.model_copy(
         update={
             "current_question_index": 0,
-            "last_action": "next",
+            "intent": ActionType.NEXT,
         }
     )
 
     new_state = navigation_node(state)
 
     assert new_state.current_question_index == 1
-    assert new_state.last_action == ActionType.NEXT
+    assert new_state.awaiting_user_input is True
+    assert new_state.intent is None
 
 
 def test_navigation_retry_keeps_same_question():
@@ -29,7 +30,7 @@ def test_navigation_retry_keeps_same_question():
     state = state.model_copy(
         update={
             "current_question_index": 1,
-            "last_action": ActionType.RETRY,
+            "intent": ActionType.RETRY,
         }
     )
 
@@ -37,7 +38,7 @@ def test_navigation_retry_keeps_same_question():
 
     assert new_state.current_question_index == 1
     assert new_state.awaiting_user_input is True
-    assert new_state.last_action == ActionType.RETRY
+    assert new_state.intent is None
 
 
 def test_navigation_does_not_overflow():
@@ -49,7 +50,7 @@ def test_navigation_does_not_overflow():
     state = state.model_copy(
         update={
             "current_question_index": last_index,
-            "last_action": ActionType.NEXT,
+            "intent": ActionType.NEXT,
         }
     )
 

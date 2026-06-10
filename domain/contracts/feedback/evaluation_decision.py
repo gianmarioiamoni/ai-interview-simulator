@@ -7,6 +7,8 @@ from typing import Optional
 class EvaluationDecision(BaseModel):
     score: float = Field(..., ge=0.0, le=100.0)
     feedback: str = Field(..., min_length=1)
+    strengths: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
     clarification_needed: bool
     follow_up_question: Optional[str] = None
 

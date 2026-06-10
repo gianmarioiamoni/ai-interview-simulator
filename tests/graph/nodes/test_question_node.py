@@ -76,7 +76,9 @@ def test_question_node_non_written():
 def test_question_node_humanized():
 
     llm = Mock()
-    llm.invoke.return_value = Mock(content="humanized question")
+    llm.invoke.return_value = Mock(
+        content='{"decision": "plain_question", "message": "humanized question"}'
+    )
 
     node = build_question_node(llm)
 
