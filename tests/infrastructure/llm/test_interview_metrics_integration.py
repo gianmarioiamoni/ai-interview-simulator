@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 from app.graph.nodes.evaluation_aggregate_node import EvaluationAggregateNode
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
+from domain.contracts.interview.interview_metrics import InterviewMetrics, OperationMetrics
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.shared.action_type import ActionType
 from domain.contracts.user.role import Role, RoleType
@@ -113,5 +114,8 @@ def test_evaluation_aggregate_node_stores_interview_metrics(monkeypatch) -> None
     assert updated.interview_metrics is not None
     assert updated.interview_metrics.total_calls == 1
     assert updated.interview_metrics.total_tokens == 15
+    assert updated.interview_cost_metrics is not None
+    assert updated.interview_cost_metrics.total_cost_usd > 0.0
+    assert updated.interview_cost_metrics.cost_per_question_usd > 0.0
     assert updated.interview_evaluation is mock_eval
     assert updated.intent == ActionType.NONE

@@ -1,5 +1,6 @@
 # tests/ui/dto/builders/test_token_calculator.py
 
+from domain.contracts.interview.interview_cost_metrics import InterviewCostMetrics
 from domain.contracts.interview.interview_metrics import InterviewMetrics
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question_evaluation import QuestionEvaluation
@@ -64,3 +65,36 @@ def test_falls_back_to_evaluation_tokens_used() -> None:
     )
 
     assert TokenCalculator().calculate(state) == 42
+
+
+def test_exposes_cost_when_interview_cost_metrics_available() -> None:
+    state = InterviewState(
+        interview_id="int-1",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
+        company="AuditCo",
+        language="en",
+        interview_cost_metrics=InterviewCostMetrics(
+            total_cost_usd=0.123456,
+            cost_per_question_usd=0.024691,
+            operations=[],
+        ),
+    )
+
+    calculator = TokenCalculator()
+
+    assert calculator.calculate_total_cost_usd(state) == 0.123456
+    assert calculator.calculate_cost_per_question_usd(state) == 0.024691
+
+
+def test_cost_methods_return_none_without_interview_cost_metrics() -> None:
+    state = InterviewState(
+        interview_id="int-1",
+        role=Role(type=RoleType.BACKEND_ENGINEER),
+        company="AuditCo",
+        language="en",
+    )
+
+    calculator = TokenCalculator()
+
+    assert calculator.calculate_total_cost_usd(state) is None
+    assert calculator.calculate_cost_per_question_usd(state) is None
