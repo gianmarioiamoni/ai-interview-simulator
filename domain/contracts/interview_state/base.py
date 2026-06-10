@@ -10,6 +10,7 @@ from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.interview.interview_progress import InterviewProgress
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
+from domain.contracts.interview.interview_cost_metrics import InterviewCostMetrics
 from domain.contracts.interview.interview_metrics import InterviewMetrics
 from domain.contracts.user.role import Role
 from domain.contracts.shared.action_type import ActionType
@@ -40,6 +41,7 @@ class InterviewStateBase(BaseModel):
     report_output: dict | None = None
     interview_evaluation: Optional[InterviewEvaluation] = None
     interview_metrics: InterviewMetrics | None = None
+    interview_cost_metrics: InterviewCostMetrics | None = None
 
     chat_history: list[str] = Field(default_factory=list)
 

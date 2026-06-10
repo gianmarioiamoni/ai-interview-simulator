@@ -14,3 +14,15 @@ class TokenCalculator:
             for r in state.results_by_question.values()
             if r.evaluation
         )
+
+    def calculate_total_cost_usd(self, state) -> float | None:
+        interview_cost_metrics = getattr(state, "interview_cost_metrics", None)
+        if interview_cost_metrics is not None:
+            return interview_cost_metrics.total_cost_usd
+        return None
+
+    def calculate_cost_per_question_usd(self, state) -> float | None:
+        interview_cost_metrics = getattr(state, "interview_cost_metrics", None)
+        if interview_cost_metrics is not None:
+            return interview_cost_metrics.cost_per_question_usd
+        return None

@@ -5,6 +5,7 @@ from infrastructure.llm.metrics.interview_metrics_aggregator import (
     InterviewMetricsAggregator,
 )
 from services.interview_evaluation_service import InterviewEvaluationService
+from services.observability.interview_cost_calculator import InterviewCostCalculator
 
 
 class EvaluationAggregateNode:
@@ -12,6 +13,7 @@ class EvaluationAggregateNode:
     def __init__(self, service: InterviewEvaluationService):
         self._service = service
         self._metrics_aggregator = InterviewMetricsAggregator()
+        self._cost_calculator = InterviewCostCalculator()
 
     def __call__(self, state):
 
@@ -55,6 +57,10 @@ class EvaluationAggregateNode:
 
         raw_metrics = get_runtime_metrics_collector().get_metrics()
         interview_metrics = self._metrics_aggregator.aggregate(raw_metrics)
+        interview_cost_metrics = self._cost_calculator.calculate(
+            interview_metrics,
+            question_count=len(state.questions),
+        )
 
         # ---------------------------------------------------------
         # STATE UPDATE
@@ -64,6 +70,7 @@ class EvaluationAggregateNode:
             update={
                 "interview_evaluation": interview_eval,
                 "interview_metrics": interview_metrics,
+                "interview_cost_metrics": interview_cost_metrics,
                 "intent": ActionType.NONE,
                 "current_step": None,
             }
