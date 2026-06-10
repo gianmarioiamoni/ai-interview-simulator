@@ -20,6 +20,10 @@ from services.question_intelligence.performance_responsive_candidate_selector im
     PerformanceResponsiveCandidateSelector,
 )
 
+BACKGROUND_MIN_POOL_AREA = "technical_background"
+
+MIN_FRESH_START_POOL_SIZE = 5
+
 
 class AdaptiveRetrievalService:
 
@@ -86,6 +90,7 @@ class AdaptiveRetrievalService:
             filter_stages=filter_stages,
             fetch_k=fetch_k,
             memory=context.memory,
+            min_pool_size=self._min_pool_size(context),
         )
 
         if not candidates:
@@ -121,7 +126,10 @@ class AdaptiveRetrievalService:
         filter_stages: list[RetrievalFilters],
         fetch_k: int,
         memory: InterviewRetrievalMemory,
+        min_pool_size: int = 1,
     ) -> list[RetrievalCandidate]:
+
+        best_undersized: list[RetrievalCandidate] = []
 
         for stage_filters in filter_stages:
 
@@ -136,7 +144,40 @@ class AdaptiveRetrievalService:
                 memory=memory,
             )
 
-            if filtered:
+            if len(filtered) >= min_pool_size:
                 return filtered
 
-        return []
+            if len(filtered) > len(best_undersized):
+                best_undersized = filtered
+
+        return best_undersized
+
+    def _min_pool_size(
+        self,
+        context: AdaptiveRetrievalContext,
+    ) -> int:
+
+        if context.target_area != BACKGROUND_MIN_POOL_AREA:
+            return 1
+
+        if not self._is_fresh_start(context):
+            return 1
+
+        return MIN_FRESH_START_POOL_SIZE
+
+    def _is_fresh_start(
+        self,
+        context: AdaptiveRetrievalContext,
+    ) -> bool:
+
+        if context.already_used_question_ids:
+            return False
+
+        memory = context.memory
+
+        return (
+            not memory.asked_question_ids
+            and not memory.session_selected_prompts
+            and not memory.session_used_topics
+            and not memory.difficulty_history
+        )

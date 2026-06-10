@@ -32,14 +32,23 @@ from services.question_corpus.retrieval.weak_domain_boost_engine import (
 def _build_context(
     target_area: str = "technical_background",
     target_question_count: int = 1,
+    asked_question_ids: list[str] | None = None,
 ) -> AdaptiveRetrievalContext:
 
+    # Stage-progression tests use non-fresh memory so the background
+    # fresh-start minimum-pool rule does not alter stage-success criteria.
     return AdaptiveRetrievalContext(
         current_role="fullstack_engineer",
         seniority="mid",
         target_area=target_area,
         target_question_count=target_question_count,
-        memory=InterviewRetrievalMemory(),
+        memory=InterviewRetrievalMemory(
+            asked_question_ids=(
+                asked_question_ids
+                if asked_question_ids is not None
+                else ["prior-question"]
+            ),
+        ),
     )
 
 
@@ -221,6 +230,85 @@ def test_all_stages_empty_returns_empty_list() -> None:
     assert results == []
     assert mock_retrieval.search_with_filters.call_count == 4
     mock_retrieval.search.assert_not_called()
+
+
+def test_background_fresh_start_micro_pool_advances_stage() -> None:
+
+    context = _build_context(asked_question_ids=[])
+    candidates_big = [
+        _build_candidate(f"bg-rich-{index}", context.target_area)
+        for index in range(6)
+    ]
+
+    mock_retrieval = MagicMock()
+    mock_retrieval.search_with_filters.side_effect = [
+        [_build_candidate("bg-micro", context.target_area)],
+        candidates_big,
+    ]
+
+    service = _build_service(mock_retrieval)
+
+    results = service.retrieve(
+        query="background experience",
+        context=context,
+    )
+
+    assert len(results) >= 1
+    assert mock_retrieval.search_with_filters.call_count == 2
+    returned_ids = {
+        item.document.metadata["document_id"] for item in results
+    }
+    assert "bg-micro" not in returned_ids
+
+
+def test_background_fresh_start_falls_back_to_largest_micro_pool() -> None:
+
+    context = _build_context(asked_question_ids=[])
+
+    mock_retrieval = MagicMock()
+    mock_retrieval.search_with_filters.side_effect = [
+        [_build_candidate("bg-a", context.target_area)],
+        [
+            _build_candidate("bg-b", context.target_area),
+            _build_candidate("bg-c", context.target_area),
+        ],
+        [],
+        [],
+    ]
+
+    service = _build_service(mock_retrieval)
+
+    results = service.retrieve(
+        query="background experience",
+        context=context,
+    )
+
+    assert len(results) == 1
+    assert mock_retrieval.search_with_filters.call_count == 4
+    assert results[0].document.metadata["document_id"] in {"bg-b", "bg-c"}
+
+
+def test_non_background_area_keeps_non_empty_stage_success() -> None:
+
+    context = _build_context(
+        target_area="technical_case_study",
+        asked_question_ids=[],
+    )
+
+    mock_retrieval = MagicMock()
+    mock_retrieval.search_with_filters.side_effect = [
+        [_build_candidate("cs-1", context.target_area)],
+    ]
+
+    service = _build_service(mock_retrieval)
+
+    results = service.retrieve(
+        query="case study",
+        context=context,
+    )
+
+    assert len(results) == 1
+    assert mock_retrieval.search_with_filters.call_count == 1
 
 
 def test_build_relaxation_stages_preserves_area_across_stages() -> None:
