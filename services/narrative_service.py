@@ -13,6 +13,8 @@ from services.interview_evaluation.builders.narrative_control_builder import (
 from domain.contracts.feedback.decision_explanation_schema import (
     DecisionExplanationSchema,
 )
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import NARRATIVE_GENERATION
 
 from app.core.logger import get_logger
 
@@ -93,7 +95,8 @@ There is a noticeable gap between strongest and weakest areas.
 
         prompt = PromptRenderer.render(template, context)
 
-        response = self._llm.invoke(prompt)
+        with LLMOperationContext.scope(NARRATIVE_GENERATION):
+            response = self._llm.invoke(prompt)
         content = (response.content or "").strip()
 
         if not content:
@@ -140,10 +143,11 @@ There is a noticeable gap between strongest and weakest areas.
 
         try:
 
-            explanation = self._llm.invoke_json(
-                prompt,
-                schema=DecisionExplanationSchema
-            )
+            with LLMOperationContext.scope(NARRATIVE_GENERATION):
+                explanation = self._llm.invoke_json(
+                    prompt,
+                    schema=DecisionExplanationSchema
+                )
             print("\n✅ PARSED EXPLANATION OBJECT:")
             print(explanation)
             print("TYPE:", type(explanation))
@@ -159,7 +163,8 @@ There is a noticeable gap between strongest and weakest areas.
             print("ERROR:", e)
 
             # 🔥 CRITICAL DEBUG
-            raw = self._llm.invoke(prompt)
+            with LLMOperationContext.scope(NARRATIVE_GENERATION):
+                raw = self._llm.invoke(prompt)
             print("\n=== RAW FALLBACK LLM OUTPUT ===")
             print(raw.content)
             print("=== END RAW ===\n")
@@ -187,7 +192,8 @@ There is a noticeable gap between strongest and weakest areas.
 
         prompt = PromptRenderer.render(template, context)
 
-        response = self._llm.invoke(prompt)
+        with LLMOperationContext.scope(NARRATIVE_GENERATION):
+            response = self._llm.invoke(prompt)
 
         return (response.content or "").strip()
 

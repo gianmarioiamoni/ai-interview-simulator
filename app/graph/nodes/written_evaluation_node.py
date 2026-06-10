@@ -6,6 +6,8 @@ from services.prompt_builders.evaluation_prompt_builder import build_evaluation_
 
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.evaluation_decision import EvaluationDecision
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import WRITTEN_EVALUATION
 
 
 class WrittenEvaluationNode:
@@ -28,7 +30,8 @@ class WrittenEvaluationNode:
 
         prompt = build_evaluation_prompt(question, answer, role=state.role)
 
-        response = self._llm.invoke(prompt)
+        with LLMOperationContext.scope(WRITTEN_EVALUATION):
+            response = self._llm.invoke(prompt)
 
         try:
             decision = EvaluationDecision.model_validate_json(response.content)

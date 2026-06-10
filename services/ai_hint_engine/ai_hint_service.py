@@ -4,6 +4,8 @@ import json
 from typing import Optional
 from domain.contracts.ai.ai_hint import AIHintInput, AIHint
 from app.ports.llm_port import LLMPort
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import HINT_GENERATION
 
 
 class AIHintService:
@@ -21,7 +23,8 @@ class AIHintService:
         prompt = self._build_prompt(input_data, effective_level)
 
         try:
-            response = self._llm.invoke(prompt)
+            with LLMOperationContext.scope(HINT_GENERATION):
+                response = self._llm.invoke(prompt)
             content = response.content.strip()
             return self._parse_response(content)
 

@@ -8,6 +8,8 @@ from app.prompts.prompt_loader import PromptLoader
 from app.prompts.prompt_renderer import PromptRenderer
 
 from app.core.logger import get_logger
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import NARRATIVE_GENERATION
 
 logger = get_logger(__name__)
 
@@ -40,7 +42,8 @@ class NarrativeGenerator:
         }
         prompt = PromptRenderer.render(template, context)
 
-        response = self._llm.invoke(prompt)
+        with LLMOperationContext.scope(NARRATIVE_GENERATION):
+            response = self._llm.invoke(prompt)
 
         try:
             parsed = self._extract_json(response.content)

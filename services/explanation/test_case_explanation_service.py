@@ -3,6 +3,8 @@
 from typing import Optional
 
 from app.ports.llm_port import LLMPort
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import TESTCASE_EXPLANATION
 
 
 class TestCaseExplanationService:
@@ -20,7 +22,8 @@ class TestCaseExplanationService:
         prompt = self._build_prompt(input_data, expected, actual)
 
         try:
-            response = self._llm.invoke(prompt)
+            with LLMOperationContext.scope(TESTCASE_EXPLANATION):
+                response = self._llm.invoke(prompt)
             content = response.content.strip()
 
             if not content:

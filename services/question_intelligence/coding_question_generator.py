@@ -11,6 +11,8 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from app.ports.llm_port import LLMPort
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 
 from app.core.logger import get_logger
 
@@ -124,7 +126,8 @@ class CodingQuestionGenerator:
 
         for attempt in range(1, MAX_INVALID_JSON_ATTEMPTS + 1):
 
-            response = self._llm.invoke(prompt)
+            with LLMOperationContext.scope(QUESTION_GENERATION):
+                response = self._llm.invoke(prompt)
 
             try:
                 return self._parse_llm_response(response.content)
