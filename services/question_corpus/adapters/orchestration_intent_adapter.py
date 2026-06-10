@@ -2,7 +2,7 @@
 
 from domain.contracts.user.role import RoleType
 
-from services.retrieval.contracts.retrieval_planning_intent import RetrievalPlanningIntent
+from domain.contracts.retrieval.retrieval_planning_intent import RetrievalPlanningIntent
 from services.question_corpus.contracts.adaptive_retrieval_context import (
     AdaptiveRetrievalContext,
 )

@@ -8,9 +8,7 @@ from domain.contracts.user.seniority_level import (
     SeniorityLevel,
 )
 
-from services.retrieval.contracts import (
-    RetrievalPlanningIntent,
-)
+from domain.contracts.retrieval.retrieval_planning_intent import RetrievalPlanningIntent
 
 
 class OrchestrationIntentBuilder:

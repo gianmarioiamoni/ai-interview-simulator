@@ -8,7 +8,7 @@ TD-003
 Duplicate RetrievalDocument contracts.
 
 TD-004
-Legacy services/retrieval still owns orchestrator path.
+~~Legacy services/retrieval still owns orchestrator path.~~ Closed in Phase 8D-A3: legacy engine excised; production uses domain contracts + question_corpus runtime.
 
 TD-005
 

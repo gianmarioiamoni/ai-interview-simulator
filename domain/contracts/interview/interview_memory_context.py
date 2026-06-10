@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 
-from services.retrieval.contracts.retrieval_adaptation_signal import RetrievalAdaptationSignal
+from domain.contracts.interview.retrieval_adaptation_signal import RetrievalAdaptationSignal
 
 
 class InterviewMemoryContext(BaseModel):
