@@ -63,7 +63,7 @@ def test_selects_closest_difficulty_over_top_ranked() -> None:
 
     selected = selector.select(
         pool=pool,
-        context=_context(target_difficulty=4, target_area="technical_background"),
+        context=_context(target_difficulty=4, target_area="technical_case_study"),
     )
 
     assert len(selected) == 1
@@ -139,7 +139,7 @@ def test_prioritize_reorders_scan_pool_for_coding_sql_paths() -> None:
 
     prioritized = selector.prioritize(
         pool=pool,
-        context=_context(target_difficulty=4, target_area="technical_background"),
+        context=_context(target_difficulty=4, target_area="technical_case_study"),
     )
 
     assert prioritized[0].document.metadata["document_id"] == "target"

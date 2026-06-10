@@ -29,6 +29,13 @@ FRESH_START_MAX_TARGET_DISTANCE = 1
 
 KNOWLEDGE_FRESH_START_AREA = "technical_technical_knowledge"
 
+CANONICAL_FRESH_START_AREAS: frozenset[str] = frozenset(
+    {
+        "technical_technical_knowledge",
+        "technical_background",
+    }
+)
+
 _CROSS_INTERVIEW_PICK_COUNTS: dict[str, int] = {}
 
 
@@ -85,7 +92,7 @@ class ConstrainedEquivalenceBand:
                 context=context,
                 selected_bank_items=selected_bank_items,
             )
-            and context.target_area == KNOWLEDGE_FRESH_START_AREA
+            and context.target_area in CANONICAL_FRESH_START_AREAS
         ):
             band_anchor = max(
                 pool,
@@ -298,9 +305,9 @@ class ConstrainedEquivalenceBand:
                 *variety,
             )
 
-        if context.target_area == KNOWLEDGE_FRESH_START_AREA:
+        if context.target_area in CANONICAL_FRESH_START_AREAS:
 
-            def knowledge_tie_break_key(candidate: RetrievalCandidate) -> tuple:
+            def canonical_tie_break_key(candidate: RetrievalCandidate) -> tuple:
 
                 document_id = str(candidate.document.metadata.get("document_id", ""))
                 historical = 1 if document_id in used_ids else 0
@@ -312,7 +319,7 @@ class ConstrainedEquivalenceBand:
                     document_id,
                 )
 
-            pick = min(equivalents, key=knowledge_tie_break_key)
+            pick = min(equivalents, key=canonical_tie_break_key)
         else:
             best_prefix = min(prefix_key(candidate) for candidate in equivalents)
             bucket = [
@@ -356,7 +363,7 @@ class ConstrainedEquivalenceBand:
             pick = min(bucket, key=tie_break_key)
         document_id = str(pick.document.metadata.get("document_id", ""))
 
-        if context.target_area == KNOWLEDGE_FRESH_START_AREA and document_id:
+        if context.target_area in CANONICAL_FRESH_START_AREAS and document_id:
             _CROSS_INTERVIEW_PICK_COUNTS[document_id] = (
                 _CROSS_INTERVIEW_PICK_COUNTS.get(document_id, 0) + 1
             )
