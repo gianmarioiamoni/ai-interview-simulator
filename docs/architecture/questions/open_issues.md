@@ -5,7 +5,7 @@ TD-002
 Double embedding generation in corpus build pipeline.
 
 TD-003
-Duplicate RetrievalDocument contracts.
+~~Duplicate RetrievalDocument contracts.~~ Closed in Phase 8E-B: orphan domain retrieval stack removed; canonical runtime contract is `services/question_corpus/contracts/retrieval_document.py`.
 
 TD-004
 ~~Legacy services/retrieval still owns orchestrator path.~~ Closed in Phase 8D-A3: legacy engine excised; production uses domain contracts + question_corpus runtime.
