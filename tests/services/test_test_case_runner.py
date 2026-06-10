@@ -1,34 +1,86 @@
 # tests/services/test_test_case_runner.py
 
-from domain.contracts.execution.test_case import TestCase
+from domain.contracts.execution.coding_test_case import CodingTestCase
 from services.coding_engine.test_case_runner import TestCaseRunner
 
 
-def test_build_harness_contains_marker():
-    runner = TestCaseRunner()
-
-    user_code = """
+USER_CODE = """
 def solution(x):
     return x * 2
 """
 
+
+def test_build_harness_contains_markers_and_runner():
+
+    runner = TestCaseRunner()
+
     visible_tests = [
-        TestCase(input=[2], expected_output=4),
-        TestCase(input=[3], expected_output=6),
+        CodingTestCase(args=[2], expected=4),
+        CodingTestCase(args=[3], expected=6),
     ]
 
     hidden_tests = [
-        TestCase(input=[4], expected_output=8),
-        TestCase(input=[5], expected_output=10),
+        CodingTestCase(args=[4], expected=8),
     ]
 
     harness = runner.build_harness(
-        user_code=user_code,
+        user_code=USER_CODE,
         visible_tests=visible_tests,
         hidden_tests=hidden_tests,
+        function_name="solution",
+        coding_spec=None,
     )
 
     assert "__RESULT__" in harness
-    assert "solution(2)" in harness
-    assert "solution(3)" in harness
-    assert "passed += 1" in harness
+    assert "__run_tests()" in harness
+    assert "solution" in harness
+
+
+def test_build_harness_embeds_user_code_and_test_data():
+
+    runner = TestCaseRunner()
+
+    harness = runner.build_harness(
+        user_code=USER_CODE,
+        visible_tests=[CodingTestCase(args=[21], expected=42)],
+        hidden_tests=[],
+        function_name="solution",
+        coding_spec=None,
+    )
+
+    assert "return x * 2" in harness
+    assert "21" in harness
+    assert "42" in harness
+
+
+def test_build_harness_is_executable_python():
+
+    import ast
+
+    runner = TestCaseRunner()
+
+    harness = runner.build_harness(
+        user_code=USER_CODE,
+        visible_tests=[CodingTestCase(args=[2], expected=4)],
+        hidden_tests=[CodingTestCase(args=[3], expected=6)],
+        function_name="solution",
+        coding_spec=None,
+    )
+
+    # must be syntactically valid python
+    ast.parse(harness)
+
+
+def test_build_harness_with_no_tests_still_renders():
+
+    runner = TestCaseRunner()
+
+    harness = runner.build_harness(
+        user_code=USER_CODE,
+        visible_tests=[],
+        hidden_tests=[],
+        function_name="solution",
+        coding_spec=None,
+    )
+
+    assert "__run_tests()" in harness

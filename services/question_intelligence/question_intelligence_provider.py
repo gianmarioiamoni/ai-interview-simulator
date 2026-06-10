@@ -16,9 +16,6 @@ from services.question_intelligence.question_intelligence_service import (
     QuestionIntelligenceService,
 )
 from services.question_intelligence.question_set_builder import QuestionSetBuilder
-from services.question_intelligence.question_selection_service import (
-    QuestionSelectionService,
-)
 from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
 )

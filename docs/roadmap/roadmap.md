@@ -28,8 +28,11 @@ services/question_intelligence/question_intelligence_service.py
 
 Move orchestration there.
 
-Slim down:
-- QuestionSelectionService
+Replaced legacy `QuestionSelectionService` with:
+
+- `AreaQuestionBuilder` (per-area retrieve + generate)
+- `QuestionSetBuilder` (set assembly, dedup, quality)
+- `LazyAdaptiveInterviewService` (adaptive runtime path)
 
 ---
 
@@ -125,7 +128,7 @@ Major qualitative improvement.
 
 # Planned Pipeline
 
-QuestionBankLoader
+Question ingestion pipeline (services/question_ingestion)
     ↓
 SQLite
     ↓
