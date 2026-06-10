@@ -6,10 +6,15 @@ from app.graph.interview_graph import build_interview_graph
 from services.ai_hint_engine.ai_hint_service import AIHintService
 
 from infrastructure.llm.llm_adapter import DefaultLLMAdapter
+from infrastructure.llm.metrics.interview_metrics_collector import (
+    InterviewMetricsCollector,
+)
+from infrastructure.llm.observability.observing_llm_adapter import ObservingLLMAdapter
 
 
 _graph = None
 _llm = None
+_metrics_collector = InterviewMetricsCollector()
 
 
 # ---------------------------------------------------------
@@ -22,9 +27,16 @@ def get_runtime_llm():
     global _llm
 
     if _llm is None:
-        _llm = DefaultLLMAdapter()
+        _llm = ObservingLLMAdapter(
+            wrapped=DefaultLLMAdapter(),
+            collector=_metrics_collector,
+        )
 
     return _llm
+
+
+def get_runtime_metrics_collector() -> InterviewMetricsCollector:
+    return _metrics_collector
 
 
 # ---------------------------------------------------------
