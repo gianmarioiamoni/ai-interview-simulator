@@ -18,6 +18,8 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from app.ports.llm_port import LLMPort
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 
 
 class QuestionGenerator:
@@ -53,7 +55,8 @@ class QuestionGenerator:
             theme_guidance=theme_guidance,
         )
 
-        response = self._llm.invoke(prompt)
+        with LLMOperationContext.scope(QUESTION_GENERATION):
+            response = self._llm.invoke(prompt)
         
         data = json.loads(response.content)
 

@@ -1,6 +1,8 @@
 # services/answer_improvement/answer_improver.py
 
 from app.ports.llm_port import LLMPort
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import ANSWER_IMPROVEMENT
 
 
 from app.prompts.prompt_loader import PromptLoader
@@ -39,7 +41,8 @@ class AnswerImprover:
         prompt = PromptRenderer.render(template, context)
 
         try:
-            response = self._llm.invoke(prompt)
+            with LLMOperationContext.scope(ANSWER_IMPROVEMENT):
+                response = self._llm.invoke(prompt)
             return response.content.strip()
         except Exception:
             return ""

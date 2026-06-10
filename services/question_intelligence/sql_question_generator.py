@@ -18,6 +18,8 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from app.ports.llm_port import LLMPort
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 
 from services.sql_engine.sql_database import SQLDatabase
 
@@ -88,7 +90,8 @@ class SQLQuestionGenerator:
             theme_guidance=theme_guidance,
         )
 
-        response = self._llm.invoke(prompt)
+        with LLMOperationContext.scope(QUESTION_GENERATION):
+            response = self._llm.invoke(prompt)
 
         try:
             validated_items = self._parse_llm_response(response.content)
@@ -124,7 +127,8 @@ class SQLQuestionGenerator:
         )
 
         try:
-            response = self._llm.invoke(prompt)
+            with LLMOperationContext.scope(QUESTION_GENERATION):
+                response = self._llm.invoke(prompt)
             validated_items = self._parse_llm_response(response.content)
         except (ValueError, Exception) as e:
             logger.warning(f"[SQL enrich] Failed to parse enrichment response: {e}")

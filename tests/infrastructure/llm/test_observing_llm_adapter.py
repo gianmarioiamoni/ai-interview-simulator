@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from infrastructure.llm.metrics.interview_metrics_collector import (
     InterviewMetricsCollector,
 )
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.observability.observing_llm_adapter import ObservingLLMAdapter
 
 T = TypeVar("T", bound=BaseModel)
@@ -71,13 +72,14 @@ def test_invoke_success_records_metric() -> None:
     raw_llm.invoke.return_value = _aimessage("hello")
 
     adapter = ObservingLLMAdapter(_StubLLMPort(raw_llm), collector)
-    response = adapter.invoke("hello")
+    with LLMOperationContext.scope("written_evaluation"):
+        response = adapter.invoke("hello")
 
     assert response.content == "hello"
 
     metrics = collector.get_metrics()
     assert len(metrics) == 1
-    assert metrics[0].operation == "invoke"
+    assert metrics[0].operation == "written_evaluation"
     assert metrics[0].success is True
     assert metrics[0].attempt == 1
     assert metrics[0].input_tokens == 10
@@ -102,7 +104,7 @@ def test_invoke_failure_records_metric() -> None:
 
     metrics = collector.get_metrics()
     assert len(metrics) == 1
-    assert metrics[0].operation == "invoke"
+    assert metrics[0].operation == "unknown"
     assert metrics[0].success is False
     assert metrics[0].input_tokens is None
     assert metrics[0].total_tokens is None
@@ -118,13 +120,14 @@ def test_invoke_json_success_records_metric() -> None:
     raw_llm.invoke.return_value = _aimessage(payload)
 
     adapter = ObservingLLMAdapter(_StubLLMPort(raw_llm), collector)
-    parsed = adapter.invoke_json("prompt", _DecisionSchema)
+    with LLMOperationContext.scope("narrative_generation"):
+        parsed = adapter.invoke_json("prompt", _DecisionSchema)
 
     assert parsed.drivers == ["a"]
 
     metrics = collector.get_metrics()
     assert len(metrics) == 1
-    assert metrics[0].operation == "invoke_json"
+    assert metrics[0].operation == "narrative_generation"
     assert metrics[0].success is True
     assert metrics[0].attempt == 1
 
@@ -142,15 +145,38 @@ def test_invoke_json_retry_records_each_attempt() -> None:
     ]
 
     adapter = ObservingLLMAdapter(_StubLLMPort(raw_llm), collector)
-    parsed = adapter.invoke_json("prompt", _DecisionSchema)
+    with LLMOperationContext.scope("narrative_generation"):
+        parsed = adapter.invoke_json("prompt", _DecisionSchema)
 
     assert parsed.blockers == ["b"]
 
     metrics = collector.get_metrics()
     assert len(metrics) == 2
-    assert metrics[0].operation == "invoke_json"
+    assert metrics[0].operation == "narrative_generation"
     assert metrics[0].attempt == 1
     assert metrics[0].success is True
-    assert metrics[1].operation == "invoke_json"
+    assert metrics[1].operation == "narrative_generation"
     assert metrics[1].attempt == 2
     assert metrics[1].success is True
+
+
+def test_operation_context_resets_after_scope() -> None:
+    collector = InterviewMetricsCollector()
+    collector.start_session()
+
+    raw_llm = MagicMock()
+    raw_llm.model_name = "gpt-4o-mini"
+    raw_llm.invoke.return_value = _aimessage("hello")
+
+    adapter = ObservingLLMAdapter(_StubLLMPort(raw_llm), collector)
+
+    with LLMOperationContext.scope("hint_generation"):
+        adapter.invoke("hello")
+
+    assert LLMOperationContext.get_operation() == "unknown"
+
+    adapter.invoke("hello")
+
+    metrics = collector.get_metrics()
+    assert metrics[0].operation == "hint_generation"
+    assert metrics[1].operation == "unknown"

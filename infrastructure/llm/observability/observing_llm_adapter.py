@@ -11,12 +11,7 @@ from app.core.logger import get_logger
 from app.ports.llm_port import LLMPort, LLMResponse
 from infrastructure.llm.contracts.llm_call_metric import LLMCallMetric
 from infrastructure.llm.metrics.interview_metrics_collector import InterviewMetricsCollector
-from infrastructure.llm.metrics.llm_operation_context import (
-    get_operation,
-    next_attempt,
-    reset_attempt,
-    set_operation,
-)
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.observability.token_usage_extractor import TokenUsageExtractor
 
 logger = get_logger(__name__)
@@ -39,8 +34,8 @@ class _ObservingRawLLMProxy:
         self._model_fallback = model_fallback
 
     def invoke(self, messages: Any, *args: Any, **kwargs: Any) -> Any:
-        operation = get_operation()
-        attempt = next_attempt()
+        operation = LLMOperationContext.get_operation()
+        attempt = LLMOperationContext.next_attempt()
         started = time.monotonic()
         raw_message: AIMessage | None = None
         success = False
@@ -94,8 +89,7 @@ class ObservingLLMAdapter(LLMPort):
         prompt: str,
         system_prompt: str | None = None,
     ) -> LLMResponse:
-        set_operation("invoke")
-        reset_attempt()
+        LLMOperationContext.reset_attempt()
 
         if system_prompt is not None:
             return self._wrapped.invoke(prompt, system_prompt=system_prompt)
@@ -103,8 +97,7 @@ class ObservingLLMAdapter(LLMPort):
         return self._wrapped.invoke(prompt)
 
     def invoke_json(self, prompt: str, schema: Type[T]) -> T:
-        set_operation("invoke_json")
-        reset_attempt()
+        LLMOperationContext.reset_attempt()
         return self._wrapped.invoke_json(prompt, schema)
 
     def _install_raw_proxy(self, wrapped: LLMPort) -> None:

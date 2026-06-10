@@ -10,6 +10,8 @@ from domain.contracts.question.question import Question
 from domain.contracts.execution.coding_spec import CodingSpec
 
 from app.ports.llm_port import LLMPort
+from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 from app.ai.test_generation.test_cache_service import TestCacheService
 from app.ai.test_generation.test_diversity_filter import TestDiversityFilter
 from app.prompts.prompt_loader import PromptLoader
@@ -128,7 +130,8 @@ class AITestGenerator:
         if retry:
             prompt += "\n\nIMPORTANT: Return ONLY valid JSON."
 
-        response = self._llm.invoke(prompt)
+        with LLMOperationContext.scope(QUESTION_GENERATION):
+            response = self._llm.invoke(prompt)
 
         content = response.content or ""
 
