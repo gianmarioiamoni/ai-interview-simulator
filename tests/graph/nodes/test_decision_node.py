@@ -18,7 +18,7 @@ def test_retry_when_failed_first_attempt():
     new_state = node(state)
 
     assert new_state.awaiting_user_input is True
-    assert new_state.last_action == ActionType.RETRY
+    assert new_state.allowed_actions == [ActionType.RETRY]
 
 
 def test_no_retry_after_max_attempts():
@@ -43,8 +43,9 @@ def test_no_retry_after_max_attempts():
 
     new_state = node(state)
 
-    assert new_state.awaiting_user_input is False
-    assert new_state.last_action == ActionType.NEXT
+    assert new_state.awaiting_user_input is True
+    assert ActionType.RETRY not in new_state.allowed_actions
+    assert new_state.allowed_actions == [ActionType.NEXT]
 
 
 def test_pass_moves_forward():
@@ -59,11 +60,11 @@ def test_pass_moves_forward():
 
     new_state = node(state)
 
-    assert new_state.awaiting_user_input is False
-    assert new_state.last_action == ActionType.NEXT
+    assert new_state.awaiting_user_input is True
+    assert ActionType.NEXT in new_state.allowed_actions
 
 
-def test_partial_triggers_retry():
+def test_partial_allows_progression():
 
     node = DecisionNode()
 
@@ -76,4 +77,5 @@ def test_partial_triggers_retry():
     new_state = node(state)
 
     assert new_state.awaiting_user_input is True
-    assert new_state.last_action == ActionType.RETRY
+    assert ActionType.NEXT in new_state.allowed_actions
+    assert ActionType.RETRY in new_state.allowed_actions

@@ -1,43 +1,44 @@
 # tests/domain/contracts/test_question.py
 
-# difficulty 1-5 range
+# difficulty is a closed enum (easy / medium / hard)
 
 import pytest
 from pydantic import ValidationError
 
-from domain.contracts.question.question import Question, QuestionType
+from domain.contracts.question.question import (
+    Question,
+    QuestionDifficulty,
+    QuestionType,
+)
 from domain.contracts.interview.interview_area import InterviewArea
 
 
-def test_question_valid_difficulty_range() -> None:
-    question = Question(
-        id="q1",
-        area=InterviewArea.TECH_BACKGROUND,
-        type=QuestionType.WRITTEN,
-        prompt="Explain REST.",
-        difficulty=3,
-    )
-
-    assert question.difficulty == 3
+def _question_kwargs() -> dict:
+    return {
+        "id": "q1",
+        "area": InterviewArea.TECH_BACKGROUND,
+        "type": QuestionType.WRITTEN,
+        "prompt": "Explain REST.",
+    }
 
 
-def test_question_invalid_difficulty_low() -> None:
+def test_question_valid_difficulty_enum() -> None:
+    question = Question(**_question_kwargs(), difficulty=QuestionDifficulty.HARD)
+
+    assert question.difficulty == QuestionDifficulty.HARD
+
+
+def test_question_difficulty_defaults_to_medium() -> None:
+    question = Question(**_question_kwargs())
+
+    assert question.difficulty == QuestionDifficulty.MEDIUM
+
+
+def test_question_invalid_difficulty_numeric() -> None:
     with pytest.raises(ValidationError):
-        Question(
-            id="q1",
-            area=InterviewArea.TECH_BACKGROUND,
-            type=QuestionType.WRITTEN,
-            prompt="Explain REST.",
-            difficulty=0,
-        )
+        Question(**_question_kwargs(), difficulty=3)
 
 
-def test_question_invalid_difficulty_high() -> None:
+def test_question_invalid_difficulty_unknown_value() -> None:
     with pytest.raises(ValidationError):
-        Question(
-            id="q1",
-            area=InterviewArea.TECH_BACKGROUND,
-            type=QuestionType.WRITTEN,
-            prompt="Explain REST.",
-            difficulty=6,
-        )
+        Question(**_question_kwargs(), difficulty="extreme")

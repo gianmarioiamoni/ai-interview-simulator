@@ -16,14 +16,24 @@ class AnswerImprover:
         question: str,
         user_answer: str,
         feedback: str,
+        role: str = "unspecified",
+        area: str = "unspecified",
+        weaknesses: list[str] | None = None,
     ) -> str:
 
         template = PromptLoader.load("transformation/answer_improver.txt")
+
+        weaknesses_text = (
+            "\n".join(f"- {w}" for w in weaknesses) if weaknesses else "None provided"
+        )
 
         context = {
             "question": question,
             "user_answer": user_answer,
             "feedback": feedback,
+            "role": role,
+            "area": area,
+            "weaknesses": weaknesses_text,
         }
 
         prompt = PromptRenderer.render(template, context)

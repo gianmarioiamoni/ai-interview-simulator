@@ -12,6 +12,8 @@ from domain.contracts.execution.execution_result import (
 from domain.contracts.question.question import Question, QuestionType, QuestionDifficulty
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.question.question_result import QuestionResult
+from domain.contracts.feedback.quality import Quality
+from domain.contracts.feedback.severity import Severity
 from app.contracts.feedback_bundle import FeedbackBundle
 
 
@@ -154,9 +156,9 @@ def build_state_with_execution(
             update={
                 "last_feedback_bundle": FeedbackBundle(
                     blocks=[],
-                    overall_severity="error",
+                    overall_severity=Severity.ERROR,
                     overall_confidence=1.0,
-                    overall_quality=quality,
+                    overall_quality=Quality(quality),
                     markdown="",
                 )
             }

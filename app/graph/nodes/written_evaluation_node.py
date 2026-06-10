@@ -26,7 +26,7 @@ class WrittenEvaluationNode:
         if result and result.evaluation is not None:
             return state
 
-        prompt = build_evaluation_prompt(question, answer)
+        prompt = build_evaluation_prompt(question, answer, role=state.role)
 
         response = self._llm.invoke(prompt)
 
@@ -39,8 +39,8 @@ class WrittenEvaluationNode:
                 max_score=100,
                 passed=decision.score >= 60,
                 feedback=decision.feedback,
-                strengths=getattr(decision, "strengths", []),
-                weaknesses=getattr(decision, "weaknesses", []),
+                strengths=list(getattr(decision, "strengths", []) or []),
+                weaknesses=list(getattr(decision, "weaknesses", []) or []),
             )
 
         except Exception:

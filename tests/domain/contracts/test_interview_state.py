@@ -42,12 +42,12 @@ def test_interview_state_minimal_instantiation() -> None:
 
     assert state.questions == []
     assert state.answers == []
-    assert state.evaluations == []
-    assert state.total_score == 0.0
+    assert state.results_by_question == {}
+    assert state.interview_evaluation is None
     assert state.progress == InterviewProgress.SETUP
 
 
-def test_computed_total_score_with_no_evaluations() -> None:
+def test_minimal_state_has_no_results() -> None:
     state = InterviewState(
         interview_id="int-1",
         role=Role(type=RoleType.BACKEND_ENGINEER),
@@ -55,4 +55,5 @@ def test_computed_total_score_with_no_evaluations() -> None:
         language="en",
     )
 
-    assert state.computed_total_score == 0.0
+    assert state.get_result_for_question("any") is None
+    assert state.current_question is None
