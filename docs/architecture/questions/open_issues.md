@@ -82,3 +82,6 @@ write a query...
 
 Quindi io la considererei una soluzione temporanea.
 
+Phase 7C-T
+
+Cross-interview diversity objectives achieved globally (109/150 unique, 27.3% reuse). HR diversity fully remediated (46 unique prompts, 8% reuse). Remaining diversity debt isolated to technical_background and technical_technical_knowledge corpus slices.
