@@ -61,9 +61,15 @@ def test_selects_closest_difficulty_over_top_ranked() -> None:
         _candidate("far", difficulty=5, score=0.80),
     ]
 
+    # Non-fresh-start context: strict tier matching applies so exact difficulty
+    # match wins regardless of score.
     selected = selector.select(
         pool=pool,
-        context=_context(target_difficulty=4, target_area="technical_case_study"),
+        context=_context(
+            target_difficulty=4,
+            target_area="technical_case_study",
+            asked_question_ids=["prior-question"],
+        ),
     )
 
     assert len(selected) == 1
@@ -137,9 +143,14 @@ def test_prioritize_reorders_scan_pool_for_coding_sql_paths() -> None:
         _candidate("other", difficulty=5, score=0.80),
     ]
 
+    # Non-fresh-start: strict tier matching ensures exact difficulty match wins.
     prioritized = selector.prioritize(
         pool=pool,
-        context=_context(target_difficulty=4, target_area="technical_case_study"),
+        context=_context(
+            target_difficulty=4,
+            target_area="technical_case_study",
+            asked_question_ids=["prior-question"],
+        ),
     )
 
     assert prioritized[0].document.metadata["document_id"] == "target"

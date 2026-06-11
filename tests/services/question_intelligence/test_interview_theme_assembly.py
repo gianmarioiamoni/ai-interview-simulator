@@ -1,6 +1,6 @@
 # tests/services/question_intelligence/test_interview_theme_assembly.py
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from langchain_core.documents import Document
 
@@ -68,29 +68,35 @@ def test_theme_selector_is_data_driven_from_corpus() -> None:
 
 
 def test_theme_selector_prefers_cluster_and_topic_signals() -> None:
+    # Patch the corpus prior so it is neutral, ensuring the test validates
+    # only the preview-item signal logic (topic + text + cluster votes).
+    with patch(
+        "services.question_intelligence.interview_theme_selector"
+        ".compute_technical_thematic_domain_counts",
+        return_value={"distributed_systems": 1, "data_engineering": 1},
+    ):
+        selector = InterviewThemeSelector()
+        preview_items = [
+            _build_bank_item(
+                "distributed rate limiter across multiple nodes",
+                "item-1",
+            ),
+            _build_bank_item(
+                "CAP theorem trade-offs in partitioned systems",
+                "item-2",
+            ),
+            _build_bank_item(
+                "eventual consistency in notification pipeline",
+                "item-3",
+            ),
+        ]
 
-    selector = InterviewThemeSelector()
-    preview_items = [
-        _build_bank_item(
-            "distributed rate limiter across multiple nodes",
-            "item-1",
-        ),
-        _build_bank_item(
-            "CAP theorem trade-offs in partitioned systems",
-            "item-2",
-        ),
-        _build_bank_item(
-            "eventual consistency in notification pipeline",
-            "item-3",
-        ),
-    ]
-
-    anchor = selector.select_anchor(
-        role=RoleType.BACKEND_ENGINEER,
-        level=SeniorityLevel.MID,
-        first_area=InterviewArea.TECH_BACKGROUND,
-        preview_items=preview_items,
-    )
+        anchor = selector.select_anchor(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            first_area=InterviewArea.TECH_BACKGROUND,
+            preview_items=preview_items,
+        )
 
     assert anchor == "distributed_systems"
 

@@ -221,9 +221,15 @@ def test_adaptive_difficulty_still_beats_variety() -> None:
         _candidate("aligned", "Standard caching strategy question.", difficulty=4, score=0.70),
     ]
 
+    # Non-fresh-start: strict tier matching ensures exact difficulty match wins
+    # over novelty/variety signals even for case study (canonical area).
     selected = selector.select(
         pool=pool,
-        context=_context(target_difficulty=4, target_area="technical_case_study"),
+        context=_context(
+            target_difficulty=4,
+            target_area="technical_case_study",
+            memory=InterviewRetrievalMemory(asked_question_ids=["prior-question"]),
+        ),
     )
 
     assert selected[0].document.metadata["document_id"] == "aligned"
