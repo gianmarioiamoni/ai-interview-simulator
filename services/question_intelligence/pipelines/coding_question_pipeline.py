@@ -17,9 +17,6 @@ from domain.contracts.execution.coding_test_case import (
 from domain.contracts.question.question_bank_item import (
     QuestionBankItem,
 )
-from domain.contracts.question.question_origin_type import (
-    QuestionOriginType,
-)
 from domain.contracts.question.question_provenance import (
     QuestionProvenance,
 )
@@ -50,25 +47,12 @@ from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
 )
 
-from services.question_intelligence.retrieval_query_builder import (
-    RetrievalQueryBuilder,
-)
-
-from services.question_intelligence.retrieval.retrieval_strategy_resolver import (
-    RetrievalStrategyResolver,
-)
-
 from services.question_corpus.contracts.interview_retrieval_memory import (
     InterviewRetrievalMemory,
 )
-from services.question_intelligence.interview_theme_guidance import (
-    build_theme_guidance,
-)
-from services.question_intelligence.interview_theme_memory import (
-    get_interview_theme_anchor,
-)
-from services.question_corpus.retrieval.interview_memory_updater import (
-    InterviewMemoryUpdater,
+
+from services.question_intelligence.pipelines.base_llm_question_pipeline import (
+    BaseLLMQuestionPipeline,
 )
 
 from infrastructure.config.settings import settings
@@ -85,7 +69,7 @@ _CODING_CANDIDATE_SCAN_K = 10
 _CODING_GENERATE_MAX_ATTEMPTS = settings.coding_pipeline_retry_attempts
 
 
-class CodingQuestionPipeline:
+class CodingQuestionPipeline(BaseLLMQuestionPipeline):
 
     def __init__(
         self,
@@ -94,59 +78,36 @@ class CodingQuestionPipeline:
         coding_retrieval_helper: CodingPipelineRetrievalHelper | None = None,
     ) -> None:
 
+        super().__init__()
         self._retrieval_service = retrieval_service
         self._coding_generator = coding_generator
         self._coding_retrieval_helper = coding_retrieval_helper
-        self._retrieval_query_builder = RetrievalQueryBuilder()
-        self._retrieval_strategy_resolver = RetrievalStrategyResolver()
-        self._memory_updater = InterviewMemoryUpdater()
 
-    # =====================================================
-    # PUBLIC
-    # =====================================================
+    # ------------------------------------------------------------------
+    # BaseLLMQuestionPipeline implementation
+    # ------------------------------------------------------------------
 
-    def build(
+    def _pipeline_label(self) -> str:
+        return "CODING"
+
+    def _candidate_scan_k(self) -> int:
+        return _CODING_CANDIDATE_SCAN_K
+
+    def _build_provenance_model_tag(self) -> str:
+        return "coding_question_enrichment"
+
+    def _retrieve_candidates(
         self,
         role: RoleType,
         level: SeniorityLevel,
         interview_type: InterviewType,
         area: InterviewArea,
-        questions_per_area: int,
-        memory: InterviewRetrievalMemory | None = None,
-    ) -> tuple[List[Question], InterviewRetrievalMemory]:
+        memory: InterviewRetrievalMemory,
+        retrieval_query: str,
+        retrieval_strategy,
+    ) -> list[QuestionBankItem]:
 
-        session_memory = (
-            memory if memory is not None else InterviewRetrievalMemory()
-        )
-
-        questions: List[Question] = []
-        enriched_pairs: list[tuple[QuestionBankItem, Question]] = []
-
-        theme_anchor = get_interview_theme_anchor(session_memory)
-        theme_guidance = build_theme_guidance(
-            theme_anchor=theme_anchor,
-            area=area,
-        )
-
-        retrieval_query = self._retrieval_query_builder.build(
-            role=role,
-            level=level,
-            area=area,
-            theme_anchor=theme_anchor,
-        )
-
-        candidate_scan_k = max(
-            questions_per_area,
-            _CODING_CANDIDATE_SCAN_K,
-        )
-
-        retrieval_strategy = self._retrieval_strategy_resolver.resolve(
-            area=area,
-            level=level,
-            questions_per_area=candidate_scan_k,
-        )
-
-        retrieved = retrieve_coding_candidates(
+        return retrieve_coding_candidates(
             retrieval_service=self._retrieval_service,
             query=retrieval_query,
             retrieval_strategy=retrieval_strategy,
@@ -154,106 +115,43 @@ class CodingQuestionPipeline:
             level=level.value,
             interview_type=interview_type.value,
             area=area.value,
-            memory=session_memory,
+            memory=memory,
             coding_retrieval_helper=self._coding_retrieval_helper,
         )
 
-        for item in retrieved:
+    def _enrich_item(
+        self,
+        item: QuestionBankItem,
+        role: RoleType,
+        level: SeniorityLevel,
+        area: InterviewArea,
+        provenance: QuestionProvenance,
+        theme_guidance: str | None,
+    ) -> Question | None:
 
-            if len(questions) >= questions_per_area:
-                break
+        if not self._is_actionable_coding_prompt(item.text):
+            logger.debug("[CODING] Skipping non-actionable retrieved prompt: %s", item.id)
+            return None
 
-            if not self._is_actionable_coding_prompt(item.text):
-                logger.debug(
-                    f"[CODING] Skipping non-actionable retrieved prompt: {item.id}",
-                )
-                continue
+        theme_guidance_text = theme_guidance
 
-            provenance = self._build_enrichment_provenance(item)
+        enriched = self._coding_generator.enrich_from_prompt(
+            seed_prompt=item.text,
+            role=role,
+            level=level,
+            provenance=provenance,
+            theme_guidance=theme_guidance_text,
+        )
 
-            enriched = self._coding_generator.enrich_from_prompt(
-                seed_prompt=item.text,
-                role=role,
-                level=level,
-                provenance=provenance,
-                theme_guidance=theme_guidance,
-            )
+        if enriched is None:
+            logger.debug("[CODING] Enrichment failed for actionable prompt: %s", item.id)
+            return None
 
-            if enriched is None:
-                logger.debug(
-                    f"[CODING] Enrichment failed for actionable prompt: {item.id}",
-                )
-                continue
-
-            try:
-                mapped = self._map_item(
-                    item=enriched,
-                    area=area,
-                    provenance=provenance,
-                )
-            except ValueError as exc:
-                logger.warning(f"[CODING enrich] Alignment failed: {exc}")
-                continue
-
-            enriched_pairs.append((item, mapped))
-            questions.append(mapped)
-
-        remaining_slots = questions_per_area - len(questions)
-
-        if remaining_slots > 0:
-            questions.extend(
-                self._generate_with_retry(
-                    role=role,
-                    level=level,
-                    n=remaining_slots,
-                    theme_guidance=theme_guidance,
-                ),
-            )
-
-        if not questions:
-            questions.extend(
-                self._generate_with_retry(
-                    role=role,
-                    level=level,
-                    n=max(1, questions_per_area),
-                    theme_guidance=theme_guidance,
-                ),
-            )
-
-        if len(questions) < questions_per_area:
-            logger.warning(
-                f"[CODING] Area {area.value} produced "
-                f"{len(questions)} questions "
-                f"(expected {questions_per_area})",
-            )
-
-        final_questions = questions[:questions_per_area]
-
-        if not final_questions:
-            final_questions = self._generate_with_retry(
-                role=role,
-                level=level,
-                n=max(1, questions_per_area),
-                theme_guidance=theme_guidance,
-            )[:questions_per_area]
-
-        final_prompts = {q.prompt for q in final_questions}
-
-        for bank_item, mapped_question in enriched_pairs:
-
-            if mapped_question.prompt not in final_prompts:
-                continue
-
-            session_memory = self._memory_updater.record_bank_item_selection(
-                memory=session_memory,
-                item=bank_item,
-            )
-
-        return final_questions, session_memory
-
-    # =====================================================
-    # MAPPING
-    # =====================================================
+        try:
+            return self._map_item(item=enriched, area=area, provenance=provenance)
+        except ValueError as exc:
+            logger.warning("[CODING enrich] Alignment failed: %s", exc)
+            return None
 
     def _generate_with_retry(
         self,
@@ -279,16 +177,14 @@ class CodingQuestionPipeline:
 
             for raw_item in raw_items:
                 try:
-                    mapped.append(
-                        self._map_item(
-                            item=raw_item,
-                            area=area,
-                        ),
-                    )
+                    mapped.append(self._map_item(item=raw_item, area=area))
                 except ValueError as exc:
                     logger.warning(
-                        f"[CODING generate] Alignment failed "
-                        f"(attempt {attempt}/{_CODING_GENERATE_MAX_ATTEMPTS}): {exc}",
+                        "[CODING generate] Alignment failed "
+                        "(attempt %d/%d): %s",
+                        attempt,
+                        _CODING_GENERATE_MAX_ATTEMPTS,
+                        exc,
                     )
 
             last_result = mapped
@@ -297,6 +193,10 @@ class CodingQuestionPipeline:
                 return last_result
 
         return last_result
+
+    # ------------------------------------------------------------------
+    # PRIVATE HELPERS
+    # ------------------------------------------------------------------
 
     def _map_item(
         self,
@@ -307,10 +207,7 @@ class CodingQuestionPipeline:
 
         coding_spec = item.coding_spec
 
-        self._validate_alignment(
-            item,
-            coding_spec,
-        )
+        self._validate_alignment(item, coding_spec)
 
         return Question(
             id=str(uuid.uuid4()),
@@ -325,10 +222,6 @@ class CodingQuestionPipeline:
             ],
         )
 
-    # =====================================================
-    # VALIDATION
-    # =====================================================
-
     def _validate_alignment(
         self,
         item: GeneratedCodingQuestion,
@@ -341,50 +234,9 @@ class CodingQuestionPipeline:
             raise ValueError(f"Entrypoint '{spec.entrypoint}' not found in prompt")
 
         for p in spec.parameters:
-
             if p not in prompt:
                 raise ValueError(f"Parameter '{p}' not found in prompt")
-
-    # =====================================================
-    # INTERNALS
-    # =====================================================
 
     def _is_actionable_coding_prompt(self, text: str) -> bool:
 
         return bool(_ACTIONABLE_CODING_PATTERN.search(text))
-
-    def _build_enrichment_provenance(
-        self,
-        item: QuestionBankItem,
-    ) -> QuestionProvenance:
-
-        base = item.provenance
-
-        source_name = (
-            base.source_name
-            if base and base.source_name
-            else item.ingestion_metadata.source_name
-        )
-
-        source_type = (
-            base.source_type
-            if base and base.source_type
-            else item.ingestion_metadata.source_type
-        )
-
-        dataset_version = (
-            base.dataset_version
-            if base and base.dataset_version
-            else item.ingestion_metadata.dataset_version
-        )
-
-        retrieval_score = base.retrieval_score if base else None
-
-        return QuestionProvenance(
-            origin_type=QuestionOriginType.RETRIEVAL,
-            source_name=source_name,
-            source_type=source_type,
-            dataset_version=dataset_version,
-            retrieval_score=retrieval_score,
-            generated_by_model="coding_question_enrichment",
-        )

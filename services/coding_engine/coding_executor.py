@@ -12,6 +12,10 @@ from services.coding_engine.test_case_runner import TestCaseRunner
 from services.coding_engine.test_case_adapter import TestCaseAdapter
 from services.coding_engine.harness_output_parser import HarnessOutputParser
 
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class CodingExecutor:
 
@@ -58,10 +62,7 @@ class CodingExecutor:
 
         raw = self._sandbox.execute(harness)
 
-        # ✅ RIPRISTINATO (debug utile)
-        print("=== RAW STDOUT ===")
-        print(raw.stdout)
-        print("==================")
+        logger.debug("sandbox stdout: %s", raw.stdout)
 
         # -----------------------------------------------------
         # Timeout

@@ -10,6 +10,9 @@ from services.feedback.dimension_aggregator import FeedbackDimensionAggregator
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
 from app.ui.constants.loader_steps import LoaderStep
 from app.ports.llm_port import LLMPort
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 from infrastructure.config.evaluation import (
     WRITTEN_QUALITY_CORRECT_THRESHOLD,
     WRITTEN_QUALITY_PARTIAL_THRESHOLD,
@@ -85,7 +88,7 @@ class FeedbackNode:
         # -----------------------------------------------------
 
         dimension_signals = self._dimension_aggregator.aggregate(bundle.blocks)
-        print("DIMENSION SIGNALS:", dimension_signals)
+        logger.debug("dimension_signals: %s", dimension_signals)
 
         # -----------------------------------------------------
         # ENRICH BUNDLE (KEEP - backward compatibility)

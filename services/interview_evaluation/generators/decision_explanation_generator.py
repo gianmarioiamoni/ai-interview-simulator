@@ -37,8 +37,6 @@ class DecisionExplanationGenerator:
         dimension_signals: Dict[str, float] | None = None,
     ) -> Dict[str, List[str]]:
 
-        print("✅ NEW DECISION GENERATOR ACTIVE")
-
         # -----------------------------------------------------
         # CALL NARRATIVE SERVICE
         # -----------------------------------------------------
@@ -48,8 +46,6 @@ class DecisionExplanationGenerator:
             dimensions=dimensions,
             dimension_signals=dimension_signals,
         )
-
-        print("🔥 USING NARRATIVE SERVICE:", type(self._narrative_service))
 
         # -----------------------------------------------------
         # NORMALIZE OUTPUT

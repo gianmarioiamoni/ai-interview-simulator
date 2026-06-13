@@ -3,6 +3,9 @@
 from langgraph.graph import StateGraph, END
 
 from domain.contracts.interview_state import InterviewState
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 from domain.contracts.question.question import QuestionType
 from domain.contracts.shared.action_type import ActionType
 
@@ -183,13 +186,11 @@ def build_interview_graph(
     graph.add_edge("completion", "evaluation_aggregate")
 
     def route_after_completion(state: InterviewState) -> str:
-        print(f"[DEBUG] route_after_completion - is_completed: {state.is_completed}")
+        logger.debug("route_after_completion: is_completed=%s", state.is_completed)
 
         if state.is_completed:
-            print("[DEBUG] routing → report")
             return "report"
 
-        print("[DEBUG] routing → END")
         return END
 
     graph.add_conditional_edges(

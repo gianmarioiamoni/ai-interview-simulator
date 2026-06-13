@@ -9,9 +9,6 @@ from domain.contracts.question.question import (
 from domain.contracts.question.question_bank_item import (
     QuestionBankItem,
 )
-from domain.contracts.question.question_origin_type import (
-    QuestionOriginType,
-)
 from domain.contracts.question.question_provenance import (
     QuestionProvenance,
 )
@@ -41,25 +38,12 @@ from services.question_intelligence.question_retrieval_service import (
     QuestionRetrievalService,
 )
 
-from services.question_intelligence.retrieval_query_builder import (
-    RetrievalQueryBuilder,
-)
-
-from services.question_intelligence.retrieval.retrieval_strategy_resolver import (
-    RetrievalStrategyResolver,
-)
-
 from services.question_corpus.contracts.interview_retrieval_memory import (
     InterviewRetrievalMemory,
 )
-from services.question_intelligence.interview_theme_guidance import (
-    build_theme_guidance,
-)
-from services.question_intelligence.interview_theme_memory import (
-    get_interview_theme_anchor,
-)
-from services.question_corpus.retrieval.interview_memory_updater import (
-    InterviewMemoryUpdater,
+
+from services.question_intelligence.pipelines.base_llm_question_pipeline import (
+    BaseLLMQuestionPipeline,
 )
 
 from infrastructure.config.settings import settings
@@ -79,7 +63,7 @@ _SQL_CANDIDATE_SCAN_K = 10
 _SQL_GENERATE_MAX_ATTEMPTS = settings.sql_pipeline_retry_attempts
 
 
-class SQLQuestionPipeline:
+class SQLQuestionPipeline(BaseLLMQuestionPipeline):
 
     def __init__(
         self,
@@ -88,74 +72,36 @@ class SQLQuestionPipeline:
         sql_retrieval_helper: SqlPipelineRetrievalHelper | None = None,
     ) -> None:
 
+        super().__init__()
         self._retrieval_service = retrieval_service
         self._sql_generator = sql_generator
         self._sql_retrieval_helper = sql_retrieval_helper
-        self._retrieval_query_builder = RetrievalQueryBuilder()
-        self._retrieval_strategy_resolver = RetrievalStrategyResolver()
-        self._memory_updater = InterviewMemoryUpdater()
 
-    # =====================================================
-    # PUBLIC
-    # =====================================================
+    # ------------------------------------------------------------------
+    # BaseLLMQuestionPipeline implementation
+    # ------------------------------------------------------------------
 
-    def build(
+    def _pipeline_label(self) -> str:
+        return "SQL"
+
+    def _candidate_scan_k(self) -> int:
+        return _SQL_CANDIDATE_SCAN_K
+
+    def _build_provenance_model_tag(self) -> str:
+        return "sql_question_enrichment"
+
+    def _retrieve_candidates(
         self,
         role: RoleType,
         level: SeniorityLevel,
         interview_type: InterviewType,
         area: InterviewArea,
-        questions_per_area: int,
-        corpus_quota: int | None = None,
-        memory: InterviewRetrievalMemory | None = None,
-    ) -> tuple[List[Question], InterviewRetrievalMemory]:
-        """
-        corpus_quota caps how many questions are drawn from the retrieval corpus.
-        Remaining slots are filled by LLM generation. When None the pipeline
-        fills as many corpus questions as available (legacy behaviour).
-        """
+        memory: InterviewRetrievalMemory,
+        retrieval_query: str,
+        retrieval_strategy,
+    ) -> list[QuestionBankItem]:
 
-        session_memory = (
-            memory if memory is not None else InterviewRetrievalMemory()
-        )
-
-        questions: List[Question] = []
-        enriched_pairs: list[tuple[QuestionBankItem, Question]] = []
-
-        theme_anchor = get_interview_theme_anchor(session_memory)
-        theme_guidance = build_theme_guidance(
-            theme_anchor=theme_anchor,
-            area=area,
-        )
-
-        retrieval_query = self._retrieval_query_builder.build(
-            role=role,
-            level=level,
-            area=area,
-            theme_anchor=theme_anchor,
-            memory=session_memory,
-        )
-
-        # When corpus_quota is set, limit how many corpus candidates we scan.
-        # We still scan at least _SQL_CANDIDATE_SCAN_K so non-actionable
-        # prompts can be filtered without exhausting the quota prematurely.
-        effective_corpus_target = (
-            min(corpus_quota, questions_per_area)
-            if corpus_quota is not None
-            else questions_per_area
-        )
-        candidate_scan_k = max(
-            effective_corpus_target,
-            _SQL_CANDIDATE_SCAN_K,
-        )
-
-        retrieval_strategy = self._retrieval_strategy_resolver.resolve(
-            area=area,
-            level=level,
-            questions_per_area=candidate_scan_k,
-        )
-
-        retrieved = retrieve_sql_candidates(
+        return retrieve_sql_candidates(
             retrieval_service=self._retrieval_service,
             query=retrieval_query,
             retrieval_strategy=retrieval_strategy,
@@ -163,98 +109,37 @@ class SQLQuestionPipeline:
             level=level.value,
             interview_type=interview_type.value,
             area=area.value,
-            memory=session_memory,
+            memory=memory,
             sql_retrieval_helper=self._sql_retrieval_helper,
         )
 
-        for item in retrieved:
+    def _enrich_item(
+        self,
+        item: QuestionBankItem,
+        role: RoleType,
+        level: SeniorityLevel,
+        area: InterviewArea,
+        provenance: QuestionProvenance,
+        theme_guidance: str | None,
+    ) -> Question | None:
 
-            if len(questions) >= questions_per_area:
-                break
+        if not self._is_actionable_sql_prompt(item.text):
+            logger.debug("[SQL] Skipping non-actionable retrieved prompt: %s", item.id)
+            return None
 
-            if corpus_quota is not None and len(questions) >= corpus_quota:
-                break
+        enriched = self._sql_generator.enrich_from_prompt(
+            seed_prompt=item.text,
+            role=role,
+            level=level,
+            provenance=provenance,
+            theme_guidance=theme_guidance,
+        )
 
-            if not self._is_actionable_sql_prompt(item.text):
-                logger.debug(
-                    f"[SQL] Skipping non-actionable retrieved prompt: {item.id}",
-                )
-                continue
+        if enriched is None:
+            logger.debug("[SQL] Enrichment failed for actionable prompt: %s", item.id)
+            return None
 
-            provenance = self._build_enrichment_provenance(item)
-
-            enriched = self._sql_generator.enrich_from_prompt(
-                seed_prompt=item.text,
-                role=role,
-                level=level,
-                provenance=provenance,
-                theme_guidance=theme_guidance,
-            )
-
-            if enriched is None:
-                logger.debug(
-                    f"[SQL] Enrichment failed for actionable prompt: {item.id}",
-                )
-                continue
-
-            enriched_pairs.append((item, enriched))
-            questions.append(enriched)
-
-        remaining_slots = questions_per_area - len(questions)
-
-        if remaining_slots > 0:
-            questions.extend(
-                self._generate_with_retry(
-                    role=role,
-                    level=level,
-                    n=remaining_slots,
-                    theme_guidance=theme_guidance,
-                ),
-            )
-
-        if not questions:
-            questions.extend(
-                self._generate_with_retry(
-                    role=role,
-                    level=level,
-                    n=max(1, questions_per_area),
-                    theme_guidance=theme_guidance,
-                ),
-            )
-
-        if len(questions) < questions_per_area:
-            logger.warning(
-                f"[SQL] Area {area.value} produced "
-                f"{len(questions)} questions "
-                f"(expected {questions_per_area})"
-            )
-
-        final_questions = questions[:questions_per_area]
-
-        if not final_questions:
-            final_questions = self._generate_with_retry(
-                role=role,
-                level=level,
-                n=max(1, questions_per_area),
-                theme_guidance=theme_guidance,
-            )[:questions_per_area]
-        final_prompts = {q.prompt for q in final_questions}
-
-        for bank_item, mapped_question in enriched_pairs:
-
-            if mapped_question.prompt not in final_prompts:
-                continue
-
-            session_memory = self._memory_updater.record_bank_item_selection(
-                memory=session_memory,
-                item=bank_item,
-            )
-
-        return final_questions, session_memory
-
-    # =====================================================
-    # INTERNALS
-    # =====================================================
+        return enriched
 
     def _generate_with_retry(
         self,
@@ -277,8 +162,10 @@ class SQLQuestionPipeline:
                 )
             except ValueError as exc:
                 logger.warning(
-                    f"[SQL generate] Attempt {attempt}/{_SQL_GENERATE_MAX_ATTEMPTS} "
-                    f"failed: {exc}",
+                    "[SQL generate] Attempt %d/%d failed: %s",
+                    attempt,
+                    _SQL_GENERATE_MAX_ATTEMPTS,
+                    exc,
                 )
                 last_result = []
 
@@ -287,42 +174,10 @@ class SQLQuestionPipeline:
 
         return last_result
 
+    # ------------------------------------------------------------------
+    # PRIVATE HELPERS
+    # ------------------------------------------------------------------
+
     def _is_actionable_sql_prompt(self, text: str) -> bool:
 
         return bool(_ACTIONABLE_SQL_PATTERN.search(text))
-
-    def _build_enrichment_provenance(
-        self,
-        item: QuestionBankItem,
-    ) -> QuestionProvenance:
-
-        base = item.provenance
-
-        source_name = (
-            base.source_name
-            if base and base.source_name
-            else item.ingestion_metadata.source_name
-        )
-
-        source_type = (
-            base.source_type
-            if base and base.source_type
-            else item.ingestion_metadata.source_type
-        )
-
-        dataset_version = (
-            base.dataset_version
-            if base and base.dataset_version
-            else item.ingestion_metadata.dataset_version
-        )
-
-        retrieval_score = base.retrieval_score if base else None
-
-        return QuestionProvenance(
-            origin_type=QuestionOriginType.RETRIEVAL,
-            source_name=source_name,
-            source_type=source_type,
-            dataset_version=dataset_version,
-            retrieval_score=retrieval_score,
-            generated_by_model="sql_question_enrichment",
-        )

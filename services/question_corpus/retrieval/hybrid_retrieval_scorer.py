@@ -5,6 +5,10 @@ from langchain_core.documents import Document
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
 from services.question_corpus.repositories.retrieval_embedding_repository import RetrievalEmbeddingRepository
 
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class HybridRetrievalScorer:
 
@@ -54,10 +58,7 @@ class HybridRetrievalScorer:
                 document_id=document_id,
             )
 
-        print(
-            "EMBEDDING:",
-            embedding is not None,
-        )
+        logger.debug("embedding resolved: %s", embedding is not None)
 
         return RetrievalCandidate(
             document=document,

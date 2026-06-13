@@ -11,6 +11,10 @@ from infrastructure.llm.llm_factory import get_raw_llm
 from typing import Type, TypeVar, Protocol
 from pydantic import BaseModel
 
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -47,8 +51,7 @@ class DefaultLLMAdapter(LLMPort):
             return _LangChainResponse(content=content)
 
         except Exception as e:
-            print("\n🔥 LLM INVOCATION FAILED 🔥")
-            print(str(e))
+            logger.error("llm_invocation_failed: %s", e)
             raise
 
     # ---------------------------------------------------------
@@ -56,7 +59,6 @@ class DefaultLLMAdapter(LLMPort):
     # ---------------------------------------------------------
 
     def invoke_json(self, prompt: str, schema: Type[T]) -> T:
-        print("INVOKE_JSON ADAPTER CALLED")
 
         base_messages = [
             SystemMessage(
@@ -90,15 +92,13 @@ class DefaultLLMAdapter(LLMPort):
                 content = content.strip()
                 last_content = content
 
-                print("\n=== RAW LLM JSON ===")
-                print(content)
-                print("=== END RAW LLM JSON ===\n")
-                print("LEN:", len(content))
-                print("ATTEMPT:", attempt)
-                print("START CHAR:", content[:1])
-                print("END CHAR:", content[-1:])
-                print("FIRST 50:", content[:50])
-                print("LAST 50:", content[-50:])
+                logger.debug(
+                    "invoke_json attempt %d: len=%d start=%r end=%r",
+                    attempt,
+                    len(content),
+                    content[:1],
+                    content[-1:],
+                )
 
                 # -------------------------------------------------
                 # TRY STRICT PARSE
@@ -131,7 +131,7 @@ class DefaultLLMAdapter(LLMPort):
 
                         return schema.model_validate(parsed)
                     except Exception as e:
-                        print("⚠️ EXTRACT RECOVERY FAILED:", e)
+                        logger.debug("extract_recovery_failed: %s", e)
 
                 # -------------------------------------------------
                 # RECOVERY 2: wrap missing braces
@@ -150,14 +150,14 @@ class DefaultLLMAdapter(LLMPort):
 
                         return schema.model_validate(parsed)
                     except Exception as e:
-                        print("⚠️ WRAP RECOVERY FAILED:", e)
+                        logger.debug("wrap_recovery_failed: %s", e)
 
                 # -------------------------------------------------
                 # RETRY (if not last attempt)
                 # -------------------------------------------------
 
                 if attempt < _last_attempt:
-                    print("⚠️ JSON parsing failed → retrying with correction prompt")
+                    logger.debug("invoke_json: JSON parsing failed, retrying (attempt %d)", attempt)
 
                     messages = list(base_messages) + [
                         HumanMessage(
@@ -175,9 +175,7 @@ class DefaultLLMAdapter(LLMPort):
 
             except Exception as e:
                 if attempt == _last_attempt:
-                    print("\n❌ LLM JSON INVOCATION FAILED ❌")
-                    print(str(e))
-                    print("RAW:", last_content)
+                    logger.error("llm_json_invocation_failed: %s | raw=%r", e, last_content)
                     raise
 
         # fallback safety (should never reach here)

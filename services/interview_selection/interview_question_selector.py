@@ -9,6 +9,10 @@ from services.interview_selection.interview_selection_result import InterviewSel
 from services.planning.planner_selection_scoring_engine import PlannerSelectionScoringEngine
 from services.planning.contracts.planner_score_breakdown import PlannerScoreBreakdown
 
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class InterviewQuestionSelector:
 
@@ -67,17 +71,13 @@ class InterviewQuestionSelector:
 
                 adjusted_score = breakdown.final_score
 
-                print()
-
-                print("[PLANNER] " "semantic balancing")
-
-                print(f"question: " f"{question.text}")
-
-                print(f"base_score: " f"{base_score}")
-
-                print(f"adjusted_score: " f"{adjusted_score}")
-
-                print(f"rationale: " f"{breakdown.rationale}")
+                logger.debug(
+                    "[PLANNER] semantic balancing: question=%s base=%.2f adjusted=%.2f rationale=%s",
+                    question.text,
+                    base_score,
+                    adjusted_score,
+                    breakdown.rationale,
+                )
 
                 if adjusted_score > best_score:
 
@@ -129,17 +129,13 @@ class InterviewQuestionSelector:
 
             adjusted_score = breakdown.final_score
 
-            print()
-
-            print("[PLANNER] " "semantic balancing")
-
-            print(f"question: " f"{item.text}")
-
-            print(f"base_score: " f"{base_score}")
-
-            print(f"adjusted_score: " f"{adjusted_score}")
-
-            print(f"rationale: " f"{breakdown.rationale}")
+            logger.debug(
+                "[PLANNER] semantic balancing: question=%s base=%.2f adjusted=%.2f rationale=%s",
+                item.text,
+                base_score,
+                adjusted_score,
+                breakdown.rationale,
+            )
 
             scored_remaining.append(
                 (
