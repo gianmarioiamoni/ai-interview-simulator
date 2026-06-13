@@ -1,7 +1,5 @@
 # services/question_intelligence/constrained_equivalence_band.py
 
-import hashlib
-
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from services.question_corpus.contracts.adaptive_retrieval_context import (
     AdaptiveRetrievalContext,
@@ -12,6 +10,13 @@ from services.question_intelligence.interview_theme_memory import (
     get_interview_theme_anchor,
 )
 from services.question_intelligence.session_variety_scorer import SessionVarietyScorer
+from services.question_intelligence.equivalence_band_scoring import (
+    adaptive_tier,
+    candidate_score,
+    historical_usage_ids,
+    rotation_index,
+    score_floor,
+)
 
 DECONVERGENCE_AREAS: frozenset[str] = frozenset(
     {
@@ -98,13 +103,14 @@ class ConstrainedEquivalenceBand:
         ):
             band_anchor = max(
                 pool,
-                key=lambda candidate: self._candidate_score(candidate),
+                key=lambda candidate: candidate_score(candidate),
             )
 
-        best_tier = self._adaptive_tier(
+        best_tier = adaptive_tier(
             candidate=band_anchor,
             target=target,
             previous_difficulty=previous_difficulty,
+            max_allowed_jump=self._max_allowed_jump,
         )
 
         equivalents = self._collect_equivalents(
@@ -154,29 +160,28 @@ class ConstrainedEquivalenceBand:
         if not tier_matches:
             return []
 
-        if self._is_fresh_start(
+        fresh = self._is_fresh_start(
             context=context,
             selected_bank_items=selected_bank_items,
-        ):
+        )
+
+        if fresh:
             anchor_score = max(
-                self._candidate_score(candidate)
+                candidate_score(candidate)
                 for candidate in tier_matches
             )
         else:
-            anchor_score = self._candidate_score(best)
+            anchor_score = candidate_score(best)
 
-        if self._is_fresh_start(
-            context=context,
-            selected_bank_items=selected_bank_items,
-        ):
+        if fresh:
             return tier_matches
 
-        floor = self._score_floor(anchor_score)
+        floor = score_floor(anchor_score, self._band_pct)
 
         return [
             candidate
             for candidate in tier_matches
-            if self._candidate_score(candidate) >= floor
+            if candidate_score(candidate) >= floor
         ]
 
     def _matches_adaptive_tier(
@@ -189,10 +194,11 @@ class ConstrainedEquivalenceBand:
         selected_bank_items: list[QuestionBankItem],
     ) -> bool:
 
-        tier = self._adaptive_tier(
+        tier = adaptive_tier(
             candidate=candidate,
             target=target,
             previous_difficulty=previous_difficulty,
+            max_allowed_jump=self._max_allowed_jump,
         )
 
         if self._is_fresh_start(
@@ -223,7 +229,7 @@ class ConstrainedEquivalenceBand:
                 context=context,
             )
 
-        used_ids = self._historical_usage_ids(context)
+        used_ids = historical_usage_ids(context)
 
         def diversity_key(candidate: RetrievalCandidate) -> tuple:
 
@@ -277,7 +283,7 @@ class ConstrainedEquivalenceBand:
         theme = get_interview_theme_anchor(context.memory) or ""
         query = context.retrieval_query or ""
         seed = f"{context.current_role}|{context.seniority}|{theme}|{query}"
-        used_ids = self._historical_usage_ids(context)
+        used_ids = historical_usage_ids(context)
         target = context.target_difficulty or 3
         previous_difficulty = (
             context.memory.difficulty_history[-1]
@@ -288,10 +294,11 @@ class ConstrainedEquivalenceBand:
         def prefix_key(candidate: RetrievalCandidate) -> tuple:
 
             document_id = str(candidate.document.metadata.get("document_id", ""))
-            tier = self._adaptive_tier(
+            tier = adaptive_tier(
                 candidate=candidate,
                 target=target,
                 previous_difficulty=previous_difficulty,
+                max_allowed_jump=self._max_allowed_jump,
             )
             historical = 1 if document_id in used_ids else 0
             variety = self._variety_scorer.variety_penalty_tuple(
@@ -317,7 +324,7 @@ class ConstrainedEquivalenceBand:
                 return (
                     historical,
                     _CROSS_INTERVIEW_PICK_COUNTS.get(document_id, 0),
-                    -self._candidate_score(candidate),
+                    -candidate_score(candidate),
                     document_id,
                 )
 
@@ -341,7 +348,7 @@ class ConstrainedEquivalenceBand:
                 )
 
                 if len(topics_in_bucket) > 1:
-                    topic_index = self._rotation_index(seed, len(topics_in_bucket))
+                    topic_index = rotation_index(seed, len(topics_in_bucket))
                     target_topic = topics_in_bucket[topic_index]
                     bucket = [
                         candidate
@@ -357,12 +364,13 @@ class ConstrainedEquivalenceBand:
                 document_id = str(candidate.document.metadata.get("document_id", ""))
 
                 return (
-                    self._rotation_index(f"{seed}|{document_id}", 10_000),
-                    -self._candidate_score(candidate),
+                    rotation_index(f"{seed}|{document_id}", 10_000),
+                    -candidate_score(candidate),
                     document_id,
                 )
 
             pick = min(bucket, key=tie_break_key)
+
         document_id = str(pick.document.metadata.get("document_id", ""))
 
         if context.target_area in CANONICAL_FRESH_START_AREAS and document_id:
@@ -372,39 +380,14 @@ class ConstrainedEquivalenceBand:
 
         return pick
 
-    def _rotation_index(
-        self,
-        seed: str,
-        size: int,
-    ) -> int:
+    # ------------------------------------------------------------------
+    # COMPAT SHIMS — delegate to equivalence_band_scoring module
+    # Tests and any callers that reference these as instance methods
+    # continue to work without modification.
+    # ------------------------------------------------------------------
 
-        digest = hashlib.sha256(seed.encode()).hexdigest()
-        return int(digest[:12], 16) % size
-
-    def _historical_usage_ids(
-        self,
-        context: AdaptiveRetrievalContext,
-    ) -> set[str]:
-
-        return {
-            *context.memory.asked_question_ids,
-            *context.already_used_question_ids,
-        }
-
-    def _candidate_score(
-        self,
-        candidate: RetrievalCandidate,
-    ) -> float:
-
-        return float(candidate.adaptive_score or candidate.final_score)
-
-    def _score_floor(
-        self,
-        best_score: float,
-    ) -> float:
-
-        margin = max(0.01, best_score * self._band_pct)
-        return best_score - margin
+    def _score_floor(self, best_score: float) -> float:
+        return score_floor(best_score, self._band_pct)
 
     def _adaptive_tier(
         self,
@@ -412,30 +395,9 @@ class ConstrainedEquivalenceBand:
         target: int,
         previous_difficulty: int | None,
     ) -> tuple[int, int]:
-
-        difficulty = self._candidate_difficulty(candidate)
-
-        if difficulty is None:
-            return (999, 1)
-
-        target_distance = abs(difficulty - target)
-        jump = (
-            abs(difficulty - previous_difficulty)
-            if previous_difficulty is not None
-            else 0
+        return adaptive_tier(
+            candidate=candidate,
+            target=target,
+            previous_difficulty=previous_difficulty,
+            max_allowed_jump=self._max_allowed_jump,
         )
-        spike = 0 if jump <= self._max_allowed_jump else 1
-
-        return (target_distance, spike)
-
-    def _candidate_difficulty(
-        self,
-        candidate: RetrievalCandidate,
-    ) -> int | None:
-
-        raw = candidate.document.metadata.get("difficulty")
-
-        try:
-            return int(raw)
-        except (TypeError, ValueError):
-            return None
