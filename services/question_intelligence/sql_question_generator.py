@@ -31,6 +31,18 @@ _SANDBOX_TABLES = (
     "employees, departments, projects, employee_projects"
 )
 
+_SANDBOX_COLUMN_WHITELIST = """
+EXACT column names per table (no others exist):
+  employees        : id, name, department_id, salary
+  departments      : id, name
+  projects         : id, name, budget
+  employee_projects: employee_id, project_id
+
+FORBIDDEN column name examples (do NOT use):
+  employee_name, emp_name, dept_name, project_name, first_name, last_name,
+  email, phone, title, position, hire_date, age, manager_id
+"""
+
 _SANDBOX_EXECUTION_RULES = f"""
 EXECUTION CONSTRAINTS (mandatory):
 - reference_query and every test case expected_query MUST be a single SELECT only
@@ -40,6 +52,7 @@ EXECUTION CONSTRAINTS (mandatory):
 - Do NOT use CREATE, ALTER, DROP, VIEW, TRIGGER, or any DDL
 - Do NOT use INSERT, UPDATE, DELETE, or multi-statement SQL (no semicolon-separated statements)
 - Do NOT invent tables, views, or column names
+{_SANDBOX_COLUMN_WHITELIST}
 """
 
 
@@ -100,10 +113,7 @@ class SQLQuestionGenerator:
 
         executable_items = self._filter_executable_items(validated_items)
 
-        return [
-            self._map_to_question(item)
-            for item in executable_items
-        ]
+        return [self._map_to_question(item) for item in executable_items]
 
     # -----------------------------------------------------
 
@@ -130,11 +140,13 @@ class SQLQuestionGenerator:
             with LLMOperationContext.scope(QUESTION_GENERATION):
                 response = self._llm.invoke(prompt)
             validated_items = self._parse_llm_response(response.content)
-        except (ValueError, Exception) as e:
-            logger.warning(f"[SQL enrich] Failed to parse enrichment response: {e}")
+            executable_items = self._filter_executable_items(validated_items)
+        except ValueError as e:
+            logger.warning(f"[SQL enrich] Failed enrichment: {e}")
             return None
-
-        executable_items = self._filter_executable_items(validated_items)
+        except Exception as e:
+            logger.warning(f"[SQL enrich] Unexpected error during enrichment: {e}")
+            return None
 
         if not executable_items:
             logger.warning("[SQL enrich] No executable SQL after enrichment validation")
@@ -184,6 +196,7 @@ class SQLQuestionGenerator:
     ) -> List[GeneratedSQLQuestion]:
 
         executable: List[GeneratedSQLQuestion] = []
+        errors: List[str] = []
 
         for item in items:
             try:
@@ -194,17 +207,34 @@ class SQLQuestionGenerator:
                     cursor.execute(test_case.expected_query)
                 executable.append(item)
             except Exception as e:
-                logger.warning(f"Invalid generated SQL: {e}")
+                error_msg = f"Invalid generated SQL: {e}"
+                logger.warning(error_msg)
+                errors.append(str(e))
+
+        if not executable and errors:
+            raise ValueError(
+                f"All {len(items)} generated SQL item(s) failed execution validation. "
+                f"Errors: {'; '.join(errors[:3])}. "
+                f"Ensure queries use only valid columns: "
+                f"employees(id,name,department_id,salary), "
+                f"departments(id,name), projects(id,name,budget), "
+                f"employee_projects(employee_id,project_id)."
+            )
 
         return executable
 
     def _build_schema_summary(self) -> str:
         return """
-        Tables:
-        - employees(id, name, department_id, salary)
-        - departments(id, name)
-        - projects(id, name, budget)
-        - employee_projects(employee_id, project_id)
+        Tables and their EXACT columns (use no others):
+        - employees(id INTEGER, name TEXT, department_id INTEGER, salary INTEGER)
+        - departments(id INTEGER, name TEXT)
+        - projects(id INTEGER, name TEXT, budget INTEGER)
+        - employee_projects(employee_id INTEGER, project_id INTEGER)
+
+        Foreign keys:
+        - employees.department_id → departments.id
+        - employee_projects.employee_id → employees.id
+        - employee_projects.project_id → projects.id
         """
 
     # -----------------------------------------------------
@@ -271,9 +301,10 @@ Each question MUST include:
 {self._json_output_contract()}
 
 Rules:
-- Use ONLY tables and columns from the schema
+- Use ONLY tables and columns listed in the schema above — NEVER invent column names
+- The column for an employee's name is "name" (in the employees table), NOT "employee_name"
 - Use SQLite-compatible SQL
-- Queries MUST be executable
+- Queries MUST be executable against the schema above
 - Avoid ambiguous wording
 - Do NOT generate schema or data
 - No markdown
@@ -329,6 +360,8 @@ Each output item MUST include:
 
 Rules:
 - Queries MUST be executable on the provided schema and seed data
+- Use ONLY columns listed in the schema — NEVER invent column names
+- The column for an employee's name is "name" (in the employees table), NOT "employee_name"
 - Do NOT generate schema or data
 - No markdown
 - Only valid JSON
