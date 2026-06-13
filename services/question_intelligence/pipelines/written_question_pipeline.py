@@ -96,8 +96,17 @@ class WrittenQuestionPipeline:
         interview_type: InterviewType,
         area: InterviewArea,
         questions_per_area: int = QUESTIONS_PER_AREA,
+        corpus_quota: int | None = None,
         memory: InterviewRetrievalMemory | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory]:
+        """
+        Build questions for a single area.
+
+        corpus_quota caps how many questions are drawn from the retrieval corpus.
+        Remaining slots (questions_per_area - corpus_quota) are always filled by
+        LLM generation. When None the pipeline fills as many corpus questions as
+        available before falling back to generation (legacy behaviour).
+        """
 
         session_memory = (
             memory if memory is not None else InterviewRetrievalMemory()
@@ -124,10 +133,18 @@ class WrittenQuestionPipeline:
         # STRATEGY
         # -------------------------------------------------
 
+        # When a corpus_quota is set, cap the retrieval target so we never
+        # retrieve more than the allowed corpus fraction.
+        effective_corpus_target = (
+            min(corpus_quota, questions_per_area)
+            if corpus_quota is not None
+            else questions_per_area
+        )
+
         retrieval_strategy = self._retrieval_strategy_resolver.resolve(
             area=area,
             level=level,
-            questions_per_area=questions_per_area,
+            questions_per_area=effective_corpus_target,
         )
 
         # -------------------------------------------------
@@ -145,6 +162,9 @@ class WrittenQuestionPipeline:
         )
 
         for item in retrieved:
+
+            if corpus_quota is not None and len(questions) >= corpus_quota:
+                break
 
             mapped = self._map_bank_item(
                 item,

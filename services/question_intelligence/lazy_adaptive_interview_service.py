@@ -18,7 +18,11 @@ from services.question_intelligence.interview_theme_memory import (
 )
 from services.question_intelligence.interview_theme_selector import InterviewThemeSelector
 
-from app.settings.constants import QUESTIONS_PER_AREA
+from app.settings.constants import (
+    QUESTIONS_PER_AREA,
+    TECHNICAL_AREA_QUESTION_COUNT,
+)
+from services.question_intelligence.corpus_quota_resolver import resolve_corpus_quota
 
 
 class LazyAdaptiveInterviewService:
@@ -64,6 +68,7 @@ class LazyAdaptiveInterviewService:
             interview_type=interview_type,
             area=planned_areas[0],
             questions_per_area=QUESTIONS_PER_AREA,
+            corpus_quota=resolve_corpus_quota(planned_areas[0], interview_type, QUESTIONS_PER_AREA),
             memory=memory,
         )
 
@@ -90,6 +95,7 @@ class LazyAdaptiveInterviewService:
             interview_type=interview_type,
             area=next_area,
             questions_per_area=QUESTIONS_PER_AREA,
+            corpus_quota=resolve_corpus_quota(next_area, interview_type, QUESTIONS_PER_AREA),
             memory=memory,
         )
 
