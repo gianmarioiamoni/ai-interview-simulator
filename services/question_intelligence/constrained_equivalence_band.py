@@ -6,16 +6,16 @@ from services.question_corpus.contracts.adaptive_retrieval_context import (
 )
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
 from services.question_intelligence.coverage.topic_extractor import TopicExtractor
-from services.question_intelligence.interview_theme_memory import (
-    get_interview_theme_anchor,
-)
 from services.question_intelligence.session_variety_scorer import SessionVarietyScorer
 from services.question_intelligence.equivalence_band_scoring import (
     adaptive_tier,
     candidate_score,
     historical_usage_ids,
-    rotation_index,
     score_floor,
+)
+from services.question_intelligence.fresh_start_selection_strategy import (
+    FreshStartSelectionStrategy,
+    CANONICAL_FRESH_START_AREAS,
 )
 
 DECONVERGENCE_AREAS: frozenset[str] = frozenset(
@@ -33,15 +33,6 @@ EQUIVALENCE_BAND_PCT = 0.05
 FRESH_START_MAX_TARGET_DISTANCE = 1
 
 KNOWLEDGE_FRESH_START_AREA = "technical_technical_knowledge"
-
-CANONICAL_FRESH_START_AREAS: frozenset[str] = frozenset(
-    {
-        "technical_technical_knowledge",
-        "technical_background",
-        "technical_database",
-        "technical_case_study",
-    }
-)
 
 _CROSS_INTERVIEW_PICK_COUNTS: dict[str, int] = {}
 
@@ -73,6 +64,13 @@ class ConstrainedEquivalenceBand:
         )
         self._max_allowed_jump = max_allowed_jump
         self._band_pct = band_pct
+
+        self._fresh_start_strategy = FreshStartSelectionStrategy(
+            variety_scorer=self._variety_scorer,
+            topic_extractor=self._topic_extractor,
+            max_allowed_jump=self._max_allowed_jump,
+            cross_interview_pick_counts=_CROSS_INTERVIEW_PICK_COUNTS,
+        )
 
     def is_eligible(self, target_area: str) -> bool:
 
@@ -166,16 +164,9 @@ class ConstrainedEquivalenceBand:
         )
 
         if fresh:
-            anchor_score = max(
-                candidate_score(candidate)
-                for candidate in tier_matches
-            )
-        else:
-            anchor_score = candidate_score(best)
-
-        if fresh:
             return tier_matches
 
+        anchor_score = candidate_score(best)
         floor = score_floor(anchor_score, self._band_pct)
 
         return [
@@ -224,7 +215,7 @@ class ConstrainedEquivalenceBand:
             context=context,
             selected_bank_items=selected_bank_items,
         ):
-            return self._pick_fresh_start_equivalent(
+            return self._fresh_start_strategy.pick(
                 equivalents=equivalents,
                 context=context,
             )
@@ -271,119 +262,23 @@ class ConstrainedEquivalenceBand:
             and not memory.difficulty_history
         )
 
+    # ------------------------------------------------------------------
+    # COMPAT SHIM — tests call _pick_fresh_start_equivalent directly
+    # on the band instance; delegate to the strategy unchanged.
+    # ------------------------------------------------------------------
+
     def _pick_fresh_start_equivalent(
         self,
         equivalents: list[RetrievalCandidate],
         context: AdaptiveRetrievalContext,
     ) -> RetrievalCandidate:
-
-        if len(equivalents) == 1:
-            return equivalents[0]
-
-        theme = get_interview_theme_anchor(context.memory) or ""
-        query = context.retrieval_query or ""
-        seed = f"{context.current_role}|{context.seniority}|{theme}|{query}"
-        used_ids = historical_usage_ids(context)
-        target = context.target_difficulty or 3
-        previous_difficulty = (
-            context.memory.difficulty_history[-1]
-            if context.memory.difficulty_history
-            else None
+        return self._fresh_start_strategy.pick(
+            equivalents=equivalents,
+            context=context,
         )
-
-        def prefix_key(candidate: RetrievalCandidate) -> tuple:
-
-            document_id = str(candidate.document.metadata.get("document_id", ""))
-            tier = adaptive_tier(
-                candidate=candidate,
-                target=target,
-                previous_difficulty=previous_difficulty,
-                max_allowed_jump=self._max_allowed_jump,
-            )
-            historical = 1 if document_id in used_ids else 0
-            variety = self._variety_scorer.variety_penalty_tuple(
-                candidate=candidate,
-                context=context,
-                selected_bank_items=[],
-            )
-
-            return (
-                historical,
-                tier[0],
-                tier[1],
-                *variety,
-            )
-
-        if context.target_area in CANONICAL_FRESH_START_AREAS:
-
-            def canonical_tie_break_key(candidate: RetrievalCandidate) -> tuple:
-
-                document_id = str(candidate.document.metadata.get("document_id", ""))
-                historical = 1 if document_id in used_ids else 0
-
-                return (
-                    historical,
-                    _CROSS_INTERVIEW_PICK_COUNTS.get(document_id, 0),
-                    -candidate_score(candidate),
-                    document_id,
-                )
-
-            pick = min(equivalents, key=canonical_tie_break_key)
-        else:
-            best_prefix = min(prefix_key(candidate) for candidate in equivalents)
-            bucket = [
-                candidate
-                for candidate in equivalents
-                if prefix_key(candidate) == best_prefix
-            ]
-
-            if len(bucket) > 1:
-                topics_in_bucket = list(
-                    dict.fromkeys(
-                        self._topic_extractor.extract(
-                            candidate.document.page_content.strip(),
-                        )
-                        for candidate in bucket
-                    ),
-                )
-
-                if len(topics_in_bucket) > 1:
-                    topic_index = rotation_index(seed, len(topics_in_bucket))
-                    target_topic = topics_in_bucket[topic_index]
-                    bucket = [
-                        candidate
-                        for candidate in bucket
-                        if self._topic_extractor.extract(
-                            candidate.document.page_content.strip(),
-                        )
-                        == target_topic
-                    ]
-
-            def tie_break_key(candidate: RetrievalCandidate) -> tuple:
-
-                document_id = str(candidate.document.metadata.get("document_id", ""))
-
-                return (
-                    rotation_index(f"{seed}|{document_id}", 10_000),
-                    -candidate_score(candidate),
-                    document_id,
-                )
-
-            pick = min(bucket, key=tie_break_key)
-
-        document_id = str(pick.document.metadata.get("document_id", ""))
-
-        if context.target_area in CANONICAL_FRESH_START_AREAS and document_id:
-            _CROSS_INTERVIEW_PICK_COUNTS[document_id] = (
-                _CROSS_INTERVIEW_PICK_COUNTS.get(document_id, 0) + 1
-            )
-
-        return pick
 
     # ------------------------------------------------------------------
     # COMPAT SHIMS — delegate to equivalence_band_scoring module
-    # Tests and any callers that reference these as instance methods
-    # continue to work without modification.
     # ------------------------------------------------------------------
 
     def _score_floor(self, best_score: float) -> float:
