@@ -134,12 +134,57 @@ def test_map_one_fails_when_difficulty_is_not_numeric() -> None:
         mapper.map_one(candidate)
 
 
-def test_map_one_fails_when_role_is_invalid() -> None:
+def test_map_one_raises_for_unknown_role() -> None:
+    """map_one must raise CorpusCandidateMappingError for any unknown role value."""
     mapper = RetrievalCandidateMapper()
     candidate = _build_candidate(metadata_overrides={"role": "invalid_role"})
 
-    with pytest.raises(CorpusCandidateMappingError):
+    with pytest.raises(CorpusCandidateMappingError, match="Invalid corpus role value"):
         mapper.map_one(candidate)
+
+
+def test_map_one_raises_for_role_other() -> None:
+    """role='other' is not a valid corpus role; map_one must raise."""
+    mapper = RetrievalCandidateMapper()
+    candidate = _build_candidate(metadata_overrides={"role": "other"})
+
+    with pytest.raises(CorpusCandidateMappingError, match="Invalid corpus role value"):
+        mapper.map_one(candidate)
+
+
+def test_map_skips_invalid_document_and_returns_valid_ones() -> None:
+    """map() must silently skip documents that fail mapping and return the rest."""
+    mapper = RetrievalCandidateMapper()
+    good = _build_candidate({"document_id": "good"})
+    bad_empty = _build_candidate({"document_id": "bad"}, page_content="   ")
+
+    items = mapper.map([good, bad_empty])
+
+    assert len(items) == 1
+    assert items[0].id == "good"
+
+
+def test_map_skips_doc_with_role_other_and_returns_valid_ones() -> None:
+    """map() must skip role='other' docs without aborting; valid docs are returned."""
+    mapper = RetrievalCandidateMapper()
+    good = _build_candidate({"document_id": "good"})
+    role_other = _build_candidate({"document_id": "bad_role", "role": "other"})
+
+    items = mapper.map([role_other, good])
+
+    assert len(items) == 1
+    assert items[0].id == "good"
+
+
+def test_map_returns_empty_list_when_all_documents_invalid() -> None:
+    """map() must return [] (not raise) when every document fails mapping."""
+    mapper = RetrievalCandidateMapper()
+    bad1 = _build_candidate(page_content="   ")
+    bad2 = _build_candidate({"area": "not_an_area"})
+
+    items = mapper.map([bad1, bad2])
+
+    assert items == []
 
 
 def test_map_one_fails_when_area_is_invalid() -> None:

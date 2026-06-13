@@ -105,8 +105,14 @@ class SQLQuestionPipeline:
         interview_type: InterviewType,
         area: InterviewArea,
         questions_per_area: int,
+        corpus_quota: int | None = None,
         memory: InterviewRetrievalMemory | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory]:
+        """
+        corpus_quota caps how many questions are drawn from the retrieval corpus.
+        Remaining slots are filled by LLM generation. When None the pipeline
+        fills as many corpus questions as available (legacy behaviour).
+        """
 
         session_memory = (
             memory if memory is not None else InterviewRetrievalMemory()
@@ -129,8 +135,16 @@ class SQLQuestionPipeline:
             memory=session_memory,
         )
 
+        # When corpus_quota is set, limit how many corpus candidates we scan.
+        # We still scan at least _SQL_CANDIDATE_SCAN_K so non-actionable
+        # prompts can be filtered without exhausting the quota prematurely.
+        effective_corpus_target = (
+            min(corpus_quota, questions_per_area)
+            if corpus_quota is not None
+            else questions_per_area
+        )
         candidate_scan_k = max(
-            questions_per_area,
+            effective_corpus_target,
             _SQL_CANDIDATE_SCAN_K,
         )
 
@@ -155,6 +169,9 @@ class SQLQuestionPipeline:
         for item in retrieved:
 
             if len(questions) >= questions_per_area:
+                break
+
+            if corpus_quota is not None and len(questions) >= corpus_quota:
                 break
 
             if not self._is_actionable_sql_prompt(item.text):

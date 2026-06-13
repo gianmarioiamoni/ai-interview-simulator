@@ -8,6 +8,10 @@ from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.question.question_origin_type import QuestionOriginType
 from domain.contracts.question.question_provenance import QuestionProvenance
 from domain.contracts.user.role import Role, RoleType
+
+from app.core.logger import get_logger
+
+_logger = get_logger(__name__)
 from domain.contracts.user.seniority_level import SeniorityLevel
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
 from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
@@ -54,8 +58,16 @@ class RetrievalCandidateMapper:
         self,
         candidates: list[RetrievalCandidate],
     ) -> list[QuestionBankItem]:
-
-        return [self.map_one(candidate) for candidate in candidates]
+        items: list[QuestionBankItem] = []
+        for candidate in candidates:
+            try:
+                items.append(self.map_one(candidate))
+            except CorpusCandidateMappingError as exc:
+                doc_id = candidate.document.metadata.get("document_id", "<unknown>")
+                _logger.warning(
+                    f"[RetrievalCandidateMapper] Skipping document {doc_id!r}: {exc}"
+                )
+        return items
 
     def map_one(
         self,
@@ -135,11 +147,17 @@ class RetrievalCandidateMapper:
         )
 
         try:
-            role = Role(type=RoleType(role_value))
-        except ValueError as exc:
+            role_type = RoleType(role_value)
+            # RoleType.OTHER requires a custom_name (domain constraint) and is
+            # not a valid corpus role — treat it like any other unknown value.
+            if role_type == RoleType.OTHER:
+                raise ValueError(f"role_value {role_value!r} is not a valid corpus role")
+            role = Role(type=role_type)
+        except ValueError:
             raise CorpusCandidateMappingError(
-                f"Invalid role value: {role_value!r}."
-            ) from exc
+                f"Invalid corpus role value: {role_value!r}. "
+                "Document will be skipped by map()."
+            )
 
         try:
             area = InterviewArea(area_value)
