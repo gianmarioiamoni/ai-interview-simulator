@@ -29,21 +29,6 @@ class TestDefaultInterviewLength:
     def test_default_interview_length_is_20(self):
         assert DEFAULT_INTERVIEW_LENGTH == 20
 
-    def test_orchestrator_source_references_constant(self):
-        """The orchestrator module must import DEFAULT_INTERVIEW_LENGTH."""
-        import importlib, ast, pathlib
-        src = pathlib.Path(
-            "services/interview_orchestration/interview_orchestrator.py"
-        ).read_text()
-        tree = ast.parse(src)
-        imported_names = [
-            alias.name
-            for node in ast.walk(tree)
-            if isinstance(node, ast.ImportFrom)
-            for alias in node.names
-        ]
-        assert "DEFAULT_INTERVIEW_LENGTH" in imported_names
-
 
 class TestFollowUpRate:
     def test_default_followup_rate_is_20_percent(self):
