@@ -4,6 +4,7 @@ from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 
+from infrastructure.config.settings import settings
 from services.question_corpus.constants.vector_store_constants import (
     CHROMA_COLLECTION_NAME,
     CHROMA_PERSIST_DIRECTORY,
@@ -16,7 +17,7 @@ class ChromaCorpusBuilder:
         self,
     ) -> None:
 
-        self._embeddings = OpenAIEmbeddings()
+        self._embeddings = OpenAIEmbeddings(model=settings.openai_embedding_model)
 
     def build(
         self,

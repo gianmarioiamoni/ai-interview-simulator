@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from infrastructure.config.settings import settings
+
 
 @dataclass(frozen=True, slots=True)
 class ModelPricing:
@@ -24,7 +26,7 @@ _MODEL_PRICING: dict[str, ModelPricing] = {
     ),
 }
 
-_DEFAULT_MODEL = "gpt-4o-mini"
+_DEFAULT_MODEL = settings.chat_model
 
 
 def get_model_pricing(model_name: str | None = None) -> ModelPricing:

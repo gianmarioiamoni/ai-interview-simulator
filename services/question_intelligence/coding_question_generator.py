@@ -13,6 +13,7 @@ from domain.contracts.user.seniority_level import SeniorityLevel
 from app.ports.llm_port import LLMPort
 from app.prompts.prompt_loader import PromptLoader
 from app.prompts.prompt_renderer import PromptRenderer
+from infrastructure.config.settings import settings
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 
@@ -22,7 +23,8 @@ from services.question_intelligence.coding_llm_json_repair import repair_llm_jso
 
 logger = get_logger(__name__)
 
-MAX_INVALID_JSON_ATTEMPTS = 3
+# Re-exported for backward compatibility with test imports.
+MAX_INVALID_JSON_ATTEMPTS = settings.coding_json_retry_attempts
 
 INVALID_JSON_PREFIX = "Invalid JSON from LLM:"
 
