@@ -71,6 +71,7 @@ from services.question_corpus.retrieval.interview_memory_updater import (
     InterviewMemoryUpdater,
 )
 
+from infrastructure.config.settings import settings
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -81,7 +82,7 @@ _ACTIONABLE_CODING_PATTERN = re.compile(
 )
 
 _CODING_CANDIDATE_SCAN_K = 10
-_CODING_GENERATE_MAX_ATTEMPTS = 2
+_CODING_GENERATE_MAX_ATTEMPTS = settings.coding_pipeline_retry_attempts
 
 
 class CodingQuestionPipeline:

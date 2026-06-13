@@ -10,6 +10,7 @@ from domain.contracts.question.question import Question
 from domain.contracts.execution.coding_spec import CodingSpec
 
 from app.ports.llm_port import LLMPort
+from infrastructure.config.settings import settings
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 from app.ai.test_generation.test_cache_service import TestCacheService
@@ -68,12 +69,13 @@ class AITestGenerator:
 
         tests: List[CodingTestCase] = []
 
-        for attempt in range(2):
+        _max_attempts = settings.test_generation_retry_attempts
+        for attempt in range(_max_attempts):
 
             tests = self._generate_with_llm(
                 question,
                 num_tests * 2,
-                retry=(attempt == 1),
+                retry=(attempt == _max_attempts - 1),
             )
 
             tests = self._validate_tests_against_spec(

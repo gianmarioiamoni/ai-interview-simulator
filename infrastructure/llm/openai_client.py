@@ -2,22 +2,21 @@
 
 # Minimal OpenAI client wrapper for GPT-4o-mini
 
-import os
 from openai import OpenAI
+
+from infrastructure.config.settings import settings
 
 
 class OpenAIClient:
     def __init__(self) -> None:
-        api_key = os.getenv("OPENAI_API_KEY")
-
-        if not api_key:
+        if not settings.openai_api_key:
             raise RuntimeError("OPENAI_API_KEY not set")
 
-        self._client = OpenAI(api_key=api_key)
+        self._client = OpenAI(api_key=settings.openai_api_key)
 
     def generate_answer(self, prompt: str) -> str:
         response = self._client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=settings.chat_model,
             messages=[
                 {
                     "role": "system",
@@ -25,7 +24,7 @@ class OpenAIClient:
                 },
                 {"role": "user", "content": prompt},
             ],
-            temperature=0.3,
+            temperature=settings.openai_client_temperature,
         )
 
         return response.choices[0].message.content.strip()

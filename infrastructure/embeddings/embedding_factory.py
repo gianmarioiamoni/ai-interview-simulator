@@ -19,6 +19,6 @@ def get_embedding_model() -> OpenAIEmbeddings:
         OpenAIEmbeddings: Configured embedding model
     """
     return OpenAIEmbeddings(
-        model=settings.embedding_model,
+        model=settings.openai_embedding_model,
         openai_api_key=settings.openai_api_key,
     )

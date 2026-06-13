@@ -2,12 +2,13 @@
 
 from langchain_core.language_models import LLM
 from langchain_openai import ChatOpenAI
-import os
+
+from infrastructure.config.settings import settings
 
 
 def get_raw_llm() -> LLM:
     return ChatOpenAI(
-        model="gpt-4o-mini",
-        temperature=0.0,
-        api_key=os.getenv("OPENAI_API_KEY"),
+        model=settings.chat_model,
+        temperature=settings.chat_temperature,
+        api_key=settings.openai_api_key,
     )

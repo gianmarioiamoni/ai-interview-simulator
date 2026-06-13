@@ -62,6 +62,7 @@ from services.question_corpus.retrieval.interview_memory_updater import (
     InterviewMemoryUpdater,
 )
 
+from infrastructure.config.settings import settings
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -75,7 +76,7 @@ _ACTIONABLE_SQL_PATTERN = re.compile(
 )
 
 _SQL_CANDIDATE_SCAN_K = 10
-_SQL_GENERATE_MAX_ATTEMPTS = 2
+_SQL_GENERATE_MAX_ATTEMPTS = settings.sql_pipeline_retry_attempts
 
 
 class SQLQuestionPipeline:

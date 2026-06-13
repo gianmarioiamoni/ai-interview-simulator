@@ -7,6 +7,7 @@ from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 
+from infrastructure.config.settings import settings
 from services.question_corpus.constants.vector_store_constants import (
     CHROMA_COLLECTION_NAME,
     CHROMA_PERSIST_DIRECTORY,
@@ -30,7 +31,7 @@ class ChromaRetrievalService:
 
         self._vectorstore = Chroma(
             collection_name=CHROMA_COLLECTION_NAME,
-            embedding_function=OpenAIEmbeddings(),
+            embedding_function=OpenAIEmbeddings(model=settings.openai_embedding_model),
             persist_directory=CHROMA_PERSIST_DIRECTORY,
         )
 

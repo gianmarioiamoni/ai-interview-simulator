@@ -1,3 +1,5 @@
 # services/embedding/embedding_config.py
 
-DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+from infrastructure.config.settings import settings
+
+DEFAULT_EMBEDDING_MODEL = settings.local_embedding_model

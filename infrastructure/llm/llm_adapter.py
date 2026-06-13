@@ -5,6 +5,7 @@ import json
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.ports.llm_port import LLMPort, LLMResponse
+from infrastructure.config.settings import settings
 from infrastructure.llm.llm_factory import get_raw_llm
 
 from typing import Type, TypeVar, Protocol
@@ -76,10 +77,12 @@ class DefaultLLMAdapter(LLMPort):
         last_content = ""
 
         # -----------------------------------------------------
-        # RETRY LOOP (max 2 attempts)
+        # RETRY LOOP
         # -----------------------------------------------------
 
-        for attempt in range(2):
+        _last_attempt = settings.llm_json_retry_attempts - 1
+
+        for attempt in range(settings.llm_json_retry_attempts):
 
             try:
                 raw = self._llm.invoke(messages)
@@ -150,10 +153,10 @@ class DefaultLLMAdapter(LLMPort):
                         print("⚠️ WRAP RECOVERY FAILED:", e)
 
                 # -------------------------------------------------
-                # RETRY (if first attempt)
+                # RETRY (if not last attempt)
                 # -------------------------------------------------
 
-                if attempt == 0:
+                if attempt < _last_attempt:
                     print("⚠️ JSON parsing failed → retrying with correction prompt")
 
                     messages = list(base_messages) + [
@@ -167,11 +170,11 @@ class DefaultLLMAdapter(LLMPort):
                     ]
                     continue
 
-                # second attempt failed → raise
+                # last attempt failed → raise
                 raise ValueError("Failed to parse LLM JSON output")
 
             except Exception as e:
-                if attempt == 1:
+                if attempt == _last_attempt:
                     print("\n❌ LLM JSON INVOCATION FAILED ❌")
                     print(str(e))
                     print("RAW:", last_content)

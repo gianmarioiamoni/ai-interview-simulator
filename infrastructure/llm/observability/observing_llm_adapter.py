@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app.core.logger import get_logger
 from app.ports.llm_port import LLMPort, LLMResponse
+from infrastructure.config.settings import settings
 from infrastructure.llm.contracts.llm_call_metric import LLMCallMetric
 from infrastructure.llm.metrics.interview_metrics_collector import InterviewMetricsCollector
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
@@ -18,7 +19,7 @@ logger = get_logger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
-_DEFAULT_MODEL_FALLBACK = "gpt-4o-mini"
+_DEFAULT_MODEL_FALLBACK = settings.chat_model
 
 
 class _ObservingRawLLMProxy:
