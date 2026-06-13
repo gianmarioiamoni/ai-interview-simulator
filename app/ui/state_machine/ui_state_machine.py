@@ -3,6 +3,10 @@
 from app.ui.ui_state import UIState
 from domain.contracts.interview_state import InterviewState
 
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class UIStateMachine:
 
@@ -15,22 +19,22 @@ class UIStateMachine:
 
         # REPORT
         if state.interview_evaluation is not None:
-            print("→ resolved UI state: REPORT\n")
+            logger.debug("resolved UI state: REPORT")
             return UIState.REPORT
 
         # COMPLETION
         if state.is_completed:
-            print("→ resolved UI state: COMPLETION\n")
+            logger.debug("resolved UI state: COMPLETION")
             return UIState.COMPLETION
 
         # SETUP
         if not state.current_question:
-            print("→ resolved UI state: SETUP\n")
+            logger.debug("resolved UI state: SETUP")
             return UIState.SETUP
 
         # PROCESSING
         if state.is_processing:
-            print("→ resolved UI state: PROCESSING\n")
+            logger.debug("resolved UI state: PROCESSING")
             return UIState.PROCESSING
 
         # FEEDBACK
@@ -39,9 +43,9 @@ class UIStateMachine:
             and state.allowed_actions
             and state.last_feedback_bundle is not None
         ):
-            print("→ resolved UI state: FEEDBACK\n")
+            logger.debug("resolved UI state: FEEDBACK")
             return UIState.FEEDBACK
 
         # DEFAULT = QUESTION
-        print("→ resolved UI state: QUESTION\n")
+        logger.debug("resolved UI state: QUESTION")
         return UIState.QUESTION

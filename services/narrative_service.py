@@ -115,10 +115,7 @@ class NarrativeService:
         dimension_signals: Dict[str, float] | None = None, 
     ) -> Dict[str, List[str]]:
 
-        print("🔥 NARRATIVE SERVICE CALLED")
-        print("🔥 NARRATIVE SERVICE GENERATING DECISION EXPLANATION")
-        print("🔥 DECISION:", decision)
-        print("🔥 DIMENSIONS:", dimensions)
+        logger.debug("generate_decision_explanation: decision=%s", decision)
 
         template = PromptLoader.load("narrative/decision_explanation.txt")
 
@@ -137,10 +134,6 @@ class NarrativeService:
 
         prompt = PromptRenderer.render(template, context)
 
-        print("\n=== DECISION PROMPT ===")
-        print(prompt)
-        print("=== END ===\n")
-
         try:
 
             with LLMOperationContext.scope(NARRATIVE_GENERATION):
@@ -148,9 +141,6 @@ class NarrativeService:
                     prompt,
                     schema=DecisionExplanationSchema
                 )
-            print("\n✅ PARSED EXPLANATION OBJECT:")
-            print(explanation)
-            print("TYPE:", type(explanation))
 
             return {
                 "drivers": explanation.drivers,
@@ -158,17 +148,7 @@ class NarrativeService:
             }
 
         except Exception as e:
-            logger.warning(f"decision_explanation_structured_failed: {e}")
-            print("\n❌ DECISION EXPLANATION FAILED")
-            print("ERROR:", e)
-
-            # 🔥 CRITICAL DEBUG
-            with LLMOperationContext.scope(NARRATIVE_GENERATION):
-                raw = self._llm.invoke(prompt)
-            print("\n=== RAW FALLBACK LLM OUTPUT ===")
-            print(raw.content)
-            print("=== END RAW ===\n")
-
+            logger.warning("decision_explanation_structured_failed: %s", e)
             return self._deterministic_fallback(dimensions)
 
     # ---------------------------------------------------------

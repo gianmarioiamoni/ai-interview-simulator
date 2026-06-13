@@ -3,206 +3,44 @@
 import re
 
 from services.question_intelligence.quality.contracts import TechnicalFilterResult
+from services.question_intelligence.quality.technical_taxonomy import TechnicalTaxonomy
 
 
 class TechnicalQuestionFilter:
+    """
+    Classifies a question text as technical or non-technical using
+    TechnicalTaxonomy term sets.
 
-    # =====================================================
-    # TECHNICAL TAXONOMY
-    # =====================================================
+    Public API
+    ----------
+    evaluate(text) -> TechnicalFilterResult
+    is_technical(text) -> bool
+    matching_categories(text) -> list[str]
+    """
 
-    STRONG_BACKEND_TERMS = {
-        "microservice",
-        "authentication",
-        "authorization",
-        "jwt",
-        "middleware",
-        "api gateway",
-        "rest api",
-        "graphql",
-        "backend architecture",
-        "service discovery",
-        "idempotency",
-    }
+    # ------------------------------------------------------------------
+    # Class-level aliases preserved for any consumer that references them
+    # directly on the class (e.g. TechnicalQuestionFilter.STRONG_BACKEND_TERMS).
+    # ------------------------------------------------------------------
 
-    WEAK_BACKEND_TERMS = {
-        "api",
-        "server",
-        "endpoint",
-        "session",
-        "request",
-        "response",
-    }
+    STRONG_BACKEND_TERMS = TechnicalTaxonomy.STRONG_BACKEND_TERMS
+    WEAK_BACKEND_TERMS = TechnicalTaxonomy.WEAK_BACKEND_TERMS
+    STRONG_DATABASE_TERMS = TechnicalTaxonomy.STRONG_DATABASE_TERMS
+    WEAK_DATABASE_TERMS = TechnicalTaxonomy.WEAK_DATABASE_TERMS
+    STRONG_DISTRIBUTED_TERMS = TechnicalTaxonomy.STRONG_DISTRIBUTED_TERMS
+    WEAK_DISTRIBUTED_TERMS = TechnicalTaxonomy.WEAK_DISTRIBUTED_TERMS
+    STRONG_FRONTEND_TERMS = TechnicalTaxonomy.STRONG_FRONTEND_TERMS
+    WEAK_FRONTEND_TERMS = TechnicalTaxonomy.WEAK_FRONTEND_TERMS
+    STRONG_DEVOPS_TERMS = TechnicalTaxonomy.STRONG_DEVOPS_TERMS
+    WEAK_DEVOPS_TERMS = TechnicalTaxonomy.WEAK_DEVOPS_TERMS
+    STRONG_DATA_ENGINEERING_TERMS = TechnicalTaxonomy.STRONG_DATA_ENGINEERING_TERMS
+    WEAK_DATA_ENGINEERING_TERMS = TechnicalTaxonomy.WEAK_DATA_ENGINEERING_TERMS
+    STRONG_ML_TERMS = TechnicalTaxonomy.STRONG_ML_TERMS
+    WEAK_ML_TERMS = TechnicalTaxonomy.WEAK_ML_TERMS
+    STRONG_CS_TERMS = TechnicalTaxonomy.STRONG_CS_TERMS
+    WEAK_CS_TERMS = TechnicalTaxonomy.WEAK_CS_TERMS
 
-    STRONG_DATABASE_TERMS = {
-        "sql",
-        "transaction",
-        "replication",
-        "sharding",
-        "database",
-        "normalization",
-        "acid",
-        "event sourcing",
-        "write amplification",
-    }
-
-    WEAK_DATABASE_TERMS = {
-        "index",
-        "schema",
-        "table",
-        "query",
-        "consistency",
-    }
-
-    STRONG_DISTRIBUTED_TERMS = {
-        "distributed system",
-        "eventual consistency",
-        "cap theorem",
-        "consensus",
-        "quorum",
-        "leader election",
-        "load balancer",
-        "rate limiter",
-        "fault tolerance",
-        "high availability",
-        "replication",
-    }
-
-    WEAK_DISTRIBUTED_TERMS = {
-        "cache",
-        "latency",
-        "throughput",
-        "scaling",
-        "partitioning",
-        "cdn",
-        "failover",
-    }
-
-    STRONG_FRONTEND_TERMS = {
-        "react",
-        "virtual dom",
-        "state management",
-        "hydration",
-        "server side rendering",
-        "frontend architecture",
-    }
-
-    WEAK_FRONTEND_TERMS = {
-        "component",
-        "rendering",
-        "typescript",
-        "javascript",
-        "dom",
-    }
-
-    STRONG_DEVOPS_TERMS = {
-        "kubernetes",
-        "terraform",
-        "helm",
-        "ci/cd",
-        "observability",
-        "infrastructure as code",
-        "container orchestration",
-    }
-
-    WEAK_DEVOPS_TERMS = {
-        "docker",
-        "deployment",
-        "pipeline",
-        "cloud",
-        "monitoring",
-    }
-
-    STRONG_DATA_ENGINEERING_TERMS = {
-        "etl",
-        "stream processing",
-        "data warehouse",
-        "lakehouse",
-        "data pipeline",
-        "spark",
-        "kafka",
-    }
-
-    WEAK_DATA_ENGINEERING_TERMS = {
-        "analytics",
-        "batch",
-        "streaming",
-        "warehouse",
-    }
-
-    STRONG_ML_TERMS = {
-        "transformer",
-        "fine tuning",
-        "rag",
-        "embedding",
-        "model serving",
-        "feature engineering",
-    }
-
-    WEAK_ML_TERMS = {
-        "machine learning",
-        "training",
-        "inference",
-        "model",
-        "vector",
-    }
-
-    STRONG_CS_TERMS = {
-        "time complexity",
-        "space complexity",
-        "binary search",
-        "dynamic programming",
-        "concurrency",
-        "parallelism",
-        "deadlock",
-    }
-
-    WEAK_CS_TERMS = {
-        "algorithm",
-        "thread",
-        "mutex",
-        "hash table",
-        "sorting",
-    }
-
-    # =====================================================
-    # CATEGORY MAP
-    # =====================================================
-
-    CATEGORY_MAP = {
-        "backend": (
-            STRONG_BACKEND_TERMS,
-            WEAK_BACKEND_TERMS,
-        ),
-        "database": (
-            STRONG_DATABASE_TERMS,
-            WEAK_DATABASE_TERMS,
-        ),
-        "distributed_systems": (
-            STRONG_DISTRIBUTED_TERMS,
-            WEAK_DISTRIBUTED_TERMS,
-        ),
-        "frontend": (
-            STRONG_FRONTEND_TERMS,
-            WEAK_FRONTEND_TERMS,
-        ),
-        "devops": (
-            STRONG_DEVOPS_TERMS,
-            WEAK_DEVOPS_TERMS,
-        ),
-        "data_engineering": (
-            STRONG_DATA_ENGINEERING_TERMS,
-            WEAK_DATA_ENGINEERING_TERMS,
-        ),
-        "machine_learning": (
-            STRONG_ML_TERMS,
-            WEAK_ML_TERMS,
-        ),
-        "computer_science": (
-            STRONG_CS_TERMS,
-            WEAK_CS_TERMS,
-        ),
-    }
+    CATEGORY_MAP = TechnicalTaxonomy.CATEGORY_MAP
 
     # =====================================================
     # PUBLIC
@@ -249,7 +87,6 @@ class TechnicalQuestionFilter:
 
             if not is_match:
                 continue
-
 
             matched_categories.append(category)
 
@@ -343,8 +180,8 @@ class TechnicalQuestionFilter:
     def _category_matches(
         self,
         normalized_text: str,
-        strong_terms: set[str],
-        weak_terms: set[str],
+        strong_terms: frozenset[str] | set[str],
+        weak_terms: frozenset[str] | set[str],
     ) -> tuple[bool, list[str], list[str]]:
 
         strong_matches = [

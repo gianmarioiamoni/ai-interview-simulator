@@ -127,7 +127,7 @@ class InterviewEvaluationService:
                 k: round(min(1.0, v), 2) for k, v in dimension_signals.items()
             }
 
-            print("FINAL DIMENSION SIGNALS:", dimension_signals)
+            logger.debug("dimension_signals: %s", dimension_signals)
 
         except Exception as e:
             logger.warning(f"signal_extraction_failed: {e}")

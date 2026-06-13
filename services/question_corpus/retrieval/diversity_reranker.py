@@ -3,6 +3,10 @@
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
 from infrastructure.embeddings.embedding_similarity_engine import EmbeddingSimilarityEngine
 
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class DiversityReranker:
 
@@ -41,16 +45,10 @@ class DiversityReranker:
 
                 diversity_score = candidate.final_score - redundancy_penalty
 
-                print(
-                    candidate.document.metadata.get(
-                        "document_id",
-                        "unknown",
-                    ),
-                    "penalty:",
-                    round(
-                        redundancy_penalty,
-                        3,
-                    ),
+                logger.debug(
+                    "diversity_rerank: doc=%s penalty=%.3f",
+                    candidate.document.metadata.get("document_id", "unknown"),
+                    redundancy_penalty,
                 )
 
                 if diversity_score > best_score:
@@ -108,7 +106,7 @@ class DiversityReranker:
                 similarity,
             )
 
-            print(f"SIMILARITY: {round(similarity, 4)}")
+            logger.debug("similarity: %.4f", similarity)
 
         if not similarities:
             return 0.0

@@ -11,6 +11,10 @@ from infrastructure.llm.metrics.interview_metrics_collector import (
 )
 from infrastructure.llm.observability.observing_llm_adapter import ObservingLLMAdapter
 
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 _graph = None
 _llm = None
@@ -51,8 +55,7 @@ def get_runtime_graph(llm=None, hint_service=None):
     if _graph is None:
 
         llm = llm or get_runtime_llm()
-        print("LLM TYPE:", type(llm))
-        print("LLM HAS invoke_json:", hasattr(llm, "invoke_json"))
+        logger.debug("llm type=%s has_invoke_json=%s", type(llm).__name__, hasattr(llm, "invoke_json"))
 
         hint_service = hint_service or AIHintService(llm)
 

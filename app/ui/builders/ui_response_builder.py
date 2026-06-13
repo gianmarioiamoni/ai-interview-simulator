@@ -28,9 +28,6 @@ class UIResponseBuilder:
 
         ui_state = UIStateMachine.resolve(state)
 
-        print(f"[DEBUG UI STATE] {ui_state}")
-        print(f"[DEBUG FEEDBACK BUNDLE] {state.last_feedback_bundle is not None}")
-
         # ---------------------------------------------------------
         if ui_state == UIState.SETUP:
             return self._build_setup(state)

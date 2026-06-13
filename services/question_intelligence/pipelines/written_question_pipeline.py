@@ -63,6 +63,10 @@ from services.question_corpus.retrieval.interview_memory_updater import (
     InterviewMemoryUpdater,
 )
 
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.settings.constants import (
     QUESTIONS_PER_AREA,
 )

@@ -33,5 +33,4 @@ class ExecutiveSummaryGenerator:
             )
         except Exception as e:
             logger.exception("executive_summary_generation_failed")
-            print("ERROR:", e)
             return None
