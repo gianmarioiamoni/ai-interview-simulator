@@ -13,6 +13,9 @@ from services.question_intelligence.equivalence_band_scoring import (
     historical_usage_ids,
     score_floor,
 )
+from services.question_intelligence.cross_interview_pick_tracker import (
+    CrossInterviewPickTracker,
+)
 from services.question_intelligence.fresh_start_selection_strategy import (
     FreshStartSelectionStrategy,
     CANONICAL_FRESH_START_AREAS,
@@ -34,12 +37,16 @@ FRESH_START_MAX_TARGET_DISTANCE = 1
 
 KNOWLEDGE_FRESH_START_AREA = "technical_technical_knowledge"
 
-_CROSS_INTERVIEW_PICK_COUNTS: dict[str, int] = {}
+# Module-level tracker instance — owns the cross-interview pick counts.
+_TRACKER = CrossInterviewPickTracker()
+
+# Compatibility alias: tests that imported _CROSS_INTERVIEW_PICK_COUNTS directly
+# continue to work because this name points at the tracker's live internal dict.
+_CROSS_INTERVIEW_PICK_COUNTS: dict[str, int] = _TRACKER.counts
 
 
 def reset_cross_interview_pick_counts() -> None:
-
-    _CROSS_INTERVIEW_PICK_COUNTS.clear()
+    _TRACKER.reset()
 
 
 class ConstrainedEquivalenceBand:
@@ -69,7 +76,7 @@ class ConstrainedEquivalenceBand:
             variety_scorer=self._variety_scorer,
             topic_extractor=self._topic_extractor,
             max_allowed_jump=self._max_allowed_jump,
-            cross_interview_pick_counts=_CROSS_INTERVIEW_PICK_COUNTS,
+            tracker=_TRACKER,
         )
 
     def is_eligible(self, target_area: str) -> bool:
