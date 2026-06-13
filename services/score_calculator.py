@@ -1,6 +1,14 @@
 # services/score_calculator.py
 
 from domain.contracts.feedback.quality import Quality
+from infrastructure.config.evaluation import (
+    CODING_QUALITY_CORRECT_THRESHOLD,
+    CODING_QUALITY_PARTIAL_THRESHOLD,
+    EXECUTION_SLOW_MS,
+    EXECUTION_FAST_MS,
+    EXECUTION_SLOW_PENALTY,
+    EXECUTION_FAST_BONUS,
+)
 
 
 class ScoreCalculator:
@@ -37,12 +45,12 @@ class ScoreCalculator:
 
         if execution_time_ms is not None:
 
-            if execution_time_ms > 300:
+            if execution_time_ms > EXECUTION_SLOW_MS:
                 is_inefficient = True
-                score -= 5
+                score -= EXECUTION_SLOW_PENALTY
 
-            elif execution_time_ms < 50:
-                score += 2
+            elif execution_time_ms < EXECUTION_FAST_MS:
+                score += EXECUTION_FAST_BONUS
 
         # clamp
         score = max(0, min(100, score))
@@ -54,10 +62,10 @@ class ScoreCalculator:
         if score == 100:
             quality = Quality.OPTIMAL if not is_inefficient else Quality.INEFFICIENT
 
-        elif score >= 80:
+        elif score >= CODING_QUALITY_CORRECT_THRESHOLD:
             quality = Quality.CORRECT
 
-        elif score >= 50:
+        elif score >= CODING_QUALITY_PARTIAL_THRESHOLD:
             quality = Quality.PARTIAL
 
         else:

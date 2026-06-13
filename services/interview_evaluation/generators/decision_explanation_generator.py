@@ -3,6 +3,20 @@
 from typing import Dict, List, Any
 
 from app.core.logger import get_logger
+from infrastructure.config.evaluation import (
+    NARRATIVE_DRIVER_SIGNAL_THRESHOLD,
+    NARRATIVE_DRIVER_SCORE_THRESHOLD,
+    NARRATIVE_BLOCKER_SCORE_THRESHOLD,
+    NARRATIVE_BLOCKER_SIGNAL_THRESHOLD,
+    NARRATIVE_BLOCKER_SIGNAL_SCORE_THRESHOLD,
+    NARRATIVE_CAUSAL_SIGNAL_STRONG,
+    NARRATIVE_CAUSAL_SIGNAL_SUPPORTED,
+    NARRATIVE_CAUSAL_SIGNAL_PARTIAL,
+    NARRATIVE_CAUSAL_SCORE_WEAK,
+    NARRATIVE_CAUSAL_SCORE_GAPS,
+    NARRATIVE_WEAKEST_BLOCKER_MILD,
+    NARRATIVE_WEAKEST_BLOCKER_MODERATE,
+)
 
 logger = get_logger(__name__)
 
@@ -66,9 +80,9 @@ class DecisionExplanationGenerator:
             weakest = weakest_dim.get("name", "Unknown")
             weakest_score = weakest_dim.get("score", 0)
 
-            if weakest_score >= 85:
+            if weakest_score >= NARRATIVE_WEAKEST_BLOCKER_MILD:
                 blocker = f"Area for improvement in {weakest}"
-            elif weakest_score >= 75:
+            elif weakest_score >= NARRATIVE_WEAKEST_BLOCKER_MODERATE:
                 blocker = f"Moderate improvement needed in {weakest}"
             else:
                 blocker = f"Weak performance in {weakest}"
@@ -125,14 +139,14 @@ class DecisionExplanationGenerator:
                 signal_strength = normalized_signals.get(dim_key)
 
                 # DRIVER enrichment (solo per top performance reale)
-                if signal_strength and signal_strength >= 0.8 and dim_score >= 85:
+                if signal_strength and signal_strength >= NARRATIVE_DRIVER_SIGNAL_THRESHOLD and dim_score >= NARRATIVE_DRIVER_SCORE_THRESHOLD:
                     enriched_drivers.append(
                         f"Consistent strong execution in {dim_name}"
                     )
 
                 # BLOCKER enrichment (più restrittivo)
-                if dim_score < 75 or (
-                    signal_strength and signal_strength >= 0.7 and dim_score < 80
+                if dim_score < NARRATIVE_BLOCKER_SCORE_THRESHOLD or (
+                    signal_strength and signal_strength >= NARRATIVE_BLOCKER_SIGNAL_THRESHOLD and dim_score < NARRATIVE_BLOCKER_SIGNAL_SCORE_THRESHOLD
                 ):
 
                     explanation = self._build_causal_explanation(
@@ -223,18 +237,18 @@ class DecisionExplanationGenerator:
         else:
             base_cause = "inconsistent performance"
 
-        if signal_strength and signal_strength >= 0.8:
+        if signal_strength and signal_strength >= NARRATIVE_CAUSAL_SIGNAL_STRONG:
             evidence = "strongly reinforced by execution failures"
-        elif signal_strength and signal_strength >= 0.5:
+        elif signal_strength and signal_strength >= NARRATIVE_CAUSAL_SIGNAL_SUPPORTED:
             evidence = "supported by execution inconsistencies"
-        elif signal_strength and signal_strength >= 0.3:
+        elif signal_strength and signal_strength >= NARRATIVE_CAUSAL_SIGNAL_PARTIAL:
             evidence = "partially reflected in execution signals"
         else:
             evidence = None
 
-        if dim_score < 70:
+        if dim_score < NARRATIVE_CAUSAL_SCORE_WEAK:
             sentence = f"{dim_name} is weak due to {base_cause}"
-        elif dim_score < 80:
+        elif dim_score < NARRATIVE_CAUSAL_SCORE_GAPS:
             sentence = f"{dim_name} shows gaps due to {base_cause}"
         else:
             sentence = (

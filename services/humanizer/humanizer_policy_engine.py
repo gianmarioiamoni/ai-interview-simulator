@@ -3,13 +3,14 @@
 from app.settings.constants import MAX_FOLLOW_UPS_PER_INTERVIEW
 from services.humanizer.contracts.humanizer_input import HumanizerInput
 from services.humanizer.contracts.humanizer_decision import HumanizerDecision
+from infrastructure.config.evaluation import FOLLOW_UP_SCORE_THRESHOLD
 
 
 class HumanizerPolicyEngine:
 
     MAX_FOLLOW_UPS = MAX_FOLLOW_UPS_PER_INTERVIEW
 
-    FOLLOW_UP_THRESHOLD = 5
+    FOLLOW_UP_THRESHOLD = FOLLOW_UP_SCORE_THRESHOLD
 
     # =====================================================
     # PUBLIC

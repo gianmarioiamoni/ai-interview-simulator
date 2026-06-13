@@ -1,6 +1,13 @@
 # services/interview_evaluation/builders/narrative_control_builder.py
 
 from typing import List, Dict
+from infrastructure.config.evaluation import (
+    NARRATIVE_BALANCE_BALANCED_SPREAD,
+    NARRATIVE_BALANCE_SLIGHTLY_UNEVEN_SPREAD,
+    NARRATIVE_EXCELLENT_THRESHOLD,
+    NARRATIVE_STRONG_THRESHOLD,
+    NARRATIVE_MODERATE_THRESHOLD,
+)
 
 
 class NarrativeControlBuilder:
@@ -31,19 +38,19 @@ class NarrativeControlBuilder:
 
         spread = strongest["score"] - weakest["score"]
 
-        if spread < 15:
+        if spread < NARRATIVE_BALANCE_BALANCED_SPREAD:
             balance_flag = "BALANCED"
-        elif spread < 25:
+        elif spread < NARRATIVE_BALANCE_SLIGHTLY_UNEVEN_SPREAD:
             balance_flag = "SLIGHTLY_UNEVEN"
         else:
             balance_flag = "UNBALANCED"
 
         def classify(score: float) -> str:
-            if score >= 90:
+            if score >= NARRATIVE_EXCELLENT_THRESHOLD:
                 return "excellent"
-            elif score >= 80:
+            elif score >= NARRATIVE_STRONG_THRESHOLD:
                 return "strong"
-            elif score >= 70:
+            elif score >= NARRATIVE_MODERATE_THRESHOLD:
                 return "moderate"
             else:
                 return "weak"

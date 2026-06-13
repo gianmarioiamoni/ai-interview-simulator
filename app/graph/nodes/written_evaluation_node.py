@@ -8,6 +8,7 @@ from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.feedback.evaluation_decision import EvaluationDecision
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import WRITTEN_EVALUATION
+from infrastructure.config.evaluation import WRITTEN_PASS_THRESHOLD
 
 
 class WrittenEvaluationNode:
@@ -40,7 +41,7 @@ class WrittenEvaluationNode:
                 question_id=question.id,
                 score=decision.score,
                 max_score=100,
-                passed=decision.score >= 60,
+                passed=decision.score >= WRITTEN_PASS_THRESHOLD,
                 feedback=decision.feedback,
                 strengths=list(getattr(decision, "strengths", []) or []),
                 weaknesses=list(getattr(decision, "weaknesses", []) or []),

@@ -1,5 +1,10 @@
 # app/ui/views/report/components/tables.py
 
+from infrastructure.config.evaluation import (
+    REPORT_DIMENSION_STRONG_THRESHOLD,
+    REPORT_DIMENSION_MODERATE_THRESHOLD,
+)
+
 
 def contribution_table(dimensions):
 
@@ -14,8 +19,8 @@ def contribution_table(dimensions):
             if d.score is None
             else (
                 "🟢 Strong"
-                if d.score >= 80
-                else "🟡 Medium" if d.score >= 60 else "🔴 Weak"
+                if d.score >= REPORT_DIMENSION_STRONG_THRESHOLD
+                else "🟡 Medium" if d.score >= REPORT_DIMENSION_MODERATE_THRESHOLD else "🔴 Weak"
             )
         )
 

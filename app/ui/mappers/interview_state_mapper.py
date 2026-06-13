@@ -6,6 +6,7 @@ from app.ui.dto.interview_session_dto import InterviewSessionDTO
 from app.ui.dto.question_dto import QuestionDTO
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.mappers.interview_area_mapper import InterviewAreaMapper
+from infrastructure.config.evaluation import WRITTEN_PASS_THRESHOLD
 
 
 class InterviewStateMapper:
@@ -76,7 +77,7 @@ class InterviewStateMapper:
 
         for q in question_assessments:
 
-            if q.score < 60:
+            if q.score < WRITTEN_PASS_THRESHOLD:
 
                 improvements.append(
                     f"Improve performance on question {q.question_id} (score {q.score:.1f}/100)."

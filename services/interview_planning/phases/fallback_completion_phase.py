@@ -14,8 +14,6 @@ logger = get_logger(__name__)
 
 class FallbackCompletionPhase:
 
-    MINIMUM_CANDIDATE_SCORE = 0.0
-
     # =====================================================
     # CONSTRUCTOR
     # =====================================================
@@ -94,18 +92,6 @@ class FallbackCompletionPhase:
 
             if len(selected) >= constraints.minimum_total_questions:
                 break
-
-            # -------------------------------------------------
-            # QUALITY THRESHOLD
-            # -------------------------------------------------
-
-            if score < self.MINIMUM_CANDIDATE_SCORE:
-
-                logger.info(f"Rejected low-quality candidate: " f"{item.text}")
-
-                logger.info(f"Score: {score}")
-
-                continue
 
             logger.info(f"Selected fallback candidate: " f"{item.text}")
 

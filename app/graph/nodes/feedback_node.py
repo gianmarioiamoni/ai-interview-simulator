@@ -10,6 +10,10 @@ from services.feedback.dimension_aggregator import FeedbackDimensionAggregator
 from app.ui.presenters.feedback.feedback_builder import FeedbackBuilder
 from app.ui.constants.loader_steps import LoaderStep
 from app.ports.llm_port import LLMPort
+from infrastructure.config.evaluation import (
+    WRITTEN_QUALITY_CORRECT_THRESHOLD,
+    WRITTEN_QUALITY_PARTIAL_THRESHOLD,
+)
 
 
 class FeedbackNode:
@@ -53,9 +57,9 @@ class FeedbackNode:
         elif evaluation:
             score = evaluation.score or 0.0
 
-            if score >= 75:
+            if score >= WRITTEN_QUALITY_CORRECT_THRESHOLD:
                 quality = Quality.CORRECT
-            elif score >= 50:
+            elif score >= WRITTEN_QUALITY_PARTIAL_THRESHOLD:
                 quality = Quality.PARTIAL
             else:
                 quality = Quality.INCORRECT

@@ -2,6 +2,13 @@
 
 from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
 from services.question_corpus.contracts.interview_retrieval_memory import InterviewRetrievalMemory
+from infrastructure.config.evaluation import (
+    ADAPTIVE_DIFFICULTY_HIGH,
+    ADAPTIVE_DIFFICULTY_HIGH_SCORE,
+    ADAPTIVE_DIFFICULTY_MEDIUM,
+    ADAPTIVE_DIFFICULTY_MEDIUM_SCORE,
+    ADAPTIVE_DIFFICULTY_BASE,
+)
 
 
 
@@ -47,10 +54,10 @@ class AdaptiveContextBuilder:
         memory: InterviewRetrievalMemory,
     ) -> int:
 
-        if memory.average_score >= 0.85:
-            return 5
+        if memory.average_score >= ADAPTIVE_DIFFICULTY_HIGH_SCORE:
+            return ADAPTIVE_DIFFICULTY_HIGH
 
-        if memory.average_score >= 0.70:
-            return 4
+        if memory.average_score >= ADAPTIVE_DIFFICULTY_MEDIUM_SCORE:
+            return ADAPTIVE_DIFFICULTY_MEDIUM
 
-        return 3
+        return ADAPTIVE_DIFFICULTY_BASE
