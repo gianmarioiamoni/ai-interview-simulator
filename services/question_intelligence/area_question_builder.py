@@ -134,6 +134,7 @@ class AreaQuestionBuilder:
                 interview_type=interview_type,
                 area=area,
                 questions_per_area=questions_per_area,
+                corpus_quota=corpus_quota,
                 memory=session_memory,
             )
 
