@@ -18,6 +18,8 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from app.ports.llm_port import LLMPort
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 
@@ -282,45 +284,20 @@ class SQLQuestionGenerator:
         if theme_guidance:
             theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
-        return f"""
-You are a senior SQL interviewer.
+        template = PromptLoader.load("generation/sql_question_generation.txt")
 
-Database schema:
-
-{schema_summary}
-
-Generate {n} SQL interview questions for a {level} {role}.
-{theme_block}
-
-Each question MUST include:
-
-1. A clear and unambiguous problem description
-2. A correct reference SQL query
-3. At least 2 test cases (query variations)
-
-{self._json_output_contract()}
-
-Rules:
-- Use ONLY tables and columns listed in the schema above — NEVER invent column names
-- The column for an employee's name is "name" (in the employees table), NOT "employee_name"
-- Use SQLite-compatible SQL
-- Queries MUST be executable against the schema above
-- Avoid ambiguous wording
-- Do NOT generate schema or data
-- No markdown
-- Only valid JSON
-
-{_SANDBOX_EXECUTION_RULES}
-
-Test cases:
-- Must represent equivalent queries
-- Must return the SAME result as reference
-- Allowed variations:
-  - JOIN syntax
-  - aliases
-  - ordering
-
-"""
+        return PromptRenderer.render(
+            template,
+            {
+                "n": n,
+                "level": level,
+                "role": role,
+                "schema_summary": schema_summary,
+                "theme_block": theme_block,
+                "json_output_contract": self._json_output_contract(),
+                "sandbox_execution_rules": _SANDBOX_EXECUTION_RULES,
+            },
+        )
 
     def _build_enrichment_prompt(
         self,
@@ -336,45 +313,20 @@ Test cases:
         if theme_guidance:
             theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
-        return f"""
-You are a senior SQL interviewer.
+        template = PromptLoader.load("generation/sql_question_enrichment.txt")
 
-Database schema:
-
-{schema_summary}
-
-Reframe the following interview question into ONE executable SQLite problem
-for a {level} {role} candidate.
-{theme_block}
-
-Seed question (conceptual — adapt to the schema above):
-{seed_prompt}
-
-Each output item MUST include:
-
-1. A clear and unambiguous problem description (rewritten for this schema only)
-2. A correct reference SQL query runnable on the schema
-3. At least 2 test cases (query variations)
-
-{self._json_output_contract()}
-
-Rules:
-- Queries MUST be executable on the provided schema and seed data
-- Use ONLY columns listed in the schema — NEVER invent column names
-- The column for an employee's name is "name" (in the employees table), NOT "employee_name"
-- Do NOT generate schema or data
-- No markdown
-- Only valid JSON
-- Return exactly 1 question in the array
-
-{_SANDBOX_EXECUTION_RULES}
-
-Test cases:
-- Must represent equivalent queries
-- Must return the SAME result as reference
-- Allowed variations: JOIN syntax, aliases, ordering
-
-"""
+        return PromptRenderer.render(
+            template,
+            {
+                "seed_prompt": seed_prompt,
+                "level": level,
+                "role": role,
+                "schema_summary": schema_summary,
+                "theme_block": theme_block,
+                "json_output_contract": self._json_output_contract(),
+                "sandbox_execution_rules": _SANDBOX_EXECUTION_RULES,
+            },
+        )
 
     def _json_output_contract(self) -> str:
 

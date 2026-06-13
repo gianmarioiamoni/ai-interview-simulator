@@ -7,6 +7,8 @@ from openai import OpenAI
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -32,6 +34,7 @@ class QuestionEvaluationService:
     ) -> QuestionEvaluation:
 
         prompt = self._build_prompt(question, answer_text)
+        system_prompt = PromptLoader.load("evaluation/question_evaluation_system.txt")
 
         for attempt in range(MAX_RETRIES + 1):
 
@@ -40,7 +43,7 @@ class QuestionEvaluationService:
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a strict and demanding FAANG-level technical interviewer.",
+                        "content": system_prompt,
                     },
                     {"role": "user", "content": prompt},
                 ],
@@ -71,77 +74,16 @@ class QuestionEvaluationService:
 
     def _build_prompt(self, question: Question, answer_text: str) -> str:
 
-        return f"""
-You are evaluating a candidate in a real technical interview.
+        template = PromptLoader.load("evaluation/question_evaluation_user.txt")
 
-Question:
-{question.prompt}
-
-Candidate answer:
-{answer_text}
-
-Return STRICT JSON only.
-
-Format:
-
-{{
-  "question_id": "{question.id}",
-  "score": float (0-100),
-  "max_score": 100,
-  "feedback": string,
-  "strengths": list of strings,
-  "weaknesses": list of strings,
-  "passed": boolean
-}}
-
-SCORING SYSTEM (STRICT AND ENFORCED):
-
-You must evaluate like a senior interviewer in a top-tier tech company.
-
-Score ranges:
-
-- 90-100 → Exceptional (VERY RARE)
-  Deep, precise, complete, with trade-offs and real-world insight
-
-- 75-89 → Good
-  Correct and structured, but missing depth OR real-world insight
-
-- 60-74 → Average
-  Partial, generic, or somewhat superficial
-
-- 40-59 → Weak
-  Significant gaps or incomplete understanding
-
-- 0-39 → Incorrect
-  Wrong or irrelevant
-
-ENFORCED PENALTIES:
-
-- If answer is generic → MAX 75
-- If no concrete examples → MAX 80
-- If missing trade-offs → MAX 78
-- If explanation is shallow → MAX 70
-
-CRITICAL CONSTRAINTS:
-
-- Most answers should fall between 60 and 80
-- Scores above 85 must be rare
-- If the answer has any meaningful weakness → score MUST be below 85
-- Scores ≥90 ONLY if the answer is complete, deep, and has no meaningful gaps
-- If you mention missing depth → score MUST be ≤ 80
-
-CONSISTENCY RULE:
-
-- The score MUST match the weaknesses
-- If weaknesses are present → score MUST reflect them clearly
-
-STRICT RULES:
-
-- score must be between 0 and 100
-- max_score must be 100
-- no extra fields
-- no explanations outside JSON
-"""
+        return PromptRenderer.render(
+            template,
+            {
+                "question_id": question.id,
+                "question_prompt": question.prompt,
+                "answer_text": answer_text,
+            },
+        )
 
     # ---------------------------------------------------------
 

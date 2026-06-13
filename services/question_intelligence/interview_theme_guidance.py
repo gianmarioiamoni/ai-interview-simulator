@@ -1,6 +1,8 @@
 # services/question_intelligence/interview_theme_guidance.py
 
 from domain.contracts.interview.interview_area import InterviewArea
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 
 
 def build_theme_guidance(
@@ -36,8 +38,12 @@ def build_theme_guidance(
         f"Prefer questions that naturally relate to {readable_theme}.",
     )
 
-    return (
-        f"Interview theme anchor: {readable_theme}. "
-        f"{focus} "
-        "Use the theme as soft guidance only; prefer natural, high-quality questions."
+    template = PromptLoader.load("orchestration/theme_guidance.txt")
+
+    return PromptRenderer.render(
+        template,
+        {
+            "readable_theme": readable_theme,
+            "focus": focus,
+        },
     )

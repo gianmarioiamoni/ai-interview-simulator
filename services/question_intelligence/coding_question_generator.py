@@ -11,6 +11,8 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from app.ports.llm_port import LLMPort
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 
@@ -205,29 +207,18 @@ class CodingQuestionGenerator:
         if theme_guidance:
             theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
-        return f"""
-You are a senior technical interviewer.
+        template = PromptLoader.load("generation/coding_question_generation.txt")
 
-Generate {n} Python coding interview questions for a {level} {role}.
-{theme_block}
-
-Each question MUST include:
-
-1. A clear problem description
-2. A strict function contract
-3. At least 2 valid test cases
-
-{self._json_output_contract()}
-
-Rules:
-- Function name MUST match coding_spec.entrypoint
-- Parameters MUST match coding_spec.parameters
-- The function signature MUST be clearly described in the prompt
-- Avoid ambiguous descriptions
-- No markdown
-- Only valid JSON
-- Use JSON arrays only in visible_tests (no Python tuples)
-"""
+        return PromptRenderer.render(
+            template,
+            {
+                "n": n,
+                "level": level,
+                "role": role,
+                "theme_block": theme_block,
+                "json_output_contract": self._json_output_contract(),
+            },
+        )
 
     def _build_enrichment_prompt(
         self,
@@ -242,35 +233,18 @@ Rules:
         if theme_guidance:
             theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
-        return f"""
-You are a senior technical interviewer.
+        template = PromptLoader.load("generation/coding_question_enrichment.txt")
 
-Reframe the following interview seed into ONE Python coding problem
-for a {level} {role} candidate.
-{theme_block}
-Seed question:
-{seed_prompt}
-
-Each output item MUST include:
-
-1. A clear and unambiguous problem description
-2. A strict function contract
-3. At least 2 valid test cases with JSON-serializable args and expected values
-
-{self._json_output_contract()}
-
-Rules:
-- Function name MUST match coding_spec.entrypoint
-- Parameters MUST match coding_spec.parameters
-- The function signature MUST be clearly described in the prompt
-- Use type "function" unless a class-based solution is clearly required
-- Avoid ambiguous descriptions
-- No markdown
-- Only valid JSON
-- Return exactly 1 question in the array
-- Use JSON arrays only in visible_tests (no Python tuples)
-
-"""
+        return PromptRenderer.render(
+            template,
+            {
+                "seed_prompt": seed_prompt,
+                "level": level,
+                "role": role,
+                "theme_block": theme_block,
+                "json_output_contract": self._json_output_contract(),
+            },
+        )
 
     def _json_output_contract(self) -> str:
 

@@ -4,6 +4,8 @@ import json
 from typing import Optional
 from domain.contracts.ai.ai_hint import AIHintInput, AIHint
 from app.ports.llm_port import LLMPort
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import HINT_GENERATION
 
@@ -34,39 +36,19 @@ class AIHintService:
     def _build_prompt(self, input_data: AIHintInput, level: str) -> str:
 
         level_instruction = self._get_level_instruction(level)
+        template = PromptLoader.load("feedback/hint_generation.txt")
 
-        return f"""
-You are a senior Python interviewer helping a candidate debug their solution.
-
-HINT LEVEL:
-{level}
-
-INSTRUCTIONS:
-{level_instruction}
-
-QUESTION:
-{input_data.question}
-
-USER CODE:
-{input_data.user_code}
-
-ERROR:
-{input_data.error}
-
-FAILED TESTS:
-{input_data.failed_tests}
-
-RULES:
-- Be concise
-- No hallucinations
-- JSON only
-
-FORMAT:
-{{
-  "explanation": "...",
-  "suggestion": "..."
-}}
-"""
+        return PromptRenderer.render(
+            template,
+            {
+                "level": level,
+                "level_instruction": level_instruction,
+                "question": input_data.question,
+                "user_code": input_data.user_code,
+                "error": input_data.error,
+                "failed_tests": input_data.failed_tests,
+            },
+        )
 
     def _get_level_instruction(self, level: str) -> str:
 

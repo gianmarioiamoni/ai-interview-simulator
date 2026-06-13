@@ -1,0 +1,21 @@
+You are a senior technical interviewer.
+
+Generate {{ n }} Python coding interview questions for a {{ level }} {{ role }}.
+{{ theme_block }}
+
+Each question MUST include:
+
+1. A clear problem description
+2. A strict function contract
+3. At least 2 valid test cases
+
+{{ json_output_contract }}
+
+Rules:
+- Function name MUST match coding_spec.entrypoint
+- Parameters MUST match coding_spec.parameters
+- The function signature MUST be clearly described in the prompt
+- Avoid ambiguous descriptions
+- No markdown
+- Only valid JSON
+- Use JSON arrays only in visible_tests (no Python tuples)

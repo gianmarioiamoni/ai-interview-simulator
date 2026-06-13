@@ -3,6 +3,8 @@
 from typing import Optional
 
 from app.ports.llm_port import LLMPort
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import TESTCASE_EXPLANATION
 
@@ -38,27 +40,13 @@ class TestCaseExplanationService:
 
     def _build_prompt(self, input_data, expected, actual) -> str:
 
-        return f"""
-You are a senior Python engineer helping debug a coding problem.
+        template = PromptLoader.load("feedback/test_case_explanation.txt")
 
-INPUT:
-{input_data}
-
-EXPECTED OUTPUT:
-{expected}
-
-ACTUAL OUTPUT:
-{actual}
-
-TASK:
-Explain the most likely cause of the incorrect result.
-
-RULES:
-- One short sentence
-- No code
-- No generic advice
-- Be specific
-
-OUTPUT:
-A single sentence explanation.
-"""
+        return PromptRenderer.render(
+            template,
+            {
+                "input_data": input_data,
+                "expected": expected,
+                "actual": actual,
+            },
+        )

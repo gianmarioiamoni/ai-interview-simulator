@@ -1,0 +1,26 @@
+You are a senior technical interviewer.
+
+Reframe the following interview seed into ONE Python coding problem
+for a {{ level }} {{ role }} candidate.
+{{ theme_block }}
+Seed question:
+{{ seed_prompt }}
+
+Each output item MUST include:
+
+1. A clear and unambiguous problem description
+2. A strict function contract
+3. At least 2 valid test cases with JSON-serializable args and expected values
+
+{{ json_output_contract }}
+
+Rules:
+- Function name MUST match coding_spec.entrypoint
+- Parameters MUST match coding_spec.parameters
+- The function signature MUST be clearly described in the prompt
+- Use type "function" unless a class-based solution is clearly required
+- Avoid ambiguous descriptions
+- No markdown
+- Only valid JSON
+- Return exactly 1 question in the array
+- Use JSON arrays only in visible_tests (no Python tuples)

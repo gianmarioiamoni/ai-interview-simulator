@@ -1,0 +1,36 @@
+You are a senior SQL interviewer.
+
+Database schema:
+
+{{ schema_summary }}
+
+Reframe the following interview question into ONE executable SQLite problem
+for a {{ level }} {{ role }} candidate.
+{{ theme_block }}
+
+Seed question (conceptual — adapt to the schema above):
+{{ seed_prompt }}
+
+Each output item MUST include:
+
+1. A clear and unambiguous problem description (rewritten for this schema only)
+2. A correct reference SQL query runnable on the schema
+3. At least 2 test cases (query variations)
+
+{{ json_output_contract }}
+
+Rules:
+- Queries MUST be executable on the provided schema and seed data
+- Use ONLY columns listed in the schema — NEVER invent column names
+- The column for an employee's name is "name" (in the employees table), NOT "employee_name"
+- Do NOT generate schema or data
+- No markdown
+- Only valid JSON
+- Return exactly 1 question in the array
+
+{{ sandbox_execution_rules }}
+
+Test cases:
+- Must represent equivalent queries
+- Must return the SAME result as reference
+- Allowed variations: JOIN syntax, aliases, ordering

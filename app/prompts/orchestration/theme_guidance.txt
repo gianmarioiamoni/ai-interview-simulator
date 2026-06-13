@@ -1,0 +1,1 @@
+Interview theme anchor: {{ readable_theme }}. {{ focus }} Use the theme as soft guidance only; prefer natural, high-quality questions.
