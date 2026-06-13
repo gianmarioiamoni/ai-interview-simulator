@@ -35,6 +35,7 @@ from services.interview_evaluation.generators.narrative_generator import (
 
 from services.feedback.signal_extractor import SignalExtractor
 from services.execution_analysis.execution_analyzer import ExecutionAnalyzer
+from infrastructure.config.evaluation import ENRICHMENT_ALPHA
 
 from app.core.logger import get_logger
 
@@ -136,7 +137,6 @@ class InterviewEvaluationService:
         # ENRICHMENT
         # -----------------------------------------------------
 
-        ENRICHMENT_ALPHA = 0.3
         enriched_scores = {}
 
         for dim, base_score in base_dimension_scores.items():

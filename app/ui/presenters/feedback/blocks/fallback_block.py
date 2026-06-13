@@ -7,6 +7,7 @@ from app.contracts.feedback_bundle import (
     FeedbackSignal,
     LearningSuggestion,
 )
+from infrastructure.config.evaluation import FEEDBACK_CONFIDENCE_FALLBACK
 
 
 class FallbackBlock:
@@ -61,7 +62,7 @@ class FallbackBlock:
             title="General Feedback",
             content=content,
             severity=Severity.INFO,
-            confidence=0.4,
+            confidence=FEEDBACK_CONFIDENCE_FALLBACK,
             signals=signals,
             learning=learning,
             quality=None,

@@ -15,6 +15,11 @@ from domain.contracts.feedback.decision_explanation_schema import (
 )
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import NARRATIVE_GENERATION
+from infrastructure.config.evaluation import (
+    NARRATIVE_FALLBACK_DRIVER_STRONG,
+    NARRATIVE_FALLBACK_DRIVER_SOLID,
+    NARRATIVE_FALLBACK_BLOCKER_DEVELOPMENT,
+)
 
 from app.core.logger import get_logger
 
@@ -208,11 +213,11 @@ class NarrativeService:
             except Exception:
                 continue
 
-            if score >= 90:
+            if score >= NARRATIVE_FALLBACK_DRIVER_STRONG:
                 drivers.append(f"Strong capability in {name}")
-            elif score >= 80:
+            elif score >= NARRATIVE_FALLBACK_DRIVER_SOLID:
                 drivers.append(f"{name} is solid but not a differentiating strength")
-            elif score >= 70:
+            elif score >= NARRATIVE_FALLBACK_BLOCKER_DEVELOPMENT:
                 blockers.append(f"{name} requires further development")
             else:
                 blockers.append(f"Weak performance in {name}")

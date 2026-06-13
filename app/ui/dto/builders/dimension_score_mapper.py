@@ -2,6 +2,10 @@
 
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
 from typing import List, Dict
+from infrastructure.config.evaluation import (
+    REPORT_DIMENSION_STRONG_THRESHOLD,
+    REPORT_DIMENSION_MODERATE_THRESHOLD,
+)
 
 
 class DimensionScoreMapper:
@@ -47,9 +51,9 @@ class DimensionScoreMapper:
             # STATUS
             # -----------------------------------------
 
-            if score >= 85:
+            if score >= REPORT_DIMENSION_STRONG_THRESHOLD:
                 status = "strong"
-            elif score >= 70:
+            elif score >= REPORT_DIMENSION_MODERATE_THRESHOLD:
                 status = "moderate"
             else:
                 status = "weak"

@@ -18,9 +18,6 @@ from services.question_intelligence.session_variety_memory import (
 
 class AdaptiveInterviewMemoryBridge:
 
-    _WEAK_THRESHOLD = 0.6
-    _STRONG_THRESHOLD = 0.85
-
     def __init__(
         self,
         memory_updater: InterviewMemoryUpdater | None = None,

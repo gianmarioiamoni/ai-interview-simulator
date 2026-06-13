@@ -12,6 +12,18 @@ from domain.contracts.shared.performance_dimension_type import (
 
 from services.feedback.dimension_mapper import FeedbackDimensionMapper
 from services.execution_analysis.execution_analyzer import ExecutionAnalysis
+from infrastructure.config.evaluation import (
+    SIGNAL_PRIMARY_ERROR_WEIGHT,
+    SIGNAL_FAILED_TEST_PS_WEIGHT,
+    SIGNAL_TEST_ERROR_TD_WEIGHT,
+    SIGNAL_FAILURE_RATIO_PS_WEIGHT,
+    SIGNAL_PERFECT_PS_WEIGHT,
+    SIGNAL_PERFECT_TD_WEIGHT,
+    SIGNAL_PASS_RATE_PS_WEIGHT,
+    SIGNAL_PASS_RATE_THRESHOLD,
+    SIGNAL_SLOW_EXEC_SD_WEIGHT,
+    SIGNAL_SLOW_EXEC_MS,
+)
 
 
 class SignalExtractor:
@@ -35,7 +47,7 @@ class SignalExtractor:
         mapped_dimension = FeedbackDimensionMapper.map(error_type, execution)
 
         if mapped_dimension:
-            signals[mapped_dimension.value] += 0.6
+            signals[mapped_dimension.value] += SIGNAL_PRIMARY_ERROR_WEIGHT
 
         # -----------------------------------------------------
         # 2. TEST-LEVEL NEGATIVE SIGNALS
@@ -48,10 +60,10 @@ class SignalExtractor:
 
             if t.status == TestStatus.FAILED:
                 failed += 1
-                signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += 0.2
+                signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += SIGNAL_FAILED_TEST_PS_WEIGHT
 
             elif t.status == TestStatus.ERROR:
-                signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += 0.3
+                signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += SIGNAL_TEST_ERROR_TD_WEIGHT
 
         # -----------------------------------------------------
         # 3. FAILURE RATIO
@@ -60,26 +72,26 @@ class SignalExtractor:
         if total > 0:
             failure_ratio = failed / total
             signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += (
-                failure_ratio * 0.4
+                failure_ratio * SIGNAL_FAILURE_RATIO_PS_WEIGHT
             )
 
         # -----------------------------------------------------
-        # 4. POSITIVE SIGNALS (🔥 CRITICAL FIX)
+        # 4. POSITIVE SIGNALS
         # -----------------------------------------------------
 
         if analysis.is_perfect:
-            signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += 0.6
-            signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += 0.4
+            signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += SIGNAL_PERFECT_PS_WEIGHT
+            signals[PerformanceDimensionType.TECHNICAL_DEPTH.value] += SIGNAL_PERFECT_TD_WEIGHT
 
-        elif analysis.pass_rate > 0.7:
-            signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += 0.4
+        elif analysis.pass_rate > SIGNAL_PASS_RATE_THRESHOLD:
+            signals[PerformanceDimensionType.PROBLEM_SOLVING.value] += SIGNAL_PASS_RATE_PS_WEIGHT
 
         # -----------------------------------------------------
         # 5. PERFORMANCE SIGNAL
         # -----------------------------------------------------
 
-        if execution.execution_time_ms and execution.execution_time_ms > 200:
-            signals[PerformanceDimensionType.SYSTEM_DESIGN.value] += 0.3
+        if execution.execution_time_ms and execution.execution_time_ms > SIGNAL_SLOW_EXEC_MS:
+            signals[PerformanceDimensionType.SYSTEM_DESIGN.value] += SIGNAL_SLOW_EXEC_SD_WEIGHT
 
         # -----------------------------------------------------
         # 6. CLAMP

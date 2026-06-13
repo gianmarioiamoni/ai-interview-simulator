@@ -4,11 +4,18 @@ from typing import List
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.interview.interview_level import InterviewLevel
-from domain.contracts.interview.hire_decision import HireDecision
 from domain.contracts.user.role import RoleType, ROLE_WEIGHTS
-
 from services.interview_scoring.scoring_result import ScoringResult
 from app.ui.presenters.helpers.dimension_ranking import DimensionRanking
+from infrastructure.config.evaluation import (
+    LEVEL_POOR_THRESHOLD,
+    LEVEL_AVERAGE_THRESHOLD,
+    LEVEL_STRONG_THRESHOLD,
+    HIRING_PROBABILITY_WEAKEST_LOW,
+    HIRING_PROBABILITY_WEAKEST_HIGH,
+    HIRING_PROBABILITY_WEAKEST_LOW_PENALTY,
+    HIRING_PROBABILITY_WEAKEST_HIGH_BONUS,
+)
 
 from .components.dimension_scorer import DimensionScorer
 from .components.gating_policy import GatingPolicy
@@ -61,18 +68,12 @@ class InterviewScoringEngine:
         confidence = self._confidence_calculator.compute(evaluations)
 
         level = self._compute_level(overall_score)
-        hire_decision = self._compute_hire_decision(
-            overall_score, 
-            gating_triggered, 
-            dimension_scores,
-        )
 
         return ScoringResult(
             dimension_scores=dimension_scores,
             weighted_breakdown=weighted_breakdown,
             overall_score=overall_score,
             level=level,
-            hire_decision=hire_decision,
             gating_triggered=gating_triggered,
             gating_reason=gating_reason,
             hiring_probability=hiring_probability,
@@ -80,60 +81,15 @@ class InterviewScoringEngine:
             confidence=confidence,
         )
 
-
-    def recompute_decision_from_scores(
-        self,
-        dimension_scores: dict,
-        overall_score: float,
-        role: RoleType,
-    ) -> HireDecision:
-
-        gating_triggered, _ = self._gating_policy.apply(
-           dimension_scores,
-           role,
-        )
-
-        return self._compute_hire_decision(
-            overall_score,
-            gating_triggered,
-            dimension_scores,
-        )
-    
     # ---------------------------------------------------------
-
-    def _compute_hire_decision(
-        self, 
-        score: float, 
-        gating_triggered: bool,
-        dimension_scores: dict):
-
-        if gating_triggered:
-            return HireDecision.NO_HIRE
-
-        weakest = min(
-            (score for score in dimension_scores.values() if score is not None),
-            default=None,
-        )
-
-        # penalty if weakest is low
-        if weakest is not None and weakest < 65:
-            return HireDecision.LEAN_NO_HIRE
-
-        if score < 55:
-            return HireDecision.NO_HIRE
-        elif score < 65:
-            return HireDecision.LEAN_NO_HIRE
-        elif score < 75:
-            return HireDecision.LEAN_HIRE
-        return HireDecision.HIRE
 
     def _compute_level(self, score: float):
 
-        if score < 50:
+        if score < LEVEL_POOR_THRESHOLD:
             return InterviewLevel.POOR
-        elif score < 65:
+        elif score < LEVEL_AVERAGE_THRESHOLD:
             return InterviewLevel.AVERAGE
-        elif score < 80:
+        elif score < LEVEL_STRONG_THRESHOLD:
             return InterviewLevel.STRONG
         return InterviewLevel.EXCELLENT
 
@@ -142,9 +98,9 @@ class InterviewScoringEngine:
         base = score
 
         if weakest is not None:
-            if weakest < 70:
-                base -= 5
-            elif weakest > 90: 
-                base += 3
+            if weakest < HIRING_PROBABILITY_WEAKEST_LOW:
+                base -= HIRING_PROBABILITY_WEAKEST_LOW_PENALTY
+            elif weakest > HIRING_PROBABILITY_WEAKEST_HIGH:
+                base += HIRING_PROBABILITY_WEAKEST_HIGH_BONUS
 
         return max(0.0, min(100.0, round(base, 1)))

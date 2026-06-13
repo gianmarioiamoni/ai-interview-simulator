@@ -6,6 +6,12 @@ from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
 )
 from domain.contracts.feedback.severity import Severity
+from infrastructure.config.evaluation import (
+    FEEDBACK_CONFIDENCE_SUCCESS,
+    FEEDBACK_CONFIDENCE_SUCCESS_PARTIAL,
+    EXECUTION_SLOW_MS,
+    EXECUTION_FAST_MS,
+)
 
 
 class SuccessBlock:
@@ -50,7 +56,7 @@ class SuccessBlock:
             )
         ]
 
-        if exec_time and exec_time > 200:
+        if exec_time and exec_time > EXECUTION_SLOW_MS:
             signals.append(
                 FeedbackSignal(
                     severity=Severity.WARNING,
@@ -62,7 +68,7 @@ class SuccessBlock:
         # Learning
         # -----------------------------------------------------
 
-        if exec_time and exec_time < 50:
+        if exec_time and exec_time < EXECUTION_FAST_MS:
             learning = [
                 LearningSuggestion(
                     topic="Advanced optimization",
@@ -70,7 +76,7 @@ class SuccessBlock:
                 )
             ]
 
-        elif exec_time and exec_time < 200:
+        elif exec_time and exec_time < EXECUTION_SLOW_MS:
             learning = [
                 LearningSuggestion(
                     topic="Performance tuning",
@@ -86,7 +92,7 @@ class SuccessBlock:
                 )
             ]
 
-        confidence = 0.95 if execution.success else 0.85
+        confidence = FEEDBACK_CONFIDENCE_SUCCESS if execution.success else FEEDBACK_CONFIDENCE_SUCCESS_PARTIAL
 
         return FeedbackBlockResult(
             title="Success",

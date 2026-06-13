@@ -11,6 +11,10 @@ from services.question_intelligence.question_difficulty_mapper import (
 from services.question_intelligence.session_variety_memory import (
     SessionVarietyMemoryHelper,
 )
+from infrastructure.config.evaluation import (
+    ADAPTIVE_WEAK_THRESHOLD,
+    ADAPTIVE_STRONG_THRESHOLD,
+)
 
 
 class InterviewMemoryUpdater:
@@ -87,12 +91,12 @@ class InterviewMemoryUpdater:
         weak_domains = list(memory.weak_domains)
         strong_domains = list(memory.strong_domains)
 
-        if evaluation_score < 0.6:
+        if evaluation_score < ADAPTIVE_WEAK_THRESHOLD:
             for domain in domains:
                 if domain not in weak_domains:
                     weak_domains.append(domain)
 
-        elif evaluation_score >= 0.85:
+        elif evaluation_score >= ADAPTIVE_STRONG_THRESHOLD:
             for domain in domains:
                 if domain not in strong_domains:
                     strong_domains.append(domain)
@@ -156,14 +160,14 @@ class InterviewMemoryUpdater:
         # PERFORMANCE ANALYSIS
         # -------------------------------------------------
 
-        if evaluation_score < 0.6:
+        if evaluation_score < ADAPTIVE_WEAK_THRESHOLD:
 
             for domain in domains:
 
                 if domain not in weak_domains:
                     weak_domains.append(domain)
 
-        elif evaluation_score >= 0.85:
+        elif evaluation_score >= ADAPTIVE_STRONG_THRESHOLD:
 
             for domain in domains:
 

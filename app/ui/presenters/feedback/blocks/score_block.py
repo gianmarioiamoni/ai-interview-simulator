@@ -2,6 +2,7 @@
 
 from app.contracts.feedback_bundle import FeedbackBlockResult
 from domain.contracts.feedback.severity import Severity
+from infrastructure.config.evaluation import FEEDBACK_CONFIDENCE_SCORE
 
 
 class ScoreBlock:
@@ -55,7 +56,7 @@ class ScoreBlock:
             title="Score",
             content=content,
             severity=Severity.INFO,
-            confidence=0.95,
+            confidence=FEEDBACK_CONFIDENCE_SCORE,
             signals=[],
             learning=[],
             quality=None,

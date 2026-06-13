@@ -3,11 +3,12 @@
 from domain.contracts.interview_state import InterviewState
 from domain.policies.decision_policy import DecisionPolicy
 from domain.contracts.shared.action_type import ActionType
+from infrastructure.config.evaluation import MAX_RETRY_ATTEMPTS
 
 
 class DecisionNode:
 
-    def __init__(self, max_attempts: int = 3):
+    def __init__(self, max_attempts: int = MAX_RETRY_ATTEMPTS):
         self.max_attempts = max_attempts
         self._policy = DecisionPolicy()
 

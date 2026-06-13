@@ -3,6 +3,7 @@
 from app.contracts.feedback_bundle import FeedbackBlockResult
 from domain.contracts.feedback.severity import Severity
 from domain.contracts.feedback.error_type import ErrorType
+from infrastructure.config.evaluation import FEEDBACK_CONFIDENCE_HINT
 
 
 class HintBlock:
@@ -46,7 +47,7 @@ class HintBlock:
             title="AI Hint",
             content=content,
             severity=Severity.INFO,
-            confidence=0.85,
+            confidence=FEEDBACK_CONFIDENCE_HINT,
             signals=[],
             learning=[],
             quality=None,

@@ -3,6 +3,10 @@
 import statistics
 from typing import List
 from domain.contracts.question.question_evaluation import QuestionEvaluation
+from infrastructure.config.evaluation import (
+    FEEDBACK_CONFIDENCE_MIN_QUESTIONS,
+    FEEDBACK_CONFIDENCE_LOW_SAMPLE,
+)
 
 
 class ConfidenceCalculator:
@@ -11,8 +15,8 @@ class ConfidenceCalculator:
 
         scores = [q.score for q in evaluations]
 
-        if len(scores) < 2:
-            return 0.7
+        if len(scores) < FEEDBACK_CONFIDENCE_MIN_QUESTIONS:
+            return FEEDBACK_CONFIDENCE_LOW_SAMPLE
 
         variance = statistics.pvariance(scores)
 

@@ -8,6 +8,11 @@ from app.contracts.feedback_bundle import (
     FeedbackSignal,
     LearningSuggestion,
 )
+from infrastructure.config.evaluation import (
+    FAILURE_PASS_RATE_MINOR,
+    FAILURE_PASS_RATE_PARTIAL,
+    FEEDBACK_CONFIDENCE_WRITTEN,
+)
 
 
 class FailureBlock:
@@ -67,9 +72,9 @@ class FailureBlock:
         # PASS RATE INTERPRETATION (NEW)
         # -----------------------------------------------------
 
-        if pass_rate >= 0.8:
+        if pass_rate >= FAILURE_PASS_RATE_MINOR:
             severity_msg = "Minor issues detected."
-        elif pass_rate >= 0.5:
+        elif pass_rate >= FAILURE_PASS_RATE_PARTIAL:
             severity_msg = "Partial correctness — several cases failing."
         else:
             severity_msg = "Fundamental issues in solution."
@@ -218,7 +223,7 @@ class FailureBlock:
             title=title,
             content=content,
             severity=Severity.ERROR,
-            confidence=0.9,
+            confidence=FEEDBACK_CONFIDENCE_WRITTEN,
             signals=signals,
             learning=learning,
             quality=None,

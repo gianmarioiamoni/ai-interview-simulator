@@ -7,6 +7,7 @@ from app.contracts.feedback_bundle import (
 )
 from domain.contracts.feedback.severity import Severity
 from domain.contracts.feedback.error_type import ErrorType
+from infrastructure.config.evaluation import FEEDBACK_CONFIDENCE_RUNTIME_ERROR
 
 
 class RuntimeErrorBlock:
@@ -83,7 +84,7 @@ class RuntimeErrorBlock:
             title=title,
             content=content,
             severity=Severity.ERROR,
-            confidence=0.95,
+            confidence=FEEDBACK_CONFIDENCE_RUNTIME_ERROR,
             signals=signals,
             learning=learning,
             quality=None,

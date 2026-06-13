@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import Dict, Optional
 
 from domain.contracts.interview.interview_level import InterviewLevel
-from domain.contracts.interview.hire_decision import HireDecision
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 
 
@@ -16,7 +15,6 @@ class ScoringResult:
     overall_score: float
 
     level: InterviewLevel
-    hire_decision: HireDecision
 
     gating_triggered: bool
     gating_reason: Optional[str]

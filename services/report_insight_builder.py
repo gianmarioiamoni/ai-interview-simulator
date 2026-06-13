@@ -3,6 +3,17 @@
 from typing import List, Dict, Optional
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
 from domain.contracts.user.role import RoleType
+from infrastructure.config.evaluation import (
+    REPORT_IMPACT_HIGH_THRESHOLD,
+    REPORT_IMPACT_MEDIUM_THRESHOLD,
+    PERCENTILE_TOP_10,
+    PERCENTILE_TOP_25,
+    PERCENTILE_ABOVE_AVG,
+    PERCENTILE_BELOW_AVG,
+    NARRATIVE_DRIVER_SIGNAL_THRESHOLD,
+    NARRATIVE_BLOCKER_SIGNAL_THRESHOLD,
+    REPORT_IMPROVEMENT_PRIORITY_THRESHOLD,
+)
 
 
 class DimensionInsight:
@@ -38,9 +49,9 @@ class ReportInsightBuilder:
 
             impact_score = score * weight * 100
 
-            if impact_score >= 60:
+            if impact_score >= REPORT_IMPACT_HIGH_THRESHOLD:
                 impact = "HIGH"
-            elif impact_score >= 30:
+            elif impact_score >= REPORT_IMPACT_MEDIUM_THRESHOLD:
                 impact = "MEDIUM"
             else:
                 impact = "LOW"
@@ -62,26 +73,26 @@ class ReportInsightBuilder:
 
     def build_percentile_segment(self, percentile: float) -> str:
 
-        if percentile >= 90:
+        if percentile >= PERCENTILE_TOP_10:
             return "Top 10%"
-        elif percentile >= 75:
+        elif percentile >= PERCENTILE_TOP_25:
             return "Top 25%"
-        elif percentile >= 50:
+        elif percentile >= PERCENTILE_ABOVE_AVG:
             return "Above Average"
-        elif percentile >= 25:
+        elif percentile >= PERCENTILE_BELOW_AVG:
             return "Below Average"
         return "Bottom 25%"
 
     def build_percentile_narrative(self, percentile: float, role: RoleType) -> str:
         role_label = self._format_role(role)
 
-        if percentile >= 90:
+        if percentile >= PERCENTILE_TOP_10:
             return f"Top-tier {role_label}s in this range typically demonstrate exceptional technical depth, strong system design skills, and consistent high-quality performance across all areas."
 
-        elif percentile >= 75:
+        elif percentile >= PERCENTILE_TOP_25:
             return f"Strong {role_label}s in this range are strong performers, typically showing solid technical expertise and problem-solving ability, with minor areas for improvement."
 
-        elif percentile >= 60:
+        elif percentile >= PERCENTILE_ABOVE_AVG:
             return f"Above-average {role_label}s demonstrate good technical foundations and problem-solving skills, though some inconsistencies or weaker areas may still be present."
 
         elif percentile >= 40:
@@ -116,7 +127,7 @@ class ReportInsightBuilder:
         # POSITIVE SIGNALS
         # -----------------------------
 
-        if ps is not None and ps >= 0.7:
+        if ps is not None and ps >= NARRATIVE_DRIVER_SIGNAL_THRESHOLD:
             insights.append(
                 {
                     "text": "Strong problem-solving ability with high correctness.",
@@ -126,7 +137,7 @@ class ReportInsightBuilder:
                 }
             )
 
-        if td is not None and td >= 0.7:
+        if td is not None and td >= NARRATIVE_DRIVER_SIGNAL_THRESHOLD:
             insights.append(
                 {
                     "text": "Solid technical implementation and code reliability.",
@@ -140,7 +151,7 @@ class ReportInsightBuilder:
         # NEGATIVE SIGNALS
         # -----------------------------
 
-        if td is not None and td < 0.4:
+        if td is not None and td < NARRATIVE_BLOCKER_SIGNAL_THRESHOLD:
             insights.append(
                 {
                     "text": "Struggles with technical implementation and runtime stability.",
@@ -150,7 +161,7 @@ class ReportInsightBuilder:
                 }
             )
 
-        if ps is not None and ps < 0.4:
+        if ps is not None and ps < NARRATIVE_BLOCKER_SIGNAL_THRESHOLD:
             insights.append(
                 {
                     "text": "Weak handling of edge cases and problem decomposition.",
@@ -160,7 +171,7 @@ class ReportInsightBuilder:
                 }
             )
 
-        if sd is not None and sd < 0.4:
+        if sd is not None and sd < NARRATIVE_BLOCKER_SIGNAL_THRESHOLD:
             insights.append(
                 {
                     "text": "Limited awareness of performance and system-level concerns.",
@@ -185,7 +196,7 @@ class ReportInsightBuilder:
             if d.score is None:
                 continue
 
-            if d.name == "Communication" and d.score < 80:
+            if d.name == "Communication" and d.score < REPORT_IMPROVEMENT_PRIORITY_THRESHOLD:
                 roadmap.append(
                     {
                         "priority": "HIGH",
@@ -194,7 +205,7 @@ class ReportInsightBuilder:
                     }
                 )
 
-            elif d.name == "Problem Solving" and d.score < 80:
+            elif d.name == "Problem Solving" and d.score < REPORT_IMPROVEMENT_PRIORITY_THRESHOLD:
                 roadmap.append(
                     {
                         "priority": "HIGH",
@@ -203,7 +214,7 @@ class ReportInsightBuilder:
                     }
                 )
 
-            elif d.name == "Technical Depth" and d.score < 80:
+            elif d.name == "Technical Depth" and d.score < REPORT_IMPROVEMENT_PRIORITY_THRESHOLD:
                 roadmap.append(
                     {
                         "priority": "HIGH",

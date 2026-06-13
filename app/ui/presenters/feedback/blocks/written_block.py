@@ -7,6 +7,12 @@ from app.contracts.feedback_bundle import (
 )
 from services.answer_improvement.answer_improver import AnswerImprover
 from domain.contracts.feedback.severity import Severity
+from infrastructure.config.evaluation import (
+    FEEDBACK_CONFIDENCE_WRITTEN,
+    WRITTEN_QUALITY_CORRECT_THRESHOLD,
+    WRITTEN_QUALITY_PARTIAL_THRESHOLD,
+    CODING_QUALITY_IMPROVEMENT_THRESHOLD,
+)
 
 
 class WrittenBlock:
@@ -58,7 +64,7 @@ class WrittenBlock:
         improved_answer = ""
 
         try:
-            if score < 90 and user_answer:
+            if score < CODING_QUALITY_IMPROVEMENT_THRESHOLD and user_answer:
                 improved_answer = self._improver.improve(
                     question_text,
                     user_answer,
@@ -99,14 +105,14 @@ class WrittenBlock:
                 )
                 for weakness in weaknesses[:3]
             ]
-        elif score < 50:
+        elif score < WRITTEN_QUALITY_PARTIAL_THRESHOLD:
             learning = [
                 LearningSuggestion(
                     topic="Fundamentals",
                     action="Review core concepts",
                 )
             ]
-        elif score < 75:
+        elif score < WRITTEN_QUALITY_CORRECT_THRESHOLD:
             learning = [
                 LearningSuggestion(
                     topic="Completeness",
@@ -171,7 +177,7 @@ class WrittenBlock:
             title="Written Answer Evaluation",
             content=content,
             severity=severity,
-            confidence=0.9,
+            confidence=FEEDBACK_CONFIDENCE_WRITTEN,
             signals=signals,
             learning=learning,
             quality=None,
@@ -179,9 +185,9 @@ class WrittenBlock:
         )
 
     def _map_score_to_feedback(self, score: float) -> tuple[Severity, str]:
-        if score < 50:
+        if score < WRITTEN_QUALITY_PARTIAL_THRESHOLD:
             return Severity.ERROR, "🔴 Incorrect Answer"
-        elif score < 75:
+        elif score < WRITTEN_QUALITY_CORRECT_THRESHOLD:
             return Severity.WARNING, "🟡 Partial Answer"
         else:
             return Severity.INFO, "🟢🟢 Strong Answer"

@@ -2,13 +2,17 @@
 
 from app.ui.views.report.charts.radar_chart import radar_chart
 from app.ui.views.report.components.bars import confidence_bar
+from infrastructure.config.evaluation import (
+    REPORT_CONFIDENCE_HIGH_THRESHOLD,
+    REPORT_CONFIDENCE_MODERATE_THRESHOLD,
+)
 
 
 def _build_confidence_text(conf):
 
-    if conf > 0.85:
+    if conf > REPORT_CONFIDENCE_HIGH_THRESHOLD:
         base = "High confidence (consistent performance)"
-    elif conf > 0.65:
+    elif conf > REPORT_CONFIDENCE_MODERATE_THRESHOLD:
         base = "Moderate confidence (some variability)"
     else:
         base = "Low confidence (inconsistent performance)"
