@@ -21,6 +21,7 @@ from services.question_corpus.adapters.orchestration_intent_adapter import (
 from services.question_corpus.mappers.retrieval_candidate_mapper import (
     RetrievalCandidateMapper,
 )
+from app.settings.constants import DEFAULT_INTERVIEW_LENGTH
 from services.question_corpus.question_retrieval_runtime import QuestionRetrievalRuntime
 
 
@@ -41,7 +42,7 @@ class InterviewOrchestrator:
         items: list[QuestionBankItem],
         role: RoleType,
         level: SeniorityLevel,
-        max_questions: int = 5,
+        max_questions: int = DEFAULT_INTERVIEW_LENGTH,
     ) -> OrchestrationResult:
 
         # -------------------------------------------------

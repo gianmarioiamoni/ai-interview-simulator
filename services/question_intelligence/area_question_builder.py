@@ -96,8 +96,14 @@ class AreaQuestionBuilder:
         interview_type: InterviewType,
         area: InterviewArea,
         questions_per_area: int = QUESTIONS_PER_AREA,
+        corpus_quota: int | None = None,
         memory: InterviewRetrievalMemory | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory]:
+        """
+        corpus_quota: maximum number of questions drawn from the retrieval corpus
+        for this area. Remaining slots are filled by LLM generation. When None
+        the pipeline uses legacy behaviour (corpus fills as much as available).
+        """
 
         session_memory = (
             memory if memory is not None else InterviewRetrievalMemory()
@@ -141,6 +147,7 @@ class AreaQuestionBuilder:
             interview_type=interview_type,
             area=area,
             questions_per_area=questions_per_area,
+            corpus_quota=corpus_quota,
             memory=session_memory,
         )
 
