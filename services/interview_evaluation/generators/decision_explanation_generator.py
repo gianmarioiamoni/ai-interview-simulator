@@ -4,18 +4,14 @@ from typing import Dict, List, Any
 
 from app.core.logger import get_logger
 from infrastructure.config.evaluation import (
-    NARRATIVE_DRIVER_SIGNAL_THRESHOLD,
-    NARRATIVE_DRIVER_SCORE_THRESHOLD,
-    NARRATIVE_BLOCKER_SCORE_THRESHOLD,
-    NARRATIVE_BLOCKER_SIGNAL_THRESHOLD,
-    NARRATIVE_BLOCKER_SIGNAL_SCORE_THRESHOLD,
-    NARRATIVE_CAUSAL_SIGNAL_STRONG,
-    NARRATIVE_CAUSAL_SIGNAL_SUPPORTED,
-    NARRATIVE_CAUSAL_SIGNAL_PARTIAL,
-    NARRATIVE_CAUSAL_SCORE_WEAK,
-    NARRATIVE_CAUSAL_SCORE_GAPS,
     NARRATIVE_WEAKEST_BLOCKER_MILD,
     NARRATIVE_WEAKEST_BLOCKER_MODERATE,
+)
+from services.interview_evaluation.generators.causal_explanation_builder import (
+    CausalExplanationBuilder,
+)
+from services.interview_evaluation.generators.signal_enrichment_builder import (
+    SignalEnrichmentBuilder,
 )
 
 logger = get_logger(__name__)
@@ -23,11 +19,13 @@ logger = get_logger(__name__)
 
 class DecisionExplanationGenerator:
 
-    def __init__(self, narrative_service):
+    def __init__(self, narrative_service) -> None:
         self._narrative_service = narrative_service
+        self._causal_builder = CausalExplanationBuilder()
+        self._enrichment_builder = SignalEnrichmentBuilder(self._causal_builder)
 
     # ---------------------------------------------------------
-    # MAIN GENERATION
+    # PUBLIC
     # ---------------------------------------------------------
 
     def generate(
@@ -37,19 +35,11 @@ class DecisionExplanationGenerator:
         dimension_signals: Dict[str, float] | None = None,
     ) -> Dict[str, List[str]]:
 
-        # -----------------------------------------------------
-        # CALL NARRATIVE SERVICE
-        # -----------------------------------------------------
-
         result = self._narrative_service.generate_decision_explanation(
             decision=decision,
             dimensions=dimensions,
             dimension_signals=dimension_signals,
         )
-
-        # -----------------------------------------------------
-        # NORMALIZE OUTPUT
-        # -----------------------------------------------------
 
         raw_drivers = result.get("drivers") if isinstance(result, dict) else []
         raw_blockers = result.get("blockers") if isinstance(result, dict) else []
@@ -57,201 +47,86 @@ class DecisionExplanationGenerator:
         drivers = self._normalize_items(raw_drivers)
         blockers = self._normalize_items(raw_blockers)
 
-        # -----------------------------------------------------
-        # FALLBACK
-        # -----------------------------------------------------
-
         if not drivers and not blockers:
-
-            if not dimensions:
-                return {
-                    "drivers": ["Evaluation completed"],
-                    "blockers": ["No significant issues identified"],
-                }
-
-            strongest_dim = max(dimensions, key=lambda x: x.get("score", 0))
-            weakest_dim = min(dimensions, key=lambda x: x.get("score", 0))
-
-            strongest = strongest_dim.get("name", "Unknown")
-            weakest = weakest_dim.get("name", "Unknown")
-            weakest_score = weakest_dim.get("score", 0)
-
-            if weakest_score >= NARRATIVE_WEAKEST_BLOCKER_MILD:
-                blocker = f"Area for improvement in {weakest}"
-            elif weakest_score >= NARRATIVE_WEAKEST_BLOCKER_MODERATE:
-                blocker = f"Moderate improvement needed in {weakest}"
-            else:
-                blocker = f"Weak performance in {weakest}"
-
-            return {
-                "drivers": [f"Strong performance in {strongest}"],
-                "blockers": [blocker],
-            }
-
-        # -----------------------------------------------------
-        # ENRICH WITH SIGNALS (SAFE)
-        # -----------------------------------------------------
-
-        enriched_blockers: List[str] = []
-        enriched_drivers: List[str] = []
+            return self._fallback(dimensions)
 
         if dimension_signals:
+            covered = self._covered_dimensions(blockers, dimensions)
+            enriched_drivers, enriched_blockers = self._enrichment_builder.build(
+                dimensions=dimensions,
+                dimension_signals=dimension_signals,
+                covered_dimensions=covered,
+            )
+            drivers = self._dedupe(drivers + enriched_drivers)[:3]
+            blockers = self._dedupe(blockers + enriched_blockers)[:3]
 
-            normalized_signals = {
-                (k.value.lower() if hasattr(k, "value") else str(k).lower()): v
-                for k, v in dimension_signals.items()
+        return {"drivers": drivers, "blockers": blockers}
+
+    # ---------------------------------------------------------
+    # PRIVATE HELPERS
+    # ---------------------------------------------------------
+
+    def _fallback(self, dimensions: List[Dict[str, Any]]) -> Dict[str, List[str]]:
+        if not dimensions:
+            return {
+                "drivers": ["Evaluation completed"],
+                "blockers": ["No significant issues identified"],
             }
 
-            # -------------------------------------------------
-            # DETECT COVERED DIMENSIONS
-            # -------------------------------------------------
+        strongest_dim = max(dimensions, key=lambda x: x.get("score", 0))
+        weakest_dim = min(dimensions, key=lambda x: x.get("score", 0))
 
-            covered_dimensions = set()
+        strongest = strongest_dim.get("name", "Unknown")
+        weakest = weakest_dim.get("name", "Unknown")
+        weakest_score = weakest_dim.get("score", 0)
 
-            for b in blockers:
-                b_lower = b.lower()
-                for dim in dimensions:
-                    name = dim.get("name", "").lower()
-                    if name and name in b_lower:
-                        covered_dimensions.add(name)
-
-            # -------------------------------------------------
-            # BUILD ENRICHMENT
-            # -------------------------------------------------
-
-            for dim in dimensions:
-
-                dim_name = dim.get("name")
-                dim_score = dim.get("score")
-
-                if not dim_name or dim_score is None:
-                    continue
-
-                dim_key = dim_name.lower().replace(" ", "_")
-
-                if dim_name.lower() in covered_dimensions:
-                    continue
-
-                signal_strength = normalized_signals.get(dim_key)
-
-                # DRIVER enrichment (solo per top performance reale)
-                if signal_strength and signal_strength >= NARRATIVE_DRIVER_SIGNAL_THRESHOLD and dim_score >= NARRATIVE_DRIVER_SCORE_THRESHOLD:
-                    enriched_drivers.append(
-                        f"Consistent strong execution in {dim_name}"
-                    )
-
-                # BLOCKER enrichment (più restrittivo)
-                if dim_score < NARRATIVE_BLOCKER_SCORE_THRESHOLD or (
-                    signal_strength and signal_strength >= NARRATIVE_BLOCKER_SIGNAL_THRESHOLD and dim_score < NARRATIVE_BLOCKER_SIGNAL_SCORE_THRESHOLD
-                ):
-
-                    explanation = self._build_causal_explanation(
-                        dim_name,
-                        dim_score,
-                        signal_strength,
-                    )
-
-                    enriched_blockers.append(explanation)
-
-        # -----------------------------------------------------
-        # MERGE + DEDUP
-        # -----------------------------------------------------
-
-        drivers = self._dedupe(drivers + enriched_drivers)[:3]
-        blockers = self._dedupe(blockers + enriched_blockers)[:3]
-
-        # -----------------------------------------------------
-        # FINAL
-        # -----------------------------------------------------
+        if weakest_score >= NARRATIVE_WEAKEST_BLOCKER_MILD:
+            blocker = f"Area for improvement in {weakest}"
+        elif weakest_score >= NARRATIVE_WEAKEST_BLOCKER_MODERATE:
+            blocker = f"Moderate improvement needed in {weakest}"
+        else:
+            blocker = f"Weak performance in {weakest}"
 
         return {
-            "drivers": drivers,
-            "blockers": blockers,
+            "drivers": [f"Strong performance in {strongest}"],
+            "blockers": [blocker],
         }
 
-    # ---------------------------------------------------------
-    # NORMALIZATION
-    # ---------------------------------------------------------
+    @staticmethod
+    def _covered_dimensions(
+        blockers: List[str],
+        dimensions: List[Dict[str, Any]],
+    ) -> set[str]:
+        covered: set[str] = set()
+        for b in blockers:
+            b_lower = b.lower()
+            for dim in dimensions:
+                name = dim.get("name", "").lower()
+                if name and name in b_lower:
+                    covered.add(name)
+        return covered
 
-    def _normalize_items(self, items: Any) -> List[str]:
-
+    @staticmethod
+    def _normalize_items(items: Any) -> List[str]:
         if not isinstance(items, list):
             return []
-
         normalized = []
-
         for item in items:
-
             if isinstance(item, str):
                 normalized.append(item)
-
             elif isinstance(item, dict):
                 text = item.get("justification") or item.get("text")
                 if text:
                     normalized.append(text)
-
         return normalized
 
-    # ---------------------------------------------------------
-    # DEDUP
-    # ---------------------------------------------------------
-
-    def _dedupe(self, items: List[str]) -> List[str]:
-
-        seen = set()
+    @staticmethod
+    def _dedupe(items: List[str]) -> List[str]:
+        seen: set[str] = set()
         result = []
-
         for item in items:
             key = item.lower().strip()
             if key not in seen:
                 seen.add(key)
                 result.append(item)
-
         return result
-
-    # ---------------------------------------------------------
-    # CAUSAL EXPLANATION BUILDER
-    # ---------------------------------------------------------
-
-    def _build_causal_explanation(
-        self,
-        dim_name: str,
-        dim_score: float,
-        signal_strength: float | None,
-    ) -> str:
-
-        dim_lower = dim_name.lower()
-
-        if "system design" in dim_lower:
-            base_cause = "limited architectural reasoning and lack of structured system trade-offs"
-        elif "technical depth" in dim_lower:
-            base_cause = "insufficient depth in core technical concepts and incomplete understanding of underlying mechanisms"
-        elif "problem solving" in dim_lower:
-            base_cause = "inconsistent reasoning and gaps in handling edge cases"
-        elif "communication" in dim_lower:
-            base_cause = "lack of clarity and structured explanation of ideas"
-        else:
-            base_cause = "inconsistent performance"
-
-        if signal_strength and signal_strength >= NARRATIVE_CAUSAL_SIGNAL_STRONG:
-            evidence = "strongly reinforced by execution failures"
-        elif signal_strength and signal_strength >= NARRATIVE_CAUSAL_SIGNAL_SUPPORTED:
-            evidence = "supported by execution inconsistencies"
-        elif signal_strength and signal_strength >= NARRATIVE_CAUSAL_SIGNAL_PARTIAL:
-            evidence = "partially reflected in execution signals"
-        else:
-            evidence = None
-
-        if dim_score < NARRATIVE_CAUSAL_SCORE_WEAK:
-            sentence = f"{dim_name} is weak due to {base_cause}"
-        elif dim_score < NARRATIVE_CAUSAL_SCORE_GAPS:
-            sentence = f"{dim_name} shows gaps due to {base_cause}"
-        else:
-            sentence = (
-                f"{dim_name} is solid, though some limitations remain in {base_cause}"
-            )
-
-        if evidence:
-            sentence += f", {evidence}"
-
-        return sentence
