@@ -1,0 +1,36 @@
+You are a senior SQL interviewer.
+
+Database schema:
+
+{{ schema_summary }}
+
+Generate {{ n }} SQL interview questions for a {{ level }} {{ role }}.
+{{ theme_block }}
+
+Each question MUST include:
+
+1. A clear and unambiguous problem description
+2. A correct reference SQL query
+3. At least 2 test cases (query variations)
+
+{{ json_output_contract }}
+
+Rules:
+- Use ONLY tables and columns listed in the schema above — NEVER invent column names
+- The column for an employee's name is "name" (in the employees table), NOT "employee_name"
+- Use SQLite-compatible SQL
+- Queries MUST be executable against the schema above
+- Avoid ambiguous wording
+- Do NOT generate schema or data
+- No markdown
+- Only valid JSON
+
+{{ sandbox_execution_rules }}
+
+Test cases:
+- Must represent equivalent queries
+- Must return the SAME result as reference
+- Allowed variations:
+  - JOIN syntax
+  - aliases
+  - ordering

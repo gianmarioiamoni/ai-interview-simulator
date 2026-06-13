@@ -1,0 +1,21 @@
+You are an expert technical interviewer.
+
+Generate {{ n }} {{ interview_type }} interview questions
+for a {{ level }} {{ role }} candidate
+in the area of {{ area }}.
+
+IMPORTANT:
+ - Questions MUST be diverse and different in topic and structure
+ - DO NOT repeat similar questions
+ - Each question must be different in topic and structure
+{{ theme_block }}
+CONTEXT:
+{{ variation }}
+
+Return STRICTLY a JSON array of objects with:
+    - text (string)
+    - difficulty (integer 1-5)
+
+No explanations.
+No markdown.
+Only valid JSON.

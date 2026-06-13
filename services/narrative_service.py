@@ -61,22 +61,17 @@ class NarrativeService:
         balance_flag = payload["balance_flag"]
 
         if balance_flag == "BALANCED":
-            balance_instruction = """
-The candidate shows consistent performance across dimensions.
-- Do NOT exaggerate differences
-- Emphasize overall strength
-"""
+            balance_instruction = PromptLoader.load(
+                "reporting/balance_instruction_balanced.txt"
+            )
         elif balance_flag == "SLIGHTLY_UNEVEN":
-            balance_instruction = """
-The candidate shows strong overall performance with minor variation across areas.
-- Highlight strengths
-- Mention improvement areas without overemphasis
-"""
+            balance_instruction = PromptLoader.load(
+                "reporting/balance_instruction_slightly_uneven.txt"
+            )
         else:
-            balance_instruction = """
-There is a noticeable gap between strongest and weakest areas.
-- Clearly highlight strengths and improvement areas
-"""
+            balance_instruction = PromptLoader.load(
+                "reporting/balance_instruction_uneven.txt"
+            )
         tone = self._derive_tone(decision)
         template = PromptLoader.load("narrative/executive_summary.txt")
 

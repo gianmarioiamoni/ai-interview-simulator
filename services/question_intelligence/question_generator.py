@@ -18,6 +18,8 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from app.ports.llm_port import LLMPort
+from app.prompts.prompt_loader import PromptLoader
+from app.prompts.prompt_renderer import PromptRenderer
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 
@@ -78,26 +80,17 @@ class QuestionGenerator:
         if theme_guidance:
             theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
-        return f"""
-            You are an expert technical interviewer.
+        template = PromptLoader.load("generation/question_generation.txt")
 
-            Generate {n} {interview_type.value} interview questions
-            for a {level.value} {role.value} candidate
-            in the area of {area.value}.
-
-            IMPORTANT:
-             - Questions MUST be diverse and different in topic and structure
-             - DO NOT repeat similar questions
-             - Each question must be different in topic and structure
-            {theme_block}
-            CONTEXT:
-            {variation}
-
-            Return STRICTLY a JSON array of objects with:
-                - text (string)
-                - difficulty (integer 1-5)
-
-            No explanations.
-            No markdown.
-            Only valid JSON.
-        """
+        return PromptRenderer.render(
+            template,
+            {
+                "n": n,
+                "interview_type": interview_type.value,
+                "level": level.value,
+                "role": role.value,
+                "area": area.value,
+                "variation": variation,
+                "theme_block": theme_block,
+            },
+        )
