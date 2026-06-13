@@ -6,8 +6,7 @@ Fresh-start selection strategy for ConstrainedEquivalenceBand.
 Owns the two sub-strategies used when no session history exists:
 
   1. Canonical rotation  — for CANONICAL_FRESH_START_AREAS
-     Picks the least-used document across interviews by reading/writing
-     cross_interview_pick_counts.
+     Picks the least-used document across interviews via CrossInterviewPickTracker.
 
   2. Hash rotation       — for all other DECONVERGENCE_AREAS
      Selects deterministically via SHA-256(role|level|theme|query) so the
@@ -31,6 +30,9 @@ from services.question_intelligence.equivalence_band_scoring import (
     historical_usage_ids,
     rotation_index,
 )
+from services.question_intelligence.cross_interview_pick_tracker import (
+    CrossInterviewPickTracker,
+)
 
 CANONICAL_FRESH_START_AREAS: frozenset[str] = frozenset(
     {
@@ -47,9 +49,6 @@ class FreshStartSelectionStrategy:
     Picks the best candidate from a fresh-start equivalence set.
 
     Dependencies are injected explicitly — no hidden module coupling.
-    cross_interview_pick_counts is passed by reference so the caller
-    (ConstrainedEquivalenceBand) retains ownership of the global dict
-    for R5C state extraction.
     """
 
     def __init__(
@@ -57,12 +56,12 @@ class FreshStartSelectionStrategy:
         variety_scorer: SessionVarietyScorer,
         topic_extractor: TopicExtractor,
         max_allowed_jump: int,
-        cross_interview_pick_counts: dict[str, int],
+        tracker: CrossInterviewPickTracker,
     ) -> None:
         self._variety_scorer = variety_scorer
         self._topic_extractor = topic_extractor
         self._max_allowed_jump = max_allowed_jump
-        self._cross_interview_pick_counts = cross_interview_pick_counts
+        self._tracker = tracker
 
     def pick(
         self,
@@ -103,9 +102,7 @@ class FreshStartSelectionStrategy:
         document_id = str(pick.document.metadata.get("document_id", ""))
 
         if context.target_area in CANONICAL_FRESH_START_AREAS and document_id:
-            self._cross_interview_pick_counts[document_id] = (
-                self._cross_interview_pick_counts.get(document_id, 0) + 1
-            )
+            self._tracker.increment(document_id)
 
         return pick
 
@@ -128,11 +125,11 @@ class FreshStartSelectionStrategy:
             historical = 1 if document_id in used_ids else 0
 
             return (
-                historical,
-                self._cross_interview_pick_counts.get(document_id, 0),
-                -candidate_score(candidate),
-                document_id,
-            )
+                    historical,
+                    self._tracker.get(document_id),
+                    -candidate_score(candidate),
+                    document_id,
+                )
 
         return min(equivalents, key=canonical_tie_break_key)
 
