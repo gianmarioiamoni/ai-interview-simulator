@@ -51,22 +51,32 @@ class UIEventOrchestrator:
     def _bind_validation(self):
         validator = InputValidator()
 
-        for component in [
+        validation_inputs = [
             self.c.role_input,
+            self.c.role_custom_name_input,
             self.c.interview_type_input,
+            self.c.seniority_input,
+            self.c.interview_length_input,
             self.c.company_input,
             self.c.language_input,
-        ]:
+        ]
+
+        for component in validation_inputs:
             component.change(
                 validator.validate,
-                inputs=[
-                    self.c.role_input,
-                    self.c.interview_type_input,
-                    self.c.company_input,
-                    self.c.language_input,
-                ],
+                inputs=validation_inputs,
                 outputs=self.c.start_button,
             )
+
+        # Show/hide custom role name field when OTHER is selected
+        def _toggle_custom_role(role):
+            return gr.update(visible=(role == "other"))
+
+        self.c.role_input.change(
+            _toggle_custom_role,
+            inputs=[self.c.role_input],
+            outputs=[self.c.role_custom_name_input],
+        )
 
     # =========================================================
     # START (STREAMING)
@@ -88,7 +98,10 @@ class UIEventOrchestrator:
             start_handler_wrapper,
             inputs=[
                 self.c.role_input,
+                self.c.role_custom_name_input,
                 self.c.interview_type_input,
+                self.c.seniority_input,
+                self.c.interview_length_input,
                 self.c.company_input,
                 self.c.language_input,
             ],

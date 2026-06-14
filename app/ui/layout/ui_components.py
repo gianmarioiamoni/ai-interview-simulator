@@ -9,7 +9,10 @@ class UILayoutComponents:
     state: object
 
     role_input: object
+    role_custom_name_input: object
     interview_type_input: object
+    seniority_input: object
+    interview_length_input: object
     company_input: object
     language_input: object
     start_button: object

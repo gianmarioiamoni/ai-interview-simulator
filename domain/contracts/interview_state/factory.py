@@ -19,16 +19,21 @@ class InterviewStateFactoryMixin:
         language: str,
         questions: list[Question],
         interview_id: str,
+        role_custom_name: str | None = None,
+        seniority_level: str = "mid",
+        interview_length: int = 20,
     ) -> Self:
 
         return cls(
             interview_id=interview_id,
-            role=Role(type=role_type),
+            role=Role(type=role_type, custom_name=role_custom_name),
             interview_type=interview_type,
             company=company.strip(),
             language=language,
             questions=questions,
             progress=InterviewProgress.SETUP,
+            seniority_level=seniority_level,
+            interview_length=interview_length,
         )
 
     # =========================================================

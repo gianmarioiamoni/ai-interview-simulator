@@ -66,6 +66,9 @@ class InterviewStateBase(BaseModel):
 
     adaptive_interview_enabled: bool = False
 
+    seniority_level: str = "mid"
+    interview_length: int = 20
+
     # Humanizer (bound aligned with HumanizerPolicyEngine.MAX_FOLLOW_UPS)
     enable_humanizer: bool = True
     follow_up_count: int = Field(default=0, ge=0, le=2)

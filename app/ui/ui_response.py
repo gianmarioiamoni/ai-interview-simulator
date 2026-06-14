@@ -16,7 +16,10 @@ class UIResponse:
 
     # SETUP
     role_visible: bool = True
+    role_custom_name_visible: bool = False
     interview_type_visible: bool = True
+    seniority_visible: bool = True
+    interview_length_visible: bool = True
     company_visible: bool = True
     language_visible: bool = True
     start_button_visible: bool = True
@@ -80,13 +83,25 @@ class UIResponse:
         return {
             # 0
             "state": self.state,
-            # 1-5 SETUP
+            # 1-8 SETUP
             "role_dropdown": gr.update(
                 visible=self.role_visible,
                 interactive=self.setup_inputs_interactive,
             ),
+            "role_custom_name_input": gr.update(
+                visible=self.role_custom_name_visible,
+                interactive=self.setup_inputs_interactive,
+            ),
             "interview_type_radio": gr.update(
                 visible=self.interview_type_visible,
+                interactive=self.setup_inputs_interactive,
+            ),
+            "seniority_radio": gr.update(
+                visible=self.seniority_visible,
+                interactive=self.setup_inputs_interactive,
+            ),
+            "interview_length_radio": gr.update(
+                visible=self.interview_length_visible,
                 interactive=self.setup_inputs_interactive,
             ),
             "company_input": gr.update(

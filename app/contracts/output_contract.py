@@ -3,9 +3,12 @@
 OUTPUT_KEYS = [
     # 0
     "state",
-    # 1-5 SETUP
+    # 1-7 SETUP
     "role_dropdown",
+    "role_custom_name_input",
     "interview_type_radio",
+    "seniority_radio",
+    "interview_length_radio",
     "company_input",
     "language_dropdown",
     "start_button",

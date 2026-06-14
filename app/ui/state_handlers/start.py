@@ -11,9 +11,18 @@ from domain.contracts.shared.action_type import ActionType
 from services.question_intelligence.question_intelligence_provider import (
     QuestionIntelligenceProvider,
 )
+from services.interview_length.interview_length_planner import (
+    compute_questions_per_area as _compute_questions_per_area,
+    expand_planned_areas as _expand_planned_areas,
+)
 
 from app.ai.test_generation.ai_test_generator import AITestGenerator
-from app.settings.constants import QUESTIONS_PER_AREA, USE_BATCH_QUESTION_GENERATION
+from app.settings.constants import (
+    QUESTIONS_PER_AREA,
+    USE_BATCH_QUESTION_GENERATION,
+    DEFAULT_INTERVIEW_LENGTH,
+    TECHNICAL_AREA_WEIGHTS,
+)
 from app.runtime.interview_runtime import (
     run_interview_graph,
     get_runtime_llm,
@@ -29,7 +38,15 @@ from app.ui.mappers.loader_mapper import map_loader_progress
 from app.ui.adapters.ui_output_adapter import UIOutputAdapter
 
 
-def start_interview(role, interview_type, company, language) -> Generator:
+def start_interview(
+    role,
+    role_custom_name,
+    interview_type,
+    seniority,
+    interview_length,
+    company,
+    language,
+) -> Generator:
     def _smooth_progress(current, target):
         return min(current + 3, target)
 
@@ -51,8 +68,10 @@ def start_interview(role, interview_type, company, language) -> Generator:
     # -----------------------------------------------------
 
     role_type = RoleType(role)
+    role_custom = role_custom_name.strip() if role_custom_name and role_custom_name.strip() else None
     interview_type_enum = InterviewType[interview_type]
-    level_enum = SeniorityLevel.MID
+    level_enum = SeniorityLevel(seniority) if seniority else SeniorityLevel.MID
+    resolved_length = int(interview_length) if interview_length else DEFAULT_INTERVIEW_LENGTH
 
     get_runtime_metrics_collector().start_session()
     llm = get_runtime_llm()
@@ -75,12 +94,19 @@ def start_interview(role, interview_type, company, language) -> Generator:
     planned_areas: list[str] = []
     adaptive_enabled = not USE_BATCH_QUESTION_GENERATION
 
+    areas = interview_type_enum.get_areas()
+    area_question_counts = _compute_questions_per_area(
+        interview_length=resolved_length,
+        areas=areas,
+        weights=TECHNICAL_AREA_WEIGHTS if interview_type_enum.name == "TECHNICAL" else None,
+    )
+
     if USE_BATCH_QUESTION_GENERATION:
         questions = question_intelligence.generate(
             role=role_type,
             level=level_enum,
             interview_type=interview_type_enum,
-            areas=interview_type_enum.get_areas(),
+            areas=areas,
             questions_per_area=QUESTIONS_PER_AREA,
         )
     else:
@@ -94,6 +120,7 @@ def start_interview(role, interview_type, company, language) -> Generator:
         configure_navigation_node(
             lazy_service=question_intelligence.lazy_adaptive_service,
             question_enricher=_enrich_question,
+            seniority_level=level_enum,
         )
 
         questions, retrieval_memory, planned_areas = (
@@ -103,6 +130,8 @@ def start_interview(role, interview_type, company, language) -> Generator:
                 interview_type=interview_type_enum,
             )
         )
+
+        planned_areas = _expand_planned_areas(area_question_counts, areas)
 
     # -----------------------------------------------------
     # STEP 3 — TESTS
@@ -137,11 +166,14 @@ def start_interview(role, interview_type, company, language) -> Generator:
 
     state = InterviewState.create_initial(
         role_type=role_type,
+        role_custom_name=role_custom,
         interview_type=interview_type_enum,
         company=company,
         language=language,
         questions=enriched_questions,
         interview_id="session-1",
+        seniority_level=level_enum.value,
+        interview_length=resolved_length,
     )
 
     if adaptive_enabled and retrieval_memory is not None:

@@ -90,7 +90,10 @@ class UIResponseBuilder:
         return UIResponse(
             state=state,
             role_visible=False,
+            role_custom_name_visible=False,
             interview_type_visible=False,
+            seniority_visible=False,
+            interview_length_visible=False,
             company_visible=False,
             language_visible=False,
             start_button_visible=False,
@@ -188,7 +191,10 @@ class UIResponseBuilder:
         return UIResponse(
             state=state,
             role_visible=False,
+            role_custom_name_visible=False,
             interview_type_visible=False,
+            seniority_visible=False,
+            interview_length_visible=False,
             company_visible=False,
             language_visible=False,
             start_button_visible=False,
@@ -231,7 +237,10 @@ class UIResponseBuilder:
             return UIResponse(
                 state=state,
                 role_visible=False,
+                role_custom_name_visible=False,
                 interview_type_visible=False,
+                seniority_visible=False,
+                interview_length_visible=False,
                 company_visible=False,
                 language_visible=False,
                 start_button_visible=False,
@@ -253,7 +262,10 @@ class UIResponseBuilder:
         return UIResponse(
             state=state,
             role_visible=False,
+            role_custom_name_visible=False,
             interview_type_visible=False,
+            seniority_visible=False,
+            interview_length_visible=False,
             company_visible=False,
             language_visible=False,
             start_button_visible=False,
