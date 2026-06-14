@@ -2,6 +2,7 @@
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.shared.action_type import ActionType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 from app.ui.constants.loader_steps import LoaderStep
 
@@ -19,6 +20,7 @@ _default_navigation_node: "AdaptiveNavigationNode | None" = None
 def configure_navigation_node(
     lazy_service: LazyAdaptiveInterviewService | None = None,
     question_enricher: Callable[[Question], Question] | None = None,
+    seniority_level: SeniorityLevel | None = None,
 ) -> None:
 
     global _default_navigation_node
@@ -28,6 +30,7 @@ def configure_navigation_node(
     _default_navigation_node = AdaptiveNavigationNode(
         lazy_service=lazy_service,
         question_enricher=question_enricher,
+        seniority_level=seniority_level,
     )
 
 

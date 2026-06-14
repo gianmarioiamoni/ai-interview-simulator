@@ -10,9 +10,12 @@ class UIOutputsBuilder:
         outputs = [
             # 0 STATE
             self.c.state,
-            # 1-5 SETUP INPUTS
+            # 1-8 SETUP INPUTS
             self.c.role_input,
+            self.c.role_custom_name_input,
             self.c.interview_type_input,
+            self.c.seniority_input,
+            self.c.interview_length_input,
             self.c.company_input,
             self.c.language_input,
             self.c.start_button,

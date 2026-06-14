@@ -23,6 +23,7 @@ class AdaptiveNavigationNode:
         lazy_service: LazyAdaptiveInterviewService | None = None,
         memory_bridge: AdaptiveInterviewMemoryBridge | None = None,
         question_enricher: Callable[[Question], Question] | None = None,
+        seniority_level: SeniorityLevel | None = None,
     ) -> None:
 
         self._lazy_service = lazy_service
@@ -32,6 +33,7 @@ class AdaptiveNavigationNode:
             else AdaptiveInterviewMemoryBridge()
         )
         self._question_enricher = question_enricher
+        self._seniority_level = seniority_level
 
     def __call__(self, state: InterviewState) -> InterviewState:
 
@@ -81,9 +83,14 @@ class AdaptiveNavigationNode:
                 and current_index >= last_index
                 and len(questions) < len(state.planned_areas)
             ):
+                level = (
+                    self._seniority_level
+                    if self._seniority_level is not None
+                    else SeniorityLevel(state.seniority_level)
+                )
                 new_question, retrieval_memory = self._lazy_service.generate_next_question(
                     role=state.role.type,
-                    level=SeniorityLevel.MID,
+                    level=level,
                     interview_type=state.interview_type,
                     planned_areas=state.planned_areas,
                     generated_count=len(questions),

@@ -9,6 +9,10 @@ from app.ui.layout.sections.report_section import render_report_section
 
 from domain.contracts.user.role import RoleType
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.user.seniority_level import SeniorityLevel
+from app.settings.constants import DEFAULT_INTERVIEW_LENGTH
+
+INTERVIEW_LENGTHS = [10, 20, 30]
 
 
 class UILayoutBuilder:
@@ -35,9 +39,29 @@ class UILayoutBuilder:
             visible=True,
         )
 
+        role_custom_name_input = gr.Textbox(
+            label="Custom Role Name",
+            placeholder="e.g. Platform Engineer, Site Reliability Engineer...",
+            visible=False,
+        )
+
         interview_type_input = gr.Radio(
             choices=[t.name for t in InterviewType],
             label="Interview Type",
+            visible=True,
+        )
+
+        seniority_input = gr.Radio(
+            choices=[(s.name.title(), s.value) for s in SeniorityLevel],
+            value=SeniorityLevel.MID.value,
+            label="Seniority Level",
+            visible=True,
+        )
+
+        interview_length_input = gr.Radio(
+            choices=INTERVIEW_LENGTHS,
+            value=DEFAULT_INTERVIEW_LENGTH,
+            label="Interview Length (questions)",
             visible=True,
         )
 
@@ -88,7 +112,10 @@ class UILayoutBuilder:
         return UILayoutComponents(
             state=state,
             role_input=role_input,
+            role_custom_name_input=role_custom_name_input,
             interview_type_input=interview_type_input,
+            seniority_input=seniority_input,
+            interview_length_input=interview_length_input,
             company_input=company_input,
             language_input=language_input,
             start_button=start_button,
