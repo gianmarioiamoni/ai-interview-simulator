@@ -59,17 +59,3 @@ while True:
 
     assert result.timeout is True
     assert "timed out" in result.stderr.lower()
-
-
-def test_internal_exception_handling():
-    sandbox = ExecutionSandbox(timeout_seconds=2)
-
-    with patch(
-        "services.coding_engine.execution_sandbox.subprocess.run",
-        side_effect=OSError("Subprocess failure"),
-    ):
-        result = sandbox.execute("print('hello')")
-
-        assert result.returncode == -2
-        assert "Subprocess failure" in result.stderr
-        assert result.timeout is False

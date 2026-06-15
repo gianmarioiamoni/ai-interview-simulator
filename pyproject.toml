@@ -60,7 +60,20 @@ filterwarnings = [
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-exclude = ["migrations"]
+exclude = ["migrations", "datasets/raw"]
+
+[tool.ruff.lint]
+select = [
+    "F821",  # undefined-name
+    "F811",  # redefined-while-unused
+    "F601",  # multi-value-repeated-key-literal
+    "E711",  # comparison-to-none
+    "E712",  # true-false-comparison
+    "W605",  # invalid-escape-sequence
+]
+ignore = [
+    "F821",  # too many false positives in forward-ref annotations and scripts
+]
 
 [tool.mypy]
 python_version = "3.11"
