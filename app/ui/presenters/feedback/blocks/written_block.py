@@ -6,6 +6,7 @@ from app.contracts.feedback_bundle import (
     LearningSuggestion,
 )
 from services.answer_improvement.answer_improver import AnswerImprover
+from domain.contracts.feedback.feedback import FeedbackBlockMetadata
 from domain.contracts.feedback.severity import Severity
 from infrastructure.config.evaluation import (
     FEEDBACK_CONFIDENCE_WRITTEN,
@@ -171,7 +172,7 @@ class WrittenBlock:
                 key=dimension_signals.get,
             )
             dim_value = getattr(top_dimension, "value", top_dimension)
-            metadata = {"dimension": dim_value}
+            metadata = FeedbackBlockMetadata(dimension=str(dim_value))
 
         return FeedbackBlockResult(
             title="Written Answer Evaluation",

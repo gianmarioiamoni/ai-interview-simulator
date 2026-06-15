@@ -20,6 +20,17 @@ class LearningSuggestion:
 
 
 @dataclass
+class FeedbackBlockMetadata:
+    score: Optional[int] = None
+    passed: Optional[int] = None
+    total: Optional[int] = None
+    dimension: Optional[str] = None
+
+    def get(self, key: str, default: object = None) -> object:
+        return getattr(self, key, default)
+
+
+@dataclass
 class FeedbackBlockResult:
     title: str
     content: str
@@ -31,7 +42,7 @@ class FeedbackBlockResult:
     learning: List[LearningSuggestion]
 
     quality: Optional[Quality] = None
-    metadata: Optional[dict] = None
+    metadata: Optional[FeedbackBlockMetadata] = None
 
 
 @dataclass

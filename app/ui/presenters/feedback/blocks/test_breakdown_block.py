@@ -10,6 +10,7 @@ from app.contracts.feedback_bundle import (
     FeedbackBlockResult,
     FeedbackSignal,
 )
+from domain.contracts.feedback.feedback import FeedbackBlockMetadata
 
 from app.ui.presenters.feedback.blocks.test_breakdown.test_case_formatter import TestCaseFormatter
 from app.ui.presenters.feedback.blocks.test_breakdown.learning_builder import LearningBuilder
@@ -83,10 +84,7 @@ class TestBreakdownBlock:
 
         dimension = DimensionMapper.map(error_type, execution)
 
-        metadata = {}
-
-        if dimension:
-            metadata["dimension"] = dimension.value
+        metadata = FeedbackBlockMetadata(dimension=dimension.value if dimension else None)
 
         return FeedbackBlockResult(
                 title="Test Breakdown",
