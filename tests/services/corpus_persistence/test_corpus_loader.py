@@ -84,6 +84,25 @@ def test_validate_corpus_raises_on_chroma_error(tmp_path):
             validate_corpus()
 
 
+def test_validate_corpus_raises_on_type_error_from_version_mismatch(tmp_path):
+    """
+    Simulate chromadb version mismatch: count() internally calls len() on an int
+    (seq_id stored as int in newer schema, decoded as bytes in older chromadb).
+    TypeError must be caught and re-raised as RuntimeError.
+    """
+    mock_collection = MagicMock()
+    mock_collection.count.side_effect = TypeError("object of type 'int' has no len()")
+    mock_client = MagicMock()
+    mock_client.get_collection.return_value = mock_collection
+
+    with (
+        patch.object(loader_module, "CHROMA_PERSIST_DIRECTORY", str(tmp_path)),
+        patch("chromadb.PersistentClient", return_value=mock_client),
+    ):
+        with pytest.raises(RuntimeError, match="Corpus validation failed"):
+            validate_corpus()
+
+
 # ---------------------------------------------------------
 # restore_corpus_from_hf
 # ---------------------------------------------------------
