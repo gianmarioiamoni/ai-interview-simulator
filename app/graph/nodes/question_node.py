@@ -73,7 +73,7 @@ def build_question_node(llm):
 
         if state.last_feedback_bundle:
 
-            last_score = int(state.last_feedback_bundle.overall_score)
+            last_score = state.last_feedback_bundle.overall_quality.rank()
 
         input_data = HumanizerInput(
             current_question=question,

@@ -6,7 +6,7 @@ colorTo: purple
 sdk: gradio
 sdk_version: 4.44.1
 python_version: 3.11
-app_file: gradio_app.py
+app_file: app.py
 ---
 
 
