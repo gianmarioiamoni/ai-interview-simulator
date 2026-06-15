@@ -44,6 +44,13 @@ class DisplaySection:
         parts: list[str] = []
 
         # -----------------------------------------------------
+        # DATABASE SCHEMA (prepended for DATABASE questions)
+        # -----------------------------------------------------
+
+        if question.is_database() and question.db_schema:
+            parts.append(f"### Database Schema\n\n```sql\n{question.db_schema.strip()}\n```")
+
+        # -----------------------------------------------------
         # ALWAYS SHOW QUESTION
         # -----------------------------------------------------
 
