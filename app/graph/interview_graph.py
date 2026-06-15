@@ -20,6 +20,7 @@ from app.graph.nodes.completion_node import completion_node
 from app.graph.nodes.report_node import report_node
 from app.graph.nodes.evaluation_aggregate_node import EvaluationAggregateNode
 from app.graph.nodes.start_processing_node import start_processing_node
+from app.graph.nodes.question_node import build_question_node
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
@@ -99,6 +100,7 @@ def build_interview_graph(
 
     graph.add_node("router", router_node)
     graph.add_node("navigation", navigation_node)
+    graph.add_node("question", build_question_node(llm))
     graph.add_node("execution", ExecutionNode(execution_engine))
     graph.add_node("evaluation", EvaluationNode())
     graph.add_node("evaluation_aggregate", EvaluationAggregateNode(evaluation_service))
@@ -182,7 +184,8 @@ def build_interview_graph(
 
     graph.add_edge("start_processing", "navigation")
     
-    graph.add_edge("navigation", "completion")
+    graph.add_edge("navigation", "question")
+    graph.add_edge("question", "completion")
     graph.add_edge("completion", "evaluation_aggregate")
 
     def route_after_completion(state: InterviewState) -> str:
