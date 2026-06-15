@@ -18,7 +18,7 @@ class SummaryBlock:
         _state,
         result,
         _evaluation,
-        _execution,
+        execution,
         _analysis,
         quality: Quality,
     ) -> FeedbackBlockResult:
@@ -50,7 +50,20 @@ class SummaryBlock:
         if quality in (Quality.CORRECT, Quality.OPTIMAL):
 
             if is_coding:
-                content = f"{icon} {label}\n\nGreat job! All tests passed."
+                all_passed = (
+                    execution is not None
+                    and execution.success
+                    and execution.passed_tests == execution.total_tests
+                )
+                if all_passed:
+                    content = f"{icon} {label}\n\nGreat job! All tests passed."
+                else:
+                    passed = execution.passed_tests if execution else 0
+                    total = execution.total_tests if execution else 0
+                    content = (
+                        f"{icon} {label}\n\n"
+                        f"Strong solution! {passed}/{total} tests passed."
+                    )
 
             elif is_written:
                 content = (

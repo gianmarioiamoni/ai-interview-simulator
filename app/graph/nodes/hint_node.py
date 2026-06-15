@@ -1,6 +1,5 @@
 # app/graph/nodes/hint_node.py
 
-from domain.contracts.feedback.quality import Quality
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.ai.ai_hint import AIHintInput, AIHint
 from domain.contracts.execution.execution_result import ExecutionResult
@@ -11,6 +10,7 @@ from domain.contracts.question.question import QuestionType
 
 from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.hint_rules.sql_hint_rules import SQLHintRules
+from services.score_calculator import compute_quality
 
 
 class HintNode:
@@ -50,15 +50,11 @@ class HintNode:
 
         attempts = state.get_attempt_for_question(question.id)
 
-        passed = execution.passed_tests or 0
-        total = execution.total_tests or 0
-
-        if execution.success:
-            quality = Quality.CORRECT
-        elif total > 0 and passed > 0:
-            quality = Quality.PARTIAL
-        else:
-            quality = Quality.INCORRECT
+        _, quality = compute_quality(
+            passed=execution.passed_tests,
+            total=execution.total_tests,
+            execution_time_ms=execution.execution_time_ms,
+        )
 
         # -----------------------------------------------------
         # HINT LEVEL
@@ -79,7 +75,13 @@ class HintNode:
 
         if question.type == QuestionType.DATABASE:
 
-            rule_hints = SQLHintRules.generate(answer.content)
+            has_failures = (
+                not execution.success
+                or execution.passed_tests < execution.total_tests
+            )
+            rule_hints = SQLHintRules.generate(
+                answer.content, has_failures=has_failures
+            )
 
             if rule_hints:
 

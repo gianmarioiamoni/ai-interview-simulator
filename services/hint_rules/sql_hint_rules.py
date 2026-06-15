@@ -6,34 +6,31 @@ from typing import List
 class SQLHintRules:
 
     @staticmethod
-    def generate(query: str) -> List[str]:
+    def generate(query: str, *, has_failures: bool = False) -> List[str]:
+        """
+        Generate style hints for a SQL query.
+
+        When has_failures is True (test cases are failing), style hints are
+        suppressed because the primary issue is correctness, not style.
+        """
 
         if not query:
+            return []
+
+        if has_failures:
             return []
 
         q = query.lower()
 
         hints: List[str] = []
 
-        # -----------------------------------------------------
-        # LIMIT missing
-        # -----------------------------------------------------
-
         if "limit" not in q:
             hints.append(
                 "Your query may return too many rows. Consider adding a LIMIT clause."
             )
 
-        # -----------------------------------------------------
-        # ORDER BY missing
-        # -----------------------------------------------------
-
         if "order by" not in q:
             hints.append("Results may not be deterministic. Consider adding ORDER BY.")
-
-        # -----------------------------------------------------
-        # SELECT *
-        # -----------------------------------------------------
 
         if "select *" in q:
             hints.append(
