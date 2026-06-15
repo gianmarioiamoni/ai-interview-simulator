@@ -46,9 +46,6 @@ def test_evaluation_node_creates_evaluation():
 
 # tests/unit/graph/nodes/test_evaluation_node.py
 
-from app.graph.nodes.evaluation_node import EvaluationNode
-from tests.factories.interview_state_factory import build_state_with_execution
-
 
 def test_evaluation_score_computation():
 
