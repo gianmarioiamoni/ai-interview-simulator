@@ -9,6 +9,17 @@ from services.humanizer.humanizer_service import HumanizerService
 from services.interview_memory.interview_memory_updater import InterviewMemoryUpdater
 
 
+def _build_display_prompt(question) -> str:
+    """Prepend schema block for DATABASE questions that carry db_schema."""
+    if question.type == QuestionType.DATABASE and question.db_schema:
+        schema_block = (
+            "**Database Schema**\n\n"
+            f"```sql\n{question.db_schema.strip()}\n```\n\n"
+        )
+        return schema_block + question.prompt
+    return question.prompt
+
+
 def build_question_node(llm):
 
     humanizer_service = HumanizerService(
@@ -37,7 +48,7 @@ def build_question_node(llm):
 
         if not state.enable_humanizer:
 
-            new_history = state.chat_history + [question.prompt]
+            new_history = state.chat_history + [_build_display_prompt(question)]
 
             return state.model_copy(
                 update={
@@ -51,7 +62,7 @@ def build_question_node(llm):
 
         if question.type != QuestionType.WRITTEN:
 
-            new_history = state.chat_history + [question.prompt]
+            new_history = state.chat_history + [_build_display_prompt(question)]
 
             return state.model_copy(
                 update={

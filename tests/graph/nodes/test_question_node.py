@@ -73,6 +73,84 @@ def test_question_node_non_written():
     assert len(new_state.chat_history) == len(state.chat_history) + 1
 
 
+def test_question_node_database_schema_displayed():
+    """DATABASE questions prepend schema block before the prompt."""
+    llm = Mock()
+    node = build_question_node(llm)
+
+    state = build_interview_state()
+    q = state.current_question.model_copy(
+        update={
+            "type": QuestionType.DATABASE,
+            "db_schema": "CREATE TABLE employees (id INT, name TEXT);",
+        }
+    )
+    state = state.model_copy(update={"questions": [q]})
+
+    new_state = node(state)
+
+    history_entry = new_state.chat_history[-1]
+    assert "**Database Schema**" in history_entry
+    assert "CREATE TABLE employees" in history_entry
+    assert q.prompt in history_entry
+    assert history_entry.index("Database Schema") < history_entry.index(q.prompt)
+
+
+def test_question_node_database_no_schema_unchanged():
+    """DATABASE question without db_schema shows prompt only."""
+    llm = Mock()
+    node = build_question_node(llm)
+
+    state = build_interview_state()
+    q = state.current_question.model_copy(
+        update={"type": QuestionType.DATABASE, "db_schema": None}
+    )
+    state = state.model_copy(update={"questions": [q]})
+
+    new_state = node(state)
+
+    assert new_state.chat_history[-1] == q.prompt
+    assert "Database Schema" not in new_state.chat_history[-1]
+
+
+def test_question_node_coding_no_schema_injected():
+    """CODING questions are never modified with schema blocks."""
+    llm = Mock()
+    node = build_question_node(llm)
+
+    state = build_interview_state()
+    q = state.current_question.model_copy(update={"type": QuestionType.CODING})
+    state = state.model_copy(update={"questions": [q]})
+
+    new_state = node(state)
+
+    assert new_state.chat_history[-1] == q.prompt
+    assert "Database Schema" not in new_state.chat_history[-1]
+
+
+def test_question_node_database_schema_humanizer_disabled():
+    """Schema is injected even when humanizer is disabled."""
+    llm = Mock()
+    node = build_question_node(llm)
+
+    state = build_interview_state()
+    q = state.current_question.model_copy(
+        update={
+            "type": QuestionType.DATABASE,
+            "db_schema": "CREATE TABLE orders (id INT);",
+        }
+    )
+    state = state.model_copy(
+        update={"questions": [q], "enable_humanizer": False}
+    )
+
+    new_state = node(state)
+
+    history_entry = new_state.chat_history[-1]
+    assert "**Database Schema**" in history_entry
+    assert "CREATE TABLE orders" in history_entry
+
+
 def test_question_node_humanized():
 
     llm = Mock()
