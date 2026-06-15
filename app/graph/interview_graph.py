@@ -109,7 +109,7 @@ def build_interview_graph(
     graph.add_node("decision", DecisionNode())
     graph.add_node("written", WrittenEvaluationNode(llm))
     graph.add_node("completion", completion_node)
-    graph.add_node("report", lambda state: report_node(state, evaluation_service))
+    graph.add_node("report", report_node)
     graph.add_node("start_processing", start_processing_node)
 
     # -----------------------------------------------------
