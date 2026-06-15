@@ -51,7 +51,6 @@ class InterviewStateBase(BaseModel):
     )
 
     current_question_index: int = 0
-    current_question: Optional[object] = None
     allowed_actions: List = []
 
     awaiting_user_input: bool = False

@@ -34,7 +34,7 @@ class FinalReportDTO(BaseModel):
     gating_triggered: bool
     gating_reason: Optional[str]
 
-    weighted_breakdown: Dict
+    weighted_breakdown: Dict[str, float]
 
     dimension_scores: List[DimensionScoreDTO]
     question_assessments: List[QuestionAssessmentDTO]
