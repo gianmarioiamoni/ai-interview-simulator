@@ -1,6 +1,7 @@
 # app/ui/presenters/feedback/blocks/score_block.py
 
 from app.contracts.feedback_bundle import FeedbackBlockResult
+from domain.contracts.feedback.feedback import FeedbackBlockMetadata
 from domain.contracts.feedback.severity import Severity
 from infrastructure.config.evaluation import FEEDBACK_CONFIDENCE_SCORE
 
@@ -46,11 +47,7 @@ class ScoreBlock:
 
         content = f"Score: {score}/100\nTests: {passed}/{total} passed"
 
-        metadata = {
-            "score": score,
-            "passed": passed,
-            "total": total,
-        }
+        metadata = FeedbackBlockMetadata(score=score, passed=passed, total=total)
 
         return FeedbackBlockResult(
             title="Score",

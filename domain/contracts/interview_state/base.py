@@ -38,7 +38,7 @@ class InterviewStateBase(BaseModel):
     asked_question_ids: list[str] = Field(default_factory=list)
     answers: list[Answer] = Field(default_factory=list)
 
-    report_output: dict | None = None
+    report_output: str | None = None
     interview_evaluation: Optional[InterviewEvaluation] = None
     interview_metrics: InterviewMetrics | None = None
     interview_cost_metrics: InterviewCostMetrics | None = None
