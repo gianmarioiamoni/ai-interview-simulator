@@ -51,9 +51,9 @@ def test_hint_correct_no_hint():
 
 
 def test_hint_partial_first_attempt():
-
+    # 3/5 = 60% → PARTIAL (50–79% range via compute_quality)
     state = build_state_with_execution(
-        passed_tests=2,
+        passed_tests=3,
         total_tests=5,
         quality="partial",
     )
@@ -62,9 +62,9 @@ def test_hint_partial_first_attempt():
 
 
 def test_hint_partial_second_attempt():
-
+    # 3/5 = 60% → PARTIAL
     state = build_state_with_execution(
-        passed_tests=2,
+        passed_tests=3,
         total_tests=5,
         quality="partial",
     )
@@ -76,9 +76,9 @@ def test_hint_partial_second_attempt():
 
 
 def test_hint_partial_third_attempt():
-
+    # 3/5 = 60% → PARTIAL
     state = build_state_with_execution(
-        passed_tests=2,
+        passed_tests=3,
         total_tests=5,
         quality="partial",
     )
