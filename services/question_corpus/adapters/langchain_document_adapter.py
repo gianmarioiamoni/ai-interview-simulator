@@ -3,6 +3,7 @@
 from langchain_core.documents import Document
 
 from services.question_corpus.contracts.retrieval_document import RetrievalDocument
+from services.question_corpus.utils.domain_parser import serialize_domains
 
 
 class LangChainDocumentAdapter:
@@ -16,19 +17,9 @@ class LangChainDocumentAdapter:
             retrieval_document.metadata,
         )
 
-        metadata["domains"] = ",".join(
-            metadata.get(
-                "domains",
-                [],
-            )
-        )
+        metadata["domains"] = serialize_domains(metadata.get("domains"))
 
-        metadata["tags"] = ",".join(
-            metadata.get(
-                "tags",
-                [],
-            )
-        )
+        metadata["tags"] = serialize_domains(metadata.get("tags"))
 
         metadata["document_id"] = retrieval_document.document_id
 
