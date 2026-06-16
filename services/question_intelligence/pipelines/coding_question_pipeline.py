@@ -55,6 +55,8 @@ from services.question_intelligence.pipelines.base_llm_question_pipeline import 
     BaseLLMQuestionPipeline,
 )
 
+from services.question_intelligence.mappers.difficulty_mapper import map_corpus_difficulty
+
 from infrastructure.config.settings import settings
 from app.core.logger import get_logger
 
@@ -148,7 +150,12 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
             return None
 
         try:
-            return self._map_item(item=enriched, area=area, provenance=provenance)
+            return self._map_item(
+                item=enriched,
+                area=area,
+                provenance=provenance,
+                source_difficulty=item.difficulty,
+            )
         except ValueError as exc:
             logger.warning("[CODING enrich] Alignment failed: %s", exc)
             return None
@@ -203,6 +210,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
         item: GeneratedCodingQuestion,
         area: InterviewArea,
         provenance: QuestionProvenance | None = None,
+        source_difficulty: int | None = None,
     ) -> Question:
 
         coding_spec = item.coding_spec
@@ -216,6 +224,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
             prompt=item.prompt,
             function_name=coding_spec.entrypoint,
             coding_spec=coding_spec,
+            difficulty=map_corpus_difficulty(source_difficulty),
             provenance=provenance,
             visible_tests=[
                 CodingTestCase(**t.model_dump()) for t in item.visible_tests

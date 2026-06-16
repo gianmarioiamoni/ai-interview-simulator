@@ -530,3 +530,58 @@ def test_example_enriched_generated_coding_question_model() -> None:
     assert parsed.coding_spec.entrypoint == "two_sum"
     assert len(parsed.visible_tests) == 2
     assert "two_sum" in parsed.prompt
+
+
+# ---------------------------------------------------------
+# DIFFICULTY PROPAGATION REGRESSION
+# ---------------------------------------------------------
+
+
+def test_coding_corpus_difficulty_2_maps_to_easy() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses([ENRICHED_CODING_JSON])
+    pipeline = CodingQuestionPipeline(
+        retrieval_service=retrieval_service,
+        coding_generator=CodingQuestionGenerator(llm),
+    )
+
+    item = _build_coding_bank_item()
+    item = item.model_copy(update={"difficulty": 2})
+
+    with patch(RETRIEVE_CODING_CANDIDATES, return_value=[item]):
+        questions, _ = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
+
+    from domain.contracts.question.question import QuestionDifficulty
+    assert questions[0].difficulty == QuestionDifficulty.EASY
+
+
+def test_coding_corpus_difficulty_5_maps_to_hard() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses([ENRICHED_CODING_JSON])
+    pipeline = CodingQuestionPipeline(
+        retrieval_service=retrieval_service,
+        coding_generator=CodingQuestionGenerator(llm),
+    )
+
+    item = _build_coding_bank_item()
+    item = item.model_copy(update={"difficulty": 5})
+
+    with patch(RETRIEVE_CODING_CANDIDATES, return_value=[item]):
+        questions, _ = pipeline.build(
+            role=RoleType.FULLSTACK_ENGINEER,
+            level=SeniorityLevel.JUNIOR,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_CODING,
+            questions_per_area=1,
+        )
+
+    from domain.contracts.question.question import QuestionDifficulty
+    assert questions[0].difficulty == QuestionDifficulty.HARD

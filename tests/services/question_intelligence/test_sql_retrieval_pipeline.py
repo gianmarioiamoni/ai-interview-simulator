@@ -518,3 +518,83 @@ def test_example_enriched_generated_sql_question_model() -> None:
     assert parsed.reference_query.startswith("SELECT")
     assert len(parsed.test_cases) == 2
     assert "Engineering" in parsed.prompt
+
+
+# ---------------------------------------------------------
+# DIFFICULTY PROPAGATION REGRESSION
+# ---------------------------------------------------------
+
+
+def test_sql_corpus_difficulty_2_maps_to_easy() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses([ENRICHED_SQL_JSON])
+    pipeline = SQLQuestionPipeline(
+        retrieval_service=retrieval_service,
+        sql_generator=SQLQuestionGenerator(llm),
+    )
+
+    item = _build_database_bank_item()
+    item = item.model_copy(update={"difficulty": 2})
+
+    with patch(RETRIEVE_SQL_CANDIDATES, return_value=[item]):
+        questions, _ = pipeline.build(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_DATABASE,
+            questions_per_area=1,
+        )
+
+    from domain.contracts.question.question import QuestionDifficulty
+    assert questions[0].difficulty == QuestionDifficulty.EASY
+
+
+def test_sql_corpus_difficulty_3_maps_to_medium() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses([ENRICHED_SQL_JSON])
+    pipeline = SQLQuestionPipeline(
+        retrieval_service=retrieval_service,
+        sql_generator=SQLQuestionGenerator(llm),
+    )
+
+    item = _build_database_bank_item()
+    item = item.model_copy(update={"difficulty": 3})
+
+    with patch(RETRIEVE_SQL_CANDIDATES, return_value=[item]):
+        questions, _ = pipeline.build(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_DATABASE,
+            questions_per_area=1,
+        )
+
+    from domain.contracts.question.question import QuestionDifficulty
+    assert questions[0].difficulty == QuestionDifficulty.MEDIUM
+
+
+def test_sql_corpus_difficulty_5_maps_to_hard() -> None:
+
+    retrieval_service = MagicMock(spec=QuestionRetrievalService)
+    llm = _mock_llm_with_responses([ENRICHED_SQL_JSON])
+    pipeline = SQLQuestionPipeline(
+        retrieval_service=retrieval_service,
+        sql_generator=SQLQuestionGenerator(llm),
+    )
+
+    item = _build_database_bank_item()
+    item = item.model_copy(update={"difficulty": 5})
+
+    with patch(RETRIEVE_SQL_CANDIDATES, return_value=[item]):
+        questions, _ = pipeline.build(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            interview_type=InterviewType.TECHNICAL,
+            area=InterviewArea.TECH_DATABASE,
+            questions_per_area=1,
+        )
+
+    from domain.contracts.question.question import QuestionDifficulty
+    assert questions[0].difficulty == QuestionDifficulty.HARD
