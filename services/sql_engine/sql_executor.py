@@ -61,11 +61,17 @@ class SQLExecutor:
 
                 try:
 
+                    effective_ordered = (
+                        test.ordered
+                        if test.ordered is not None
+                        else question.expected_ordered
+                    )
+
                     success, candidate_rows, expected_rows = self._evaluator.evaluate(
                         cursor,
                         candidate_query=query,
                         reference_query=test.expected_query,
-                        ordered=test.ordered,
+                        ordered=effective_ordered,
                     )
 
                     status = TestStatus.PASSED if success else TestStatus.FAILED
