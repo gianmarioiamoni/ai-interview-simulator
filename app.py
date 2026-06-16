@@ -16,6 +16,44 @@ logger.info("Building Gradio app for HF Spaces...")
 
 demo = build_app()
 
+def _audit_api_schema(demo):
+    import json
+
+    def _find_ap_bool(obj, path=""):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                cur = f"{path}.{k}"
+                if k == "additionalProperties" and isinstance(v, bool):
+                    logger.error(
+                        "[SCHEMA_AUDIT] additionalProperties=%s at %s | keys=%s | fragment=%s",
+                        v, cur, list(obj.keys()), json.dumps(obj)[:500],
+                    )
+                else:
+                    _find_ap_bool(v, cur)
+        elif isinstance(obj, list):
+            for i, item in enumerate(obj):
+                _find_ap_bool(item, f"{path}[{i}]")
+
+    try:
+        api_info = demo.get_blocks().get_api_info()
+        logger.info("[SCHEMA_AUDIT] get_api_info() succeeded — no crash")
+        _find_ap_bool(api_info, "api_info")
+    except Exception as exc:
+        logger.error("[SCHEMA_AUDIT] get_api_info() crashed: %s", exc)
+        try:
+            config = demo.get_blocks().config
+            for comp in config.get("components", []):
+                for key in ("api_info", "api_info_as_input", "api_info_as_output"):
+                    schema = comp.get(key)
+                    if schema:
+                        _find_ap_bool(schema, f"component[{comp.get('id')}].{key}")
+        except Exception as inner:
+            logger.error("[SCHEMA_AUDIT] component scan failed: %s", inner)
+        raise
+
+
+_audit_api_schema(demo)
+
 if __name__ == "__main__":
     demo.launch(
         server_name="0.0.0.0",
