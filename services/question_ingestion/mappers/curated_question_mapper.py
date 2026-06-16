@@ -58,7 +58,7 @@ class CuratedQuestionMapper:
             role=role,
             seniority=seniority,
             area=area,
-            domains=[area.value],
+            domains=metadata.domains if metadata.domains else [area.value],
             difficulty=difficulty,
             source=source,
             quality_score=PHASE_4A_QUALITY_SCORE,
