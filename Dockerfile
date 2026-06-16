@@ -16,11 +16,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p data/vector_store
+RUN mkdir -p storage/chroma/interview_corpus
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 EXPOSE 7860
 
-CMD ["python", "app/main.py"]
+CMD ["python", "app.py"]
