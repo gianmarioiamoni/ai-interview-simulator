@@ -8,6 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from domain.contracts.interview.interview_area import InterviewArea
+from services.question_corpus.utils.domain_parser import parse_domains as _parse_domains
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _CORPUS_ROOTS = (
@@ -102,14 +103,3 @@ def load_preview_texts_for_area(
                     return texts
 
     return texts
-
-
-def _parse_domains(raw_domains: object) -> list[str]:
-
-    if isinstance(raw_domains, list):
-        return [str(domain).strip() for domain in raw_domains if str(domain).strip()]
-
-    if isinstance(raw_domains, str):
-        return [part.strip() for part in raw_domains.split(",") if part.strip()]
-
-    return []

@@ -2,6 +2,7 @@
 
 from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
+from services.question_corpus.utils.domain_parser import parse_domains
 
 
 class CoveragePenaltyEngine:
@@ -74,12 +75,6 @@ class CoveragePenaltyEngine:
         candidate: RetrievalCandidate,
     ) -> list[str]:
 
-        domains = candidate.document.metadata.get(
-            "domains",
-            "",
+        return parse_domains(
+            candidate.document.metadata.get("domains"),
         )
-
-        if not domains:
-            return []
-
-        return [d.strip() for d in domains.split(",")]

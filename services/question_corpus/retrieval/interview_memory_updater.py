@@ -5,6 +5,7 @@ from domain.contracts.question.question_bank_item import QuestionBankItem
 
 from services.question_corpus.contracts.interview_retrieval_memory import InterviewRetrievalMemory
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
+from services.question_corpus.utils.domain_parser import parse_domains
 from services.question_intelligence.question_difficulty_mapper import (
     question_difficulty_to_corpus_int,
 )
@@ -216,12 +217,6 @@ class InterviewMemoryUpdater:
         candidate: RetrievalCandidate,
     ) -> list[str]:
 
-        domains = candidate.document.metadata.get(
-            "domains",
-            "",
+        return parse_domains(
+            candidate.document.metadata.get("domains"),
         )
-
-        if not domains:
-            return []
-
-        return [d.strip() for d in domains.split(",")]
