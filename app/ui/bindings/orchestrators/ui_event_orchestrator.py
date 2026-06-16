@@ -4,7 +4,6 @@ import gradio as gr
 
 from app.ui.handlers.start_handler import start_handler
 from app.ui.state_handlers import new_interview
-from app.ui.state_handlers.export_handlers import export_pdf_handler, export_json_handler
 
 from app.ui.state_handlers import (
     submit_answer,
@@ -186,20 +185,6 @@ class UIEventOrchestrator:
             inputs=[self.state],
             outputs=self.outputs,
             show_progress=False,
-        )
-
-        # PDF
-        self.c.pdf_button.click(
-            export_pdf_handler,
-            inputs=[self.state],
-            outputs=self.c.pdf_file,
-        )
-
-        # JSON
-        self.c.json_button.click(
-            export_json_handler,
-            inputs=[self.state],
-            outputs=self.c.json_file,
         )
 
         # NEW INTERVIEW

@@ -38,8 +38,6 @@ class UILayoutComponents:
     report_section: object
     pdf_button: object
     json_button: object
-    pdf_file: object
-    json_file: object
     new_interview_button: object
 
     global_loader: object
