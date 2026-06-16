@@ -219,6 +219,109 @@ def test_broken_schema_triggers_runtime_error():
 
 
 # ---------------------------------------------------------
+# ORDERING REGRESSION: Question.expected_ordered propagation
+# ---------------------------------------------------------
+
+
+def test_case_a_unordered_question_accepts_different_row_order():
+    """Case A: same rows, different order, expected_ordered=False → PASS."""
+
+    executor = SQLExecutor()
+
+    question = Question(
+        id="q_case_a",
+        area=InterviewArea.TECH_DATABASE,
+        type=QuestionType.DATABASE,
+        prompt="Select employee names.",
+        difficulty=QuestionDifficulty.MEDIUM,
+        db_schema=SCHEMA,
+        db_seed_data=SEED,
+        expected_ordered=False,
+        sql_test_cases=[
+            SQLTestCase(
+                id="t1",
+                expected_query="SELECT name FROM employees WHERE salary > 80000 ORDER BY name ASC",
+            )
+        ],
+    )
+
+    result = executor.execute(
+        question,
+        "SELECT name FROM employees WHERE salary > 80000 ORDER BY name DESC",
+    )
+
+    assert result.success is True
+    assert result.status == ExecutionStatus.SUCCESS
+    assert result.passed_tests == 1
+    assert result.test_results[0].status == ExecutionTestStatus.PASSED
+
+
+def test_case_b_ordered_question_fails_on_different_row_order():
+    """Case B: same rows, different order, expected_ordered=True → FAIL."""
+
+    executor = SQLExecutor()
+
+    question = Question(
+        id="q_case_b",
+        area=InterviewArea.TECH_DATABASE,
+        type=QuestionType.DATABASE,
+        prompt="Select employee names.",
+        difficulty=QuestionDifficulty.MEDIUM,
+        db_schema=SCHEMA,
+        db_seed_data=SEED,
+        expected_ordered=True,
+        sql_test_cases=[
+            SQLTestCase(
+                id="t1",
+                expected_query="SELECT name FROM employees WHERE salary > 80000 ORDER BY name ASC",
+            )
+        ],
+    )
+
+    result = executor.execute(
+        question,
+        "SELECT name FROM employees WHERE salary > 80000 ORDER BY name DESC",
+    )
+
+    assert result.success is False
+    assert result.status == ExecutionStatus.FAILED_TESTS
+    assert result.passed_tests == 0
+    assert result.test_results[0].status == ExecutionTestStatus.FAILED
+
+
+def test_per_case_ordered_overrides_question_expected_ordered():
+    """Per-test ordered=True overrides Question.expected_ordered=False."""
+
+    executor = SQLExecutor()
+
+    question = Question(
+        id="q_override",
+        area=InterviewArea.TECH_DATABASE,
+        type=QuestionType.DATABASE,
+        prompt="Select employee names.",
+        difficulty=QuestionDifficulty.MEDIUM,
+        db_schema=SCHEMA,
+        db_seed_data=SEED,
+        expected_ordered=False,
+        sql_test_cases=[
+            SQLTestCase(
+                id="t1",
+                expected_query="SELECT name FROM employees WHERE salary > 80000 ORDER BY name ASC",
+                ordered=True,
+            )
+        ],
+    )
+
+    result = executor.execute(
+        question,
+        "SELECT name FROM employees WHERE salary > 80000 ORDER BY name DESC",
+    )
+
+    assert result.success is False
+    assert result.test_results[0].status == ExecutionTestStatus.FAILED
+
+
+# ---------------------------------------------------------
 # RESULT FORMATTING
 # ---------------------------------------------------------
 

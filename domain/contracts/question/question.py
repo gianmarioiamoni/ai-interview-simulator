@@ -22,7 +22,7 @@ from domain.contracts.question.question_runtime_telemetry import QuestionRuntime
 class SQLTestCase(BaseModel):
     id: str = Field(..., min_length=1)
     expected_query: str = Field(..., min_length=1)
-    ordered: bool = True
+    ordered: Optional[bool] = None  # None = inherit from Question.expected_ordered
 
     model_config = {
         "frozen": True,

@@ -34,7 +34,7 @@ logger = get_logger(__name__)
 
 class GeneratedSQLTestCase(BaseModel):
     expected_query: str
-    ordered: bool = True
+    ordered: bool | None = None
 
 
 class GeneratedSQLQuestion(BaseModel):
