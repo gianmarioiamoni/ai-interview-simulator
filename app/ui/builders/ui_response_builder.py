@@ -146,7 +146,8 @@ class UIResponseBuilder:
 
         display = DisplaySection.build(state, question, ui_state, attempts > 0)
         feedback = FeedbackSection.build(state) if is_feedback_mode else ""
-        counter = CounterSection.build(state, question, attempts, MAX_ATTEMPTS)
+        display_attempt = attempts if is_feedback_mode else (attempts + 1)
+        counter = CounterSection.build(state, question, display_attempt, MAX_ATTEMPTS)
         buttons = ButtonMapper.map(state, ui_state, can_retry)
 
         area_label = InterviewAreaMapper.to_label(question.area)

@@ -12,5 +12,5 @@ class CounterSection:
         index = state.current_question_index + 1
 
         return (
-            f"Question {index} / {total}\n\n" f"Attempt {attempts + 1} / {max_attempts}"
+            f"Question {index} / {total}\n\n" f"Attempt {attempts} / {max_attempts}"
         )
