@@ -17,6 +17,8 @@ class QuestionMetadata(BaseModel):
 
     difficulty: int | None = None
 
+    domains: list[str] = []
+
     model_config = {
         "frozen": True,
         "extra": "forbid",

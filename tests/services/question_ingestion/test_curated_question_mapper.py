@@ -152,3 +152,68 @@ def test_map_falls_back_to_fullstack_role() -> None:
     )
 
     assert curated.role == RoleType.FULLSTACK_ENGINEER
+
+
+def test_map_preserves_authored_domains() -> None:
+    mapper = CuratedQuestionMapper()
+
+    record = _build_record()
+
+    metadata = QuestionMetadata(
+        area=InterviewArea.TECH_DATABASE,
+        domains=["sql", "joins", "aggregation"],
+    )
+
+    curated = mapper.map(record=record, metadata=metadata)
+
+    assert curated.domains == ["sql", "joins", "aggregation"]
+
+
+def test_map_falls_back_to_area_value_when_domains_empty() -> None:
+    mapper = CuratedQuestionMapper()
+
+    record = _build_record()
+
+    metadata = QuestionMetadata(
+        area=InterviewArea.TECH_DATABASE,
+        domains=[],
+    )
+
+    curated = mapper.map(record=record, metadata=metadata)
+
+    assert curated.domains == [InterviewArea.TECH_DATABASE.value]
+
+
+def test_map_backward_compatible_no_domains_field() -> None:
+    """Existing callers that omit domains must still get [area.value]."""
+    mapper = CuratedQuestionMapper()
+
+    record = _build_record()
+
+    metadata = QuestionMetadata(
+        area=InterviewArea.TECH_TECHNICAL_KNOWLEDGE,
+        role=RoleType.BACKEND_ENGINEER,
+        level=SeniorityLevel.SENIOR,
+        difficulty=4,
+    )
+
+    curated = mapper.map(record=record, metadata=metadata)
+
+    assert curated.domains == [InterviewArea.TECH_TECHNICAL_KNOWLEDGE.value]
+
+
+def test_map_domains_not_contaminated_by_area() -> None:
+    """Authored domains must not be mixed with area.value."""
+    mapper = CuratedQuestionMapper()
+
+    record = _build_record()
+
+    metadata = QuestionMetadata(
+        area=InterviewArea.TECH_DATABASE,
+        domains=["cte", "window_function"],
+    )
+
+    curated = mapper.map(record=record, metadata=metadata)
+
+    assert InterviewArea.TECH_DATABASE.value not in curated.domains
+    assert curated.domains == ["cte", "window_function"]
