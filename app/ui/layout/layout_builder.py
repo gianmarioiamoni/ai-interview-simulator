@@ -102,9 +102,6 @@ class UILayoutBuilder:
         pdf_button=report_components["pdf_button"]
         json_button=report_components["json_button"]
 
-        pdf_file=report_components["pdf_file"]
-        json_file=report_components["json_file"]
-
         new_interview_button=report_components["new_interview_button"]
 
         global_loader = gr.HTML("", visible=False, elem_id="global-loader")
@@ -136,8 +133,6 @@ class UILayoutBuilder:
             report_section=report_section,
             pdf_button=pdf_button,
             json_button=json_button,
-            pdf_file=pdf_file,
-            json_file=json_file,
             new_interview_button=new_interview_button,
             global_loader=global_loader,
         )
