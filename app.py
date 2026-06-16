@@ -34,14 +34,15 @@ def _audit_api_schema(demo):
             for i, item in enumerate(obj):
                 _find_ap_bool(item, f"{path}[{i}]")
 
+    blocks = demo.get_blocks() if hasattr(demo, "get_blocks") else demo
     try:
-        api_info = demo.get_blocks().get_api_info()
+        api_info = blocks.get_api_info()
         logger.info("[SCHEMA_AUDIT] get_api_info() succeeded — no crash")
         _find_ap_bool(api_info, "api_info")
     except Exception as exc:
         logger.error("[SCHEMA_AUDIT] get_api_info() crashed: %s", exc)
         try:
-            config = demo.get_blocks().config
+            config = blocks.config
             for comp in config.get("components", []):
                 for key in ("api_info", "api_info_as_input", "api_info_as_output"):
                     schema = comp.get(key)
