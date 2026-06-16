@@ -21,6 +21,7 @@ from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 
 from services.sql_engine.sql_database import SQLDatabase
+from services.question_intelligence.mappers.difficulty_mapper import map_corpus_difficulty
 
 from app.core.logger import get_logger
 
@@ -106,6 +107,7 @@ class SQLQuestionGenerator:
         level: SeniorityLevel,
         provenance: QuestionProvenance | None = None,
         theme_guidance: str | None = None,
+        source_difficulty: int | None = None,
     ) -> Question | None:
 
         prompt = self._prompt_builder.build_enrichment_prompt(
@@ -134,6 +136,7 @@ class SQLQuestionGenerator:
         return self._map_to_question(
             executable_items[0],
             provenance=provenance,
+            source_difficulty=source_difficulty,
         )
 
     # =========================================================
@@ -144,6 +147,7 @@ class SQLQuestionGenerator:
         self,
         item: GeneratedSQLQuestion,
         provenance: QuestionProvenance | None = None,
+        source_difficulty: int | None = None,
     ) -> Question:
 
         return Question(
@@ -151,7 +155,7 @@ class SQLQuestionGenerator:
             area=InterviewArea.TECH_DATABASE,
             type=QuestionType.DATABASE,
             prompt=item.prompt,
-            difficulty=QuestionDifficulty.MEDIUM,
+            difficulty=map_corpus_difficulty(source_difficulty),
             reference_solution=item.reference_query,
             expected_ordered=False,
             db_schema=self._db.get_schema_sql(),

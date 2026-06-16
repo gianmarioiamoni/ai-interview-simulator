@@ -14,6 +14,8 @@ from domain.contracts.question.question_runtime_lineage import QuestionRuntimeLi
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.question.question_runtime_telemetry import QuestionRuntimeTelemetry
 
+from services.question_intelligence.mappers.difficulty_mapper import map_corpus_difficulty
+
 from services.interview_selection.assembled_question import AssembledQuestion
 
 
@@ -125,11 +127,4 @@ class RuntimeQuestionMapper:
         self,
         value: int,
     ) -> QuestionDifficulty:
-
-        if value <= 2:
-            return QuestionDifficulty.EASY
-
-        if value == 3:
-            return QuestionDifficulty.MEDIUM
-
-        return QuestionDifficulty.HARD
+        return map_corpus_difficulty(value)

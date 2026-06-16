@@ -6,6 +6,7 @@ from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.question.question import Question, QuestionType, QuestionDifficulty
 from domain.contracts.question.generated_question import GeneratedQuestion
 from domain.contracts.question.question_bank_item import QuestionBankItem
+from services.question_intelligence.mappers.difficulty_mapper import map_corpus_difficulty
 
 
 class WrittenQuestionMapper:
@@ -45,8 +46,4 @@ class WrittenQuestionMapper:
 
     @staticmethod
     def _map_difficulty(value: int) -> QuestionDifficulty:
-        if value <= 2:
-            return QuestionDifficulty.EASY
-        if value == 3:
-            return QuestionDifficulty.MEDIUM
-        return QuestionDifficulty.HARD
+        return map_corpus_difficulty(value)

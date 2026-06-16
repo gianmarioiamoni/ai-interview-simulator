@@ -133,6 +133,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
             level=level,
             provenance=provenance,
             theme_guidance=theme_guidance,
+            source_difficulty=item.difficulty,
         )
 
         if enriched is None:
