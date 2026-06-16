@@ -34,12 +34,30 @@ class SchemaSummaryGenerator:
             columns = cursor.fetchall()
 
             for column in columns:
-                # column structure:
-                # (cid, name, type, notnull, default_value, pk)
+                # column structure: (cid, name, type, notnull, default_value, pk)
                 col_name = column[1]
                 col_type = column[2]
                 summary_lines.append(f"  - {col_name} ({col_type})")
 
             summary_lines.append("")
 
+        fk_lines = self._collect_foreign_keys(cursor, tables)
+        if fk_lines:
+            summary_lines.append("Foreign keys:")
+            summary_lines.extend(fk_lines)
+
         return "\n".join(summary_lines).strip()
+
+    def _collect_foreign_keys(
+        self, cursor: "sqlite3.Cursor", tables: list[str]
+    ) -> list[str]:
+        lines = []
+        for table in tables:
+            cursor.execute(f"PRAGMA foreign_key_list({table})")
+            for fk in cursor.fetchall():
+                # fk structure: (id, seq, table, from, to, on_update, on_delete, match)
+                from_col = fk[3]
+                ref_table = fk[2]
+                ref_col = fk[4]
+                lines.append(f"  - {table}.{from_col} → {ref_table}.{ref_col}")
+        return lines

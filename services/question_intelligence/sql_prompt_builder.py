@@ -1,47 +1,11 @@
 # services/question_intelligence/sql_prompt_builder.py
 
+import sqlite3
+
 from app.prompts.prompt_loader import PromptLoader
 from app.prompts.prompt_renderer import PromptRenderer
+from services.sql_engine.schema_summary_generator import SchemaSummaryGenerator
 
-
-_SANDBOX_TABLES = "employees, departments, projects, employee_projects"
-
-_SANDBOX_COLUMN_WHITELIST = """
-EXACT column names per table (no others exist):
-  employees        : id, name, department_id, salary
-  departments      : id, name
-  projects         : id, name, budget
-  employee_projects: employee_id, project_id
-
-FORBIDDEN column name examples (do NOT use):
-  employee_name, emp_name, dept_name, project_name, first_name, last_name,
-  email, phone, title, position, hire_date, age, manager_id
-"""
-
-_SANDBOX_EXECUTION_RULES = f"""
-EXECUTION CONSTRAINTS (mandatory):
-- reference_query and every test case expected_query MUST be a single SELECT only
-- Use ONLY sandbox tables: {_SANDBOX_TABLES}
-- Use ONLY columns that exist on those tables in the provided schema
-- Use SQLite-compatible SQL (not PostgreSQL-specific syntax)
-- Do NOT use CREATE, ALTER, DROP, VIEW, TRIGGER, or any DDL
-- Do NOT use INSERT, UPDATE, DELETE, or multi-statement SQL (no semicolon-separated statements)
-- Do NOT invent tables, views, or column names
-{_SANDBOX_COLUMN_WHITELIST}
-"""
-
-_SCHEMA_SUMMARY = """
-        Tables and their EXACT columns (use no others):
-        - employees(id INTEGER, name TEXT, department_id INTEGER, salary INTEGER)
-        - departments(id INTEGER, name TEXT)
-        - projects(id INTEGER, name TEXT, budget INTEGER)
-        - employee_projects(employee_id INTEGER, project_id INTEGER)
-
-        Foreign keys:
-        - employees.department_id → departments.id
-        - employee_projects.employee_id → employees.id
-        - employee_projects.project_id → projects.id
-        """
 
 _JSON_OUTPUT_CONTRACT = """
 Return STRICT JSON array:
@@ -64,8 +28,17 @@ Return STRICT JSON array:
 class SQLPromptBuilder:
     """
     Builds LLM prompts for SQL question generation and enrichment.
-    Owns all sandbox schema constants and output contract definitions.
+
+    Receives schema information dynamically via the constructor, derived from
+    the live SQLDatabase through SchemaSummaryGenerator. No hardcoded schema
+    constants are stored here.
     """
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        generator = SchemaSummaryGenerator()
+        self._schema_summary = generator.generate(connection)
+        self._sandbox_tables = self._extract_table_names(connection)
+        self._sandbox_execution_rules = self._build_execution_rules()
 
     # ------------------------------------------------------------------
     # PUBLIC
@@ -87,10 +60,10 @@ class SQLPromptBuilder:
                 "n": n,
                 "level": level,
                 "role": role,
-                "schema_summary": _SCHEMA_SUMMARY,
+                "schema_summary": self._schema_summary,
                 "theme_block": self._theme_block(theme_guidance),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
-                "sandbox_execution_rules": _SANDBOX_EXECUTION_RULES,
+                "sandbox_execution_rules": self._sandbox_execution_rules,
             },
         )
 
@@ -110,16 +83,39 @@ class SQLPromptBuilder:
                 "seed_prompt": seed_prompt,
                 "level": level,
                 "role": role,
-                "schema_summary": _SCHEMA_SUMMARY,
+                "schema_summary": self._schema_summary,
                 "theme_block": self._theme_block(theme_guidance),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
-                "sandbox_execution_rules": _SANDBOX_EXECUTION_RULES,
+                "sandbox_execution_rules": self._sandbox_execution_rules,
             },
         )
 
     # ------------------------------------------------------------------
     # PRIVATE
     # ------------------------------------------------------------------
+
+    def _extract_table_names(self, connection: sqlite3.Connection) -> str:
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+            SELECT name FROM sqlite_master
+            WHERE type='table' AND name NOT LIKE 'sqlite_%'
+            ORDER BY name
+            """
+        )
+        return ", ".join(row[0] for row in cursor.fetchall())
+
+    def _build_execution_rules(self) -> str:
+        return f"""
+EXECUTION CONSTRAINTS (mandatory):
+- reference_query and every test case expected_query MUST be a single SELECT only
+- Use ONLY sandbox tables: {self._sandbox_tables}
+- Use ONLY columns that exist on those tables in the provided schema
+- Use SQLite-compatible SQL (not PostgreSQL-specific syntax)
+- Do NOT use CREATE, ALTER, DROP, VIEW, TRIGGER, or any DDL
+- Do NOT use INSERT, UPDATE, DELETE, or multi-statement SQL (no semicolon-separated statements)
+- Do NOT invent tables, views, or column names
+"""
 
     def _theme_block(self, theme_guidance: str | None) -> str:
         if theme_guidance:
