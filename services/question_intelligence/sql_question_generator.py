@@ -66,7 +66,7 @@ class SQLQuestionGenerator:
         from services.question_intelligence.sql_prompt_builder import SQLPromptBuilder
         from services.question_intelligence.sql_response_parser import SQLResponseParser
 
-        self._prompt_builder = SQLPromptBuilder()
+        self._prompt_builder = SQLPromptBuilder(self._db.connection)
         self._response_parser = SQLResponseParser(self._db)
 
     # -----------------------------------------------------

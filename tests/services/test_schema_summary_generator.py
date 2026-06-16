@@ -18,3 +18,6 @@ def test_schema_summary_contains_tables_and_columns():
     assert "id (INTEGER)" in summary
     assert "name (TEXT)" in summary
     assert "salary (INTEGER)" in summary
+
+    assert "Foreign keys:" in summary
+    assert "department_id" in summary
