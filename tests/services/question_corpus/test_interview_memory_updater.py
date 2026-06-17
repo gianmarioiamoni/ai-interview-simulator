@@ -1,7 +1,10 @@
 # tests/services/question_corpus/test_interview_memory_updater.py
 
+import uuid
+
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.question.question import Question, QuestionDifficulty, QuestionType
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.question.question_origin_type import QuestionOriginType
 from domain.contracts.question.question_provenance import QuestionProvenance
@@ -18,6 +21,7 @@ from services.question_ingestion.contracts.ingestion_metadata import IngestionMe
 
 def _build_bank_item(
     question_id: str,
+    domains: list[str] | None = None,
 ) -> QuestionBankItem:
 
     return QuestionBankItem(
@@ -28,6 +32,7 @@ def _build_bank_item(
         area=InterviewArea.TECH_CASE_STUDY,
         level=SeniorityLevel.SENIOR,
         difficulty=4,
+        domains=domains if domains is not None else [],
         ingestion_metadata=IngestionMetadata(
             source_name="test",
             source_type="question_corpus",
@@ -40,6 +45,25 @@ def _build_bank_item(
             source_type="question_corpus",
             dataset_version="v1",
         ),
+    )
+
+
+def _build_question(
+    domains: list[str] | None = None,
+    score: float = 0.7,
+) -> Question:
+    provenance = QuestionProvenance(
+        origin_type=QuestionOriginType.RETRIEVAL,
+        source_name="test",
+        domains=domains if domains is not None else [],
+    )
+    return Question(
+        id=str(uuid.uuid4()),
+        area=InterviewArea.TECH_DATABASE,
+        type=QuestionType.WRITTEN,
+        prompt="Write a join query.",
+        difficulty=QuestionDifficulty.MEDIUM,
+        provenance=provenance,
     )
 
 
@@ -73,3 +97,80 @@ def test_record_bank_item_selection_skips_duplicate_id() -> None:
     )
 
     assert updated == memory
+
+
+def test_record_bank_item_selection_uses_item_domains_when_present() -> None:
+    updater = InterviewMemoryUpdater()
+    memory = InterviewRetrievalMemory()
+
+    updated = updater.record_bank_item_selection(
+        memory=memory,
+        item=_build_bank_item("q1", domains=["join", "group_by"]),
+    )
+
+    assert "join" in updated.covered_domains
+    assert "group_by" in updated.covered_domains
+    assert "technical_case_study" not in updated.covered_domains
+
+
+def test_record_bank_item_selection_falls_back_to_area_when_domains_empty() -> None:
+    updater = InterviewMemoryUpdater()
+    memory = InterviewRetrievalMemory()
+
+    updated = updater.record_bank_item_selection(
+        memory=memory,
+        item=_build_bank_item("q2", domains=[]),
+    )
+
+    assert "technical_case_study" in updated.covered_domains
+
+
+def test_update_from_question_evaluation_uses_provenance_domains() -> None:
+    updater = InterviewMemoryUpdater()
+    memory = InterviewRetrievalMemory()
+
+    updated = updater.update_from_question_evaluation(
+        memory=memory,
+        question=_build_question(domains=["exists"]),
+        evaluation_score=0.9,
+    )
+
+    assert "exists" in updated.covered_domains
+    assert "technical_database" not in updated.covered_domains
+
+
+def test_update_from_question_evaluation_falls_back_to_area_when_no_provenance_domains() -> None:
+    updater = InterviewMemoryUpdater()
+    memory = InterviewRetrievalMemory()
+
+    q = _build_question(domains=[])
+
+    updated = updater.update_from_question_evaluation(
+        memory=memory,
+        question=q,
+        evaluation_score=0.5,
+    )
+
+    assert "technical_database" in updated.covered_domains
+
+
+def test_update_from_question_evaluation_falls_back_to_area_when_no_provenance() -> None:
+    updater = InterviewMemoryUpdater()
+    memory = InterviewRetrievalMemory()
+
+    q = Question(
+        id=str(uuid.uuid4()),
+        area=InterviewArea.TECH_DATABASE,
+        type=QuestionType.WRITTEN,
+        prompt="Explain indexing.",
+        difficulty=QuestionDifficulty.EASY,
+        provenance=None,
+    )
+
+    updated = updater.update_from_question_evaluation(
+        memory=memory,
+        question=q,
+        evaluation_score=0.4,
+    )
+
+    assert "technical_database" in updated.covered_domains

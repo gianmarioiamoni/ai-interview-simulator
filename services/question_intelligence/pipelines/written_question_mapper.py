@@ -18,13 +18,16 @@ class WrittenQuestionMapper:
     """
 
     def from_bank_item(self, item: QuestionBankItem) -> Question:
+        provenance = item.provenance
+        if provenance is not None and item.domains:
+            provenance = provenance.model_copy(update={"domains": list(item.domains)})
         return Question(
             id=str(uuid.uuid4()),
             area=item.area,
             type=QuestionType.WRITTEN,
             prompt=item.text,
             difficulty=self._map_difficulty(item.difficulty),
-            provenance=item.provenance,
+            provenance=provenance,
         )
 
     def from_generated(

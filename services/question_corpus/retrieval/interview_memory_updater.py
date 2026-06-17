@@ -46,7 +46,7 @@ class InterviewMemoryUpdater:
         if not question_id or question_id in memory.asked_question_ids:
             return memory
 
-        domains = [item.area.value]
+        domains = list(item.domains) if item.domains else [item.area.value]
 
         updated = InterviewRetrievalMemory(
             asked_question_ids=[
@@ -88,7 +88,12 @@ class InterviewMemoryUpdater:
 
         question_id = question.id.strip()
 
-        domains = [question.area.value]
+        provenance_domains = (
+            question.provenance.domains
+            if question.provenance is not None and question.provenance.domains
+            else None
+        )
+        domains = provenance_domains if provenance_domains is not None else [question.area.value]
         weak_domains = list(memory.weak_domains)
         strong_domains = list(memory.strong_domains)
 

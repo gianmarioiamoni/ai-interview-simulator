@@ -231,3 +231,40 @@ def test_map_one_leaves_clean_page_content_unchanged() -> None:
     item = mapper.map_one(candidate)
 
     assert item.text == "How would you design a distributed cache?"
+
+
+def test_map_one_propagates_single_domain() -> None:
+    mapper = RetrievalCandidateMapper()
+    candidate = _build_candidate(metadata_overrides={"domains": "join"})
+
+    item = mapper.map_one(candidate)
+
+    assert item.domains == ["join"]
+
+
+def test_map_one_propagates_csv_domains() -> None:
+    mapper = RetrievalCandidateMapper()
+    candidate = _build_candidate(metadata_overrides={"domains": "join,group_by"})
+
+    item = mapper.map_one(candidate)
+
+    assert item.domains == ["join", "group_by"]
+
+
+def test_map_one_propagates_empty_domains_when_metadata_missing() -> None:
+    mapper = RetrievalCandidateMapper()
+    candidate = _build_candidate()
+
+    item = mapper.map_one(candidate)
+
+    assert item.domains == []
+
+
+def test_map_one_domains_carried_into_provenance() -> None:
+    mapper = RetrievalCandidateMapper()
+    candidate = _build_candidate(metadata_overrides={"domains": "exists"})
+
+    item = mapper.map_one(candidate)
+
+    assert item.domains == ["exists"]
+    assert item.provenance is not None

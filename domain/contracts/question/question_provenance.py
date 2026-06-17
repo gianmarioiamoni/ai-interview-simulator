@@ -23,6 +23,8 @@ class QuestionProvenance(BaseModel):
 
     recovery_expansion: bool = False
 
+    domains: list[str] = []
+
     model_config = {
         "frozen": True,
     }
