@@ -22,6 +22,8 @@ class QuestionBankItem(BaseModel):
     level: SeniorityLevel
     difficulty: int = Field(..., ge=1, le=5)
 
+    domains: list[str] = Field(default_factory=list)
+
     ingestion_metadata: IngestionMetadata
     provenance: QuestionProvenance | None = None
 

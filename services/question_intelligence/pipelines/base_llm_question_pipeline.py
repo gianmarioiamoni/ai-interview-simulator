@@ -235,6 +235,7 @@ class BaseLLMQuestionPipeline(ABC):
             dataset_version=dataset_version,
             retrieval_score=retrieval_score,
             generated_by_model=self._build_provenance_model_tag(),
+            domains=list(item.domains),
         )
 
     # ------------------------------------------------------------------
