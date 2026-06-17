@@ -59,7 +59,7 @@ from services.question_corpus.mappers.retrieval_candidate_mapper import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_DIR = PROJECT_ROOT / "scripts/question_intelligence/output"
-INTERVIEW_COUNT = 50
+INTERVIEW_COUNT = int(__import__('os').environ.get('INTERVIEW_COUNT', '50'))
 
 ROLES_SENIORITIES: list[tuple[RoleType, SeniorityLevel]] = [
     (RoleType.BACKEND_ENGINEER, SeniorityLevel.JUNIOR),
