@@ -1,8 +1,7 @@
 from pydantic import BaseModel
 
-from domain.contracts.question.question_origin_type import (
-    QuestionOriginType,
-)
+from domain.contracts.question.question_origin_type import QuestionOriginType
+from domain.contracts.question.sql_domain import SqlDomain
 
 
 class QuestionProvenance(BaseModel):
@@ -23,7 +22,7 @@ class QuestionProvenance(BaseModel):
 
     recovery_expansion: bool = False
 
-    domains: list[str] = []
+    domains: list[SqlDomain] = []
 
     model_config = {
         "frozen": True,

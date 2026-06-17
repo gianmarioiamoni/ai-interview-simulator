@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 
+from domain.contracts.question.sql_domain import SqlDomain
 from services.question_corpus.contracts.interview_retrieval_memory import InterviewRetrievalMemory
 
 
@@ -17,11 +18,11 @@ class AdaptiveRetrievalContext(BaseModel):
 
     already_used_question_ids: list[str] = []
 
-    already_used_domains: list[str] = []
+    already_used_domains: list[SqlDomain] = []
 
-    weak_domains: list[str] = []
+    weak_domains: list[SqlDomain] = []
 
-    strong_domains: list[str] = []
+    strong_domains: list[SqlDomain] = []
 
     target_difficulty: int | None = None
 

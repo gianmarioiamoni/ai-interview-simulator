@@ -7,6 +7,7 @@ from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.question.question import Question, QuestionDifficulty, QuestionType
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.question.question_result import QuestionResult
+from domain.contracts.question.sql_domain import SqlDomain
 from domain.contracts.shared.action_type import ActionType
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
@@ -45,7 +46,7 @@ def test_generate_first_question_returns_single_question() -> None:
     area_builder = MagicMock()
     area_builder.build.return_value = (
         [_written_question(InterviewArea.TECH_BACKGROUND, "q-1")],
-        InterviewRetrievalMemory(strong_domains=["theme_anchor:backend"]),
+        InterviewRetrievalMemory(theme_anchor="backend"),
     )
 
     service = LazyAdaptiveInterviewService(area_builder=area_builder)
@@ -58,7 +59,7 @@ def test_generate_first_question_returns_single_question() -> None:
 
     assert len(questions) == 1
     assert len(planned) == 5
-    assert memory.strong_domains
+    assert memory.theme_anchor
 
 
 def test_memory_updater_records_evaluation_signals() -> None:
@@ -72,7 +73,7 @@ def test_memory_updater_records_evaluation_signals() -> None:
         evaluation_score=0.4,
     )
 
-    assert updated.weak_domains == [InterviewArea.TECH_DATABASE.value]
+    assert updated.weak_domains == [SqlDomain.TECHNICAL_DATABASE]
     assert updated.average_score == 0.4
     assert updated.question_count == 1
     assert len(updated.difficulty_history) == 1
@@ -98,7 +99,7 @@ def test_memory_bridge_updates_from_evaluation() -> None:
         result=result,
     )
 
-    assert updated.strong_domains == [InterviewArea.TECH_CODING.value]
+    assert updated.strong_domains == [SqlDomain.TECHNICAL_DATABASE]
     assert updated.average_score == 0.9
 
 

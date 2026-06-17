@@ -2,6 +2,7 @@
 
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_result import QuestionResult
+from domain.contracts.question.sql_domain import SqlDomain
 from services.question_corpus.contracts.interview_retrieval_memory import (
     InterviewRetrievalMemory,
 )
@@ -82,7 +83,10 @@ class AdaptiveInterviewMemoryBridge:
             update={
                 "asked_question_ids": [*memory.asked_question_ids, question.id],
                 "covered_domains": list(
-                    set([*memory.covered_domains, question.area.value]),
+                    set([
+                        *memory.covered_domains,
+                        SqlDomain(question.area.value) if question.area.value in SqlDomain._value2member_map_ else SqlDomain.TECHNICAL_DATABASE,
+                    ]),
                 ),
                 "difficulty_history": [*memory.difficulty_history, difficulty_int],
             },

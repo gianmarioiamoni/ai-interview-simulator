@@ -8,6 +8,7 @@ from domain.contracts.question.question import Question, QuestionDifficulty, Que
 from domain.contracts.question.question_bank_item import QuestionBankItem
 from domain.contracts.question.question_origin_type import QuestionOriginType
 from domain.contracts.question.question_provenance import QuestionProvenance
+from domain.contracts.question.sql_domain import SqlDomain
 from domain.contracts.user.role import Role, RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 from services.question_corpus.contracts.interview_retrieval_memory import (
@@ -21,7 +22,7 @@ from services.question_ingestion.contracts.ingestion_metadata import IngestionMe
 
 def _build_bank_item(
     question_id: str,
-    domains: list[str] | None = None,
+    domains: list[SqlDomain] | None = None,
 ) -> QuestionBankItem:
 
     return QuestionBankItem(
@@ -49,7 +50,7 @@ def _build_bank_item(
 
 
 def _build_question(
-    domains: list[str] | None = None,
+    domains: list[SqlDomain] | None = None,
     score: float = 0.7,
 ) -> Question:
     provenance = QuestionProvenance(
@@ -79,7 +80,7 @@ def test_record_bank_item_selection_adds_id_and_domain() -> None:
     )
 
     assert updated.asked_question_ids == ["corpus_question_a"]
-    assert "technical_case_study" in updated.covered_domains
+    assert SqlDomain.TECHNICAL_DATABASE in updated.covered_domains
     assert updated.difficulty_history == [4]
 
 
@@ -105,12 +106,12 @@ def test_record_bank_item_selection_uses_item_domains_when_present() -> None:
 
     updated = updater.record_bank_item_selection(
         memory=memory,
-        item=_build_bank_item("q1", domains=["join", "group_by"]),
+        item=_build_bank_item("q1", domains=[SqlDomain.JOIN, SqlDomain.GROUP_BY]),
     )
 
-    assert "join" in updated.covered_domains
-    assert "group_by" in updated.covered_domains
-    assert "technical_case_study" not in updated.covered_domains
+    assert SqlDomain.JOIN in updated.covered_domains
+    assert SqlDomain.GROUP_BY in updated.covered_domains
+    assert SqlDomain.TECHNICAL_DATABASE not in updated.covered_domains
 
 
 def test_record_bank_item_selection_falls_back_to_area_when_domains_empty() -> None:
@@ -122,7 +123,7 @@ def test_record_bank_item_selection_falls_back_to_area_when_domains_empty() -> N
         item=_build_bank_item("q2", domains=[]),
     )
 
-    assert "technical_case_study" in updated.covered_domains
+    assert SqlDomain.TECHNICAL_DATABASE in updated.covered_domains
 
 
 def test_update_from_question_evaluation_uses_provenance_domains() -> None:
@@ -131,12 +132,12 @@ def test_update_from_question_evaluation_uses_provenance_domains() -> None:
 
     updated = updater.update_from_question_evaluation(
         memory=memory,
-        question=_build_question(domains=["exists"]),
+        question=_build_question(domains=[SqlDomain.EXISTS]),
         evaluation_score=0.9,
     )
 
-    assert "exists" in updated.covered_domains
-    assert "technical_database" not in updated.covered_domains
+    assert SqlDomain.EXISTS in updated.covered_domains
+    assert SqlDomain.TECHNICAL_DATABASE not in updated.covered_domains
 
 
 def test_update_from_question_evaluation_falls_back_to_area_when_no_provenance_domains() -> None:
@@ -151,7 +152,7 @@ def test_update_from_question_evaluation_falls_back_to_area_when_no_provenance_d
         evaluation_score=0.5,
     )
 
-    assert "technical_database" in updated.covered_domains
+    assert SqlDomain.TECHNICAL_DATABASE in updated.covered_domains
 
 
 def test_update_from_question_evaluation_falls_back_to_area_when_no_provenance() -> None:
@@ -173,4 +174,4 @@ def test_update_from_question_evaluation_falls_back_to_area_when_no_provenance()
         evaluation_score=0.4,
     )
 
-    assert "technical_database" in updated.covered_domains
+    assert SqlDomain.TECHNICAL_DATABASE in updated.covered_domains

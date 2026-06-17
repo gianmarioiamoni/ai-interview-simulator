@@ -2,16 +2,20 @@
 
 from pydantic import BaseModel
 
+from domain.contracts.question.sql_domain import SqlDomain
+
 
 class InterviewRetrievalMemory(BaseModel):
 
     asked_question_ids: list[str] = []
 
-    covered_domains: list[str] = []
+    covered_domains: list[SqlDomain] = []
 
-    weak_domains: list[str] = []
+    weak_domains: list[SqlDomain] = []
 
-    strong_domains: list[str] = []
+    strong_domains: list[SqlDomain] = []
+
+    theme_anchor: str | None = None
 
     difficulty_history: list[int] = []
 

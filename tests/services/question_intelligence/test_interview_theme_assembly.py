@@ -51,7 +51,7 @@ def test_theme_anchor_stored_in_strong_domains() -> None:
     updated = with_interview_theme_anchor(memory, "distributed_systems")
 
     assert get_interview_theme_anchor(updated) == "distributed_systems"
-    assert "theme_anchor:distributed_systems" in updated.strong_domains
+    assert updated.theme_anchor == "distributed_systems"
 
 
 def test_theme_selector_is_data_driven_from_corpus() -> None:
@@ -115,7 +115,7 @@ def test_adaptive_context_builder_propagates_strong_domains() -> None:
         question_count=1,
     )
 
-    assert context.strong_domains == memory.strong_domains
+    assert context.memory.theme_anchor == "system_design"
     assert get_interview_theme_anchor(context.memory) == "system_design"
 
 
@@ -123,7 +123,7 @@ def test_weak_domain_boost_engine_applies_theme_affinity_soft_bias() -> None:
 
     memory = with_interview_theme_anchor(
         InterviewRetrievalMemory(),
-        "distributed_systems",
+        "join",
     )
     context = AdaptiveRetrievalContext(
         current_role="backend_engineer",
@@ -135,14 +135,14 @@ def test_weak_domain_boost_engine_applies_theme_affinity_soft_bias() -> None:
 
     aligned = _build_candidate(
         document_id="aligned",
-        domains="distributed_systems",
-        text="Design a distributed notification system",
+        domains="join",
+        text="Explain how to perform a complex join between two tables",
         adaptive_score=0.70,
     )
     neutral = _build_candidate(
         document_id="neutral",
-        domains="frontend",
-        text="Explain CSS layout",
+        domains="indexing",
+        text="Explain B-tree index structure",
         adaptive_score=0.72,
     )
 

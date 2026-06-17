@@ -2,6 +2,7 @@
 
 from unittest.mock import MagicMock
 
+from domain.contracts.question.sql_domain import SqlDomain
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 from services.interview_orchestration.orchestration_intent_builder import (
@@ -32,8 +33,8 @@ def _build_intent():
 def test_adapt_happy_path_reuses_builder_and_maps_fields() -> None:
     intent = _build_intent()
     memory = InterviewRetrievalMemory(
-        covered_domains=["backend"],
-        weak_domains=["distributed_systems"],
+        covered_domains=[SqlDomain.JOIN],
+        weak_domains=[SqlDomain.PERFORMANCE],
         average_score=0.9,
         question_count=2,
     )
@@ -51,8 +52,8 @@ def test_adapt_happy_path_reuses_builder_and_maps_fields() -> None:
     assert context.seniority == "senior"
     assert context.target_area == "technical_case_study"
     assert context.target_question_count == intent.max_candidates
-    assert context.already_used_domains == ["backend"]
-    assert context.weak_domains == ["distributed_systems"]
+    assert context.already_used_domains == [SqlDomain.JOIN]
+    assert context.weak_domains == [SqlDomain.PERFORMANCE]
     assert context.target_difficulty == 5
     assert context.memory == memory
 

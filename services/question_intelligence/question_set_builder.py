@@ -147,17 +147,13 @@ class QuestionSetBuilder:
             all_questions.extend(selected)
 
             for question in selected:
-                retrieval_memory = InterviewRetrievalMemory(
-                    asked_question_ids=retrieval_memory.asked_question_ids,
-                    covered_domains=retrieval_memory.covered_domains,
-                    weak_domains=retrieval_memory.weak_domains,
-                    strong_domains=retrieval_memory.strong_domains,
-                    difficulty_history=append_difficulty_to_memory_history(
-                        retrieval_memory.difficulty_history,
-                        question,
-                    ),
-                    average_score=retrieval_memory.average_score,
-                    question_count=retrieval_memory.question_count,
+                retrieval_memory = retrieval_memory.model_copy(
+                    update={
+                        "difficulty_history": append_difficulty_to_memory_history(
+                            retrieval_memory.difficulty_history,
+                            question,
+                        ),
+                    }
                 )
 
         # -----------------------------------------------------

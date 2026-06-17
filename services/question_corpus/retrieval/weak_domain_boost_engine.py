@@ -1,8 +1,9 @@
 # services/question_corpus/retrieval/weak_domain_boost_engine.py
 
+from domain.contracts.question.sql_domain import SqlDomain
 from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
-from services.question_corpus.utils.domain_parser import parse_domains
+from services.question_corpus.utils.domain_parser import parse_sql_domains
 from services.question_intelligence.interview_theme_memory import get_interview_theme_anchor
 
 
@@ -81,20 +82,22 @@ class WeakDomainBoostEngine:
     def _extract_domains(
         self,
         candidate: RetrievalCandidate,
-    ) -> list[str]:
+    ) -> list[SqlDomain]:
 
-        return parse_domains(
+        return parse_sql_domains(
             candidate.document.metadata.get("domains"),
         )
 
     def _theme_affinity_boost(
         self,
         candidate: RetrievalCandidate,
-        domains: list[str],
+        domains: list[SqlDomain],
         theme_anchor: str,
     ) -> float:
 
-        if theme_anchor in domains:
+        domain_values = [d.value for d in domains]
+
+        if theme_anchor in domain_values:
             return self.THEME_AFFINITY_BOOST
 
         readable_theme = theme_anchor.replace("_", " ")
