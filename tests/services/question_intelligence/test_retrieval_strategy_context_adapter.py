@@ -1,5 +1,6 @@
 # tests/services/question_intelligence/test_retrieval_strategy_context_adapter.py
 
+from domain.contracts.question.sql_domain import SqlDomain
 from services.question_corpus.contracts.interview_retrieval_memory import (
     InterviewRetrievalMemory,
 )
@@ -11,8 +12,8 @@ from services.question_intelligence.retrieval.retrieval_strategy import Retrieva
 
 def test_adapt_maps_strategy_and_filters_to_adaptive_context() -> None:
     memory = InterviewRetrievalMemory(
-        covered_domains=["backend"],
-        weak_domains=["distributed_systems"],
+        covered_domains=[SqlDomain.JOIN],
+        weak_domains=[SqlDomain.PERFORMANCE],
         average_score=0.9,
         question_count=2,
     )
@@ -32,8 +33,8 @@ def test_adapt_maps_strategy_and_filters_to_adaptive_context() -> None:
     assert context.seniority == "senior"
     assert context.target_area == "technical_case_study"
     assert context.target_question_count == 7
-    assert context.already_used_domains == ["backend"]
-    assert context.weak_domains == ["distributed_systems"]
+    assert context.already_used_domains == [SqlDomain.JOIN]
+    assert context.weak_domains == [SqlDomain.PERFORMANCE]
     assert context.target_difficulty == 5
     assert context.memory == memory
 

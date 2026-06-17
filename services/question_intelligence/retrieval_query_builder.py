@@ -93,10 +93,10 @@ class RetrievalQueryBuilder:
 
         adaptive_topics: list[str] = []
         if memory and memory.weak_domains:
-            adaptive_topics.extend(memory.weak_domains[:2])
+            adaptive_topics.extend(d.value for d in memory.weak_domains[:2])
         if memory and memory.strong_domains:
             adaptive_topics.extend(
-                [f"not {domain}" for domain in memory.strong_domains[:1]],
+                [f"not {domain.value}" for domain in memory.strong_domains[:1]],
             )
 
         all_topics = area_topics + role_topics + level_topics + adaptive_topics

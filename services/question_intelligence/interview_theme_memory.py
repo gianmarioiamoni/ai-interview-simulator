@@ -10,28 +10,13 @@ THEME_ANCHOR_PREFIX = "theme_anchor:"
 def get_interview_theme_anchor(
     memory: InterviewRetrievalMemory,
 ) -> str | None:
-
-    for domain in memory.strong_domains:
-
-        if domain.startswith(THEME_ANCHOR_PREFIX):
-            return domain[len(THEME_ANCHOR_PREFIX) :]
-
-    return None
+    return memory.theme_anchor
 
 
 def with_interview_theme_anchor(
     memory: InterviewRetrievalMemory,
     theme_anchor: str,
 ) -> InterviewRetrievalMemory:
-
-    preserved = [
-        domain
-        for domain in memory.strong_domains
-        if not domain.startswith(THEME_ANCHOR_PREFIX)
-    ]
-
-    anchored = [f"{THEME_ANCHOR_PREFIX}{theme_anchor}"] + preserved
-
     return memory.model_copy(
-        update={"strong_domains": anchored},
+        update={"theme_anchor": theme_anchor},
     )

@@ -2,10 +2,11 @@
 
 from domain.contracts.question.question import Question
 from domain.contracts.question.question_bank_item import QuestionBankItem
+from domain.contracts.question.sql_domain import SqlDomain
 
 from services.question_corpus.contracts.interview_retrieval_memory import InterviewRetrievalMemory
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
-from services.question_corpus.utils.domain_parser import parse_domains
+from services.question_corpus.utils.domain_parser import parse_sql_domains
 from services.question_intelligence.question_difficulty_mapper import (
     question_difficulty_to_corpus_int,
 )
@@ -46,7 +47,7 @@ class InterviewMemoryUpdater:
         if not question_id or question_id in memory.asked_question_ids:
             return memory
 
-        domains = list(item.domains) if item.domains else [item.area.value]
+        domains: list[SqlDomain] = list(item.domains) if item.domains else [SqlDomain(item.area.value) if item.area.value in SqlDomain._value2member_map_ else SqlDomain.TECHNICAL_DATABASE]
 
         updated = InterviewRetrievalMemory(
             asked_question_ids=[
@@ -88,12 +89,17 @@ class InterviewMemoryUpdater:
 
         question_id = question.id.strip()
 
-        provenance_domains = (
+        provenance_domains: list[SqlDomain] | None = (
             question.provenance.domains
             if question.provenance is not None and question.provenance.domains
             else None
         )
-        domains = provenance_domains if provenance_domains is not None else [question.area.value]
+        if provenance_domains is not None:
+            domains: list[SqlDomain] = provenance_domains
+        elif question.area.value in SqlDomain._value2member_map_:
+            domains = [SqlDomain(question.area.value)]
+        else:
+            domains = [SqlDomain.TECHNICAL_DATABASE]
         weak_domains = list(memory.weak_domains)
         strong_domains = list(memory.strong_domains)
 
@@ -220,8 +226,8 @@ class InterviewMemoryUpdater:
     def _extract_domains(
         self,
         candidate: RetrievalCandidate,
-    ) -> list[str]:
+    ) -> list[SqlDomain]:
 
-        return parse_domains(
+        return parse_sql_domains(
             candidate.document.metadata.get("domains"),
         )

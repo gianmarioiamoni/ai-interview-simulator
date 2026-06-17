@@ -1,6 +1,7 @@
 # tests/services/question_intelligence/test_retrieval_query_builder.py
 
 from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.question.sql_domain import SqlDomain
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
@@ -65,8 +66,8 @@ def test_retrieval_query_builder_rotates_with_memory() -> None:
 def test_retrieval_query_builder_includes_adaptive_domains() -> None:
 
     memory = InterviewRetrievalMemory(
-        weak_domains=["indexing", "transactions"],
-        strong_domains=["joins"],
+        weak_domains=[SqlDomain.INDEXING, SqlDomain.TRANSACTION],
+        strong_domains=[SqlDomain.JOIN],
     )
     query = RetrievalQueryBuilder().build(
         role=RoleType.BACKEND_ENGINEER,
@@ -76,5 +77,5 @@ def test_retrieval_query_builder_includes_adaptive_domains() -> None:
     )
 
     assert "indexing" in query.lower()
-    assert "transactions" in query.lower()
-    assert "not joins" in query.lower()
+    assert "transaction" in query.lower()
+    assert "not join" in query.lower()

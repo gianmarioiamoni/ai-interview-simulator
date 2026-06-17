@@ -1,8 +1,9 @@
 # services/question_corpus/retrieval/coverage_penalty_engine.py
 
+from domain.contracts.question.sql_domain import SqlDomain
 from services.question_corpus.contracts.adaptive_retrieval_context import AdaptiveRetrievalContext
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
-from services.question_corpus.utils.domain_parser import parse_domains
+from services.question_corpus.utils.domain_parser import parse_sql_domains
 
 
 class CoveragePenaltyEngine:
@@ -73,8 +74,8 @@ class CoveragePenaltyEngine:
     def _extract_domains(
         self,
         candidate: RetrievalCandidate,
-    ) -> list[str]:
+    ) -> list[SqlDomain]:
 
-        return parse_domains(
+        return parse_sql_domains(
             candidate.document.metadata.get("domains"),
         )

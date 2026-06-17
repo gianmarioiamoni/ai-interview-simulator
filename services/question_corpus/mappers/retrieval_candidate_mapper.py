@@ -14,7 +14,7 @@ from app.core.logger import get_logger
 _logger = get_logger(__name__)
 from domain.contracts.user.seniority_level import SeniorityLevel
 from services.question_corpus.contracts.retrieval_candidate import RetrievalCandidate
-from services.question_corpus.utils.domain_parser import parse_domains
+from services.question_corpus.utils.domain_parser import parse_sql_domains
 from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
 
 
@@ -174,7 +174,7 @@ class RetrievalCandidateMapper:
                 f"Invalid seniority value: {seniority_value!r}."
             ) from exc
 
-        domains = parse_domains(metadata.get("domains"))
+        domains = parse_sql_domains(metadata.get("domains"))
 
         return QuestionBankItem(
             id=document_id,
