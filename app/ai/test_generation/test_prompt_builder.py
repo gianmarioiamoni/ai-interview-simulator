@@ -20,6 +20,9 @@ class TestPromptBuilder:
     Builds the rendered prompt string sent to the LLM for test generation.
 
     Stateless — safe to share across requests.
+
+    Accepts an optional CodingDomainProfile to inject domain-specific
+    edge-case hints into the hidden test generation prompt.
     """
 
     def build(
@@ -27,6 +30,7 @@ class TestPromptBuilder:
         problem: str,
         spec: CodingSpec,
         num_tests: int,
+        domain_profile=None,
     ) -> str:
         template = PromptLoader.load("test_generation/ai_test_generator.txt")
 
@@ -36,6 +40,16 @@ class TestPromptBuilder:
             "parameters": json.dumps(spec.parameters),
             "num_tests": num_tests,
             "param_count": len(spec.parameters),
+            "domain_hints_block": self._domain_hints_block(domain_profile),
         }
 
         return PromptRenderer.render(template, context)
+
+    def _domain_hints_block(self, domain_profile) -> str:
+        if domain_profile is None or not domain_profile.test_scenario_hints:
+            return ""
+        hints = ", ".join(domain_profile.test_scenario_hints)
+        return (
+            f"\nDOMAIN TEST HINTS (prefer these edge cases where applicable):\n"
+            f"{hints}\n"
+        )

@@ -35,6 +35,8 @@ from domain.contracts.user.seniority_level import (
     SeniorityLevel,
 )
 
+from typing import Callable
+
 from services.question_intelligence.coding_question_generator import (
     CodingQuestionGenerator,
     GeneratedCodingQuestion,
@@ -71,6 +73,8 @@ _ACTIONABLE_CODING_PATTERN = re.compile(
 _CODING_CANDIDATE_SCAN_K = 10
 _CODING_GENERATE_MAX_ATTEMPTS = settings.coding_pipeline_retry_attempts
 
+CodingGeneratorFactory = Callable[[BusinessContext], CodingQuestionGenerator]
+
 
 class CodingQuestionPipeline(BaseLLMQuestionPipeline):
 
@@ -79,12 +83,14 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
         retrieval_service: QuestionRetrievalService,
         coding_generator: CodingQuestionGenerator,
         coding_retrieval_helper: CodingPipelineRetrievalHelper | None = None,
+        generator_factory: CodingGeneratorFactory | None = None,
     ) -> None:
 
         super().__init__()
         self._retrieval_service = retrieval_service
         self._coding_generator = coding_generator
         self._coding_retrieval_helper = coding_retrieval_helper
+        self._generator_factory = generator_factory
 
     # ------------------------------------------------------------------
     # BaseLLMQuestionPipeline implementation
@@ -122,6 +128,11 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
             coding_retrieval_helper=self._coding_retrieval_helper,
         )
 
+    def _resolve_generator(self, business_context: BusinessContext | None) -> CodingQuestionGenerator:
+        if self._generator_factory is not None and business_context is not None:
+            return self._generator_factory(business_context)
+        return self._coding_generator
+
     def _enrich_item(
         self,
         item: QuestionBankItem,
@@ -140,8 +151,9 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
             return None
 
         theme_guidance_text = theme_guidance
+        generator = self._resolve_generator(business_context)
 
-        enriched = self._coding_generator.enrich_from_prompt(
+        enriched = generator.enrich_from_prompt(
             seed_prompt=item.text,
             role=role,
             level=level,
@@ -178,11 +190,12 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
     ) -> List[Question]:
 
         area = InterviewArea.TECH_CODING
+        generator = self._resolve_generator(business_context)
         last_result: List[Question] = []
 
         for attempt in range(1, _CODING_GENERATE_MAX_ATTEMPTS + 1):
 
-            raw_items = self._coding_generator.generate(
+            raw_items = generator.generate(
                 role=role,
                 level=level,
                 n=n,

@@ -50,9 +50,12 @@ class CodingQuestionGenerator:
 
     Delegates prompt construction to CodingPromptBuilder and
     LLM invocation + parsing to CodingResponseParser.
+
+    Accepts an optional CodingDomainProfile for BusinessContext-driven
+    vocabulary and scenario framing.
     """
 
-    def __init__(self, llm: LLMPort) -> None:
+    def __init__(self, llm: LLMPort, domain_profile=None) -> None:
         self._llm = llm
 
         from services.question_intelligence.coding_prompt_builder import (
@@ -62,7 +65,7 @@ class CodingQuestionGenerator:
             CodingResponseParser,
         )
 
-        self._prompt_builder = CodingPromptBuilder()
+        self._prompt_builder = CodingPromptBuilder(domain_profile=domain_profile)
         self._response_parser = CodingResponseParser(llm)
 
     # -----------------------------------------------------

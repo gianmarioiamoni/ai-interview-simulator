@@ -200,7 +200,7 @@ class TestCDPromptBuilders:
         from services.question_intelligence.coding_prompt_builder import CodingPromptBuilder
         builder = CodingPromptBuilder()
         block = builder._cd_block(_CD)
-        assert "BUSINESS CONTEXT" in block
+        assert "COMPANY DESCRIPTION" in block
         assert "Fintech" in block
 
     def test_coding_prompt_builder_cd_block_absent_when_none(self):

@@ -35,6 +35,7 @@ class AITestGenerator:
         self,
         question: Question,
         num_tests: int = 3,
+        domain_profile=None,
     ) -> List[CodingTestCase]:
 
         if not question.coding_spec:
@@ -53,6 +54,7 @@ class AITestGenerator:
                 problem=question.prompt,
                 spec=spec,
                 num_tests=num_tests * 2,
+                domain_profile=domain_profile,
             )
             tests = self._response_parser.invoke_and_parse(
                 prompt=prompt,
