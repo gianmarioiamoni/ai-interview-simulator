@@ -2,6 +2,7 @@
 
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.interview.business_context import BusinessContext
 from domain.contracts.question.question import Question
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
@@ -52,6 +53,7 @@ class LazyAdaptiveInterviewService:
         interview_type: InterviewType,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> tuple[list[Question], InterviewRetrievalMemory, list[str]]:
 
         planned_areas = self.resolve_planned_areas(interview_type)
@@ -74,6 +76,7 @@ class LazyAdaptiveInterviewService:
             memory=memory,
             job_description=job_description,
             company_description=company_description,
+            business_context=business_context,
         )
 
         return questions[:QUESTIONS_PER_AREA], memory, [area.value for area in planned_areas]
@@ -88,6 +91,7 @@ class LazyAdaptiveInterviewService:
         memory: InterviewRetrievalMemory,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> tuple[Question, InterviewRetrievalMemory]:
 
         if generated_count >= len(planned_areas):
@@ -105,6 +109,7 @@ class LazyAdaptiveInterviewService:
             memory=memory,
             job_description=job_description,
             company_description=company_description,
+            business_context=business_context,
         )
 
         if not questions:

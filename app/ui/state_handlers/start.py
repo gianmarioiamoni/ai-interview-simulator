@@ -32,6 +32,7 @@ from app.graph.nodes.navigation_node import configure_navigation_node
 
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
+from domain.contracts.interview.business_context import BusinessContext
 
 from infrastructure.config.settings import settings
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
@@ -146,6 +147,7 @@ def start_interview(
                 interview_type=interview_type_enum,
                 job_description=jd_for_generation,
                 company_description=cd_for_generation,
+                business_context=BusinessContext.from_company_description(cd_for_generation),
             )
         )
 
@@ -182,9 +184,13 @@ def start_interview(
     state.current_progress = _smooth_progress(state.current_progress, 100)
     time.sleep(0.2)
 
+    raw_cd = company_description.strip() if company_description and company_description.strip() else None
+    business_context = BusinessContext.from_company_description(raw_cd)
+
     context_profile = InterviewContextProfile(
         job_description=job_description.strip() if job_description and job_description.strip() else None,
-        company_description=company_description.strip() if company_description and company_description.strip() else None,
+        company_description=raw_cd,
+        business_context=business_context,
     )
 
     state = InterviewState.create_initial(

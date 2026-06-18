@@ -47,9 +47,13 @@ def render_overall(report):
         _MAX = 300
         jd = context_profile.job_description
         cd = context_profile.company_description
-        if jd or cd:
+        bc = getattr(context_profile, "business_context", None)
+        if jd or cd or bc:
             jd_line = ""
             cd_line = ""
+            bc_line = ""
+            if bc:
+                bc_line = f"<div><strong>Business Context:</strong> {bc.value.capitalize()}</div>"
             if jd:
                 jd_preview = jd[:_MAX] + ("…" if len(jd) > _MAX else "")
                 jd_line = f"<div><strong>Job Description:</strong> {jd_preview}</div>"
@@ -59,6 +63,7 @@ def render_overall(report):
             context_block = f"""
 <details>
 <summary><strong>Interview Context</strong></summary>
+{bc_line}
 {jd_line}
 {cd_line}
 </details>

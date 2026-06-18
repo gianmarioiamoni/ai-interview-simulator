@@ -9,6 +9,7 @@ from domain.contracts.question.question_origin_type import QuestionOriginType
 from domain.contracts.question.question_provenance import QuestionProvenance
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.interview.business_context import BusinessContext
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
@@ -66,6 +67,7 @@ class BaseLLMQuestionPipeline(ABC):
         memory: InterviewRetrievalMemory | None = None,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory]:
         """
         Orchestrate retrieval → enrich → generate → memory update.
@@ -135,6 +137,7 @@ class BaseLLMQuestionPipeline(ABC):
                 theme_guidance=theme_guidance,
                 job_description=job_description,
                 company_description=company_description,
+                business_context=business_context,
             )
 
             if enriched is None:
@@ -155,6 +158,7 @@ class BaseLLMQuestionPipeline(ABC):
                     theme_guidance=theme_guidance,
                     job_description=job_description,
                     company_description=company_description,
+                    business_context=business_context,
                 )
             )
 
@@ -167,6 +171,7 @@ class BaseLLMQuestionPipeline(ABC):
                     theme_guidance=theme_guidance,
                     job_description=job_description,
                     company_description=company_description,
+                    business_context=business_context,
                 )
             )
 
@@ -189,6 +194,7 @@ class BaseLLMQuestionPipeline(ABC):
                 theme_guidance=theme_guidance,
                 job_description=job_description,
                 company_description=company_description,
+                business_context=business_context,
             )[:questions_per_area]
 
         final_prompts = {q.prompt for q in final_questions}
@@ -284,6 +290,7 @@ class BaseLLMQuestionPipeline(ABC):
         theme_guidance: str | None,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> Question | None:
         """Enrich a single bank item via LLM. Return None on failure."""
 
@@ -296,6 +303,7 @@ class BaseLLMQuestionPipeline(ABC):
         theme_guidance: str | None = None,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> List[Question]:
         """Generate questions from scratch via LLM with retry logic."""
 
