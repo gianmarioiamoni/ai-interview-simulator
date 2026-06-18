@@ -81,6 +81,7 @@ class QuestionIntelligenceProvider:
             generator=generator,
             coding_generator=coding_generator,
             sql_generator=sql_generator,
+            llm=llm,
         )
 
         deduplicator = SemanticDeduplicator(threshold=DEDUPLICATION_THRESHOLD)

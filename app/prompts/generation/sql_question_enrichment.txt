@@ -25,8 +25,7 @@ Each output item MUST include:
 Rules:
 - Queries MUST be executable on the provided schema and seed data
 - Use ONLY columns listed in the schema — NEVER invent column names
-- The column for an employee's name is "name" (in the employees table), NOT "employee_name"
-- Do NOT generate schema or data
+- Use SQLite-compatible SQL
 - No markdown
 - Only valid JSON
 - Return exactly 1 question in the array

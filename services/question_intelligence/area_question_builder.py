@@ -47,6 +47,7 @@ from services.question_intelligence.pipelines.coding_question_pipeline import (
 
 from services.question_intelligence.pipelines.sql_question_pipeline import (
     SQLQuestionPipeline,
+    SQLGeneratorFactory,
 )
 
 from services.question_corpus.contracts.interview_retrieval_memory import (
@@ -60,6 +61,31 @@ from app.core.logger import get_logger
 logger = get_logger(__name__)
 
 
+def _build_sql_generator_factory(
+    llm,
+    default_generator: SQLQuestionGenerator,
+) -> SQLGeneratorFactory:
+    """
+    Returns a factory that provides a schema-scoped SQLQuestionGenerator per BusinessContext.
+    Generators are cached by context after first construction.
+    GENERIC returns the pre-built default_generator (no re-init cost).
+    """
+    from services.sql_engine.schema_registry import SchemaRegistry
+    from domain.contracts.interview.business_context import BusinessContext
+
+    _cache: dict[BusinessContext, SQLQuestionGenerator] = {
+        BusinessContext.GENERIC: default_generator,
+    }
+
+    def factory(context: BusinessContext) -> SQLQuestionGenerator:
+        if context not in _cache:
+            schema_def = SchemaRegistry.get(context)
+            _cache[context] = SQLQuestionGenerator(llm, schema_definition=schema_def)
+        return _cache[context]
+
+    return factory
+
+
 class AreaQuestionBuilder:
 
     def __init__(
@@ -68,6 +94,7 @@ class AreaQuestionBuilder:
         generator: QuestionGenerator,
         coding_generator: CodingQuestionGenerator,
         sql_generator: SQLQuestionGenerator,
+        llm=None,
     ) -> None:
 
         self._retrieval_service = retrieval_service
@@ -82,9 +109,17 @@ class AreaQuestionBuilder:
             retrieval_service=retrieval_service,
             coding_generator=coding_generator,
         )
+
+        generator_factory = (
+            _build_sql_generator_factory(llm, sql_generator)
+            if llm is not None
+            else None
+        )
+
         self._sql_pipeline = SQLQuestionPipeline(
             retrieval_service=retrieval_service,
             sql_generator=sql_generator,
+            generator_factory=generator_factory,
         )
     # =====================================================
     # PUBLIC

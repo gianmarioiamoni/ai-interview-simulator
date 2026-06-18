@@ -1,0 +1,302 @@
+# tests/services/question_intelligence/test_sql_schema_injection.py
+"""
+End-to-end schema propagation tests.
+
+Verifies that:
+- FINTECH BusinessContext resolves to a generator with FINTECH SQLDatabase
+- GENERIC BusinessContext resolves to a generator with GENERIC SQLDatabase
+- db_schema on generated Question contains fintech DDL for FINTECH context
+- filter_executable validates against fintech schema (rejects HR SQL)
+- GENERIC behaviour unchanged
+- Factory caches generators (same instance returned on repeated calls)
+"""
+
+import json
+import pytest
+from unittest.mock import MagicMock
+
+from domain.contracts.interview.business_context import BusinessContext
+from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
+from services.question_corpus.contracts.interview_retrieval_memory import (
+    InterviewRetrievalMemory,
+)
+from services.question_intelligence.area_question_builder import (
+    _build_sql_generator_factory,
+)
+from services.question_intelligence.pipelines.sql_question_pipeline import (
+    SQLGeneratorFactory,
+    SQLQuestionPipeline,
+    _BUSINESS_CONTEXT_METADATA_ONLY,
+)
+from services.question_intelligence.sql_question_generator import SQLQuestionGenerator
+from services.sql_engine.schema_registry import SchemaRegistry
+
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+_FINTECH_VALID_JSON = json.dumps(
+    [
+        {
+            "prompt": "List all accounts with balance above 5000.",
+            "reference_query": "SELECT id, balance FROM accounts WHERE balance > 5000",
+            "test_cases": [
+                {
+                    "expected_query": "SELECT id, balance FROM accounts WHERE balance > 5000",
+                    "ordered": False,
+                },
+                {
+                    "expected_query": "SELECT a.id, a.balance FROM accounts a WHERE a.balance > 5000",
+                    "ordered": False,
+                },
+            ],
+        }
+    ]
+)
+
+_GENERIC_VALID_JSON = json.dumps(
+    [
+        {
+            "prompt": "List all employees.",
+            "reference_query": "SELECT name FROM employees",
+            "test_cases": [
+                {"expected_query": "SELECT name FROM employees", "ordered": False},
+                {"expected_query": "SELECT e.name FROM employees e", "ordered": False},
+            ],
+        }
+    ]
+)
+
+
+def _make_llm(json_str: str) -> MagicMock:
+    llm = MagicMock()
+    response = MagicMock()
+    response.content = json_str
+    llm.invoke.return_value = response
+    return llm
+
+
+# ── factory tests ─────────────────────────────────────────────────────────────
+
+
+class TestSQLGeneratorFactory:
+    def test_generic_returns_default_generator(self):
+        llm = _make_llm(_GENERIC_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+
+        result = factory(BusinessContext.GENERIC)
+        assert result is default_gen
+
+    def test_fintech_returns_different_generator(self):
+        llm = _make_llm(_FINTECH_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+
+        result = factory(BusinessContext.FINTECH)
+        assert result is not default_gen
+
+    def test_fintech_generator_has_fintech_schema(self):
+        llm = _make_llm(_FINTECH_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+
+        fintech_gen = factory(BusinessContext.FINTECH)
+        assert "accounts" in fintech_gen._db.get_schema_sql()
+        assert "transactions" in fintech_gen._db.get_schema_sql()
+        assert "employees" not in fintech_gen._db.get_schema_sql()
+
+    def test_generic_generator_has_generic_schema(self):
+        llm = _make_llm(_GENERIC_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+
+        generic_gen = factory(BusinessContext.GENERIC)
+        assert "employees" in generic_gen._db.get_schema_sql()
+        assert "departments" in generic_gen._db.get_schema_sql()
+        assert "accounts" not in generic_gen._db.get_schema_sql()
+
+    def test_factory_caches_fintech_generator(self):
+        llm = _make_llm(_FINTECH_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+
+        gen1 = factory(BusinessContext.FINTECH)
+        gen2 = factory(BusinessContext.FINTECH)
+        assert gen1 is gen2
+
+    def test_ecommerce_falls_back_to_generic_schema(self):
+        """ECOMMERCE not in registry → falls back to GENERIC SchemaDefinition."""
+        llm = _make_llm(_GENERIC_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+
+        ecom_gen = factory(BusinessContext.ECOMMERCE)
+        assert "employees" in ecom_gen._db.get_schema_sql()
+
+
+# ── schema propagation to Question.db_schema ─────────────────────────────────
+
+
+class TestSchemaStampedOnQuestion:
+    def test_fintech_generator_stamps_fintech_db_schema(self):
+        llm = _make_llm(_FINTECH_VALID_JSON)
+        fintech_defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        gen = SQLQuestionGenerator(llm, schema_definition=fintech_defn)
+
+        questions = gen.generate(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+        )
+
+        assert len(questions) == 1
+        assert "accounts" in questions[0].db_schema
+        assert "transactions" in questions[0].db_schema
+        assert "employees" not in questions[0].db_schema
+
+    def test_fintech_generator_stamps_fintech_db_seed_data(self):
+        llm = _make_llm(_FINTECH_VALID_JSON)
+        fintech_defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        gen = SQLQuestionGenerator(llm, schema_definition=fintech_defn)
+
+        questions = gen.generate(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+        )
+
+        assert "INSERT INTO accounts" in questions[0].db_seed_data
+        assert "INSERT INTO transactions" in questions[0].db_seed_data
+
+    def test_generic_generator_stamps_generic_db_schema(self):
+        llm = _make_llm(_GENERIC_VALID_JSON)
+        gen = SQLQuestionGenerator(llm)
+
+        questions = gen.generate(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+        )
+
+        assert "employees" in questions[0].db_schema
+        assert "accounts" not in questions[0].db_schema
+
+
+# ── filter_executable uses correct schema ─────────────────────────────────────
+
+
+class TestFilterExecutableSchemaIsolation:
+    def test_fintech_rejects_hr_sql(self):
+        """SQL referencing `employees` must be rejected on FINTECH schema."""
+        llm = MagicMock()
+        hr_json = json.dumps(
+            [
+                {
+                    "prompt": "List all employees.",
+                    "reference_query": "SELECT name FROM employees",
+                    "test_cases": [
+                        {"expected_query": "SELECT name FROM employees", "ordered": False},
+                        {"expected_query": "SELECT e.name FROM employees e", "ordered": False},
+                    ],
+                }
+            ]
+        )
+        response = MagicMock()
+        response.content = hr_json
+        llm.invoke.return_value = response
+
+        fintech_defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        gen = SQLQuestionGenerator(llm, schema_definition=fintech_defn)
+
+        with pytest.raises(ValueError):
+            gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID)
+
+    def test_fintech_accepts_fintech_sql(self):
+        """SQL referencing `accounts` must be accepted on FINTECH schema."""
+        llm = _make_llm(_FINTECH_VALID_JSON)
+        fintech_defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        gen = SQLQuestionGenerator(llm, schema_definition=fintech_defn)
+
+        questions = gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID)
+        assert len(questions) == 1
+
+    def test_generic_rejects_fintech_sql(self):
+        """SQL referencing `accounts` must be rejected on GENERIC schema."""
+        llm = MagicMock()
+        response = MagicMock()
+        response.content = _FINTECH_VALID_JSON
+        llm.invoke.return_value = response
+
+        gen = SQLQuestionGenerator(llm)  # GENERIC schema
+
+        with pytest.raises(ValueError):
+            gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID)
+
+
+# ── prompt schema summary contains correct tables ─────────────────────────────
+
+
+class TestPromptSchemaSummary:
+    def test_fintech_prompt_contains_accounts_not_employees(self):
+        llm = _make_llm(_FINTECH_VALID_JSON)
+        fintech_defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        gen = SQLQuestionGenerator(llm, schema_definition=fintech_defn)
+
+        gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID)
+        prompt = llm.invoke.call_args[0][0]
+
+        assert "accounts" in prompt
+        assert "transactions" in prompt
+        assert "employees" not in prompt
+
+    def test_generic_prompt_contains_employees_not_accounts(self):
+        llm = _make_llm(_GENERIC_VALID_JSON)
+        gen = SQLQuestionGenerator(llm)
+
+        gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID)
+        prompt = llm.invoke.call_args[0][0]
+
+        assert "employees" in prompt
+        assert "accounts" not in prompt
+
+
+# ── pipeline _resolve_generator uses factory ─────────────────────────────────
+
+
+class TestPipelineResolveGenerator:
+    def test_no_factory_returns_default_generator(self):
+        default_gen = MagicMock(spec=SQLQuestionGenerator)
+        pipeline = SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=None,
+        )
+        assert pipeline._resolve_generator(BusinessContext.FINTECH) is default_gen
+
+    def test_factory_returns_context_specific_generator(self):
+        default_gen = MagicMock(spec=SQLQuestionGenerator)
+        fintech_gen = MagicMock(spec=SQLQuestionGenerator)
+        factory = lambda ctx: fintech_gen if ctx == BusinessContext.FINTECH else default_gen
+
+        pipeline = SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=factory,
+        )
+        assert pipeline._resolve_generator(BusinessContext.FINTECH) is fintech_gen
+        assert pipeline._resolve_generator(BusinessContext.GENERIC) is default_gen
+
+    def test_factory_none_context_returns_default(self):
+        default_gen = MagicMock(spec=SQLQuestionGenerator)
+        fintech_gen = MagicMock(spec=SQLQuestionGenerator)
+        factory = lambda ctx: fintech_gen
+
+        pipeline = SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=factory,
+        )
+        assert pipeline._resolve_generator(None) is default_gen
