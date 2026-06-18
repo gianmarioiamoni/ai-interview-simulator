@@ -300,3 +300,131 @@ class TestPipelineResolveGenerator:
             generator_factory=factory,
         )
         assert pipeline._resolve_generator(None) is default_gen
+
+
+# ── _generate_with_retry uses context-specific generator ─────────────────────
+
+
+class TestGenerateWithRetrySchemaSelection:
+    """Verifies that _generate_with_retry delegates to the factory-resolved
+    generator, not the default sql_generator."""
+
+    def _make_pipeline(
+        self,
+        default_gen: MagicMock,
+        fintech_gen: MagicMock,
+    ) -> SQLQuestionPipeline:
+        factory = (
+            lambda ctx: fintech_gen if ctx == BusinessContext.FINTECH else default_gen
+        )
+        return SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=factory,
+        )
+
+    def test_fintech_retry_calls_fintech_generator(self):
+        default_gen = MagicMock(spec=SQLQuestionGenerator)
+        fintech_gen = MagicMock(spec=SQLQuestionGenerator)
+        fintech_gen.generate.return_value = [MagicMock()]
+
+        pipeline = self._make_pipeline(default_gen, fintech_gen)
+        result = pipeline._generate_with_retry(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+            business_context=BusinessContext.FINTECH,
+        )
+
+        fintech_gen.generate.assert_called_once()
+        default_gen.generate.assert_not_called()
+        assert len(result) == 1
+
+    def test_generic_retry_calls_default_generator(self):
+        default_gen = MagicMock(spec=SQLQuestionGenerator)
+        fintech_gen = MagicMock(spec=SQLQuestionGenerator)
+        default_gen.generate.return_value = [MagicMock()]
+
+        pipeline = self._make_pipeline(default_gen, fintech_gen)
+        result = pipeline._generate_with_retry(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+            business_context=BusinessContext.GENERIC,
+        )
+
+        default_gen.generate.assert_called_once()
+        fintech_gen.generate.assert_not_called()
+        assert len(result) == 1
+
+    def test_no_factory_retry_always_uses_default(self):
+        default_gen = MagicMock(spec=SQLQuestionGenerator)
+        default_gen.generate.return_value = [MagicMock()]
+
+        pipeline = SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=None,
+        )
+        result = pipeline._generate_with_retry(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+            business_context=BusinessContext.FINTECH,
+        )
+
+        default_gen.generate.assert_called_once()
+        assert len(result) == 1
+
+    def test_fintech_retry_stamps_fintech_schema_on_question(self):
+        """Integration: FINTECH retry path produces Question with fintech DDL."""
+        llm = _make_llm(_FINTECH_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        fintech_defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        fintech_gen = SQLQuestionGenerator(llm, schema_definition=fintech_defn)
+
+        factory = (
+            lambda ctx: fintech_gen if ctx == BusinessContext.FINTECH else default_gen
+        )
+        pipeline = SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=factory,
+        )
+
+        results = pipeline._generate_with_retry(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+            business_context=BusinessContext.FINTECH,
+        )
+
+        assert len(results) == 1
+        assert "accounts" in results[0].db_schema
+        assert "employees" not in results[0].db_schema
+
+    def test_generic_retry_stamps_generic_schema_on_question(self):
+        """Integration: GENERIC retry path produces Question with HR DDL."""
+        llm = _make_llm(_GENERIC_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        fintech_gen = MagicMock(spec=SQLQuestionGenerator)
+
+        factory = (
+            lambda ctx: fintech_gen if ctx == BusinessContext.FINTECH else default_gen
+        )
+        pipeline = SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=factory,
+        )
+
+        results = pipeline._generate_with_retry(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+            business_context=BusinessContext.GENERIC,
+        )
+
+        assert len(results) == 1
+        assert "employees" in results[0].db_schema
+        assert "accounts" not in results[0].db_schema
