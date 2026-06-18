@@ -13,3 +13,4 @@ class SchemaDefinition:
     seed_sql: str
     domain_tags: tuple[SqlDomain, ...] = field(default_factory=tuple)
     summary_hint: str | None = None
+    vocabulary_hint: tuple[str, ...] = field(default_factory=tuple)

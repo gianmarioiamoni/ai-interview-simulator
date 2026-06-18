@@ -35,11 +35,19 @@ class SQLPromptBuilder:
     constants are stored here.
     """
 
-    def __init__(self, connection: sqlite3.Connection) -> None:
+    def __init__(
+        self,
+        connection: sqlite3.Connection,
+        vocabulary_hint: tuple[str, ...] = (),
+    ) -> None:
         generator = SchemaSummaryGenerator()
         self._schema_summary = generator.generate(connection)
         self._sandbox_tables = self._extract_table_names(connection)
         self._sandbox_execution_rules = self._build_execution_rules()
+        self._vocabulary_hint = vocabulary_hint
+        self._sandbox_table_list: list[str] = [
+            t.strip() for t in self._sandbox_tables.split(",") if t.strip()
+        ]
 
     # ------------------------------------------------------------------
     # PUBLIC
@@ -73,6 +81,8 @@ class SQLPromptBuilder:
                 "scenario_focus_block": self._scenario_focus_block(scenario_anchor),
                 "cd_block": self._cd_block(company_description),
                 "jd_block": self._jd_block(job_description),
+                "vocabulary_block": self._vocabulary_block(),
+                "schema_coverage_block": self._schema_coverage_block(),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
                 "sandbox_execution_rules": self._sandbox_execution_rules,
             },
@@ -106,6 +116,8 @@ class SQLPromptBuilder:
                 "difficulty_block": self._difficulty_block(difficulty_label),
                 "cd_block": self._cd_block(company_description),
                 "jd_block": self._jd_block(job_description),
+                "vocabulary_block": self._vocabulary_block(),
+                "schema_coverage_block": self._schema_coverage_block(),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
                 "sandbox_execution_rules": self._sandbox_execution_rules,
             },
@@ -196,3 +208,25 @@ EXECUTION CONSTRAINTS (mandatory):
         if scenario_anchor:
             return f"\nSCENARIO FOCUS:\n{scenario_anchor}\n"
         return ""
+
+    def _vocabulary_block(self) -> str:
+        if not self._vocabulary_hint:
+            return ""
+        terms = ", ".join(self._vocabulary_hint)
+        return (
+            f"\nBUSINESS VOCABULARY (incorporate where natural — do not force):\n"
+            f"{terms}\n"
+            f"Frame the problem description using these domain concepts when appropriate.\n"
+        )
+
+    def _schema_coverage_block(self) -> str:
+        if not self._sandbox_table_list:
+            return ""
+        tables = ", ".join(self._sandbox_table_list)
+        return (
+            f"\nSCHEMA COVERAGE GUIDANCE:\n"
+            f"Available tables: {tables}\n"
+            f"- Avoid repeatedly querying the same table in isolation\n"
+            f"- Prefer questions that JOIN multiple tables or exercise less-used tables\n"
+            f"- Vary the focal table across questions to maximise schema coverage\n"
+        )

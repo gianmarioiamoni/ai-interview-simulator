@@ -197,6 +197,174 @@ class TestSQLPromptBuilderEnrichmentPrompt:
         assert "preserving the SQL domain" in prompt
 
 
+class TestSQLPromptBuilderVocabularyBlock:
+    def test_no_vocabulary_block_when_no_hint(self, builder):
+        prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "BUSINESS VOCABULARY" not in prompt
+
+    def test_vocabulary_block_present_when_hint_set(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        from services.sql_engine.schema_registry import SchemaRegistry
+        from domain.contracts.interview.business_context import BusinessContext
+
+        defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        db = SQLDatabase(schema_definition=defn)
+        b = SQLPromptBuilder(db.connection, vocabulary_hint=defn.vocabulary_hint)
+
+        prompt = b.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "BUSINESS VOCABULARY" in prompt
+
+    def test_vocabulary_block_contains_fintech_terms(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        from services.sql_engine.schema_registry import SchemaRegistry
+        from domain.contracts.interview.business_context import BusinessContext
+
+        defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        db = SQLDatabase(schema_definition=defn)
+        b = SQLPromptBuilder(db.connection, vocabulary_hint=defn.vocabulary_hint)
+
+        prompt = b.build_generation_prompt(role="backend", level="mid", n=1)
+        for term in ("fraud", "settlement", "ledger", "chargeback"):
+            assert term in prompt
+
+    def test_vocabulary_block_contains_ecommerce_terms(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        from services.sql_engine.schema_registry import SchemaRegistry
+        from domain.contracts.interview.business_context import BusinessContext
+
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        db = SQLDatabase(schema_definition=defn)
+        b = SQLPromptBuilder(db.connection, vocabulary_hint=defn.vocabulary_hint)
+
+        prompt = b.build_generation_prompt(role="backend", level="mid", n=1)
+        for term in ("inventory", "fulfillment", "returns", "sku"):
+            assert term in prompt
+
+    def test_vocabulary_block_contains_saas_terms(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        from services.sql_engine.schema_registry import SchemaRegistry
+        from domain.contracts.interview.business_context import BusinessContext
+
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        db = SQLDatabase(schema_definition=defn)
+        b = SQLPromptBuilder(db.connection, vocabulary_hint=defn.vocabulary_hint)
+
+        prompt = b.build_generation_prompt(role="backend", level="mid", n=1)
+        for term in ("churn", "retention", "MRR", "ARR"):
+            assert term in prompt
+
+    def test_vocabulary_block_in_enrichment_prompt(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        from services.sql_engine.schema_registry import SchemaRegistry
+        from domain.contracts.interview.business_context import BusinessContext
+
+        defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        db = SQLDatabase(schema_definition=defn)
+        b = SQLPromptBuilder(db.connection, vocabulary_hint=defn.vocabulary_hint)
+
+        prompt = b.build_enrichment_prompt(
+            seed_prompt="Find top accounts", role="backend", level="mid"
+        )
+        assert "BUSINESS VOCABULARY" in prompt
+        assert "fraud" in prompt
+
+    def test_no_vocabulary_block_in_enrichment_when_no_hint(self, builder):
+        prompt = builder.build_enrichment_prompt(
+            seed_prompt="Find top earners", role="backend", level="senior"
+        )
+        assert "BUSINESS VOCABULARY" not in prompt
+
+
+class TestSQLPromptBuilderSchemaCoverageBlock:
+    def test_schema_coverage_block_present_in_generation(self, builder):
+        prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "SCHEMA COVERAGE GUIDANCE" in prompt
+
+    def test_schema_coverage_block_lists_tables(self, builder):
+        prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "employees" in prompt
+        assert "departments" in prompt
+
+    def test_schema_coverage_block_contains_diversity_instruction(self, builder):
+        prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "Avoid repeatedly" in prompt
+        assert "less-used tables" in prompt
+
+    def test_schema_coverage_block_present_in_enrichment(self, builder):
+        prompt = builder.build_enrichment_prompt(
+            seed_prompt="List employees", role="backend", level="mid"
+        )
+        assert "SCHEMA COVERAGE GUIDANCE" in prompt
+
+    def test_schema_coverage_lists_fintech_tables(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        from services.sql_engine.schema_registry import SchemaRegistry
+        from domain.contracts.interview.business_context import BusinessContext
+
+        defn = SchemaRegistry.get(BusinessContext.FINTECH)
+        db = SQLDatabase(schema_definition=defn)
+        b = SQLPromptBuilder(db.connection, vocabulary_hint=defn.vocabulary_hint)
+
+        prompt = b.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "SCHEMA COVERAGE GUIDANCE" in prompt
+        for table in ("accounts", "transactions", "portfolios"):
+            assert table in prompt
+
+    def test_schema_coverage_lists_ecommerce_tables(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        from services.sql_engine.schema_registry import SchemaRegistry
+        from domain.contracts.interview.business_context import BusinessContext
+
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        db = SQLDatabase(schema_definition=defn)
+        b = SQLPromptBuilder(db.connection, vocabulary_hint=defn.vocabulary_hint)
+
+        prompt = b.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "SCHEMA COVERAGE GUIDANCE" in prompt
+        for table in ("orders", "order_items", "products", "categories"):
+            assert table in prompt
+
+    def test_schema_coverage_lists_saas_tables(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        from services.sql_engine.schema_registry import SchemaRegistry
+        from domain.contracts.interview.business_context import BusinessContext
+
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        db = SQLDatabase(schema_definition=defn)
+        b = SQLPromptBuilder(db.connection, vocabulary_hint=defn.vocabulary_hint)
+
+        prompt = b.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "SCHEMA COVERAGE GUIDANCE" in prompt
+        for table in ("tenants", "subscriptions", "usage_events"):
+            assert table in prompt
+
+
+class TestSQLPromptBuilderBackwardCompatibility:
+    def test_default_builder_no_vocabulary_block(self, builder):
+        """Builder constructed without vocabulary_hint emits no vocabulary block."""
+        prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "BUSINESS VOCABULARY" not in prompt
+
+    def test_default_builder_still_has_schema_coverage(self, builder):
+        """Schema coverage block is always present regardless of vocabulary_hint."""
+        prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "SCHEMA COVERAGE GUIDANCE" in prompt
+
+    def test_existing_blocks_unaffected(self, builder):
+        prompt = builder.build_generation_prompt(
+            role="backend",
+            level="senior",
+            n=2,
+            domains=["joins"],
+            difficulty_label="hard",
+            scenario_anchor="reporting",
+        )
+        assert "DOMAIN FOCUS" in prompt
+        assert "DIFFICULTY TARGET" in prompt
+        assert "SCENARIO FOCUS" in prompt
+        assert "EXECUTION CONSTRAINTS" in prompt
+
+
 class TestSQLPromptBuilderSchemaPropagation:
     def test_schema_change_propagates_to_generation_prompt(self):
         """Schema changes in SQLDatabase automatically appear in prompt output."""
