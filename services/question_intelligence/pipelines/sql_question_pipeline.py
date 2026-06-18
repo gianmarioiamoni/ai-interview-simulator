@@ -68,6 +68,8 @@ _SQL_GENERATE_MAX_ATTEMPTS = settings.sql_pipeline_retry_attempts
 
 _BUSINESS_CONTEXT_METADATA_ONLY = frozenset({
     BusinessContext.FINTECH,
+    BusinessContext.ECOMMERCE,
+    BusinessContext.SAAS,
 })
 
 _SCENARIO_ANCHOR_POOL: list[ScenarioAnchor] = list(ScenarioAnchor)

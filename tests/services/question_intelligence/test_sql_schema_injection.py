@@ -127,14 +127,15 @@ class TestSQLGeneratorFactory:
         gen2 = factory(BusinessContext.FINTECH)
         assert gen1 is gen2
 
-    def test_ecommerce_falls_back_to_generic_schema(self):
-        """ECOMMERCE not in registry → falls back to GENERIC SchemaDefinition."""
-        llm = _make_llm(_GENERIC_VALID_JSON)
+    def test_ecommerce_returns_ecommerce_scoped_generator(self):
+        """ECOMMERCE is now in registry → returns ECOMMERCE SchemaDefinition."""
+        llm = _make_llm(_ECOMMERCE_VALID_JSON)
         default_gen = SQLQuestionGenerator(llm)
         factory = _build_sql_generator_factory(llm, default_gen)
 
         ecom_gen = factory(BusinessContext.ECOMMERCE)
-        assert "employees" in ecom_gen._db.get_schema_sql()
+        assert "orders" in ecom_gen._db.get_schema_sql()
+        assert "employees" not in ecom_gen._db.get_schema_sql()
 
 
 # ── schema propagation to Question.db_schema ─────────────────────────────────
@@ -428,3 +429,150 @@ class TestGenerateWithRetrySchemaSelection:
         assert len(results) == 1
         assert "employees" in results[0].db_schema
         assert "accounts" not in results[0].db_schema
+
+
+# ── ECOMMERCE / SAAS schema stamping ─────────────────────────────────────────
+
+_ECOMMERCE_VALID_JSON = json.dumps(
+    [
+        {
+            "prompt": "List all delivered orders with customer names.",
+            "reference_query": "SELECT c.name, o.id FROM customers c JOIN orders o ON o.customer_id = c.id WHERE o.status = 'delivered'",
+            "test_cases": [
+                {
+                    "expected_query": "SELECT c.name, o.id FROM customers c JOIN orders o ON o.customer_id = c.id WHERE o.status = 'delivered'",
+                    "ordered": False,
+                }
+            ],
+        }
+    ]
+)
+
+_SAAS_VALID_JSON = json.dumps(
+    [
+        {
+            "prompt": "List all active subscriptions with tenant and plan name.",
+            "reference_query": "SELECT t.name, p.name FROM tenants t JOIN subscriptions s ON s.tenant_id = t.id JOIN plans p ON p.id = s.plan_id WHERE s.status = 'active'",
+            "test_cases": [
+                {
+                    "expected_query": "SELECT t.name, p.name FROM tenants t JOIN subscriptions s ON s.tenant_id = t.id JOIN plans p ON p.id = s.plan_id WHERE s.status = 'active'",
+                    "ordered": False,
+                }
+            ],
+        }
+    ]
+)
+
+
+class TestEcommerceSchemaStamping:
+    def test_ecommerce_generator_stamps_ecommerce_db_schema(self):
+        llm = _make_llm(_ECOMMERCE_VALID_JSON)
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        gen = SQLQuestionGenerator(llm, schema_definition=defn)
+
+        questions = gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID, n=1)
+
+        assert len(questions) == 1
+        assert "orders" in questions[0].db_schema
+        assert "order_items" in questions[0].db_schema
+        assert "employees" not in questions[0].db_schema
+
+    def test_ecommerce_generator_stamps_ecommerce_db_seed_data(self):
+        llm = _make_llm(_ECOMMERCE_VALID_JSON)
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        gen = SQLQuestionGenerator(llm, schema_definition=defn)
+
+        questions = gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID, n=1)
+
+        assert "INSERT INTO orders" in questions[0].db_seed_data
+        assert "INSERT INTO order_items" in questions[0].db_seed_data
+
+    def test_factory_ecommerce_returns_ecommerce_scoped_generator(self):
+        llm = _make_llm(_ECOMMERCE_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+
+        ecom_gen = factory(BusinessContext.ECOMMERCE)
+        assert "orders" in ecom_gen._db.get_schema_sql()
+        assert "employees" not in ecom_gen._db.get_schema_sql()
+
+    def test_ecommerce_retry_stamps_ecommerce_schema(self):
+        llm = _make_llm(_ECOMMERCE_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+        pipeline = SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=factory,
+        )
+
+        results = pipeline._generate_with_retry(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+            business_context=BusinessContext.ECOMMERCE,
+        )
+
+        assert len(results) == 1
+        assert "orders" in results[0].db_schema
+        assert "employees" not in results[0].db_schema
+
+    def test_ecommerce_in_metadata_only_set(self):
+        assert BusinessContext.ECOMMERCE in _BUSINESS_CONTEXT_METADATA_ONLY
+
+
+class TestSaasSchemaStamping:
+    def test_saas_generator_stamps_saas_db_schema(self):
+        llm = _make_llm(_SAAS_VALID_JSON)
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        gen = SQLQuestionGenerator(llm, schema_definition=defn)
+
+        questions = gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID, n=1)
+
+        assert len(questions) == 1
+        assert "tenants" in questions[0].db_schema
+        assert "subscriptions" in questions[0].db_schema
+        assert "employees" not in questions[0].db_schema
+
+    def test_saas_generator_stamps_saas_db_seed_data(self):
+        llm = _make_llm(_SAAS_VALID_JSON)
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        gen = SQLQuestionGenerator(llm, schema_definition=defn)
+
+        questions = gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID, n=1)
+
+        assert "INSERT INTO tenants" in questions[0].db_seed_data
+        assert "INSERT INTO usage_events" in questions[0].db_seed_data
+
+    def test_factory_saas_returns_saas_scoped_generator(self):
+        llm = _make_llm(_SAAS_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+
+        saas_gen = factory(BusinessContext.SAAS)
+        assert "tenants" in saas_gen._db.get_schema_sql()
+        assert "employees" not in saas_gen._db.get_schema_sql()
+
+    def test_saas_retry_stamps_saas_schema(self):
+        llm = _make_llm(_SAAS_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+        pipeline = SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=factory,
+        )
+
+        results = pipeline._generate_with_retry(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+            business_context=BusinessContext.SAAS,
+        )
+
+        assert len(results) == 1
+        assert "tenants" in results[0].db_schema
+        assert "employees" not in results[0].db_schema
+
+    def test_saas_in_metadata_only_set(self):
+        assert BusinessContext.SAAS in _BUSINESS_CONTEXT_METADATA_ONLY

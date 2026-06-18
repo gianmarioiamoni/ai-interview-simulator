@@ -17,13 +17,13 @@ class TestSchemaRegistryLookup:
         defn = SchemaRegistry.get(BusinessContext.FINTECH)
         assert defn.context_key == BusinessContext.FINTECH
 
-    def test_ecommerce_falls_back_to_generic(self):
+    def test_ecommerce_returns_ecommerce_definition(self):
         defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
-        assert defn.context_key == BusinessContext.GENERIC
+        assert defn.context_key == BusinessContext.ECOMMERCE
 
-    def test_saas_falls_back_to_generic(self):
+    def test_saas_returns_saas_definition(self):
         defn = SchemaRegistry.get(BusinessContext.SAAS)
-        assert defn.context_key == BusinessContext.GENERIC
+        assert defn.context_key == BusinessContext.SAAS
 
     def test_generic_schema_contains_hr_tables(self):
         defn = SchemaRegistry.get(BusinessContext.GENERIC)
@@ -84,3 +84,125 @@ class TestSchemaDefinitionContract:
         assert defn.schema_sql
         assert defn.seed_sql
         assert isinstance(defn.domain_tags, tuple)
+
+
+class TestEcommerceSchema:
+    def test_ecommerce_schema_contains_expected_tables(self):
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        for table in ("customers", "products", "categories", "orders", "order_items"):
+            assert table in defn.schema_sql
+
+    def test_ecommerce_schema_not_contain_hr_tables(self):
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        assert "employees" not in defn.schema_sql
+        assert "departments" not in defn.schema_sql
+
+    def test_ecommerce_schema_not_contain_fintech_tables(self):
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        assert "accounts" not in defn.schema_sql
+        assert "transactions" not in defn.schema_sql
+
+    def test_ecommerce_seed_data_present(self):
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        for table in ("customers", "products", "categories", "orders", "order_items"):
+            assert f"INSERT INTO {table}" in defn.seed_sql
+
+    def test_ecommerce_referential_integrity(self):
+        """SQLite must accept DDL + seed without FK violations."""
+        from services.sql_engine.sql_database import SQLDatabase
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        db = SQLDatabase(schema_definition=defn)
+        result = db.connection.execute("SELECT COUNT(*) FROM order_items").fetchall()
+        assert result[0][0] == 7
+
+    def test_ecommerce_has_domain_tags(self):
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        assert SqlDomain.JOIN in defn.domain_tags
+        assert SqlDomain.GROUP_BY in defn.domain_tags
+
+    def test_ecommerce_has_summary_hint(self):
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        assert defn.summary_hint is not None
+        assert "order" in defn.summary_hint.lower()
+
+    def test_ecommerce_join_query_executes(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        db = SQLDatabase(schema_definition=defn)
+        result = db.connection.execute(
+            "SELECT c.name, COUNT(o.id) FROM customers c "
+            "JOIN orders o ON o.customer_id = c.id GROUP BY c.id"
+        ).fetchall()
+        assert len(result) > 0
+
+    def test_ecommerce_aggregation_query_executes(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        defn = SchemaRegistry.get(BusinessContext.ECOMMERCE)
+        db = SQLDatabase(schema_definition=defn)
+        result = db.connection.execute(
+            "SELECT p.name, SUM(oi.quantity) as total_sold "
+            "FROM products p JOIN order_items oi ON oi.product_id = p.id "
+            "GROUP BY p.id HAVING total_sold > 0"
+        ).fetchall()
+        assert len(result) > 0
+
+
+class TestSaasSchema:
+    def test_saas_schema_contains_expected_tables(self):
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        for table in ("tenants", "users", "plans", "subscriptions", "usage_events"):
+            assert table in defn.schema_sql
+
+    def test_saas_schema_not_contain_hr_tables(self):
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        assert "employees" not in defn.schema_sql
+        assert "departments" not in defn.schema_sql
+
+    def test_saas_schema_not_contain_fintech_tables(self):
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        assert "accounts" not in defn.schema_sql
+        assert "transactions" not in defn.schema_sql
+
+    def test_saas_seed_data_present(self):
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        for table in ("tenants", "users", "plans", "subscriptions", "usage_events"):
+            assert f"INSERT INTO {table}" in defn.seed_sql
+
+    def test_saas_referential_integrity(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        db = SQLDatabase(schema_definition=defn)
+        result = db.connection.execute("SELECT COUNT(*) FROM usage_events").fetchall()
+        assert result[0][0] == 10
+
+    def test_saas_has_domain_tags(self):
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        assert SqlDomain.JOIN in defn.domain_tags
+        assert SqlDomain.GROUP_BY in defn.domain_tags
+
+    def test_saas_has_summary_hint(self):
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        assert defn.summary_hint is not None
+        assert "saas" in defn.summary_hint.lower()
+
+    def test_saas_join_query_executes(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        db = SQLDatabase(schema_definition=defn)
+        result = db.connection.execute(
+            "SELECT t.name, p.name FROM tenants t "
+            "JOIN subscriptions s ON s.tenant_id = t.id "
+            "JOIN plans p ON p.id = s.plan_id"
+        ).fetchall()
+        assert len(result) > 0
+
+    def test_saas_aggregation_query_executes(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        defn = SchemaRegistry.get(BusinessContext.SAAS)
+        db = SQLDatabase(schema_definition=defn)
+        result = db.connection.execute(
+            "SELECT t.name, SUM(ue.units) as total_units "
+            "FROM tenants t JOIN usage_events ue ON ue.tenant_id = t.id "
+            "GROUP BY t.id HAVING total_units > 100"
+        ).fetchall()
+        assert len(result) > 0

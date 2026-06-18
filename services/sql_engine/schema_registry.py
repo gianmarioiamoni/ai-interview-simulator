@@ -147,9 +147,204 @@ INSERT INTO portfolios (id, account_id, asset, quantity, purchase_price) VALUES 
     summary_hint="Fintech schema: customers, accounts, transactions, portfolios.",
 )
 
+_ECOMMERCE_SCHEMA = SchemaDefinition(
+    context_key=BusinessContext.ECOMMERCE,
+    schema_sql="""
+CREATE TABLE customers (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    country TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE categories (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    parent_id INTEGER,
+    FOREIGN KEY (parent_id) REFERENCES categories(id)
+);
+
+CREATE TABLE products (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    category_id INTEGER NOT NULL,
+    price REAL NOT NULL,
+    stock_quantity INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
+CREATE TABLE orders (
+    id INTEGER PRIMARY KEY,
+    customer_id INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    order_date TEXT NOT NULL,
+    total_amount REAL NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+
+CREATE TABLE order_items (
+    id INTEGER PRIMARY KEY,
+    order_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    unit_price REAL NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+""",
+    seed_sql="""
+INSERT INTO customers (id, name, email, country, created_at) VALUES (1, 'Alice', 'alice@example.com', 'US', '2022-01-10');
+INSERT INTO customers (id, name, email, country, created_at) VALUES (2, 'Bob', 'bob@example.com', 'UK', '2022-03-15');
+INSERT INTO customers (id, name, email, country, created_at) VALUES (3, 'Charlie', 'charlie@example.com', 'US', '2021-07-01');
+INSERT INTO customers (id, name, email, country, created_at) VALUES (4, 'Diana', 'diana@example.com', 'DE', '2023-02-28');
+INSERT INTO customers (id, name, email, country, created_at) VALUES (5, 'Eve', 'eve@example.com', 'US', '2023-06-01');
+
+INSERT INTO categories (id, name, parent_id) VALUES (1, 'Electronics', NULL);
+INSERT INTO categories (id, name, parent_id) VALUES (2, 'Clothing', NULL);
+INSERT INTO categories (id, name, parent_id) VALUES (3, 'Laptops', 1);
+INSERT INTO categories (id, name, parent_id) VALUES (4, 'Phones', 1);
+INSERT INTO categories (id, name, parent_id) VALUES (5, 'T-Shirts', 2);
+
+INSERT INTO products (id, name, category_id, price, stock_quantity) VALUES (1, 'Pro Laptop 15', 3, 1299.99, 25);
+INSERT INTO products (id, name, category_id, price, stock_quantity) VALUES (2, 'SmartPhone X', 4, 799.00, 50);
+INSERT INTO products (id, name, category_id, price, stock_quantity) VALUES (3, 'Wireless Earbuds', 1, 149.99, 100);
+INSERT INTO products (id, name, category_id, price, stock_quantity) VALUES (4, 'Cotton T-Shirt', 5, 29.99, 200);
+INSERT INTO products (id, name, category_id, price, stock_quantity) VALUES (5, 'Budget Laptop', 3, 499.00, 15);
+
+INSERT INTO orders (id, customer_id, status, order_date, total_amount) VALUES (1, 1, 'delivered', '2024-01-05', 1449.98);
+INSERT INTO orders (id, customer_id, status, order_date, total_amount) VALUES (2, 2, 'shipped', '2024-01-10', 799.00);
+INSERT INTO orders (id, customer_id, status, order_date, total_amount) VALUES (3, 1, 'pending', '2024-02-01', 149.99);
+INSERT INTO orders (id, customer_id, status, order_date, total_amount) VALUES (4, 3, 'delivered', '2024-01-20', 59.98);
+INSERT INTO orders (id, customer_id, status, order_date, total_amount) VALUES (5, 4, 'cancelled', '2024-01-25', 799.00);
+INSERT INTO orders (id, customer_id, status, order_date, total_amount) VALUES (6, 5, 'delivered', '2024-02-10', 499.00);
+
+INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (1, 1, 1, 1, 1299.99);
+INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (2, 1, 3, 1, 149.99);
+INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (3, 2, 2, 1, 799.00);
+INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (4, 3, 3, 1, 149.99);
+INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (5, 4, 4, 2, 29.99);
+INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (6, 5, 2, 1, 799.00);
+INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (7, 6, 5, 1, 499.00);
+""",
+    domain_tags=(
+        SqlDomain.JOIN,
+        SqlDomain.GROUP_BY,
+        SqlDomain.HAVING,
+        SqlDomain.EXISTS,
+        SqlDomain.CTE,
+        SqlDomain.WINDOW_FUNCTION,
+        SqlDomain.CORRELATED_SUBQUERY,
+        SqlDomain.UNION,
+        SqlDomain.INDEXING,
+        SqlDomain.PERFORMANCE,
+    ),
+    summary_hint="E-commerce schema: customers, categories, products, orders, order_items.",
+)
+
+_SAAS_SCHEMA = SchemaDefinition(
+    context_key=BusinessContext.SAAS,
+    schema_sql="""
+CREATE TABLE tenants (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    domain TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE plans (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    price_monthly REAL NOT NULL,
+    max_users INTEGER,
+    max_usage_units INTEGER
+);
+
+CREATE TABLE subscriptions (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    plan_id INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    expires_at TEXT,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+    FOREIGN KEY (plan_id) REFERENCES plans(id)
+);
+
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    role TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE usage_events (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    event_type TEXT NOT NULL,
+    units INTEGER NOT NULL DEFAULT 1,
+    event_date TEXT NOT NULL,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+""",
+    seed_sql="""
+INSERT INTO tenants (id, name, domain, created_at) VALUES (1, 'Acme Corp', 'acme.example.com', '2021-03-01');
+INSERT INTO tenants (id, name, domain, created_at) VALUES (2, 'Globex', 'globex.example.com', '2022-06-15');
+INSERT INTO tenants (id, name, domain, created_at) VALUES (3, 'Initech', 'initech.example.com', '2023-01-10');
+INSERT INTO tenants (id, name, domain, created_at) VALUES (4, 'Umbrella', 'umbrella.example.com', '2023-08-20');
+
+INSERT INTO plans (id, name, price_monthly, max_users, max_usage_units) VALUES (1, 'Starter', 29.00, 5, 1000);
+INSERT INTO plans (id, name, price_monthly, max_users, max_usage_units) VALUES (2, 'Growth', 99.00, 25, 10000);
+INSERT INTO plans (id, name, price_monthly, max_users, max_usage_units) VALUES (3, 'Enterprise', 499.00, NULL, NULL);
+
+INSERT INTO subscriptions (id, tenant_id, plan_id, status, started_at, expires_at) VALUES (1, 1, 3, 'active', '2021-03-01', NULL);
+INSERT INTO subscriptions (id, tenant_id, plan_id, status, started_at, expires_at) VALUES (2, 2, 2, 'active', '2022-06-15', NULL);
+INSERT INTO subscriptions (id, tenant_id, plan_id, status, started_at, expires_at) VALUES (3, 3, 1, 'active', '2023-01-10', NULL);
+INSERT INTO subscriptions (id, tenant_id, plan_id, status, started_at, expires_at) VALUES (4, 4, 1, 'cancelled', '2023-08-20', '2024-01-01');
+
+INSERT INTO users (id, tenant_id, email, role, created_at) VALUES (1, 1, 'alice@acme.example.com', 'admin', '2021-03-01');
+INSERT INTO users (id, tenant_id, email, role, created_at) VALUES (2, 1, 'bob@acme.example.com', 'member', '2021-04-10');
+INSERT INTO users (id, tenant_id, email, role, created_at) VALUES (3, 1, 'carol@acme.example.com', 'member', '2022-01-05');
+INSERT INTO users (id, tenant_id, email, role, created_at) VALUES (4, 2, 'dave@globex.example.com', 'admin', '2022-06-15');
+INSERT INTO users (id, tenant_id, email, role, created_at) VALUES (5, 2, 'eve@globex.example.com', 'member', '2022-07-01');
+INSERT INTO users (id, tenant_id, email, role, created_at) VALUES (6, 3, 'frank@initech.example.com', 'admin', '2023-01-10');
+INSERT INTO users (id, tenant_id, email, role, created_at) VALUES (7, 4, 'grace@umbrella.example.com', 'admin', '2023-08-20');
+
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (1, 1, 1, 'api_call', 50, '2024-01-05');
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (2, 1, 2, 'api_call', 120, '2024-01-06');
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (3, 1, 3, 'export', 1, '2024-01-07');
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (4, 2, 4, 'api_call', 300, '2024-01-05');
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (5, 2, 5, 'api_call', 200, '2024-01-06');
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (6, 3, 6, 'api_call', 80, '2024-01-05');
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (7, 3, 6, 'export', 2, '2024-01-08');
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (8, 1, 1, 'api_call', 90, '2024-02-01');
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (9, 2, 4, 'export', 3, '2024-02-03');
+INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date) VALUES (10, 4, 7, 'api_call', 10, '2023-12-15');
+""",
+    domain_tags=(
+        SqlDomain.JOIN,
+        SqlDomain.GROUP_BY,
+        SqlDomain.HAVING,
+        SqlDomain.EXISTS,
+        SqlDomain.CTE,
+        SqlDomain.WINDOW_FUNCTION,
+        SqlDomain.CORRELATED_SUBQUERY,
+        SqlDomain.TRANSACTION,
+        SqlDomain.INDEXING,
+        SqlDomain.PERFORMANCE,
+    ),
+    summary_hint="SaaS schema: tenants, plans, subscriptions, users, usage_events.",
+)
+
 _REGISTRY: dict[BusinessContext, SchemaDefinition] = {
     BusinessContext.GENERIC: _GENERIC_SCHEMA,
     BusinessContext.FINTECH: _FINTECH_SCHEMA,
+    BusinessContext.ECOMMERCE: _ECOMMERCE_SCHEMA,
+    BusinessContext.SAAS: _SAAS_SCHEMA,
 }
 
 
