@@ -52,6 +52,8 @@ class SQLPromptBuilder:
         n: int,
         theme_guidance: str | None = None,
         domains: list[str] | None = None,
+        difficulty_label: str | None = None,
+        scenario_anchor: str | None = None,
         job_description: str | None = None,
         company_description: str | None = None,
     ) -> str:
@@ -67,6 +69,8 @@ class SQLPromptBuilder:
                 "schema_summary": self._schema_summary,
                 "theme_block": self._theme_block(theme_guidance),
                 "domain_focus_block": self._domain_focus_block(domains),
+                "difficulty_target_block": self._difficulty_target_block(difficulty_label),
+                "scenario_focus_block": self._scenario_focus_block(scenario_anchor),
                 "cd_block": self._cd_block(company_description),
                 "jd_block": self._jd_block(job_description),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
@@ -181,4 +185,14 @@ EXECUTION CONSTRAINTS (mandatory):
                 f"Generate questions that specifically test: {joined}.\n"
                 f"Do NOT generate generic employee/department/salary questions unless they directly exercise the domain(s) above.\n"
             )
+        return ""
+
+    def _difficulty_target_block(self, difficulty_label: str | None) -> str:
+        if difficulty_label:
+            return f"\nDIFFICULTY TARGET:\n{difficulty_label.upper()}\n"
+        return ""
+
+    def _scenario_focus_block(self, scenario_anchor: str | None) -> str:
+        if scenario_anchor:
+            return f"\nSCENARIO FOCUS:\n{scenario_anchor}\n"
         return ""

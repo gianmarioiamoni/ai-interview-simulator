@@ -16,6 +16,7 @@ from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
+from domain.contracts.question.scenario_anchor import ScenarioAnchor
 from app.ports.llm_port import LLMPort
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
@@ -77,6 +78,9 @@ class SQLQuestionGenerator:
         level: SeniorityLevel,
         n: int = 1,
         theme_guidance: str | None = None,
+        domains: list[str] | None = None,
+        difficulty_label: str | None = None,
+        scenario_anchor: ScenarioAnchor | None = None,
         job_description: str | None = None,
         company_description: str | None = None,
     ) -> List[Question]:
@@ -86,6 +90,9 @@ class SQLQuestionGenerator:
             level=level.value,
             n=n,
             theme_guidance=theme_guidance,
+            domains=domains,
+            difficulty_label=difficulty_label,
+            scenario_anchor=scenario_anchor.value if scenario_anchor else None,
             job_description=job_description,
             company_description=company_description,
         )
