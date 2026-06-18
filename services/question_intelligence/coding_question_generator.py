@@ -74,6 +74,7 @@ class CodingQuestionGenerator:
         n: int = 1,
         theme_guidance: str | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> List[GeneratedCodingQuestion]:
 
         prompt = self._prompt_builder.build_generation_prompt(
@@ -82,6 +83,7 @@ class CodingQuestionGenerator:
             n=n,
             theme_guidance=theme_guidance,
             job_description=job_description,
+            company_description=company_description,
         )
 
         parsed = self._response_parser.invoke_and_parse(
@@ -107,6 +109,7 @@ class CodingQuestionGenerator:
         provenance: QuestionProvenance | None = None,
         theme_guidance: str | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> GeneratedCodingQuestion | None:
 
         _ = provenance
@@ -117,6 +120,7 @@ class CodingQuestionGenerator:
             level=level.value,
             theme_guidance=theme_guidance,
             job_description=job_description,
+            company_description=company_description,
         )
 
         parsed = self._response_parser.invoke_and_parse(

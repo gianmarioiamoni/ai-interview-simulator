@@ -93,6 +93,11 @@ class AdaptiveNavigationNode:
                     if state.context_profile is not None
                     else None
                 )
+                company_description = (
+                    state.context_profile.company_description
+                    if state.context_profile is not None
+                    else None
+                )
                 new_question, retrieval_memory = self._lazy_service.generate_next_question(
                     role=state.role.type,
                     level=level,
@@ -101,6 +106,7 @@ class AdaptiveNavigationNode:
                     generated_count=len(questions),
                     memory=retrieval_memory,
                     job_description=job_description,
+                    company_description=company_description,
                 )
 
                 if self._question_enricher is not None:

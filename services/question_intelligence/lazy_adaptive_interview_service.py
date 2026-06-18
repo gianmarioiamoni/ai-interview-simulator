@@ -51,6 +51,7 @@ class LazyAdaptiveInterviewService:
         level: SeniorityLevel,
         interview_type: InterviewType,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> tuple[list[Question], InterviewRetrievalMemory, list[str]]:
 
         planned_areas = self.resolve_planned_areas(interview_type)
@@ -72,6 +73,7 @@ class LazyAdaptiveInterviewService:
             corpus_quota=resolve_corpus_quota(planned_areas[0], interview_type, QUESTIONS_PER_AREA),
             memory=memory,
             job_description=job_description,
+            company_description=company_description,
         )
 
         return questions[:QUESTIONS_PER_AREA], memory, [area.value for area in planned_areas]
@@ -85,6 +87,7 @@ class LazyAdaptiveInterviewService:
         generated_count: int,
         memory: InterviewRetrievalMemory,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> tuple[Question, InterviewRetrievalMemory]:
 
         if generated_count >= len(planned_areas):
@@ -101,6 +104,7 @@ class LazyAdaptiveInterviewService:
             corpus_quota=resolve_corpus_quota(next_area, interview_type, QUESTIONS_PER_AREA),
             memory=memory,
             job_description=job_description,
+            company_description=company_description,
         )
 
         if not questions:

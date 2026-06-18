@@ -99,6 +99,7 @@ class AreaQuestionBuilder:
         corpus_quota: int | None = None,
         memory: InterviewRetrievalMemory | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory]:
         """
         corpus_quota: maximum number of questions drawn from the retrieval corpus
@@ -123,6 +124,7 @@ class AreaQuestionBuilder:
                 questions_per_area=questions_per_area,
                 memory=session_memory,
                 job_description=job_description,
+                company_description=company_description,
             )
 
         # -------------------------------------------------
@@ -139,6 +141,7 @@ class AreaQuestionBuilder:
                 corpus_quota=corpus_quota,
                 memory=session_memory,
                 job_description=job_description,
+                company_description=company_description,
             )
 
         # -------------------------------------------------
@@ -154,6 +157,7 @@ class AreaQuestionBuilder:
             corpus_quota=corpus_quota,
             memory=session_memory,
             job_description=job_description,
+            company_description=company_description,
         )
 
 

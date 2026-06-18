@@ -33,6 +33,7 @@ from app.graph.nodes.navigation_node import configure_navigation_node
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 
+from infrastructure.config.settings import settings
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.constants.loader_steps import LoaderStep
 from app.ui.mappers.loader_mapper import map_loader_progress
@@ -127,8 +128,14 @@ def start_interview(
         )
 
         jd_for_generation = (
-            job_description.strip()[:500]
+            job_description.strip()[:settings.job_description_max_chars]
             if job_description and job_description.strip()
+            else None
+        )
+
+        cd_for_generation = (
+            company_description.strip()[:settings.company_description_max_chars]
+            if company_description and company_description.strip()
             else None
         )
 
@@ -138,6 +145,7 @@ def start_interview(
                 level=level_enum,
                 interview_type=interview_type_enum,
                 job_description=jd_for_generation,
+                company_description=cd_for_generation,
             )
         )
 

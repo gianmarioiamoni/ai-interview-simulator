@@ -115,6 +115,7 @@ class QuestionIntelligenceProvider:
         level: SeniorityLevel,
         interview_type: InterviewType,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory, List[str]]:
 
         return self._lazy_adaptive_service.generate_first_question(
@@ -122,6 +123,7 @@ class QuestionIntelligenceProvider:
             level=level,
             interview_type=interview_type,
             job_description=job_description,
+            company_description=company_description,
         )
 
     def generate(

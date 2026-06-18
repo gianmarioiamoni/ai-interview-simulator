@@ -20,6 +20,7 @@ from domain.contracts.user.seniority_level import SeniorityLevel
 from app.ports.llm_port import LLMPort
 from app.prompts.prompt_loader import PromptLoader
 from app.prompts.prompt_renderer import PromptRenderer
+from infrastructure.config.settings import settings
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 
@@ -27,8 +28,6 @@ from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
 class QuestionGenerator:
     def __init__(self, llm: LLMPort) -> None:
         self._llm = llm
-
-    _JD_MAX_CHARS = 500
 
     def generate(
         self,
@@ -39,6 +38,7 @@ class QuestionGenerator:
         n: int = 2,
         theme_guidance: str | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> List[GeneratedQuestion]:
 
         VARIATION_SEEDS = [
@@ -59,6 +59,7 @@ class QuestionGenerator:
             variation=variation,
             theme_guidance=theme_guidance,
             job_description=job_description,
+            company_description=company_description,
         )
 
         with LLMOperationContext.scope(QUESTION_GENERATION):
@@ -78,6 +79,7 @@ class QuestionGenerator:
         variation: str,
         theme_guidance: str | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> str:
 
         theme_block = ""
@@ -85,6 +87,7 @@ class QuestionGenerator:
         if theme_guidance:
             theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
 
+        cd_block = self._cd_block(company_description)
         jd_block = self._jd_block(job_description)
 
         template = PromptLoader.load("generation/question_generation.txt")
@@ -99,6 +102,7 @@ class QuestionGenerator:
                 "area": area.value,
                 "variation": variation,
                 "theme_block": theme_block,
+                "cd_block": cd_block,
                 "jd_block": jd_block,
             },
         )
@@ -106,5 +110,11 @@ class QuestionGenerator:
     def _jd_block(self, job_description: str | None) -> str:
         if not job_description or not job_description.strip():
             return ""
-        truncated = job_description.strip()[:self._JD_MAX_CHARS]
+        truncated = job_description.strip()[:settings.job_description_max_chars]
         return f"\nJOB DESCRIPTION CONTEXT (guidance only — do not override domain or difficulty):\n{truncated}\n"
+
+    def _cd_block(self, company_description: str | None) -> str:
+        if not company_description or not company_description.strip():
+            return ""
+        truncated = company_description.strip()[:settings.company_description_max_chars]
+        return f"\nBUSINESS CONTEXT (scenario framing only — do not change domain, difficulty, or seniority):\n{truncated}\n"

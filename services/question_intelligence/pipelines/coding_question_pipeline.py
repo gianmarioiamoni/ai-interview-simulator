@@ -130,6 +130,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
         provenance: QuestionProvenance,
         theme_guidance: str | None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> Question | None:
 
         if not self._is_actionable_coding_prompt(item.text):
@@ -145,6 +146,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
             provenance=provenance,
             theme_guidance=theme_guidance_text,
             job_description=job_description,
+            company_description=company_description,
         )
 
         if enriched is None:
@@ -169,6 +171,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
         n: int,
         theme_guidance: str | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> List[Question]:
 
         area = InterviewArea.TECH_CODING
@@ -182,6 +185,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
                 n=n,
                 theme_guidance=theme_guidance,
                 job_description=job_description,
+                company_description=company_description,
             )
 
             mapped: List[Question] = []
