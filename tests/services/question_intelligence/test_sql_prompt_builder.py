@@ -78,6 +78,44 @@ class TestSQLPromptBuilderGenerationPrompt:
         prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
         assert "DOMAIN FOCUS" not in prompt
 
+    def test_generation_prompt_with_difficulty_label(self, builder):
+        prompt = builder.build_generation_prompt(
+            role="backend", level="senior", n=1, difficulty_label="hard"
+        )
+        assert "DIFFICULTY TARGET" in prompt
+        assert "HARD" in prompt
+
+    def test_generation_prompt_no_difficulty_block_when_absent(self, builder):
+        prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "DIFFICULTY TARGET" not in prompt
+
+    def test_generation_prompt_with_scenario_anchor(self, builder):
+        prompt = builder.build_generation_prompt(
+            role="backend", level="mid", n=1, scenario_anchor="reporting"
+        )
+        assert "SCENARIO FOCUS" in prompt
+        assert "reporting" in prompt
+
+    def test_generation_prompt_no_scenario_block_when_absent(self, builder):
+        prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "SCENARIO FOCUS" not in prompt
+
+    def test_generation_prompt_all_metadata_combined(self, builder):
+        prompt = builder.build_generation_prompt(
+            role="backend",
+            level="senior",
+            n=2,
+            domains=["joins", "aggregation"],
+            difficulty_label="intermediate",
+            scenario_anchor="anti_pattern",
+        )
+        assert "DOMAIN FOCUS" in prompt
+        assert "joins" in prompt
+        assert "DIFFICULTY TARGET" in prompt
+        assert "INTERMEDIATE" in prompt
+        assert "SCENARIO FOCUS" in prompt
+        assert "anti_pattern" in prompt
+
 
 class TestSQLPromptBuilderEnrichmentPrompt:
     def test_enrichment_prompt_contains_schema(self, builder):
