@@ -68,6 +68,7 @@ class WrittenQuestionPipeline:
         corpus_quota: int | None = None,
         memory: InterviewRetrievalMemory | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory]:
         """
         Build questions for a single area.
@@ -154,6 +155,7 @@ class WrittenQuestionPipeline:
                     area=area,
                 ),
                 job_description=job_description,
+                company_description=company_description,
             )
 
             for gen in generated:

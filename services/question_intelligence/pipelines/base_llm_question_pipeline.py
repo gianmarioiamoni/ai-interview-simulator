@@ -65,6 +65,7 @@ class BaseLLMQuestionPipeline(ABC):
         corpus_quota: int | None = None,
         memory: InterviewRetrievalMemory | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory]:
         """
         Orchestrate retrieval → enrich → generate → memory update.
@@ -133,6 +134,7 @@ class BaseLLMQuestionPipeline(ABC):
                 provenance=provenance,
                 theme_guidance=theme_guidance,
                 job_description=job_description,
+                company_description=company_description,
             )
 
             if enriched is None:
@@ -152,6 +154,7 @@ class BaseLLMQuestionPipeline(ABC):
                     n=remaining_slots,
                     theme_guidance=theme_guidance,
                     job_description=job_description,
+                    company_description=company_description,
                 )
             )
 
@@ -163,6 +166,7 @@ class BaseLLMQuestionPipeline(ABC):
                     n=max(1, questions_per_area),
                     theme_guidance=theme_guidance,
                     job_description=job_description,
+                    company_description=company_description,
                 )
             )
 
@@ -184,6 +188,7 @@ class BaseLLMQuestionPipeline(ABC):
                 n=max(1, questions_per_area),
                 theme_guidance=theme_guidance,
                 job_description=job_description,
+                company_description=company_description,
             )[:questions_per_area]
 
         final_prompts = {q.prompt for q in final_questions}
@@ -278,6 +283,7 @@ class BaseLLMQuestionPipeline(ABC):
         provenance: QuestionProvenance,
         theme_guidance: str | None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> Question | None:
         """Enrich a single bank item via LLM. Return None on failure."""
 
@@ -289,6 +295,7 @@ class BaseLLMQuestionPipeline(ABC):
         n: int,
         theme_guidance: str | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> List[Question]:
         """Generate questions from scratch via LLM with retry logic."""
 

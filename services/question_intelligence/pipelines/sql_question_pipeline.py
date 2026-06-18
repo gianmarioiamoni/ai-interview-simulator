@@ -123,6 +123,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         provenance: QuestionProvenance,
         theme_guidance: str | None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> Question | None:
 
         if not self._is_actionable_sql_prompt(item.text):
@@ -142,6 +143,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
             expected_topics=list(item.expected_topics),
             difficulty_label=difficulty_label,
             job_description=job_description,
+            company_description=company_description,
         )
 
         if enriched is None:
@@ -157,6 +159,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         n: int,
         theme_guidance: str | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> List[Question]:
 
         last_result: List[Question] = []
@@ -170,6 +173,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
                     n=n,
                     theme_guidance=theme_guidance,
                     job_description=job_description,
+                    company_description=company_description,
                 )
             except ValueError as exc:
                 logger.warning(

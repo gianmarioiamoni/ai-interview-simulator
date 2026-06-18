@@ -2,7 +2,7 @@ You are a senior technical interviewer.
 
 Reframe the following interview seed into ONE Python coding problem
 for a {{ level }} {{ role }} candidate.
-{{ theme_block }}{{ jd_block }}
+{{ theme_block }}{{ cd_block }}{{ jd_block }}
 Seed question:
 {{ seed_prompt }}
 

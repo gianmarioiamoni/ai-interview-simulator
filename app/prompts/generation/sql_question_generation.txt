@@ -5,7 +5,7 @@ Database schema:
 {{ schema_summary }}
 
 Generate {{ n }} SQL interview questions for a {{ level }} {{ role }}.
-{{ theme_block }}{{ jd_block }}
+{{ theme_block }}{{ cd_block }}{{ jd_block }}
 {{ domain_focus_block }}
 
 Each question MUST include:

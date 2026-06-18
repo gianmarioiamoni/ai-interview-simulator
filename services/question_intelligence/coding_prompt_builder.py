@@ -2,6 +2,7 @@
 
 from app.prompts.prompt_loader import PromptLoader
 from app.prompts.prompt_renderer import PromptRenderer
+from infrastructure.config.settings import settings
 
 
 _JSON_OUTPUT_CONTRACT = """
@@ -34,8 +35,6 @@ class CodingPromptBuilder:
     Owns the JSON output contract definition.
     """
 
-    _JD_MAX_CHARS = 500
-
     # ------------------------------------------------------------------
     # PUBLIC
     # ------------------------------------------------------------------
@@ -47,6 +46,7 @@ class CodingPromptBuilder:
         n: int,
         theme_guidance: str | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> str:
 
         template = PromptLoader.load("generation/coding_question_generation.txt")
@@ -58,6 +58,7 @@ class CodingPromptBuilder:
                 "level": level,
                 "role": role,
                 "theme_block": self._theme_block(theme_guidance),
+                "cd_block": self._cd_block(company_description),
                 "jd_block": self._jd_block(job_description),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
             },
@@ -70,6 +71,7 @@ class CodingPromptBuilder:
         level: str,
         theme_guidance: str | None = None,
         job_description: str | None = None,
+        company_description: str | None = None,
     ) -> str:
 
         template = PromptLoader.load("generation/coding_question_enrichment.txt")
@@ -81,6 +83,7 @@ class CodingPromptBuilder:
                 "level": level,
                 "role": role,
                 "theme_block": self._theme_block(theme_guidance),
+                "cd_block": self._cd_block(company_description),
                 "jd_block": self._jd_block(job_description),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
             },
@@ -98,5 +101,11 @@ class CodingPromptBuilder:
     def _jd_block(self, job_description: str | None) -> str:
         if not job_description or not job_description.strip():
             return ""
-        truncated = job_description.strip()[:self._JD_MAX_CHARS]
+        truncated = job_description.strip()[:settings.job_description_max_chars]
         return f"\nJOB DESCRIPTION CONTEXT (guidance only — do not override domain or difficulty):\n{truncated}\n"
+
+    def _cd_block(self, company_description: str | None) -> str:
+        if not company_description or not company_description.strip():
+            return ""
+        truncated = company_description.strip()[:settings.company_description_max_chars]
+        return f"\nBUSINESS CONTEXT (scenario framing only — do not change domain, difficulty, or seniority):\n{truncated}\n"

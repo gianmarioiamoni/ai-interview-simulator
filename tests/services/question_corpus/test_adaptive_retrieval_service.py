@@ -202,7 +202,7 @@ def test_stage_4_retrieval_success() -> None:
     assert mock_retrieval.search_with_filters.call_args_list[3].kwargs["filters"] == stages[3]
     assert stages[3].area == context.target_area
     assert stages[3].role is None
-    assert stages[3].seniority is None
+    assert stages[3].seniority == context.seniority
     assert stages[3].min_difficulty is None
     assert stages[3].max_difficulty is None
     mock_retrieval.search.assert_not_called()

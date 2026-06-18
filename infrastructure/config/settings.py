@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     # Generation retries inside AITestGenerator.
     test_generation_retry_attempts: int = 2
 
+    # ── Context profile prompt limits ────────────────────────────────────────
+    # Maximum characters of job_description injected into generation prompts.
+    job_description_max_chars: int = 500
+
+    # Maximum characters of company_description injected into generation prompts.
+    company_description_max_chars: int = 200
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
