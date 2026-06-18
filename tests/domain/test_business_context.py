@@ -170,4 +170,4 @@ class TestBusinessContextEnum:
         assert isinstance(BusinessContext.GENERIC, str)
 
     def test_four_values_defined(self):
-        assert len(BusinessContext) == 4
+        assert len(BusinessContext) == 5

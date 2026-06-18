@@ -206,3 +206,72 @@ class TestSaasSchema:
             "GROUP BY t.id HAVING total_units > 100"
         ).fetchall()
         assert len(result) > 0
+
+
+class TestHealthcareSchema:
+    def test_healthcare_returns_healthcare_definition(self):
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        assert defn.context_key == BusinessContext.HEALTHCARE
+
+    def test_healthcare_schema_contains_expected_tables(self):
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        for table in ("patients", "appointments", "diagnoses", "prescriptions", "providers"):
+            assert table in defn.schema_sql
+
+    def test_healthcare_schema_not_contain_hr_tables(self):
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        assert "employees" not in defn.schema_sql
+        assert "departments" not in defn.schema_sql
+
+    def test_healthcare_schema_not_contain_fintech_tables(self):
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        assert "accounts" not in defn.schema_sql
+        assert "transactions" not in defn.schema_sql
+
+    def test_healthcare_seed_data_present(self):
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        for table in ("patients", "appointments", "diagnoses", "prescriptions", "providers"):
+            assert f"INSERT INTO {table}" in defn.seed_sql
+
+    def test_healthcare_referential_integrity(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        db = SQLDatabase(schema_definition=defn)
+        result = db.connection.execute("SELECT COUNT(*) FROM diagnoses").fetchall()
+        assert result[0][0] == 8
+
+    def test_healthcare_has_domain_tags(self):
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        assert SqlDomain.JOIN in defn.domain_tags
+        assert SqlDomain.GROUP_BY in defn.domain_tags
+
+    def test_healthcare_has_summary_hint(self):
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        assert defn.summary_hint is not None
+        assert "patient" in defn.summary_hint.lower()
+
+    def test_healthcare_has_vocabulary_hint(self):
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        assert len(defn.vocabulary_hint) > 0
+        assert "patient" in defn.vocabulary_hint
+
+    def test_healthcare_join_query_executes(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        db = SQLDatabase(schema_definition=defn)
+        result = db.connection.execute(
+            "SELECT p.name, COUNT(a.id) FROM patients p "
+            "JOIN appointments a ON a.patient_id = p.id GROUP BY p.id"
+        ).fetchall()
+        assert len(result) > 0
+
+    def test_healthcare_aggregation_query_executes(self):
+        from services.sql_engine.sql_database import SQLDatabase
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        db = SQLDatabase(schema_definition=defn)
+        result = db.connection.execute(
+            "SELECT pr.specialty, COUNT(DISTINCT d.patient_id) as patient_count "
+            "FROM providers pr JOIN appointments a ON a.provider_id = pr.id "
+            "JOIN diagnoses d ON d.appointment_id = a.id GROUP BY pr.specialty"
+        ).fetchall()
+        assert len(result) > 0

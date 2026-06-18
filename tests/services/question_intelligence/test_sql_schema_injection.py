@@ -576,3 +576,84 @@ class TestSaasSchemaStamping:
 
     def test_saas_in_metadata_only_set(self):
         assert BusinessContext.SAAS in _BUSINESS_CONTEXT_METADATA_ONLY
+
+
+# ── HEALTHCARE schema stamping ─────────────────────────────────────────────────
+
+_HEALTHCARE_VALID_JSON = json.dumps(
+    [
+        {
+            "prompt": "List all active prescriptions with patient names.",
+            "reference_query": (
+                "SELECT p.name, pr.medication FROM patients p "
+                "JOIN prescriptions pr ON pr.patient_id = p.id WHERE pr.status = 'active'"
+            ),
+            "test_cases": [
+                {
+                    "expected_query": (
+                        "SELECT p.name, pr.medication FROM patients p "
+                        "JOIN prescriptions pr ON pr.patient_id = p.id WHERE pr.status = 'active'"
+                    ),
+                    "ordered": False,
+                }
+            ],
+        }
+    ]
+)
+
+
+class TestHealthcareSchemaStamping:
+    def test_healthcare_generator_stamps_healthcare_db_schema(self):
+        llm = _make_llm(_HEALTHCARE_VALID_JSON)
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        gen = SQLQuestionGenerator(llm, schema_definition=defn)
+
+        questions = gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID, n=1)
+
+        assert len(questions) == 1
+        assert "patients" in questions[0].db_schema
+        assert "prescriptions" in questions[0].db_schema
+        assert "employees" not in questions[0].db_schema
+
+    def test_healthcare_generator_stamps_healthcare_db_seed_data(self):
+        llm = _make_llm(_HEALTHCARE_VALID_JSON)
+        defn = SchemaRegistry.get(BusinessContext.HEALTHCARE)
+        gen = SQLQuestionGenerator(llm, schema_definition=defn)
+
+        questions = gen.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID, n=1)
+
+        assert "INSERT INTO patients" in questions[0].db_seed_data
+        assert "INSERT INTO prescriptions" in questions[0].db_seed_data
+
+    def test_factory_healthcare_returns_healthcare_scoped_generator(self):
+        llm = _make_llm(_HEALTHCARE_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+
+        hc_gen = factory(BusinessContext.HEALTHCARE)
+        assert "patients" in hc_gen._db.get_schema_sql()
+        assert "employees" not in hc_gen._db.get_schema_sql()
+
+    def test_healthcare_retry_stamps_healthcare_schema(self):
+        llm = _make_llm(_HEALTHCARE_VALID_JSON)
+        default_gen = SQLQuestionGenerator(llm)
+        factory = _build_sql_generator_factory(llm, default_gen)
+        pipeline = SQLQuestionPipeline(
+            retrieval_service=MagicMock(),
+            sql_generator=default_gen,
+            generator_factory=factory,
+        )
+
+        results = pipeline._generate_with_retry(
+            role=RoleType.BACKEND_ENGINEER,
+            level=SeniorityLevel.MID,
+            n=1,
+            business_context=BusinessContext.HEALTHCARE,
+        )
+
+        assert len(results) == 1
+        assert "patients" in results[0].db_schema
+        assert "employees" not in results[0].db_schema
+
+    def test_healthcare_in_metadata_only_set(self):
+        assert BusinessContext.HEALTHCARE in _BUSINESS_CONTEXT_METADATA_ONLY

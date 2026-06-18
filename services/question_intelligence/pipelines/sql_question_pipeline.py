@@ -70,6 +70,7 @@ _BUSINESS_CONTEXT_METADATA_ONLY = frozenset({
     BusinessContext.FINTECH,
     BusinessContext.ECOMMERCE,
     BusinessContext.SAAS,
+    BusinessContext.HEALTHCARE,
 })
 
 _SCENARIO_ANCHOR_POOL: list[ScenarioAnchor] = list(ScenarioAnchor)

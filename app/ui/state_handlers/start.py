@@ -33,6 +33,9 @@ from app.graph.nodes.navigation_node import configure_navigation_node
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 from domain.contracts.interview.business_context import BusinessContext
+from services.question_intelligence.coding_domain_profile_registry import (
+    CodingDomainProfileRegistry,
+)
 
 from infrastructure.config.settings import settings
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
@@ -101,6 +104,7 @@ def start_interview(
 
     raw_cd = company_description.strip() if company_description and company_description.strip() else None
     resolved_business_context = BusinessContext.from_company_description(raw_cd)
+    resolved_domain_profile = CodingDomainProfileRegistry.get(resolved_business_context)
 
     areas = interview_type_enum.get_areas()
     area_question_counts = _compute_questions_per_area(
@@ -121,7 +125,9 @@ def start_interview(
 
         def _enrich_question(question):
             if question.type.name == "CODING":
-                hidden_tests = test_generator.generate_tests(question, num_tests=3)
+                hidden_tests = test_generator.generate_tests(
+                    question, num_tests=3, domain_profile=resolved_domain_profile
+                )
                 return question.model_copy(update={"hidden_tests": hidden_tests})
             return question
 
@@ -167,7 +173,9 @@ def start_interview(
 
     for q in questions:
         if q.type.name == "CODING":
-            hidden_tests = test_generator.generate_tests(q, num_tests=3)
+            hidden_tests = test_generator.generate_tests(
+                q, num_tests=3, domain_profile=resolved_domain_profile
+            )
             q = q.model_copy(update={"hidden_tests": hidden_tests})
 
         enriched_questions.append(q)

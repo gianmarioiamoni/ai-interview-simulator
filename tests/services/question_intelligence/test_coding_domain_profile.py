@@ -46,18 +46,22 @@ class TestCodingDomainProfileRegistry:
         profile = CodingDomainProfileRegistry.get(BusinessContext.SAAS)
         assert profile.context_key == BusinessContext.SAAS
 
+    def test_healthcare_returns_healthcare_profile(self):
+        profile = CodingDomainProfileRegistry.get(BusinessContext.HEALTHCARE)
+        assert profile.context_key == BusinessContext.HEALTHCARE
+
     def test_all_profiles_have_vocabulary_hints(self):
-        for ctx in (BusinessContext.FINTECH, BusinessContext.ECOMMERCE, BusinessContext.SAAS):
+        for ctx in (BusinessContext.FINTECH, BusinessContext.ECOMMERCE, BusinessContext.SAAS, BusinessContext.HEALTHCARE):
             profile = CodingDomainProfileRegistry.get(ctx)
             assert len(profile.vocabulary_hint) > 0
 
     def test_all_profiles_have_scenario_anchor_pool(self):
-        for ctx in (BusinessContext.FINTECH, BusinessContext.ECOMMERCE, BusinessContext.SAAS):
+        for ctx in (BusinessContext.FINTECH, BusinessContext.ECOMMERCE, BusinessContext.SAAS, BusinessContext.HEALTHCARE):
             profile = CodingDomainProfileRegistry.get(ctx)
             assert len(profile.scenario_anchor_pool) > 0
 
     def test_all_profiles_have_test_scenario_hints(self):
-        for ctx in (BusinessContext.FINTECH, BusinessContext.ECOMMERCE, BusinessContext.SAAS):
+        for ctx in (BusinessContext.FINTECH, BusinessContext.ECOMMERCE, BusinessContext.SAAS, BusinessContext.HEALTHCARE):
             profile = CodingDomainProfileRegistry.get(ctx)
             assert len(profile.test_scenario_hints) > 0
 
@@ -78,6 +82,27 @@ class TestCodingDomainProfileRegistry:
         vocab_lower = [t.lower() for t in profile.vocabulary_hint]
         for term in ("subscription", "tenant", "churn"):
             assert term in vocab_lower
+
+    def test_healthcare_vocabulary_contains_expected_terms(self):
+        profile = CodingDomainProfileRegistry.get(BusinessContext.HEALTHCARE)
+        vocab_lower = [t.lower() for t in profile.vocabulary_hint]
+        for term in ("patient", "diagnosis", "prescription"):
+            assert term in vocab_lower
+
+    def test_healthcare_has_context_summary(self):
+        profile = CodingDomainProfileRegistry.get(BusinessContext.HEALTHCARE)
+        assert profile.context_summary is not None
+        assert "patient" in profile.context_summary.lower() or "healthcare" in profile.context_summary.lower()
+
+    def test_healthcare_scenario_anchors_are_clinical(self):
+        profile = CodingDomainProfileRegistry.get(BusinessContext.HEALTHCARE)
+        pool_text = " ".join(profile.scenario_anchor_pool).lower()
+        assert "appointment" in pool_text or "diagnosis" in pool_text or "prescription" in pool_text
+
+    def test_healthcare_test_hints_are_clinical(self):
+        profile = CodingDomainProfileRegistry.get(BusinessContext.HEALTHCARE)
+        hints_text = " ".join(profile.test_scenario_hints).lower()
+        assert "prescription" in hints_text or "appointment" in hints_text or "patient" in hints_text
 
     def test_profile_is_frozen(self):
         profile = CodingDomainProfileRegistry.get(BusinessContext.FINTECH)
