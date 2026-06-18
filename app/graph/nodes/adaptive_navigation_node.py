@@ -88,6 +88,11 @@ class AdaptiveNavigationNode:
                     if self._seniority_level is not None
                     else SeniorityLevel(state.seniority_level)
                 )
+                job_description = (
+                    state.context_profile.job_description
+                    if state.context_profile is not None
+                    else None
+                )
                 new_question, retrieval_memory = self._lazy_service.generate_next_question(
                     role=state.role.type,
                     level=level,
@@ -95,6 +100,7 @@ class AdaptiveNavigationNode:
                     planned_areas=state.planned_areas,
                     generated_count=len(questions),
                     memory=retrieval_memory,
+                    job_description=job_description,
                 )
 
                 if self._question_enricher is not None:

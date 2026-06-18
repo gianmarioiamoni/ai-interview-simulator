@@ -8,7 +8,7 @@ IMPORTANT:
  - Questions MUST be diverse and different in topic and structure
  - DO NOT repeat similar questions
  - Each question must be different in topic and structure
-{{ theme_block }}
+{{ theme_block }}{{ jd_block }}
 CONTEXT:
 {{ variation }}
 

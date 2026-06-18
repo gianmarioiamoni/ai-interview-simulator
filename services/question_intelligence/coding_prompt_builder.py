@@ -34,6 +34,8 @@ class CodingPromptBuilder:
     Owns the JSON output contract definition.
     """
 
+    _JD_MAX_CHARS = 500
+
     # ------------------------------------------------------------------
     # PUBLIC
     # ------------------------------------------------------------------
@@ -44,6 +46,7 @@ class CodingPromptBuilder:
         level: str,
         n: int,
         theme_guidance: str | None = None,
+        job_description: str | None = None,
     ) -> str:
 
         template = PromptLoader.load("generation/coding_question_generation.txt")
@@ -55,6 +58,7 @@ class CodingPromptBuilder:
                 "level": level,
                 "role": role,
                 "theme_block": self._theme_block(theme_guidance),
+                "jd_block": self._jd_block(job_description),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
             },
         )
@@ -65,6 +69,7 @@ class CodingPromptBuilder:
         role: str,
         level: str,
         theme_guidance: str | None = None,
+        job_description: str | None = None,
     ) -> str:
 
         template = PromptLoader.load("generation/coding_question_enrichment.txt")
@@ -76,6 +81,7 @@ class CodingPromptBuilder:
                 "level": level,
                 "role": role,
                 "theme_block": self._theme_block(theme_guidance),
+                "jd_block": self._jd_block(job_description),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
             },
         )
@@ -88,3 +94,9 @@ class CodingPromptBuilder:
         if theme_guidance:
             return f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
         return ""
+
+    def _jd_block(self, job_description: str | None) -> str:
+        if not job_description or not job_description.strip():
+            return ""
+        truncated = job_description.strip()[:self._JD_MAX_CHARS]
+        return f"\nJOB DESCRIPTION CONTEXT (guidance only — do not override domain or difficulty):\n{truncated}\n"

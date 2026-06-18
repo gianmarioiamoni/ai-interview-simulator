@@ -6,7 +6,7 @@ Database schema:
 
 Reframe the following interview question into ONE executable SQLite problem
 for a {{ level }} {{ role }} candidate, preserving the SQL domain and concepts stated below.
-{{ theme_block }}
+{{ theme_block }}{{ jd_block }}
 {{ domain_constraint_block }}
 {{ expected_topics_block }}
 {{ difficulty_block }}

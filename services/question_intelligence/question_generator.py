@@ -28,6 +28,8 @@ class QuestionGenerator:
     def __init__(self, llm: LLMPort) -> None:
         self._llm = llm
 
+    _JD_MAX_CHARS = 500
+
     def generate(
         self,
         role: RoleType,
@@ -36,6 +38,7 @@ class QuestionGenerator:
         area: InterviewArea,
         n: int = 2,
         theme_guidance: str | None = None,
+        job_description: str | None = None,
     ) -> List[GeneratedQuestion]:
 
         VARIATION_SEEDS = [
@@ -55,6 +58,7 @@ class QuestionGenerator:
             n=n,
             variation=variation,
             theme_guidance=theme_guidance,
+            job_description=job_description,
         )
 
         with LLMOperationContext.scope(QUESTION_GENERATION):
@@ -73,12 +77,15 @@ class QuestionGenerator:
         n: int,
         variation: str,
         theme_guidance: str | None = None,
+        job_description: str | None = None,
     ) -> str:
 
         theme_block = ""
 
         if theme_guidance:
             theme_block = f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
+
+        jd_block = self._jd_block(job_description)
 
         template = PromptLoader.load("generation/question_generation.txt")
 
@@ -92,5 +99,12 @@ class QuestionGenerator:
                 "area": area.value,
                 "variation": variation,
                 "theme_block": theme_block,
+                "jd_block": jd_block,
             },
         )
+
+    def _jd_block(self, job_description: str | None) -> str:
+        if not job_description or not job_description.strip():
+            return ""
+        truncated = job_description.strip()[:self._JD_MAX_CHARS]
+        return f"\nJOB DESCRIPTION CONTEXT (guidance only — do not override domain or difficulty):\n{truncated}\n"

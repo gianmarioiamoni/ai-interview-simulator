@@ -44,6 +44,8 @@ class SQLPromptBuilder:
     # PUBLIC
     # ------------------------------------------------------------------
 
+    _JD_MAX_CHARS = 500
+
     def build_generation_prompt(
         self,
         role: str,
@@ -51,6 +53,7 @@ class SQLPromptBuilder:
         n: int,
         theme_guidance: str | None = None,
         domains: list[str] | None = None,
+        job_description: str | None = None,
     ) -> str:
 
         template = PromptLoader.load("generation/sql_question_generation.txt")
@@ -64,6 +67,7 @@ class SQLPromptBuilder:
                 "schema_summary": self._schema_summary,
                 "theme_block": self._theme_block(theme_guidance),
                 "domain_focus_block": self._domain_focus_block(domains),
+                "jd_block": self._jd_block(job_description),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
                 "sandbox_execution_rules": self._sandbox_execution_rules,
             },
@@ -78,6 +82,7 @@ class SQLPromptBuilder:
         domains: list[str] | None = None,
         expected_topics: list[str] | None = None,
         difficulty_label: str | None = None,
+        job_description: str | None = None,
     ) -> str:
 
         template = PromptLoader.load("generation/sql_question_enrichment.txt")
@@ -93,6 +98,7 @@ class SQLPromptBuilder:
                 "domain_constraint_block": self._domain_constraint_block(domains),
                 "expected_topics_block": self._expected_topics_block(expected_topics),
                 "difficulty_block": self._difficulty_block(difficulty_label),
+                "jd_block": self._jd_block(job_description),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
                 "sandbox_execution_rules": self._sandbox_execution_rules,
             },
@@ -151,6 +157,12 @@ EXECUTION CONSTRAINTS (mandatory):
         if difficulty_label:
             return f"\nDIFFICULTY: {difficulty_label.upper()}\n"
         return ""
+
+    def _jd_block(self, job_description: str | None) -> str:
+        if not job_description or not job_description.strip():
+            return ""
+        truncated = job_description.strip()[:self._JD_MAX_CHARS]
+        return f"\nJOB DESCRIPTION CONTEXT (guidance only — do not override domain or difficulty):\n{truncated}\n"
 
     def _domain_focus_block(self, domains: list[str] | None) -> str:
         if domains:
