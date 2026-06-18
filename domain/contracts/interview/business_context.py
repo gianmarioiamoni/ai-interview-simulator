@@ -29,9 +29,20 @@ _SAAS_KEYWORDS: frozenset[str] = frozenset({
     "usage", "billing", "b2b", "platform", "cloud", "workspace", "tier",
 })
 
+_HEALTHCARE_KEYWORDS: frozenset[str] = frozenset({
+    "healthcare", "hospital", "patient", "patients", "clinical",
+    "medical", "physician", "doctor", "nurse", "nursing",
+    "ehr", "emr", "fhir", "hl7", "hipaa", "diagnosis", "diagnoses",
+    "prescription", "prescriptions", "pharmacy", "laboratory",
+    "telemedicine", "telehealth", "clinic", "appointment", "appointments",
+    "radiology", "pathology", "health record", "electronic health",
+    "patient care", "clinical workflow", "care coordination",
+    "health information",
+})
+
 # Explicit tie-breaking priority (lower index = higher priority on equal score).
-# Documented: FINTECH > ECOMMERCE > SAAS when scores are equal.
-_PRIORITY: list[str] = ["fintech", "ecommerce", "saas"]
+# Documented: FINTECH > ECOMMERCE > SAAS > HEALTHCARE when scores are equal.
+_PRIORITY: list[str] = ["fintech", "ecommerce", "saas", "healthcare"]
 
 
 class BusinessContext(str, Enum):
@@ -39,6 +50,7 @@ class BusinessContext(str, Enum):
     FINTECH = "fintech"
     ECOMMERCE = "ecommerce"
     SAAS = "saas"
+    HEALTHCARE = "healthcare"
 
     @classmethod
     def from_company_description(cls, company_description: str | None) -> "BusinessContext":
@@ -52,6 +64,7 @@ class BusinessContext(str, Enum):
             "fintech": sum(1 for kw in _FINTECH_KEYWORDS if kw in text),
             "ecommerce": sum(1 for kw in _ECOMMERCE_KEYWORDS if kw in text),
             "saas": sum(1 for kw in _SAAS_KEYWORDS if kw in text),
+            "healthcare": sum(1 for kw in _HEALTHCARE_KEYWORDS if kw in text),
         }
 
         max_score = max(scores.values())

@@ -355,11 +355,130 @@ INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date)
     ),
 )
 
+_HEALTHCARE_SCHEMA = SchemaDefinition(
+    context_key=BusinessContext.HEALTHCARE,
+    schema_sql="""
+CREATE TABLE providers (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    specialty TEXT NOT NULL,
+    license_number TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE patients (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    date_of_birth TEXT NOT NULL,
+    gender TEXT NOT NULL,
+    provider_id INTEGER,
+    FOREIGN KEY (provider_id) REFERENCES providers(id)
+);
+
+CREATE TABLE appointments (
+    id INTEGER PRIMARY KEY,
+    patient_id INTEGER NOT NULL,
+    provider_id INTEGER NOT NULL,
+    appointment_date TEXT NOT NULL,
+    status TEXT NOT NULL,
+    reason TEXT,
+    FOREIGN KEY (patient_id) REFERENCES patients(id),
+    FOREIGN KEY (provider_id) REFERENCES providers(id)
+);
+
+CREATE TABLE diagnoses (
+    id INTEGER PRIMARY KEY,
+    patient_id INTEGER NOT NULL,
+    appointment_id INTEGER NOT NULL,
+    icd_code TEXT NOT NULL,
+    description TEXT NOT NULL,
+    diagnosed_at TEXT NOT NULL,
+    FOREIGN KEY (patient_id) REFERENCES patients(id),
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id)
+);
+
+CREATE TABLE prescriptions (
+    id INTEGER PRIMARY KEY,
+    patient_id INTEGER NOT NULL,
+    provider_id INTEGER NOT NULL,
+    medication TEXT NOT NULL,
+    dosage TEXT NOT NULL,
+    issued_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    status TEXT NOT NULL,
+    FOREIGN KEY (patient_id) REFERENCES patients(id),
+    FOREIGN KEY (provider_id) REFERENCES providers(id)
+);
+""",
+    seed_sql="""
+INSERT INTO providers (id, name, specialty, license_number) VALUES (1, 'Dr. Alice Chen', 'Cardiology', 'LIC-001');
+INSERT INTO providers (id, name, specialty, license_number) VALUES (2, 'Dr. Bob Patel', 'General Practice', 'LIC-002');
+INSERT INTO providers (id, name, specialty, license_number) VALUES (3, 'Dr. Carol Smith', 'Neurology', 'LIC-003');
+INSERT INTO providers (id, name, specialty, license_number) VALUES (4, 'Dr. David Kim', 'Orthopedics', 'LIC-004');
+INSERT INTO providers (id, name, specialty, license_number) VALUES (5, 'Dr. Eve Torres', 'Pediatrics', 'LIC-005');
+
+INSERT INTO patients (id, name, date_of_birth, gender, provider_id) VALUES (1, 'James Wilson', '1980-03-15', 'M', 2);
+INSERT INTO patients (id, name, date_of_birth, gender, provider_id) VALUES (2, 'Maria Garcia', '1975-07-22', 'F', 1);
+INSERT INTO patients (id, name, date_of_birth, gender, provider_id) VALUES (3, 'Tom Brown', '1990-11-08', 'M', 2);
+INSERT INTO patients (id, name, date_of_birth, gender, provider_id) VALUES (4, 'Sarah Lee', '1968-01-30', 'F', 3);
+INSERT INTO patients (id, name, date_of_birth, gender, provider_id) VALUES (5, 'Chris Davis', '2000-05-14', 'M', 5);
+INSERT INTO patients (id, name, date_of_birth, gender, provider_id) VALUES (6, 'Anna White', '1955-09-03', 'F', 1);
+INSERT INTO patients (id, name, date_of_birth, gender, provider_id) VALUES (7, 'Mike Johnson', '1985-12-19', 'M', 4);
+INSERT INTO patients (id, name, date_of_birth, gender, provider_id) VALUES (8, 'Lucy Martinez', '1995-06-27', 'F', 2);
+
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (1, 1, 2, '2024-01-10', 'completed', 'Annual checkup');
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (2, 2, 1, '2024-01-12', 'completed', 'Chest pain evaluation');
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (3, 3, 2, '2024-01-15', 'no_show', 'Follow-up');
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (4, 4, 3, '2024-01-18', 'completed', 'Headache assessment');
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (5, 5, 5, '2024-01-20', 'completed', 'Vaccination');
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (6, 6, 1, '2024-01-22', 'cancelled', 'Arrhythmia checkup');
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (7, 7, 4, '2024-01-25', 'completed', 'Knee pain');
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (8, 8, 2, '2024-02-01', 'completed', 'General consultation');
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (9, 1, 2, '2024-02-05', 'completed', 'Blood pressure review');
+INSERT INTO appointments (id, patient_id, provider_id, appointment_date, status, reason) VALUES (10, 2, 1, '2024-02-10', 'scheduled', 'Stress test');
+
+INSERT INTO diagnoses (id, patient_id, appointment_id, icd_code, description, diagnosed_at) VALUES (1, 1, 1, 'I10', 'Essential hypertension', '2024-01-10');
+INSERT INTO diagnoses (id, patient_id, appointment_id, icd_code, description, diagnosed_at) VALUES (2, 2, 2, 'I20.9', 'Unstable angina', '2024-01-12');
+INSERT INTO diagnoses (id, patient_id, appointment_id, icd_code, description, diagnosed_at) VALUES (3, 4, 4, 'G43.909', 'Migraine', '2024-01-18');
+INSERT INTO diagnoses (id, patient_id, appointment_id, icd_code, description, diagnosed_at) VALUES (4, 5, 5, 'Z23', 'Immunization encounter', '2024-01-20');
+INSERT INTO diagnoses (id, patient_id, appointment_id, icd_code, description, diagnosed_at) VALUES (5, 7, 7, 'M17.11', 'Osteoarthritis of right knee', '2024-01-25');
+INSERT INTO diagnoses (id, patient_id, appointment_id, icd_code, description, diagnosed_at) VALUES (6, 8, 8, 'J06.9', 'Upper respiratory infection', '2024-02-01');
+INSERT INTO diagnoses (id, patient_id, appointment_id, icd_code, description, diagnosed_at) VALUES (7, 1, 9, 'I10', 'Essential hypertension', '2024-02-05');
+INSERT INTO diagnoses (id, patient_id, appointment_id, icd_code, description, diagnosed_at) VALUES (8, 2, 2, 'Z82.49', 'Family history of ischemic heart disease', '2024-01-12');
+
+INSERT INTO prescriptions (id, patient_id, provider_id, medication, dosage, issued_at, expires_at, status) VALUES (1, 1, 2, 'Lisinopril', '10mg daily', '2024-01-10', '2025-01-10', 'active');
+INSERT INTO prescriptions (id, patient_id, provider_id, medication, dosage, issued_at, expires_at, status) VALUES (2, 2, 1, 'Nitroglycerin', '0.4mg sublingual', '2024-01-12', '2025-01-12', 'active');
+INSERT INTO prescriptions (id, patient_id, provider_id, medication, dosage, issued_at, expires_at, status) VALUES (3, 4, 3, 'Sumatriptan', '50mg as needed', '2024-01-18', '2024-07-18', 'expired');
+INSERT INTO prescriptions (id, patient_id, provider_id, medication, dosage, issued_at, expires_at, status) VALUES (4, 7, 4, 'Ibuprofen', '400mg three times daily', '2024-01-25', '2024-04-25', 'active');
+INSERT INTO prescriptions (id, patient_id, provider_id, medication, dosage, issued_at, expires_at, status) VALUES (5, 8, 2, 'Amoxicillin', '500mg three times daily', '2024-02-01', '2024-02-15', 'completed');
+INSERT INTO prescriptions (id, patient_id, provider_id, medication, dosage, issued_at, expires_at, status) VALUES (6, 1, 2, 'Atorvastatin', '20mg nightly', '2024-02-05', '2025-02-05', 'active');
+INSERT INTO prescriptions (id, patient_id, provider_id, medication, dosage, issued_at, expires_at, status) VALUES (7, 6, 1, 'Metoprolol', '25mg twice daily', '2023-06-01', '2024-06-01', 'active');
+INSERT INTO prescriptions (id, patient_id, provider_id, medication, dosage, issued_at, expires_at, status) VALUES (8, 3, 2, 'Omeprazole', '20mg daily', '2023-11-15', '2024-02-15', 'expired');
+""",
+    domain_tags=(
+        SqlDomain.JOIN,
+        SqlDomain.GROUP_BY,
+        SqlDomain.HAVING,
+        SqlDomain.EXISTS,
+        SqlDomain.CTE,
+        SqlDomain.WINDOW_FUNCTION,
+        SqlDomain.CORRELATED_SUBQUERY,
+        SqlDomain.INDEXING,
+        SqlDomain.PERFORMANCE,
+    ),
+    summary_hint="Healthcare schema: providers, patients, appointments, diagnoses, prescriptions.",
+    vocabulary_hint=(
+        "patient", "diagnosis", "prescription", "provider", "appointment",
+        "treatment", "referral", "care plan", "clinical workflow",
+        "encounter", "laboratory", "healthcare",
+    ),
+)
+
 _REGISTRY: dict[BusinessContext, SchemaDefinition] = {
     BusinessContext.GENERIC: _GENERIC_SCHEMA,
     BusinessContext.FINTECH: _FINTECH_SCHEMA,
     BusinessContext.ECOMMERCE: _ECOMMERCE_SCHEMA,
     BusinessContext.SAAS: _SAAS_SCHEMA,
+    BusinessContext.HEALTHCARE: _HEALTHCARE_SCHEMA,
 }
 
 

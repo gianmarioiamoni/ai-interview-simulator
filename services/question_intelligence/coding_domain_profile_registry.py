@@ -97,11 +97,40 @@ _SAAS_PROFILE = CodingDomainProfile(
     ),
 )
 
+_HEALTHCARE_PROFILE = CodingDomainProfile(
+    context_key=BusinessContext.HEALTHCARE,
+    context_summary=(
+        "Frame the problem in a healthcare context: "
+        "patients, appointments, diagnoses, prescriptions, providers, or clinical workflows."
+    ),
+    vocabulary_hint=(
+        "patient", "diagnosis", "prescription", "physician", "nurse",
+        "appointment", "encounter", "ehr", "fhir", "hipaa",
+        "laboratory", "referral",
+    ),
+    entity_hint=(
+        "patient", "provider", "appointment", "diagnosis", "prescription",
+        "lab_result", "encounter", "care_plan",
+    ),
+    scenario_anchor_pool=(
+        "appointment scheduling", "diagnosis validation",
+        "prescription interaction check", "lab result aggregation",
+        "referral routing", "care coordination",
+        "clinical workflow automation", "patient triage",
+    ),
+    test_scenario_hints=(
+        "duplicate diagnosis code", "expired prescription",
+        "no-show appointment", "missing patient record",
+        "concurrent encounter update", "empty lab results",
+    ),
+)
+
 _REGISTRY: dict[BusinessContext, CodingDomainProfile] = {
     BusinessContext.GENERIC: _GENERIC_PROFILE,
     BusinessContext.FINTECH: _FINTECH_PROFILE,
     BusinessContext.ECOMMERCE: _ECOMMERCE_PROFILE,
     BusinessContext.SAAS: _SAAS_PROFILE,
+    BusinessContext.HEALTHCARE: _HEALTHCARE_PROFILE,
 }
 
 
