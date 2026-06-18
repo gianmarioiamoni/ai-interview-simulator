@@ -4,6 +4,7 @@ from typing import List
 
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.interview.business_context import BusinessContext
 from domain.contracts.question.question import Question
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
@@ -116,6 +117,7 @@ class QuestionIntelligenceProvider:
         interview_type: InterviewType,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory, List[str]]:
 
         return self._lazy_adaptive_service.generate_first_question(
@@ -124,6 +126,7 @@ class QuestionIntelligenceProvider:
             interview_type=interview_type,
             job_description=job_description,
             company_description=company_description,
+            business_context=business_context,
         )
 
     def generate(

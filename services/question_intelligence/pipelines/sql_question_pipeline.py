@@ -19,6 +19,7 @@ from domain.contracts.interview.interview_area import (
 from domain.contracts.interview.interview_type import (
     InterviewType,
 )
+from domain.contracts.interview.business_context import BusinessContext
 
 from domain.contracts.user.role import RoleType
 
@@ -124,6 +125,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         theme_guidance: str | None,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> Question | None:
 
         if not self._is_actionable_sql_prompt(item.text):
@@ -160,6 +162,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         theme_guidance: str | None = None,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> List[Question]:
 
         last_result: List[Question] = []

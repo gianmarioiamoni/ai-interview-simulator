@@ -27,6 +27,7 @@ from domain.contracts.interview.interview_area import (
 from domain.contracts.interview.interview_type import (
     InterviewType,
 )
+from domain.contracts.interview.business_context import BusinessContext
 
 from domain.contracts.user.role import RoleType
 
@@ -131,6 +132,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
         theme_guidance: str | None,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> Question | None:
 
         if not self._is_actionable_coding_prompt(item.text):
@@ -172,6 +174,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
         theme_guidance: str | None = None,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> List[Question]:
 
         area = InterviewArea.TECH_CODING

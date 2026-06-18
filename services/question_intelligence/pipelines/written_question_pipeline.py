@@ -4,6 +4,7 @@ from typing import List
 
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.interview.business_context import BusinessContext
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 from domain.contracts.question.question import Question
@@ -69,6 +70,7 @@ class WrittenQuestionPipeline:
         memory: InterviewRetrievalMemory | None = None,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory]:
         """
         Build questions for a single area.

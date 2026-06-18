@@ -14,6 +14,7 @@ from domain.contracts.interview.interview_area import (
 from domain.contracts.interview.interview_type import (
     InterviewType,
 )
+from domain.contracts.interview.business_context import BusinessContext
 
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import (
@@ -100,6 +101,7 @@ class AreaQuestionBuilder:
         memory: InterviewRetrievalMemory | None = None,
         job_description: str | None = None,
         company_description: str | None = None,
+        business_context: BusinessContext | None = None,
     ) -> tuple[List[Question], InterviewRetrievalMemory]:
         """
         corpus_quota: maximum number of questions drawn from the retrieval corpus
@@ -125,6 +127,7 @@ class AreaQuestionBuilder:
                 memory=session_memory,
                 job_description=job_description,
                 company_description=company_description,
+                business_context=business_context,
             )
 
         # -------------------------------------------------
@@ -142,6 +145,7 @@ class AreaQuestionBuilder:
                 memory=session_memory,
                 job_description=job_description,
                 company_description=company_description,
+                business_context=business_context,
             )
 
         # -------------------------------------------------
@@ -158,6 +162,7 @@ class AreaQuestionBuilder:
             memory=session_memory,
             job_description=job_description,
             company_description=company_description,
+            business_context=business_context,
         )
 
 

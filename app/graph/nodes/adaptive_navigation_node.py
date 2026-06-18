@@ -6,6 +6,7 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import Question
 from domain.contracts.shared.action_type import ActionType
 from domain.contracts.user.seniority_level import SeniorityLevel
+from domain.contracts.interview.business_context import BusinessContext
 
 from app.ui.constants.loader_steps import LoaderStep
 from services.question_intelligence.adaptive_interview_memory_bridge import (
@@ -98,6 +99,11 @@ class AdaptiveNavigationNode:
                     if state.context_profile is not None
                     else None
                 )
+                business_context = (
+                    state.context_profile.business_context
+                    if state.context_profile is not None
+                    else BusinessContext.GENERIC
+                )
                 new_question, retrieval_memory = self._lazy_service.generate_next_question(
                     role=state.role.type,
                     level=level,
@@ -107,6 +113,7 @@ class AdaptiveNavigationNode:
                     memory=retrieval_memory,
                     job_description=job_description,
                     company_description=company_description,
+                    business_context=business_context,
                 )
 
                 if self._question_enricher is not None:
