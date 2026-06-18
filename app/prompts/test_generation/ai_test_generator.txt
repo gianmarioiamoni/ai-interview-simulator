@@ -53,6 +53,7 @@ Example:
 parameters = ["point"]
 args = [(1,2)]
 
+{{ domain_hints_block }}
 Rules:
 - args MUST match the parameter order exactly
 - expected MUST be correct

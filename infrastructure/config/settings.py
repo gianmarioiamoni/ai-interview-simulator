@@ -57,6 +57,16 @@ class Settings(BaseSettings):
     # A score below this threshold falls back to GENERIC.
     business_context_min_keyword_score: int = 2
 
+    # ── Coding domain profile feature flags ──────────────────────────────────
+    # Enable CodingDomainProfile-driven framing in coding question prompts.
+    coding_domain_profile_enabled: bool = True
+
+    # Enable scenario anchor sampling from CodingDomainProfile.scenario_anchor_pool.
+    coding_scenario_anchor_enabled: bool = True
+
+    # Enable domain vocabulary injection from CodingDomainProfile.vocabulary_hint.
+    coding_domain_vocabulary_enabled: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

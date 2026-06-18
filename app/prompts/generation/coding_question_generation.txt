@@ -1,7 +1,7 @@
 You are a senior technical interviewer.
 
 Generate {{ n }} Python coding interview questions for a {{ level }} {{ role }}.
-{{ theme_block }}{{ cd_block }}{{ jd_block }}
+{{ theme_block }}{{ cd_block }}{{ jd_block }}{{ domain_framing_block }}{{ vocabulary_block }}{{ scenario_block }}
 
 Each question MUST include:
 

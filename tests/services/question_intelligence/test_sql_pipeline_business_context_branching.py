@@ -85,11 +85,11 @@ class TestBusinessContextMetadataOnlySet:
     def test_generic_not_in_metadata_only_set(self):
         assert BusinessContext.GENERIC not in _BUSINESS_CONTEXT_METADATA_ONLY
 
-    def test_ecommerce_not_in_metadata_only_set(self):
-        assert BusinessContext.ECOMMERCE not in _BUSINESS_CONTEXT_METADATA_ONLY
+    def test_ecommerce_in_metadata_only_set(self):
+        assert BusinessContext.ECOMMERCE in _BUSINESS_CONTEXT_METADATA_ONLY
 
-    def test_saas_not_in_metadata_only_set(self):
-        assert BusinessContext.SAAS not in _BUSINESS_CONTEXT_METADATA_ONLY
+    def test_saas_in_metadata_only_set(self):
+        assert BusinessContext.SAAS in _BUSINESS_CONTEXT_METADATA_ONLY
 
 
 class TestGenericContextUsesEnrichment:
