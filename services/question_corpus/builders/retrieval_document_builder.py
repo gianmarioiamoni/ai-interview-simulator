@@ -102,6 +102,7 @@ class RetrievalDocumentBuilder:
             "seniority": question.seniority.value,
             "difficulty": question.difficulty,
             "domains": question.domains,
+            "expected_topics": question.expected_topics,
             "tags": question.tags,
             "quality_score": question.quality_score,
             "source": question.source,

@@ -24,6 +24,7 @@ class QuestionBankItem(BaseModel):
     difficulty: int = Field(..., ge=1, le=5)
 
     domains: list[SqlDomain] = Field(default_factory=list)
+    expected_topics: list[str] = Field(default_factory=list)
 
     ingestion_metadata: IngestionMetadata
     provenance: QuestionProvenance | None = None

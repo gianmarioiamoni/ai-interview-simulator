@@ -66,6 +66,18 @@ class TestSQLPromptBuilderGenerationPrompt:
         )
         assert "aggregation queries" in prompt
 
+    def test_generation_prompt_with_domain_focus(self, builder):
+        prompt = builder.build_generation_prompt(
+            role="backend", level="mid", n=1, domains=["window_function", "cte"]
+        )
+        assert "DOMAIN FOCUS" in prompt
+        assert "window_function" in prompt
+        assert "cte" in prompt
+
+    def test_generation_prompt_no_domain_focus_when_empty(self, builder):
+        prompt = builder.build_generation_prompt(role="backend", level="mid", n=1)
+        assert "DOMAIN FOCUS" not in prompt
+
 
 class TestSQLPromptBuilderEnrichmentPrompt:
     def test_enrichment_prompt_contains_schema(self, builder):
@@ -89,6 +101,62 @@ class TestSQLPromptBuilderEnrichmentPrompt:
             theme_guidance="GROUP BY usage",
         )
         assert "GROUP BY usage" in prompt
+
+    def test_enrichment_prompt_has_grounding_reference_label(self, builder):
+        prompt = builder.build_enrichment_prompt(
+            seed_prompt="Explain window functions", role="backend", level="senior"
+        )
+        assert "grounding reference" in prompt
+        assert "conceptual" not in prompt
+
+    def test_enrichment_prompt_with_domain_constraint(self, builder):
+        prompt = builder.build_enrichment_prompt(
+            seed_prompt="Write a query",
+            role="backend",
+            level="mid",
+            domains=["window_function"],
+        )
+        assert "DOMAIN CONSTRAINT" in prompt
+        assert "window_function" in prompt
+        assert "mandatory" in prompt
+
+    def test_enrichment_prompt_with_expected_topics(self, builder):
+        prompt = builder.build_enrichment_prompt(
+            seed_prompt="Write a query",
+            role="backend",
+            level="mid",
+            expected_topics=["ROW_NUMBER", "PARTITION BY"],
+        )
+        assert "REQUIRED KEYWORDS" in prompt
+        assert "ROW_NUMBER" in prompt
+        assert "PARTITION BY" in prompt
+
+    def test_enrichment_prompt_with_difficulty_label(self, builder):
+        prompt = builder.build_enrichment_prompt(
+            seed_prompt="Write a query",
+            role="backend",
+            level="senior",
+            difficulty_label="hard",
+        )
+        assert "DIFFICULTY" in prompt
+        assert "HARD" in prompt
+
+    def test_enrichment_prompt_no_constraint_blocks_when_empty(self, builder):
+        prompt = builder.build_enrichment_prompt(
+            seed_prompt="Write a query", role="backend", level="mid"
+        )
+        assert "DOMAIN CONSTRAINT" not in prompt
+        assert "REQUIRED KEYWORDS" not in prompt
+        assert "DIFFICULTY" not in prompt
+
+    def test_enrichment_prompt_preserves_domain_intent_instruction(self, builder):
+        prompt = builder.build_enrichment_prompt(
+            seed_prompt="Write a query using CTE",
+            role="backend",
+            level="mid",
+            domains=["cte"],
+        )
+        assert "preserving the SQL domain" in prompt
 
 
 class TestSQLPromptBuilderSchemaPropagation:

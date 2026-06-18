@@ -108,6 +108,9 @@ class SQLQuestionGenerator:
         provenance: QuestionProvenance | None = None,
         theme_guidance: str | None = None,
         source_difficulty: int | None = None,
+        domains: list[str] | None = None,
+        expected_topics: list[str] | None = None,
+        difficulty_label: str | None = None,
     ) -> Question | None:
 
         prompt = self._prompt_builder.build_enrichment_prompt(
@@ -115,6 +118,9 @@ class SQLQuestionGenerator:
             role=role.value,
             level=level.value,
             theme_guidance=theme_guidance,
+            domains=domains or [],
+            expected_topics=expected_topics or [],
+            difficulty_label=difficulty_label or "",
         )
 
         try:

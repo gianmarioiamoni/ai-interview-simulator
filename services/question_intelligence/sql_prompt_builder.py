@@ -50,6 +50,7 @@ class SQLPromptBuilder:
         level: str,
         n: int,
         theme_guidance: str | None = None,
+        domains: list[str] | None = None,
     ) -> str:
 
         template = PromptLoader.load("generation/sql_question_generation.txt")
@@ -62,6 +63,7 @@ class SQLPromptBuilder:
                 "role": role,
                 "schema_summary": self._schema_summary,
                 "theme_block": self._theme_block(theme_guidance),
+                "domain_focus_block": self._domain_focus_block(domains),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
                 "sandbox_execution_rules": self._sandbox_execution_rules,
             },
@@ -73,6 +75,9 @@ class SQLPromptBuilder:
         role: str,
         level: str,
         theme_guidance: str | None = None,
+        domains: list[str] | None = None,
+        expected_topics: list[str] | None = None,
+        difficulty_label: str | None = None,
     ) -> str:
 
         template = PromptLoader.load("generation/sql_question_enrichment.txt")
@@ -85,6 +90,9 @@ class SQLPromptBuilder:
                 "role": role,
                 "schema_summary": self._schema_summary,
                 "theme_block": self._theme_block(theme_guidance),
+                "domain_constraint_block": self._domain_constraint_block(domains),
+                "expected_topics_block": self._expected_topics_block(expected_topics),
+                "difficulty_block": self._difficulty_block(difficulty_label),
                 "json_output_contract": _JSON_OUTPUT_CONTRACT,
                 "sandbox_execution_rules": self._sandbox_execution_rules,
             },
@@ -120,4 +128,36 @@ EXECUTION CONSTRAINTS (mandatory):
     def _theme_block(self, theme_guidance: str | None) -> str:
         if theme_guidance:
             return f"\nTHEME GUIDANCE:\n{theme_guidance}\n"
+        return ""
+
+    def _domain_constraint_block(self, domains: list[str] | None) -> str:
+        if domains:
+            joined = ", ".join(domains)
+            return (
+                f"\nDOMAIN CONSTRAINT (mandatory):\n"
+                f"The generated question MUST test one or more of the following SQL concepts: {joined}.\n"
+                f"The question prompt MUST require the candidate to use these concepts directly.\n"
+                f"Do NOT generate a question about a different SQL topic.\n"
+            )
+        return ""
+
+    def _expected_topics_block(self, expected_topics: list[str] | None) -> str:
+        if expected_topics:
+            joined = ", ".join(expected_topics)
+            return f"\nREQUIRED KEYWORDS (preferred — use in question wording when possible):\n{joined}\n"
+        return ""
+
+    def _difficulty_block(self, difficulty_label: str | None) -> str:
+        if difficulty_label:
+            return f"\nDIFFICULTY: {difficulty_label.upper()}\n"
+        return ""
+
+    def _domain_focus_block(self, domains: list[str] | None) -> str:
+        if domains:
+            joined = ", ".join(domains)
+            return (
+                f"\nDOMAIN FOCUS (mandatory):\n"
+                f"Generate questions that specifically test: {joined}.\n"
+                f"Do NOT generate generic employee/department/salary questions unless they directly exercise the domain(s) above.\n"
+            )
         return ""

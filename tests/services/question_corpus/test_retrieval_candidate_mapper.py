@@ -268,3 +268,34 @@ def test_map_one_domains_carried_into_provenance() -> None:
 
     assert item.domains == ["exists"]
     assert item.provenance is not None
+
+
+def test_map_one_propagates_expected_topics_list() -> None:
+    mapper = RetrievalCandidateMapper()
+    candidate = _build_candidate(
+        metadata_overrides={"expected_topics": ["ROW_NUMBER", "PARTITION BY"]}
+    )
+
+    item = mapper.map_one(candidate)
+
+    assert item.expected_topics == ["ROW_NUMBER", "PARTITION BY"]
+
+
+def test_map_one_propagates_expected_topics_csv_string() -> None:
+    mapper = RetrievalCandidateMapper()
+    candidate = _build_candidate(
+        metadata_overrides={"expected_topics": "GROUP BY, HAVING"}
+    )
+
+    item = mapper.map_one(candidate)
+
+    assert item.expected_topics == ["GROUP BY", "HAVING"]
+
+
+def test_map_one_expected_topics_defaults_to_empty_when_missing() -> None:
+    mapper = RetrievalCandidateMapper()
+    candidate = _build_candidate()
+
+    item = mapper.map_one(candidate)
+
+    assert item.expected_topics == []

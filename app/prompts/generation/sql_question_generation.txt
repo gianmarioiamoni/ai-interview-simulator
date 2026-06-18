@@ -6,6 +6,7 @@ Database schema:
 
 Generate {{ n }} SQL interview questions for a {{ level }} {{ role }}.
 {{ theme_block }}
+{{ domain_focus_block }}
 
 Each question MUST include:
 

@@ -146,3 +146,54 @@ def test_build_embedding_text_contains_metadata(
     assert f"Seniority: {question.seniority.value}" in embedding_input
     assert "Domains: technical_case_study" in embedding_input
     assert "Topics: rate limiting" in embedding_input
+
+
+@patch(
+    "services.question_corpus.builders.retrieval_document_builder.get_embedding_model",
+)
+def test_build_metadata_contains_expected_topics(
+    mock_get_embedding_model: MagicMock,
+) -> None:
+
+    mock_embedding_model = MagicMock()
+    mock_embedding_model.embed_query.return_value = [0.1]
+    mock_get_embedding_model.return_value = mock_embedding_model
+
+    question = _build_question()
+    builder = RetrievalDocumentBuilder(skip_embedding=False)
+
+    document = builder.build(question)
+
+    assert "expected_topics" in document.metadata
+    assert document.metadata["expected_topics"] == ["rate limiting"]
+
+
+@patch(
+    "services.question_corpus.builders.retrieval_document_builder.get_embedding_model",
+)
+def test_build_metadata_expected_topics_empty_list_when_none(
+    mock_get_embedding_model: MagicMock,
+) -> None:
+
+    mock_embedding_model = MagicMock()
+    mock_embedding_model.embed_query.return_value = [0.1]
+    mock_get_embedding_model.return_value = mock_embedding_model
+
+    question = CuratedQuestion(
+        id="q_no_topics",
+        question="Explain joins.",
+        role=RoleType.BACKEND_ENGINEER,
+        seniority=SeniorityLevel.MID,
+        area=InterviewArea.TECH_CASE_STUDY,
+        domains=["join"],
+        difficulty=2,
+        source="test",
+        quality_score=0.7,
+        tags=[],
+        expected_topics=[],
+    )
+    builder = RetrievalDocumentBuilder(skip_embedding=False)
+
+    document = builder.build(question)
+
+    assert document.metadata["expected_topics"] == []

@@ -176,6 +176,14 @@ class RetrievalCandidateMapper:
 
         domains = parse_sql_domains(metadata.get("domains"))
 
+        raw_topics = metadata.get("expected_topics", [])
+        if isinstance(raw_topics, str):
+            expected_topics = [t.strip() for t in raw_topics.split(",") if t.strip()]
+        elif isinstance(raw_topics, list):
+            expected_topics = [str(t).strip() for t in raw_topics if str(t).strip()]
+        else:
+            expected_topics = []
+
         return QuestionBankItem(
             id=document_id,
             text=text,
@@ -185,6 +193,7 @@ class RetrievalCandidateMapper:
             level=level,
             difficulty=difficulty,
             domains=domains,
+            expected_topics=expected_topics,
             ingestion_metadata=ingestion_metadata,
             provenance=provenance,
         )

@@ -5,10 +5,13 @@ Database schema:
 {{ schema_summary }}
 
 Reframe the following interview question into ONE executable SQLite problem
-for a {{ level }} {{ role }} candidate.
+for a {{ level }} {{ role }} candidate, preserving the SQL domain and concepts stated below.
 {{ theme_block }}
+{{ domain_constraint_block }}
+{{ expected_topics_block }}
+{{ difficulty_block }}
 
-Seed question (conceptual — adapt to the schema above):
+Seed question (grounding reference — maintain domain intent):
 {{ seed_prompt }}
 
 Each output item MUST include:
