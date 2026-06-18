@@ -68,7 +68,12 @@ class SQLQuestionGenerator:
         from services.question_intelligence.sql_prompt_builder import SQLPromptBuilder
         from services.question_intelligence.sql_response_parser import SQLResponseParser
 
-        self._prompt_builder = SQLPromptBuilder(self._db.connection)
+        vocabulary_hint = (
+            schema_definition.vocabulary_hint
+            if schema_definition is not None
+            else ()
+        )
+        self._prompt_builder = SQLPromptBuilder(self._db.connection, vocabulary_hint=vocabulary_hint)
         self._response_parser = SQLResponseParser(self._db)
 
     # -----------------------------------------------------

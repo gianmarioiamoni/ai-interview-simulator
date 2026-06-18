@@ -6,7 +6,7 @@ Database schema:
 
 Generate {{ n }} SQL interview questions for a {{ level }} {{ role }}.
 {{ theme_block }}{{ cd_block }}{{ jd_block }}
-{{ domain_focus_block }}{{ difficulty_target_block }}{{ scenario_focus_block }}
+{{ domain_focus_block }}{{ difficulty_target_block }}{{ scenario_focus_block }}{{ vocabulary_block }}{{ schema_coverage_block }}
 
 Each question MUST include:
 

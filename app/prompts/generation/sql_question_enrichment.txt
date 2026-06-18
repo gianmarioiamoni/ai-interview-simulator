@@ -9,7 +9,7 @@ for a {{ level }} {{ role }} candidate, preserving the SQL domain and concepts s
 {{ theme_block }}{{ cd_block }}{{ jd_block }}
 {{ domain_constraint_block }}
 {{ expected_topics_block }}
-{{ difficulty_block }}
+{{ difficulty_block }}{{ vocabulary_block }}{{ schema_coverage_block }}
 
 Seed question (grounding reference — maintain domain intent):
 {{ seed_prompt }}

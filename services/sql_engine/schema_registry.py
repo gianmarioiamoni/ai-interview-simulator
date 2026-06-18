@@ -145,6 +145,11 @@ INSERT INTO portfolios (id, account_id, asset, quantity, purchase_price) VALUES 
         SqlDomain.PERFORMANCE,
     ),
     summary_hint="Fintech schema: customers, accounts, transactions, portfolios.",
+    vocabulary_hint=(
+        "merchant", "settlement", "ledger", "chargeback",
+        "reconciliation", "fraud", "compliance", "balance",
+        "payment", "transfer", "portfolio", "investment",
+    ),
 )
 
 _ECOMMERCE_SCHEMA = SchemaDefinition(
@@ -240,6 +245,11 @@ INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES 
         SqlDomain.PERFORMANCE,
     ),
     summary_hint="E-commerce schema: customers, categories, products, orders, order_items.",
+    vocabulary_hint=(
+        "inventory", "fulfillment", "warehouse", "sku",
+        "returns", "supplier", "shipment", "checkout",
+        "cart", "catalog", "discount", "revenue",
+    ),
 )
 
 _SAAS_SCHEMA = SchemaDefinition(
@@ -338,6 +348,11 @@ INSERT INTO usage_events (id, tenant_id, user_id, event_type, units, event_date)
         SqlDomain.PERFORMANCE,
     ),
     summary_hint="SaaS schema: tenants, plans, subscriptions, users, usage_events.",
+    vocabulary_hint=(
+        "churn", "retention", "engagement", "usage events",
+        "MRR", "ARR", "feature adoption", "billing",
+        "onboarding", "seat", "tier", "quota",
+    ),
 )
 
 _REGISTRY: dict[BusinessContext, SchemaDefinition] = {
