@@ -6,6 +6,7 @@ from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.question.question import Question
 from domain.contracts.interview.interview_progress import InterviewProgress
 from domain.contracts.shared.action_type import ActionType
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 
 
 class InterviewStateFactoryMixin:
@@ -22,6 +23,7 @@ class InterviewStateFactoryMixin:
         role_custom_name: str | None = None,
         seniority_level: str = "mid",
         interview_length: int = 20,
+        context_profile: InterviewContextProfile | None = None,
     ) -> Self:
 
         return cls(
@@ -34,6 +36,7 @@ class InterviewStateFactoryMixin:
             progress=InterviewProgress.SETUP,
             seniority_level=seniority_level,
             interview_length=interview_length,
+            context_profile=context_profile or InterviewContextProfile(),
         )
 
     # =========================================================

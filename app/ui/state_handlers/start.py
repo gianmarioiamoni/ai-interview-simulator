@@ -31,6 +31,7 @@ from app.runtime.interview_runtime import (
 from app.graph.nodes.navigation_node import configure_navigation_node
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.constants.loader_steps import LoaderStep
@@ -46,6 +47,8 @@ def start_interview(
     interview_length,
     company,
     language,
+    job_description=None,
+    company_description=None,
 ) -> Generator:
     def _smooth_progress(current, target):
         return min(current + 3, target)
@@ -164,6 +167,11 @@ def start_interview(
     state.current_progress = _smooth_progress(state.current_progress, 100)
     time.sleep(0.2)
 
+    context_profile = InterviewContextProfile(
+        job_description=job_description.strip() if job_description and job_description.strip() else None,
+        company_description=company_description.strip() if company_description and company_description.strip() else None,
+    )
+
     state = InterviewState.create_initial(
         role_type=role_type,
         role_custom_name=role_custom,
@@ -174,6 +182,7 @@ def start_interview(
         interview_id="session-1",
         seniority_level=level_enum.value,
         interview_length=resolved_length,
+        context_profile=context_profile,
     )
 
     if adaptive_enabled and retrieval_memory is not None:

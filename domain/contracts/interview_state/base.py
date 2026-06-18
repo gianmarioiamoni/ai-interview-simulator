@@ -22,6 +22,7 @@ from services.question_corpus.contracts.interview_retrieval_memory import (
 
 from app.ui.constants.loader_steps import LoaderStep
 from app.contracts.feedback_bundle import FeedbackBundle
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 
 
 class InterviewStateBase(BaseModel):
@@ -67,6 +68,10 @@ class InterviewStateBase(BaseModel):
 
     seniority_level: str = "mid"
     interview_length: int = 20
+
+    context_profile: InterviewContextProfile = Field(
+        default_factory=InterviewContextProfile,
+    )
 
     # Humanizer (bound aligned with HumanizerPolicyEngine.MAX_FOLLOW_UPS)
     enable_humanizer: bool = True

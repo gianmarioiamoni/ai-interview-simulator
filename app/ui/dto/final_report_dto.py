@@ -15,6 +15,7 @@ from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 
 
 class FinalReportDTO(BaseModel):
@@ -50,6 +51,8 @@ class FinalReportDTO(BaseModel):
 
     seniority_level: str
 
+    context_profile: InterviewContextProfile
+
     @classmethod
     def from_components(cls, state: InterviewState, final_evaluation):
 
@@ -69,6 +72,7 @@ class FinalReportDTO(BaseModel):
         hire_decision = (HireDecisionMapper.to_label(final_evaluation.hire_decision))
 
         seniority_level = state.seniority_level
+        context_profile = state.context_profile
 
         return cls(
             overall_score=final_evaluation.overall_score,
@@ -91,4 +95,5 @@ class FinalReportDTO(BaseModel):
             confidence=final_evaluation.confidence,
             role=role,
             seniority_level=seniority_level,
+            context_profile=context_profile,
         )

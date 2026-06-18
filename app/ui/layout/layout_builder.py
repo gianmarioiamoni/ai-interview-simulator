@@ -74,6 +74,20 @@ class UILayoutBuilder:
             visible=True,
         )
 
+        with gr.Accordion("Advanced Context (optional)", open=False):
+            job_description_input = gr.Textbox(
+                label="Job Description",
+                placeholder="Paste the job description here to tailor the interview questions...",
+                lines=5,
+                visible=True,
+            )
+            company_description_input = gr.Textbox(
+                label="Company Description",
+                placeholder="Describe the company culture, stack, or mission to add context...",
+                lines=3,
+                visible=True,
+            )
+
         start_button = gr.Button("Start Interview", interactive=False, visible=True)
 
         question_counter = gr.Markdown("", visible=False)
@@ -115,6 +129,8 @@ class UILayoutBuilder:
             interview_length_input=interview_length_input,
             company_input=company_input,
             language_input=language_input,
+            job_description_input=job_description_input,
+            company_description_input=company_description_input,
             start_button=start_button,
             page_title=page_title,
             question_counter=question_counter,
