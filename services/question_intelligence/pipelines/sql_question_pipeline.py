@@ -26,6 +26,7 @@ from domain.contracts.user.seniority_level import (
     SeniorityLevel,
 )
 
+from services.question_intelligence.mappers.difficulty_mapper import map_corpus_difficulty
 from services.question_intelligence.sql_question_generator import (
     SQLQuestionGenerator,
 )
@@ -127,6 +128,8 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
             logger.debug("[SQL] Skipping non-actionable retrieved prompt: %s", item.id)
             return None
 
+        difficulty_label = map_corpus_difficulty(item.difficulty).value
+
         enriched = self._sql_generator.enrich_from_prompt(
             seed_prompt=item.text,
             role=role,
@@ -134,6 +137,9 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
             provenance=provenance,
             theme_guidance=theme_guidance,
             source_difficulty=item.difficulty,
+            domains=[d.value for d in item.domains],
+            expected_topics=list(item.expected_topics),
+            difficulty_label=difficulty_label,
         )
 
         if enriched is None:
