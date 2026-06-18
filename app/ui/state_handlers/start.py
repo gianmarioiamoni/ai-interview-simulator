@@ -126,11 +126,18 @@ def start_interview(
             seniority_level=level_enum,
         )
 
+        jd_for_generation = (
+            job_description.strip()[:500]
+            if job_description and job_description.strip()
+            else None
+        )
+
         questions, retrieval_memory, planned_areas = (
             question_intelligence.generate_first_question(
                 role=role_type,
                 level=level_enum,
                 interview_type=interview_type_enum,
+                job_description=jd_for_generation,
             )
         )
 

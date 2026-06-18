@@ -77,6 +77,7 @@ class SQLQuestionGenerator:
         level: SeniorityLevel,
         n: int = 1,
         theme_guidance: str | None = None,
+        job_description: str | None = None,
     ) -> List[Question]:
 
         prompt = self._prompt_builder.build_generation_prompt(
@@ -84,6 +85,7 @@ class SQLQuestionGenerator:
             level=level.value,
             n=n,
             theme_guidance=theme_guidance,
+            job_description=job_description,
         )
 
         with LLMOperationContext.scope(QUESTION_GENERATION):
@@ -111,6 +113,7 @@ class SQLQuestionGenerator:
         domains: list[str] | None = None,
         expected_topics: list[str] | None = None,
         difficulty_label: str | None = None,
+        job_description: str | None = None,
     ) -> Question | None:
 
         prompt = self._prompt_builder.build_enrichment_prompt(
@@ -121,6 +124,7 @@ class SQLQuestionGenerator:
             domains=domains or [],
             expected_topics=expected_topics or [],
             difficulty_label=difficulty_label or "",
+            job_description=job_description,
         )
 
         try:

@@ -122,6 +122,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         area: InterviewArea,
         provenance: QuestionProvenance,
         theme_guidance: str | None,
+        job_description: str | None = None,
     ) -> Question | None:
 
         if not self._is_actionable_sql_prompt(item.text):
@@ -140,6 +141,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
             domains=[d.value for d in item.domains],
             expected_topics=list(item.expected_topics),
             difficulty_label=difficulty_label,
+            job_description=job_description,
         )
 
         if enriched is None:
@@ -154,6 +156,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         level: SeniorityLevel,
         n: int,
         theme_guidance: str | None = None,
+        job_description: str | None = None,
     ) -> List[Question]:
 
         last_result: List[Question] = []
@@ -166,6 +169,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
                     level=level,
                     n=n,
                     theme_guidance=theme_guidance,
+                    job_description=job_description,
                 )
             except ValueError as exc:
                 logger.warning(
