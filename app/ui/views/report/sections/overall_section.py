@@ -41,6 +41,29 @@ def render_overall(report):
 
     seniority_label = getattr(report, "seniority_level", "mid").capitalize()
 
+    context_profile = getattr(report, "context_profile", None)
+    context_block = ""
+    if context_profile is not None:
+        _MAX = 300
+        jd = context_profile.job_description
+        cd = context_profile.company_description
+        if jd or cd:
+            jd_line = ""
+            cd_line = ""
+            if jd:
+                jd_preview = jd[:_MAX] + ("…" if len(jd) > _MAX else "")
+                jd_line = f"<div><strong>Job Description:</strong> {jd_preview}</div>"
+            if cd:
+                cd_preview = cd[:_MAX] + ("…" if len(cd) > _MAX else "")
+                cd_line = f"<div><strong>Company Description:</strong> {cd_preview}</div>"
+            context_block = f"""
+<details>
+<summary><strong>Interview Context</strong></summary>
+{jd_line}
+{cd_line}
+</details>
+"""
+
     return f"""
 <h2>Overall Performance</h2>
 
@@ -54,4 +77,5 @@ def render_overall(report):
 </table>
 
 {gating_block}
+{context_block}
 """

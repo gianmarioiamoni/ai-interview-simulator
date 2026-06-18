@@ -103,6 +103,8 @@ class UIEventOrchestrator:
                 self.c.interview_length_input,
                 self.c.company_input,
                 self.c.language_input,
+                self.c.job_description_input,
+                self.c.company_description_input,
             ],
             outputs=self.outputs,
             show_progress=False,

@@ -3,7 +3,17 @@
 from app.ui.state_handlers import start_interview
 
 
-def start_handler(role, role_custom_name, interview_type, seniority, interview_length, company, language):
+def start_handler(
+    role,
+    role_custom_name,
+    interview_type,
+    seniority,
+    interview_length,
+    company,
+    language,
+    job_description=None,
+    company_description=None,
+):
     return start_interview(
         role=role,
         role_custom_name=role_custom_name,
@@ -12,4 +22,6 @@ def start_handler(role, role_custom_name, interview_type, seniority, interview_l
         interview_length=int(interview_length),
         company=company,
         language=language,
+        job_description=job_description,
+        company_description=company_description,
     )
