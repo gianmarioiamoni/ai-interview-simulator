@@ -18,7 +18,6 @@ Each question MUST include:
 
 Rules:
 - Use ONLY tables and columns listed in the schema above — NEVER invent column names
-- The column for an employee's name is "name" (in the employees table), NOT "employee_name"
 - Use SQLite-compatible SQL
 - Queries MUST be executable against the schema above
 - Avoid ambiguous wording

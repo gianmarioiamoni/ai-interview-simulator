@@ -300,15 +300,14 @@ def test_prompt_includes_foreign_key_definitions() -> None:
     assert "departments.id" in prompt_text
 
 
-def test_prompt_includes_forbidden_column_warning() -> None:
+def test_prompt_includes_column_name_constraint() -> None:
     llm = _make_llm(_VALID_SQL_JSON)
     generator = SQLQuestionGenerator(llm)
 
     generator.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID, n=1)
 
     prompt_text = llm.invoke.call_args[0][0]
-    assert "employee_name" in prompt_text
-    assert "FORBIDDEN" in prompt_text or "NOT" in prompt_text
+    assert "NEVER invent column names" in prompt_text
 
 
 def test_generation_prompt_explicitly_names_employee_column() -> None:
@@ -318,7 +317,7 @@ def test_generation_prompt_explicitly_names_employee_column() -> None:
     generator.generate(role=RoleType.BACKEND_ENGINEER, level=SeniorityLevel.MID, n=1)
 
     prompt_text = llm.invoke.call_args[0][0]
-    assert 'column for an employee\'s name is "name"' in prompt_text
+    assert "NEVER invent column names" in prompt_text
 
 
 def test_enrichment_prompt_explicitly_names_employee_column() -> None:
@@ -332,7 +331,7 @@ def test_enrichment_prompt_explicitly_names_employee_column() -> None:
     )
 
     prompt_text = llm.invoke.call_args[0][0]
-    assert 'column for an employee\'s name is "name"' in prompt_text
+    assert "NEVER invent column names" in prompt_text
 
 
 # ── 7. Partial success: mix of valid and invalid items ────────────────────────

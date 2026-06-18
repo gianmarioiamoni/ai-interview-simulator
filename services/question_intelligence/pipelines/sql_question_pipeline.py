@@ -2,7 +2,7 @@
 
 import re
 import random
-from typing import List
+from typing import Callable, List
 
 from domain.contracts.question.question import (
     Question,
@@ -72,6 +72,8 @@ _BUSINESS_CONTEXT_METADATA_ONLY = frozenset({
 
 _SCENARIO_ANCHOR_POOL: list[ScenarioAnchor] = list(ScenarioAnchor)
 
+SQLGeneratorFactory = Callable[[BusinessContext], SQLQuestionGenerator]
+
 
 def _pick_scenario_anchor() -> ScenarioAnchor:
     return random.choice(_SCENARIO_ANCHOR_POOL)
@@ -84,12 +86,16 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         retrieval_service: QuestionRetrievalService,
         sql_generator: SQLQuestionGenerator,
         sql_retrieval_helper: SqlPipelineRetrievalHelper | None = None,
+        generator_factory: SQLGeneratorFactory | None = None,
     ) -> None:
 
         super().__init__()
         self._retrieval_service = retrieval_service
         self._sql_generator = sql_generator
         self._sql_retrieval_helper = sql_retrieval_helper
+        # Factory resolves the correct schema-scoped generator per BusinessContext.
+        # When None, falls back to the default sql_generator for all contexts.
+        self._generator_factory = generator_factory
 
     # ------------------------------------------------------------------
     # BaseLLMQuestionPipeline implementation
@@ -148,6 +154,7 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
                 theme_guidance=theme_guidance,
                 job_description=job_description,
                 company_description=company_description,
+                business_context=business_context,
             )
 
         if not self._is_actionable_sql_prompt(item.text):
@@ -218,6 +225,11 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
     # PRIVATE HELPERS
     # ------------------------------------------------------------------
 
+    def _resolve_generator(self, business_context: BusinessContext | None) -> SQLQuestionGenerator:
+        if self._generator_factory is not None and business_context is not None:
+            return self._generator_factory(business_context)
+        return self._sql_generator
+
     def _is_actionable_sql_prompt(self, text: str) -> bool:
         return bool(_ACTIONABLE_SQL_PATTERN.search(text))
 
@@ -229,13 +241,15 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         theme_guidance: str | None,
         job_description: str | None,
         company_description: str | None,
+        business_context: BusinessContext | None = None,
     ) -> Question | None:
         difficulty_label = map_corpus_difficulty(item.difficulty).value
         domains = [d.value for d in item.domains] if item.domains else None
         scenario_anchor = _pick_scenario_anchor()
+        generator = self._resolve_generator(business_context)
 
         try:
-            results = self._sql_generator.generate(
+            results = generator.generate(
                 role=role,
                 level=level,
                 n=1,
