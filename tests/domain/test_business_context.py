@@ -33,6 +33,7 @@ class TestBusinessContextResolver:
         assert result == BusinessContext.FINTECH
 
     def test_fintech_keyword_bank(self):
+        # "banking" matches both "bank" and "banking" keywords (substring) → F=2 → FINTECH
         result = BusinessContext.from_company_description("A digital banking startup")
         assert result == BusinessContext.FINTECH
 
@@ -63,11 +64,38 @@ class TestBusinessContextResolver:
         )
         assert result == BusinessContext.ECOMMERCE
 
-    def test_default_generic_wins_on_tie(self):
-        # Constructed to have 1 match each → returns whichever max() picks (not generic)
+    def test_tie_falls_back_to_generic_at_threshold_2(self):
+        # F=1, S=1 — both below threshold=2 → GENERIC (not FINTECH or SAAS)
         result = BusinessContext.from_company_description("payment subscription")
-        # Either fintech or saas, NOT generic
-        assert result in {BusinessContext.FINTECH, BusinessContext.SAAS}
+        assert result == BusinessContext.GENERIC
+
+    # ─── Threshold=2 hardening cases ─────────────────────────────────────────
+
+    def test_single_word_platform_returns_generic(self):
+        # S=1 — below threshold=2
+        assert BusinessContext.from_company_description("platform") == BusinessContext.GENERIC
+
+    def test_single_word_cloud_returns_generic(self):
+        # S=1 — below threshold=2
+        assert BusinessContext.from_company_description("cloud") == BusinessContext.GENERIC
+
+    def test_single_word_billing_returns_generic(self):
+        # S=1 — below threshold=2
+        assert BusinessContext.from_company_description("billing") == BusinessContext.GENERIC
+
+    def test_single_word_subscription_returns_generic(self):
+        # S=1 — below threshold=2
+        assert BusinessContext.from_company_description("subscription") == BusinessContext.GENERIC
+
+    def test_tie_breaker_fintech_wins_over_saas_at_equal_score(self):
+        # F=2 (payment, fintech), S=2 (billing, saas) → FINTECH wins by explicit priority
+        result = BusinessContext.from_company_description("fintech payment billing saas")
+        assert result == BusinessContext.FINTECH
+
+    def test_tie_breaker_ecommerce_wins_over_saas_at_equal_score(self):
+        # E=2 (ecommerce, orders), S=2 (saas, subscription) → ECOMMERCE wins by explicit priority
+        result = BusinessContext.from_company_description("ecommerce orders saas subscription")
+        assert result == BusinessContext.ECOMMERCE
 
 
 # =====================================================
