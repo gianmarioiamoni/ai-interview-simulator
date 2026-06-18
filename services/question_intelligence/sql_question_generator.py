@@ -17,6 +17,7 @@ from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
 from domain.contracts.question.scenario_anchor import ScenarioAnchor
+from services.sql_engine.schema_definition import SchemaDefinition
 from app.ports.llm_port import LLMPort
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
 from infrastructure.llm.metrics.llm_operation_names import QUESTION_GENERATION
@@ -59,9 +60,9 @@ class SQLQuestionGenerator:
     LLM invocation and domain-mapping responsibilities.
     """
 
-    def __init__(self, llm: LLMPort) -> None:
+    def __init__(self, llm: LLMPort, schema_definition: SchemaDefinition | None = None) -> None:
         self._llm = llm
-        self._db = SQLDatabase()
+        self._db = SQLDatabase(schema_definition)
 
         # Lazy import to avoid circular dependency at module level
         from services.question_intelligence.sql_prompt_builder import SQLPromptBuilder
