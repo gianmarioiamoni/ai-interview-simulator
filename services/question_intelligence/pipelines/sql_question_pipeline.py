@@ -1,6 +1,7 @@
 # services/question_intelligence/pipelines/sql_question_pipeline.py
 
 import re
+import random
 from typing import List
 
 from domain.contracts.question.question import (
@@ -12,6 +13,7 @@ from domain.contracts.question.question_bank_item import (
 from domain.contracts.question.question_provenance import (
     QuestionProvenance,
 )
+from domain.contracts.question.scenario_anchor import ScenarioAnchor
 
 from domain.contracts.interview.interview_area import (
     InterviewArea,
@@ -63,6 +65,16 @@ _ACTIONABLE_SQL_PATTERN = re.compile(
 
 _SQL_CANDIDATE_SCAN_K = 10
 _SQL_GENERATE_MAX_ATTEMPTS = settings.sql_pipeline_retry_attempts
+
+_BUSINESS_CONTEXT_METADATA_ONLY = frozenset({
+    BusinessContext.FINTECH,
+})
+
+_SCENARIO_ANCHOR_POOL: list[ScenarioAnchor] = list(ScenarioAnchor)
+
+
+def _pick_scenario_anchor() -> ScenarioAnchor:
+    return random.choice(_SCENARIO_ANCHOR_POOL)
 
 
 class SQLQuestionPipeline(BaseLLMQuestionPipeline):
@@ -127,6 +139,16 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         company_description: str | None = None,
         business_context: BusinessContext | None = None,
     ) -> Question | None:
+
+        if business_context in _BUSINESS_CONTEXT_METADATA_ONLY:
+            return self._generate_from_item_metadata(
+                item=item,
+                role=role,
+                level=level,
+                theme_guidance=theme_guidance,
+                job_description=job_description,
+                company_description=company_description,
+            )
 
         if not self._is_actionable_sql_prompt(item.text):
             logger.debug("[SQL] Skipping non-actionable retrieved prompt: %s", item.id)
@@ -197,5 +219,35 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
     # ------------------------------------------------------------------
 
     def _is_actionable_sql_prompt(self, text: str) -> bool:
-
         return bool(_ACTIONABLE_SQL_PATTERN.search(text))
+
+    def _generate_from_item_metadata(
+        self,
+        item: QuestionBankItem,
+        role: RoleType,
+        level: SeniorityLevel,
+        theme_guidance: str | None,
+        job_description: str | None,
+        company_description: str | None,
+    ) -> Question | None:
+        difficulty_label = map_corpus_difficulty(item.difficulty).value
+        domains = [d.value for d in item.domains] if item.domains else None
+        scenario_anchor = _pick_scenario_anchor()
+
+        try:
+            results = self._sql_generator.generate(
+                role=role,
+                level=level,
+                n=1,
+                theme_guidance=theme_guidance,
+                domains=domains,
+                difficulty_label=difficulty_label,
+                scenario_anchor=scenario_anchor,
+                job_description=job_description,
+                company_description=company_description,
+            )
+        except ValueError as exc:
+            logger.warning("[SQL metadata-gen] Generation failed: %s", exc)
+            return None
+
+        return results[0] if results else None
