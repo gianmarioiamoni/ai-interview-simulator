@@ -34,11 +34,12 @@ class ChromaFilterBuilder:
 
         if filters.seniority:
 
-            conditions.append(
-                {
-                    "seniority": filters.seniority,
-                }
-            )
+            seniority_values = [v.strip() for v in filters.seniority.split(",") if v.strip()]
+
+            if len(seniority_values) == 1:
+                conditions.append({"seniority": seniority_values[0]})
+            else:
+                conditions.append({"seniority": {"$in": seniority_values}})
 
         # -------------------------------------------------
         # AREA

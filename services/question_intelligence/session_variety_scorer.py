@@ -226,13 +226,19 @@ class SessionVarietyScorer:
 
         area_value = metadata.get("area", InterviewArea.TECH_TECHNICAL_KNOWLEDGE.value)
 
+        seniority_raw = metadata.get("seniority", SeniorityLevel.MID.value)
+        try:
+            level = SeniorityLevel(seniority_raw)
+        except ValueError:
+            level = SeniorityLevel.MID
+
         return QuestionBankItem(
             id=str(metadata.get("document_id", "candidate")),
             text=candidate.document.page_content,
             interview_type=InterviewType.TECHNICAL,
             role=Role(type=RoleType.BACKEND_ENGINEER),
             area=InterviewArea(area_value),
-            level=SeniorityLevel.MID,
+            level=level,
             difficulty=difficulty,
             ingestion_metadata=IngestionMetadata(
                 source_name="session_variety",

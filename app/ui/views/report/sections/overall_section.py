@@ -39,6 +39,8 @@ def render_overall(report):
         </div>
         """
 
+    seniority_label = getattr(report, "seniority_level", "mid").capitalize()
+
     return f"""
 <h2>Overall Performance</h2>
 
@@ -47,6 +49,7 @@ def render_overall(report):
 <td><strong>Overall Score</strong><br>{score_block}</td>
 <td><strong>Hiring Decision</strong><br>{decision_badge}</td>
 <td><strong>Hiring Confidence Score</strong><br>{score_badge(report.hiring_probability)}</td>
+<td><strong>Seniority Level</strong><br>{seniority_label}</td>
 </tr>
 </table>
 
