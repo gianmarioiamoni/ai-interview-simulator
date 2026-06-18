@@ -12,6 +12,7 @@ def build_evaluation_prompt(
     question: Question,
     answer: Answer,
     role: Role | None = None,
+    seniority_level: str | None = None,
 ) -> str:
 
     template = PromptLoader.load("evaluation/written_evaluation.txt")
@@ -27,6 +28,7 @@ def build_evaluation_prompt(
         "area": question.area.value,
         "question_type": question.type.value,
         "difficulty": question.difficulty.value,
+        "seniority_level": seniority_level or "mid",
     }
 
     return PromptRenderer.render(template, context)

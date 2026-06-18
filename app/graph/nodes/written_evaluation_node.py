@@ -29,7 +29,7 @@ class WrittenEvaluationNode:
         if result and result.evaluation is not None:
             return state
 
-        prompt = build_evaluation_prompt(question, answer, role=state.role)
+        prompt = build_evaluation_prompt(question, answer, role=state.role, seniority_level=state.seniority_level)
 
         with LLMOperationContext.scope(WRITTEN_EVALUATION):
             response = self._llm.invoke(prompt)

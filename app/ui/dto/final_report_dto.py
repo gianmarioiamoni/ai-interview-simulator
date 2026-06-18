@@ -14,6 +14,7 @@ from app.ui.dto.builders.token_calculator import TokenCalculator
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.user.role import RoleType
+from domain.contracts.user.seniority_level import SeniorityLevel
 
 
 class FinalReportDTO(BaseModel):
@@ -47,6 +48,8 @@ class FinalReportDTO(BaseModel):
 
     role: RoleType
 
+    seniority_level: str
+
     @classmethod
     def from_components(cls, state: InterviewState, final_evaluation):
 
@@ -64,6 +67,8 @@ class FinalReportDTO(BaseModel):
         role = state.role.type
 
         hire_decision = (HireDecisionMapper.to_label(final_evaluation.hire_decision))
+
+        seniority_level = state.seniority_level
 
         return cls(
             overall_score=final_evaluation.overall_score,
@@ -85,4 +90,5 @@ class FinalReportDTO(BaseModel):
             total_tokens_used=tokens,
             confidence=final_evaluation.confidence,
             role=role,
+            seniority_level=seniority_level,
         )
