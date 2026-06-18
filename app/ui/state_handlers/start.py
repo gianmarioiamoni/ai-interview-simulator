@@ -99,6 +99,9 @@ def start_interview(
     planned_areas: list[str] = []
     adaptive_enabled = not USE_BATCH_QUESTION_GENERATION
 
+    raw_cd = company_description.strip() if company_description and company_description.strip() else None
+    resolved_business_context = BusinessContext.from_company_description(raw_cd)
+
     areas = interview_type_enum.get_areas()
     area_question_counts = _compute_questions_per_area(
         interview_length=resolved_length,
@@ -134,11 +137,7 @@ def start_interview(
             else None
         )
 
-        cd_for_generation = (
-            company_description.strip()[:settings.company_description_max_chars]
-            if company_description and company_description.strip()
-            else None
-        )
+        cd_for_generation = raw_cd[:settings.company_description_max_chars] if raw_cd else None
 
         questions, retrieval_memory, planned_areas = (
             question_intelligence.generate_first_question(
@@ -147,7 +146,7 @@ def start_interview(
                 interview_type=interview_type_enum,
                 job_description=jd_for_generation,
                 company_description=cd_for_generation,
-                business_context=BusinessContext.from_company_description(cd_for_generation),
+                business_context=resolved_business_context,
             )
         )
 
@@ -184,13 +183,10 @@ def start_interview(
     state.current_progress = _smooth_progress(state.current_progress, 100)
     time.sleep(0.2)
 
-    raw_cd = company_description.strip() if company_description and company_description.strip() else None
-    business_context = BusinessContext.from_company_description(raw_cd)
-
     context_profile = InterviewContextProfile(
         job_description=job_description.strip() if job_description and job_description.strip() else None,
         company_description=raw_cd,
-        business_context=business_context,
+        business_context=resolved_business_context,
     )
 
     state = InterviewState.create_initial(

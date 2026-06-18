@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     # Maximum characters of company_description injected into generation prompts.
     company_description_max_chars: int = 200
 
+    # Minimum keyword score required for BusinessContext classification.
+    # A score below this threshold falls back to GENERIC.
+    business_context_min_keyword_score: int = 2
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
