@@ -194,12 +194,13 @@ class SQLQuestionPipeline(BaseLLMQuestionPipeline):
         business_context: BusinessContext | None = None,
     ) -> List[Question]:
 
+        generator = self._resolve_generator(business_context)
         last_result: List[Question] = []
 
         for attempt in range(1, _SQL_GENERATE_MAX_ATTEMPTS + 1):
 
             try:
-                last_result = self._sql_generator.generate(
+                last_result = generator.generate(
                     role=role,
                     level=level,
                     n=n,
