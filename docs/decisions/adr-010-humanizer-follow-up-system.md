@@ -46,8 +46,8 @@ answers with follow-up questions (FOLLOW_UP). Without this, the interview feels 
 - Single source of truth for max follow-up cap
 
 ### Negative / Risks
-- FOLLOW_UP not functional until V1.1 (score propagation + UI wiring fixes required)
-- `chat_history` → UI wiring still pending (separate commit)
+- Q1 shown as raw prompt on initial session start (question_node not invoked on start path)
+- FOLLOW_UP requires `humanizer_follow_up_enabled=True` (default `False`)
 
 ## Implementation Evidence
 
@@ -64,6 +64,13 @@ answers with follow-up questions (FOLLOW_UP). Without this, the interview feels 
 - `app/graph/nodes/adaptive_navigation_node.py` — same snapshot capture on all NEXT paths
 - `app/ui/response/sections/display_section.py` — renders `question_display_text` with fallback to `question.prompt`
 
+## Hardening Notes (V1 release-ready)
+
+- **Score propagation:** `question_node` reads `last_answer_score` from `last_feedback_bundle`; falls back to `last_question_context.quality_rank` when bundle is cleared by navigation (standard NEXT flow). FOLLOW_UP now reachable in production.
+- **Stale display:** `navigation_node` and `adaptive_navigation_node` clear `question_display_text` on every index-advancing NEXT, preventing stale prior-question text.
+- **Resilience:** `humanizer_service.humanize()` wrapped in try/except in `question_node`; LLM failure falls back to raw `question.prompt`, graph continues.
+- **Schema ownership:** `question_node` stores plain prompt text only. `DisplaySection` exclusively renders the DATABASE schema block, preventing duplication.
+
 ## Review Trigger
 
-V1.1: enable `HUMANIZER_FOLLOW_UP_ENABLED` after score propagation + UI wiring commits land.
+V1.1: enable `HUMANIZER_FOLLOW_UP_ENABLED=True` in production after integration testing with real LLM output.

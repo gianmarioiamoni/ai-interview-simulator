@@ -112,6 +112,7 @@ def _legacy_navigation_node(state: InterviewState) -> InterviewState:
                 update={
                     "current_question_index": current_index + 1,
                     "last_question_context": snapshot,
+                    "question_display_text": None,
                     "awaiting_user_input": True,
                     "last_feedback_bundle": None,
                     "allowed_actions": [],

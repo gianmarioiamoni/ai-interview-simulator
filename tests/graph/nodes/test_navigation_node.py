@@ -125,6 +125,25 @@ def test_navigation_next_context_none_on_last_question() -> None:
     assert new_state.last_question_context is None
 
 
+def test_navigation_next_clears_question_display_text() -> None:
+
+    q1 = build_question(qid="q1", qtype=QuestionType.WRITTEN)
+    q2 = build_question(qid="q2", qtype=QuestionType.WRITTEN)
+
+    state = build_interview_state(questions=[q1, q2])
+    state = state.model_copy(
+        update={
+            "current_question_index": 0,
+            "intent": ActionType.NEXT,
+            "question_display_text": "Stale humanized text from Q1",
+        }
+    )
+
+    new_state = navigation_node(state)
+
+    assert new_state.question_display_text is None
+
+
 def test_navigation_next_snapshot_previous_area_populated() -> None:
     from domain.contracts.interview.interview_area import InterviewArea
 
