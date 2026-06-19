@@ -4,9 +4,76 @@ from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.shared.action_type import ActionType
+from domain.contracts.execution.execution_result import ExecutionStatus
 
 from app.ui.dto.builders.dimension_mapper import DimensionMapper
 from app.ui.constants.loader_steps import LoaderStep
+from app.ui.presenters.feedback.blocks.failure.edge_case_detector import EdgeCaseDetector
+from infrastructure.config.evaluation import (
+    EXECUTION_SLOW_MS,
+    CODING_QUALITY_CORRECT_THRESHOLD,
+    CODING_QUALITY_PARTIAL_THRESHOLD,
+)
+
+_EDGE_CASE_DETECTOR = EdgeCaseDetector()
+
+
+def _build_coding_signals(execution) -> tuple[list[str], list[str]]:
+    total = execution.total_tests or 0
+    passed = execution.passed_tests or 0
+    pass_rate = (passed / total) if total > 0 else (1.0 if execution.success else 0.0)
+    is_perfect = total > 0 and passed == total
+    status = execution.status
+
+    strengths: list[str] = []
+    weaknesses: list[str] = []
+
+    # --- STRENGTHS ---
+
+    if is_perfect:
+        strengths.append("All test cases passed")
+
+    if status not in (
+        ExecutionStatus.RUNTIME_ERROR,
+        ExecutionStatus.SYNTAX_ERROR,
+        ExecutionStatus.TIMEOUT,
+        ExecutionStatus.INTERNAL_ERROR,
+    ) and not any(
+        hasattr(t, "error") and t.error for t in execution.test_results
+    ):
+        if status == ExecutionStatus.SUCCESS or pass_rate >= CODING_QUALITY_CORRECT_THRESHOLD / 100:
+            strengths.append("No runtime errors detected")
+
+    if (
+        execution.execution_time_ms > 0
+        and execution.execution_time_ms < EXECUTION_SLOW_MS
+        and is_perfect
+    ):
+        strengths.append("Efficient execution time")
+
+    # --- WEAKNESSES ---
+
+    if status in (ExecutionStatus.RUNTIME_ERROR, ExecutionStatus.SYNTAX_ERROR):
+        label = "Syntax error in submitted code" if status == ExecutionStatus.SYNTAX_ERROR else "Runtime error during execution"
+        weaknesses.append(label)
+
+    elif status == ExecutionStatus.TIMEOUT:
+        weaknesses.append("Solution exceeded time limit")
+
+    if not is_perfect and total > 0:
+        failed = total - passed
+        if pass_rate == 0.0:
+            weaknesses.append("No test cases passed")
+        elif pass_rate < CODING_QUALITY_PARTIAL_THRESHOLD / 100:
+            weaknesses.append(f"Most test cases failed ({failed} of {total})")
+        else:
+            weaknesses.append(f"Partial test coverage ({passed} of {total} passed)")
+
+    if _EDGE_CASE_DETECTOR.detect(execution.test_results):
+        weaknesses.append("Edge cases not handled correctly")
+
+    return strengths[:3], weaknesses[:3]
+
 
 class EvaluationNode:
 
@@ -43,14 +110,20 @@ class EvaluationNode:
         else:
             score = 100 if execution.success else 0
 
+        strengths, weaknesses = (
+            _build_coding_signals(execution)
+            if question.type == QuestionType.CODING
+            else ([], [])
+        )
+
         evaluation = QuestionEvaluation(
             question_id=question.id,
             score=score,
             max_score=100,
             passed=execution.success,
             feedback=execution.error or "Execution evaluated automatically.",
-            strengths=[],
-            weaknesses=[],
+            strengths=strengths,
+            weaknesses=weaknesses,
             passed_tests=execution.passed_tests,
             total_tests=execution.total_tests,
             execution_status=execution.status.value,
