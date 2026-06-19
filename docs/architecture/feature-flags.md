@@ -1,6 +1,6 @@
 # Feature Flags Reference
 
-**Status:** STUB — populate from settings.py, interview_state/base.py, decision_policy.py
+**Status:** Partially complete — Humanizer flags and state flags documented; Decision Engine flags are stubs
 **Owner:** Arch
 **SSOT For:** All feature flags, their defaults, locations, and effect
 **Update Trigger:** Any flag add/remove/default change

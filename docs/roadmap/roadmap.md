@@ -83,9 +83,9 @@ AreaQuestionBuilder integration
 
 ---
 
-# STEP 5 — Humanizer Refactor
+# STEP 5 — Humanizer Refactor ✓ COMPLETED
 
-Extract:
+Extracted:
 - follow-up orchestration
 - conversational logic
 
@@ -93,10 +93,14 @@ Into:
 
 HumanizerService
 
-Features:
-- max 2 follow-ups
+Features implemented:
+- max 2 follow-ups (MAX_FOLLOW_UPS_PER_INTERVIEW)
 - non-consecutive
-- score-triggered
+- score-triggered (FOLLOW_UP_SCORE_THRESHOLD = Quality.OPTIMAL.rank())
+- DIRECT_QUESTION and REMARK_PLUS_QUESTION: ACTIVE in V1
+- FOLLOW_UP: gated behind HUMANIZER_FOLLOW_UP_ENABLED (default False, V1.1)
+- question_display_text wired to DisplaySection
+- LastQuestionContext snapshot prevents timing defect
 
 ---
 

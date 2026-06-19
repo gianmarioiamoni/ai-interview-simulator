@@ -35,7 +35,7 @@ docs/
 │   ├── adr-007-domain-layer-exceptions.md      [Proposed] MISSING
 │   ├── adr-008-dual-decision-policy.md         [Proposed] MISSING
 │   ├── adr-009-adaptive-interview-path.md      [Proposed] MISSING
-│   ├── adr-010-humanizer-follow-up-system.md   [Proposed] MISSING
+│   ├── adr-010-humanizer-follow-up-system.md   [Accepted]
 │   ├── adr-011-evaluation-governance.md        [Proposed] MISSING
 │   ├── adr-012-prompt-centralization.md        [Proposed] MISSING
 │   ├── adr-013-partial-adapter-registry.md     [Proposed] MISSING
@@ -86,7 +86,7 @@ docs/
 | ADR-007 | **Proposed** | Domain | Domain layer boundary exceptions |
 | ADR-008 | **Proposed** | Domain | Two DecisionPolicy concepts |
 | ADR-009 | **Proposed** | Arch | Adaptive interview path |
-| ADR-010 | **Proposed** | Services | Humanizer follow-up system |
+| ADR-010 | **Accepted** | Services | Humanizer follow-up system |
 | ADR-011 | **Proposed** | Infra | Evaluation governance centralization |
 | ADR-012 | **Proposed** | Services | Prompt centralization |
 | ADR-013 | **Proposed** | Services | Partial adapter registry |
