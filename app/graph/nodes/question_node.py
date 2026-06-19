@@ -77,16 +77,20 @@ def build_question_node(llm):
         # ---------------------------------------------------------
 
         last_answer = None
-
         last_score = None
 
         if state.answers:
-
             last_answer = state.answers[-1].content
 
         if state.last_feedback_bundle:
-
             last_score = state.last_feedback_bundle.overall_quality.rank()
+
+        # Populate previous_* from snapshot captured before index advanced
+        ctx = state.last_question_context
+        previous_question = ctx.question_prompt if ctx is not None else None
+        previous_answer = ctx.answer_content if ctx is not None else None
+        previous_score = float(ctx.quality_rank) if ctx is not None and ctx.quality_rank is not None else None
+        previous_area = ctx.question_area if ctx is not None else None
 
         input_data = HumanizerInput(
             current_question=question,
@@ -96,21 +100,25 @@ def build_question_node(llm):
             last_answer_score=last_score,
             follow_up_count=state.follow_up_count,
             last_turn_was_follow_up=(state.last_humanizer_follow_up),
+            previous_question=previous_question,
+            previous_answer=previous_answer,
+            previous_score=previous_score,
+            previous_area=previous_area,
         )
 
         # ---------------------------------------------------------
         # HUMANIZE
         # ---------------------------------------------------------
 
-        output = humanizer_service.humanize(
+        policy_decision, output = humanizer_service.humanize(
             input_data=input_data,
         )
 
         # ---------------------------------------------------------
-        # FOLLOW-UP TRACKING
+        # FOLLOW-UP TRACKING — driven by policy decision, never LLM output
         # ---------------------------------------------------------
 
-        is_follow_up = output.decision == HumanizerDecision.FOLLOW_UP
+        is_follow_up = policy_decision == HumanizerDecision.FOLLOW_UP
 
         follow_up_count = (
             state.follow_up_count + 1 if is_follow_up else state.follow_up_count

@@ -24,6 +24,7 @@ from app.ui.constants.loader_steps import LoaderStep
 from app.contracts.feedback_bundle import FeedbackBundle
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 from app.settings.constants import MAX_FOLLOW_UPS_PER_INTERVIEW
+from domain.contracts.interview_state.last_question_context import LastQuestionContext
 
 
 class InterviewStateBase(BaseModel):
@@ -77,6 +78,7 @@ class InterviewStateBase(BaseModel):
     enable_humanizer: bool = True
     follow_up_count: int = Field(default=0, ge=0, le=MAX_FOLLOW_UPS_PER_INTERVIEW)
     last_humanizer_follow_up: bool = False
+    last_question_context: LastQuestionContext | None = None
 
     events: list = Field(default_factory=list)
 

@@ -15,6 +15,8 @@ class HumanizerInput(BaseModel):
 
     previous_score: float | None = None
 
+    previous_area: str | None = None
+
     follow_up_count: int = 0
 
     language: str = "en"

@@ -73,27 +73,44 @@ def test_policy_suppresses_consecutive_follow_up() -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_question_node_increments_follow_up_count_on_follow_up() -> None:
+    from unittest.mock import patch
+    from domain.contracts.feedback.quality import Quality
+    from domain.contracts.feedback.severity import Severity
+    from app.contracts.feedback_bundle import FeedbackBundle
 
     llm = Mock()
     llm.invoke.return_value = Mock(
         content='{"decision": "follow_up", "message": "follow-up question", "follow_up_used": true}'
     )
 
-    node = build_question_node(llm)
+    # Enable follow_up in settings so policy can return FOLLOW_UP
+    with patch("app.graph.nodes.question_node.settings") as mock_settings:
+        mock_settings.humanizer_follow_up_enabled = True
+        node = build_question_node(llm)
 
-    state = build_interview_state()
-    q = state.current_question.model_copy(update={"type": QuestionType.WRITTEN})
-    state = state.model_copy(
-        update={
-            "questions": [q],
-            "chat_history": [],
-            "current_question_index": 0,
-            "follow_up_count": 0,
-            "enable_humanizer": True,
-        }
-    )
+        state = build_interview_state()
+        q = state.current_question.model_copy(update={"type": QuestionType.WRITTEN})
+        # Provide OPTIMAL feedback bundle so policy evaluates score >= threshold (4)
+        bundle = FeedbackBundle(
+            blocks=[],
+            overall_severity=Severity.INFO,
+            overall_confidence=1.0,
+            overall_quality=Quality.OPTIMAL,
+            markdown="",
+        )
+        state = state.model_copy(
+            update={
+                "questions": [q],
+                "chat_history": [],
+                "current_question_index": 0,
+                "follow_up_count": 0,
+                "enable_humanizer": True,
+                "last_feedback_bundle": bundle,
+                "last_humanizer_follow_up": False,
+            }
+        )
 
-    new_state = node(state)
+        new_state = node(state)
 
     assert new_state.follow_up_count == 1
     assert new_state.last_humanizer_follow_up is True

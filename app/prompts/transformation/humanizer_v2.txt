@@ -21,6 +21,9 @@ PREVIOUS ANSWER:
 PREVIOUS SCORE:
 {{previous_score}}
 
+PREVIOUS COMPETENCY AREA:
+{{previous_area}}
+
 FOLLOW-UP COUNT:
 {{follow_up_count}}
 
@@ -38,6 +41,7 @@ RULES:
 7. Do not include explanations.
 8. Never invent technical experience not present in the answer.
 9. Follow the requested decision type strictly.
+10. For follow_up: stay strictly within the same competency area as PREVIOUS COMPETENCY AREA. Do not introduce unrelated topics.
 
 DECISION RULES:
 

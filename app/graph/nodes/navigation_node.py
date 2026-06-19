@@ -1,6 +1,7 @@
 # app/graph/nodes/navigation_node.py
 
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.interview_state.last_question_context import LastQuestionContext
 from domain.contracts.shared.action_type import ActionType
 from domain.contracts.user.seniority_level import SeniorityLevel
 
@@ -42,6 +43,33 @@ def navigation_node(state: InterviewState) -> InterviewState:
     return _legacy_navigation_node(state)
 
 
+def _build_last_question_context(state: InterviewState) -> LastQuestionContext | None:
+    question = state.current_question
+    if question is None:
+        return None
+
+    answer = state.get_latest_answer_for_question(question.id)
+    result = state.results_by_question.get(question.id)
+
+    quality_rank: int | None = None
+    if state.last_feedback_bundle is not None:
+        quality_rank = state.last_feedback_bundle.overall_quality.rank()
+    elif result is not None and result.evaluation is not None:
+        score = getattr(result.evaluation, "score", None)
+        if score is not None:
+            from domain.contracts.feedback.quality import Quality
+            quality_rank = min(int(score // 25), Quality.OPTIMAL.rank())
+
+    return LastQuestionContext(
+        question_id=question.id,
+        question_prompt=question.prompt,
+        question_type=question.type,
+        question_area=getattr(question, "area", None),
+        answer_content=answer.content if answer is not None else None,
+        quality_rank=quality_rank,
+    )
+
+
 def _legacy_navigation_node(state: InterviewState) -> InterviewState:
 
     action = state.intent
@@ -79,9 +107,11 @@ def _legacy_navigation_node(state: InterviewState) -> InterviewState:
     if action == ActionType.NEXT:
 
         if current_index < last_index:
+            snapshot = _build_last_question_context(state)
             return state.model_copy(
                 update={
                     "current_question_index": current_index + 1,
+                    "last_question_context": snapshot,
                     "awaiting_user_input": True,
                     "last_feedback_bundle": None,
                     "allowed_actions": [],

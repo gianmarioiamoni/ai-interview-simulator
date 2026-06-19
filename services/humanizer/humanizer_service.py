@@ -3,6 +3,7 @@
 from langchain_core.language_models.chat_models import BaseChatModel
 
 from services.humanizer.builders.humanizer_prompt_builder import HumanizerPromptBuilder
+from services.humanizer.contracts.humanizer_decision import HumanizerDecision
 from services.humanizer.contracts.humanizer_input import HumanizerInput
 from services.humanizer.contracts.humanizer_output import HumanizerOutput
 from services.humanizer.humanizer_policy_engine import HumanizerPolicyEngine
@@ -36,10 +37,12 @@ class HumanizerService:
     def humanize(
         self,
         input_data: HumanizerInput,
-    ) -> HumanizerOutput:
+    ) -> tuple[HumanizerDecision, HumanizerOutput]:
+        """Return (policy_decision, llm_output). Callers must use policy_decision
+        for follow_up_count tracking — never output.decision."""
 
         # -------------------------------------------------
-        # DECISION
+        # DECISION (policy-owned)
         # -------------------------------------------------
 
         decision = self._policy_engine.decide(
@@ -67,6 +70,8 @@ class HumanizerService:
         # PARSE
         # -------------------------------------------------
 
-        return self._parser.parse(
+        output = self._parser.parse(
             response=content,
         )
+
+        return decision, output
