@@ -206,7 +206,7 @@ Current report includes:
 - adaptive feedback
 - semantic scoring
 - dimension aggregation
-- AI hint replay in final report: `ai_hint_explanation` and `ai_hint_suggestion` from `QuestionAssessmentDTO` are rendered in the `question_section` per-question card when a hint was generated during the session
+- Per-question coaching surfaced in final report: `question_section` renders `strengths`, `weaknesses`, and `ai_hint_explanation`/`ai_hint_suggestion` from `QuestionAssessmentDTO` when present. Strengths/weaknesses are populated from `QuestionEvaluation` for written questions; AI hints are populated for any question type where a hint was generated.
 
 ---
 

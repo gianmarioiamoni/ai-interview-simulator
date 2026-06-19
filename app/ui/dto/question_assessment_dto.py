@@ -1,6 +1,6 @@
 # app/ui/dto/question_assessment_dto.py
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 
@@ -17,3 +17,5 @@ class QuestionAssessmentDTO:
     attempts: Optional[int] = None
     ai_hint_explanation: Optional[str] = None
     ai_hint_suggestion: Optional[str] = None
+    strengths: list[str] = field(default_factory=list)
+    weaknesses: list[str] = field(default_factory=list)
