@@ -66,6 +66,33 @@ def test_written_eval_success(mock_decision_cls):
 
     assert result.evaluation.score == 80
     assert result.evaluation.passed is True
+    assert result.evaluation.strengths == []
+    assert result.evaluation.weaknesses == []
+
+
+@patch("app.graph.nodes.written_evaluation_node.EvaluationDecision")
+def test_written_eval_propagates_strengths_and_weaknesses(mock_decision_cls):
+
+    mock_decision = Mock()
+    mock_decision.score = 75
+    mock_decision.feedback = "decent"
+    mock_decision.strengths = ["Clear explanation", "Good structure"]
+    mock_decision.weaknesses = ["Missing edge cases", "Shallow on complexity"]
+
+    mock_decision_cls.model_validate_json.return_value = mock_decision
+
+    llm = Mock()
+    llm.invoke.return_value = Mock(content="whatever")
+
+    node = WrittenEvaluationNode(llm)
+    state = build_interview_state()
+    new_state = node(state)
+
+    q = state.current_question
+    result = new_state.get_result_for_question(q.id)
+
+    assert result.evaluation.strengths == ["Clear explanation", "Good structure"]
+    assert result.evaluation.weaknesses == ["Missing edge cases", "Shallow on complexity"]
 
 
 def test_written_eval_parsing_failure():

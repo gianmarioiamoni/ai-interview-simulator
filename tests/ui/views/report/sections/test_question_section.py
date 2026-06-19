@@ -23,6 +23,8 @@ def _base_assessment(**kwargs) -> QuestionAssessmentDTO:
         passed_tests=None,
         total_tests=None,
         execution_status=None,
+        strengths=[],
+        weaknesses=[],
     )
     defaults.update(kwargs)
     return QuestionAssessmentDTO(**defaults)
@@ -122,6 +124,73 @@ def test_execution_block_absent_when_no_tests_or_status():
     html = render_questions(_make_report(assessment))
 
     assert "tests passed" not in html
+
+
+# ------------------------------------------------------------------
+# Strengths block rendering
+# ------------------------------------------------------------------
+
+
+def test_strengths_block_rendered_when_present():
+    assessment = _base_assessment(strengths=["Clear explanation", "Correct terminology"])
+    html = render_questions(_make_report(assessment))
+
+    assert "Strengths" in html
+    assert "Clear explanation" in html
+    assert "Correct terminology" in html
+
+
+def test_weaknesses_block_rendered_when_present():
+    assessment = _base_assessment(weaknesses=["Missing edge cases", "Shallow on complexity"])
+    html = render_questions(_make_report(assessment))
+
+    assert "Areas to Improve" in html
+    assert "Missing edge cases" in html
+    assert "Shallow on complexity" in html
+
+
+def test_both_strengths_and_weaknesses_rendered():
+    assessment = _base_assessment(
+        strengths=["Good structure"],
+        weaknesses=["Needs more depth"],
+    )
+    html = render_questions(_make_report(assessment))
+
+    assert "Strengths" in html
+    assert "Good structure" in html
+    assert "Areas to Improve" in html
+    assert "Needs more depth" in html
+
+
+def test_strengths_block_absent_when_empty_list():
+    assessment = _base_assessment(strengths=[])
+    html = render_questions(_make_report(assessment))
+
+    assert "Strengths" not in html
+
+
+def test_weaknesses_block_absent_when_empty_list():
+    assessment = _base_assessment(weaknesses=[])
+    html = render_questions(_make_report(assessment))
+
+    assert "Areas to Improve" not in html
+
+
+def test_strengths_weaknesses_appear_before_hint_block():
+    assessment = _base_assessment(
+        strengths=["Good"],
+        weaknesses=["Needs work"],
+        ai_hint_explanation="Check boundaries.",
+        ai_hint_suggestion="Fix the loop.",
+    )
+    html = render_questions(_make_report(assessment))
+
+    strengths_pos = html.index("Strengths")
+    weaknesses_pos = html.index("Areas to Improve")
+    hint_pos = html.index("AI Coaching Hint")
+
+    assert strengths_pos < hint_pos
+    assert weaknesses_pos < hint_pos
 
 
 # ------------------------------------------------------------------

@@ -19,6 +19,24 @@ def render_questions(report):
             color = "#16a34a" if q.execution_status == "success" else "#dc2626"
             execution += f"<br>{badge(q.execution_status.upper(), color)}"
 
+        strengths_block = ""
+        if q.strengths:
+            items = "".join(f"<li>{s}</li>" for s in q.strengths)
+            strengths_block = f"""
+<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:8px 12px;margin-top:10px;">
+<strong>✅ Strengths</strong>
+<ul style="margin:6px 0 0 0;padding-left:18px;">{items}</ul>
+</div>"""
+
+        weaknesses_block = ""
+        if q.weaknesses:
+            items = "".join(f"<li>{w}</li>" for w in q.weaknesses)
+            weaknesses_block = f"""
+<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:8px 12px;margin-top:10px;">
+<strong>⚠️ Areas to Improve</strong>
+<ul style="margin:6px 0 0 0;padding-left:18px;">{items}</ul>
+</div>"""
+
         hint_block = ""
         if q.ai_hint_explanation:
             suggestion_line = (
@@ -38,6 +56,8 @@ def render_questions(report):
 <strong>Question {q.question_id}</strong><br>
 Score: {score_badge(q.score)}<br><br>
 {q.feedback}
+{strengths_block}
+{weaknesses_block}
 {hint_block}
 {execution}
 </div>

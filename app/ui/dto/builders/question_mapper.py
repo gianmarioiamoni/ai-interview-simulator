@@ -41,11 +41,16 @@ class QuestionMapper:
         ai_hint_explanation = None
         ai_hint_suggestion = None
 
+        strengths: list[str] = []
+        weaknesses: list[str] = []
+
         # ---------------- Evaluation
 
         if result.evaluation and not result.execution:
             score = result.evaluation.score
             feedback = result.evaluation.feedback
+            strengths = list(result.evaluation.strengths or [])
+            weaknesses = list(result.evaluation.weaknesses or [])
 
         # ---------------- Execution
 
@@ -93,5 +98,7 @@ class QuestionMapper:
             attempts=attempts,
             ai_hint_explanation=ai_hint_explanation,
             ai_hint_suggestion=ai_hint_suggestion,
-            area=area_label,  
+            area=area_label,
+            strengths=strengths,
+            weaknesses=weaknesses,
         )

@@ -8,6 +8,7 @@ from domain.contracts.interview.hire_decision import HireDecision
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_level import InterviewLevel
 from domain.contracts.interview.interview_progress import InterviewProgress
+from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.shared.performance_dimension import PerformanceDimension
 
@@ -16,6 +17,7 @@ from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from tests.factories.interview_state_factory import (
     build_interview_state,
     build_state_with_execution,
+    build_written_question_state,
 )
 
 
@@ -218,3 +220,46 @@ def test_final_report_ai_hint_fields_are_none_when_no_hint():
     assessment = report.question_assessments[0]
     assert assessment.ai_hint_explanation is None
     assert assessment.ai_hint_suggestion is None
+
+
+def test_final_report_maps_strengths_and_weaknesses_for_written_question():
+
+    state = build_written_question_state()
+    question_id = state.current_question.id
+
+    evaluation = QuestionEvaluation(
+        question_id=question_id,
+        score=78.0,
+        max_score=100.0,
+        feedback="Good answer overall.",
+        passed=True,
+        strengths=["Clear explanation", "Correct terminology"],
+        weaknesses=["Missing edge cases", "Shallow on complexity"],
+    )
+    result = QuestionResult(question_id=question_id, evaluation=evaluation)
+    state = state.model_copy(
+        update={
+            "results_by_question": {question_id: result},
+            "interview_evaluation": build_interview_evaluation(),
+        }
+    )
+
+    mapper = InterviewStateMapper()
+    report = mapper.to_final_report_dto(state)
+
+    assessment = report.question_assessments[0]
+    assert assessment.strengths == ["Clear explanation", "Correct terminology"]
+    assert assessment.weaknesses == ["Missing edge cases", "Shallow on complexity"]
+
+
+def test_final_report_strengths_weaknesses_empty_for_coding_question():
+
+    state = build_state_with_execution(passed_tests=2, total_tests=2)
+    state = state.model_copy(update={"interview_evaluation": build_interview_evaluation()})
+
+    mapper = InterviewStateMapper()
+    report = mapper.to_final_report_dto(state)
+
+    assessment = report.question_assessments[0]
+    assert assessment.strengths == []
+    assert assessment.weaknesses == []
