@@ -3,7 +3,7 @@
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.ai.ai_hint import AIHintInput, AIHint
 from domain.contracts.execution.execution_result import ExecutionResult
-from domain.contracts.execution.test_execution_result import TestStatus
+from domain.contracts.execution.execution_test_result import TestStatus
 from domain.contracts.ai.hint_level import HintLevel
 from domain.policies.hint_policy import HintPolicy
 from domain.contracts.question.question import QuestionType

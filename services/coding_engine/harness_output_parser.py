@@ -8,7 +8,7 @@ from domain.contracts.execution.execution_result import (
     ExecutionType,
     ExecutionStatus,
 )
-from domain.contracts.execution.test_execution_result import (
+from domain.contracts.execution.execution_test_result import (
     TestExecutionResult,
     TestStatus,
     TestType,

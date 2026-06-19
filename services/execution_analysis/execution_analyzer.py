@@ -3,7 +3,7 @@
 from typing import Optional
 
 from domain.contracts.execution.execution_result import ExecutionResult, ExecutionStatus
-from domain.contracts.execution.test_execution_result import TestStatus
+from domain.contracts.execution.execution_test_result import TestStatus
 from domain.contracts.feedback.error_type import ErrorType
 
 

@@ -18,11 +18,12 @@ class HumanizerService:
     def __init__(
         self,
         llm: BaseChatModel,
+        follow_up_enabled: bool = False,
     ) -> None:
 
         self._llm = llm
 
-        self._policy_engine = HumanizerPolicyEngine()
+        self._policy_engine = HumanizerPolicyEngine(follow_up_enabled=follow_up_enabled)
 
         self._prompt_builder = HumanizerPromptBuilder()
 

@@ -7,6 +7,7 @@ from services.humanizer.contracts.humanizer_input import HumanizerInput
 from services.humanizer.contracts.humanizer_decision import HumanizerDecision
 from services.humanizer.humanizer_service import HumanizerService
 from services.interview_memory.interview_memory_updater import InterviewMemoryUpdater
+from infrastructure.config.settings import settings
 
 
 def _build_display_prompt(question) -> str:
@@ -24,6 +25,7 @@ def build_question_node(llm):
 
     humanizer_service = HumanizerService(
         llm=llm,
+        follow_up_enabled=settings.humanizer_follow_up_enabled,
     )
 
     memory_updater = InterviewMemoryUpdater()

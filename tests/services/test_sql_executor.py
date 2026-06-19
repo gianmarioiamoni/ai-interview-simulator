@@ -4,7 +4,7 @@ from domain.contracts.execution.execution_result import (
     ExecutionStatus,
     ExecutionType,
 )
-from domain.contracts.execution.test_execution_result import (
+from domain.contracts.execution.execution_test_result import (
     TestStatus as ExecutionTestStatus,
 )
 from domain.contracts.interview.interview_area import InterviewArea

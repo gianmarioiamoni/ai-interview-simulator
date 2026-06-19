@@ -158,4 +158,4 @@ ADAPTIVE_DIFFICULTY_BASE: int = 3
 # FOLLOW-UP / HUMANIZER
 # =============================================================================
 
-FOLLOW_UP_SCORE_THRESHOLD: int = 5
+FOLLOW_UP_SCORE_THRESHOLD: int = 4  # Quality.OPTIMAL.rank() — maximum achievable rank
