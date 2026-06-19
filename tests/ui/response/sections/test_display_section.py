@@ -140,3 +140,41 @@ def test_coding_question_does_not_render_schema_block():
     assert _PROMPT in result["coding_display"]
     assert result["database_display"] == ""
     assert result["written_display"] == ""
+
+
+# ---------------------------------------------------------
+# HUMANIZER: question_display_text preferred over question.prompt
+# ---------------------------------------------------------
+
+
+def test_display_section_prefers_question_display_text_when_set():
+    question = _make_question(QuestionType.WRITTEN)
+    state = build_interview_state(questions=[question], answers=[])
+    humanized = "So, building on what you mentioned earlier — walk me through REST."
+    state = state.model_copy(update={"question_display_text": humanized})
+
+    result = DisplaySection.build(state, question, UIState.QUESTION, has_previous_answer=False)
+
+    assert humanized in result["written_display"]
+    assert _PROMPT not in result["written_display"]
+
+
+def test_display_section_falls_back_to_question_prompt_when_display_text_is_none():
+    question = _make_question(QuestionType.WRITTEN)
+    state = build_interview_state(questions=[question], answers=[])
+    state = state.model_copy(update={"question_display_text": None})
+
+    result = DisplaySection.build(state, question, UIState.QUESTION, has_previous_answer=False)
+
+    assert _PROMPT in result["written_display"]
+
+
+def test_display_section_coding_unaffected_by_humanizer_display_text():
+    question = _make_question(QuestionType.CODING)
+    state = build_interview_state(questions=[question], answers=[])
+    state = state.model_copy(update={"question_display_text": "Humanized text"})
+
+    result = DisplaySection.build(state, question, UIState.QUESTION, has_previous_answer=False)
+
+    assert "Humanized text" in result["coding_display"]
+    assert result["written_display"] == ""

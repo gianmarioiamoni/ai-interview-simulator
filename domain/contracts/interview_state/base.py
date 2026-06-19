@@ -79,6 +79,7 @@ class InterviewStateBase(BaseModel):
     follow_up_count: int = Field(default=0, ge=0, le=MAX_FOLLOW_UPS_PER_INTERVIEW)
     last_humanizer_follow_up: bool = False
     last_question_context: LastQuestionContext | None = None
+    question_display_text: str | None = None
 
     events: list = Field(default_factory=list)
 

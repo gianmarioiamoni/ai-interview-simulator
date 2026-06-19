@@ -52,10 +52,12 @@ class DisplaySection:
 
         # -----------------------------------------------------
         # ALWAYS SHOW QUESTION
+        # Prefer humanized display text when available; fall back to raw prompt.
         # -----------------------------------------------------
 
-        if question.prompt:
-            parts.append(f"### Question\n\n{question.prompt.strip()}")
+        display_text = state.question_display_text or question.prompt
+        if display_text:
+            parts.append(f"### Question\n\n{display_text.strip()}")
 
         last_answer = state.get_latest_answer_for_question(question.id)
 

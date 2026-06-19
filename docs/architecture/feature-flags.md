@@ -30,6 +30,7 @@
 |---|---|---|---|
 | `enable_humanizer` | `True` | `settings.humanizer_enabled` via `start.py` | Enables humanizer LLM call for WRITTEN questions |
 | `adaptive_interview_enabled` | `False` | `app/ui/state_handlers/start.py` | Enables adaptive navigation path |
+| `question_display_text` | `None` | `question_node` | Humanized question text shown to candidate. Falls back to `question.prompt` when `None` (first question, non-WRITTEN, humanizer disabled). Reset to `None` on new session. |
 
 #### Decision Engine Flags (`services/decision_engine/decision_policy.py` `POLICY["global"]`)
 

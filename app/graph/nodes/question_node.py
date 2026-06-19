@@ -50,11 +50,13 @@ def build_question_node(llm):
 
         if not state.enable_humanizer:
 
-            new_history = state.chat_history + [_build_display_prompt(question)]
+            raw_text = _build_display_prompt(question)
+            new_history = state.chat_history + [raw_text]
 
             return state.model_copy(
                 update={
                     "chat_history": new_history,
+                    "question_display_text": raw_text,
                 }
             )
 
@@ -64,11 +66,13 @@ def build_question_node(llm):
 
         if question.type != QuestionType.WRITTEN:
 
-            new_history = state.chat_history + [_build_display_prompt(question)]
+            raw_text = _build_display_prompt(question)
+            new_history = state.chat_history + [raw_text]
 
             return state.model_copy(
                 update={
                     "chat_history": new_history,
+                    "question_display_text": raw_text,
                 }
             )
 
@@ -138,6 +142,7 @@ def build_question_node(llm):
         return state.model_copy(
             update={
                 "chat_history": new_history,
+                "question_display_text": output.message,
                 "follow_up_count": follow_up_count,
                 "last_humanizer_follow_up": (is_follow_up),
                 "memory_context": updated_memory,
