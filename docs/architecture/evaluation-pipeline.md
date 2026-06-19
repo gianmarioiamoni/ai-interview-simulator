@@ -206,6 +206,7 @@ Current report includes:
 - adaptive feedback
 - semantic scoring
 - dimension aggregation
+- AI hint replay in final report: `ai_hint_explanation` and `ai_hint_suggestion` from `QuestionAssessmentDTO` are rendered in the `question_section` per-question card when a hint was generated during the session
 
 ---
 
