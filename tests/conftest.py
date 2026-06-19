@@ -79,3 +79,18 @@ def _build_jiter_stub() -> types.ModuleType:
 
 
 sys.modules.setdefault("jiter", _build_jiter_stub())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3.  pydub / audioop stub  (gradio → pydub → audioop missing on Python 3.13)
+# ─────────────────────────────────────────────────────────────────────────────
+
+for _mod in ("audioop", "pyaudioop", "pydub", "pydub.utils", "pydub.audio_segment"):
+    sys.modules.setdefault(_mod, MagicMock())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4.  weasyprint stub  (requires system libs not present in test runner)
+# ─────────────────────────────────────────────────────────────────────────────
+
+sys.modules.setdefault("weasyprint", MagicMock())

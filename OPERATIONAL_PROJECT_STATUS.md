@@ -6,9 +6,26 @@ The project is currently in a stable state.
 
 Latest completed milestone:
 
-HUMANIZER_V1_RELEASE_HARDENED
+EXPORT_RECOVERY_R3_1
 
 Results:
+
+* PDF and JSON export fully wired end-to-end
+* gr.DownloadButton replaces gr.Button for PDF/JSON in report_section
+* pdf_download_btn / json_download_btn added to OUTPUT_KEYS contract
+* UIResponse fields pdf_download_btn_visible / json_download_btn_visible control visibility
+* Download buttons shown automatically when final report renders (is_completed=True)
+* export_handlers.py: is_completed guard, try/except, correct return type
+* report_export_service.py: model_dump(mode="json") fixes enum serialization; try/except on WeasyPrint
+* export.py (duplicate, broken /mnt/data path, PDF→.json bug) deleted
+* ReportExportService typed with FinalReportDTO (removes Any)
+* 1206 tests passed
+* 0 failures
+* 0 regressions
+
+Previous milestone:
+
+HUMANIZER_V1_RELEASE_HARDENED
 
 * Humanizer subsystem fully wired and production-ready
 * question_display_text integrated in UI (DisplaySection)
@@ -21,19 +38,6 @@ Results:
 * 1195 tests passed
 * 0 failures
 * 0 regressions
-
-Previous milestone:
-
-UI_V1_BLOCKERS_RESOLVED
-
-* Interview length selector implemented
-* Seniority selector implemented
-* RoleType.OTHER fully supported
-* 533 tests passed
-
-The system is currently considered:
-
-READY_FOR_V1_RELEASE_CANDIDATE
 
 ---
 
