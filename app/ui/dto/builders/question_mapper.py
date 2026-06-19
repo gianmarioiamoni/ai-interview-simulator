@@ -58,6 +58,11 @@ class QuestionMapper:
 
         elif result.execution:
 
+            if result.evaluation:
+                strengths = list(result.evaluation.strengths or [])
+                weaknesses = list(result.evaluation.weaknesses or [])
+                follow_up_question = result.evaluation.follow_up_question or None
+
             exec_res = result.execution
             execution_status = exec_res.status.value
 
