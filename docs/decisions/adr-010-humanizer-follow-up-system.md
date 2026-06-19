@@ -54,11 +54,15 @@ answers with follow-up questions (FOLLOW_UP). Without this, the interview feels 
 - `infrastructure/config/settings.py` — `humanizer_enabled`, `humanizer_follow_up_enabled`
 - `infrastructure/config/evaluation.py` — `FOLLOW_UP_SCORE_THRESHOLD = 4`
 - `app/settings/constants.py` — `MAX_FOLLOW_UPS_PER_INTERVIEW = 2`
-- `domain/contracts/interview_state/base.py` — `enable_humanizer`, `follow_up_count` (le= from constant)
+- `domain/contracts/interview_state/base.py` — `enable_humanizer`, `follow_up_count` (le= from constant), `question_display_text`, `last_question_context`
 - `domain/contracts/interview_state/factory.py` — `enable_humanizer` param in `create_initial`
+- `domain/contracts/interview_state/last_question_context.py` — prior-question snapshot
 - `services/humanizer/humanizer_policy_engine.py` — `follow_up_enabled` constructor param
-- `services/humanizer/humanizer_service.py` — `follow_up_enabled` forwarded to policy engine
-- `app/graph/nodes/question_node.py` — `follow_up_enabled` from settings
+- `services/humanizer/humanizer_service.py` — returns `(policy_decision, output)` tuple
+- `app/graph/nodes/question_node.py` — sets `question_display_text` on all paths
+- `app/graph/nodes/navigation_node.py` — captures `last_question_context` snapshot before index advance
+- `app/graph/nodes/adaptive_navigation_node.py` — same snapshot capture on all NEXT paths
+- `app/ui/response/sections/display_section.py` — renders `question_display_text` with fallback to `question.prompt`
 
 ## Review Trigger
 

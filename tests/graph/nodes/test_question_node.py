@@ -178,3 +178,93 @@ def test_question_node_humanized():
     assert "humanized question" in new_state.chat_history
     assert len(new_state.chat_history) == 1
     llm.invoke.assert_called_once()
+
+
+# ---------------------------------------------------------
+# question_display_text
+# ---------------------------------------------------------
+
+
+def test_question_node_sets_question_display_text_humanized():
+    llm = Mock()
+    llm.invoke.return_value = Mock(
+        content='{"decision": "direct_question", "message": "Conversational intro to the question."}'
+    )
+
+    node = build_question_node(llm)
+    state = build_interview_state()
+    q = state.current_question.model_copy(update={"type": QuestionType.WRITTEN})
+    state = state.model_copy(
+        update={
+            "questions": [q],
+            "chat_history": [],
+            "current_question_index": 0,
+            "enable_humanizer": True,
+        }
+    )
+
+    new_state = node(state)
+
+    assert new_state.question_display_text == "Conversational intro to the question."
+
+
+def test_question_node_sets_question_display_text_fallback_when_humanizer_disabled():
+    llm = Mock()
+    node = build_question_node(llm)
+
+    state = build_interview_state()
+    q = state.current_question.model_copy(update={"type": QuestionType.WRITTEN})
+    state = state.model_copy(
+        update={
+            "questions": [q],
+            "chat_history": [],
+            "current_question_index": 0,
+            "enable_humanizer": False,
+        }
+    )
+
+    new_state = node(state)
+
+    assert new_state.question_display_text == q.prompt
+    llm.invoke.assert_not_called()
+
+
+def test_question_node_sets_question_display_text_raw_for_non_written():
+    llm = Mock()
+    node = build_question_node(llm)
+
+    state = build_interview_state()
+    q = state.current_question.model_copy(update={"type": QuestionType.CODING})
+    state = state.model_copy(
+        update={
+            "questions": [q],
+            "chat_history": [],
+            "current_question_index": 0,
+        }
+    )
+
+    new_state = node(state)
+
+    assert new_state.question_display_text == q.prompt
+    llm.invoke.assert_not_called()
+
+
+def test_question_display_text_none_on_fresh_state():
+    state = build_interview_state()
+    assert state.question_display_text is None
+
+
+def test_question_display_text_reset_on_create_initial():
+    from domain.contracts.user.role import RoleType
+    from domain.contracts.interview.interview_type import InterviewType
+    from domain.contracts.interview_state import InterviewState
+
+    state = InterviewState.create_initial(
+        role_type=RoleType.BACKEND_ENGINEER,
+        interview_type=InterviewType.TECHNICAL,
+        company="Acme",
+        language="en",
+        questions=[],
+        interview_id="test-reset",
+    )
+    assert state.question_display_text is None
