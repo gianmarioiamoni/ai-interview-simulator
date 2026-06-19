@@ -9,6 +9,8 @@ from domain.contracts.execution.execution_result import ExecutionStatus
 from app.ui.dto.builders.dimension_mapper import DimensionMapper
 from app.ui.constants.loader_steps import LoaderStep
 from app.ui.presenters.feedback.blocks.failure.edge_case_detector import EdgeCaseDetector
+from app.ui.presenters.feedback.blocks.test_breakdown.logic_issue_analyzer import LogicIssueAnalyzer
+from domain.contracts.feedback.error_type import ErrorType
 from infrastructure.config.evaluation import (
     EXECUTION_SLOW_MS,
     CODING_QUALITY_CORRECT_THRESHOLD,
@@ -16,6 +18,7 @@ from infrastructure.config.evaluation import (
 )
 
 _EDGE_CASE_DETECTOR = EdgeCaseDetector()
+_LOGIC_ISSUE_ANALYZER = LogicIssueAnalyzer()
 
 
 def _build_coding_signals(execution) -> tuple[list[str], list[str]]:
@@ -75,6 +78,60 @@ def _build_coding_signals(execution) -> tuple[list[str], list[str]]:
     return strengths[:3], weaknesses[:3]
 
 
+def _build_sql_signals(execution) -> tuple[list[str], list[str]]:
+    total = execution.total_tests or 0
+    passed = execution.passed_tests or 0
+    is_perfect = total > 0 and passed == total
+
+    strengths: list[str] = []
+    weaknesses: list[str] = []
+
+    # --- STRENGTHS ---
+
+    if is_perfect:
+        strengths.append("Correct query logic demonstrated across all tested scenarios")
+
+    has_test_errors = any(
+        getattr(t, "status", None) is not None and t.status.value == "error"
+        for t in execution.test_results
+    )
+
+    if execution.status == ExecutionStatus.SUCCESS and not has_test_errors:
+        strengths.append("Query executed successfully without runtime errors")
+
+    # --- WEAKNESSES ---
+
+    for t in execution.test_results:
+        if getattr(t, "status", None) is None or t.status.value != "error":
+            continue
+        error_str = (t.error or "").lower()
+        if "syntax error" in error_str:
+            label = "SQL syntax issues detected"
+        elif "no such table" in error_str or "no such column" in error_str:
+            label = "Schema understanding issues detected"
+        else:
+            label = "SQL execution errors detected"
+        if label not in weaknesses:
+            weaknesses.append(label)
+        break  # one error-class weakness is enough
+
+    if not is_perfect and total > 0:
+        for t in execution.test_results:
+            if getattr(t, "status", None) is None or t.status.value != "failed":
+                continue
+            msg = _LOGIC_ISSUE_ANALYZER.infer(t.expected, t.actual, ErrorType.LOGIC)
+            if msg and msg not in weaknesses:
+                weaknesses.append(msg)
+            break  # one logic weakness per question
+
+    if _EDGE_CASE_DETECTOR.detect(execution.test_results):
+        label = "Query does not correctly handle empty-result scenarios"
+        if label not in weaknesses:
+            weaknesses.append(label)
+
+    return strengths[:3], weaknesses[:3]
+
+
 class EvaluationNode:
 
     def __call__(self, state: InterviewState) -> InterviewState:
@@ -110,11 +167,12 @@ class EvaluationNode:
         else:
             score = 100 if execution.success else 0
 
-        strengths, weaknesses = (
-            _build_coding_signals(execution)
-            if question.type == QuestionType.CODING
-            else ([], [])
-        )
+        if question.type == QuestionType.CODING:
+            strengths, weaknesses = _build_coding_signals(execution)
+        elif question.type == QuestionType.DATABASE:
+            strengths, weaknesses = _build_sql_signals(execution)
+        else:
+            strengths, weaknesses = [], []
 
         evaluation = QuestionEvaluation(
             question_id=question.id,
