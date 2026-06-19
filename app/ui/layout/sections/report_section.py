@@ -9,8 +9,8 @@ def render_report_section():
 
         report_output = gr.HTML("")
 
-        pdf_button = gr.Button("Download PDF", visible=False)
-        json_button = gr.Button("Download JSON", visible=False)
+        pdf_button = gr.DownloadButton("Download PDF", visible=False)
+        json_button = gr.DownloadButton("Download JSON", visible=False)
 
         new_interview_button = gr.Button("Start New Interview")
 

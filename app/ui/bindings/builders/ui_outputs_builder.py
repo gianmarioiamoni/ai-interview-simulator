@@ -32,6 +32,9 @@ class UIOutputsBuilder:
             self.c.final_feedback,
             self.c.report_output,
             self.c.report_section,
+            # 15-16 EXPORT BUTTONS
+            self.c.pdf_button,
+            self.c.json_button,
             # 15-17 BUTTONS
             self.c.submit_button,
             self.c.retry_button,

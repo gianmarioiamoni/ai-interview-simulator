@@ -1,39 +1,43 @@
 # app/ui/state_handlers/export_handlers.py
 
+import logging
 import gradio as gr
 from datetime import datetime, timezone
 
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 from services.report_export_service import ReportExportService
 
+logger = logging.getLogger(__name__)
 
-def export_pdf_handler(state):
-
-    if state is None:
-        return gr.update(value=None, visible=False)
-
-    mapper = InterviewStateMapper()
-    report = mapper.to_final_report_dto(state)
-
-    service = ReportExportService()
-    file_path = f"/tmp/report_{state.interview_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.pdf"
-
-    path = service.export_pdf(report, file_path)
-
-    return gr.update(value=path, visible=True)
+_mapper = InterviewStateMapper()
+_service = ReportExportService()
 
 
-def export_json_handler(state):
+def export_pdf_handler(state) -> gr.DownloadButton:
 
-    if state is None:
-        return gr.update(value=None, visible=False)
+    if state is None or not state.is_completed:
+        return gr.DownloadButton(value=None, visible=False)
 
-    mapper = InterviewStateMapper()
-    report = mapper.to_final_report_dto(state)
+    try:
+        report = _mapper.to_final_report_dto(state)
+        file_path = f"/tmp/report_{state.interview_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.pdf"
+        path = _service.export_pdf(report, file_path)
+        return gr.DownloadButton(value=path, visible=True)
+    except Exception:
+        logger.exception("PDF export failed")
+        return gr.DownloadButton(value=None, visible=False)
 
-    service = ReportExportService()
-    file_path = f"/tmp/report_{state.interview_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
 
-    path = service.export_json(report, file_path)
+def export_json_handler(state) -> gr.DownloadButton:
 
-    return gr.update(value=path, visible=True)
+    if state is None or not state.is_completed:
+        return gr.DownloadButton(value=None, visible=False)
+
+    try:
+        report = _mapper.to_final_report_dto(state)
+        file_path = f"/tmp/report_{state.interview_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+        path = _service.export_json(report, file_path)
+        return gr.DownloadButton(value=path, visible=True)
+    except Exception:
+        logger.exception("JSON export failed")
+        return gr.DownloadButton(value=None, visible=False)

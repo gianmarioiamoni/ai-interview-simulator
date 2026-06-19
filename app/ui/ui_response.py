@@ -45,6 +45,8 @@ class UIResponse:
     final_feedback: str = ""
     report_output: str = ""
     report_section_visible: bool = False
+    pdf_download_btn_visible: bool = False
+    json_download_btn_visible: bool = False
 
     # BUTTONS
     show_submit: bool = False
@@ -153,6 +155,9 @@ class UIResponse:
             "report_group": gr.update(
                 visible=self.report_section_visible,
             ),
+            # 15-16 EXPORT BUTTONS
+            "pdf_download_btn": gr.DownloadButton(visible=self.pdf_download_btn_visible),
+            "json_download_btn": gr.DownloadButton(visible=self.json_download_btn_visible),
             # 15-17 BUTTONS
             "submit_button": gr.update(
                 visible=self.show_submit,

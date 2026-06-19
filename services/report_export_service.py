@@ -6,11 +6,14 @@
 # Ensures visual consistency with UI report
 
 import json
-from typing import Any
+import logging
 
 from weasyprint import HTML
 
 from app.ui.views.report_view import build_report_markdown
+from app.ui.dto.final_report_dto import FinalReportDTO
+
+logger = logging.getLogger(__name__)
 
 
 class ReportExportService:
@@ -19,11 +22,15 @@ class ReportExportService:
     # PDF EXPORT (HTML → PDF)
     # ---------------------------------------------------------
 
-    def export_pdf(self, report: Any, file_path: str) -> str:
+    def export_pdf(self, report: FinalReportDTO, file_path: str) -> str:
 
         html_content = self._build_full_html(report)
 
-        HTML(string=html_content).write_pdf(file_path)
+        try:
+            HTML(string=html_content).write_pdf(file_path)
+        except Exception:
+            logger.exception("WeasyPrint PDF generation failed for %s", file_path)
+            raise
 
         return file_path
 
@@ -31,10 +38,10 @@ class ReportExportService:
     # JSON EXPORT
     # ---------------------------------------------------------
 
-    def export_json(self, report: Any, file_path: str) -> str:
+    def export_json(self, report: FinalReportDTO, file_path: str) -> str:
 
         with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(report.model_dump(), f, indent=4)
+            json.dump(report.model_dump(mode="json"), f, indent=4)
 
         return file_path
 
@@ -42,7 +49,7 @@ class ReportExportService:
     # INTERNAL: FULL HTML DOCUMENT
     # ---------------------------------------------------------
 
-    def _build_full_html(self, report: Any) -> str:
+    def _build_full_html(self, report: FinalReportDTO) -> str:
 
         body = build_report_markdown(report)
 

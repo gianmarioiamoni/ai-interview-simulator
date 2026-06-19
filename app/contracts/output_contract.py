@@ -25,6 +25,9 @@ OUTPUT_KEYS = [
     "final_feedback",
     "report_output",
     "report_group",
+    # 15-16 EXPORT BUTTONS
+    "pdf_download_btn",
+    "json_download_btn",
     # 15-17 BUTTONS
     "submit_button",
     "retry_button",

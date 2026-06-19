@@ -10,6 +10,7 @@ from app.ui.state_handlers import (
     retry_answer,
     next_question,
 )
+from app.ui.state_handlers.export_handlers import export_pdf_handler, export_json_handler
 
 from app.ui.bindings.builders.ui_outputs_builder import UIOutputsBuilder
 from app.ui.bindings.validators.input_validator import InputValidator
@@ -42,6 +43,7 @@ class UIEventOrchestrator:
         self._bind_submit()
         self._bind_enable_submit()
         self._bind_navigation()
+        self._bind_export()
 
     # =========================================================
     # VALIDATION
@@ -194,4 +196,23 @@ class UIEventOrchestrator:
             new_interview,
             inputs=[self.state],
             outputs=self.outputs,
+        )
+
+    # =========================================================
+    # EXPORT
+    # =========================================================
+
+    def _bind_export(self):
+        self.c.pdf_button.click(
+            export_pdf_handler,
+            inputs=[self.state],
+            outputs=[self.c.pdf_button],
+            show_progress=False,
+        )
+
+        self.c.json_button.click(
+            export_json_handler,
+            inputs=[self.state],
+            outputs=[self.c.json_button],
+            show_progress=False,
         )
