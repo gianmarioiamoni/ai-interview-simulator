@@ -43,6 +43,7 @@ class QuestionMapper:
 
         strengths: list[str] = []
         weaknesses: list[str] = []
+        follow_up_question: str | None = None
 
         # ---------------- Evaluation
 
@@ -51,6 +52,7 @@ class QuestionMapper:
             feedback = result.evaluation.feedback
             strengths = list(result.evaluation.strengths or [])
             weaknesses = list(result.evaluation.weaknesses or [])
+            follow_up_question = result.evaluation.follow_up_question or None
 
         # ---------------- Execution
 
@@ -101,4 +103,5 @@ class QuestionMapper:
             area=area_label,
             strengths=strengths,
             weaknesses=weaknesses,
+            follow_up_question=follow_up_question,
         )

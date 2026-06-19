@@ -19,3 +19,4 @@ class QuestionAssessmentDTO:
     ai_hint_suggestion: Optional[str] = None
     strengths: list[str] = field(default_factory=list)
     weaknesses: list[str] = field(default_factory=list)
+    follow_up_question: Optional[str] = None

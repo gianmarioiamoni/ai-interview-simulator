@@ -25,6 +25,7 @@ def _base_assessment(**kwargs) -> QuestionAssessmentDTO:
         execution_status=None,
         strengths=[],
         weaknesses=[],
+        follow_up_question=None,
     )
     defaults.update(kwargs)
     return QuestionAssessmentDTO(**defaults)
@@ -191,6 +192,56 @@ def test_strengths_weaknesses_appear_before_hint_block():
 
     assert strengths_pos < hint_pos
     assert weaknesses_pos < hint_pos
+
+
+# ------------------------------------------------------------------
+# Follow-up question block rendering
+# ------------------------------------------------------------------
+
+
+def test_follow_up_block_rendered_when_present():
+    assessment = _base_assessment(
+        follow_up_question="Can you clarify what you mean by eventual consistency?"
+    )
+    html = render_questions(_make_report(assessment))
+
+    assert "Suggested Interviewer Follow-Up" in html
+    assert "Can you clarify what you mean by eventual consistency?" in html
+
+
+def test_follow_up_block_absent_when_none():
+    assessment = _base_assessment(follow_up_question=None)
+    html = render_questions(_make_report(assessment))
+
+    assert "Suggested Interviewer Follow-Up" not in html
+
+
+def test_follow_up_appears_before_hint_block():
+    assessment = _base_assessment(
+        follow_up_question="Can you elaborate on caching?",
+        ai_hint_explanation="Check boundaries.",
+        ai_hint_suggestion="Fix the loop.",
+    )
+    html = render_questions(_make_report(assessment))
+
+    follow_up_pos = html.index("Suggested Interviewer Follow-Up")
+    hint_pos = html.index("AI Coaching Hint")
+
+    assert follow_up_pos < hint_pos
+
+
+def test_follow_up_and_hint_coexist_independently():
+    assessment = _base_assessment(
+        follow_up_question="How would you handle cache invalidation at scale?",
+        ai_hint_explanation="Revisit your approach.",
+        ai_hint_suggestion="Check edge cases.",
+    )
+    html = render_questions(_make_report(assessment))
+
+    assert "Suggested Interviewer Follow-Up" in html
+    assert "AI Coaching Hint" in html
+    assert html.count("Suggested Interviewer Follow-Up") == 1
+    assert html.count("AI Coaching Hint") == 1
 
 
 # ------------------------------------------------------------------

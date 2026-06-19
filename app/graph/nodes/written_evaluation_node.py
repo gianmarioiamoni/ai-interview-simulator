@@ -45,6 +45,7 @@ class WrittenEvaluationNode:
                 feedback=decision.feedback,
                 strengths=list(getattr(decision, "strengths", []) or []),
                 weaknesses=list(getattr(decision, "weaknesses", []) or []),
+                follow_up_question=getattr(decision, "follow_up_question", None) or None,
             )
 
         except Exception:
