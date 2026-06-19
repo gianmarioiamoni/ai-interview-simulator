@@ -128,6 +128,7 @@ class AdaptiveNavigationNode:
                         "questions": updated_questions,
                         "current_question_index": current_index + 1,
                         "last_question_context": snapshot,
+                        "question_display_text": None,
                         "retrieval_memory": retrieval_memory,
                         "awaiting_user_input": True,
                         "last_feedback_bundle": None,
@@ -141,6 +142,7 @@ class AdaptiveNavigationNode:
                     update={
                         "current_question_index": current_index + 1,
                         "last_question_context": snapshot,
+                        "question_display_text": None,
                         "retrieval_memory": retrieval_memory,
                         "awaiting_user_input": True,
                         "last_feedback_bundle": None,

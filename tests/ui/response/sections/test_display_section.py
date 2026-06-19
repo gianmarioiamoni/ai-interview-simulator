@@ -178,3 +178,18 @@ def test_display_section_coding_unaffected_by_humanizer_display_text():
 
     assert "Humanized text" in result["coding_display"]
     assert result["written_display"] == ""
+
+
+def test_display_section_database_schema_rendered_once_when_display_text_is_raw_prompt():
+    """H2: question_node stores raw prompt; DisplaySection adds schema block exactly once."""
+    question = _make_question(QuestionType.DATABASE, db_schema=_SCHEMA)
+    # Simulate what question_node now stores: raw prompt only
+    state = build_interview_state(questions=[question], answers=[])
+    state = state.model_copy(update={"question_display_text": question.prompt})
+
+    result = DisplaySection.build(state, question, UIState.QUESTION, has_previous_answer=False)
+
+    db_text = result["database_display"]
+    schema_count = db_text.count("### Database Schema")
+    assert schema_count == 1, f"Schema block rendered {schema_count} times"
+    assert _PROMPT in db_text

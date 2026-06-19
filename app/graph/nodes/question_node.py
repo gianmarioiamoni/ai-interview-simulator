@@ -1,5 +1,7 @@
 # app/graph/nodes/question_node.py
 
+import logging
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 
@@ -9,15 +11,11 @@ from services.humanizer.humanizer_service import HumanizerService
 from services.interview_memory.interview_memory_updater import InterviewMemoryUpdater
 from infrastructure.config.settings import settings
 
+logger = logging.getLogger(__name__)
+
 
 def _build_display_prompt(question) -> str:
-    """Prepend schema block for DATABASE questions that carry db_schema."""
-    if question.type == QuestionType.DATABASE and question.db_schema:
-        schema_block = (
-            "**Database Schema**\n\n"
-            f"```sql\n{question.db_schema.strip()}\n```\n\n"
-        )
-        return schema_block + question.prompt
+    """Return the question prompt text only. Schema rendering is owned by DisplaySection."""
     return question.prompt
 
 
@@ -88,6 +86,10 @@ def build_question_node(llm):
 
         if state.last_feedback_bundle:
             last_score = state.last_feedback_bundle.overall_quality.rank()
+        elif state.last_question_context is not None:
+            # Bundle was cleared by navigation_node before question_node runs;
+            # fall back to quality_rank captured in the snapshot.
+            last_score = state.last_question_context.quality_rank
 
         # Populate previous_* from snapshot captured before index advanced
         ctx = state.last_question_context
@@ -114,9 +116,15 @@ def build_question_node(llm):
         # HUMANIZE
         # ---------------------------------------------------------
 
-        policy_decision, output = humanizer_service.humanize(
-            input_data=input_data,
-        )
+        try:
+            policy_decision, output = humanizer_service.humanize(
+                input_data=input_data,
+            )
+            humanized_text = output.message
+        except Exception:
+            logger.warning("humanizer_failed", exc_info=True)
+            policy_decision = None
+            humanized_text = question.prompt
 
         # ---------------------------------------------------------
         # FOLLOW-UP TRACKING — driven by policy decision, never LLM output
@@ -132,7 +140,7 @@ def build_question_node(llm):
         # UPDATE HISTORY
         # ---------------------------------------------------------
 
-        new_history = state.chat_history + [output.message]
+        new_history = state.chat_history + [humanized_text]
 
         updated_memory = memory_updater.update_after_question(
             memory=state.memory_context,
@@ -142,7 +150,7 @@ def build_question_node(llm):
         return state.model_copy(
             update={
                 "chat_history": new_history,
-                "question_display_text": output.message,
+                "question_display_text": humanized_text,
                 "follow_up_count": follow_up_count,
                 "last_humanizer_follow_up": (is_follow_up),
                 "memory_context": updated_memory,
