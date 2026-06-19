@@ -37,6 +37,14 @@ def render_questions(report):
 <ul style="margin:6px 0 0 0;padding-left:18px;">{items}</ul>
 </div>"""
 
+        follow_up_block = ""
+        if q.follow_up_question:
+            follow_up_block = f"""
+<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;padding:8px 12px;margin-top:10px;">
+<strong>🔍 Suggested Interviewer Follow-Up</strong>
+<p style="margin:6px 0 0 0;font-style:italic;">{q.follow_up_question}</p>
+</div>"""
+
         hint_block = ""
         if q.ai_hint_explanation:
             suggestion_line = (
@@ -58,6 +66,7 @@ Score: {score_badge(q.score)}<br><br>
 {q.feedback}
 {strengths_block}
 {weaknesses_block}
+{follow_up_block}
 {hint_block}
 {execution}
 </div>

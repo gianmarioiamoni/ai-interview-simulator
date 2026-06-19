@@ -206,7 +206,7 @@ Current report includes:
 - adaptive feedback
 - semantic scoring
 - dimension aggregation
-- Per-question coaching surfaced in final report: `question_section` renders `strengths`, `weaknesses`, and `ai_hint_explanation`/`ai_hint_suggestion` from `QuestionAssessmentDTO` when present. Strengths/weaknesses are populated from `QuestionEvaluation` for written questions; AI hints are populated for any question type where a hint was generated.
+- Per-question coaching surfaced in final report: `question_section` renders `strengths`, `weaknesses`, `follow_up_question`, and `ai_hint_explanation`/`ai_hint_suggestion` from `QuestionAssessmentDTO` when present. Strengths/weaknesses and follow-up questions are populated from `QuestionEvaluation` for written questions; AI hints are populated for any question type where a hint was generated. `follow_up_question` originates from `EvaluationDecision` and is now carried through `QuestionEvaluation` → `QuestionAssessmentDTO` → report.
 
 ---
 

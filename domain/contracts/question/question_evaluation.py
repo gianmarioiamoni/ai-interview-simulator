@@ -16,6 +16,8 @@ class QuestionEvaluation(BaseModel):
     strengths: list[str] = Field(default_factory=list)
     weaknesses: list[str] = Field(default_factory=list)
 
+    follow_up_question: Optional[str] = None
+
     passed: bool
 
     # execution metadata

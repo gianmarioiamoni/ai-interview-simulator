@@ -263,3 +263,43 @@ def test_final_report_strengths_weaknesses_empty_for_coding_question():
     assessment = report.question_assessments[0]
     assert assessment.strengths == []
     assert assessment.weaknesses == []
+
+
+def test_final_report_maps_follow_up_question_for_written_question():
+
+    state = build_written_question_state()
+    question_id = state.current_question.id
+
+    evaluation = QuestionEvaluation(
+        question_id=question_id,
+        score=72.0,
+        max_score=100.0,
+        feedback="Good but incomplete.",
+        passed=True,
+        follow_up_question="Can you clarify what you mean by eventual consistency here?",
+    )
+    result = QuestionResult(question_id=question_id, evaluation=evaluation)
+    state = state.model_copy(
+        update={
+            "results_by_question": {question_id: result},
+            "interview_evaluation": build_interview_evaluation(),
+        }
+    )
+
+    mapper = InterviewStateMapper()
+    report = mapper.to_final_report_dto(state)
+
+    assessment = report.question_assessments[0]
+    assert assessment.follow_up_question == "Can you clarify what you mean by eventual consistency here?"
+
+
+def test_final_report_follow_up_is_none_for_coding_question():
+
+    state = build_state_with_execution(passed_tests=2, total_tests=2)
+    state = state.model_copy(update={"interview_evaluation": build_interview_evaluation()})
+
+    mapper = InterviewStateMapper()
+    report = mapper.to_final_report_dto(state)
+
+    assessment = report.question_assessments[0]
+    assert assessment.follow_up_question is None

@@ -49,6 +49,7 @@ def test_written_eval_success(mock_decision_cls):
     mock_decision.feedback = "good"
     mock_decision.strengths = []
     mock_decision.weaknesses = []
+    mock_decision.follow_up_question = None
 
     mock_decision_cls.model_validate_json.return_value = mock_decision
 
@@ -78,6 +79,7 @@ def test_written_eval_propagates_strengths_and_weaknesses(mock_decision_cls):
     mock_decision.feedback = "decent"
     mock_decision.strengths = ["Clear explanation", "Good structure"]
     mock_decision.weaknesses = ["Missing edge cases", "Shallow on complexity"]
+    mock_decision.follow_up_question = None
 
     mock_decision_cls.model_validate_json.return_value = mock_decision
 
@@ -93,6 +95,56 @@ def test_written_eval_propagates_strengths_and_weaknesses(mock_decision_cls):
 
     assert result.evaluation.strengths == ["Clear explanation", "Good structure"]
     assert result.evaluation.weaknesses == ["Missing edge cases", "Shallow on complexity"]
+
+
+@patch("app.graph.nodes.written_evaluation_node.EvaluationDecision")
+def test_written_eval_propagates_follow_up_question(mock_decision_cls):
+
+    mock_decision = Mock()
+    mock_decision.score = 70
+    mock_decision.feedback = "decent"
+    mock_decision.strengths = []
+    mock_decision.weaknesses = []
+    mock_decision.follow_up_question = "Can you elaborate on how you'd handle cache invalidation?"
+
+    mock_decision_cls.model_validate_json.return_value = mock_decision
+
+    llm = Mock()
+    llm.invoke.return_value = Mock(content="whatever")
+
+    node = WrittenEvaluationNode(llm)
+    state = build_interview_state()
+    new_state = node(state)
+
+    q = state.current_question
+    result = new_state.get_result_for_question(q.id)
+
+    assert result.evaluation.follow_up_question == "Can you elaborate on how you'd handle cache invalidation?"
+
+
+@patch("app.graph.nodes.written_evaluation_node.EvaluationDecision")
+def test_written_eval_follow_up_is_none_when_not_set(mock_decision_cls):
+
+    mock_decision = Mock()
+    mock_decision.score = 85
+    mock_decision.feedback = "strong"
+    mock_decision.strengths = []
+    mock_decision.weaknesses = []
+    mock_decision.follow_up_question = None
+
+    mock_decision_cls.model_validate_json.return_value = mock_decision
+
+    llm = Mock()
+    llm.invoke.return_value = Mock(content="whatever")
+
+    node = WrittenEvaluationNode(llm)
+    state = build_interview_state()
+    new_state = node(state)
+
+    q = state.current_question
+    result = new_state.get_result_for_question(q.id)
+
+    assert result.evaluation.follow_up_question is None
 
 
 def test_written_eval_parsing_failure():
