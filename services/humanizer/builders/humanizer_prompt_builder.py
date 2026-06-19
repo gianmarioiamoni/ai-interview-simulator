@@ -41,6 +41,7 @@ class HumanizerPromptBuilder:
                 if input_data.previous_score is not None
                 else ""
             ),
+            "previous_area": (input_data.previous_area or ""),
             "follow_up_count": input_data.follow_up_count,
             "last_answer": input_data.last_answer or "",
             "last_answer_score": input_data.last_answer_score or 0,

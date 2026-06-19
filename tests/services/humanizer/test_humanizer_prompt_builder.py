@@ -114,3 +114,35 @@ def test_build_empty_history_produces_no_history_section() -> None:
     )
 
     assert isinstance(result, str)
+
+
+def test_build_includes_previous_area_when_provided() -> None:
+
+    builder = HumanizerPromptBuilder()
+    state = build_interview_state()
+    input_data = HumanizerInput(
+        current_question=state.current_question,
+        language="en",
+        chat_history=[],
+        previous_area="system_design",
+    )
+
+    result = builder.build(
+        input_data=input_data,
+        decision=HumanizerDecision.FOLLOW_UP,
+    )
+
+    assert "system_design" in result
+
+
+def test_build_previous_area_empty_when_not_provided() -> None:
+
+    builder = HumanizerPromptBuilder()
+    input_data = _make_input()
+
+    result = builder.build(
+        input_data=input_data,
+        decision=HumanizerDecision.FOLLOW_UP,
+    )
+
+    assert "PREVIOUS COMPETENCY AREA:" in result

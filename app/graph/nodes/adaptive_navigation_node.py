@@ -9,6 +9,7 @@ from domain.contracts.user.seniority_level import SeniorityLevel
 from domain.contracts.interview.business_context import BusinessContext
 
 from app.ui.constants.loader_steps import LoaderStep
+from app.graph.nodes.navigation_node import _build_last_question_context
 from services.question_intelligence.adaptive_interview_memory_bridge import (
     AdaptiveInterviewMemoryBridge,
 )
@@ -66,6 +67,7 @@ class AdaptiveNavigationNode:
 
         if action == ActionType.NEXT:
 
+            snapshot = _build_last_question_context(state)
             retrieval_memory = state.retrieval_memory
             current_question = state.current_question
 
@@ -125,6 +127,7 @@ class AdaptiveNavigationNode:
                     update={
                         "questions": updated_questions,
                         "current_question_index": current_index + 1,
+                        "last_question_context": snapshot,
                         "retrieval_memory": retrieval_memory,
                         "awaiting_user_input": True,
                         "last_feedback_bundle": None,
@@ -137,6 +140,7 @@ class AdaptiveNavigationNode:
                 return state.model_copy(
                     update={
                         "current_question_index": current_index + 1,
+                        "last_question_context": snapshot,
                         "retrieval_memory": retrieval_memory,
                         "awaiting_user_input": True,
                         "last_feedback_bundle": None,
