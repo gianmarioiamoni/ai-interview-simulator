@@ -6,6 +6,23 @@ The project is currently in a stable state.
 
 Latest completed milestone:
 
+PACKAGING_HARDENING_R3_2
+
+Results:
+
+* README replaced — accurate product description, setup, env vars, HF Spaces deployment
+* OPENAI_API_KEY validated at startup via pydantic model_validator; fail-fast on missing key
+* CORPUS_HF_REPO centralized in Settings; removed raw os.environ.get from corpus_loader
+* app/main.py now calls ensure_corpus() — local startup fail-fast aligned with app.py
+* gradio_app.py deprecated with SystemExit; superseded by app/main.py and app.py
+* configuration.md fully populated (all env vars, types, defaults, required flags)
+* .env.example created at project root
+* 22 new/updated tests: settings validation + corpus loader startup paths
+* 1 pre-existing unrelated failure (test_interview_theme_assembly — network)
+* 0 regressions
+
+Previous milestone:
+
 EXPORT_RECOVERY_R3_1
 
 Results:
@@ -396,14 +413,7 @@ A phase is complete only if:
 
 Priority:
 
-Corpus Expansion
+R4 End-to-End Validation
 
-Order:
-
-1. BG Expansion
-2. TK Expansion
-3. Coding Expansion
-
-Before implementation:
-
-run a fresh corpus-expansion audit to verify current corpus metrics after all recent architectural and UI changes.
+All mandatory pre-R4 packaging findings resolved (A1–A5).
+Proceed with R4 E2E validation: full interview session, export, corpus bootstrap smoke test.

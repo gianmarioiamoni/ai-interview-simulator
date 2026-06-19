@@ -7,12 +7,19 @@
 # Loads environment variables and provides type-safe access.
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
+from typing import Self
 
 
 class Settings(BaseSettings):
     # ── Credentials ──────────────────────────────────────────────────────────
     openai_api_key: str = ""
     hf_token: str | None = None
+
+    # ── Corpus ───────────────────────────────────────────────────────────────
+    # HF Dataset repo ID containing the pre-built Chroma corpus artifact.
+    # Required at startup when no local corpus is present.
+    corpus_hf_repo: str | None = None
 
     # ── Chat model ───────────────────────────────────────────────────────────
     chat_model: str = "gpt-4o-mini"
@@ -82,6 +89,15 @@ class Settings(BaseSettings):
         protected_namespaces=(),
         extra="ignore",
     )
+
+    @model_validator(mode="after")
+    def validate_required_credentials(self) -> Self:
+        if not self.openai_api_key:
+            raise ValueError(
+                "OPENAI_API_KEY is required but not set. "
+                "Set it in your environment or .env file."
+            )
+        return self
 
 
 settings = Settings()

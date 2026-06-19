@@ -163,9 +163,8 @@ def test_ensure_corpus_skips_restore_when_present(tmp_path):
         ensure_corpus()
 
 
-def test_ensure_corpus_restores_when_missing(tmp_path, monkeypatch):
+def test_ensure_corpus_restores_when_missing(tmp_path):
     missing = tmp_path / "missing"
-    monkeypatch.setenv("CORPUS_HF_REPO", "owner/repo")
 
     mock_collection = MagicMock()
     mock_collection.count.return_value = 300
@@ -178,6 +177,7 @@ def test_ensure_corpus_restores_when_missing(tmp_path, monkeypatch):
 
     with (
         patch.object(loader_module, "CHROMA_PERSIST_DIRECTORY", str(missing / "interview_corpus")),
+        patch.object(loader_module.settings, "corpus_hf_repo", "owner/repo"),
         patch(
             "huggingface_hub.hf_hub_download",
             return_value=str(artifact),
@@ -187,21 +187,23 @@ def test_ensure_corpus_restores_when_missing(tmp_path, monkeypatch):
         ensure_corpus()
 
 
-def test_ensure_corpus_exits_when_missing_and_no_repo(tmp_path, monkeypatch):
+def test_ensure_corpus_exits_when_missing_and_no_repo(tmp_path):
     missing = tmp_path / "missing"
-    monkeypatch.delenv("CORPUS_HF_REPO", raising=False)
 
-    with patch.object(loader_module, "CHROMA_PERSIST_DIRECTORY", str(missing)):
+    with (
+        patch.object(loader_module, "CHROMA_PERSIST_DIRECTORY", str(missing)),
+        patch.object(loader_module.settings, "corpus_hf_repo", None),
+    ):
         with pytest.raises(SystemExit):
             ensure_corpus()
 
 
-def test_ensure_corpus_exits_on_restore_failure(tmp_path, monkeypatch):
+def test_ensure_corpus_exits_on_restore_failure(tmp_path):
     missing = tmp_path / "missing"
-    monkeypatch.setenv("CORPUS_HF_REPO", "owner/repo")
 
     with (
         patch.object(loader_module, "CHROMA_PERSIST_DIRECTORY", str(missing)),
+        patch.object(loader_module.settings, "corpus_hf_repo", "owner/repo"),
         patch(
             "huggingface_hub.hf_hub_download",
             side_effect=Exception("download error"),
