@@ -2,11 +2,13 @@
 
 import pytest
 
+from domain.contracts.ai.ai_hint import AIHint
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.interview.hire_decision import HireDecision
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_level import InterviewLevel
 from domain.contracts.interview.interview_progress import InterviewProgress
+from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.shared.performance_dimension import PerformanceDimension
 
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
@@ -177,3 +179,42 @@ def test_final_report_includes_question_assessments_from_results():
     assert assessment.passed_tests == 1
     assert assessment.total_tests == 2
     assert assessment.score == 50.0
+
+
+def test_final_report_maps_ai_hint_when_present():
+
+    state = build_state_with_execution(passed_tests=1, total_tests=2)
+
+    question_id = state.current_question.id
+    existing_result = state.results_by_question[question_id]
+    hint = AIHint(
+        explanation="Check your loop boundary conditions.",
+        suggestion="Move the return statement outside the inner loop.",
+    )
+    updated_result = existing_result.model_copy(update={"ai_hint": hint})
+    state = state.model_copy(
+        update={
+            "results_by_question": {**state.results_by_question, question_id: updated_result},
+            "interview_evaluation": build_interview_evaluation(),
+        }
+    )
+
+    mapper = InterviewStateMapper()
+    report = mapper.to_final_report_dto(state)
+
+    assessment = report.question_assessments[0]
+    assert assessment.ai_hint_explanation == "Check your loop boundary conditions."
+    assert assessment.ai_hint_suggestion == "Move the return statement outside the inner loop."
+
+
+def test_final_report_ai_hint_fields_are_none_when_no_hint():
+
+    state = build_state_with_execution(passed_tests=2, total_tests=2)
+    state = state.model_copy(update={"interview_evaluation": build_interview_evaluation()})
+
+    mapper = InterviewStateMapper()
+    report = mapper.to_final_report_dto(state)
+
+    assessment = report.question_assessments[0]
+    assert assessment.ai_hint_explanation is None
+    assert assessment.ai_hint_suggestion is None
