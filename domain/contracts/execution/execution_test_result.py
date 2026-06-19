@@ -1,4 +1,4 @@
-# domain/contracts/test_execution_result.py
+# domain/contracts/execution/execution_test_result.py
 
 from typing import Any, Dict, List, Optional
 from typing_extensions import Annotated

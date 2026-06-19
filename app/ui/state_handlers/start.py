@@ -208,6 +208,7 @@ def start_interview(
         seniority_level=level_enum.value,
         interview_length=resolved_length,
         context_profile=context_profile,
+        enable_humanizer=settings.humanizer_enabled,
     )
 
     if adaptive_enabled and retrieval_memory is not None:

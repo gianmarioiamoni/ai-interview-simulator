@@ -57,3 +57,43 @@ def test_minimal_state_has_no_results() -> None:
 
     assert state.get_result_for_question("any") is None
     assert state.current_question is None
+
+
+def test_follow_up_count_limit_matches_constant() -> None:
+    from app.settings.constants import MAX_FOLLOW_UPS_PER_INTERVIEW
+
+    with pytest.raises(ValidationError):
+        InterviewState(**_base_state(), follow_up_count=MAX_FOLLOW_UPS_PER_INTERVIEW + 1)
+
+
+def test_create_initial_enable_humanizer_false() -> None:
+    from domain.contracts.user.role import RoleType
+    from domain.contracts.interview.interview_type import InterviewType
+
+    state = InterviewState.create_initial(
+        role_type=RoleType.BACKEND_ENGINEER,
+        interview_type=InterviewType.TECHNICAL,
+        company="Acme",
+        language="en",
+        questions=[],
+        interview_id="test-1",
+        enable_humanizer=False,
+    )
+
+    assert state.enable_humanizer is False
+
+
+def test_create_initial_enable_humanizer_default_true() -> None:
+    from domain.contracts.user.role import RoleType
+    from domain.contracts.interview.interview_type import InterviewType
+
+    state = InterviewState.create_initial(
+        role_type=RoleType.BACKEND_ENGINEER,
+        interview_type=InterviewType.TECHNICAL,
+        company="Acme",
+        language="en",
+        questions=[],
+        interview_id="test-2",
+    )
+
+    assert state.enable_humanizer is True

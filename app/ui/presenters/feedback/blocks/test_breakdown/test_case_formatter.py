@@ -1,6 +1,6 @@
 # app/ui/presenters/feedback/blocks/test_breakdown/test_case_formatter.py
 
-from domain.contracts.execution.test_execution_result import TestStatus
+from domain.contracts.execution.execution_test_result import TestStatus
 
 from .logic_issue_analyzer import LogicIssueAnalyzer
 from .llm_explanation_policy import LLMExplanationPolicy

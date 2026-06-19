@@ -124,3 +124,35 @@ def test_consecutive_check_takes_priority_over_score() -> None:
     )
 
     assert engine.decide(input_data) == HumanizerDecision.REMARK_PLUS_QUESTION
+
+
+def test_follow_up_disabled_returns_remark_plus_question_on_optimal_score() -> None:
+
+    engine = HumanizerPolicyEngine(follow_up_enabled=False)
+
+    input_data = _make_input(
+        follow_up_count=0,
+        last_turn_was_follow_up=False,
+        last_answer_score=HumanizerPolicyEngine.FOLLOW_UP_THRESHOLD,
+    )
+
+    assert engine.decide(input_data) == HumanizerDecision.REMARK_PLUS_QUESTION
+
+
+def test_follow_up_enabled_by_default() -> None:
+
+    engine = HumanizerPolicyEngine()
+
+    input_data = _make_input(
+        follow_up_count=0,
+        last_turn_was_follow_up=False,
+        last_answer_score=HumanizerPolicyEngine.FOLLOW_UP_THRESHOLD,
+    )
+
+    assert engine.decide(input_data) == HumanizerDecision.FOLLOW_UP
+
+
+def test_threshold_aligns_with_quality_optimal_rank() -> None:
+    from domain.contracts.feedback.quality import Quality
+
+    assert HumanizerPolicyEngine.FOLLOW_UP_THRESHOLD == Quality.OPTIMAL.rank()

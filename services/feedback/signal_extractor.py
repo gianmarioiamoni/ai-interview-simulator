@@ -4,7 +4,7 @@ from collections import defaultdict
 from typing import Dict, Optional
 
 from domain.contracts.execution.execution_result import ExecutionResult
-from domain.contracts.execution.test_execution_result import TestStatus
+from domain.contracts.execution.execution_test_result import TestStatus
 from domain.contracts.feedback.error_type import ErrorType
 from domain.contracts.shared.performance_dimension_type import (
     PerformanceDimensionType,

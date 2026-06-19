@@ -57,6 +57,15 @@ class Settings(BaseSettings):
     # A score below this threshold falls back to GENERIC.
     business_context_min_keyword_score: int = 2
 
+    # ── Humanizer feature flags ───────────────────────────────────────────────
+    # Enable the Humanizer subsystem (conversational question framing).
+    humanizer_enabled: bool = True
+
+    # Enable FOLLOW_UP decisions in the Humanizer policy engine.
+    # Requires humanizer_enabled=True. Disabled by default until V1.1
+    # (score propagation and timing fixes are prerequisites).
+    humanizer_follow_up_enabled: bool = False
+
     # ── Coding domain profile feature flags ──────────────────────────────────
     # Enable CodingDomainProfile-driven framing in coding question prompts.
     coding_domain_profile_enabled: bool = True

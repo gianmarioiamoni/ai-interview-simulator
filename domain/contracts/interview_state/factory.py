@@ -24,6 +24,7 @@ class InterviewStateFactoryMixin:
         seniority_level: str = "mid",
         interview_length: int = 20,
         context_profile: InterviewContextProfile | None = None,
+        enable_humanizer: bool = True,
     ) -> Self:
 
         return cls(
@@ -37,6 +38,7 @@ class InterviewStateFactoryMixin:
             seniority_level=seniority_level,
             interview_length=interview_length,
             context_profile=context_profile or InterviewContextProfile(),
+            enable_humanizer=enable_humanizer,
         )
 
     # =========================================================

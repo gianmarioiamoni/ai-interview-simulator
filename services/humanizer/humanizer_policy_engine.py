@@ -12,6 +12,9 @@ class HumanizerPolicyEngine:
 
     FOLLOW_UP_THRESHOLD = FOLLOW_UP_SCORE_THRESHOLD
 
+    def __init__(self, follow_up_enabled: bool = True) -> None:
+        self._follow_up_enabled = follow_up_enabled
+
     # =====================================================
     # PUBLIC
     # =====================================================
@@ -49,7 +52,7 @@ class HumanizerPolicyEngine:
         # GOOD ANSWER
         # -------------------------------------------------
 
-        if input_data.last_answer_score >= self.FOLLOW_UP_THRESHOLD:
+        if self._follow_up_enabled and input_data.last_answer_score >= self.FOLLOW_UP_THRESHOLD:
 
             return HumanizerDecision.FOLLOW_UP
 

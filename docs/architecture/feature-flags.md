@@ -18,15 +18,17 @@
 
 | Flag | Default | Type | Effect |
 |---|---|---|---|
-| `CODING_DOMAIN_PROFILE_ENABLED` | — | bool | Enables domain vocabulary profiles in coding QI |
-| `CODING_SCENARIO_ANCHOR_ENABLED` | — | bool | Enables scenario anchoring in coding questions |
-| `CODING_DOMAIN_VOCABULARY_ENABLED` | — | bool | Enables domain vocabulary injection |
+| `HUMANIZER_ENABLED` | `True` | bool | Enables the Humanizer subsystem (conversational framing). Propagated to `InterviewState.enable_humanizer` at session start. |
+| `HUMANIZER_FOLLOW_UP_ENABLED` | `False` | bool | Enables `FOLLOW_UP` decisions in the policy engine. Requires `HUMANIZER_ENABLED=True`. Disabled by default until V1.1 (score propagation and timing fixes required). |
+| `CODING_DOMAIN_PROFILE_ENABLED` | `True` | bool | Enables domain vocabulary profiles in coding QI |
+| `CODING_SCENARIO_ANCHOR_ENABLED` | `True` | bool | Enables scenario anchoring in coding questions |
+| `CODING_DOMAIN_VOCABULARY_ENABLED` | `True` | bool | Enables domain vocabulary injection |
 
 #### Runtime State Flags (`domain/contracts/interview_state/base.py`)
 
 | Flag | Default | Set By | Effect |
 |---|---|---|---|
-| `enable_humanizer` | `True` | State init | Enables follow-up question generation |
+| `enable_humanizer` | `True` | `settings.humanizer_enabled` via `start.py` | Enables humanizer LLM call for WRITTEN questions |
 | `adaptive_interview_enabled` | `False` | `app/ui/state_handlers/start.py` | Enables adaptive navigation path |
 
 #### Decision Engine Flags (`services/decision_engine/decision_policy.py` `POLICY["global"]`)
