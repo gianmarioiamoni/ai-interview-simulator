@@ -101,6 +101,6 @@
 
 | ID | Item | Reason | Target |
 |---|---|---|---|
-| — | LangGraph follow-up wiring | V1.1 scope | V1.1 |
+| — | Humanizer FOLLOW_UP activation | Gated by `HUMANIZER_FOLLOW_UP_ENABLED=True`; requires production LLM validation | V1.1 |
 | TD-IN-001 | Full adapter registry migration | V1.1 scope | V1.1 |
 | TD-008 | Unused `CodingDomainProfile.entity_hint` — introduce `entity_hint` prompt block or remove the field | No active consumer; low risk | V1.1 |

@@ -6,16 +6,30 @@ The project is currently in a stable state.
 
 Latest completed milestone:
 
-UI_V1_BLOCKERS_RESOLVED
+HUMANIZER_V1_RELEASE_HARDENED
 
 Results:
+
+* Humanizer subsystem fully wired and production-ready
+* question_display_text integrated in UI (DisplaySection)
+* LastQuestionContext snapshot prevents timing defect
+* Score fallback from last_question_context.quality_rank
+* question_display_text cleared on every index-advancing navigation
+* LLM exception fallback prevents graph abort
+* DisplaySection is sole owner of DATABASE schema rendering
+* HUMANIZER_ENABLED=True, HUMANIZER_FOLLOW_UP_ENABLED=False (V1.1)
+* 1195 tests passed
+* 0 failures
+* 0 regressions
+
+Previous milestone:
+
+UI_V1_BLOCKERS_RESOLVED
 
 * Interview length selector implemented
 * Seniority selector implemented
 * RoleType.OTHER fully supported
 * 533 tests passed
-* 0 failures
-* 0 regressions
 
 The system is currently considered:
 
@@ -215,12 +229,12 @@ LangGraph Integration
 
 Not migration.
 
-Potential V1.1 activity:
+V1.1 activity:
 
-* wire question_node
-* activate follow-up flow
+* activate FOLLOW_UP flow (set HUMANIZER_FOLLOW_UP_ENABLED=True)
+* validate follow-up rate and LLM quality
 
-Only after higher ROI activities.
+Humanizer conversational framing (DIRECT_QUESTION / REMARK_PLUS_QUESTION) is active in V1.
 
 ---
 
@@ -285,24 +299,24 @@ Tasks:
 
 ## Priority 2 — V1.1 Features
 
-### Follow-up Activation
+### Humanizer — ACTIVE (Production Ready)
 
 Current status:
 
-Implemented but not wired.
+WIRED AND PRODUCTION-READY as of HUMANIZER_V1_RELEASE_HARDENED.
 
-Components already exist:
+Active components:
 
-* HumanizerService
-* HumanizerPolicyEngine
-* question_node
+* HumanizerService (wired in question_node)
+* HumanizerPolicyEngine (DIRECT_QUESTION, REMARK_PLUS_QUESTION; FOLLOW_UP gated)
+* question_display_text rendered by DisplaySection
+* LastQuestionContext snapshot captured by navigation_node / adaptive_navigation_node
 
-Tasks:
+V1.1 tasks (FOLLOW_UP enablement):
 
-* register question_node in graph
-* validate follow-up rate
-* validate max follow-ups
-* update UI if needed
+* set HUMANIZER_FOLLOW_UP_ENABLED=True in production settings
+* validate follow-up rate and quality with real LLM output
+* validate max follow-ups enforcement (MAX_FOLLOW_UPS_PER_INTERVIEW=2)
 
 ---
 

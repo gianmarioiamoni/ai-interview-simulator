@@ -212,9 +212,14 @@ Current report includes:
 
 # Planned Improvements
 
-## Follow-up generation
+## Conversational Question Delivery (Humanizer — ACTIVE)
 
-Adaptive questioning.
+Implemented in V1 via `HumanizerService` + `question_node`.
+
+- `DIRECT_QUESTION` and `REMARK_PLUS_QUESTION` decisions active.
+- `question_display_text` stored in `InterviewState`, rendered by `DisplaySection`.
+- `FOLLOW_UP` gated by `HUMANIZER_FOLLOW_UP_ENABLED` flag (default `False`; V1.1 activation).
+- See ADR-010 and `docs/architecture/graph-nodes.md` for full contract.
 
 ---
 
