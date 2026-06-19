@@ -1,12 +1,12 @@
 # services/corpus_persistence/corpus_loader.py
 
-import os
 import shutil
 import tarfile
 import tempfile
 from pathlib import Path
 
 from app.core.logger import get_logger
+from infrastructure.config.settings import settings
 from services.question_corpus.constants.vector_store_constants import (
     CHROMA_COLLECTION_NAME,
     CHROMA_PERSIST_DIRECTORY,
@@ -14,7 +14,6 @@ from services.question_corpus.constants.vector_store_constants import (
 
 logger = get_logger(__name__)
 
-_HF_REPO_ENV = "CORPUS_HF_REPO"
 _HF_FILENAME = "chroma_corpus.tar.gz"
 _MIN_EXPECTED_DOCS = 100
 
@@ -102,10 +101,10 @@ def ensure_corpus(*, hf_token: str | None = None) -> None:
         except RuntimeError as exc:
             logger.warning("Existing corpus invalid, will attempt restore: %s", exc)
 
-    hf_repo = os.environ.get(_HF_REPO_ENV)
+    hf_repo = settings.corpus_hf_repo
     if not hf_repo:
         logger.error(
-            "CORPUS_LOAD_FAILED: corpus missing and %s env var not set", _HF_REPO_ENV
+            "CORPUS_LOAD_FAILED: corpus missing and CORPUS_HF_REPO env var not set"
         )
         raise SystemExit(1)
 

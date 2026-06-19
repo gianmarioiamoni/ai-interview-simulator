@@ -1,19 +1,13 @@
-# gradio_app.py
+# gradio_app.py — DEPRECATED
+#
+# This entry point is superseded by:
+#   app/main.py  — local development
+#   app.py       — Hugging Face Spaces (production)
+#
+# It is retained only for historical reference and will be removed post-R4.
+# Do NOT use this entry point; it lacks corpus validation and startup hardening.
 
-import os
-
-from app.ui.app import build_app
-from app.core.logger import configure_logging, get_logger
-
-configure_logging()
-
-logger = get_logger(__name__)
-
-if not os.getenv("OPENAI_API_KEY"):
-    logger.error("OPENAI_API_KEY not set")
-
-logger.info("BUILD VERSION: 2026-03-16-A")
-
-app = build_app()
-
-app.launch(server_name="0.0.0.0", server_port=7860, share=True, show_api=False)
+raise SystemExit(
+    "gradio_app.py is deprecated. "
+    "Use 'python -m app.main' for local runs or app.py for HF Spaces."
+)

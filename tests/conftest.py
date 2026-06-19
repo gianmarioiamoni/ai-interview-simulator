@@ -15,9 +15,15 @@ real ML / OpenAI infrastructure.
 Production code is not affected; these stubs are only active during test runs.
 """
 
+import os
 import sys
 import types
 from unittest.mock import MagicMock
+
+# Provide a sentinel API key so Settings() can be instantiated during tests
+# without requiring real credentials. Tests that validate the missing-key
+# behaviour override this via monkeypatch or by constructing Settings directly.
+os.environ.setdefault("OPENAI_API_KEY", "sk-test-sentinel")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
