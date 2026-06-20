@@ -172,7 +172,7 @@ def test_export_pdf_handler_calls_service_and_returns_visible_on_success():
     gr_mock.DownloadButton.assert_called_with(value="/tmp/report_test.pdf", visible=True)
 
 
-def test_export_pdf_handler_returns_hidden_on_weasyprint_failure():
+def test_export_pdf_handler_keeps_button_visible_on_failure():
     handlers, gr_mock = _import_handlers()
     state = build_state_with_execution(passed_tests=2, total_tests=2)
     state = state.model_copy(
@@ -184,7 +184,52 @@ def test_export_pdf_handler_returns_hidden_on_weasyprint_failure():
     with patch.object(handlers, "_service") as mock_svc:
         mock_svc.export_pdf.side_effect = RuntimeError("font error")
         handlers.export_pdf_handler(state)
-    gr_mock.DownloadButton.assert_called_with(value=None, visible=False)
+    gr_mock.DownloadButton.assert_called_with(value=None, visible=True)
+
+
+def test_export_pdf_handler_shows_warning_on_failure():
+    handlers, gr_mock = _import_handlers()
+    state = build_state_with_execution(passed_tests=2, total_tests=2)
+    state = state.model_copy(
+        update={
+            "interview_evaluation": build_interview_evaluation(),
+            "is_completed": True,
+        }
+    )
+    with patch.object(handlers, "_service") as mock_svc:
+        mock_svc.export_pdf.side_effect = RuntimeError("font error")
+        handlers.export_pdf_handler(state)
+    gr_mock.Warning.assert_called_once()
+
+
+def test_export_json_handler_keeps_button_visible_on_failure():
+    handlers, gr_mock = _import_handlers()
+    state = build_state_with_execution(passed_tests=2, total_tests=2)
+    state = state.model_copy(
+        update={
+            "interview_evaluation": build_interview_evaluation(),
+            "is_completed": True,
+        }
+    )
+    with patch.object(handlers, "_service") as mock_svc:
+        mock_svc.export_json.side_effect = OSError("disk full")
+        handlers.export_json_handler(state)
+    gr_mock.DownloadButton.assert_called_with(value=None, visible=True)
+
+
+def test_export_json_handler_shows_warning_on_failure():
+    handlers, gr_mock = _import_handlers()
+    state = build_state_with_execution(passed_tests=2, total_tests=2)
+    state = state.model_copy(
+        update={
+            "interview_evaluation": build_interview_evaluation(),
+            "is_completed": True,
+        }
+    )
+    with patch.object(handlers, "_service") as mock_svc:
+        mock_svc.export_json.side_effect = OSError("disk full")
+        handlers.export_json_handler(state)
+    gr_mock.Warning.assert_called_once()
 
 
 def test_export_json_handler_calls_service_and_returns_visible_on_success():
