@@ -2,11 +2,24 @@
 
 ## Current Status
 
-The project is currently in a stable state.
+The project is currently in **R5 Production Hardening**.
+
+R2 Release Readiness: **COMPLETED**
+R4 End-to-End Validation: **COMPLETED**
+R4.2 Candidate Experience Validation: **COMPLETED**
 
 Latest completed milestone:
 
-PACKAGING_HARDENING_R3_2
+R5_PRODUCTION_HARDENING (active)
+
+Activities completed in R5:
+
+* B5: Export error visibility — gr.Warning on failure; button kept visible after export exception
+* Export handlers updated; 4 new/updated tests; 0 regressions
+
+Previous milestone:
+
+PACKAGING_HARDENING_R3_2 (R2 — COMPLETED)
 
 Results:
 
@@ -42,7 +55,7 @@ Results:
 
 Previous milestone:
 
-HUMANIZER_V1_RELEASE_HARDENED
+HUMANIZER_V1_RELEASE_HARDENED (R4 — COMPLETED)
 
 * Humanizer subsystem fully wired and production-ready
 * question_display_text integrated in UI (DisplaySection)
@@ -413,7 +426,8 @@ A phase is complete only if:
 
 Priority:
 
-R4 End-to-End Validation
+R5 Production Hardening — continue open hardening items (B1–B9).
 
+R4 End-to-End Validation is COMPLETED.
 All mandatory pre-R4 packaging findings resolved (A1–A5).
-Proceed with R4 E2E validation: full interview session, export, corpus bootstrap smoke test.
+R4.2 Candidate Experience Validation is COMPLETED.

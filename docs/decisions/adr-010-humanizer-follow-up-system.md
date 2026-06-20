@@ -27,7 +27,9 @@ answers with follow-up questions (FOLLOW_UP). Without this, the interview feels 
 
 - Model A is a 1-day fix; Model B requires 20–50h of new pipeline work with regression risk.
 - Conversational framing alone significantly improves realism — REMARK_PLUS_QUESTION and DIRECT_QUESTION paths are production-safe.
-- FOLLOW_UP requires prior-answer context (score propagation bug + timing defect) before enabling.
+- **Timing defect:** resolved — `navigation_node` and `adaptive_navigation_node` clear `question_display_text` on every index-advancing NEXT; stale display eliminated.
+- **Score propagation:** resolved — `question_node` reads `last_answer_score` from `last_feedback_bundle`; falls back to `last_question_context.quality_rank` when bundle is cleared. `LastQuestionContext` snapshot implemented.
+- **FOLLOW_UP remains disabled** (`HUMANIZER_FOLLOW_UP_ENABLED=False`) by product/rollout decision, not technical limitation. Technical blockers are resolved. Activation deferred to V1.1 after integration testing with real LLM output.
 
 ## Alternatives Considered
 

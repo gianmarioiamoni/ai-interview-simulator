@@ -13,11 +13,11 @@ docs/
 │   ├── runtime-flow.md                   ← LangGraph pipeline [Required]
 │   ├── ui-architecture.md                ← UI state machine [Required]
 │   ├── evaluation-pipeline.md            ← eval/feedback/decision chain [Required]
-│   ├── question-intelligence.md          ← pipelines/registries/retrieval [Required] MISSING
-│   ├── graph-nodes.md                    ← per-node contract reference [Required] MISSING
-│   ├── ingestion.md                      ← adapter ABC & registry guide [Recommended] MISSING
-│   ├── configuration.md                  ← env vars & constants reference [Required] MISSING
-│   ├── feature-flags.md                  ← all flags, defaults, locations [Recommended] MISSING
+│   ├── question-intelligence.md          ← pipelines/registries/retrieval [Required]
+│   ├── graph-nodes.md                    ← per-node contract reference [Required]
+│   ├── ingestion.md                      ← adapter ABC & registry guide [Recommended]
+│   ├── configuration.md                  ← env vars & constants reference [Required]
+│   ├── feature-flags.md                  ← all flags, defaults, locations [Recommended]
 │   ├── domain-contracts.md               ← 67-contract index [Recommended] MISSING
 │   ├── storage.md                        ← SQLite + Chroma split [Optional] MISSING
 │   ├── testing-strategy.md               ← layer coverage policy [Recommended] MISSING
@@ -29,18 +29,18 @@ docs/
 │   ├── adr-001-intent-vs-last-action.md  ← [Accepted]
 │   ├── adr-002-output-contract-refactor.md ← [Accepted]
 │   ├── adr-003-state-driven-ui.md        ← [Accepted]
-│   ├── adr-004-hybrid-question-intelligence.md [Proposed] MISSING
-│   ├── adr-005-dual-embedding-strategy.md      [Proposed] MISSING
-│   ├── adr-006-business-context-profiles.md    [Proposed] MISSING
-│   ├── adr-007-domain-layer-exceptions.md      [Proposed] MISSING
-│   ├── adr-008-dual-decision-policy.md         [Proposed] MISSING
-│   ├── adr-009-adaptive-interview-path.md      [Proposed] MISSING
+│   ├── adr-004-hybrid-question-intelligence.md [Accepted]
+│   ├── adr-005-dual-embedding-strategy.md      [Accepted]
+│   ├── adr-006-business-context-profiles.md    [Accepted]
+│   ├── adr-007-domain-layer-exceptions.md      [Accepted]
+│   ├── adr-008-dual-decision-policy.md         [Accepted]
+│   ├── adr-009-adaptive-interview-path.md      [Accepted]
 │   ├── adr-010-humanizer-follow-up-system.md   [Accepted]
-│   ├── adr-011-evaluation-governance.md        [Proposed] MISSING
-│   ├── adr-012-prompt-centralization.md        [Proposed] MISSING
-│   ├── adr-013-partial-adapter-registry.md     [Proposed] MISSING
-│   ├── adr-014-langgraph-sufficiency.md        [Proposed] MISSING
-│   └── adr-015-storage-backend-split.md        [Proposed] MISSING
+│   ├── adr-011-evaluation-governance.md        [Accepted]
+│   ├── adr-012-prompt-centralization.md        [Accepted]
+│   ├── adr-013-partial-adapter-registry.md     [Accepted]
+│   ├── adr-014-langgraph-sufficiency.md        [Accepted]
+│   └── adr-015-storage-backend-split.md        [Accepted]
 │
 ├── runbooks/
 │   ├── corpus-build.md                   ← Chroma corpus ops [Recommended] MISSING
@@ -59,15 +59,15 @@ docs/
 
 | Document | Status | Owner | SSOT For | Update Trigger |
 |---|---|---|---|---|
-| `system_overview.md` | Exists / Partially stale | Arch | Vision, layers, stack | Major feature addition |
+| `system_overview.md` | Exists / Current | Arch | Vision, layers, stack | Major feature addition |
 | `runtime-flow.md` | Exists / Current | Arch | LangGraph pipeline, intent routing | Node add/remove |
 | `ui-architecture.md` | Exists / Current | Arch | UIStateMachine, UIResponseBuilder | UI refactor |
 | `evaluation-pipeline.md` | Exists / Current | Arch | Eval/hint/feedback/decision chain | Pipeline change |
-| `question-intelligence.md` | **MISSING** [Required] | Services | Pipelines, registries, retrieval strategy | Any QI change |
-| `graph-nodes.md` | **MISSING** [Required] | Arch | Per-node inputs/outputs/side-effects | Node change |
-| `ingestion.md` | **MISSING** [Recommended] | Services | Adapter ABC, registry, dataset loaders | Adapter change |
-| `configuration.md` | **MISSING** [Required] | Infra | All env vars + evaluation constants | Any config change |
-| `feature-flags.md` | **MISSING** [Recommended] | Arch | All flags, defaults, locations | Flag add/remove |
+| `question-intelligence.md` | Exists | Services | Pipelines, registries, retrieval strategy | Any QI change |
+| `graph-nodes.md` | Exists | Arch | Per-node inputs/outputs/side-effects | Node change |
+| `ingestion.md` | Exists | Services | Adapter ABC, registry, dataset loaders | Adapter change |
+| `configuration.md` | Exists | Infra | All env vars + evaluation constants | Any config change |
+| `feature-flags.md` | Exists | Arch | All flags, defaults, locations | Flag add/remove |
 | `domain-contracts.md` | **MISSING** [Recommended] | Domain | 67-contract catalog + layer rules | Contract change |
 | `storage.md` | **MISSING** [Optional] | Infra | SQLite + Chroma topology | Storage change |
 | `testing-strategy.md` | **MISSING** [Recommended] | QA | Layer test policy, coverage targets | Test standard change |
@@ -80,18 +80,18 @@ docs/
 | ADR-001 | Accepted | Arch | `state.intent` as orchestration driver |
 | ADR-002 | Accepted | Arch | Semantic dict output contract |
 | ADR-003 | Accepted | Arch | State-driven UI |
-| ADR-004 | **Proposed** | Arch | Hybrid QI (RAG + LLM + structured) |
-| ADR-005 | **Proposed** | Infra | Dual embedding strategy |
-| ADR-006 | **Proposed** | Services | Business-context profile registries |
-| ADR-007 | **Proposed** | Domain | Domain layer boundary exceptions |
-| ADR-008 | **Proposed** | Domain | Two DecisionPolicy concepts |
-| ADR-009 | **Proposed** | Arch | Adaptive interview path |
+| ADR-004 | **Accepted** | Arch | Hybrid QI (RAG + LLM + structured) |
+| ADR-005 | **Accepted** | Infra | Dual embedding strategy |
+| ADR-006 | **Accepted** | Services | Business-context profile registries |
+| ADR-007 | **Accepted** | Domain | Domain layer boundary exceptions |
+| ADR-008 | **Accepted** | Domain | Two DecisionPolicy concepts |
+| ADR-009 | **Accepted** | Arch | Adaptive interview path |
 | ADR-010 | **Accepted** | Services | Humanizer follow-up system |
-| ADR-011 | **Proposed** | Infra | Evaluation governance centralization |
-| ADR-012 | **Proposed** | Services | Prompt centralization |
-| ADR-013 | **Proposed** | Services | Partial adapter registry |
-| ADR-014 | **Proposed** | Arch | LangGraph sufficiency |
-| ADR-015 | **Proposed** | Infra | SQLite + Chroma split backends |
+| ADR-011 | **Accepted** | Infra | Evaluation governance centralization |
+| ADR-012 | **Accepted** | Services | Prompt centralization |
+| ADR-013 | **Accepted** | Services | Partial adapter registry |
+| ADR-014 | **Accepted** | Arch | LangGraph sufficiency |
+| ADR-015 | **Accepted** | Infra | SQLite + Chroma split backends |
 
 ### Runbooks
 

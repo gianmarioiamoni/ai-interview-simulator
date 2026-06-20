@@ -11,24 +11,24 @@
 |---|---|---|---|
 | System vision & layers | `system_overview.md` | — | — |
 | LangGraph pipeline / intent routing | `runtime-flow.md` | `app/graph/interview_graph.py` | ADR-001 |
-| Graph node contracts | `graph-nodes.md` ⚠️ MISSING | `app/graph/nodes/` | ADR-014 |
+| Graph node contracts | `graph-nodes.md` | `app/graph/nodes/` | ADR-014 |
 | UI state machine | `ui-architecture.md` | `app/ui/` | ADR-002, ADR-003 |
 | Eval/hint/feedback/decision chain | `evaluation-pipeline.md` | `app/graph/nodes/evaluation_node.py` + decision chain | — |
-| Question intelligence pipelines | `question-intelligence.md` ⚠️ MISSING | `services/question_intelligence/` | ADR-004 |
-| Embedding strategy | `question-intelligence.md` ⚠️ MISSING | `infrastructure/config/settings.py` | ADR-005 |
-| Business-context profiles | `business-context.md` ⚠️ MISSING | `services/question_intelligence/coding_domain_profile_registry.py` | ADR-006 |
-| SQL engine schemas & strategy | `sql-engine.md` ⚠️ MISSING | `services/sql_engine/schema_registry.py` | ADR-004, ADR-006 |
-| Coding engine framing | `coding-engine.md` ⚠️ MISSING | `services/question_intelligence/pipelines/coding_question_pipeline.py` | ADR-004, ADR-006 |
-| Dataset ingestion & adapters | `ingestion.md` ⚠️ MISSING | `services/question_ingestion/` | ADR-013 |
-| Configuration & env vars | `configuration.md` ⚠️ MISSING | `infrastructure/config/settings.py` | ADR-011 |
-| Evaluation governance constants | `configuration.md` ⚠️ MISSING | `infrastructure/config/evaluation.py` | ADR-011 |
-| Feature flags | `feature-flags.md` ⚠️ MISSING | `settings.py` + `interview_state/base.py` + `decision_policy.py` | ADR-009, ADR-010 |
+| Question intelligence pipelines | `question-intelligence.md` | `services/question_intelligence/` | ADR-004 |
+| Embedding strategy | `question-intelligence.md` | `infrastructure/config/settings.py` | ADR-005 |
+| Business-context profiles | `business-context.md` | `services/question_intelligence/coding_domain_profile_registry.py` | ADR-006 |
+| SQL engine schemas & strategy | `sql-engine.md` | `services/sql_engine/schema_registry.py` | ADR-004, ADR-006 |
+| Coding engine framing | `coding-engine.md` | `services/question_intelligence/pipelines/coding_question_pipeline.py` | ADR-004, ADR-006 |
+| Dataset ingestion & adapters | `ingestion.md` | `services/question_ingestion/` | ADR-013 |
+| Configuration & env vars | `configuration.md` | `infrastructure/config/settings.py` | ADR-011 |
+| Evaluation governance constants | `configuration.md` | `infrastructure/config/evaluation.py` | ADR-011 |
+| Feature flags | `feature-flags.md` | `settings.py` + `interview_state/base.py` + `decision_policy.py` | ADR-009, ADR-010 |
 | Domain contracts catalog | `domain-contracts.md` ⚠️ MISSING | `domain/contracts/` (67 files) | ADR-007 |
 | Domain layer boundary rules | `domain-contracts.md` ⚠️ MISSING | — | ADR-007 |
 | Storage topology | `storage.md` ⚠️ MISSING | `infrastructure/persistence/` + `infrastructure/vector_store/` | ADR-015 |
 | Adaptive interview path | `runtime-flow.md` (partial) | `services/interview_selection/lazy_adaptive_interview_service.py` | ADR-009 |
-| Humanizer system | — ⚠️ NO DOC | `services/humanizer/` | ADR-010 |
-| Prompt catalog | — ⚠️ NO DOC | `app/prompts/` | ADR-012 |
+| Humanizer system | `feature-flags.md` + ADR-010 | `services/humanizer/` | ADR-010 |
+| Prompt catalog | ADR-012 | `app/prompts/` | ADR-012 |
 | Technical debt tracker | `technical-debt-register.md` + `questions/open_issues.md` | — | — |
 | ADR registry | `docs/INDEX.md` + `docs/decisions/` | — | — |
 | Roadmap | `roadmap/roadmap.md` | — | — |
@@ -97,13 +97,13 @@
 ```
 system_overview.md (exists)
     └── runtime-flow.md (exists)
-            ├── graph-nodes.md          [P1 — MISSING]
+            ├── graph-nodes.md          
             └── evaluation-pipeline.md (exists)
-                    └── configuration.md [P0 — MISSING]
+                    └── configuration.md [P0]
 
-question-intelligence.md [P1 — MISSING]
-    ├── ingestion.md                    [P1 — MISSING]
-    └── configuration.md               [P0 — MISSING]
+question-intelligence.md [P1]
+    ├── ingestion.md                    [P1]
+    └── configuration.md               [P0]
 
 domain-contracts.md [P2 — MISSING]
     └── ADR-007
