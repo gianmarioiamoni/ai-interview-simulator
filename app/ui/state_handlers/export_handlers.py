@@ -25,7 +25,8 @@ def export_pdf_handler(state) -> gr.DownloadButton:
         return gr.DownloadButton(value=path, visible=True)
     except Exception:
         logger.exception("PDF export failed")
-        return gr.DownloadButton(value=None, visible=False)
+        gr.Warning("PDF export failed. Please try again.")
+        return gr.DownloadButton(value=None, visible=True)
 
 
 def export_json_handler(state) -> gr.DownloadButton:
@@ -40,4 +41,5 @@ def export_json_handler(state) -> gr.DownloadButton:
         return gr.DownloadButton(value=path, visible=True)
     except Exception:
         logger.exception("JSON export failed")
-        return gr.DownloadButton(value=None, visible=False)
+        gr.Warning("JSON export failed. Please try again.")
+        return gr.DownloadButton(value=None, visible=True)
