@@ -8,7 +8,11 @@ class CounterSection:
     @staticmethod
     def build(state: InterviewState, question, attempts: int, max_attempts: int) -> str:
 
-        total = len(state.questions)
+        if state.adaptive_interview_enabled and state.planned_areas:
+            total = len(state.planned_areas)
+        else:
+            total = len(state.questions)
+
         index = state.current_question_index + 1
 
         return (
