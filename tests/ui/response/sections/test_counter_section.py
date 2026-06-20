@@ -76,3 +76,59 @@ def test_feedback_mode_attempts_2_display_is_2():
 
 def test_feedback_mode_attempts_3_display_is_3():
     assert _compute_display_attempt(3, is_feedback_mode=True) == 3
+
+
+# ---------------------------------------------------------
+# B1: adaptive counter uses len(planned_areas)
+# ---------------------------------------------------------
+
+
+def _adaptive_state(planned_area_count: int, current_index: int = 0):
+    from domain.contracts.interview.interview_area import InterviewArea
+
+    questions = [build_question(qid=f"q{i}") for i in range(current_index + 1)]
+    state = build_interview_state(
+        questions=questions,
+        current_question_index=current_index,
+    )
+    planned_areas = [InterviewArea.TECH_CODING.value] * planned_area_count
+    return state.model_copy(
+        update={
+            "adaptive_interview_enabled": True,
+            "planned_areas": planned_areas,
+        }
+    )
+
+
+def test_counter_adaptive_q1_shows_planned_total():
+    """B1: first question of a 20-question adaptive interview shows 1/20, not 1/1."""
+    state = _adaptive_state(planned_area_count=20, current_index=0)
+    result = CounterSection.build(state, state.current_question, attempts=1, max_attempts=3)
+    assert "Question 1 / 20" in result
+
+
+def test_counter_adaptive_mid_interview_shows_planned_total():
+    """B1: 5th question with 20 planned shows 5/20, not 5/5."""
+    state = _adaptive_state(planned_area_count=20, current_index=4)
+    result = CounterSection.build(state, state.current_question, attempts=1, max_attempts=3)
+    assert "Question 5 / 20" in result
+
+
+def test_counter_batch_mode_uses_len_questions():
+    """B1 regression: batch mode (adaptive disabled) uses len(questions)."""
+    questions = [build_question(qid=f"q{i}") for i in range(5)]
+    state = build_interview_state(questions=questions, current_question_index=0)
+    state = state.model_copy(update={"adaptive_interview_enabled": False})
+    result = CounterSection.build(state, state.current_question, attempts=1, max_attempts=3)
+    assert "Question 1 / 5" in result
+
+
+def test_counter_adaptive_no_planned_areas_falls_back_to_questions():
+    """B1 edge case: adaptive enabled but planned_areas empty → falls back to len(questions)."""
+    questions = [build_question(qid="q1")]
+    state = build_interview_state(questions=questions)
+    state = state.model_copy(
+        update={"adaptive_interview_enabled": True, "planned_areas": []}
+    )
+    result = CounterSection.build(state, state.current_question, attempts=1, max_attempts=3)
+    assert "Question 1 / 1" in result

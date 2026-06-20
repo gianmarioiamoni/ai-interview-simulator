@@ -192,6 +192,11 @@ class UIResponseBuilder:
             and state.awaiting_user_input
         )
 
+        # ---------------------------------------------------------
+        # PRE-FILL EDITORS ON RETRY (QUESTION mode with prior answer)
+        # ---------------------------------------------------------
+        editor_prefill = previous_value if (not is_feedback_mode and previous_value) else ""
+
         return UIResponse(
             state=state,
             role_visible=False,
@@ -220,6 +225,9 @@ class UIResponseBuilder:
             written_editor_visible=is_written and not is_feedback_mode,
             coding_editor_visible=is_coding and not is_feedback_mode,
             database_editor_visible=is_database and not is_feedback_mode,
+            written_editor_value=editor_prefill if is_written else "",
+            coding_editor_value=editor_prefill if is_coding else "",
+            database_editor_value=editor_prefill if is_database else "",
             loader_visible=loader_visible,
             loader_value=loader_value,
             current_progress=progress,
