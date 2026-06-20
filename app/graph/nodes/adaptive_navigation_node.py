@@ -16,6 +16,9 @@ from services.question_intelligence.adaptive_interview_memory_bridge import (
 from services.question_intelligence.lazy_adaptive_interview_service import (
     LazyAdaptiveInterviewService,
 )
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class AdaptiveNavigationNode:
@@ -106,17 +109,47 @@ class AdaptiveNavigationNode:
                     if state.context_profile is not None
                     else BusinessContext.GENERIC
                 )
-                new_question, retrieval_memory = self._lazy_service.generate_next_question(
-                    role=state.role.type,
-                    level=level,
-                    interview_type=state.interview_type,
-                    planned_areas=state.planned_areas,
-                    generated_count=len(questions),
-                    memory=retrieval_memory,
-                    job_description=job_description,
-                    company_description=company_description,
-                    business_context=business_context,
-                )
+                try:
+                    new_question, retrieval_memory = self._lazy_service.generate_next_question(
+                        role=state.role.type,
+                        level=level,
+                        interview_type=state.interview_type,
+                        planned_areas=state.planned_areas,
+                        generated_count=len(questions),
+                        memory=retrieval_memory,
+                        job_description=job_description,
+                        company_description=company_description,
+                        business_context=business_context,
+                    )
+                except Exception as exc:
+                    logger.error(
+                        "Adaptive question generation failed (count=%s, areas=%s): %s",
+                        len(questions),
+                        len(state.planned_areas),
+                        exc,
+                    )
+                    # Fallback: advance within already-generated questions if possible,
+                    # otherwise stay on current question so the candidate can generate report.
+                    if current_index < last_index:
+                        return state.model_copy(
+                            update={
+                                "current_question_index": current_index + 1,
+                                "last_question_context": snapshot,
+                                "question_display_text": None,
+                                "retrieval_memory": retrieval_memory,
+                                "awaiting_user_input": True,
+                                "last_feedback_bundle": None,
+                                "allowed_actions": [],
+                                "intent": None,
+                            }
+                        )
+                    return state.model_copy(
+                        update={
+                            "retrieval_memory": retrieval_memory,
+                            "awaiting_user_input": True,
+                            "intent": None,
+                        }
+                    )
 
                 if self._question_enricher is not None:
                     new_question = self._question_enricher(new_question)

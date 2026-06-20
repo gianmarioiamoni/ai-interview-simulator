@@ -3,10 +3,20 @@
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.question.question import QuestionType
 from domain.contracts.shared.action_type import ActionType
+from domain.contracts.execution.execution_result import (
+    ExecutionResult,
+    ExecutionStatus,
+    ExecutionType,
+)
+from domain.contracts.question.question_result import QuestionResult
 
 from services.execution_engine import ExecutionEngine
 
 from app.ui.constants.loader_steps import LoaderStep
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class ExecutionNode:
 
@@ -64,8 +74,37 @@ class ExecutionNode:
                 except Exception:
                     execution_result.question_id = question.id
 
-        except Exception:
-            return working_state
+        except Exception as exc:
+            logger.error("Execution failed for question %s: %s", question.id, exc)
+
+            error_result = ExecutionResult(
+                question_id=question.id,
+                execution_type=(
+                    ExecutionType.DATABASE
+                    if question.type == QuestionType.DATABASE
+                    else ExecutionType.CODING
+                ),
+                status=ExecutionStatus.INTERNAL_ERROR,
+                success=False,
+                output="",
+                error=f"Execution service unavailable: {exc}",
+                passed_tests=0,
+                total_tests=0,
+                execution_time_ms=0,
+                test_results=[],
+            )
+
+            new_results = dict(state.results_by_question)
+            existing_result = new_results.get(question.id)
+            if existing_result is None:
+                existing_result = QuestionResult(
+                    question_id=question.id,
+                    question=question,
+                )
+            existing_result = existing_result.model_copy(update={"execution": error_result})
+            new_results[question.id] = existing_result
+
+            return working_state.model_copy(update={"results_by_question": new_results})
 
         # ---------------------------------------------------------
         # State update (IMMUTABLE SAFE)
@@ -76,11 +115,9 @@ class ExecutionNode:
         result = new_results.get(question.id)
 
         if result is None:
-            from domain.contracts.question.question_result import QuestionResult
-
             result = QuestionResult(
                 question_id=question.id,
-                question=question,  # 🔥 NEW
+                question=question,
             )
         else:
             if result.question is None:

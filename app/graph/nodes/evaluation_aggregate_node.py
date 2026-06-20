@@ -6,6 +6,9 @@ from infrastructure.llm.metrics.interview_metrics_aggregator import (
 )
 from services.interview_evaluation_service import InterviewEvaluationService
 from services.observability.interview_cost_calculator import InterviewCostCalculator
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class EvaluationAggregateNode:
@@ -36,18 +39,27 @@ class EvaluationAggregateNode:
         question_results = list(state.results_by_question.values())
 
         if not question_results:
-            raise ValueError("Cannot compute interview evaluation without results")
+            logger.error("Cannot compute interview evaluation: no question results")
+            return state.model_copy(
+                update={"current_step": None, "intent": ActionType.NONE}
+            )
 
         # ---------------------------------------------------------
         # EVALUATION
         # ---------------------------------------------------------
 
-        interview_eval = self._service.evaluate(
-            question_results=question_results,
-            questions=state.questions,
-            interview_type=state.interview_type,
-            role=state.role.type,
-        )
+        try:
+            interview_eval = self._service.evaluate(
+                question_results=question_results,
+                questions=state.questions,
+                interview_type=state.interview_type,
+                role=state.role.type,
+            )
+        except Exception as exc:
+            logger.error("Interview evaluation failed: %s", exc)
+            return state.model_copy(
+                update={"current_step": None, "intent": ActionType.NONE}
+            )
 
         # ---------------------------------------------------------
         # LLM METRICS SNAPSHOT

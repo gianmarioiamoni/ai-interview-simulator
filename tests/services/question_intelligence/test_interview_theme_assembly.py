@@ -70,12 +70,40 @@ def test_theme_selector_is_data_driven_from_corpus() -> None:
 def test_theme_selector_prefers_cluster_and_topic_signals() -> None:
     # Patch the corpus prior so it is neutral, ensuring the test validates
     # only the preview-item signal logic (topic + text + cluster votes).
+    # Also mock SemanticClusteringEngine to avoid live OpenAI embedding calls.
+    from services.question_intelligence.clustering.semantic_cluster import SemanticCluster
+    from services.question_intelligence.clustering.semantic_cluster_report import (
+        SemanticClusterReport,
+    )
+
+    mock_cluster_report = SemanticClusterReport(
+        total_documents=3,
+        total_clusters=1,
+        largest_cluster_size=3,
+        average_cluster_size=3.0,
+        clusters=[
+            SemanticCluster(
+                cluster_id=1,
+                centroid_text="distributed rate limiter across multiple nodes",
+                members=[
+                    "distributed rate limiter across multiple nodes",
+                    "CAP theorem trade-offs in partitioned systems",
+                    "eventual consistency in notification pipeline",
+                ],
+                average_similarity=0.85,
+            )
+        ],
+    )
+
+    mock_clustering_engine = MagicMock()
+    mock_clustering_engine.cluster.return_value = mock_cluster_report
+
     with patch(
         "services.question_intelligence.interview_theme_selector"
         ".compute_technical_thematic_domain_counts",
         return_value={"distributed_systems": 1, "data_engineering": 1},
     ):
-        selector = InterviewThemeSelector()
+        selector = InterviewThemeSelector(clustering_engine=mock_clustering_engine)
         preview_items = [
             _build_bank_item(
                 "distributed rate limiter across multiple nodes",

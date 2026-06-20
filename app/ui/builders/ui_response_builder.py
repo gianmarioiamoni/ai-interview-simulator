@@ -44,6 +44,9 @@ class UIResponseBuilder:
         if ui_state == UIState.REPORT:
             return self._build_report(state)
 
+        if ui_state == UIState.COMPLETION:
+            return self._build_completion(state)
+
         return self._build_setup(state)
 
     # =====================================================
@@ -218,6 +221,40 @@ class UIResponseBuilder:
             coding_editor_visible=is_coding and not is_feedback_mode,
             database_editor_visible=is_database and not is_feedback_mode,
             loader_visible=loader_visible,
+            loader_value=loader_value,
+            current_progress=progress,
+        )
+
+    # =====================================================
+    # COMPLETION (interview done, report not yet generated)
+    # =====================================================
+    def _build_completion(self, state: InterviewState) -> UIResponse:
+
+        loader_value = map_loader_text(state.current_step)
+        progress = map_loader_progress(state.current_step)
+
+        return UIResponse(
+            state=state,
+            role_visible=False,
+            role_custom_name_visible=False,
+            interview_type_visible=False,
+            seniority_visible=False,
+            interview_length_visible=False,
+            company_visible=False,
+            language_visible=False,
+            start_button_visible=False,
+            page_title="## Interview Complete",
+            report_output="<i>Generating your final report, please wait…</i>",
+            report_section_visible=True,
+            pdf_download_btn_visible=False,
+            json_download_btn_visible=False,
+            show_submit=False,
+            show_retry=False,
+            show_next=False,
+            written_visible=False,
+            coding_visible=False,
+            database_visible=False,
+            loader_visible=state.is_processing,
             loader_value=loader_value,
             current_progress=progress,
         )

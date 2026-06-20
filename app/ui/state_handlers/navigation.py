@@ -10,6 +10,9 @@ from app.ui.state_handlers.ui_builder import (
 )
 from app.ui.constants.loader_steps import LoaderStep
 from app.ui.adapters.ui_output_adapter import UIOutputAdapter
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 # =========================================================
@@ -81,7 +84,17 @@ def next_question(state: InterviewState):
     # ---------------------------------------------------------
     # GRAPH
     # ---------------------------------------------------------
-    new_state = run_interview_graph(new_state)
+    try:
+        new_state = run_interview_graph(new_state)
+    except Exception as exc:
+        logger.error("Interview graph failed during next/report: %s", exc)
+        new_state.is_processing = False
+        new_state.awaiting_user_input = True
+        new_state.intent = ActionType.NONE
+        new_state.current_step = None
+        new_state.current_progress = 0
+        yield UIOutputAdapter.to_gradio(build_ui_response_from_state(new_state))
+        return
 
     # ---------------------------------------------------------
     # RESET LOADER STATE
