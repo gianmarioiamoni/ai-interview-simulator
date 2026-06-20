@@ -241,6 +241,16 @@ class UIResponseBuilder:
         loader_value = map_loader_text(state.current_step)
         progress = map_loader_progress(state.current_step)
 
+        if state.is_processing:
+            report_output = "<i>Generating your final report, please wait…</i>"
+        elif state.interview_evaluation is None:
+            report_output = (
+                "<i>Report generation failed.<br>"
+                "Please start a new interview session and try again.</i>"
+            )
+        else:
+            report_output = "<i>Generating your final report, please wait…</i>"
+
         return UIResponse(
             state=state,
             role_visible=False,
@@ -252,7 +262,7 @@ class UIResponseBuilder:
             language_visible=False,
             start_button_visible=False,
             page_title="## Interview Complete",
-            report_output="<i>Generating your final report, please wait…</i>",
+            report_output=report_output,
             report_section_visible=True,
             pdf_download_btn_visible=False,
             json_download_btn_visible=False,

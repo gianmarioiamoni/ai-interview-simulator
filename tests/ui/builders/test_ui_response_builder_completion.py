@@ -42,6 +42,29 @@ def test_a4_ui_response_builder_returns_completion_view():
     assert response.json_download_btn_visible is False
 
 
+def test_completion_shows_loading_message_when_processing():
+    """I1: Loading message shown when is_processing=True and interview_evaluation=None."""
+    builder = UIResponseBuilder()
+    state = _completed_state()
+    state = state.model_copy(update={"is_processing": True})
+
+    response = builder.build(state)
+
+    assert "please wait" in response.report_output
+
+
+def test_completion_shows_failure_message_when_not_processing_and_no_evaluation():
+    """I1: Failure message shown when processing finished but interview_evaluation is None."""
+    builder = UIResponseBuilder()
+    state = _completed_state()
+    state = state.model_copy(update={"is_processing": False})
+
+    response = builder.build(state)
+
+    assert "failed" in response.report_output.lower()
+    assert "new interview" in response.report_output.lower() or "try again" in response.report_output.lower()
+
+
 def test_a4_report_state_still_renders_report():
     """A4: REPORT state must still render the full report (regression guard)."""
     from unittest.mock import patch, MagicMock
