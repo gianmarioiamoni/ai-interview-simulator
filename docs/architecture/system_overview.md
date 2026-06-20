@@ -401,7 +401,7 @@ Execution:
 - SQLite
 
 Vector retrieval:
-- Chroma (planned/full integration ongoing)
+- Chroma (active — production usage)
 
 Deployment target:
 - HuggingFace Spaces

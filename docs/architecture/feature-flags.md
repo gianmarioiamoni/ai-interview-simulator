@@ -19,7 +19,7 @@
 | Flag | Default | Type | Effect |
 |---|---|---|---|
 | `HUMANIZER_ENABLED` | `True` | bool | Enables the Humanizer subsystem (conversational framing). Propagated to `InterviewState.enable_humanizer` at session start. |
-| `HUMANIZER_FOLLOW_UP_ENABLED` | `False` | bool | Enables `FOLLOW_UP` decisions in the policy engine. Requires `HUMANIZER_ENABLED=True`. Disabled by default until V1.1 (score propagation and timing fixes required). |
+| `HUMANIZER_FOLLOW_UP_ENABLED` | `False` | bool | Enables `FOLLOW_UP` decisions in the policy engine. Requires `HUMANIZER_ENABLED=True`. Disabled by default. Technical blockers (timing defect, score propagation) are resolved as of HUMANIZER_V1_RELEASE_HARDENED. Remains `False` by product/rollout decision; activation deferred to V1.1. See ADR-010. |
 | `CODING_DOMAIN_PROFILE_ENABLED` | `True` | bool | Enables domain vocabulary profiles in coding QI |
 | `CODING_SCENARIO_ANCHOR_ENABLED` | `True` | bool | Enables scenario anchoring in coding questions |
 | `CODING_DOMAIN_VOCABULARY_ENABLED` | `True` | bool | Enables domain vocabulary injection |
