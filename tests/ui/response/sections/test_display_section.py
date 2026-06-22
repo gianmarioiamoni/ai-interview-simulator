@@ -4,6 +4,8 @@ import pytest
 
 from domain.contracts.question.question import Question, QuestionType, QuestionDifficulty
 from domain.contracts.interview.interview_area import InterviewArea
+from domain.contracts.execution.coding_spec import CodingSpec
+from domain.contracts.execution.coding_test_case import CodingTestCase
 
 from app.ui.response.sections.display_section import DisplaySection
 from app.ui.ui_state import UIState
@@ -193,3 +195,119 @@ def test_display_section_database_schema_rendered_once_when_display_text_is_raw_
     schema_count = db_text.count("### Database Schema")
     assert schema_count == 1, f"Schema block rendered {schema_count} times"
     assert _PROMPT in db_text
+
+
+# ---------------------------------------------------------
+# CODING CONTRACT BLOCK
+# ---------------------------------------------------------
+
+
+def _make_coding_question(
+    *,
+    coding_spec: CodingSpec | None = None,
+    visible_tests: list[CodingTestCase] | None = None,
+    prompt: str = _PROMPT,
+    qid: str = "q1",
+) -> Question:
+    return Question(
+        id=qid,
+        area=InterviewArea.TECH_CODING,
+        type=QuestionType.CODING,
+        prompt=prompt,
+        difficulty=QuestionDifficulty.MEDIUM,
+        coding_spec=coding_spec,
+        visible_tests=visible_tests or [],
+    )
+
+
+def test_coding_contract_block_shown_when_coding_spec_present():
+    spec = CodingSpec(entrypoint="two_sum", parameters=["nums", "target"])
+    question = _make_coding_question(coding_spec=spec)
+    result = _build(question)
+
+    text = result["coding_display"]
+    assert "### Execution Contract" in text
+    assert "def two_sum(nums, target)" in text
+    assert "Exact equality" in text
+
+
+def test_coding_contract_block_absent_when_coding_spec_is_none():
+    question = _make_coding_question(coding_spec=None)
+    result = _build(question)
+
+    assert "### Execution Contract" not in result["coding_display"]
+
+
+def test_coding_contract_block_absent_for_non_coding_question():
+    spec = CodingSpec(entrypoint="solve", parameters=["x"])
+    question = Question(
+        id="w1",
+        area=InterviewArea.TECH_BACKGROUND,
+        type=QuestionType.WRITTEN,
+        prompt=_PROMPT,
+        difficulty=QuestionDifficulty.MEDIUM,
+        coding_spec=spec,
+    )
+    state = build_interview_state(questions=[question], answers=[])
+    result = DisplaySection.build(state, question, UIState.QUESTION, has_previous_answer=False)
+
+    assert "### Execution Contract" not in result["written_display"]
+
+
+def test_coding_examples_rendered_from_visible_tests():
+    spec = CodingSpec(entrypoint="two_sum", parameters=["nums", "target"])
+    tests = [
+        CodingTestCase(args=[[2, 7, 11, 15], 9], expected=[0, 1]),
+        CodingTestCase(args=[[3, 2, 4], 6], expected=[1, 2]),
+    ]
+    question = _make_coding_question(coding_spec=spec, visible_tests=tests)
+    result = _build(question)
+
+    text = result["coding_display"]
+    assert "### Examples" in text
+    assert "Example 1" in text
+    assert "Example 2" in text
+    assert "nums=" in text
+    assert "target=" in text
+    assert "[0, 1]" in text
+
+
+def test_coding_examples_at_most_two_visible_tests():
+    spec = CodingSpec(entrypoint="solve", parameters=["x"])
+    tests = [
+        CodingTestCase(args=[1], expected=2),
+        CodingTestCase(args=[2], expected=4),
+        CodingTestCase(args=[3], expected=6),
+    ]
+    question = _make_coding_question(coding_spec=spec, visible_tests=tests)
+    result = _build(question)
+
+    text = result["coding_display"]
+    assert "Example 1" in text
+    assert "Example 2" in text
+    assert "Example 3" not in text
+
+
+def test_coding_examples_absent_when_visible_tests_empty():
+    spec = CodingSpec(entrypoint="solve", parameters=["x"])
+    question = _make_coding_question(coding_spec=spec, visible_tests=[])
+    result = _build(question)
+
+    text = result["coding_display"]
+    assert "### Execution Contract" in text
+    assert "### Examples" not in text
+
+
+def test_coding_contract_class_method_rendering():
+    spec = CodingSpec(
+        type="class_method",
+        entrypoint="LRUCache",
+        method_name="get",
+        parameters=["key"],
+    )
+    question = _make_coding_question(coding_spec=spec)
+    result = _build(question)
+
+    text = result["coding_display"]
+    assert "class LRUCache" in text
+    assert "def get(self, key)" in text
