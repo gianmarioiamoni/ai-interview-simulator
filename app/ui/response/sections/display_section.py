@@ -7,6 +7,10 @@ from app.ui.ui_state import UIState
 from app.ui.types.ui_fields import DisplayFields
 
 
+def _safe_repr(value) -> str:
+    return repr(value)
+
+
 class DisplaySection:
 
     @staticmethod
@@ -59,6 +63,11 @@ class DisplaySection:
         if display_text:
             parts.append(f"### Question\n\n{display_text.strip()}")
 
+        if question.is_coding():
+            contract_block = DisplaySection._build_contract_block(question)
+            if contract_block:
+                parts.append(contract_block)
+
         last_answer = state.get_latest_answer_for_question(question.id)
 
         # -----------------------------------------------------
@@ -76,6 +85,56 @@ class DisplaySection:
             parts.append(f"\n\n### Previous Answer\n\n{last_answer.content}")
 
         return "\n".join(parts)
+
+    # =========================================================
+    # CODING CONTRACT BLOCK
+    # =========================================================
+
+    @staticmethod
+    def _build_contract_block(question: Question) -> str:
+        spec = question.coding_spec
+        if spec is None:
+            return ""
+
+        params = ", ".join(spec.parameters)
+
+        if spec.type == "class_method" and spec.method_name:
+            signature = f"class {spec.entrypoint}:\n    def {spec.method_name}(self, {params})"
+        else:
+            signature = f"def {spec.entrypoint}({params})"
+
+        lines = [
+            "### Execution Contract",
+            "",
+            "Function Signature:",
+            f"```python",
+            signature,
+            "```",
+            "",
+            "Comparison Rule: Exact equality",
+        ]
+
+        tests = question.visible_tests[:2]
+        if tests:
+            lines.append("")
+            lines.append("### Examples")
+            for i, test in enumerate(tests, start=1):
+                param_names = spec.parameters
+                if param_names and len(param_names) == len(test.args):
+                    input_str = ", ".join(
+                        f"{name}={_safe_repr(val)}"
+                        for name, val in zip(param_names, test.args)
+                    )
+                else:
+                    input_str = _safe_repr(test.args)
+
+                lines.append("")
+                lines.append(f"Example {i}")
+                lines.append("")
+                lines.append(f"Input:  {input_str}")
+                lines.append(f"Output: {_safe_repr(test.expected)}")
+
+        return "\n".join(lines)
 
     # =========================================================
     # MAPPING BY TYPE
