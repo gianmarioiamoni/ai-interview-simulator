@@ -11,7 +11,7 @@ question-intelligence subsystem.
 import json
 from typing import List
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from domain.contracts.execution.coding_spec import CodingSpec
 from domain.contracts.execution.coding_test_case import CodingTestCase
@@ -31,6 +31,12 @@ logger = get_logger(__name__)
 class _GeneratedTestCase(BaseModel):
     args: list = Field(default_factory=list)
     expected: object
+
+    @model_validator(mode="after")
+    def _reject_null_expected(self) -> "_GeneratedTestCase":
+        if self.expected is None:
+            raise ValueError("expected cannot be None in a test case")
+        return self
 
 
 class TestResponseParser:

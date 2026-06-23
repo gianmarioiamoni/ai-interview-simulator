@@ -110,6 +110,16 @@ class HintNode:
         error = execution.error
         failed_tests = self._extract_execution_signals(execution)
 
+        # When visible tests all pass but hidden tests fail, supplement with
+        # the hidden failure sample so the hint LLM has actionable context.
+        if failed_tests == "None" and getattr(execution, "hidden_failure_sample", None):
+            sample = execution.hidden_failure_sample
+            failed_tests = (
+                f"Input: {sample.get('args')} | "
+                f"Expected: {sample.get('expected')} | "
+                f"Actual: {sample.get('actual')} | Error: None"
+            )
+
         # -----------------------------------------------------
         # AI INPUT
         # -----------------------------------------------------
@@ -169,11 +179,7 @@ class HintNode:
 
         for t in failed[:2]:
 
-            # Readable input representation
-            if t.args:
-                input_repr = t.args[0] if len(t.args) == 1 else t.args
-            else:
-                input_repr = "[]"
+            input_repr = t.args if t.args else "[]"
 
             lines.append(
                 f"Input: {input_repr} | Expected: {t.expected} | Actual: {t.actual} | Error: {t.error}"

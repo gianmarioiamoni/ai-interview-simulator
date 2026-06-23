@@ -2,7 +2,7 @@
 
 from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from domain.contracts.execution.coding_spec import CodingSpec
 from domain.contracts.question.question_provenance import QuestionProvenance
@@ -31,6 +31,12 @@ logger = get_logger(__name__)
 class GeneratedTestCase(BaseModel):
     args: List = Field(default_factory=list)
     expected: object
+
+    @model_validator(mode="after")
+    def _reject_null_expected(self) -> "GeneratedTestCase":
+        if self.expected is None:
+            raise ValueError("expected cannot be None in a test case")
+        return self
 
 
 class GeneratedCodingQuestion(BaseModel):

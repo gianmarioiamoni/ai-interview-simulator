@@ -6,3 +6,4 @@ class TestMarkers:
     VISIBLE = "__VISIBLE__"
     HIDDEN = "__HIDDEN__"
     TEST_RESULT = "__TEST_RESULT__"
+    HIDDEN_FAILURE = "__HIDDEN_FAILURE__"

@@ -82,11 +82,25 @@ class FailureBlock:
             )
         ]
 
+        hidden_sample = getattr(execution, "hidden_failure_sample", None)
+        hidden_section = ""
+        if hidden_sample:
+            args = hidden_sample.get("args")
+            expected = hidden_sample.get("expected")
+            actual = hidden_sample.get("actual")
+            lines_hs = ["### 🔍 Hidden Test Failure (example)"]
+            if args is not None:
+                lines_hs.append(f"- Input: {args}")
+            lines_hs.append(f"- Expected: {expected}")
+            lines_hs.append(f"- Got: {actual}")
+            hidden_section = "\n\n" + "\n".join(lines_hs)
+
         content = (
             f"### ❌ {message}\n\n"
             f"{severity_msg}\n"
             f"Passed {passed}/{total} tests.\n"
             + details
+            + hidden_section
             + "\n\nReview the failing cases to identify the issue."
         )
 

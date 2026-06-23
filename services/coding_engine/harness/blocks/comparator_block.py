@@ -10,6 +10,8 @@ class ComparatorBlock(BaseBlock):
         return [
             "def __compare(a, b):",
             "    import math",
+            "    if a is None or b is None:",
+            "        return False",
             "    if isinstance(a, float) and isinstance(b, float):",
             "        return math.isclose(a, b, rel_tol=1e-6)",
             "    return a == b",

@@ -12,8 +12,12 @@ from domain.contracts.execution.coding_test_case import CodingTestCase
 class TestCacheService:
     # Persistent cache for AI-generated tests.
     # Supports backward compatibility with legacy TestCase format.
+    #
+    # CACHE_VERSION: increment to invalidate all previously stored entries.
+    # Current version (v2) rejects null-expected test cases cached in v1.
 
     CACHE_FILE = Path("data/ai_test_cache.json")
+    CACHE_VERSION = 2
 
     def __init__(self):
         self._cache = self._load_cache()
@@ -44,11 +48,15 @@ class TestCacheService:
             # -----------------------------------------------------
 
             if "args" in item:
+                expected = item.get("expected")
+                if expected is None:
+                    # Stale null-expected entry — skip to force regeneration
+                    continue
                 results.append(
                     CodingTestCase(
                         args=item.get("args", []),
                         kwargs=item.get("kwargs", {}),
-                        expected=item.get("expected"),
+                        expected=expected,
                     )
                 )
 
@@ -57,15 +65,19 @@ class TestCacheService:
             # -----------------------------------------------------
 
             elif "input" in item:
+                expected = item.get("expected_output")
+                if expected is None:
+                    continue
                 results.append(
                     CodingTestCase(
                         args=[item.get("input")],
                         kwargs={},
-                        expected=item.get("expected_output"),
+                        expected=expected,
                     )
                 )
 
-        return results
+        # If all cached entries had null expected, treat as cache miss
+        return results if results else None
 
     def store_tests(
         self,
@@ -101,7 +113,7 @@ class TestCacheService:
         num_tests: int,
     ) -> str:
 
-        payload = f"{question.id}:{question.prompt}:{num_tests}"
+        payload = f"v{self.CACHE_VERSION}:{question.id}:{question.prompt}:{num_tests}"
 
         return hashlib.sha256(payload.encode()).hexdigest()
 

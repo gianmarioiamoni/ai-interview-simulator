@@ -32,6 +32,7 @@ def __run_tests():
                 "type": "visible",
                 "id": {{ loop.index }},
                 "status": "failed",
+                "args": args,
                 "expected": expected,
                 "actual": result
             }))
@@ -47,6 +48,7 @@ def __run_tests():
             "type": "visible",
             "id": {{ loop.index }},
             "status": "error",
+            "args": args,
             "error": str(e)
         }))
     {% endfor %}
@@ -54,6 +56,8 @@ def __run_tests():
     # =========================================================
     # HIDDEN TESTS
     # =========================================================
+
+    __hidden_failure_emitted__ = False
 
     {% for test in hidden_tests %}
     try:
@@ -64,6 +68,13 @@ def __run_tests():
 
         if __compare(result, expected):
             hidden_passed += 1
+        elif not __hidden_failure_emitted__:
+            print("{{ markers.HIDDEN_FAILURE }}:" + json.dumps({
+                "args": args,
+                "expected": expected,
+                "actual": result
+            }))
+            __hidden_failure_emitted__ = True
     except Exception:
         pass
     {% endfor %}
