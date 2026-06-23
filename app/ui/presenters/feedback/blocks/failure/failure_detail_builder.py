@@ -28,9 +28,13 @@ class FailureDetailBuilder:
 
         if sample.expected is not None and sample.actual is not None:
             insight = self._insight(sample)
+            input_line = ""
+            if getattr(sample, "args", None):
+                input_line = f"- Input: {sample.args}\n"
             details += (
                 "### 🔍 Example Failure\n"
-                f"- Expected: {sample.expected}\n"
+                + input_line
+                + f"- Expected: {sample.expected}\n"
                 f"- Got: {sample.actual}\n"
             )
             if insight:

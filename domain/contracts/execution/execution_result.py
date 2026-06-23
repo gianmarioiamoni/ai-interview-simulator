@@ -1,7 +1,7 @@
 # domain/contracts/execution_result.py
 
 from enum import Enum
-from typing import Optional
+from typing import Any, Dict, Optional
 from typing import List
 
 from domain.contracts.execution.execution_test_result import TestExecutionResult
@@ -45,6 +45,10 @@ class ExecutionResult(BaseModel):
 
     # Test results (primarily for coding engine)
     test_results: List[TestExecutionResult] = []
+
+    # One representative hidden-test failure (args/expected/actual) for candidate feedback.
+    # Never reveals the full hidden suite — only a single example to guide learning.
+    hidden_failure_sample: Optional[Dict[str, Any]] = None
 
     model_config = {
         "frozen": True,

@@ -68,23 +68,12 @@ class AITestGenerator:
             logger.warning("test_generation_empty_attempt_%s", attempt)
 
         if not tests:
-            logger.warning("LLM test generation failed → using fallback")
-            tests = self._fallback_tests(spec)
+            logger.warning(
+                "LLM test generation failed → no hidden tests (visible-only scoring)"
+            )
+            return []
 
         tests = self._diversity_filter.filter(tests, num_tests)
         self._cache.store_tests(question, num_tests, tests)
 
         return tests
-
-    # ------------------------------------------------------------------
-    # FALLBACK
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _fallback_tests(spec) -> List[CodingTestCase]:
-        num_params = len(spec.parameters)
-        base_args = [0] * num_params
-        return [
-            CodingTestCase(args=base_args, expected=0),
-            CodingTestCase(args=[1] * num_params, expected=1),
-        ]

@@ -70,6 +70,14 @@ _ACTIONABLE_CODING_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Questions requiring custom type injection (TreeNode, ListNode, GraphNode) are
+# not yet supported by the harness. They are quarantined here until full
+# serializer support is implemented (P2 roadmap item).
+_UNSUPPORTED_TYPE_PATTERN = re.compile(
+    r"\b(TreeNode|ListNode|GraphNode|linked\s+list\s+node|binary\s+tree\s+node)\b",
+    re.IGNORECASE,
+)
+
 _CODING_CANDIDATE_SCAN_K = 10
 _CODING_GENERATE_MAX_ATTEMPTS = settings.coding_pipeline_retry_attempts
 
@@ -148,6 +156,12 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
 
         if not self._is_actionable_coding_prompt(item.text):
             logger.debug("[CODING] Skipping non-actionable retrieved prompt: %s", item.id)
+            return None
+
+        if self._requires_unsupported_type(item.text):
+            logger.debug(
+                "[CODING] Skipping quarantined prompt (unsupported type): %s", item.id
+            )
             return None
 
         theme_guidance_text = theme_guidance
@@ -239,6 +253,12 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
 
         coding_spec = item.coding_spec
 
+        if self._requires_unsupported_type(item.prompt):
+            raise ValueError(
+                f"Question requires unsupported custom type (TreeNode/ListNode/GraphNode) "
+                f"— quarantined: {item.prompt[:80]}"
+            )
+
         self._validate_alignment(item, coding_spec)
 
         return Question(
@@ -273,3 +293,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
     def _is_actionable_coding_prompt(self, text: str) -> bool:
 
         return bool(_ACTIONABLE_CODING_PATTERN.search(text))
+
+    def _requires_unsupported_type(self, text: str) -> bool:
+
+        return bool(_UNSUPPORTED_TYPE_PATTERN.search(text))

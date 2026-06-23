@@ -21,6 +21,7 @@ class HarnessOutputParser:
     VISIBLE_MARKER = "__VISIBLE__"
     HIDDEN_MARKER = "__HIDDEN__"
     TEST_RESULT_MARKER = "__TEST_RESULT__"
+    HIDDEN_FAILURE_MARKER = "__HIDDEN_FAILURE__"
 
     def parse(self, question_id: str, raw) -> ExecutionResult:
 
@@ -28,6 +29,7 @@ class HarnessOutputParser:
         visible_total = 0
         hidden_passed = 0
         hidden_total = 0
+        hidden_failure_sample = None
 
         test_results: List[TestExecutionResult] = []
 
@@ -62,6 +64,19 @@ class HarnessOutputParser:
                     _, passed, total = line.split(":")
                     visible_passed = int(passed)
                     visible_total = int(total)
+                except Exception:
+                    pass
+
+            elif line.startswith(self.HIDDEN_FAILURE_MARKER):
+                try:
+                    payload = line.replace(f"{self.HIDDEN_FAILURE_MARKER}:", "")
+                    data = json.loads(payload)
+                    if hidden_failure_sample is None:
+                        hidden_failure_sample = {
+                            "args": data.get("args"),
+                            "expected": data.get("expected"),
+                            "actual": data.get("actual"),
+                        }
                 except Exception:
                     pass
 
@@ -150,4 +165,5 @@ class HarnessOutputParser:
             total_tests=total_tests,
             execution_time_ms=raw.execution_time_ms,
             test_results=test_results,
+            hidden_failure_sample=hidden_failure_sample,
         )
