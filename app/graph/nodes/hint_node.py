@@ -1,5 +1,7 @@
 # app/graph/nodes/hint_node.py
 
+import hashlib
+
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.ai.ai_hint import AIHintInput, AIHint
 from domain.contracts.execution.execution_result import ExecutionResult
@@ -11,6 +13,10 @@ from domain.contracts.question.question import QuestionType
 from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.hint_rules.sql_hint_rules import SQLHintRules
 from services.score_calculator import compute_quality
+
+
+def _answer_hash(content: str) -> str:
+    return hashlib.sha256(content.encode()).hexdigest()
 
 
 class HintNode:
@@ -38,10 +44,16 @@ class HintNode:
             return state
 
         # -----------------------------------------------------
-        # IDEMPOTENCY
+        # IDEMPOTENCY — reuse hint only when answer is unchanged
         # -----------------------------------------------------
 
-        if result.ai_hint is not None and result.hint_level is not None:
+        current_hash = _answer_hash(answer.content)
+
+        if (
+            result.ai_hint is not None
+            and result.hint_level is not None
+            and result.hint_answer_hash == current_hash
+        ):
             return state
 
         # -----------------------------------------------------
@@ -96,6 +108,7 @@ class HintNode:
                     update={
                         "ai_hint": ai_hint,
                         "hint_level": hint_level,
+                        "hint_answer_hash": current_hash,
                     }
                 )
 
@@ -140,6 +153,7 @@ class HintNode:
             ai_hint = self._hint_service.generate_hint(
                 hint_input,
                 level=hint_level.value,
+                question_type=question.type,
             )
         except Exception:
             ai_hint = None
@@ -154,6 +168,7 @@ class HintNode:
             update={
                 "ai_hint": ai_hint,
                 "hint_level": hint_level,
+                "hint_answer_hash": current_hash,
             }
         )
 

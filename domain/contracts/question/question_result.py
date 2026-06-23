@@ -20,3 +20,4 @@ class QuestionResult(BaseModel):
 
     ai_hint: Optional[AIHint] = None
     hint_level: Optional[HintLevel] = None
+    hint_answer_hash: Optional[str] = None

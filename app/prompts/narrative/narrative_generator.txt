@@ -11,9 +11,19 @@ Dimension scores:
 
 Provide:
 
-1. Justification for each dimension
-2. 3 improvement suggestions
+1. Justification for each dimension (reference specific answer content or failures)
+2. 3 improvement suggestions that are specific to this candidate's actual weaknesses
 
-Return STRICT JSON only.
-No explanations.
-No text outside JSON.
+Return STRICT JSON only. No explanations. No text outside JSON.
+
+Expected structure:
+{
+  "dimension_justifications": {
+    "<dimension_name>": "<one sentence referencing specific evidence from the candidate answers>"
+  },
+  "improvement_suggestions": [
+    "<specific actionable improvement referencing an actual weakness observed>",
+    "<specific actionable improvement referencing an actual weakness observed>",
+    "<specific actionable improvement referencing an actual weakness observed>"
+  ]
+}

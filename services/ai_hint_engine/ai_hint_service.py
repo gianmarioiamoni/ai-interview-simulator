@@ -3,6 +3,7 @@
 import json
 from typing import Optional
 from domain.contracts.ai.ai_hint import AIHintInput, AIHint
+from domain.contracts.question.question import QuestionType
 from app.ports.llm_port import LLMPort
 from app.prompts.prompt_loader import PromptLoader
 from app.prompts.prompt_renderer import PromptRenderer
@@ -19,10 +20,11 @@ class AIHintService:
         self,
         input_data: AIHintInput,
         level: Optional[str] = None,
+        question_type: Optional[QuestionType] = None,
     ) -> AIHint:
 
         effective_level = level or input_data.hint_level.value
-        prompt = self._build_prompt(input_data, effective_level)
+        prompt = self._build_prompt(input_data, effective_level, question_type)
 
         try:
             with LLMOperationContext.scope(HINT_GENERATION):
@@ -33,10 +35,19 @@ class AIHintService:
         except Exception:
             return self._fallback_hint(effective_level)
 
-    def _build_prompt(self, input_data: AIHintInput, level: str) -> str:
+    def _build_prompt(
+        self,
+        input_data: AIHintInput,
+        level: str,
+        question_type: Optional[QuestionType],
+    ) -> str:
 
         level_instruction = self._get_level_instruction(level)
-        template = PromptLoader.load("feedback/hint_generation.txt")
+
+        if question_type == QuestionType.DATABASE:
+            template = PromptLoader.load("feedback/sql_hint_generation.txt")
+        else:
+            template = PromptLoader.load("feedback/hint_generation.txt")
 
         return PromptRenderer.render(
             template,

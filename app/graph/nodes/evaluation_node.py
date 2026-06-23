@@ -16,9 +16,11 @@ from infrastructure.config.evaluation import (
     CODING_QUALITY_CORRECT_THRESHOLD,
     CODING_QUALITY_PARTIAL_THRESHOLD,
 )
+from services.coding_engine.coding_failure_explainer import CodingFailureExplainer
 
 _EDGE_CASE_DETECTOR = EdgeCaseDetector()
 _LOGIC_ISSUE_ANALYZER = LogicIssueAnalyzer()
+_FAILURE_EXPLAINER = CodingFailureExplainer()
 
 
 def _build_coding_signals(execution) -> tuple[list[str], list[str]]:
@@ -179,7 +181,7 @@ class EvaluationNode:
             score=score,
             max_score=100,
             passed=execution.success,
-            feedback=execution.error or "Execution evaluated automatically.",
+            feedback=_FAILURE_EXPLAINER.explain(execution),
             strengths=strengths,
             weaknesses=weaknesses,
             passed_tests=execution.passed_tests,
