@@ -291,6 +291,18 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
             if p not in prompt:
                 raise ValueError(f"Parameter '{p}' not found in prompt")
 
+        params_str = ", ".join(spec.parameters)
+        if spec.type == "class_method" and spec.method_name:
+            expected_sig = f"def {spec.method_name}(self, {params_str})"
+        else:
+            expected_sig = f"def {spec.entrypoint}({params_str})"
+
+        if expected_sig not in prompt:
+            raise ValueError(
+                f"Rendered signature '{expected_sig}' not found in prompt — "
+                "function name or parameter list may be inconsistent"
+            )
+
     def _is_actionable_coding_prompt(self, text: str) -> bool:
 
         return bool(_ACTIONABLE_CODING_PATTERN.search(text))
