@@ -29,6 +29,7 @@ class ReportViewModelBuilder:
                 report.percentile_rank, report.role
             ),
             "roadmap": builder.prioritize_improvements(dims),
+            "improvement_suggestions": getattr(report, "improvement_suggestions", None) or [],
             "missing_dims": [d.name for d in dims if d.score is None],
             "signal_insights": builder.build_signal_insights(
                 report.dimension_signals

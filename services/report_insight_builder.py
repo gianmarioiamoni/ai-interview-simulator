@@ -223,6 +223,15 @@ class ReportInsightBuilder:
                     }
                 )
 
+            elif d.name == "System Design" and d.score < REPORT_IMPROVEMENT_PRIORITY_THRESHOLD:
+                roadmap.append(
+                    {
+                        "priority": "HIGH",
+                        "dimension": d.name,
+                        "action": "Practice system design fundamentals: scalability, data modeling, API design, and trade-off analysis.",
+                    }
+                )
+
         return roadmap
 
     # ---------------------------------------------------------
