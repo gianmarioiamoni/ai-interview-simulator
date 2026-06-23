@@ -111,7 +111,7 @@ class DisplaySection:
             signature,
             "```",
             "",
-            "Comparison Rule: Exact equality",
+            "Comparison Rule: Exact equality (floats: relative tolerance 1e-6)",
         ]
 
         tests = question.visible_tests[:2]

@@ -94,13 +94,14 @@ class AITestGenerator:
         )
 
         if validated is None:
-            # Reference solution not trusted or not provided: skip validation,
-            # proceed with unvalidated hidden tests (pre-R5.2 behavior).
+            # Reference solution missing or not trusted: discard all hidden tests.
             logger.warning(
-                "[AITestGenerator] Oracle validation skipped — hidden tests unvalidated"
+                "[AITestGenerator] Oracle validation skipped — discarding hidden tests "
+                "(visible-only scoring)"
             )
+            return []
         elif not validated:
-            # All hidden tests discarded by validation: visible-only scoring.
+            # All hidden tests discarded by oracle: visible-only scoring.
             logger.warning(
                 "[AITestGenerator] All hidden tests discarded by oracle validation "
                 "→ visible-only scoring"
