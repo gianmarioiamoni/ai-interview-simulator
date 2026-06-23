@@ -75,7 +75,7 @@ def next_question(state: InterviewState):
     if is_report:
         new_state.current_step = LoaderStep.PREPARING_REPORT
     else:
-        new_state.current_step = LoaderStep.SUBMITTING
+        new_state.current_step = LoaderStep.LOADING_NEXT_QUESTION
 
     new_state.current_progress = map_loader_progress(new_state.current_step)
 

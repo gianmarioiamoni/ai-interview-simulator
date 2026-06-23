@@ -21,6 +21,9 @@ def map_loader_text(step: LoaderStep | None) -> str:
         LoaderStep.ANALYZING: "🧪 Analyzing results...",
         LoaderStep.GENERATING_FEEDBACK: "💬 Generating feedback...",
 
+        # NAVIGATION
+        LoaderStep.LOADING_NEXT_QUESTION: "⏭️ Loading next question...",
+
         # REPORT
         LoaderStep.PREPARING_REPORT: "📊 Preparing report data...",
         LoaderStep.ANALYZING_RESULTS: "🧪 Analyzing interview performance...",
@@ -48,6 +51,9 @@ def map_loader_progress(step: LoaderStep | None) -> int:
         LoaderStep.RUNNING_EXECUTION: 40,
         LoaderStep.ANALYZING: 70,
         LoaderStep.GENERATING_FEEDBACK: 90,
+
+        # NAVIGATION
+        LoaderStep.LOADING_NEXT_QUESTION: 30,
 
         # REPORT
         LoaderStep.PREPARING_REPORT: 10,

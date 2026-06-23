@@ -17,6 +17,7 @@ class UILayoutComponents:
     language_input: object
     job_description_input: object
     company_description_input: object
+    advanced_context_accordion: object
     start_button: object
     page_title: object
 

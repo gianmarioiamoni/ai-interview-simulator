@@ -15,7 +15,7 @@ def render_overall(report):
     if report.raw_score != report.adjusted_score:
         score_block = f"""
         {score_badge(report.adjusted_score)}
-        <div style='font-size:12px;color:#6b7280'>
+        <div style='font-size:12px;color:#374151'>
             Base: {report.raw_score:.1f}
         </div>
         """

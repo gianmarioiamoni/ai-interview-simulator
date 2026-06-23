@@ -74,7 +74,7 @@ class UILayoutBuilder:
             visible=True,
         )
 
-        with gr.Accordion("Advanced Context (optional)", open=False):
+        with gr.Accordion("Advanced Context (optional)", open=False) as advanced_context_accordion:
             job_description_input = gr.Textbox(
                 label="Job Description",
                 placeholder="Paste the job description here to tailor the interview questions...",
@@ -131,6 +131,7 @@ class UILayoutBuilder:
             language_input=language_input,
             job_description_input=job_description_input,
             company_description_input=company_description_input,
+            advanced_context_accordion=advanced_context_accordion,
             start_button=start_button,
             page_title=page_title,
             question_counter=question_counter,

@@ -20,7 +20,7 @@ Candidate is positioned in <strong>{vm["percentile_segment"]}</strong><br>
 
 {gaussian}
 
-<p style="color:#6b7280;font-size:12px;">
+<p style="color:#374151;font-size:12px;">
 {report.percentile_explanation}
 </p>
 
