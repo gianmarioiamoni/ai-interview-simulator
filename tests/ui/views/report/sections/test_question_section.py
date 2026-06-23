@@ -213,7 +213,7 @@ def test_follow_up_block_rendered_when_present():
     )
     html = render_questions(_make_report(assessment))
 
-    assert "Suggested Interviewer Follow-Up" in html
+    assert "Topics You May Be Asked Next" in html
     assert "Can you clarify what you mean by eventual consistency?" in html
 
 
@@ -221,7 +221,7 @@ def test_follow_up_block_absent_when_none():
     assessment = _base_assessment(follow_up_question=None)
     html = render_questions(_make_report(assessment))
 
-    assert "Suggested Interviewer Follow-Up" not in html
+    assert "Topics You May Be Asked Next" not in html
 
 
 def test_follow_up_appears_before_hint_block():
@@ -232,7 +232,7 @@ def test_follow_up_appears_before_hint_block():
     )
     html = render_questions(_make_report(assessment))
 
-    follow_up_pos = html.index("Suggested Interviewer Follow-Up")
+    follow_up_pos = html.index("Topics You May Be Asked Next")
     hint_pos = html.index("AI Coaching Hint")
 
     assert follow_up_pos < hint_pos
@@ -246,9 +246,9 @@ def test_follow_up_and_hint_coexist_independently():
     )
     html = render_questions(_make_report(assessment))
 
-    assert "Suggested Interviewer Follow-Up" in html
+    assert "Topics You May Be Asked Next" in html
     assert "AI Coaching Hint" in html
-    assert html.count("Suggested Interviewer Follow-Up") == 1
+    assert html.count("Topics You May Be Asked Next") == 1
     assert html.count("AI Coaching Hint") == 1
 
 

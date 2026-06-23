@@ -41,7 +41,7 @@ def render_questions(report):
         if q.follow_up_question:
             follow_up_block = f"""
 <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;padding:8px 12px;margin-top:10px;">
-<strong>🔍 Suggested Interviewer Follow-Up</strong>
+<strong>🔍 Topics You May Be Asked Next</strong>
 <p style="margin:6px 0 0 0;font-style:italic;">{q.follow_up_question}</p>
 </div>"""
 
