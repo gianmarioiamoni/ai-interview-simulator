@@ -25,9 +25,16 @@ Return STRICT JSON array:
         "args": [...],
         "expected": ...
       }
-    ]
+    ],
+
+    "reference_solution": "def function_name(...):\\n    # correct Python implementation\\n    ..."
   }
 ]
+
+IMPORTANT:
+- reference_solution MUST be a complete, correct Python function using the same entrypoint as coding_spec.
+- It must be executable Python code.
+- It must pass all visible_tests.
 """
 
 

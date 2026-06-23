@@ -14,10 +14,11 @@ class TestCacheService:
     # Supports backward compatibility with legacy TestCase format.
     #
     # CACHE_VERSION: increment to invalidate all previously stored entries.
-    # Current version (v2) rejects null-expected test cases cached in v1.
+    # v2: rejects null-expected test cases cached in v1.
+    # v3: invalidates all pre-oracle-validated entries (R5.2).
 
     CACHE_FILE = Path("data/ai_test_cache.json")
-    CACHE_VERSION = 2
+    CACHE_VERSION = 3
 
     def __init__(self):
         self._cache = self._load_cache()
