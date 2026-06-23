@@ -43,6 +43,7 @@ class GeneratedCodingQuestion(BaseModel):
     prompt: str
     coding_spec: CodingSpec
     visible_tests: List[GeneratedTestCase]
+    reference_solution: str = ""
 
 
 # =========================================================

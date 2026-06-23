@@ -273,6 +273,7 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
             visible_tests=[
                 CodingTestCase(**t.model_dump()) for t in item.visible_tests
             ],
+            reference_solution=getattr(item, "reference_solution", "") or "",
         )
 
     def _validate_alignment(
