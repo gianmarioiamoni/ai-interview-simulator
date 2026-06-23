@@ -88,11 +88,15 @@ class FailureBlock:
             args = hidden_sample.get("args")
             expected = hidden_sample.get("expected")
             actual = hidden_sample.get("actual")
+            error = hidden_sample.get("error")
             lines_hs = ["### 🔍 Hidden Test Failure (example)"]
             if args is not None:
                 lines_hs.append(f"- Input: {args}")
-            lines_hs.append(f"- Expected: {expected}")
-            lines_hs.append(f"- Got: {actual}")
+            if error:
+                lines_hs.append(f"- Error: {error}")
+            else:
+                lines_hs.append(f"- Expected: {expected}")
+                lines_hs.append(f"- Got: {actual}")
             hidden_section = "\n\n" + "\n".join(lines_hs)
 
         content = (

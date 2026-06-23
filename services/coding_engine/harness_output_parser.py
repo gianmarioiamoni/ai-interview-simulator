@@ -76,6 +76,7 @@ class HarnessOutputParser:
                             "args": data.get("args"),
                             "expected": data.get("expected"),
                             "actual": data.get("actual"),
+                            "error": data.get("error"),
                         }
                 except Exception:
                     pass
