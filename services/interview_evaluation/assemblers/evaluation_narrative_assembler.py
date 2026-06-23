@@ -164,6 +164,7 @@ class EvaluationNarrativeAssembler:
         improvement_suggestions = self._improvement_builder.build(
             dimension_scores,
             narrative,
+            evaluations=evaluations,
         )
 
         return {
