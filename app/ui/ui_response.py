@@ -22,6 +22,7 @@ class UIResponse:
     interview_length_visible: bool = True
     company_visible: bool = True
     language_visible: bool = True
+    advanced_context_visible: bool = True
     start_button_visible: bool = True
     start_button_interactive: bool = False
 
@@ -113,6 +114,9 @@ class UIResponse:
             "language_dropdown": gr.update(
                 visible=self.language_visible,
                 interactive=self.setup_inputs_interactive,
+            ),
+            "advanced_context_accordion": gr.update(
+                visible=self.advanced_context_visible,
             ),
             "start_button": gr.update(
                 visible=self.start_button_visible,

@@ -12,7 +12,7 @@ def badge(value, color):
 
 def score_badge(score):
     if score is None:
-        return badge("N/A", "#6b7280")
+        return badge("N/A", "#4b5563")
     if score >= REPORT_SCORE_GREEN_THRESHOLD:
         return badge(f"{score}/100", "#16a34a")
     if score >= REPORT_SCORE_YELLOW_THRESHOLD:
