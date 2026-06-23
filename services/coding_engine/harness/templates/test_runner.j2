@@ -75,8 +75,15 @@ def __run_tests():
                 "actual": result
             }))
             __hidden_failure_emitted__ = True
-    except Exception:
-        pass
+    except Exception as __hidden_exc__:
+        if not __hidden_failure_emitted__:
+            print("{{ markers.HIDDEN_FAILURE }}:" + json.dumps({
+                "args": args,
+                "expected": None,
+                "actual": None,
+                "error": type(__hidden_exc__).__name__ + ": " + str(__hidden_exc__)
+            }))
+            __hidden_failure_emitted__ = True
     {% endfor %}
 
     # =========================================================

@@ -69,18 +69,20 @@ def _run_reference(
 
 def _outputs_equal(reference_output: Any, expected: Any) -> bool:
     """
-    Structural equality — handles list ordering (treats lists as sets for index-pair results).
-    Primary: direct equality.
-    Secondary: sorted comparison (for index-pair / unordered results).
+    Strict structural equality — mirrors runtime ComparatorBlock semantics exactly.
+    Floats: relative tolerance 1e-6. All other types: strict ==.
+    No order relaxation for lists; order matters at runtime and must matter here too.
     """
-    if reference_output == expected:
-        return True
-    try:
-        if isinstance(reference_output, list) and isinstance(expected, list):
-            return sorted(str(x) for x in reference_output) == sorted(str(x) for x in expected)
-    except Exception:
-        pass
-    return False
+    import math
+
+    if type(reference_output) is not type(expected):
+        if not (isinstance(reference_output, (int, float)) and isinstance(expected, (int, float))):
+            return False
+
+    if isinstance(reference_output, float) and isinstance(expected, float):
+        return math.isclose(reference_output, expected, rel_tol=1e-6)
+
+    return reference_output == expected
 
 
 class OracleValidator:

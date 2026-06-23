@@ -59,8 +59,8 @@ class TestOutputsEqual:
     def test_exact_match(self):
         assert _outputs_equal([0, 2], [0, 2]) is True
 
-    def test_sorted_match_for_index_pairs(self):
-        assert _outputs_equal([1, 0], [0, 1]) is True
+    def test_reordered_list_is_not_equal(self):
+        assert _outputs_equal([1, 0], [0, 1]) is False
 
     def test_mismatch(self):
         assert _outputs_equal([0, 3], [0, 2]) is False
@@ -265,10 +265,11 @@ class TestAITestGeneratorAllDiscarded:
 
 class TestCacheVersion:
 
-    def test_cache_version_is_3(self):
-        assert TestCacheService.CACHE_VERSION == 3
+    def test_cache_version_is_4(self):
+        assert TestCacheService.CACHE_VERSION == 4
 
-    def test_cache_key_includes_version_3(self):
+    def test_cache_key_includes_version_and_ref_hash(self):
+        import hashlib
         from domain.contracts.question.question import Question, QuestionType
         from domain.contracts.interview.interview_area import InterviewArea
 
@@ -277,13 +278,13 @@ class TestCacheVersion:
             area=InterviewArea.TECH_CODING,
             type=QuestionType.CODING,
             prompt="test",
+            reference_solution="def f(): pass",
         )
         svc = TestCacheService.__new__(TestCacheService)
         svc._cache = {}
         key = svc._build_cache_key(q, 3)
-        # Key is SHA256 — verify it's consistent
-        import hashlib
-        expected_key = hashlib.sha256(f"v3:q1:test:3".encode()).hexdigest()
+        ref_hash = hashlib.sha256("def f(): pass".encode()).hexdigest()[:16]
+        expected_key = hashlib.sha256(f"v4:q1:test:3:{ref_hash}".encode()).hexdigest()
         assert key == expected_key
 
 

@@ -16,9 +16,10 @@ class TestCacheService:
     # CACHE_VERSION: increment to invalidate all previously stored entries.
     # v2: rejects null-expected test cases cached in v1.
     # v3: invalidates all pre-oracle-validated entries (R5.2).
+    # v4: cache key includes reference_solution hash (R5.3.4).
 
     CACHE_FILE = Path("data/ai_test_cache.json")
-    CACHE_VERSION = 3
+    CACHE_VERSION = 4
 
     def __init__(self):
         self._cache = self._load_cache()
@@ -114,7 +115,9 @@ class TestCacheService:
         num_tests: int,
     ) -> str:
 
-        payload = f"v{self.CACHE_VERSION}:{question.id}:{question.prompt}:{num_tests}"
+        ref_solution = getattr(question, "reference_solution", "") or ""
+        ref_hash = hashlib.sha256(ref_solution.encode()).hexdigest()[:16]
+        payload = f"v{self.CACHE_VERSION}:{question.id}:{question.prompt}:{num_tests}:{ref_hash}"
 
         return hashlib.sha256(payload.encode()).hexdigest()
 
