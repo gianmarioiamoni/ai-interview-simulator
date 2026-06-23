@@ -87,10 +87,18 @@ def test_feedback_always_rendered():
 
 
 def test_question_id_always_rendered():
-    assessment = _base_assessment(question_id="q42")
+    assessment = _base_assessment(question_id="q42", question_prompt="Explain binary search.")
     html = render_questions(_make_report(assessment))
 
-    assert "Question q42" in html
+    assert "Explain binary search." in html
+    assert "Question q42" not in html
+
+
+def test_question_id_used_as_fallback_when_no_prompt():
+    assessment = _base_assessment(question_id="q42", question_prompt=None)
+    html = render_questions(_make_report(assessment))
+
+    assert "q42" in html
 
 
 def test_score_always_rendered():
@@ -250,10 +258,10 @@ def test_follow_up_and_hint_coexist_independently():
 
 
 def test_multiple_questions_rendered_independently():
-    a1 = _base_assessment(question_id="q1", ai_hint_explanation="Hint for q1.", ai_hint_suggestion="Fix q1.")
-    a2 = _base_assessment(question_id="q2", ai_hint_explanation=None, ai_hint_suggestion=None)
+    a1 = _base_assessment(question_id="q1", question_prompt="First question text.", ai_hint_explanation="Hint for q1.", ai_hint_suggestion="Fix q1.")
+    a2 = _base_assessment(question_id="q2", question_prompt="Second question text.", ai_hint_explanation=None, ai_hint_suggestion=None)
     html = render_questions(_make_report(a1, a2))
 
     assert html.count("AI Coaching Hint") == 1
-    assert "Question q1" in html
-    assert "Question q2" in html
+    assert "First question text." in html
+    assert "Second question text." in html

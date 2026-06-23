@@ -6,6 +6,17 @@ from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
 from app.ui.utils.error_formatter import simplify_execution_error
 from app.ui.mappers.interview_area_mapper import InterviewAreaMapper
 
+_MAX_PROMPT_LEN = 120
+
+
+def _truncate_prompt(prompt: str) -> str:
+    if not prompt:
+        return ""
+    prompt = prompt.strip()
+    if len(prompt) <= _MAX_PROMPT_LEN:
+        return prompt
+    return prompt[:_MAX_PROMPT_LEN].rstrip() + "…"
+
 
 class QuestionMapper:
 
@@ -81,7 +92,8 @@ class QuestionMapper:
                     score = 0
 
             feedback = (
-                simplify_execution_error(exec_res.error)
+                (result.evaluation.feedback if result.evaluation and result.evaluation.feedback else None)
+                or simplify_execution_error(exec_res.error)
                 or "Execution evaluated automatically."
             )
 
@@ -97,6 +109,7 @@ class QuestionMapper:
 
         return QuestionAssessmentDTO(
             question_id=question_id,
+            question_prompt=_truncate_prompt(question.prompt),
             score=score,
             feedback=feedback,
             passed_tests=passed_tests,

@@ -8,7 +8,14 @@
 import json
 import logging
 
-from weasyprint import HTML
+try:
+    from weasyprint import HTML as _WeasyprintHTML
+    _WEASYPRINT_AVAILABLE = True
+except OSError:
+    _WEASYPRINT_AVAILABLE = False
+    _WeasyprintHTML = None  # type: ignore
+
+HTML = _WeasyprintHTML
 
 from app.ui.views.report_view import build_report_markdown
 from app.ui.dto.final_report_dto import FinalReportDTO
@@ -24,10 +31,15 @@ class ReportExportService:
 
     def export_pdf(self, report: FinalReportDTO, file_path: str) -> str:
 
+        if not _WEASYPRINT_AVAILABLE:
+            raise RuntimeError(
+                "PDF export is unavailable: WeasyPrint native libraries are not installed on this system."
+            )
+
         html_content = self._build_full_html(report)
 
         try:
-            HTML(string=html_content).write_pdf(file_path)
+            HTML(string=html_content).write_pdf(file_path)  # type: ignore[misc]
         except Exception:
             logger.exception("WeasyPrint PDF generation failed for %s", file_path)
             raise

@@ -14,10 +14,16 @@ class DimensionScoreMapper:
         self,
         dimension_scores: Dict,
         weighted_breakdown: Dict | None = None,
+        performance_dimensions: list | None = None,
     ) -> List[DimensionScoreDTO]:
 
         if not dimension_scores:
             return []
+
+        justification_by_name: dict[str, str] = {}
+        if performance_dimensions:
+            for pd in performance_dimensions:
+                justification_by_name[pd.name.lower()] = getattr(pd, "justification", "")
 
         results = []
 
@@ -58,6 +64,8 @@ class DimensionScoreMapper:
             else:
                 status = "weak"
 
+            justification = justification_by_name.get(label.lower(), "")
+
             results.append(
                 DimensionScoreDTO(
                     name=label,
@@ -67,6 +75,7 @@ class DimensionScoreMapper:
                     contribution=contribution,
                     is_evaluated=True,
                     status=status,
+                    justification=justification,
                 )
             )
 

@@ -61,7 +61,7 @@ def render_questions(report):
 
         html += f"""
 <div style="border:1px solid #ddd;padding:10px;margin-bottom:10px;border-radius:8px;">
-<strong>Question {q.question_id}</strong><br>
+<strong>{q.question_prompt or q.question_id}</strong><br>
 Score: {score_badge(q.score)}<br><br>
 {q.feedback}
 {strengths_block}

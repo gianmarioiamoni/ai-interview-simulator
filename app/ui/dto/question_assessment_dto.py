@@ -14,6 +14,7 @@ class QuestionAssessmentDTO:
     total_tests: Optional[int]
     execution_status: Optional[str]
 
+    question_prompt: Optional[str] = None
     attempts: Optional[int] = None
     ai_hint_explanation: Optional[str] = None
     ai_hint_suggestion: Optional[str] = None

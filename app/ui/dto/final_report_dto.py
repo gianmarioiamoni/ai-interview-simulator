@@ -64,6 +64,7 @@ class FinalReportDTO(BaseModel):
         dimension_scores = dimension_mapper.map(
             final_evaluation.dimension_scores,
             final_evaluation.weighted_breakdown,
+            getattr(final_evaluation, "performance_dimensions", None),
         )
         tokens = token_calculator.calculate(state)
 

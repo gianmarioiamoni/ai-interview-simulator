@@ -25,10 +25,14 @@ def render_dimensions(vm):
 
     dimension_html = ""
     for d in vm["dimension_insights"]:
+        justification_block = ""
+        if d.justification:
+            justification_block = f"<p style='margin:6px 0 0 0;font-size:0.9em;color:#4b5563;'>{d.justification}</p>"
         dimension_html += f"""
 <div style="border:1px solid #ddd;padding:10px;margin-bottom:10px;border-radius:8px;">
 <strong>{d.name}</strong> - {score_badge(d.score)}<br>
 Impact: <strong>{d.impact}</strong><br>
+{justification_block}
 </div>
 """
 
