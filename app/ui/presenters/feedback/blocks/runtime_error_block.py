@@ -51,7 +51,7 @@ class RuntimeErrorBlock:
         return bool(analysis and analysis.has_runtime_error)
 
     def build(
-        self, _state, _result, _evaluation, execution, analysis, _quality
+        self, _state, _result, evaluation, execution, analysis, _quality
     ) -> FeedbackBlockResult:
 
         raw_error = (analysis.primary_error or "").strip()
@@ -116,6 +116,9 @@ class RuntimeErrorBlock:
         if failing_input is not None:
             parts.append(f"**Input:** `{failing_input}`\n")
         parts.append(f"**Traceback:**\n```\n{traceback_section}\n```")
+
+        if evaluation and getattr(evaluation, "feedback", None):
+            parts.append(f"### 🔎 Analysis\n{evaluation.feedback}")
 
         content = "\n\n".join(parts)
 

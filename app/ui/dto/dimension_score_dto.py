@@ -12,3 +12,4 @@ class DimensionScoreDTO:
     contribution: float
     is_evaluated: bool
     status: str
+    justification: str = ""

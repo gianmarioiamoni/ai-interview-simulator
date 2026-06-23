@@ -57,7 +57,7 @@ class FailureBlock:
         return False
 
     def build(
-        self, _state, _result, _evaluation, execution, analysis, _quality
+        self, _state, _result, evaluation, execution, analysis, _quality
     ) -> FeedbackBlockResult:
 
         passed = execution.passed_tests or 0
@@ -107,6 +107,12 @@ class FailureBlock:
             + hidden_section
             + "\n\nReview the failing cases to identify the issue."
         )
+
+        explainer_section = ""
+        if evaluation and getattr(evaluation, "feedback", None):
+            explainer_section = f"\n\n### 🔎 Analysis\n{evaluation.feedback}"
+
+        content = content + explainer_section
 
         return FeedbackBlockResult(
             title=title,

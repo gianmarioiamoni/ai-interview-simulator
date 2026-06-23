@@ -18,11 +18,12 @@ from infrastructure.config.evaluation import (
 
 class DimensionInsight:
 
-    def __init__(self, name: str, score: float, weight: float, impact: str):
+    def __init__(self, name: str, score: float, weight: float, impact: str, justification: str = ""):
         self.name = name
         self.score = score
         self.weight = weight
         self.impact = impact
+        self.justification = justification
 
 
 class ReportInsightBuilder:
@@ -62,6 +63,7 @@ class ReportInsightBuilder:
                     score=score,
                     weight=weight,
                     impact=impact,
+                    justification=getattr(d, "justification", ""),
                 )
             )
 
