@@ -64,7 +64,11 @@ class AIHintService:
     def _get_level_instruction(self, level: str) -> str:
 
         if level == "BASIC":
-            return "High-level hint. No code."
+            return (
+                "The candidate's approach is likely close to correct. "
+                "Give a high-level coaching hint focused on edge cases, boundary conditions, "
+                "ordering, or special inputs. Do not expose the solution or provide code."
+            )
 
         if level == "TARGETED":
             return "Point to likely bug. No full solution."
@@ -94,8 +98,8 @@ class AIHintService:
 
         if level == "BASIC":
             return AIHint(
-                explanation="Conceptual issue likely.",
-                suggestion="Revisit approach.",
+                explanation="Your overall approach appears close to correct.",
+                suggestion="Focus on edge cases, boundary conditions, ordering, or special inputs.",
             )
 
         if level == "TARGETED":

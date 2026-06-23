@@ -68,6 +68,12 @@ class DisplaySection:
             if contract_block:
                 parts.append(contract_block)
 
+        if question.is_coding() or question.is_database():
+            parts.append(
+                "> **Note:** Your solution will be evaluated using both visible examples "
+                "and additional hidden test cases."
+            )
+
         last_answer = state.get_latest_answer_for_question(question.id)
 
         # -----------------------------------------------------
