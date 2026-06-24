@@ -11,7 +11,7 @@ INPUT:
 - Evaluation context: {{ classification }}
 - Guidance: {{ balance_instruction }}
 - Tone: {{ tone }}
-
+{{ context_block }}
 Rules:
 - Always produce a complete answer (never empty)
 - Start directly with the hiring decision WITHOUT labels
