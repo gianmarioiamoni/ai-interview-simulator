@@ -1,9 +1,10 @@
 # services/interview_evaluation/assemblers/evaluation_narrative_assembler.py
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION
 
@@ -70,6 +71,7 @@ class EvaluationNarrativeAssembler:
         evaluations: List[QuestionEvaluation],
         interview_type: InterviewType,
         role: RoleType,
+        context_profile: Optional[InterviewContextProfile] = None,
     ) -> Dict[str, Any]:
         """
         Compute and return all narrative fields needed by InterviewEvaluation.
@@ -131,6 +133,7 @@ class EvaluationNarrativeAssembler:
             percentile,
             strongest_score,
             weakest_score,
+            context_profile=context_profile,
         )
 
         if not executive_summary or not executive_summary.strip():
@@ -150,6 +153,7 @@ class EvaluationNarrativeAssembler:
             dimension_scores,
             interview_type,
             role,
+            context_profile=context_profile,
         )
 
         # -------------------------------------------------

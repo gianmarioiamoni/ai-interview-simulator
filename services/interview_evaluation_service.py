@@ -1,11 +1,12 @@
 # services/interview_evaluation_service.py
 
-from typing import List
+from typing import List, Optional
 
 from app.ports.llm_port import LLMPort
 
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_type import InterviewType
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.question.question import Question
@@ -66,6 +67,7 @@ class InterviewEvaluationService:
         questions: List[Question],
         interview_type: InterviewType,
         role: RoleType,
+        context_profile: Optional[InterviewContextProfile] = None,
     ) -> InterviewEvaluation:
 
         # -----------------------------------------------------
@@ -151,6 +153,7 @@ class InterviewEvaluationService:
             evaluations=evaluations,
             interview_type=interview_type,
             role=role,
+            context_profile=context_profile,
         )
 
         # -----------------------------------------------------

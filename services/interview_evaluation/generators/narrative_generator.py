@@ -19,7 +19,7 @@ class NarrativeGenerator:
     def __init__(self, llm):
         self._llm = llm
 
-    def generate(self, evaluations, dimension_scores, interview_type, role):
+    def generate(self, evaluations, dimension_scores, interview_type, role, context_profile=None):
 
         readable_dimension_scores = {
             DIMENSION_LABELS.get(dim, dim.value): (
@@ -28,9 +28,10 @@ class NarrativeGenerator:
             for dim, score in dimension_scores.items()
         }
 
-        # convert to string
         evaluations_str = json.dumps([e.model_dump() for e in evaluations], indent=2)
         readable_dimension_scores_str = json.dumps(readable_dimension_scores, indent=2)
+
+        context_block = self._build_context_block(context_profile)
 
         template = PromptLoader.load("narrative/narrative_generator.txt")
 
@@ -39,6 +40,7 @@ class NarrativeGenerator:
             "interview_type": interview_type.value,
             "evaluations": evaluations_str,
             "dimension_scores": readable_dimension_scores_str,
+            "context_block": context_block,
         }
         prompt = PromptRenderer.render(template, context)
 
@@ -80,3 +82,15 @@ class NarrativeGenerator:
             
             
             return json.loads(text[start : end + 1])
+
+    def _build_context_block(self, context_profile) -> str:
+        if context_profile is None:
+            return ""
+        bc = getattr(context_profile, "business_context", None)
+        jd = getattr(context_profile, "job_description", None)
+        if bc is None or bc.value == "generic":
+            return ""
+        lines = [f"Industry Context: {bc.value.upper()}"]
+        if jd and jd.strip():
+            lines.append(f"Role Context: {jd.strip()[:300]}")
+        return "\n".join(lines) + "\n"

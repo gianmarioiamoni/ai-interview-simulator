@@ -2,7 +2,7 @@ You are a senior technical interviewer.
 
 Role: {{ role }}
 Interview type: {{ interview_type }}
-
+{{ context_block }}
 Here are evaluated answers:
 {{ evaluations }}
 

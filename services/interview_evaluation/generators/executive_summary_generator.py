@@ -19,6 +19,7 @@ class ExecutiveSummaryGenerator:
         percentile,
         strongest_score,
         weakest_score,
+        context_profile=None,
     ):
 
         try:
@@ -30,6 +31,7 @@ class ExecutiveSummaryGenerator:
                 percentile=percentile,
                 strongest_score=strongest_score,
                 weakest_score=weakest_score,
+                context_profile=context_profile,
             )
         except Exception as e:
             logger.exception("executive_summary_generation_failed")

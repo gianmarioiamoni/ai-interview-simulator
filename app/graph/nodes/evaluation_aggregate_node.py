@@ -54,6 +54,7 @@ class EvaluationAggregateNode:
                 questions=state.questions,
                 interview_type=state.interview_type,
                 role=state.role.type,
+                context_profile=state.context_profile,
             )
         except Exception as exc:
             logger.error("Interview evaluation failed: %s", exc)

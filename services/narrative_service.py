@@ -1,7 +1,7 @@
 # services/narrative_service.py
 
 import json
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from app.ports.llm_port import LLMPort
 from app.prompts.prompt_loader import PromptLoader
@@ -44,6 +44,7 @@ class NarrativeService:
         percentile: float,
         strongest_score: float,
         weakest_score: float,
+        context_profile=None,
     ) -> str:
 
         builder = NarrativeControlBuilder()
@@ -91,6 +92,7 @@ class NarrativeService:
             "classification": classification_str,
             "balance_instruction": balance_instruction,
             "tone": tone,
+            "context_block": self._build_context_block(context_profile),
         }
 
         prompt = PromptRenderer.render(template, context)
@@ -217,3 +219,28 @@ class NarrativeService:
             return "positive"
 
         return "balanced"
+
+    # ---------------------------------------------------------
+    # CONTEXT BLOCK
+    # ---------------------------------------------------------
+
+    def _build_context_block(self, context_profile) -> str:
+        """Build an industry/role context snippet for narrative prompts.
+
+        Returns an empty string for generic context so existing behaviour
+        is fully preserved when no JD/CD is supplied.
+        """
+        if context_profile is None:
+            return ""
+
+        bc = getattr(context_profile, "business_context", None)
+        jd = getattr(context_profile, "job_description", None)
+
+        if bc is None or bc.value == "generic":
+            return ""
+
+        lines = [f"Industry Context: {bc.value.upper()}"]
+        if jd and jd.strip():
+            lines.append(f"Role Context: {jd.strip()[:300]}")
+
+        return "\n".join(lines) + "\n"
