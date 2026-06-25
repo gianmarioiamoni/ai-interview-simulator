@@ -28,41 +28,77 @@ Return STRICT JSON with this structure:
 }
 {% endraw %}
 
-SCORING SYSTEM (STRICT AND ENFORCED):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SCORING BANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-- 90–100 → Exceptional: deep technical understanding, concrete real-world experience, explicit trade-off discussion, architectural reasoning, and specific examples or metrics. This range IS achievable for strong senior answers — do not avoid it.
-- 80–89 → Good: correct and well-structured, addresses trade-offs, may lack depth in one area or concrete metrics.
-- 65–79 → Acceptable: covers the topic adequately, some trade-offs mentioned, but generic or missing specifics.
-- 40–64 → Weak: significant gaps, incomplete understanding, or no trade-offs discussed. Score in this range even if the candidate uses correct vocabulary.
-- 0–39 → Incorrect: fundamental misunderstanding of core concepts, factually wrong, or irrelevant. Score here even if isolated technical keywords appear — keyword recognition alone does not justify a higher score.
+Score the answer using exactly one band. Assign an integer within that range.
 
-SCORING PRECISION:
+90–100  EXCEPTIONAL
+The answer demonstrates real-world mastery. It is technically accurate, discusses trade-offs with
+explicit justification, references concrete personal experience or specific systems, and shows
+depth beyond definitions. All five dimensions below are at least partially present:
+  (a) technical accuracy  (b) trade-off analysis  (c) concrete real-world examples
+  (d) operational/failure-case awareness  (e) depth beyond definitions
+A "weak mention" of failure cases satisfies dimension (d) partially — this is enough.
+Do not require every dimension to be deep. Require all five to be present in some form.
+Start score at 92. Subtract 1–2 per dimension that is only weakly present. Floor: 90.
+
+80–89  STRONG
+Correct and well-structured, trade-offs are addressed, working-level mastery is clear.
+May lack personal examples, specific metrics, or depth in one area.
+An answer that mentions concrete systems and trade-offs but does not provide operational depth scores here.
+Start score at 84. Add up to 5 for strong personal examples or metrics. Subtract up to 4 for weak trade-off justification.
+
+65–79  ACCEPTABLE
+Conceptually correct. Covers the topic at a textbook level. Some trade-offs mentioned but shallow.
+Missing specifics, concrete examples, or any operational grounding.
+For a senior role: a correct-but-shallow answer that lacks any personal context belongs here, not in STRONG.
+Start score at 70. Add up to 9 if trade-offs are at least partially justified. Subtract up to 5 for purely generic responses.
+
+40–64  WEAK
+Conceptually correct on the surface but with significant gaps.
+Vocabulary is used without demonstrating understanding of implications.
+No trade-offs. No depth. The answer reduces a nuanced topic to a one-line statement or buzzword list.
+Start score at 52. Add up to 12 if one sub-area is partially understood. Subtract up to 12 for trivially shallow answers.
+
+0–39  INCORRECT
+The answer contains at least one fundamental conceptual error about a core topic in the question.
+The following are examples of fundamental errors that place an answer in this band regardless of
+other content, tool names, or correct vocabulary present elsewhere:
+  - Defining strong consistency as "the database never has bugs or errors"
+  - Defining eventual consistency as "eventually it will be correct" with no understanding of convergence
+  - Stating that causal consistency is a theoretical physics concept not used in practice
+  - Proposing a per-minute cron job as the primary mechanism for real-time rate limiting at high RPS
+  - Claiming a system becomes distributed simply by being deployed on Kubernetes or Docker
+  - Answering a distributed-systems architecture question with only deployment tooling (Kubernetes,
+    Docker, health checks) and no discussion of data consistency, coordination, or failure modes
+  - Answering a consistency-model question with a database-brand list (MySQL = strong, MongoDB = eventual)
+    without explaining the actual consistency guarantees
+
+If ANY of the above apply, score 0–39 regardless of correct terminology elsewhere.
+Tool names, framework names, and buzzwords alongside a conceptual error do not promote the score above 39.
+
+Start score at 18. Add up to 17 for peripheral correct implementation details. Maximum: 35.
+strengths MUST be empty [] when no meaningful technical evidence exists.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SCORING PRECISION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 - Assign integer scores with 1-point precision (e.g. 87, 73, 52, 31).
 - Do NOT round to multiples of 5.
-- 60 is not a default or floor score. Weak answers belong in 40–59. Score on merits only.
+- Do NOT default to band boundaries (40, 65, 80, 90) without justification.
 
-POSITIVE CRITERIA FOR 90+:
-An answer is eligible for 90–100 when it demonstrates ALL of the following:
-1. Technically accurate and complete
-2. Discusses real-world trade-offs with justification
-3. References concrete systems, tools, or personal experience
-4. Addresses failure cases, edge cases, or operational concerns
-5. Shows depth beyond textbook definitions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONSISTENCY RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-PENALTIES (applied only when the criterion is clearly absent):
-- No concrete examples cited → cap at 82
-- No trade-offs discussed → cap at 78
-- Explanation is entirely shallow or definitional → cap at 68
-
-INCORRECTNESS RULES:
-- If the answer demonstrates a fundamental factual error about a core concept → score ≤ 35
-- Do NOT inflate the score because the candidate mentions correct vocabulary alongside the error
-- strengths MAY be empty [] when no meaningful technical evidence exists — do not invent positives
-
-CONSISTENCY RULES:
-- The score MUST match the weaknesses listed
-- Calibrate to the seniority level: a senior candidate must demonstrate depth, trade-offs, and real-world experience; correct-but-shallow answers score in the 65–79 range, not 80+
-- Each strength and weakness MUST reference concrete content of the answer (or a concrete missing element), not generic advice
+- Score MUST fall within the band selected.
+- Score MUST match the weaknesses listed.
+- Calibrate to seniority: senior candidates must demonstrate depth, trade-offs, and real-world experience.
+  A correct-but-shallow senior answer belongs in ACCEPTABLE (65–79), not STRONG (80+).
+- Each strength and weakness MUST reference concrete content of the answer, not generic advice.
 
 Rules:
 - Only suggest clarification if the answer is incomplete or ambiguous.
