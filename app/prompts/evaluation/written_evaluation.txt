@@ -19,7 +19,7 @@ Return STRICT JSON with this structure:
 
 {% raw %}
 {
-    "score": float between 0 and 100,
+    "score": integer between 0 and 100,
     "feedback": "concise but precise explanation, referencing specific points of the candidate answer",
     "strengths": ["specific strength observed in the answer", "..."],
     "weaknesses": ["specific gap or missing element in the answer", "..."],
@@ -30,24 +30,39 @@ Return STRICT JSON with this structure:
 
 SCORING SYSTEM (STRICT AND ENFORCED):
 
-- 90-100 → Exceptional (VERY RARE): deep, precise, complete, with trade-offs and real-world insight
-- 75-89 → Good: correct and structured, but missing depth OR real-world insight
-- 60-74 → Average: partial, generic, or somewhat superficial
-- 40-59 → Weak: significant gaps or incomplete understanding
-- 0-39 → Incorrect: wrong or irrelevant
+- 90–100 → Exceptional: deep technical understanding, concrete real-world experience, explicit trade-off discussion, architectural reasoning, and specific examples or metrics. This range IS achievable for strong senior answers — do not avoid it.
+- 80–89 → Good: correct and well-structured, addresses trade-offs, may lack depth in one area or concrete metrics.
+- 65–79 → Acceptable: covers the topic adequately, some trade-offs mentioned, but generic or missing specifics.
+- 40–64 → Weak: significant gaps, incomplete understanding, or no trade-offs discussed. Score in this range even if the candidate uses correct vocabulary.
+- 0–39 → Incorrect: fundamental misunderstanding of core concepts, factually wrong, or irrelevant. Score here even if isolated technical keywords appear — keyword recognition alone does not justify a higher score.
 
-ENFORCED PENALTIES:
-- If answer is generic → MAX 75
-- If no concrete examples → MAX 80
-- If missing trade-offs → MAX 78
-- If explanation is shallow → MAX 70
+SCORING PRECISION:
+- Assign integer scores with 1-point precision (e.g. 87, 73, 52, 31).
+- Do NOT round to multiples of 5.
+- 60 is not a default or floor score. Weak answers belong in 40–59. Score on merits only.
+
+POSITIVE CRITERIA FOR 90+:
+An answer is eligible for 90–100 when it demonstrates ALL of the following:
+1. Technically accurate and complete
+2. Discusses real-world trade-offs with justification
+3. References concrete systems, tools, or personal experience
+4. Addresses failure cases, edge cases, or operational concerns
+5. Shows depth beyond textbook definitions
+
+PENALTIES (applied only when the criterion is clearly absent):
+- No concrete examples cited → cap at 82
+- No trade-offs discussed → cap at 78
+- Explanation is entirely shallow or definitional → cap at 68
+
+INCORRECTNESS RULES:
+- If the answer demonstrates a fundamental factual error about a core concept → score ≤ 35
+- Do NOT inflate the score because the candidate mentions correct vocabulary alongside the error
+- strengths MAY be empty [] when no meaningful technical evidence exists — do not invent positives
 
 CONSISTENCY RULES:
-- The score MUST match the weaknesses
-- Calibrate expectations to the role, area, difficulty AND seniority level above
-- A junior candidate is expected to know fundamentals; a senior candidate is expected to demonstrate depth, trade-offs, and real-world experience; a staff candidate is expected to show system-level thinking and cross-team impact
+- The score MUST match the weaknesses listed
+- Calibrate to the seniority level: a senior candidate must demonstrate depth, trade-offs, and real-world experience; correct-but-shallow answers score in the 65–79 range, not 80+
 - Each strength and weakness MUST reference concrete content of the answer (or a concrete missing element), not generic advice
-- Provide 1-3 strengths and 1-3 weaknesses; use [] only if truly none apply
 
 Rules:
 - Only suggest clarification if the answer is incomplete or ambiguous.
