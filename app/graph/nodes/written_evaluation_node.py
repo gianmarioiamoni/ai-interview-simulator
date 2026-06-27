@@ -35,7 +35,11 @@ class WrittenEvaluationNode:
             response = self._llm.invoke(prompt)
 
         try:
-            decision = EvaluationDecision.model_validate_json(response.content)
+            raw = response.content.strip()
+            if raw.startswith("```"):
+                raw = raw.split("\n", 1)[-1]
+                raw = raw[: raw.rfind("```")].strip()
+            decision = EvaluationDecision.model_validate_json(raw)
 
             evaluation = QuestionEvaluation(
                 question_id=question.id,
