@@ -316,7 +316,7 @@ class TestComparatorContractDisclosure:
 
 
 # ===========================================================
-# F9 — Stronger alignment validation
+# F9 — Alignment validation: runtime blocking vs narrative warnings
 # ===========================================================
 
 class TestAlignmentValidation:
@@ -339,55 +339,108 @@ class TestAlignmentValidation:
             coding_generator=MagicMock(),
         )
 
-    def test_valid_signature_in_prompt_passes(self):
-        pipeline = self._make_pipeline()
-        item = self._make_generated(
-            prompt="Implement def two_sum(nums, target) that returns indices.",
-            entrypoint="two_sum",
-            parameters=["nums", "target"],
-        )
-        spec = item.coding_spec
-        # Should not raise
-        pipeline._validate_alignment(item, spec)
+    # ------------------------------------------------------------------
+    # BLOCKING: runtime contract violations must still raise
+    # ------------------------------------------------------------------
 
-    def test_missing_entrypoint_raises(self):
+    def test_valid_spec_passes_regardless_of_prose(self):
+        # Prose omits function name entirely — must NOT raise (narrative warning only)
         pipeline = self._make_pipeline()
         item = self._make_generated(
-            prompt="Implement def solution(nums, target) that returns indices.",
+            prompt="Implement a function that finds two numbers summing to the target.",
             entrypoint="two_sum",
             parameters=["nums", "target"],
         )
         spec = item.coding_spec
-        with pytest.raises(ValueError, match="two_sum"):
+        pipeline._validate_alignment(item, spec)  # must not raise
+
+    def test_entrypoint_not_in_prose_does_not_raise(self):
+        # Core change: missing entrypoint in prose is now a warning, not an error
+        pipeline = self._make_pipeline()
+        item = self._make_generated(
+            prompt="Design and implement a function taking implementations and test cases.",
+            entrypoint="run_tests",
+            parameters=["implementations", "test_cases"],
+        )
+        spec = item.coding_spec
+        pipeline._validate_alignment(item, spec)  # must not raise
+
+    def test_parameter_not_in_prose_does_not_raise(self):
+        # Core change: missing param in prose is now a warning, not an error
+        pipeline = self._make_pipeline()
+        item = self._make_generated(
+            prompt="Implement def two_sum that returns indices.",
+            entrypoint="two_sum",
+            parameters=["nums", "target"],
+        )
+        spec = item.coding_spec
+        pipeline._validate_alignment(item, spec)  # must not raise
+
+    def test_invalid_entrypoint_identifier_raises(self):
+        # BLOCKING: entrypoint must be a valid Python identifier
+        pipeline = self._make_pipeline()
+        from domain.contracts.execution.coding_spec import CodingSpec
+        from services.question_intelligence.coding_question_generator import GeneratedCodingQuestion
+        spec = CodingSpec(type="function", entrypoint="two-sum", parameters=["nums"])
+        item = GeneratedCodingQuestion(prompt="Implement two-sum.", coding_spec=spec, visible_tests=[])
+        with pytest.raises(ValueError, match="valid Python identifier"):
             pipeline._validate_alignment(item, spec)
 
-    def test_missing_parameter_raises(self):
+    def test_type_annotated_parameter_raises(self):
+        # BLOCKING: type annotations in parameters are rejected (CodingSpec normalizes them
+        # at construction time; this tests direct _validate_alignment rejection path)
         pipeline = self._make_pipeline()
-        item = self._make_generated(
-            prompt="Implement def two_sum(nums) that returns indices.",
-            entrypoint="two_sum",
-            parameters=["nums", "target"],
-        )
-        spec = item.coding_spec
-        with pytest.raises(ValueError, match="target"):
-            pipeline._validate_alignment(item, spec)
-
-    def test_entrypoint_present_in_prose_but_signature_missing_raises(self):
-        # entrypoint and params appear in prose but rendered signature does not
-        pipeline = self._make_pipeline()
-        item = self._make_generated(
-            prompt="Use two_sum with nums and target to find the answer.",
-            entrypoint="two_sum",
-            parameters=["nums", "target"],
-        )
-        spec = item.coding_spec
-        with pytest.raises(ValueError, match="signature"):
-            pipeline._validate_alignment(item, spec)
-
-    def test_class_method_signature_validated(self):
         from domain.contracts.execution.coding_spec import CodingSpec
         from services.question_intelligence.coding_question_generator import GeneratedCodingQuestion
 
+        # Build spec with already-normalized bare param (CodingSpec strips annotations)
+        # then manually inject a bad param to test validator directly
+        spec = CodingSpec(type="function", entrypoint="solve", parameters=["n"])
+        item = GeneratedCodingQuestion(
+            prompt="Implement solve(n: int).",
+            coding_spec=spec,
+            visible_tests=[],
+        )
+        # Override parameters with annotation to simulate LLM JSON bypass
+        object.__setattr__(spec, "parameters", ["n: int"])
+        with pytest.raises(ValueError, match="valid Python identifier"):
+            pipeline._validate_alignment(item, spec)
+
+    # ------------------------------------------------------------------
+    # CodingSpec normalization tests
+    # ------------------------------------------------------------------
+
+    def test_coding_spec_strips_type_annotations(self):
+        from domain.contracts.execution.coding_spec import CodingSpec
+        spec = CodingSpec(
+            type="function",
+            entrypoint="get_deployment_strategy",
+            parameters=["strategy_type: str"],
+        )
+        assert spec.parameters == ["strategy_type"]
+
+    def test_coding_spec_strips_multiple_type_annotations(self):
+        from domain.contracts.execution.coding_spec import CodingSpec
+        spec = CodingSpec(
+            type="function",
+            entrypoint="process",
+            parameters=["items: List[int]", "threshold: float", "name"],
+        )
+        assert spec.parameters == ["items", "threshold", "name"]
+
+    # ------------------------------------------------------------------
+    # Class method: method_name required (still blocking)
+    # ------------------------------------------------------------------
+
+    def test_class_method_without_method_name_raises(self):
+        from domain.contracts.execution.coding_spec import CodingSpec
+        with pytest.raises(ValueError, match="method_name required"):
+            CodingSpec(type="class_method", entrypoint="LRUCache", parameters=["key"])
+
+    def test_class_method_valid_passes(self):
+        pipeline = self._make_pipeline()
+        from domain.contracts.execution.coding_spec import CodingSpec
+        from services.question_intelligence.coding_question_generator import GeneratedCodingQuestion
         spec = CodingSpec(
             type="class_method",
             entrypoint="LRUCache",
@@ -395,29 +448,8 @@ class TestAlignmentValidation:
             parameters=["key"],
         )
         item = GeneratedCodingQuestion(
-            prompt="Implement def get(self, key) inside class LRUCache.",
+            prompt="Implement an LRU cache supporting get and put.",
             coding_spec=spec,
             visible_tests=[],
         )
-        pipeline = self._make_pipeline()
-        # Should not raise
-        pipeline._validate_alignment(item, spec)
-
-    def test_class_method_wrong_method_name_raises(self):
-        from domain.contracts.execution.coding_spec import CodingSpec
-        from services.question_intelligence.coding_question_generator import GeneratedCodingQuestion
-
-        spec = CodingSpec(
-            type="class_method",
-            entrypoint="LRUCache",
-            method_name="get",
-            parameters=["key"],
-        )
-        item = GeneratedCodingQuestion(
-            prompt="Implement def put(self, key) inside class LRUCache.",
-            coding_spec=spec,
-            visible_tests=[],
-        )
-        pipeline = self._make_pipeline()
-        with pytest.raises(ValueError, match="signature"):
-            pipeline._validate_alignment(item, spec)
+        pipeline._validate_alignment(item, spec)  # must not raise

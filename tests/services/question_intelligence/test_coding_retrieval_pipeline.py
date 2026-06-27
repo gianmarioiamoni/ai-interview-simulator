@@ -348,7 +348,8 @@ def test_coding_pipeline_memory_update_only_for_enriched_selection() -> None:
 
 
 def test_coding_pipeline_selects_second_when_first_alignment_fails() -> None:
-
+    # After R6.6: MISALIGNED_ENRICH_JSON (prose missing entrypoint) is now ACCEPTED
+    # with a warning. The first candidate is selected since its CodingSpec is valid.
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
     llm = _mock_llm_with_responses(
         [MISALIGNED_ENRICH_JSON, ENRICHED_CODING_JSON],
@@ -376,15 +377,17 @@ def test_coding_pipeline_selects_second_when_first_alignment_fails() -> None:
             questions_per_area=1,
         )
 
+    # First candidate accepted (prose warning only, spec is valid)
     assert len(questions) == 1
-    assert questions[0].provenance is not None
-    assert "second-actionable-id" in memory.asked_question_ids
-    assert "first-actionable-id" not in memory.asked_question_ids
-    assert llm.invoke.call_count == 2
+    assert questions[0].coding_spec.entrypoint == "two_sum"
+    assert "first-actionable-id" in memory.asked_question_ids
+    assert llm.invoke.call_count == 1  # only one LLM call needed
 
 
 def test_coding_pipeline_selects_third_after_two_enrich_failures() -> None:
-
+    # After R6.6: MISALIGNED_ENRICH_JSON is accepted (warning only).
+    # The first candidate (MISALIGNED) is selected. LLM invalid JSON from second
+    # candidate is never reached.
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
     llm = _mock_llm_with_responses(
         [
@@ -420,13 +423,16 @@ def test_coding_pipeline_selects_third_after_two_enrich_failures() -> None:
             questions_per_area=1,
         )
 
+    # First candidate accepted (narrative warning only)
     assert len(questions) == 1
-    assert questions[0].provenance is not None
-    assert "third-id" in memory.asked_question_ids
+    assert questions[0].coding_spec.entrypoint == "two_sum"
+    assert "first-id" in memory.asked_question_ids
 
 
 def test_coding_pipeline_all_candidates_fail_then_fallback() -> None:
-
+    # After R6.6: MISALIGNED_ENRICH_JSON is accepted (narrative warning only).
+    # The second candidate (invalid-json) fails enrichment. First candidate is accepted.
+    # Fallback is NOT reached since first candidate passes.
     retrieval_service = MagicMock(spec=QuestionRetrievalService)
     llm = _mock_llm_with_responses(
         ["invalid-json"] * MAX_INVALID_JSON_ATTEMPTS
@@ -457,10 +463,10 @@ def test_coding_pipeline_all_candidates_fail_then_fallback() -> None:
             questions_per_area=1,
         )
 
+    # First candidate fails JSON parse, second accepted (narrative warning only)
     assert len(questions) == 1
-    assert questions[0].coding_spec.entrypoint == "max_of_two"
-    assert questions[0].provenance is None
-    assert CORPUS_QUESTION_ID not in memory.asked_question_ids
+    assert questions[0].coding_spec.entrypoint == "two_sum"
+    assert "second-id" in memory.asked_question_ids
 
 
 def test_coding_pipeline_generate_retry_after_first_failure() -> None:

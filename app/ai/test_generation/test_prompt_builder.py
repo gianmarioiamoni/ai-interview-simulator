@@ -40,6 +40,7 @@ class TestPromptBuilder:
             "parameters": json.dumps(spec.parameters),
             "num_tests": num_tests,
             "param_count": len(spec.parameters),
+            "param_example": ", ".join(spec.parameters),
             "domain_hints_block": self._domain_hints_block(domain_profile),
         }
 

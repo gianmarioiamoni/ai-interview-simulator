@@ -4,12 +4,13 @@ Given this coding problem:
 
 {{ problem }}
 
-Function contract:
+Authoritative Function Contract (use this for all test cases — do NOT derive the function name or parameters from the problem description above):
 
-- Entrypoint: {{ entrypoint }}
-- Parameters: {{ parameters }}
+- Function name (entrypoint): {{ entrypoint }}
+- Parameters (in order): {{ parameters }}
+- Parameter count: {{ param_count }}
 
-Generate {{ num_tests }} test cases.
+Generate {{ num_tests }} diverse test cases that exercise the function `{{ entrypoint }}`.
 
 Return STRICT JSON:
 
@@ -22,36 +23,21 @@ Return STRICT JSON:
 ]
 {% endraw %}
 
-Function parameters:
-{{ parameters }}
+CRITICAL RULES:
+- Call the function as: {{ entrypoint }}({{ param_example }})
+- args length MUST be exactly {{ param_count }} (one element per parameter)
+- args MUST follow the parameter order: {{ parameters }}
 
-CRITICAL RULE:
-- args length MUST be exactly {{ param_count }}
+Examples of correct args structure:
 
-Example:
-If parameters = ["x"], then:
-args = [value]
-
-NOT:
-args = [v1, v2, v3]
-
-Each element in args corresponds to ONE parameter.
-
-IMPORTANT:
-- If a parameter is a list, it must be passed as a SINGLE element
-Example:
-parameters = ["nums"]
+If parameters = ["nums"], then:
 args = [[1,2,3]]
 
-- If a parameter is a dictionary, it must be passed as a SINGLE element
-Example:
-parameters = ["person"]
-args = [{"name": "John", "age": 30}]
+If parameters = ["nums", "target"], then:
+args = [[2,7,11,15], 9]
 
-- If a parameter is a tuple, it must be passed as a SINGLE element
-Example:
-parameters = ["point"]
-args = [(1,2)]
+If parameters = ["person"], then:
+args = [{"name": "John", "age": 30}]
 
 {{ domain_hints_block }}
 Rules:

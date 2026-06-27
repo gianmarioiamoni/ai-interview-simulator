@@ -55,8 +55,10 @@ asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
     "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
     "ignore::pytest.PytestCollectionWarning",
     "ignore:pkg_resources is deprecated:UserWarning",
+    "ignore::langchain_core._api.deprecation.LangChainPendingDeprecationWarning",
 ]
 
 [tool.ruff]
