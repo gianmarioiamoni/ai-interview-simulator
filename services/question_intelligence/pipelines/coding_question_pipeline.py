@@ -281,30 +281,92 @@ class CodingQuestionPipeline(BaseLLMQuestionPipeline):
         item: GeneratedCodingQuestion,
         spec,
     ) -> None:
+        """
+        Distinguishes between runtime contract violations (blocking) and
+        narrative quality issues (warnings only).
 
+        BLOCKING — spec structural integrity:
+          - entrypoint must be a valid Python identifier
+          - every parameter must be a valid Python identifier
+          - class_method must have method_name
+
+        WARNING ONLY — narrative quality (never reject):
+          - entrypoint not literally present in prompt prose
+          - parameter names not literally present in prompt prose
+          - full signature string not verbatim in prompt
+
+        CodingSpec is the authoritative execution contract. prompt is narrative.
+        No downstream runtime component requires entrypoint to appear in prompt.
+        """
         prompt = item.prompt
 
-        if spec.entrypoint not in prompt:
-            raise ValueError(f"Entrypoint '{spec.entrypoint}' not found in prompt")
+        # ------------------------------------------------------------------
+        # BLOCKING: runtime contract violations
+        # ------------------------------------------------------------------
+
+        if not spec.entrypoint or not spec.entrypoint.isidentifier():
+            raise ValueError(
+                f"CodingSpec.entrypoint '{spec.entrypoint}' is not a valid Python identifier"
+            )
 
         for p in spec.parameters:
-            if p not in prompt:
-                raise ValueError(f"Parameter '{p}' not found in prompt")
+            if not p or not p.isidentifier():
+                raise ValueError(
+                    f"CodingSpec.parameter '{p}' is not a valid Python identifier "
+                    f"(type annotations must not appear in parameters)"
+                )
 
-        # Soft signature check: log a warning but do not reject the question.
-        # The strict full-signature check blocked valid LLM outputs where the
-        # prompt describes the function without reproducing the exact signature
-        # string verbatim (regression introduced in Sprint 1 hardening pass).
+        if spec.type == "class_method" and not spec.method_name:
+            raise ValueError(
+                "CodingSpec.method_name is required for class_method type"
+            )
+
+        # ------------------------------------------------------------------
+        # ALIGNMENT TELEMETRY
+        # ------------------------------------------------------------------
+
+        ep_in_prompt = spec.entrypoint in prompt
+        params_in_prompt = {p: (p in prompt) for p in spec.parameters}
+        missing_params = [p for p, found in params_in_prompt.items() if not found]
+
         params_str = ", ".join(spec.parameters)
         if spec.type == "class_method" and spec.method_name:
             expected_sig = f"def {spec.method_name}(self, {params_str})"
         else:
             expected_sig = f"def {spec.entrypoint}({params_str})"
+        sig_in_prompt = expected_sig in prompt
 
-        if expected_sig not in prompt:
+        logger.info(
+            "[CODING Alignment] entrypoint=%s ep_in_prompt=%s sig_in_prompt=%s "
+            "params_missing=%s | spec_valid=YES",
+            spec.entrypoint,
+            ep_in_prompt,
+            sig_in_prompt,
+            missing_params or "none",
+        )
+
+        # ------------------------------------------------------------------
+        # WARNING ONLY: narrative quality issues — never reject
+        # ------------------------------------------------------------------
+
+        if not ep_in_prompt:
+            logger.warning(
+                "[Alignment Warning] Prompt does not explicitly mention entrypoint '%s' "
+                "— CodingSpec is authoritative; question accepted.",
+                spec.entrypoint,
+            )
+
+        if missing_params:
+            logger.warning(
+                "[Alignment Warning] Prompt does not explicitly mention parameter(s) %s "
+                "— CodingSpec is authoritative; question accepted.",
+                missing_params,
+            )
+
+        if not sig_in_prompt:
             logger.debug(
-                "[CODING] Signature '%s' not literally in prompt — entrypoint and params "
-                "verified individually; accepting question.",
+                "[CODING] Full signature '%s' not literally in prompt "
+                "— entrypoint and params verified individually; accepting question.",
                 expected_sig,
             )
 

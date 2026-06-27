@@ -17,7 +17,7 @@ class CodingSpec(BaseModel):
     # only for class_method
     method_name: Optional[str] = None
 
-    # signature
+    # signature — bare identifier names only, no type annotations
     parameters: list[str] = Field(default_factory=list)
 
     # ---------------------------------------------------------
@@ -30,6 +30,17 @@ class CodingSpec(BaseModel):
         if self.type == "class_method":
             if not self.method_name:
                 raise ValueError("method_name required for class_method")
+
+        # Normalize: strip type annotations from parameter names.
+        # LLMs sometimes emit "param: type" or "param: List[int]" inside the
+        # parameters list. Strip everything after the first colon or space so
+        # downstream harness and validator work with bare identifiers only.
+        normalized: list[str] = []
+        for p in self.parameters:
+            bare = p.split(":")[0].split(" ")[0].strip()
+            normalized.append(bare)
+
+        object.__setattr__(self, "parameters", normalized)
 
         return self
 
