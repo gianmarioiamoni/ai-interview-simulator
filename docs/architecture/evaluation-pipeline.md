@@ -2,63 +2,71 @@
 
 # Evaluation Pipeline
 
+**Version:** V1.0
+**Last updated:** R7.9 milestone
+
 # Overview
 
 The evaluation system is built around:
 
-- executable validation
-- structured evaluation
-- semantic feedback
-- adaptive retry decisions
+- executable validation (Coding / SQL)
+- structured LLM evaluation with field-aware JSON repair
+- dimensional scoring with signal enrichment (Strategy B)
+- coaching-first report generation
 
 ---
 
 # Core Pipeline
 
+```
 Answer
   ↓
-Execution (optional)
+Execution (Coding/SQL only)
   ↓
-Evaluation
+Evaluation (LLM-based, with markdown-fence stripping and field-aware repair)
   ↓
 Hint Generation
   ↓
 Feedback Generation
   ↓
-Decision
+Decision (retry / next / report)
   ↓
 Interview Aggregation
   ↓
-Final Report
+Signal Enrichment (Strategy B)
+  ↓
+Weight Normalization
+  ↓
+Hire Decision + Gating
+  ↓
+Narrative + Coaching Report
+```
 
 ---
 
 # Execution Layer
 
-# Coding Questions
+## Coding Questions
 
 Uses:
 - Python sandbox
-- hidden tests
-- visible tests
+- visible tests (shown to candidate)
+- hidden tests (oracle-generated)
 
 Execution outputs:
-- passed tests
-- failed tests
+- passed / failed tests
 - execution time
 - execution status
 
+**JSON Repair (R6.16):** Field-aware repair is applied to LLM-generated question JSON. Python tuple-to-array normalization is applied only to `args`/`expected`/`visible_tests`/`hidden_tests` fields. It is never applied to `reference_solution`, `prompt`, `explanation`, or any field containing Python source code. This prevents corruption of valid reference solutions.
+
 ---
 
-# SQL Questions
+## SQL Questions
 
 Uses:
 - SQLite execution
 - executable validation
-
-Current roadmap includes:
-- multi-test execution
-- stronger SQL generation
 
 ---
 
@@ -66,188 +74,188 @@ Current roadmap includes:
 
 ## Written Questions
 
-Handled by:
-- WrittenEvaluationNode
+Handled by `WrittenEvaluationNode` → `WrittenQuestionEvaluator`.
 
-Uses:
-- LLM structured evaluation
+**Parser (R6.9.2):** The LLM response is pre-processed to strip markdown fences (` ```json ` / ` ``` `) before JSON parsing. This eliminates the parsing failures observed when the model wraps its output in a code block.
+
+**Calibration (R7.1.1):** The evaluation prompt explicitly instructs the LLM that question difficulty determines expected depth, not the scoring scale. An excellent answer on a MEDIUM-difficulty question can and should score in the STRONG/EXCEPTIONAL band. The full 0–100 range is encouraged.
 
 ---
 
 ## Coding / SQL
 
-Handled by:
-- EvaluationNode
+Handled by `EvaluationNode`.
 
 Consumes:
 - execution results
-- question metadata
+- question metadata (entrypoint, visible tests, expected outputs)
 
 ---
 
 # Source of Truth
 
-Primary source of truth:
-
-QuestionResult
+Primary source of truth: `QuestionResult`
 
 Contains:
 - question
-- execution
+- execution (optional, Coding/SQL only)
 - evaluation
 - metadata
 
 ---
 
-# Feedback Pipeline
+# Dimension Scoring
 
-## FeedbackNode
+## DimensionScorer
 
-Builds:
-- FeedbackBundle
-
----
-
-# FeedbackBundle
-
-Contains:
-- blocks
-- severity
-- confidence
-- quality
-- markdown
-- dimension signals
-
----
-
-# Dimension Signals
+Aggregates per-question `QuestionEvaluation` scores into dimension-level scores.
 
 Current dimensions:
-- problem solving
-- technical depth
-- system design
+- Technical Depth
+- Problem Solving
+- System Design
 
 ---
 
-# Hint System
+## Signal Enrichment — Strategy B (R6.26)
 
-Generated through:
-- HintNode
-- AIHintService
+`SignalEnrichmentStep.enrich_scores()` receives `execution_dims: set[str]` — the set of dimensions that received at least one execution-based signal.
 
-Current system:
-- adaptive hints
-- quality-aware hints
+**Rule:**
+- If a dimension is **not** in `execution_dims` → enriched score = base score (no blending)
+- If a dimension **is** in `execution_dims` → enriched score = `base * (1 - α) + signal * 100 * α` (α = 0.30)
 
----
-
-# Decision System
-
-## DecisionNode
-
-Computes:
-- retry
-- next
-- generate report
-
-Uses:
-- quality
-- attempts
-- max attempts
+This ensures written-only candidates are never penalized by a missing execution signal treated as a failed execution. Without Strategy B, written-only candidates were capped around LEAN_HIRE regardless of answer quality.
 
 ---
 
-# Allowed Actions
+## Weight Normalization
 
-Derived dynamically.
+`WeightNormalizationStep` applies role-specific dimension weights (see `ROLE_WEIGHTS` in `domain/contracts/user/role.py`).
 
-Examples:
-- retry
-- next
-- generate report
+---
+
+# Decision Engine
+
+`HiringDecisionEngine` applies gating rules and maps overall score to a hire decision.
+
+Thresholds (see `infrastructure/config/evaluation.py`):
+
+| Decision | Minimum score |
+|---|---|
+| HIRE | ≥ 85 |
+| LEAN_HIRE | ≥ 70 |
+| LEAN_NO_HIRE | ≥ 60 |
+| NO_HIRE | < 60 |
+
+Gating rules reduce the score if a critical dimension (System Design < 60 or Technical Depth < 50) falls below threshold.
+
+**Calibration note (R6.28):** Thresholds are intentionally slightly conservative. A HIRE requires 85+, which reflects senior interview bar. LEAN_HIRE (70–84) is the expected outcome for good-but-not-exceptional candidates.
 
 ---
 
 # Interview Aggregation
 
-## EvaluationAggregateNode
+`EvaluationAggregateNode` orchestrates the full pipeline.
 
-Aggregates:
-- question evaluations
-- execution signals
-- dimension scores
+Produces `InterviewEvaluation` containing:
+- `overall_score` — final adjusted score
+- `raw_score` — pre-gating score
+- `adjusted_score` — post-gating score (candidate-facing)
+- `level` — recomputed from `adjusted_score` (POOR / AVERAGE / STRONG / EXCELLENT)
+- `hire_decision`
+- `dimension_scores`, `dimension_signals`, `weighted_breakdown`
+- `performance_dimensions` (with LLM-generated justifications)
+- `improvement_suggestions`
+- `went_well`, `held_you_back`, `knowledge_gaps`, `next_strategy` — coaching sections (V1.0)
 
-Produces:
-- InterviewEvaluation
-
----
-
-# Final Report
-
-Generated by:
-- ReportNode
-- NarrativeService
+**Level label fix (R7.9):** `level` is computed from `adjusted_score`, not the raw pre-gating score. This ensures the label shown to the candidate matches the score they see.
 
 ---
 
-# Narrative Explanation
+# Report Generation
 
-Current report includes:
-- drivers
-- blockers
-- hiring rationale
+## Narrative Assembly
 
----
+`EvaluationNarrativeAssembler` coordinates:
+- `NarrativeGenerator` — single LLM call returning dimension justifications, improvement suggestions, and all 4 coaching sections
+- `ExecutiveSummaryGenerator` — separate LLM call for the 250–350 word coaching-first Executive Summary
+- `DecisionExplanationGenerator`
+- `PercentileCalculator`
+- `ConfidenceCalculator`
 
-# Current Strengths
+## Coaching Report Sections (V1.0 — R7.7)
 
-- executable validation
-- structured evaluation
-- adaptive feedback
-- semantic scoring
-- dimension aggregation
-- Per-question coaching surfaced in final report: `question_section` renders `strengths`, `weaknesses`, `follow_up_question`, and `ai_hint_explanation`/`ai_hint_suggestion` from `QuestionAssessmentDTO` when present. Strengths/weaknesses and follow-up questions are populated from `QuestionEvaluation` for written questions; AI hints are populated for any question type where a hint was generated. `follow_up_question` originates from `EvaluationDecision` and is now carried through `QuestionEvaluation` → `QuestionAssessmentDTO` → report.
+`NarrativeGenerator` now returns 4 additional structured sections in its JSON response:
 
----
+| Field | Purpose | Constraints |
+|---|---|---|
+| `went_well` | Reinforce confidence | ≥ 3 concrete observations, evidence-bound |
+| `held_you_back` | Explain why weaknesses mattered | ≥ 3 items, each with `behaviour` / `why_it_matters` / `impact` |
+| `knowledge_gaps` | Group missing knowledge by category | 2–5 items, evidence-only, no invented gaps |
+| `next_strategy` | Concrete priorities before next interview | Exactly 3, each with `priority` / `why` / `expected_improvement` / `impact` |
 
-# Planned Improvements
+## Executive Summary (V1.0 — R7.6)
 
-## Conversational Question Delivery (Humanizer — ACTIVE)
+250–350 words. Structured around 5 ideas:
+1. Overall impression
+2. What most impressed the interviewer (2–3 concrete observations)
+3. Main limiting factors (explains *why* they reduced evaluation)
+4. Interview Readiness (natural language, not a label)
+5. Next interview focus (2–3 priorities)
 
-Implemented in V1 via `HumanizerService` + `question_node`.
-
-- `DIRECT_QUESTION` and `REMARK_PLUS_QUESTION` decisions active.
-- `question_display_text` stored in `InterviewState`, rendered by `DisplaySection`.
-- `FOLLOW_UP` gated by `HUMANIZER_FOLLOW_UP_ENABLED` flag (default `False`; V1.1 activation).
-- See ADR-010 and `docs/architecture/graph-nodes.md` for full contract.
-
----
-
-## Better dimension scoring
-
-Improved signal extraction.
+Style: professional, warm, honest. No bullet lists. No HR clichés.
 
 ---
 
-## Weighted evaluation
+# Candidate-Facing Report (V1.0 — R7.5)
 
-Dimension weighting exposure.
+Internal metrics removed from the candidate report:
+- `hiring_probability` — not shown
+- `confidence` — not shown
+- `gating_triggered` / `gating_reason` — not shown
+
+Shown instead:
+- **Interview Readiness** label (Interview Ready / Nearly Ready / Needs Improvement / Not Ready Yet)
+- Score band label (EXCEPTIONAL / STRONG / ACCEPTABLE / WEAK / INCORRECT) on overall, dimension, and question scores
+- Plain-English percentile: "You performed better than approximately X% of Senior Backend candidates."
+
+Section order:
+1. Interview Readiness
+2. Executive Summary
+3. What You Did Well
+4. What Held You Back
+5. Knowledge Gap Summary
+6. Next Interview Strategy
+7. Performance Dimensions
+8. Question-by-Question Analysis
+9. Interview Benchmark
+10. Decision Details
+11. Execution Signals (if present)
 
 ---
 
-## Richer execution analysis
+# Feedback Pipeline
 
-- edge cases
-- performance analysis
-- optimization hints
+`FeedbackNode` builds a `FeedbackBundle` containing:
+- blocks (per-answer feedback)
+- severity
+- confidence
+- quality
+- dimension signals
 
 ---
 
-# Strategic Importance
+# Hint System
 
-The evaluation system is one of the strongest differentiators of the platform.
+`HintNode` → `AIHintService`: generates adaptive, quality-aware hints shown between attempts.
 
-Especially:
-- executable coding validation
-- structured semantic evaluation
-- adaptive feedback generation
+---
+
+# Planned Improvements (V1.1+)
+
+- Deduplication between "What Held You Back" and "Next Strategy" (~40% thematic overlap)
+- Readiness time-horizon framing ("1 week vs 3 months away")
+- `HUMANIZER_FOLLOW_UP_ENABLED` activation
+- Percentile distribution calibration (currently slightly conservative at mid-range)
+- Enforce `invoke_json` on `LLMPort` interface (currently silent fallback on raw LLM path)

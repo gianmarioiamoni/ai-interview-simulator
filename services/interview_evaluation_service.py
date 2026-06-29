@@ -13,6 +13,12 @@ from domain.contracts.question.question import Question
 from domain.contracts.user.role import RoleType
 
 from services.interview_scoring.interview_scoring_engine import InterviewScoringEngine
+from infrastructure.config.evaluation import (
+    LEVEL_POOR_THRESHOLD,
+    LEVEL_AVERAGE_THRESHOLD,
+    LEVEL_STRONG_THRESHOLD,
+)
+from domain.contracts.interview.interview_level import InterviewLevel
 from services.interview_scoring.components.dimension_scorer import AREA_TO_DIMENSION
 from services.narrative_service import NarrativeService
 from services.decision_engine.decision_engine import DecisionEngine
@@ -177,6 +183,17 @@ class InterviewEvaluationService:
         # 7. FINAL DTO
         # -----------------------------------------------------
 
+        # Recompute level from the adjusted score so the label reflects
+        # the same score the candidate sees (not the pre-gating raw score).
+        if adjusted_score < LEVEL_POOR_THRESHOLD:
+            final_level = InterviewLevel.POOR
+        elif adjusted_score < LEVEL_AVERAGE_THRESHOLD:
+            final_level = InterviewLevel.AVERAGE
+        elif adjusted_score < LEVEL_STRONG_THRESHOLD:
+            final_level = InterviewLevel.STRONG
+        else:
+            final_level = InterviewLevel.EXCELLENT
+
         return InterviewEvaluation(
             overall_score=overall_score,
             raw_score=raw_score,
@@ -185,7 +202,7 @@ class InterviewEvaluationService:
             performance_dimensions=narrative_outputs["performance_dimensions"],
             dimension_scores=dimension_scores,
             dimension_signals=dimension_signals,
-            level=scoring.level,
+            level=final_level,
             hire_decision=hire_decision,
             decision_explanation=narrative_outputs["decision_explanation"],
             hiring_probability=scoring.hiring_probability,
