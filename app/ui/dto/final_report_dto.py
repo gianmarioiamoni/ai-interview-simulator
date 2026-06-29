@@ -1,7 +1,7 @@
 # app/ui/dto/final_report_dto.py
 
 from typing import List, Dict, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
 from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
@@ -42,6 +42,12 @@ class FinalReportDTO(BaseModel):
     question_assessments: List[QuestionAssessmentDTO]
 
     improvement_suggestions: List[str]
+
+    # Coaching sections (V1.0)
+    went_well: List[str] = Field(default_factory=list)
+    held_you_back: List[Dict] = Field(default_factory=list)
+    knowledge_gaps: List[Dict] = Field(default_factory=list)
+    next_strategy: List[Dict] = Field(default_factory=list)
 
     total_tokens_used: int
 
@@ -92,6 +98,10 @@ class FinalReportDTO(BaseModel):
             dimension_scores=dimension_scores,
             question_assessments=question_assessments,
             improvement_suggestions=final_evaluation.improvement_suggestions,
+            went_well=getattr(final_evaluation, "went_well", []) or [],
+            held_you_back=getattr(final_evaluation, "held_you_back", []) or [],
+            knowledge_gaps=getattr(final_evaluation, "knowledge_gaps", []) or [],
+            next_strategy=getattr(final_evaluation, "next_strategy", []) or [],
             total_tokens_used=tokens,
             confidence=final_evaluation.confidence,
             role=role,

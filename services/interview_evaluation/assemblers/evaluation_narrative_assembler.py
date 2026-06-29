@@ -189,4 +189,8 @@ class EvaluationNarrativeAssembler:
             "narrative": narrative,
             "performance_dimensions": performance_dimensions,
             "improvement_suggestions": improvement_suggestions,
+            "went_well": narrative.get("went_well", []),
+            "held_you_back": narrative.get("held_you_back", []),
+            "knowledge_gaps": narrative.get("knowledge_gaps", []),
+            "next_strategy": narrative.get("next_strategy", []),
         }
