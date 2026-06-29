@@ -196,5 +196,9 @@ class InterviewEvaluationService:
             weighted_breakdown=weighted_breakdown,
             per_question_assessment=evaluations,
             improvement_suggestions=narrative_outputs["improvement_suggestions"],
+            went_well=narrative_outputs.get("went_well", []),
+            held_you_back=narrative_outputs.get("held_you_back", []),
+            knowledge_gaps=narrative_outputs.get("knowledge_gaps", []),
+            next_strategy=narrative_outputs.get("next_strategy", []),
             confidence=narrative_outputs["confidence"],
         )

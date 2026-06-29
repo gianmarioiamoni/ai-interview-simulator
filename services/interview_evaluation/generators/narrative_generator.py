@@ -54,6 +54,14 @@ class NarrativeGenerator:
                 parsed["dimension_justifications"] = {}
             if "improvement_suggestions" not in parsed:
                 parsed["improvement_suggestions"] = []
+            if "went_well" not in parsed:
+                parsed["went_well"] = []
+            if "held_you_back" not in parsed:
+                parsed["held_you_back"] = []
+            if "knowledge_gaps" not in parsed:
+                parsed["knowledge_gaps"] = []
+            if "next_strategy" not in parsed:
+                parsed["next_strategy"] = []
 
             return parsed
 
@@ -66,6 +74,10 @@ class NarrativeGenerator:
                     for name in DIMENSION_LABELS.values()
                 },
                 "improvement_suggestions": [],
+                "went_well": [],
+                "held_you_back": [],
+                "knowledge_gaps": [],
+                "next_strategy": [],
             }
 
     # -----------------------------------------------------

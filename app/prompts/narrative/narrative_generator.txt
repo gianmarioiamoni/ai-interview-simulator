@@ -1,22 +1,16 @@
-You are a senior technical interviewer.
+You are a senior technical interviewer writing a coaching report for a candidate.
 
 Role: {{ role }}
 Interview type: {{ interview_type }}
 {{ context_block }}
-Here are evaluated answers:
+Evaluated answers:
 {{ evaluations }}
 
 Dimension scores:
 {{ dimension_scores }}
 
-Provide:
+Provide ALL of the following. Return STRICT JSON only. No text outside JSON.
 
-1. Justification for each dimension (reference specific answer content or failures)
-2. 3 improvement suggestions that are specific to this candidate's actual weaknesses
-
-Return STRICT JSON only. No explanations. No text outside JSON.
-
-Expected structure:
 {
   "dimension_justifications": {
     "<dimension_name>": "<one sentence referencing specific evidence from the candidate answers>"
@@ -25,5 +19,63 @@ Expected structure:
     "<specific actionable improvement referencing an actual weakness observed>",
     "<specific actionable improvement referencing an actual weakness observed>",
     "<specific actionable improvement referencing an actual weakness observed>"
+  ],
+  "went_well": [
+    "<concrete observation about something the candidate demonstrated well — must reference specific answer content, a named concept, system, or methodology>",
+    "<concrete observation>",
+    "<concrete observation>"
+  ],
+  "held_you_back": [
+    {
+      "behaviour": "<observed behaviour from the interview>",
+      "why_it_matters": "<why interviewers care about this — what it signals about engineering judgement>",
+      "impact": "<how this limited the evaluation result>"
+    },
+    {
+      "behaviour": "<observed behaviour>",
+      "why_it_matters": "<interviewer perspective>",
+      "impact": "<evaluation impact>"
+    },
+    {
+      "behaviour": "<observed behaviour>",
+      "why_it_matters": "<interviewer perspective>",
+      "impact": "<evaluation impact>"
+    }
+  ],
+  "knowledge_gaps": [
+    {
+      "category": "<one of: Core Concepts, Architecture, Distributed Systems, Databases, System Design, Backend Engineering, Cloud / DevOps, Communication, Leadership, Operational Excellence>",
+      "concept": "<specific missing concept or skill>",
+      "why_it_matters": "<why this matters in real interviews for this role>",
+      "interview_impact": "<what interview questions this affects>"
+    }
+  ],
+  "next_strategy": [
+    {
+      "priority": "<short title for this priority>",
+      "why": "<why this is worth investing time in>",
+      "expected_improvement": "<what the candidate will be able to do better>",
+      "impact": "<High|Medium|Low>"
+    },
+    {
+      "priority": "<short title>",
+      "why": "<reason>",
+      "expected_improvement": "<improvement>",
+      "impact": "<High|Medium|Low>"
+    },
+    {
+      "priority": "<short title>",
+      "why": "<reason>",
+      "expected_improvement": "<improvement>",
+      "impact": "<High|Medium|Low>"
+    }
   ]
 }
+
+RULES:
+- went_well: minimum 3 items. Every item must name a specific concept, technology, or method from the actual answers. Never generic praise.
+- held_you_back: exactly 3 items. Every item must explain WHY the behaviour matters to the interviewer, not just describe it.
+- knowledge_gaps: only include gaps supported by the interview evidence. Do not invent gaps. 2-5 items.
+- next_strategy: exactly 3 items. Each must have a concrete priority title, a clear why, and an impact level.
+- Do NOT expose dimension names as internal keys. Use readable labels.
+- Return ONLY valid JSON. No markdown. No backticks. No explanation.

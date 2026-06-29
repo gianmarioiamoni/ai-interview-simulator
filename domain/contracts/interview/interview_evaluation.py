@@ -44,6 +44,12 @@ class InterviewEvaluation(BaseModel):
     per_question_assessment: List[QuestionEvaluation]
     improvement_suggestions: List[str]
 
+    # Coaching sections (V1.0)
+    went_well: List[str] = Field(default_factory=list)
+    held_you_back: List[Dict] = Field(default_factory=list)
+    knowledge_gaps: List[Dict] = Field(default_factory=list)
+    next_strategy: List[Dict] = Field(default_factory=list)
+
     confidence: Confidence
 
     model_config = {"frozen": True}
