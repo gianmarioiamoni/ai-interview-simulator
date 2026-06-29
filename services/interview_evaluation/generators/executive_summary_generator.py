@@ -11,15 +11,18 @@ class ExecutiveSummaryGenerator:
         self._narrative_service = narrative_service
 
     def generate(
-        self, 
-        decision, 
-        overall_score, 
-        strongest, 
-        weakest, 
+        self,
+        decision,
+        overall_score,
+        strongest,
+        weakest,
         percentile,
         strongest_score,
         weakest_score,
         context_profile=None,
+        evaluations=None,
+        seniority_level: str = "mid",
+        role: str = "backend engineer",
     ):
 
         try:
@@ -32,6 +35,9 @@ class ExecutiveSummaryGenerator:
                 strongest_score=strongest_score,
                 weakest_score=weakest_score,
                 context_profile=context_profile,
+                evaluations=evaluations,
+                seniority_level=seniority_level,
+                role=role,
             )
         except Exception as e:
             logger.exception("executive_summary_generation_failed")

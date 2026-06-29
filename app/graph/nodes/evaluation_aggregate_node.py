@@ -55,6 +55,7 @@ class EvaluationAggregateNode:
                 interview_type=state.interview_type,
                 role=state.role.type,
                 context_profile=state.context_profile,
+                seniority_level=getattr(state, "seniority_level", "mid") or "mid",
             )
         except Exception as exc:
             logger.error("Interview evaluation failed: %s", exc)
