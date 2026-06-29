@@ -69,6 +69,7 @@ class InterviewEvaluationService:
         interview_type: InterviewType,
         role: RoleType,
         context_profile: Optional[InterviewContextProfile] = None,
+        seniority_level: str = "mid",
     ) -> InterviewEvaluation:
 
         # -----------------------------------------------------
@@ -169,6 +170,7 @@ class InterviewEvaluationService:
             interview_type=interview_type,
             role=role,
             context_profile=context_profile,
+            seniority_level=seniority_level,
         )
 
         # -----------------------------------------------------

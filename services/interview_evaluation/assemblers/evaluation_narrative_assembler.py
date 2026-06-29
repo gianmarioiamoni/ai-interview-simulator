@@ -72,6 +72,7 @@ class EvaluationNarrativeAssembler:
         interview_type: InterviewType,
         role: RoleType,
         context_profile: Optional[InterviewContextProfile] = None,
+        seniority_level: str = "mid",
     ) -> Dict[str, Any]:
         """
         Compute and return all narrative fields needed by InterviewEvaluation.
@@ -134,6 +135,9 @@ class EvaluationNarrativeAssembler:
             strongest_score,
             weakest_score,
             context_profile=context_profile,
+            evaluations=evaluations,
+            seniority_level=seniority_level,
+            role=role.value if hasattr(role, "value") else str(role),
         )
 
         if not executive_summary or not executive_summary.strip():
