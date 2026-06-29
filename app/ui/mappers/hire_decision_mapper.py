@@ -19,6 +19,20 @@ class HireDecisionMapper:
         HireDecision.HIRE: "green",
     }
 
+    READINESS_LABELS = {
+        HireDecision.NO_HIRE: "Not Ready Yet",
+        HireDecision.LEAN_NO_HIRE: "Needs Improvement",
+        HireDecision.LEAN_HIRE: "Nearly Ready",
+        HireDecision.HIRE: "Interview Ready",
+    }
+
+    READINESS_COLORS = {
+        HireDecision.NO_HIRE: "#dc2626",
+        HireDecision.LEAN_NO_HIRE: "#d97706",
+        HireDecision.LEAN_HIRE: "#2563eb",
+        HireDecision.HIRE: "#16a34a",
+    }
+
     # ---------------------------------------------------------
 
     @classmethod
@@ -27,6 +41,19 @@ class HireDecisionMapper:
             decision,
             decision.value.replace("_", " ").title(),
         )
+
+    # ---------------------------------------------------------
+
+    @classmethod
+    def to_readiness_label(cls, decision: HireDecision) -> str:
+        return cls.READINESS_LABELS.get(
+            decision,
+            decision.value.replace("_", " ").title(),
+        )
+
+    @classmethod
+    def to_readiness_color(cls, decision: HireDecision) -> str:
+        return cls.READINESS_COLORS.get(decision, "#4b5563")
 
     # ---------------------------------------------------------
 

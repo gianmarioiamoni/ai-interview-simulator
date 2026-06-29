@@ -1,45 +1,42 @@
 # app/ui/views/report/sections/overall_section.py
 
-from app.ui.views.report.components.badges import score_badge, badge
-from app.ui.mappers.gating_reason_mapper import map_gating_reason
+from app.ui.views.report.components.badges import score_badge, badge, score_band_badge
+from app.ui.mappers.hire_decision_mapper import HireDecisionMapper
+from domain.contracts.interview.hire_decision import HireDecision
+
+
+def _parse_decision(report) -> HireDecision | None:
+    """Resolve HireDecision enum from report, which may store a string label."""
+    hd = getattr(report, "_hire_decision_enum", None)
+    if hd is not None:
+        return hd
+    label_to_enum = {
+        "Hire": HireDecision.HIRE,
+        "Lean Hire": HireDecision.LEAN_HIRE,
+        "Lean No Hire": HireDecision.LEAN_NO_HIRE,
+        "No Hire": HireDecision.NO_HIRE,
+    }
+    raw = getattr(report, "hire_decision", "")
+    return label_to_enum.get(raw)
 
 
 def render_overall(report):
 
-    decision_badge = badge(report.hire_decision.upper(), "#2563eb")
+    decision_enum = _parse_decision(report)
 
-    # -----------------------------------------------------
-    # SCORE DISPLAY 
-    # -----------------------------------------------------
-
-    if report.raw_score != report.adjusted_score:
-        score_block = f"""
-        {score_badge(report.adjusted_score)}
-        <div style='font-size:12px;color:#374151'>
-            Base: {report.raw_score:.1f}
-        </div>
-        """
-    else:
-        score_block = score_badge(report.overall_score)
-
-    # -----------------------------------------------------
-    # GATING
-    # -----------------------------------------------------
-
-    if report.gating_triggered:
-        gating_block = f"""
-        <div style='color:#dc2626;font-weight:bold;'>
-            Gating Applied: {map_gating_reason(report.gating_reason)}
-        </div>
-        """
-    else:
-        gating_block = """
-        <div style='color:#16a34a;font-weight:bold;'>
-            No Gating Applied
-        </div>
-        """
+    readiness_label = (
+        HireDecisionMapper.to_readiness_label(decision_enum)
+        if decision_enum
+        else report.hire_decision
+    )
+    readiness_color = (
+        HireDecisionMapper.to_readiness_color(decision_enum)
+        if decision_enum
+        else "#4b5563"
+    )
 
     seniority_label = getattr(report, "seniority_level", "mid").capitalize()
+    role_label = getattr(report, "role", "").value if hasattr(getattr(report, "role", ""), "value") else str(getattr(report, "role", ""))
 
     context_profile = getattr(report, "context_profile", None)
     context_block = ""
@@ -70,17 +67,25 @@ def render_overall(report):
 """
 
     return f"""
-<h2>Overall Performance</h2>
+<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:20px;">
 
-<table>
-<tr>
-<td><strong>Overall Score</strong><br>{score_block}</td>
-<td><strong>Hiring Decision</strong><br>{decision_badge}</td>
-<td><strong>Hiring Confidence Score</strong><br>{score_badge(report.hiring_probability)}</td>
-<td><strong>Seniority Level</strong><br>{seniority_label}</td>
-</tr>
-</table>
+<h2 style="margin:0 0 4px 0;font-size:1.1em;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Interview Readiness</h2>
 
-{gating_block}
+<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+  <span style="background:{readiness_color};color:white;padding:8px 18px;border-radius:8px;font-size:1.1em;font-weight:bold;">
+    {readiness_label}
+  </span>
+  <div>
+    <span style="font-size:2em;font-weight:bold;color:#1e293b;">{report.overall_score:.0f}</span>
+    <span style="font-size:1em;color:#64748b;"> /100</span>
+    &nbsp;&nbsp;{score_band_badge(report.overall_score)}
+  </div>
+</div>
+
+<div style="color:#64748b;font-size:0.9em;">
+  {seniority_label} · {role_label.replace("_", " ").title()}
+</div>
+
 {context_block}
+</div>
 """
