@@ -47,6 +47,11 @@ docs/
 │   ├── deployment-huggingface.md         ← HF Spaces deploy [Recommended] MISSING
 │   └── ingestion-run.md                  ← dataset ingestion ops [Optional] MISSING
 │
+├── master-plan/
+│   ├── INDEX.md                          ← master plan index [Required]
+│   ├── PRD-V1.1-V1.2.md                 ← Product Requirements Document V1.1/V1.2 [Required]
+│   └── TDS-V1.1-V1.2.md                 ← Technical Design Specification V1.1/V1.2 [Required]
+│
 └── roadmap/
     └── roadmap.md                        ← feature roadmap [Required]
 ```
