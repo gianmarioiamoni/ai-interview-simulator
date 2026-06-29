@@ -69,9 +69,44 @@ class Settings(BaseSettings):
     humanizer_enabled: bool = True
 
     # Enable FOLLOW_UP decisions in the Humanizer policy engine.
-    # Requires humanizer_enabled=True. Disabled by default until V1.1
-    # (score propagation and timing fixes are prerequisites).
-    humanizer_follow_up_enabled: bool = False
+    # Requires humanizer_enabled=True. Activated in V1.1.
+    humanizer_follow_up_enabled: bool = True
+
+    # ── Follow-up configuration (single source of truth) ─────────────────────
+    # Score threshold to trigger a follow-up (Quality.OPTIMAL.rank() = 4).
+    follow_up_score_threshold: int = 4
+
+    # Maximum follow-up turns per interview session.
+    max_follow_ups_per_interview: int = 2
+
+    # Fraction of planned questions eligible for follow-up (0.0–1.0).
+    follow_up_percentage: float = 0.20
+
+    # Selector policy: "percentage" uses follow_up_percentage; "fixed" uses max_follow_ups.
+    follow_up_selector_policy: str = "percentage"
+
+    # Minimum character length for a generated follow-up message to be accepted.
+    follow_up_min_length: int = 20
+
+    # Maximum characters of the candidate answer passed into the humanizer prompt.
+    follow_up_max_input_chars: int = 800
+
+    # Minimum number of qualifying keywords (≥4 chars, non-stopword) that must
+    # overlap between last_answer and the generated follow-up message.
+    follow_up_min_keyword_overlap: int = 1
+
+    # Comma-separated InterviewArea values allowed for follow-up.
+    # Empty string means all WRITTEN areas are allowed.
+    follow_up_allowed_areas: str = ""
+
+    # Comma-separated QuestionType values allowed for follow-up.
+    follow_up_allowed_types: str = "written"
+
+    # Emit structured log entries for follow-up trigger/skip events.
+    follow_up_logging_enabled: bool = True
+
+    # Sanitize candidate answer input before humanizer prompt construction.
+    follow_up_sanitize_input: bool = True
 
     # ── Coding domain profile feature flags ──────────────────────────────────
     # Enable CodingDomainProfile-driven framing in coding question prompts.

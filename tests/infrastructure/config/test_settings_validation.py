@@ -73,5 +73,5 @@ class TestSettingsIntegration:
         s = _make_settings(openai_api_key="sk-test-key")
         assert s.chat_model == "gpt-4o-mini"
         assert s.humanizer_enabled is True
-        assert s.humanizer_follow_up_enabled is False
+        assert s.humanizer_follow_up_enabled is True
         assert s.llm_json_retry_attempts == 2

@@ -1,7 +1,7 @@
 # domain/contracts/interview_state/base.py
 
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, List
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, Dict, List, FrozenSet
 
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
 from domain.contracts.question.question import Question
@@ -25,6 +25,7 @@ from app.contracts.feedback_bundle import FeedbackBundle
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 from app.settings.constants import MAX_FOLLOW_UPS_PER_INTERVIEW
 from domain.contracts.interview_state.last_question_context import LastQuestionContext
+from domain.events.interview_event import InterviewEvent
 
 
 class InterviewStateBase(BaseModel):
@@ -81,7 +82,12 @@ class InterviewStateBase(BaseModel):
     last_question_context: LastQuestionContext | None = None
     question_display_text: str | None = None
 
-    events: list = Field(default_factory=list)
+    # Populated once at session start by FollowUpSelector.
+    # Contains the indices of questions eligible to trigger a follow-up.
+    # Never modified after initial population.
+    follow_up_eligible_indices: FrozenSet[int] = Field(default_factory=frozenset)
+
+    events: list[InterviewEvent] = Field(default_factory=list)
 
     last_feedback_bundle: Optional[FeedbackBundle] = None
 

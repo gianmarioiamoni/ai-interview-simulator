@@ -74,6 +74,11 @@ class Question(BaseModel):
     # Coding support
     coding_spec: Optional[CodingSpec] = None
 
+    # Follow-up eligibility flag.
+    # When False, question_node will not trigger a follow-up regardless of score.
+    # Default True preserves full backward compatibility for all existing questions.
+    supports_follow_up: bool = True
+
     # =========================================================
     # TYPE HELPERS
     # =========================================================
