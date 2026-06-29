@@ -1,6 +1,6 @@
 # app/ui/views/report/sections/dimension_section.py
 
-from app.ui.views.report.components.badges import score_badge
+from app.ui.views.report.components.badges import score_badge, score_band_badge
 from app.ui.views.report.components.tables import contribution_table
 
 
@@ -30,7 +30,7 @@ def render_dimensions(vm):
             justification_block = f"<p style='margin:6px 0 0 0;font-size:0.9em;color:#4b5563;'>{d.justification}</p>"
         dimension_html += f"""
 <div style="border:1px solid #ddd;padding:10px;margin-bottom:10px;border-radius:8px;">
-<strong>{d.name}</strong> - {score_badge(d.score)}<br>
+<strong>{d.name}</strong> &nbsp; {score_badge(d.score)} &nbsp; {score_band_badge(d.score)}<br>
 Impact: <strong>{d.impact}</strong><br>
 {justification_block}
 </div>

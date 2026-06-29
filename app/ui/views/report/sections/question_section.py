@@ -1,6 +1,6 @@
 # app/ui/views/report/sections/question_section.py
 
-from app.ui.views.report.components.badges import score_badge, badge
+from app.ui.views.report.components.badges import score_badge, badge, score_band_badge
 from app.ui.views.report.components.bars import test_progress_bar
 
 
@@ -62,7 +62,7 @@ def render_questions(report):
         html += f"""
 <div style="border:1px solid #ddd;padding:10px;margin-bottom:10px;border-radius:8px;">
 <strong>{q.question_prompt or q.question_id}</strong><br>
-Score: {score_badge(q.score)}<br><br>
+Score: {score_badge(q.score)} &nbsp; {score_band_badge(q.score)}<br><br>
 {q.feedback}
 {strengths_block}
 {weaknesses_block}
