@@ -10,15 +10,25 @@ app_file: app.py
 
 # AI Interview Simulator
 
-AI-powered technical interview simulation platform. Generates adaptive, context-aware interview questions across Behavioral, Technical Knowledge, and Coding domains. Evaluates answers with dimensional scoring, produces humanized conversational framing, and exports structured PDF/JSON reports.
+AI-powered technical interview simulation and coaching platform. Generates adaptive, context-aware interview questions across Written, Coding, and Database domains. Evaluates answers with dimensional scoring, produces a personalized coaching report, and helps candidates prepare for real technical interviews.
 
 ## Features
 
-- Domain-aware question generation (BG, TK, Coding, SQL)
+- Domain-aware question generation (Written, Coding, SQL)
 - LangGraph-based interview graph with adaptive flow
 - Humanizer subsystem for conversational question framing
-- Business context profiles (job/company description integration)
-- Dimensional answer evaluation with hire/no-hire decision
+- Business context profiles (job description and company description integration)
+- Dimensional answer evaluation with Interview Readiness decision
+- Coaching-first final report:
+  - Executive Summary (250–350 words, Senior EM tone)
+  - What You Did Well — concrete, evidence-bound observations
+  - What Held You Back — explains *why* weaknesses mattered to the interviewer
+  - Knowledge Gap Summary — grouped by category (Architecture, Distributed Systems, etc.)
+  - Next Interview Strategy — exactly 3 priorities with impact level
+  - Score band labels (EXCEPTIONAL / STRONG / ACCEPTABLE / WEAK / INCORRECT)
+  - Plain-English Interview Benchmark (percentile without statistical jargon)
+- Field-aware JSON repair for coding question generation
+- Signal Enrichment Strategy B — written-only candidates scored fairly
 - PDF and JSON report export
 - Chroma vector corpus with HF Dataset backup/restore
 - Gradio UI — deployable locally or on Hugging Face Spaces

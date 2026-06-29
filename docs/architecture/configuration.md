@@ -87,7 +87,52 @@ Configured in `services/decision_engine/decision_policy.py` `POLICY["global"]`:
 
 ---
 
-## 4. `.env.example`
+## 4. Evaluation Governance Constants
+
+All constants live in `infrastructure/config/evaluation.py`. They are **never overridden by environment variables** — changes require a code deploy.
+
+### Hire Decision Thresholds
+
+| Decision | Score band | Notes |
+|---|---|---|
+| HIRE | ≥ 85 | Intentionally high; reflects senior interview bar |
+| LEAN_HIRE | 70–84 | Expected outcome for good-but-not-exceptional candidates |
+| LEAN_NO_HIRE | 60–69 | Needs improvement |
+| NO_HIRE | < 60 | Significant gaps |
+
+### Dimension Gate Rules
+
+Applied by `HiringDecisionEngine` before assigning the final decision. A gate failure applies a score penalty.
+
+| Dimension | Gate threshold | Penalty |
+|---|---|---|
+| System Design | < 60 | × 0.90 |
+| Technical Depth | < 50 | × 0.95 |
+
+### Level Labels
+
+Recomputed from `adjusted_score` (post-gating) — not from the raw pre-gating score.
+
+| Level | Score band |
+|---|---|
+| EXCELLENT | ≥ 80 |
+| STRONG | 65–79 |
+| AVERAGE | 50–64 |
+| POOR | < 50 |
+
+### Signal Enrichment (Strategy B — R6.26)
+
+Enrichment alpha: `ENRICHMENT_ALPHA = 0.30`
+
+Applied only to dimensions that received at least one execution-based signal (`execution_dims`). Dimensions without execution evidence use the base score unchanged. This prevents written-only candidates from being penalized by a missing signal.
+
+### Calibration Note (R6.28)
+
+The HIRE threshold (85) is intentionally conservative. In a synthetic population of 200 candidates, approximately 8% fall in the HIRE band. This aligns with FAANG-style hiring bar. For a mid-size company context, the threshold may be adjusted in a future release.
+
+---
+
+## 5. `.env.example`
 
 ```dotenv
 # Required
