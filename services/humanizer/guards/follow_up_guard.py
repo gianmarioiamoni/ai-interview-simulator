@@ -7,26 +7,26 @@ from services.humanizer.guards.follow_up_guard_result import FollowUpGuardResult
 
 
 # ---------------------------------------------------------------------------
-# Constants — rule identifiers (stable strings used in failed_rules)
+# Constants — stable rule codes (FG-prefixed, referenced in failed_rules)
 # ---------------------------------------------------------------------------
 
-_R_MIN_LENGTH       = "G-R1:min_length"
-_R_MAX_LENGTH       = "G-R1b:max_length"
-_R_KEYWORD_OVERLAP  = "G-R2:keyword_overlap"
-_R_AREA_ANCHOR      = "G-R3:area_anchor"
-_R_NOT_DUPLICATE    = "G-R4:not_duplicate"
-_R_NOT_JSON         = "G-R5:not_json"
-_R_NOT_MARKDOWN     = "G-R6:not_markdown"
-_R_NO_PLACEHOLDER   = "G-R7:no_placeholder"
-_R_HAS_QUESTION     = "G-R8:has_question_mark"
-_R_NO_CODE_BLOCK    = "G-R9:no_code_block"
-_R_NO_HTML_XML      = "G-R10:no_html_xml"
-_R_NO_INJECTION     = "G-R11:no_prompt_injection"
-_R_NO_ROLE_OVERRIDE = "G-R12:no_role_override"
-_R_NO_SYS_LEAKAGE   = "G-R13:no_system_leakage"
-_R_NO_SQL           = "G-R14:no_sql_payload"
-_R_NO_PYTHON        = "G-R15:no_python_payload"
-_R_NO_TEMPLATE      = "G-R16:no_template_text"
+_R_MIN_LENGTH       = "FG001:min_length"
+_R_MAX_LENGTH       = "FG002:max_length"
+_R_KEYWORD_OVERLAP  = "FG003:keyword_overlap"
+_R_AREA_ANCHOR      = "FG004:area_anchor"
+_R_NOT_DUPLICATE    = "FG005:not_duplicate"
+_R_NOT_JSON         = "FG006:not_json"
+_R_NOT_MARKDOWN     = "FG007:not_markdown"
+_R_NO_PLACEHOLDER   = "FG008:no_placeholder"
+_R_HAS_QUESTION     = "FG009:has_question_mark"
+_R_NO_CODE_BLOCK    = "FG010:no_code_block"
+_R_NO_HTML_XML      = "FG011:no_html_xml"
+_R_NO_INJECTION     = "FG012:no_prompt_injection"
+_R_NO_ROLE_OVERRIDE = "FG013:no_role_override"
+_R_NO_SYS_LEAKAGE   = "FG014:no_system_leakage"
+_R_NO_SQL           = "FG015:no_sql_payload"
+_R_NO_PYTHON        = "FG016:no_python_payload"
+_R_NO_TEMPLATE      = "FG017:no_template_text"
 
 _ALL_RULES: tuple[str, ...] = (
     _R_MIN_LENGTH, _R_MAX_LENGTH, _R_KEYWORD_OVERLAP, _R_AREA_ANCHOR,
@@ -312,7 +312,7 @@ def _check_keyword_overlap(
 ) -> None:
     answer_kw = _extract_keywords(answer)
     if not answer_kw:
-        warnings.append("G-R2:no_qualifying_keywords_in_answer")
+        warnings.append("FG003:no_qualifying_keywords_in_answer")
         return
     follow_up_kw = _extract_keywords(follow_up)
     overlap = len(answer_kw & follow_up_kw)
@@ -332,7 +332,7 @@ def _check_area_anchor(
         if len(t) >= _MIN_WORD_LEN
     }
     if not area_tokens:
-        warnings.append("G-R3:no_qualifying_area_tokens")
+        warnings.append("FG004:no_qualifying_area_tokens")
         return
     lower_follow_up = follow_up.lower()
     if not any(token in lower_follow_up for token in area_tokens):
