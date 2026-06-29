@@ -13,6 +13,7 @@ from domain.contracts.question.question import Question
 from domain.contracts.user.role import RoleType
 
 from services.interview_scoring.interview_scoring_engine import InterviewScoringEngine
+from services.interview_scoring.components.dimension_scorer import AREA_TO_DIMENSION
 from services.narrative_service import NarrativeService
 from services.decision_engine.decision_engine import DecisionEngine
 
@@ -102,9 +103,23 @@ class InterviewEvaluationService:
 
         dimension_signals = self._signal_enrichment.extract_signals(question_results)
 
+        # Dimensions that have at least one execution-based question result.
+        # Only these dimensions receive signal enrichment; written-only dimensions
+        # pass through unchanged (absence of execution ≠ execution failure).
+        question_map = {q.id: q for q in questions}
+        execution_dims: set[str] = set()
+        for qr in question_results:
+            if qr.execution is not None:
+                q = question_map.get(qr.question_id)
+                if q is not None:
+                    dim = AREA_TO_DIMENSION.get(q.area)
+                    if dim is not None:
+                        execution_dims.add(dim.value if hasattr(dim, "value") else dim)
+
         dimension_scores = self._signal_enrichment.enrich_scores(
             base_dimension_scores=base_dimension_scores,
             dimension_signals=dimension_signals,
+            execution_dims=execution_dims,
         )
 
         # -----------------------------------------------------

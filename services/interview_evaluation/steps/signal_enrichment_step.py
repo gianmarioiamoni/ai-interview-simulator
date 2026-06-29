@@ -77,10 +77,19 @@ class SignalEnrichmentStep:
         self,
         base_dimension_scores: Dict,
         dimension_signals: Dict[str, float],
+        execution_dims: set[str] | None = None,
     ) -> Dict:
         """
         Blend base dimension scores with execution signals using ENRICHMENT_ALPHA.
         Returns a new dict with the same keys as *base_dimension_scores*.
+
+        Enrichment is applied only to dimensions in *execution_dims* (i.e. those
+        for which at least one execution-based question exists).  Dimensions absent
+        from *execution_dims* pass through unchanged so that missing execution
+        evidence is not penalised as if execution had completely failed.
+
+        When *execution_dims* is None (backwards-compatible default) enrichment
+        is applied to every dimension, preserving the original behaviour.
         """
 
         enriched_scores: Dict = {}
@@ -88,6 +97,11 @@ class SignalEnrichmentStep:
         for dim, base_score in base_dimension_scores.items():
 
             dim_key = dim.value if hasattr(dim, "value") else dim
+
+            if execution_dims is not None and dim_key not in execution_dims:
+                enriched_scores[dim] = base_score
+                continue
+
             signal = dimension_signals.get(dim_key, 0.0)
 
             enriched = (
