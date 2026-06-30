@@ -26,6 +26,8 @@ from domain.contracts.interview.interview_context_profile import InterviewContex
 from app.settings.constants import MAX_FOLLOW_UPS_PER_INTERVIEW
 from domain.contracts.interview_state.last_question_context import LastQuestionContext
 from domain.events.interview_event import InterviewEvent
+from domain.contracts.reasoning.interview_memory import InterviewMemory
+from domain.contracts.reasoning.reasoner_decision import ReasonerDecision
 
 
 class InterviewStateBase(BaseModel):
@@ -90,6 +92,20 @@ class InterviewStateBase(BaseModel):
     events: list[InterviewEvent] = Field(default_factory=list)
 
     last_feedback_bundle: Optional[FeedbackBundle] = None
+
+    # --- Interview Reasoner (V1.1 M2, ADR-032) ---
+    # Single-writer: InterviewReasoner only.
+    # Supersedes interview_memory_context (deprecated below).
+    interview_memory: InterviewMemory = Field(default_factory=InterviewMemory)
+
+    # Advisory output of the last ReasonerNode cycle.
+    # Transient: meaningful only for the immediately following nodes.
+    # Reset to None at the start of each new question cycle.
+    current_reasoning_decision: ReasonerDecision | None = None
+
+    # DEPRECATED (V1.1 M2) — use interview_memory instead.
+    # Still populated by AdaptiveInterviewMemoryBridge for backward compat.
+    # Will be removed in M3 (ADR-032).
 
     allowed_actions: list[ActionType] = Field(default_factory=list)
 

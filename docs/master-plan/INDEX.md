@@ -1,6 +1,6 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1 M2 Contract Freeze (2026-06-30). ADR-028–040 added. EPIC-04 contracts frozen.
+**Status:** V1.1 M2 Contract Freeze (2026-06-30). ADR-028–041 added. EPIC-04 contracts frozen.
 
 | Document | File | Scope |
 |---|---|---|
@@ -79,6 +79,7 @@
 | ADR-038 | InterviewMemory Internal Composition (5 substructures) | **Accepted — M2** |
 | ADR-039 | Evidence Freshness — Architectural Reservation (V1.2) | **Accepted — Deferred** |
 | ADR-040 | ProfileDimension: ENGINEERING_JUDGMENT | **Accepted — M2** |
+| ADR-041 | Reasoner Explainability — Internal Audit Trail (ReasoningTrace) | **Accepted — Architecture; impl deferred** |
 
 ## Document Versions
 
