@@ -1,8 +1,8 @@
 # Technical Design Specification — AI Interview Simulator V1.1 / V1.2
 
-**Version:** 1.0-draft  
-**Date:** 2026-06-29  
-**Status:** Approved for Implementation  
+**Version:** 1.1  
+**Date:** 2026-06-30  
+**Status:** V1.1 M1 Frozen — Architecture Baseline  
 **Authors:** Engineering Team  
 **Supersedes:** ADRs 001–015 (V1.0 era)
 
@@ -933,79 +933,155 @@ LanguageAdapterPort:
 
 ## 9. Follow-up Question Engine
 
-### 9.1 Decision Flow
+> **Status: IMPLEMENTED — V1.1 M1 (Frozen 2026-06-30)**
+> This section describes the **shipped implementation**. The original TDS §9 design (corpus-first, InterviewReasoner-gated, ChromaDB-backed) was revised during M1-1 Architecture Review. See ADR-019 (revised), ADR-024, ADR-025.
+
+### 9.1 Runtime Pipeline
 
 ```
-EvaluationResult received
+session start (start.py)
         │
         ▼
-InterviewReasoner: should_follow_up?
-        │
-   Yes  │  No
-        ▼
-FollowUpService: corpus_lookup(answer_embedding, topic)
-        │
-  HIT   │  MISS
-        ▼         ▼
-Return  Generate
-corpus  LLM follow-up
-item    question
+FollowUpSelector.select()
+  → frozenset[int] stored in state.follow_up_eligible_indices (once only)
         │
         ▼
-OutputValidationLayer: validate follow-up
+question_node (per WRITTEN question)
         │
-  PASS  │  FAIL
-        ▼    ▼
-Return  Retry (max 2)
+   index in eligible_indices?
+   supports_follow_up=True?
+   follow_up_count < max?
+        │
+       YES
+        ▼
+_attempt_follow_up()
         │
         ▼
-max_follow_up_pct_check
+_build_follow_up_prompt_input()
         │
- Under  │  Over cap
-limit   ▼
-        Skip follow-up → proceed to next question
+        ▼
+HumanizerService.generate_follow_up()
+        │
+        ▼
+FollowUpPromptBuilder → PromptLoader → follow_up_generation.txt → PromptRenderer
+        │
+        ▼
+LLM.invoke()
+        │
+        ▼
+FollowUpParser (STRICT)
+  ← FollowUpParseError on any contract violation
+        │
+        ▼
+FollowUpGuard.validate() — 17 deterministic rules
+        │
+  accepted?
+  YES          NO
+   │            │
+   ▼            ▼
+display     FollowUpSkippedEvent
+follow-up   → fallback to V1.0 humanizer
+follow-up-  → interview continues
+TriggeredEvent
+state update
 ```
 
-### 9.2 Generation Policy
+### 9.2 Selector Design
 
-**Trigger conditions (all must be satisfied):**
-- `EvaluationResult.overall_score` in range [4.0, 8.5] — scores below 4.0 indicate answer too weak; above 8.5 indicates complete answer
-- At least one evaluation dimension has `score < 7.0` and `is_improvable: true`
-- `InterviewReasoner.next_action == "follow_up"`
-- `follow_up_count_this_session < max_follow_up_pct * total_questions_planned`
-- No identical follow-up topic has been used in this session
+- **Algorithm:** `FollowUpSelector.select(total_questions, planned_areas, settings)`
+- **Quota:** `policy="percentage"` → `floor(total_questions × follow_up_percentage)`, capped at `max_follow_ups_per_interview`
+- **Constraints:** index 0 excluded; last index excluded; no two consecutive indices
+- **Determinism:** Pure function — same inputs always produce same `frozenset[int]`
+- **Wiring:** Called once in `app/ui/state_handlers/start.py` after questions are built, before `run_interview_graph()`
 
-**Max follow-up percentage:** 25% of planned questions (configurable via `InterviewConfig.max_follow_up_pct`)
+### 9.3 Prompt Architecture
 
-### 9.3 Replacement Policy
+- **Prompt file:** `app/prompts/humanizer/follow_up_generation.txt` (Jinja2 template)
+- **Loader:** `PromptLoader.load("humanizer/follow_up_generation.txt")`
+- **Renderer:** `PromptRenderer` with `StrictUndefined` — fails fast on missing variables
+- **11 template variables:** `question_area`, `previous_question`, `previous_answer`, `previous_feedback`, `candidate_level`, `role`, `seniority`, `job_description`, `company_description`, `business_context`, `follow_up_type`
+- **No hardcoded prompt strings in Python code**
 
-- A corpus-retrieved follow-up question may be replaced by a generated one if:
-  - Corpus retrieval similarity score < 0.75 (low relevance)
-  - Retrieved question topic does not match the weak dimension identified by `EvaluationEngine`
-- Generated follow-ups are added to the corpus after validation (corpus self-growth).
+### 9.4 Parser Contract (STRICT — ADR-019)
 
-### 9.4 Selection Algorithm
+- **Class:** `services/humanizer/follow_up/follow_up_parser.py`
+- **Raises `FollowUpParseError` (always with `.raw`) on:** markdown fence, extra surrounding text, invalid JSON, non-object root, missing fields, unknown fields, schema violations
+- **`FollowUpOutput` schema (frozen, extra=forbid):**
+  ```json
+  {
+    "follow_up_question": "<string, contains '?'>",
+    "reasoning": "<string>",
+    "topic_anchor": "<string>",
+    "confidence": <float 0.0..1.0>
+  }
+  ```
+- Guard always called after successful parse
 
-1. Embed candidate answer using `text-embedding-3-small`.
-2. Query ChromaDB follow-up corpus with: `topic_filter = weak_dimension_topic`, `n_results = 5`.
-3. Re-rank by: `relevance_score * 0.6 + topic_match_score * 0.4`.
-4. Select top-ranked item if score ≥ 0.75.
-5. Fallback to LLM generation if no item meets threshold.
+### 9.5 Guard Design (17 Deterministic Rules)
 
-### 9.5 Integration with Interview Reasoner
+| ID | Rule |
+|----|------|
+| FG001 | min_length ≥ `settings.follow_up_min_length` |
+| FG002 | max_length ≤ 2000 |
+| FG003 | keyword_overlap ≥ `settings.follow_up_min_keyword_overlap` |
+| FG004 | area_anchor token present in output |
+| FG005 | not_duplicate (Levenshtein similarity < 0.70) |
+| FG006 | not_json |
+| FG007 | not_markdown |
+| FG008 | no_placeholder (`{{...}}`) |
+| FG009 | has_question_mark |
+| FG010 | no_code_block |
+| FG011 | no_html_xml |
+| FG012 | no_prompt_injection |
+| FG013 | no_role_override |
+| FG014 | no_system_leakage |
+| FG015 | no_sql_payload |
+| FG016 | no_python_payload |
+| FG017 | no_template_text |
 
-- `InterviewReasoner` emits `FollowUpTrigger`: `{ weak_dimension: str, target_depth: shallow | deep, rationale: str }`.
-- `FollowUpService` consumes `FollowUpTrigger` to constrain corpus search and generation prompt.
-- `InterviewReasoner` is authoritative on follow-up necessity; `FollowUpService` handles selection mechanics.
+- `accepted = len(failed_rules) == 0`
+- `score` is diagnostic only; never influences `accepted`
+- `failed_rules` use stable FG-prefixed codes
 
-### 9.6 Failure Recovery Design
+### 9.6 Failure Recovery
 
 | Failure | Recovery |
 |---------|----------|
-| Corpus empty | Immediately fallback to LLM generation |
-| LLM generation fails validation (2 retries) | Skip follow-up; proceed to next main question; log `FollowUpSkippedEvent` |
-| Follow-up cap exceeded | Skip follow-up; log `FollowUpCapExceededEvent`; no LLM call made |
-| OutputValidationError on generated follow-up | Discard; do not add to corpus; retry once |
+| No `last_question_context` | `FollowUpSkippedEvent(reason="no_context")` → V1.0 fallback |
+| `FollowUpParseError` | `FollowUpSkippedEvent(reason="parse_error")` → V1.0 fallback |
+| Guard rejected | `FollowUpSkippedEvent(reason="guard_rejected", failed_rules=...)` → V1.0 fallback |
+| Generic LLM exception | Logged `follow_up_generation_failed`; V1.0 fallback |
+| `supports_follow_up=False` | V1.1 skipped silently; V1.0 runs |
+| `follow_up_count >= max` | `_is_follow_up_eligible` returns False; V1.0 runs |
+
+Interview is **never interrupted** by follow-up failures.
+
+### 9.7 State Updates
+
+| Field | When updated |
+|-------|-------------|
+| `follow_up_count` | +1 on V1.1 acceptance |
+| `last_humanizer_follow_up` | `True` on V1.1 acceptance |
+| `follow_up_eligible_indices` | Set once at session start; never modified |
+| `events` | Appended with `FollowUpTriggeredEvent` or `FollowUpSkippedEvent` |
+
+### 9.8 Configuration (Single Source of Truth: `settings.py`)
+
+All 12 follow-up parameters live in `infrastructure/config/settings.py`:
+`follow_up_score_threshold`, `max_follow_ups_per_interview`, `follow_up_percentage`, `follow_up_selector_policy`, `follow_up_min_length`, `follow_up_max_input_chars`, `follow_up_min_keyword_overlap`, `follow_up_allowed_areas`, `follow_up_allowed_types`, `follow_up_logging_enabled`, `follow_up_sanitize_input`, `humanizer_follow_up_enabled`.
+
+`MAX_FOLLOW_UPS_PER_INTERVIEW` in `app/settings/constants.py` is a re-export from `settings.max_follow_ups_per_interview` for backward compatibility.
+
+---
+
+### 9.9 M2 Backlog (deferred from M1)
+
+- Score gating on V1.1 path (ADR-E: intentionally omitted from M1)
+- Guard retry (max 1 retry on guard failure) — ADR-F
+- `humanizer_v2.txt` area anchoring slot
+- Event field alignment with ARCH-REVIEW spec
+- Batch-mode selector area filter refinement
+- Distinct `reason="llm_fail"` event code
 
 ---
 
@@ -1397,27 +1473,91 @@ Session list → Select session → Replay mode selection (full / selective)
 
 ---
 
-### ADR-019: Follow-up Question Engine Design
+### ADR-019: Follow-up Question Engine Design (Revised — V1.1 M1)
 
-**Context:** V1.0 has a `FollowUpService` that generates follow-up questions via LLM on every trigger. No corpus-first strategy exists. No cap enforcement exists. No integration with session reasoning exists.
+**Context:** V1.0 has a `HumanizerPolicyEngine` that can emit a `FOLLOW_UP` decision for V1.0 humanizer sessions. The original TDS §9 designed a corpus-first, `InterviewReasoner`-gated, ChromaDB-backed follow-up engine. During M1-1 Architecture Review, this design was revised to a dedicated Humanizer subsystem pipeline that does not require `InterviewReasoner`, ChromaDB corpus, or a separate `FollowUpService`.
 
-**Decision:** Extend `FollowUpService` with a corpus-first selection algorithm backed by ChromaDB. Add `InterviewReasoner` as the authoritative decision-maker for follow-up triggering. Enforce a 25% follow-up cap via `domain/policies`. LLM generation is a fallback only.
+**Decision (V1.1 M1 Shipped):**
+1. `FollowUpSelector` pre-selects eligible indices once at session start (slot-based, deterministic).
+2. A dedicated V1.1 pipeline (`FollowUpPromptBuilder` → `follow_up_generation.txt` → LLM → `FollowUpParser` → `FollowUpGuard`) runs in `QuestionNode` at eligible slots.
+3. The V1.0 Humanizer path is retained as-is; V1.1 pipeline is additive and non-destructive.
+4. Graceful fallback to V1.0 on any V1.1 failure.
+5. `settings.py` is the single source of truth for all follow-up configuration.
+6. Score gating intentionally omitted from V1.1 (see ADR-E below).
 
 **Rationale:**
-- Corpus-first reduces LLM calls for follow-ups by an estimated 40%.
-- `InterviewReasoner` centralizes all session trajectory decisions; `FollowUpService` focuses on selection mechanics (SRP).
-- Cap enforcement in the domain policy layer ensures consistent application regardless of UI or API entry point.
-- Self-growing corpus (validated follow-ups added back) improves retrieval quality over time.
+- Avoids introducing `InterviewReasoner`, ChromaDB follow-up corpus, and embedding calls in M1.
+- Dedicated pipeline (SRP) maintains independence from V1.0 humanizer.
+- Slot-based selection is fully deterministic and testable without real LLM.
+- All 17 guard rules are deterministic; no embeddings required in V1.1.
 
 **Alternatives Rejected:**
-- *Always-generate follow-ups via LLM:* Higher cost; no quality improvement over corpus retrieval.
-- *Follow-up cap enforced in graph node:* Business rule belongs in domain layer; graph nodes should not embed policy.
-- *No cap:* Risk of interview becoming follow-up-dominated; degrades candidate experience.
+- *Corpus-first (original TDS §9 design):* Requires ChromaDB seeding; deferred to V1.2.
+- *InterviewReasoner gating:* Out of scope for M1; deferred to M2.
+- *Retry on guard failure:* Risk of compounding latency in happy path; deferred to V1.2 (ADR-F).
 
 **Consequences:**
-- Follow-up corpus must be seeded before V1.1 launch (minimum 50 entries per topic domain).
-- Corpus quality gate required: generated follow-ups validated before corpus insertion.
-- `InterviewReasoner` introduces a new dependency in the LangGraph node sequence.
+- Follow-up triggering is slot-based (pre-selected at session start), not score-based.
+- Follow-up corpus strategy deferred to V1.2.
+- `FollowUpSkippedEvent` replaces `FollowUpCapExceededEvent` (H7 — naming simplified).
+
+---
+
+### ADR-024: Follow-up Selector Independence from Score Gating (ADR-E)
+
+**Status: Accepted**
+
+**Context:** The M1-3 Acceptance Criteria defined a FOLLOW_UP_SCORE_THRESHOLD gating mechanism that would condition V1.1 pipeline entry on `last_answer_score >= threshold`. During M1-5D/M1-6 implementation, this was intentionally removed.
+
+**Decision:** V1.1 does not gate follow-up generation on answer quality scores. Slot-based selection (pre-determined at session start) is the only gating mechanism for V1.1.
+
+**Rationale:** Score propagation across the LangGraph node sequence introduces ordering dependencies. Slot-based approach is deterministic and avoids coupling to the evaluation subsystem. Score gating can be added in M2 as an additional filter inside `_is_follow_up_eligible`.
+
+**Consequences:** Follow-up may be attempted for any quality answer at an eligible slot. The `FollowUpGuard` answer-relevance rule (FG003) provides a content-based quality gate.
+
+---
+
+### ADR-025: Guard Retry Deferred to V1.2 (ADR-F)
+
+**Status: Accepted**
+
+**Context:** The original ARCH-REVIEW-M1-1 proposed optional retry on guard rejection (max 1 retry). Not implemented in M1.
+
+**Decision:** Guard retry not implemented in V1.1 M1. A single guard rejection immediately emits `FollowUpSkippedEvent` and falls back to V1.0.
+
+**Rationale:** Retry doubles worst-case LLM call latency. V1.1 baseline establishes guard accuracy data; retry strategy should be informed by real rejection rates before implementation.
+
+**Consequences:** Guard rejections result in V1.0 fallback. `FollowUpSkippedEvent(reason="guard_rejected")` carries `failed_rules` for analysis.
+
+---
+
+### ADR-026: Dedicated Follow-up Prompt File (ADR-C)
+
+**Status: Accepted**
+
+**Context:** TDS originally implied a `humanizer_v2.txt` prompt. Implementation uses a dedicated `follow_up_generation.txt`.
+
+**Decision:** Follow-up generation uses `app/prompts/humanizer/follow_up_generation.txt`, loaded via `PromptLoader`. Not a modification of existing `humanizer_v1.txt` or a `humanizer_v2.txt`.
+
+**Rationale:** Separation of concerns (SRP). The V1.0 humanizer prompt and follow-up prompt serve different purposes. Sharing a prompt creates coupling and reduces clarity.
+
+**Consequences:** Any changes to follow-up LLM behavior are isolated to `follow_up_generation.txt` without risk of affecting V1.0 humanizer.
+
+---
+
+### ADR-027: FollowUpSelector Determinism (ADR-D)
+
+**Status: Accepted**
+
+**Context:** M1-3 required deterministic slot selection.
+
+**Decision:** `FollowUpSelector.select()` is a pure function. Same `(total_questions, planned_areas, settings_snapshot)` always produces same `frozenset[int]`. No random seed, no mutable state.
+
+**Rationale:** Determinism enables reproducible testing without mocking random; simplifies debugging of session behavior.
+
+**Consequences:** Distribution algorithm uses fixed center-offset logic, not random sampling.
+
+---
 
 ---
 
@@ -1607,9 +1747,33 @@ Session list → Select session → Replay mode selection (full / selective)
 
 ## 16. Master Implementation Plan
 
+> **V1.1 M1 STATUS: FROZEN (2026-06-30)**
+> The TDS §16 plan below reflects the original pre-implementation plan for reference.
+> The follow-up engine (originally called M1-2) was implemented in the single M1 milestone.
+> M2 starts from the M1 frozen baseline. See §9.9 for M2 backlog items.
+
 ### V1.1 Implementation Roadmap
 
-#### Milestone M1-1: Security Foundation
+#### Milestone M1: Follow-up Question Engine — COMPLETED (Frozen 2026-06-30)
+
+**Status: FROZEN**
+
+**Delivered:**
+- `FollowUpSelector` (deterministic slot selection, ADR-027)
+- `FollowUpPromptBuilder` + `follow_up_generation.txt` (ADR-026)
+- STRICT `FollowUpParser` + `FollowUpParseError`
+- `FollowUpGuard` (17 deterministic rules FG001–FG017)
+- `HumanizerService.generate_follow_up()`
+- `QuestionNode` V1.1 integration with graceful V1.0 fallback
+- `FollowUpTriggeredEvent`, `FollowUpSkippedEvent`
+- `settings.py` as single configuration source
+- 44/44 Acceptance Gates PASS; 186 dedicated tests; 1,760 total tests
+
+**M2 Baseline:** All future follow-up improvements build on this frozen baseline.
+
+---
+
+#### Milestone M1-1 (Original Plan): Security Foundation
 
 **Audit (before starting):**
 - Review all 6 LLM call sites; document input field types and origins.
@@ -1651,7 +1815,9 @@ Session list → Select session → Replay mode selection (full / selective)
 
 ---
 
-#### Milestone M1-2: Interview Reasoner and Follow-up Engine
+#### Milestone M1-2 (Original Plan — SUPERSEDED): Interview Reasoner and Follow-up Engine
+
+> **SUPERSEDED:** The follow-up engine was implemented in M1 without `InterviewReasoner`, `FollowUpService`, or ChromaDB corpus (see TDS §9 revised, ADR-019 revised). This original plan is retained for historical reference only.
 
 **Audit (before starting):**
 - Review V1.0 follow-up decision logic in LangGraph node; document current trigger conditions.

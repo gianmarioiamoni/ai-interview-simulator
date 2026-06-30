@@ -33,8 +33,11 @@ DEFAULT_INTERVIEW_LENGTH = 20
 # 20% of base questions receive an adaptive follow-up (Phase 7E-D).
 DEFAULT_FOLLOWUP_RATE = 0.20
 
-# Maximum consecutive follow-ups per interview (unchanged).
-MAX_FOLLOW_UPS_PER_INTERVIEW = 2
+# Maximum consecutive follow-ups per interview.
+# Single source of truth: infrastructure/config/settings.py (max_follow_ups_per_interview).
+# This re-export preserves backward compatibility for all existing imports.
+from infrastructure.config.settings import settings as _settings
+MAX_FOLLOW_UPS_PER_INTERVIEW: int = _settings.max_follow_ups_per_interview
 
 # Technical interview area weights (must sum to 1.0).
 # Validated by Phase 7E-C (practical allocation) and Phase 7E-F.

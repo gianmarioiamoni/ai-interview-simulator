@@ -1,8 +1,8 @@
 # Product Requirements Document — AI Interview Simulator V1.1 / V1.2
 
-**Status:** Draft  
-**Version:** 1.0  
-**Date:** 2026-06-29  
+**Status:** V1.1 M1 Released  
+**Version:** 1.1  
+**Date:** 2026-06-30  
 **Owner:** Product  
 **Audience:** Engineering, Product, Stakeholders
 
@@ -216,34 +216,32 @@ The Hybrid Question Intelligence architecture (ADR-004) limits generation to con
 
 ### EPIC-03: Follow-up Question Engine
 
-**Purpose:** Enable the Humanizer subsystem to generate contextual follow-up questions for high-quality answers, deepening conversational realism and probing candidate depth.
+**Status: COMPLETED — V1.1 M1 (Frozen 2026-06-30)**
+
+**Purpose:** Enable the Humanizer subsystem to generate contextual follow-up questions anchored to the candidate's previous answer, deepening conversational realism and probing candidate depth.
 
 **Business Value:** Elevates the platform from a static question list to a genuine conversational interview simulation. High-quality candidate answers deserve deeper exploration — matching real interviewer behaviour.
 
 **User Story:** As a candidate who gives a strong answer, I want the AI to probe deeper with a contextual follow-up, so that I can demonstrate — and stress-test — the full extent of my knowledge.
 
-**Functional Requirements:**
-- `HUMANIZER_FOLLOW_UP_ENABLED` flag activates `FOLLOW_UP` policy branch.
-- Follow-up is triggered when `last_answer_score >= FOLLOW_UP_SCORE_THRESHOLD (4)`.
-- Maximum 2 follow-ups per interview (`MAX_FOLLOW_UPS_PER_INTERVIEW`).
-- Follow-ups are non-consecutive (cannot trigger back-to-back).
-- Follow-up questions are conversational only (Model A): no new `Question` object, no new `planned_areas` entry, no independent evaluation.
-- `question_display_text` is set correctly for follow-up output via `question_node`.
-- LLM failure in follow-up generation falls back to `DIRECT_QUESTION` policy.
+**Shipped Implementation (V1.1 M1):**
+- `FollowUpSelector` pre-selects eligible question indices once at session start (slot-based, deterministic).
+- Dedicated follow-up pipeline: `FollowUpPromptBuilder` → external `follow_up_generation.txt` prompt → LLM → STRICT `FollowUpParser` → `FollowUpGuard` (17 deterministic rules).
+- `HumanizerService.generate_follow_up()` added without modifying existing `humanize()`.
+- `QuestionNode` checks `follow_up_eligible_indices`, `supports_follow_up`, and `follow_up_count < max` before entering V1.1 path.
+- Graceful fallback to V1.0 on any failure (parse error, guard rejection, missing context, LLM exception).
+- `FollowUpTriggeredEvent` and `FollowUpSkippedEvent` emitted on `state.events`.
+- `settings.py` is the single source of truth for all 12 follow-up configuration parameters.
+- Maximum 2 follow-ups per interview (`settings.max_follow_ups_per_interview`).
+- Follow-ups are slot-gated (selector pre-selects indices); no consecutive indices selected.
+- All 44 M1-3 Acceptance Gates verified PASS.
+- 186 dedicated tests; 1,760 total tests passing.
 
-**Non-Functional Requirements:**
-- Follow-up generation latency p95 < 4s.
-- Follow-up cap enforcement verified across 1,000 simulated sessions.
+**Intentional V1.1 Design Decisions (deferred to M2):**
+- Score gating on V1.1 path intentionally omitted (ADR-E). Slot-based triggering sufficient for V1.1.
+- Guard retry not implemented (ADR-F). Planned for V1.2.
 
-**Dependencies:** ADR-010, `services/humanizer/humanizer_service.py`, `infrastructure/config/settings.py`.
-
-**Acceptance Criteria:**
-- With `HUMANIZER_FOLLOW_UP_ENABLED=True`, sessions with 2 optimal-quality answers trigger exactly 2 follow-ups.
-- Sessions with 0 optimal-quality answers trigger 0 follow-ups.
-- Follow-up does not appear on consecutive questions.
-- LLM failure during follow-up generation does not break session flow.
-
-**Risks:** Score propagation edge cases at session boundaries; follow-up LLM output quality variance.
+**Dependencies:** `services/humanizer/selector/`, `services/humanizer/follow_up/`, `services/humanizer/guards/`, `app/graph/nodes/question_node.py`, `app/ui/state_handlers/start.py`, `infrastructure/config/settings.py`.
 
 **Priority:** P0  
 **Estimated Complexity:** S  
@@ -641,23 +639,24 @@ The Hybrid Question Intelligence architecture (ADR-004) limits generation to con
 
 ### V1.1
 
-#### Milestone M1 — Reliability Foundation (Weeks 1–2)
+#### Milestone M1 — Follow-Up Question Engine (FROZEN 2026-06-30)
 
-**Features:**
-- EPIC-06: LLM Reliability Framework — retry policy, structured output enforcement, fallback chain.
-- EPIC-05: Prompt Security Layer — injection detection, answer slot isolation, injection logging.
+**Status: COMPLETED**
 
-**Success Criteria:**
-- Session completion rate > 99.5% on 1,000 synthetic test sessions.
-- Injection detection test suite: > 99% detection rate on known pattern corpus.
-- All LLM schema validation failures produce structured log entries.
+**Delivered:**
+- EPIC-03: Follow-up Question Engine — fully implemented and integrated.
+  - `FollowUpSelector`, `FollowUpPromptBuilder`, STRICT `FollowUpParser`, `FollowUpGuard` (17 rules).
+  - `HumanizerService.generate_follow_up()`, `QuestionNode` integration, runtime events.
+  - Graceful fallback; 44/44 Acceptance Gates PASS; 186 dedicated tests.
+
+**M1 Architecture Baseline:** Frozen. All future follow-up improvements target M2 or V1.2.
 
 ---
 
 #### Milestone M2 — Conversation Depth (Weeks 3–4)
 
 **Features:**
-- EPIC-03: Follow-up Question Engine — activate `HUMANIZER_FOLLOW_UP_ENABLED=True`, integration testing with real LLM output.
+- EPIC-03: Follow-up Question Engine — **COMPLETED in M1**. M2 adds: score gating, guard retry, `humanizer_v2.txt` area anchoring, event field alignment, batch-mode selector refinement.
 - EPIC-04: Interview Reasoner — per-dimension reasoning with structured output schema.
 
 **Success Criteria:**
