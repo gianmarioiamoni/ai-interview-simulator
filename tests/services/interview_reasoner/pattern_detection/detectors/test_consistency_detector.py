@@ -38,7 +38,7 @@ def test_metadata_enabled():
 
 def test_empty_memory_no_output():
     result = ConsistencyDetector().detect(make_input())
-    assert result.evidence == []
+    assert result.generated_signals == []
 
 
 # ---- duplicate detection ----
@@ -54,7 +54,7 @@ def test_duplicate_signals_flagged():
     memory = InterviewMemory(evidence_store=store)
     inp = make_input(memory=memory)
     result = ConsistencyDetector().detect(inp)
-    dups = [e for e in result.evidence if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
+    dups = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
     assert len(dups) == 1
 
 
@@ -64,7 +64,7 @@ def test_no_duplicate_when_different_questions():
     store = EvidenceStore(signals=[s1, s2])
     memory = InterviewMemory(evidence_store=store)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    dups = [e for e in result.evidence if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
+    dups = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
     assert dups == []
 
 
@@ -76,7 +76,7 @@ def test_no_duplicate_different_polarity_same_question():
     store = EvidenceStore(signals=[s1, s2])
     memory = InterviewMemory(evidence_store=store)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    dups = [e for e in result.evidence if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
+    dups = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
     assert dups == []
 
 
@@ -89,7 +89,7 @@ def test_contradictory_signals_flagged():
     store = EvidenceStore(signals=[pos, neg])
     memory = InterviewMemory(evidence_store=store)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    contradictions = [e for e in result.evidence if e.signal_type == EvidenceType.CONTRADICTORY_ANSWER]
+    contradictions = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONTRADICTORY_ANSWER]
     assert len(contradictions) == 1
 
 
@@ -100,7 +100,7 @@ def test_no_contradiction_when_same_polarity():
     store = EvidenceStore(signals=[s1, s2])
     memory = InterviewMemory(evidence_store=store)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    contradictions = [e for e in result.evidence if e.signal_type == EvidenceType.CONTRADICTORY_ANSWER]
+    contradictions = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONTRADICTORY_ANSWER]
     assert contradictions == []
 
 
@@ -113,7 +113,7 @@ def test_contradiction_on_correct_dimension():
     store = EvidenceStore(signals=[pos, neg])
     memory = InterviewMemory(evidence_store=store)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    cont = [e for e in result.evidence if e.signal_type == EvidenceType.CONTRADICTORY_ANSWER]
+    cont = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONTRADICTORY_ANSWER]
     assert len(cont) == 1
     assert cont[0].dimension == ProfileDimension.COMMUNICATION
 
@@ -127,7 +127,7 @@ def test_confidence_drop_detected():
     history = ReasoningHistory(entries=[e1, e2, e3])
     memory = InterviewMemory(reasoning_history=history)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert len(drops) == 1
 
 
@@ -137,7 +137,7 @@ def test_no_confidence_drop_when_stable():
     history = ReasoningHistory(entries=[e1, e2])
     memory = InterviewMemory(reasoning_history=history)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
 
 
@@ -145,7 +145,7 @@ def test_single_entry_no_confidence_drop():
     history = ReasoningHistory(entries=[make_reasoning_entry()])
     memory = InterviewMemory(reasoning_history=history)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
 
 
@@ -156,7 +156,7 @@ def test_confidence_drop_skips_dim_without_enough_entries():
     history = ReasoningHistory(entries=[e1, e2])
     memory = InterviewMemory(reasoning_history=history)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
 
 
@@ -168,7 +168,7 @@ def test_confidence_drop_strength_capped_at_1():
     history = ReasoningHistory(entries=[e1, e2, e3])
     memory = InterviewMemory(reasoning_history=history)
     result = ConsistencyDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert all(e.strength <= 1.0 for e in drops)
 
 
@@ -180,4 +180,4 @@ def test_result_detector_name():
 def test_none_area_defaults_to_unknown():
     inp = ReasonerInput(session_id="s", question_index=0)
     result = ConsistencyDetector().detect(inp)
-    assert result.evidence == []
+    assert result.generated_signals == []

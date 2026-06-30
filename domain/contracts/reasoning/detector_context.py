@@ -3,6 +3,8 @@
 from pydantic import BaseModel, Field
 
 from domain.contracts.reasoning.evidence_signal import EvidenceSignal
+from domain.contracts.reasoning.pattern_match import PatternMatch
+from domain.contracts.reasoning.reasoning_confidence import ReasoningConfidence
 from domain.contracts.reasoning.reasoner_input import ReasonerInput
 
 
@@ -20,13 +22,22 @@ class DetectorContext(BaseModel):
 
 
 class DetectorResult(BaseModel):
-    """Output of one PatternDetector.detect() call.
+    """Uniform per-detector output contract (ADR-034, ADR-045).
 
-    `execution_time_ms` is populated by the pipeline, not the detector.
+    `matches`          — structured PatternMatch records produced this cycle.
+    `generated_signals` — EvidenceSignals emitted (may be empty).
+    `confidence`       — per-detector ReasoningConfidence snapshot.
+    `execution_time_ms` — populated by the ReasonerService pipeline.
+    `warnings`         — internal detector diagnostics; NEVER candidate-facing.
     """
 
     detector_name: str = Field(..., min_length=1)
-    evidence: list[EvidenceSignal] = Field(default_factory=list)
+    # Structured match records (one per detected pattern rule).
+    matches: list[PatternMatch] = Field(default_factory=list)
+    # Flat list of EvidenceSignal emitted by this detector this cycle.
+    generated_signals: list[EvidenceSignal] = Field(default_factory=list)
+    confidence: ReasoningConfidence = Field(default_factory=ReasoningConfidence)
     execution_time_ms: float = Field(default=0.0, ge=0.0)
+    warnings: list[str] = Field(default_factory=list)
 
     model_config = {"frozen": True, "extra": "forbid"}

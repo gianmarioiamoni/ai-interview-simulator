@@ -20,8 +20,10 @@ from domain.contracts.reasoning.evidence_polarity import EvidencePolarity
 from domain.contracts.reasoning.evidence_source import EvidenceSource
 from domain.contracts.reasoning.evidence_type import EvidenceType
 from domain.contracts.reasoning.evidence_signal import EvidenceSignal
+from domain.contracts.reasoning.pattern_match import PatternMatch
 from domain.contracts.reasoning.profile_dimension import ProfileDimension
 from domain.contracts.reasoning.reasoner_input import ReasonerInput
+from domain.contracts.reasoning.trend import Trend
 from services.interview_reasoner.pattern_detection.base_detector import PatternDetector
 from services.interview_reasoner.pattern_detection.detector_metadata import DetectorMetadata
 
@@ -57,14 +59,15 @@ class CoverageDetector(PatternDetector):
         for sig in store.signals:
             evidence_per_dim[sig.dimension] += 1
 
-        produced: list[EvidenceSignal] = []
+        missing_sigs: list[EvidenceSignal] = []
+        weak_sigs: list[EvidenceSignal] = []
 
         for dim in ProfileDimension:
             count = evidence_per_dim[dim]
             dim_trace = profile.dimension_scores.get(dim)
 
             if count == 0:
-                produced.append(
+                missing_sigs.append(
                     EvidenceSignal(
                         id=str(uuid.uuid4()),
                         question_index=q_idx,
@@ -79,11 +82,9 @@ class CoverageDetector(PatternDetector):
                 )
             elif count < _LOW_COVERAGE_THRESHOLD:
                 strength = _LOW_COVERAGE_SIGNAL_STRENGTH
-                if dim_trace is not None:
-                    from domain.contracts.reasoning.trend import Trend
-                    if dim_trace.trend == Trend.DECLINING:
-                        strength = min(strength + 0.15, 1.0)
-                produced.append(
+                if dim_trace is not None and dim_trace.trend == Trend.DECLINING:
+                    strength = min(strength + 0.15, 1.0)
+                weak_sigs.append(
                     EvidenceSignal(
                         id=str(uuid.uuid4()),
                         question_index=q_idx,
@@ -97,7 +98,28 @@ class CoverageDetector(PatternDetector):
                     )
                 )
 
+        matches: list[PatternMatch] = []
+        if missing_sigs:
+            matches.append(PatternMatch(
+                pattern_type=EvidenceType.MISSING_EVIDENCE,
+                evidence_signals=missing_sigs,
+                label=f"{len(missing_sigs)} dimension(s) with no evidence",
+            ))
+        if weak_sigs:
+            matches.append(PatternMatch(
+                pattern_type=EvidenceType.REPEATED_WEAKNESS,
+                evidence_signals=weak_sigs,
+                label=f"{len(weak_sigs)} dimension(s) under coverage threshold",
+            ))
+
+        all_signals = missing_sigs + weak_sigs
+        warnings: list[str] = []
+        if len(all_signals) == len(list(ProfileDimension)):
+            warnings.append("All dimensions lack sufficient coverage.")
+
         return DetectorResult(
             detector_name=_METADATA.name,
-            evidence=produced,
+            matches=matches,
+            generated_signals=all_signals,
+            warnings=warnings,
         )

@@ -21,19 +21,33 @@ class PatternMatch(BaseModel):
 
 
 class PatternDetectionResult(BaseModel):
-    """Aggregated output of the PatternDetectionPipeline for one cycle.
+    """Aggregated pipeline output for one ReasonerService cycle (ADR-034).
 
-    All matches from all active detectors are merged here.
+    Merges all DetectorResult records from every active detector.
+    Consumed by ReasonerService to build the ReasonerDecision.
     """
 
     matches: list[PatternMatch] = Field(default_factory=list)
+    generated_signals: list[EvidenceSignal] = Field(default_factory=list)
+    execution_time_ms: float = Field(default=0.0, ge=0.0)
+    warnings: list[str] = Field(default_factory=list)
 
     @property
     def all_evidence(self) -> list[EvidenceSignal]:
-        return [sig for m in self.matches for sig in m.evidence_signals]
+        return list(self.generated_signals)
 
     @property
     def detected_types(self) -> list[EvidenceType]:
-        return [m.pattern_type for m in self.matches]
+        """Return all EvidenceTypes present in matches + generated_signals (deduplicated)."""
+        types_from_matches = [m.pattern_type for m in self.matches]
+        types_from_signals = [s.signal_type for s in self.generated_signals]
+        # Preserve order, deduplicate
+        seen: set[EvidenceType] = set()
+        result: list[EvidenceType] = []
+        for t in types_from_matches + types_from_signals:
+            if t not in seen:
+                seen.add(t)
+                result.append(t)
+        return result
 
     model_config = {"frozen": True, "extra": "forbid"}

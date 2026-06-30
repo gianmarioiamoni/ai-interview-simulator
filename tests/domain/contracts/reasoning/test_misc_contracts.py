@@ -209,7 +209,9 @@ def test_detector_context_basic():
 
 def test_detector_result_defaults():
     result = DetectorResult(detector_name="KnowledgeConsistencyDetector")
-    assert result.evidence == []
+    assert result.generated_signals == []
+    assert result.matches == []
+    assert result.warnings == []
     assert result.execution_time_ms == 0.0
 
 

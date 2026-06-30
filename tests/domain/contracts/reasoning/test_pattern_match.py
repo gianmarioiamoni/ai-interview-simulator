@@ -44,9 +44,7 @@ def test_pattern_match_extra_forbidden():
 
 def test_detection_result_all_evidence():
     s1, s2 = _sig(0), _sig(1)
-    m1 = PatternMatch(pattern_type=EvidenceType.SHALLOW_ANSWER, evidence_signals=[s1])
-    m2 = PatternMatch(pattern_type=EvidenceType.KNOWLEDGE_GAP, evidence_signals=[s2])
-    result = PatternDetectionResult(matches=[m1, m2])
+    result = PatternDetectionResult(generated_signals=[s1, s2])
     assert len(result.all_evidence) == 2
 
 

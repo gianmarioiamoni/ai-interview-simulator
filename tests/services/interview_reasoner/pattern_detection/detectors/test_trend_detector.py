@@ -39,7 +39,7 @@ def test_metadata_enabled():
 
 def test_empty_memory_no_output():
     result = TrendDetector().detect(make_input())
-    assert result.evidence == []
+    assert result.generated_signals == []
 
 
 # ---- declining trend → REPEATED_WEAKNESS ----
@@ -50,7 +50,7 @@ def test_declining_trend_emits_weakness():
     memory = InterviewMemory(candidate_profile=profile)
     inp = make_input(memory=memory)
     result = TrendDetector().detect(inp)
-    weakness = [e for e in result.evidence if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
+    weakness = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
     assert len(weakness) == 1
     assert weakness[0].polarity == EvidencePolarity.NEGATIVE
     assert weakness[0].dimension == ProfileDimension.TECHNICAL_DEPTH
@@ -63,8 +63,8 @@ def test_declining_trend_strength_scales_with_evidence_count():
     profile_many = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_many})
     r_few = TrendDetector().detect(make_input(memory=InterviewMemory(candidate_profile=profile_few)))
     r_many = TrendDetector().detect(make_input(memory=InterviewMemory(candidate_profile=profile_many)))
-    s_few = r_few.evidence[0].strength
-    s_many = r_many.evidence[0].strength
+    s_few = r_few.generated_signals[0].strength
+    s_many = r_many.generated_signals[0].strength
     assert s_many > s_few
 
 
@@ -75,7 +75,7 @@ def test_improving_trend_emits_strength():
     profile = CandidateProfile(dimension_scores={ProfileDimension.COMMUNICATION: trace})
     memory = InterviewMemory(candidate_profile=profile)
     result = TrendDetector().detect(make_input(memory=memory))
-    strength = [e for e in result.evidence if e.signal_type == EvidenceType.REPEATED_STRENGTH]
+    strength = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_STRENGTH]
     assert len(strength) == 1
     assert strength[0].polarity == EvidencePolarity.POSITIVE
     assert strength[0].dimension == ProfileDimension.COMMUNICATION
@@ -88,7 +88,7 @@ def test_improving_trend_strength_scales_with_evidence_count():
     profile_many = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_many})
     r_few = TrendDetector().detect(make_input(memory=InterviewMemory(candidate_profile=profile_few)))
     r_many = TrendDetector().detect(make_input(memory=InterviewMemory(candidate_profile=profile_many)))
-    assert r_many.evidence[0].strength > r_few.evidence[0].strength
+    assert r_many.generated_signals[0].strength > r_few.generated_signals[0].strength
 
 
 # ---- stable trend → REPEATED_STRENGTH at base strength ----
@@ -98,7 +98,7 @@ def test_stable_trend_emits_strength():
     profile = CandidateProfile(dimension_scores={ProfileDimension.PROBLEM_SOLVING: trace})
     memory = InterviewMemory(candidate_profile=profile)
     result = TrendDetector().detect(make_input(memory=memory))
-    sigs = [e for e in result.evidence if e.signal_type == EvidenceType.REPEATED_STRENGTH]
+    sigs = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_STRENGTH]
     assert len(sigs) == 1
     assert sigs[0].strength == 0.4  # _BASE_POSITIVE_STRENGTH
 
@@ -110,7 +110,7 @@ def test_insufficient_data_no_signal():
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
     memory = InterviewMemory(candidate_profile=profile)
     result = TrendDetector().detect(make_input(memory=memory))
-    assert result.evidence == []
+    assert result.generated_signals == []
 
 
 # ---- score volatility ----
@@ -120,7 +120,7 @@ def test_volatile_score_emits_confidence_drop():
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
     memory = InterviewMemory(candidate_profile=profile)
     result = TrendDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert len(drops) == 1
 
 
@@ -129,7 +129,7 @@ def test_non_volatile_score_no_confidence_drop():
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
     memory = InterviewMemory(candidate_profile=profile)
     result = TrendDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
 
 
@@ -138,7 +138,7 @@ def test_no_last_score_skips_volatility():
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
     memory = InterviewMemory(candidate_profile=profile)
     result = TrendDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
 
 
@@ -147,7 +147,7 @@ def test_volatility_strength_capped_at_1():
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
     memory = InterviewMemory(candidate_profile=profile)
     result = TrendDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert all(e.strength <= 1.0 for e in drops)
 
 
@@ -158,7 +158,7 @@ def test_session_confidence_drop_requires_4_entries():
     history = ReasoningHistory(entries=entries)
     memory = InterviewMemory(reasoning_history=history)
     result = TrendDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
 
 
@@ -168,7 +168,7 @@ def test_session_confidence_drop_detected():
     history = ReasoningHistory(entries=first + second)
     memory = InterviewMemory(reasoning_history=history)
     result = TrendDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert len(drops) >= 1
 
 
@@ -177,7 +177,7 @@ def test_session_confidence_stable_no_drop():
     history = ReasoningHistory(entries=entries)
     memory = InterviewMemory(reasoning_history=history)
     result = TrendDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
 
 
@@ -187,7 +187,7 @@ def test_session_drop_uses_dominant_dim():
     history = ReasoningHistory(entries=first + second)
     memory = InterviewMemory(reasoning_history=history)
     result = TrendDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert any(e.dimension == ProfileDimension.COMMUNICATION for e in drops)
 
 
@@ -197,7 +197,7 @@ def test_session_drop_fallback_to_technical_depth_when_no_dominant():
     history = ReasoningHistory(entries=first + second)
     memory = InterviewMemory(reasoning_history=history)
     result = TrendDetector().detect(make_input(memory=memory))
-    drops = [e for e in result.evidence if e.signal_type == EvidenceType.CONFIDENCE_DROP]
+    drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert any(e.dimension == ProfileDimension.TECHNICAL_DEPTH for e in drops)
 
 
@@ -209,4 +209,4 @@ def test_result_detector_name():
 def test_none_area_defaults_to_unknown():
     inp = ReasonerInput(session_id="s", question_index=0)
     result = TrendDetector().detect(inp)
-    assert result.evidence == []
+    assert result.generated_signals == []
