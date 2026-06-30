@@ -2130,3 +2130,544 @@ M1-4 (Progress Tracker + Gap Engine) → M2-2 (Gap UI + Resources) → M2-3 (Rep
 ---
 
 *End of Technical Design Specification — AI Interview Simulator V1.1 / V1.2*
+
+---
+
+## 17. EPIC-04 Architecture — Interview Reasoner (V1.1 M2)
+
+> This section documents the complete architecture for EPIC-04 as approved in the M2 Architecture Review and Final Contract Freeze (2026-06-30). It is the authoritative design reference for implementation.
+
+### 17.1 Domain Contract Package
+
+All contracts below live in `domain/contracts/reasoning/` and must be frozen before implementation begins.
+
+```
+domain/contracts/reasoning/
+  __init__.py
+  trend.py                       Trend enum
+  data_sufficiency.py            DataSufficiency enum
+  evidence_type.py               EvidenceType enum
+  evidence_signal.py             EvidenceSignal DTO
+  profile_dimension.py           ProfileDimension enum
+  profile_signal.py              ProfileSignal enum
+  dimension_trace.py             DimensionTrace DTO
+  signal_trace.py                SignalTrace DTO (+ SignalObservation)
+  candidate_profile.py           CandidateProfile DTO
+  evidence_store.py              EvidenceStore DTO
+  coverage_state.py              CoverageState DTO
+  reasoning_history.py           ReasoningHistory DTO + ReasoningEntry
+  session_metrics.py             SessionMetrics DTO
+  interview_memory.py            InterviewMemory DTO (composed of the above)
+  reasoning_confidence.py        ReasoningConfidence DTO
+  reasoning_basis.py             ReasoningBasis DTO
+  follow_up_recommendation.py    FollowUpRecommendation DTO
+  navigation_recommendation.py   NavigationRecommendation DTO
+  reasoner_decision.py           ReasonerDecision DTO
+  reasoner_input.py              ReasonerInput DTO
+```
+
+### 17.2 Frozen Contract Schemas
+
+#### Trend
+```
+Trend: IMPROVING | STABLE | DECLINING | INSUFFICIENT_DATA
+```
+
+#### DataSufficiency
+```
+DataSufficiency: INSUFFICIENT | TENTATIVE | CONFIDENT | STRONG
+```
+
+#### ProfileDimension
+```
+ProfileDimension (extends PerformanceDimensionType):
+  TECHNICAL_DEPTH         (existing)
+  PROBLEM_SOLVING         (existing)
+  COMMUNICATION           (existing)
+  SYSTEM_DESIGN           (existing)
+  ENGINEERING_JUDGMENT    (NEW — replaces TRADE_OFF_AWARENESS; see ADR-040)
+```
+
+#### ProfileSignal
+```
+ProfileSignal:
+  CONFIDENCE
+  CONSISTENCY
+  EVIDENCE_QUALITY
+  REASONING_DEPTH
+```
+
+#### EvidenceType
+```
+EvidenceType:
+  # Positive
+  REPEATED_STRENGTH
+  RECOVERED_WEAKNESS
+  DEMONSTRATED_DEPTH
+  ENGINEERING_JUDGMENT_ARTICULATED
+
+  # Negative
+  REPEATED_WEAKNESS
+  KNOWLEDGE_GAP
+  COMMUNICATION_GAP
+  REASONING_GAP
+  CONFIDENCE_DROP
+  MISSING_EVIDENCE
+  SHALLOW_ANSWER
+  CONTRADICTORY_ANSWER
+```
+
+#### EvidenceSource
+```
+EvidenceSource:
+  EVALUATION       ← from EvaluationNode / WrittenEvaluationNode scores
+  FEEDBACK         ← from FeedbackBundle dimension signals
+  PATTERN_DETECTOR ← from PatternDetectionPipeline detectors
+  DERIVED          ← reserved V1.2: cross-source combined signals
+```
+
+#### EvidenceSignal
+```
+EvidenceSignal (frozen, extra=forbid):
+  id: str                         ← uuid4, assigned at creation
+  question_index: int
+  question_area: str
+  dimension: ProfileDimension
+  polarity: EvidencePolarity      ← POSITIVE | NEGATIVE
+  signal_type: EvidenceType
+  strength: float                 ← [0.0..1.0]
+  source: EvidenceSource
+  schema_version: str = "1.0"
+  timestamp_question_index: int   ← redundant with question_index; retained for replay ordering
+```
+
+#### DimensionTrace
+```
+DimensionTrace (frozen, extra=forbid):
+  average_score: float            ← rolling mean of all observed scores for this dimension
+  last_score: float | None        ← score at most recent observation
+  trend: Trend
+  confidence: float               ← evidence_count / questions_answered (capped at 1.0)
+  evidence_count: int             ← number of questions contributing evidence
+  last_updated_question: int      ← question_index of most recent update
+```
+> NOTE: Historical raw scores are NOT stored here. They exist in `state.results_by_question[q_id].evaluation`. DimensionTrace stores only derived aggregates to avoid state duplication.
+
+#### SignalObservation
+```
+SignalObservation (frozen, extra=forbid):
+  question_index: int
+  polarity: EvidencePolarity
+  evidence: str                   ← Reasoner-generated label; NEVER interpolates candidate text
+```
+
+#### SignalTrace
+```
+SignalTrace (frozen, extra=forbid):
+  observations: list[SignalObservation]   ← capped at 20
+  trend: Trend
+```
+
+#### CandidateProfile
+```
+CandidateProfile (frozen, extra=forbid):
+  dimension_scores: dict[ProfileDimension, DimensionTrace]
+  signals: dict[ProfileSignal, SignalTrace]
+  questions_answered: int
+  areas_covered: list[str]
+  last_updated_at_question_index: int
+```
+
+#### EvidenceStore
+```
+EvidenceStore (frozen, extra=forbid):
+  signals: list[EvidenceSignal]   ← append-only; capped at 200 entries
+  # Query helpers (computed properties, not stored):
+  #   positive() → list[EvidenceSignal]
+  #   negative() → list[EvidenceSignal]
+  #   by_dimension(dim) → list[EvidenceSignal]
+  #   by_type(type) → list[EvidenceSignal]
+  #   strength_above(threshold) → list[EvidenceSignal]
+```
+
+#### CoverageState
+```
+CoverageState (frozen, extra=forbid):
+  covered_areas: list[str]
+  coverage_depth: dict[str, int]         ← area → question count
+  follow_up_history: list[str]           ← question_ids that triggered follow-up
+  repeated_topics: list[str]             ← topics appearing more than once
+```
+
+#### ReasoningEntry
+```
+ReasoningEntry (frozen, extra=forbid):
+  question_index: int
+  dominant_dimension: ProfileDimension | None
+  detected_patterns: list[EvidenceType]
+  follow_up_recommended: bool
+  navigation_recommended: bool
+  reasoning_confidence: float
+  schema_version: str = "1.0"
+```
+
+#### ReasoningHistory
+```
+ReasoningHistory (frozen, extra=forbid):
+  entries: list[ReasoningEntry]          ← capped at 20
+```
+
+#### SessionMetrics
+```
+SessionMetrics (frozen, extra=forbid):
+  questions_answered: int
+  follow_up_count: int
+  total_evidence_signals: int
+  positive_evidence_count: int
+  negative_evidence_count: int
+  last_reasoning_at_question_index: int | None
+```
+
+#### InterviewMemory
+```
+InterviewMemory (frozen, extra=forbid):
+  candidate_profile: CandidateProfile
+  evidence_store: EvidenceStore
+  coverage_state: CoverageState
+  reasoning_history: ReasoningHistory
+  session_metrics: SessionMetrics
+  schema_version: str = "1.0"
+```
+
+#### ReasoningConfidence
+```
+ReasoningConfidence (frozen, extra=forbid):
+  reasoning_confidence: float          ← [0.0..1.0]; based on questions_answered
+  evidence_strength: float             ← [0.0..1.0]; weighted mean of signal strengths
+  data_sufficiency: DataSufficiency
+```
+
+#### ReasoningBasis
+```
+ReasoningBasis (frozen, extra=forbid):
+  detected_patterns: list[EvidenceType]
+  dominant_dimension: ProfileDimension | None
+  session_quality_trend: Trend
+  follow_up_triggers: list[EvidenceType]
+  navigation_triggers: list[EvidenceType]
+  reasoning_confidence: ReasoningConfidence
+```
+
+#### FollowUpRecommendation
+```
+FollowUpRecommendation (frozen, extra=forbid):
+  recommended: bool
+  target_dimension: ProfileDimension | None
+  trigger_types: list[EvidenceType]
+  priority: int                          ← 1 (high) to 3 (low)
+```
+
+#### NavigationRecommendation
+```
+NavigationRecommendation (frozen, extra=forbid):
+  suggested_area: str | None
+  deepen_current: bool
+  skip_area: str | None
+  trigger_types: list[EvidenceType]
+```
+
+#### ReasonerDecision
+```
+ReasonerDecision (frozen, extra=forbid):
+  session_id: str
+  question_index: int
+  schema_version: str = "1.0"
+  follow_up_recommendation: FollowUpRecommendation | None
+  navigation_recommendation: NavigationRecommendation | None
+  new_evidence: list[EvidenceSignal]
+  candidate_profile_snapshot: CandidateProfile
+  reasoning_basis: ReasoningBasis
+  skip: bool = False
+```
+
+#### ReasonerInput
+```
+ReasonerInput (frozen, extra=forbid):
+  # Session identity
+  session_id: str
+  question_index: int
+
+  # Accumulated intelligence (read-only view)
+  interview_memory: InterviewMemory
+
+  # Current cycle inputs
+  current_question_area: str | None
+  current_question_type: str              ← QuestionType.value
+  current_answer_content: str | None      ← sanitized; max 2000 chars
+  current_evaluation: QuestionEvaluation | None
+  current_feedback_quality: str | None    ← Quality.value
+  current_dimension_signals: dict[str, float]
+
+  # Full result history (read-only reference)
+  results_by_question: dict[str, QuestionResult]
+
+  # Settings snapshot (frozen at input construction time)
+  max_follow_ups: int
+  follow_up_count: int
+  follow_up_eligible_indices: frozenset[int]
+  questions_remaining: int
+
+  # Interview metadata
+  role: str
+  seniority: str
+  interview_type: str
+```
+> NOTE: `ReasonerInput` is built ONLY by `ReasoningContextBuilder`. No other component constructs it directly.
+
+### 17.3 PatternDetector Registry Architecture
+
+```
+PatternDetectorRegistry
+  registered_detectors: list[PatternDetector]    ← ordered; populated at service init
+  active_flags: dict[str, bool]                  ← optional feature-flag gate per detector
+
+PatternDetector (protocol):
+  name: str
+  def detect(context: ReasonerInput) -> list[EvidenceSignal]
+
+Active detectors (V1.1 M2):
+  ReasoningDepthDetector      → SHALLOW_ANSWER, REASONING_GAP
+  KnowledgeConsistencyDetector → REPEATED_WEAKNESS, KNOWLEDGE_GAP, REPEATED_STRENGTH, RECOVERED_WEAKNESS
+  ContradictionDetector        → CONTRADICTORY_ANSWER
+  EvidenceQualityDetector      → DEMONSTRATED_DEPTH, MISSING_EVIDENCE
+  TradeOffDetector             → ENGINEERING_JUDGMENT_ARTICULATED, REASONING_GAP
+
+Reserved (V1.2):
+  ConfidenceTrendDetector      → CONFIDENCE_DROP (uses DERIVED source)
+  BehavioralPatternDetector    → future HR/behavioral interviews
+```
+
+Lifecycle:
+1. `InterviewReasoner.__init__()` constructs `PatternDetectorRegistry` with all active detectors.
+2. `PatternDetectionPipeline.run(context)` queries registry for active detectors.
+3. Pipeline calls `detect()` on each; merges `list[EvidenceSignal]` outputs.
+4. New detectors are added to registry only — pipeline code is never modified (OCP).
+5. Feature flags in registry allow disabling individual detectors without code change.
+
+### 17.4 Graph Position and State Changes
+
+**New graph edge:** `feedback → reasoner → decision`
+
+**New InterviewState fields:**
+```
+interview_memory: InterviewMemory = Field(default_factory=InterviewMemory)
+current_reasoning_decision: ReasonerDecision | None = None
+```
+
+**Deprecated InterviewState field (M2 — removal in M3):**
+```
+interview_memory_context: InterviewMemoryContext    ← deprecated; still populated by AdaptiveInterviewMemoryBridge for M2 backward compat
+```
+
+### 17.5 Downstream Consumption Map
+
+```
+interview_memory.evidence_store.signals
+  ├── KnowledgeGapEngine.detect()            ← EPIC-05; filters polarity=NEGATIVE
+  ├── ReportNarrativeAssembler               ← EPIC-07; all evidence
+  ├── CoachingRoadmapBuilder                 ← V1.2; negative evidence ordered by strength
+  └── ExecutiveSummaryGenerator              ← EPIC-08; structured input
+
+interview_memory.candidate_profile
+  ├── AdaptiveNavigationNode                 ← soft area hint
+  ├── NarrativeService (structured input)    ← EPIC-07
+  └── ContradictionDetector (reads history)  ← internal Reasoner
+
+current_reasoning_decision.follow_up_recommendation
+  └── question_node._is_follow_up_eligible   ← M2 runtime score gate (ADR-024)
+
+current_reasoning_decision.navigation_recommendation
+  └── AdaptiveNavigationNode                 ← soft hint
+```
+
+---
+
+### ADR-028: Interview Reasoner Is a Deterministic Service (No LLM)
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** `InterviewReasoner` contains zero LLM calls. All pattern detection is rule-based, deterministic. No LLM may be called from within `services/interview_reasoner/` or any of its sub-components in V1.1 M2.
+
+**Rationale:** 20 questions × LLM call = 20–100s added session latency. Rule-based detection is <5ms, testable, reproducible.
+
+**Consequences:** Reasoning quality is bounded by rule expressiveness. Semantic contradiction detection deferred to M3+ as async/background LLM step.
+
+---
+
+### ADR-029: Reasoner Node Position — After Feedback, Before Decision
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** `reasoner_node` is inserted between `feedback_node` and `decision_node` in the interview graph.
+
+**Rationale:** Only at this point are evaluation result, feedback bundle, and dimension signals all available. Decision has not yet been committed.
+
+**Consequences:** `reasoner_node` must handle `last_feedback_bundle=None` gracefully: return `ReasonerDecision(skip=True)`.
+
+---
+
+### ADR-030: Reasoner Outputs Are Advisory Only
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** No node is required to follow Reasoner recommendations. `question_node` and `AdaptiveNavigationNode` read `current_reasoning_decision` as optional hints and retain full authority.
+
+**Rationale:** A Reasoner bug cannot break interview flow; degrades gracefully to M1 baseline.
+
+---
+
+### ADR-031: ReasonerDecision Is Stored Transiently; ReasoningHistory Is Persistent
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** `current_reasoning_decision` holds only the last cycle's decision. `InterviewMemory.reasoning_history` is capped at 20 entries and contains `ReasoningEntry` (compact summary only).
+
+---
+
+### ADR-032: InterviewMemory as Session-Scoped Accumulated Intelligence
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** `InterviewMemory` is introduced as the canonical accumulation contract on `InterviewState`. Single-writer: only `InterviewReasoner` writes to it. All downstream consumers read it. Supersedes `InterviewMemoryContext`.
+
+**Consequences:** `InterviewMemoryContext` deprecated in M2; removed in M3.
+
+---
+
+### ADR-033: EvidenceSignal as Universal Signal Abstraction
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** `EvidenceSignal` replaces the originally proposed `GapSignal`. Captures both positive and negative evidence with polarity, type, strength, source, dimension, id, and schema_version.
+
+**Rationale:** Coaching-first platform requires positive evidence for "went well" coaching. Gap-only abstraction structurally biases output toward deficit reporting.
+
+---
+
+### ADR-034: PatternDetector Decomposed into Registry-Backed Pipeline
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** `PatternDetector` (single component) is replaced by `PatternDetectorRegistry` + `PatternDetectionPipeline` with five independent stateless detectors in V1.1 M2.
+
+**Rationale:** OCP compliance; new detectors plug in via registry without pipeline modification.
+
+---
+
+### ADR-035: ReasonerDecision Is Fully Structured — No Free Text
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** `ReasonerDecision` contains no free-text fields. All output is structured data. `NarrativeGenerator` is solely responsible for natural language.
+
+**Rationale:** Free text in `ReasonerDecision` creates prompt injection surface and violates SRP.
+
+---
+
+### ADR-036: Two-Tier Confidence Model (ReasoningConfidence)
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** Flat `confidence: float` replaced by `ReasoningConfidence { reasoning_confidence, evidence_strength, data_sufficiency }`.
+
+**Rationale:** Two independent dimensions: how many questions has Reasoner seen (reasoning_confidence) vs. how strong are the signals this cycle (evidence_strength).
+
+---
+
+### ADR-037: CandidateProfile as Evolving Derived Structure Inside InterviewMemory
+
+**Status: Accepted — V1.1 M2**
+
+**Decision:** `CandidateProfile` lives inside `InterviewMemory`. Single-writer: `InterviewReasoner`. Historical raw scores are NOT stored in `DimensionTrace` (they exist in `results_by_question`).
+
+---
+
+### ADR-038: InterviewMemory Internal Composition
+
+**Status: Accepted — V1.1 M2**
+
+**Context:** A monolithic `InterviewMemory` DTO would create coupling between unrelated concerns (profile, evidence, coverage, history, metrics) and make future independent evolution difficult.
+
+**Decision:** `InterviewMemory` is composed of five independent immutable substructures:
+
+| Substructure | Responsibility |
+|---|---|
+| `CandidateProfile` | Current profile state: dimension traces, signal traces, areas covered |
+| `EvidenceStore` | Canonical append-only list of `EvidenceSignal`; capped at 200; exposes query helpers |
+| `CoverageState` | Interview area coverage: depth per area, follow-up history, repeated topics |
+| `ReasoningHistory` | Compact per-cycle `ReasoningEntry` log; capped at 20; supports debugging and replay |
+| `SessionMetrics` | Aggregate counters: questions answered, follow-up count, evidence statistics |
+
+Each substructure is independently frozen (immutable). `InterviewReasoner` creates a new `InterviewMemory` each cycle by replacing only the substructures that changed.
+
+**Rationale:**
+- Each substructure has a single clear responsibility (SRP).
+- Future EPIC-05, EPIC-07, V1.2 consumers import only the substructure they need.
+- Independent evolution: `EvidenceStore` capacity rules can change without touching `CandidateProfile`.
+- Testability: each substructure can be unit-tested independently.
+
+**Consequences:**
+- `InterviewMemory` has no direct fields; all data is accessed through named substructures.
+- `ReasonerContextBuilder` must provide each substructure to the Reasoner input (`ReasonerInput.interview_memory` carries the full `InterviewMemory`).
+
+---
+
+### ADR-039: Evidence Freshness — Architectural Reservation
+
+**Status: Accepted (Deferred to V1.2)**
+
+**Context:** A candidate who struggles early but recovers mid-session should not be penalized equally to one who consistently struggles. Flat evidence accumulation treats all signals equally regardless of when they occurred.
+
+**Decision:** The architecture reserves the `DERIVED` `EvidenceSource` value and the `ReasoningHistory` structure for a future evidence freshness weighting mechanism. In V1.1 M2, all evidence is weighted equally.
+
+**V1.2 Implementation Requirement (not designed here):**
+- A weighting strategy will be defined and implemented in V1.2.
+- The strategy must use only `EvidenceSignal.question_index` and `SessionMetrics.questions_answered` to compute recency weight.
+- The weighting algorithm is explicitly out of scope for V1.1 M2.
+- No formula, no implementation, no alpha parameter is defined here.
+
+**Rationale:** Recovery from early mistakes is realistic interview behaviour. Flat weighting penalises early errors that the candidate has demonstrably overcome. Deferring ensures V1.1 M2 is not blocked on an algorithm design decision.
+
+**Consequences:**
+- `EvidenceSource.DERIVED` is defined but never emitted in V1.1 M2.
+- Any component that filters by `EvidenceSource` must not assume `DERIVED` is absent.
+- V1.2 may introduce a `FreshnessWeightedEvidenceStore` wrapper without changing `EvidenceStore` schema.
+
+---
+
+### ADR-040: ProfileDimension Naming — ENGINEERING_JUDGMENT
+
+**Status: Accepted — V1.1 M2**
+
+**Context:** Two candidate names were evaluated: `TRADE_OFF_AWARENESS` vs `ENGINEERING_JUDGMENT`.
+
+**Evaluation:**
+
+| Criterion | TRADE_OFF_AWARENESS | ENGINEERING_JUDGMENT |
+|---|---|---|
+| Clarity | Narrow: implies only trade-off analysis | Broad: covers trade-offs, prioritization, failure mode reasoning, operational decisions |
+| Future extensibility | Locked to "trade-off" framing | Extensible to any engineering decision context |
+| Behavioral interview alignment | Weak | Strong: engineering judgment maps to standard SWE interview rubrics |
+| Seniority signal | Partial | Strong: senior engineers are assessed on judgment, not just awareness |
+| Coaching language | "You lacked trade-off awareness" | "Your engineering judgment showed..." |
+
+**Decision:** `ENGINEERING_JUDGMENT` is adopted as the fifth `ProfileDimension`.
+
+**All references to `TRADE_OFF_AWARENESS` in this TDS and all architecture documents are superseded by `ENGINEERING_JUDGMENT`.**
+
+**Corresponding EvidenceType:** `ENGINEERING_JUDGMENT_ARTICULATED` (positive) replaces `TRADE_OFF_ARTICULATED`.
+
+**Corresponding Detector:** `TradeOffDetector` is renamed `EngineeringJudgmentDetector` at implementation time.
+
+---
+
