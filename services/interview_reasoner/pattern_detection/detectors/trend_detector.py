@@ -2,20 +2,16 @@
 """TrendDetector — analyses score and confidence trends across the session (ADR-034).
 
 Algorithm (fully deterministic, O(n)):
-Sources used: DimensionTrace (from CandidateProfile), ReasoningHistory,
-              EvidenceStore.  No LLM calls.
+Sources: DimensionTrace (CandidateProfile), ReasoningHistory, EvidenceStore.
 
 Rules:
-1. For each ProfileDimension with a DimensionTrace:
-   - Trend.DECLINING  → emit REPEATED_WEAKNESS with strength proportional to evidence_count.
-   - Trend.IMPROVING  → emit REPEATED_STRENGTH.
-   - Trend.STABLE     → emit REPEATED_STRENGTH at low strength (baseline positive signal).
-   - Trend.INSUFFICIENT_DATA → skip (not enough data; CoverageDetector handles absence).
-2. Score volatility: if a dimension's last_score deviates from average_score by more than
-   VOLATILITY_THRESHOLD, emit CONFIDENCE_DROP to flag instability.
-3. Overall session trend (from ReasoningHistory): compare average reasoning_confidence
-   of the first half vs second half of entries.  If the drop exceeds SESSION_DROP_THRESHOLD
-   emit one aggregate CONFIDENCE_DROP on the dominant dimension of the most recent entry.
+1. Per-dimension trend: DECLINING→REPEATED_WEAKNESS, IMPROVING→REPEATED_STRENGTH,
+   STABLE→REPEATED_STRENGTH (base), INSUFFICIENT_DATA→skip.
+2. Score volatility: last_score deviation from average_score > VOLATILITY_THRESHOLD
+   → CONFIDENCE_DROP.
+3. Session confidence: first-half vs second-half mean of ReasoningHistory entries
+   (requires ≥4 entries). Drop > SESSION_DROP_THRESHOLD → CONFIDENCE_DROP on last
+   entry's dominant dimension (fallback to TECHNICAL_DEPTH).
 """
 
 from __future__ import annotations
@@ -28,6 +24,7 @@ from domain.contracts.reasoning.evidence_polarity import EvidencePolarity
 from domain.contracts.reasoning.evidence_signal import EvidenceSignal
 from domain.contracts.reasoning.evidence_source import EvidenceSource
 from domain.contracts.reasoning.evidence_type import EvidenceType
+from domain.contracts.reasoning.pattern_match import PatternMatch
 from domain.contracts.reasoning.profile_dimension import ProfileDimension
 from domain.contracts.reasoning.reasoner_input import ReasonerInput
 from domain.contracts.reasoning.trend import Trend
@@ -60,18 +57,46 @@ class TrendDetector(PatternDetector):
         q_idx = reasoner_input.question_index
         area = reasoner_input.current_question_area or "unknown"
 
-        produced: list[EvidenceSignal] = []
-        produced.extend(self._analyse_dimension_trends(profile.dimension_scores, q_idx, area))
-        produced.extend(self._detect_score_volatility(profile.dimension_scores, q_idx, area))
-        produced.extend(self._detect_session_confidence_drop(history.entries, q_idx, area))
+        trend_sigs = self._analyse_dimension_trends(profile.dimension_scores, q_idx, area)
+        volatility_sigs = self._detect_score_volatility(profile.dimension_scores, q_idx, area)
+        session_drop_sigs = self._detect_session_confidence_drop(history.entries, q_idx, area)
 
-        return DetectorResult(detector_name=_METADATA.name, evidence=produced)
+        all_sigs = trend_sigs + volatility_sigs + session_drop_sigs
+
+        matches: list[PatternMatch] = []
+        pos_sigs = [s for s in trend_sigs if s.polarity == EvidencePolarity.POSITIVE]
+        neg_sigs = [s for s in trend_sigs if s.polarity == EvidencePolarity.NEGATIVE]
+        if pos_sigs:
+            matches.append(PatternMatch(
+                pattern_type=EvidenceType.REPEATED_STRENGTH,
+                evidence_signals=pos_sigs,
+                label=f"{len(pos_sigs)} dimension(s) improving/stable",
+            ))
+        if neg_sigs:
+            matches.append(PatternMatch(
+                pattern_type=EvidenceType.REPEATED_WEAKNESS,
+                evidence_signals=neg_sigs,
+                label=f"{len(neg_sigs)} dimension(s) declining",
+            ))
+        drop_all = volatility_sigs + session_drop_sigs
+        if drop_all:
+            matches.append(PatternMatch(
+                pattern_type=EvidenceType.CONFIDENCE_DROP,
+                evidence_signals=drop_all,
+                label=f"{len(drop_all)} confidence/volatility drop(s)",
+            ))
+
+        return DetectorResult(
+            detector_name=_METADATA.name,
+            matches=matches,
+            generated_signals=all_sigs,
+        )
 
     # ------------------------------------------------------------------
 
     def _analyse_dimension_trends(
         self,
-        dimension_scores: dict[ProfileDimension, object],
+        dimension_scores: dict,
         q_idx: int,
         area: str,
     ) -> list[EvidenceSignal]:
@@ -101,7 +126,7 @@ class TrendDetector(PatternDetector):
 
     def _detect_score_volatility(
         self,
-        dimension_scores: dict[ProfileDimension, object],
+        dimension_scores: dict,
         q_idx: int,
         area: str,
     ) -> list[EvidenceSignal]:

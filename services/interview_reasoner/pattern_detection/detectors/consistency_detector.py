@@ -22,6 +22,7 @@ from domain.contracts.reasoning.evidence_polarity import EvidencePolarity
 from domain.contracts.reasoning.evidence_signal import EvidenceSignal
 from domain.contracts.reasoning.evidence_source import EvidenceSource
 from domain.contracts.reasoning.evidence_type import EvidenceType
+from domain.contracts.reasoning.pattern_match import PatternMatch
 from domain.contracts.reasoning.profile_dimension import ProfileDimension
 from domain.contracts.reasoning.reasoner_input import ReasonerInput
 from services.interview_reasoner.pattern_detection.base_detector import PatternDetector
@@ -54,12 +55,37 @@ class ConsistencyDetector(PatternDetector):
         q_idx = reasoner_input.question_index
         area = reasoner_input.current_question_area or "unknown"
 
-        produced: list[EvidenceSignal] = []
-        produced.extend(self._detect_duplicates(store.signals, q_idx, area))
-        produced.extend(self._detect_contradictions(store.signals, q_idx, area))
-        produced.extend(self._detect_confidence_drops(history.entries, q_idx, area))
+        dup_sigs = self._detect_duplicates(store.signals, q_idx, area)
+        cont_sigs = self._detect_contradictions(store.signals, q_idx, area)
+        drop_sigs = self._detect_confidence_drops(history.entries, q_idx, area)
 
-        return DetectorResult(detector_name=_METADATA.name, evidence=produced)
+        matches: list[PatternMatch] = []
+        if dup_sigs:
+            matches.append(PatternMatch(
+                pattern_type=EvidenceType.REPEATED_WEAKNESS,
+                evidence_signals=dup_sigs,
+                label=f"{len(dup_sigs)} duplicate signal cluster(s) detected",
+            ))
+        if cont_sigs:
+            matches.append(PatternMatch(
+                pattern_type=EvidenceType.CONTRADICTORY_ANSWER,
+                evidence_signals=cont_sigs,
+                label=f"{len(cont_sigs)} contradictory dimension(s)",
+            ))
+        if drop_sigs:
+            matches.append(PatternMatch(
+                pattern_type=EvidenceType.CONFIDENCE_DROP,
+                evidence_signals=drop_sigs,
+                label=f"{len(drop_sigs)} confidence drop(s) detected",
+            ))
+
+        all_signals = dup_sigs + cont_sigs + drop_sigs
+
+        return DetectorResult(
+            detector_name=_METADATA.name,
+            matches=matches,
+            generated_signals=all_signals,
+        )
 
     # ------------------------------------------------------------------
 
@@ -99,7 +125,6 @@ class ConsistencyDetector(PatternDetector):
         q_idx: int,
         area: str,
     ) -> list[EvidenceSignal]:
-        # (dimension, question_index) → set of polarities seen
         polarity_map: dict[tuple[ProfileDimension, int], set[EvidencePolarity]] = defaultdict(set)
         for sig in signals:
             polarity_map[(sig.dimension, sig.question_index)].add(sig.polarity)
@@ -131,7 +156,6 @@ class ConsistencyDetector(PatternDetector):
         if len(entries) < 2:
             return []
 
-        # Find the last two entries that share the same dominant_dimension
         by_dim: dict[ProfileDimension, list] = defaultdict(list)
         for entry in entries:
             if entry.dominant_dimension is not None:

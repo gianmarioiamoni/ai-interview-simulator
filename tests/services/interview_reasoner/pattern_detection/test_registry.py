@@ -242,4 +242,4 @@ def test_concrete_detector_returns_result():
     inp = ReasonerInput(session_id="s", question_index=0)
     result = d.detect(inp)
     assert result.detector_name == "Concrete"
-    assert result.evidence == []
+    assert result.generated_signals == []

@@ -11,7 +11,7 @@ class PatternDetector(ABC):
     """Abstract base for all pattern detectors (ADR-034, ADR-045).
 
     Concrete detectors must implement:
-        metadata() → DetectorMetadata
+        metadata → DetectorMetadata
         detect(input) → DetectorResult
 
     Detectors are stateless — all state is derived from ReasonerInput.
@@ -32,4 +32,6 @@ class PatternDetector(ABC):
           - side-effect-free
           - O(n) relative to session history size
           - no LLM calls
+
+        `DetectorResult.execution_time_ms` is populated by the pipeline.
         """
