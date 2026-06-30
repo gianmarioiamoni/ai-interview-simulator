@@ -38,6 +38,7 @@ from services.question_intelligence.coding_domain_profile_registry import (
 )
 
 from infrastructure.config.settings import settings
+from services.humanizer.selector.follow_up_selector import FollowUpSelector
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.constants.loader_steps import LoaderStep
 from app.ui.mappers.loader_mapper import map_loader_progress
@@ -218,6 +219,20 @@ def start_interview(
                 "planned_areas": planned_areas,
                 "adaptive_interview_enabled": True,
             }
+        )
+
+    # -----------------------------------------------------
+    # FOLLOW-UP SELECTOR — populate eligible indices once
+    # -----------------------------------------------------
+
+    if settings.humanizer_follow_up_enabled:
+        eligible_indices = FollowUpSelector().select(
+            total_questions=len(enriched_questions),
+            planned_areas=planned_areas,
+            settings=settings,
+        )
+        state = state.model_copy(
+            update={"follow_up_eligible_indices": eligible_indices}
         )
 
     # -----------------------------------------------------

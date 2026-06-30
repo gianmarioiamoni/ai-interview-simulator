@@ -78,7 +78,7 @@ class FollowUpParser:
         self._reject_if_markdown_fence(raw)
         self._reject_if_extra_text(raw)
         payload = self._parse_json(raw)
-        self._validate_exact_keys(payload)
+        self._validate_exact_keys(payload, raw)
         return self._validate_schema(payload, raw)
 
     def _reject_if_markdown_fence(self, raw: str) -> None:
@@ -111,17 +111,17 @@ class FollowUpParser:
             )
         return payload
 
-    def _validate_exact_keys(self, payload: dict) -> None:  # type: ignore[type-arg]
+    def _validate_exact_keys(self, payload: dict, raw: str) -> None:  # type: ignore[type-arg]
         present = frozenset(payload.keys())
         missing = _REQUIRED_KEYS - present
         unknown = present - _REQUIRED_KEYS
         if missing:
             raise FollowUpParseError(
-                f"STRICT:missing_fields — {sorted(missing)}"
+                f"STRICT:missing_fields — {sorted(missing)}", raw
             )
         if unknown:
             raise FollowUpParseError(
-                f"STRICT:unknown_fields — {sorted(unknown)}"
+                f"STRICT:unknown_fields — {sorted(unknown)}", raw
             )
 
     def _validate_schema(self, payload: dict, raw: str) -> FollowUpOutput:  # type: ignore[type-arg]

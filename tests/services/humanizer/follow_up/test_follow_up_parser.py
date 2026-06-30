@@ -308,6 +308,30 @@ def test_par_027_parse_error_carries_raw_response() -> None:
         pytest.fail("Expected FollowUpParseError")
 
 
+def test_par_027b_missing_fields_carries_raw() -> None:
+    payload = json.loads(_VALID_RESPONSE)
+    del payload["reasoning"]
+    raw = json.dumps(payload)
+    try:
+        _parse(raw)
+    except FollowUpParseError as exc:
+        assert exc.raw == raw
+    else:
+        pytest.fail("Expected FollowUpParseError")
+
+
+def test_par_027c_unknown_fields_carries_raw() -> None:
+    payload = json.loads(_VALID_RESPONSE)
+    payload["extra"] = "bad"
+    raw = json.dumps(payload)
+    try:
+        _parse(raw)
+    except FollowUpParseError as exc:
+        assert exc.raw == raw
+    else:
+        pytest.fail("Expected FollowUpParseError")
+
+
 # ---------------------------------------------------------------------------
 # PAR-028: Guard rejected → output still returned (guard decides)
 # ---------------------------------------------------------------------------
