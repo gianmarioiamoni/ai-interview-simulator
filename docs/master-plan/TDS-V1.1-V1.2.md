@@ -2671,3 +2671,45 @@ Each substructure is independently frozen (immutable). `InterviewReasoner` creat
 
 ---
 
+
+### ADR-041: Reasoner Explainability — Internal Audit Trail
+
+**Status: Accepted — Architecture only; implementation deferred to V1.1 M2 final**
+
+**Context:** The Reasoner is fully deterministic and has no LLM calls. However, as pattern detection rules grow in number and complexity, tracing *why* a particular `ReasonerDecision` was produced becomes difficult without structured internal metadata.
+
+**Decision:** A lightweight `ReasoningTrace` contract is introduced as an internal audit trail. It captures per-step metadata for each component involved in producing a `ReasonerDecision`.
+
+**Scope — INTERNAL ONLY:**
+- Never exposed to candidates.
+- Never rendered in UI or coaching reports.
+- Never sent to `NarrativeGenerator` or any LLM prompt.
+- Never persisted outside `InterviewMemory.reasoning_history`.
+- Contains only Reasoner-generated metadata — never candidate text, answers, or prompts.
+
+**Schema:**
+```
+ReasoningTrace (frozen, extra=forbid):
+  steps: list[ReasoningTraceStep]
+
+ReasoningTraceStep (frozen, extra=forbid):
+  step_id: str
+  component: str          ← e.g. "ReasoningDepthDetector", "KnowledgeConsistencyDetector"
+  rule_name: str          ← e.g. "shallow_answer_check", "dimension_consistency"
+  confidence_delta: float ← how much this step shifted reasoning_confidence
+  execution_time_ms: float
+  summary: str            ← Reasoner-generated label; NEVER interpolates candidate text
+```
+
+**Use cases:**
+- Unit testing: verify specific rules fired for a given input
+- Architecture audits: trace decision provenance
+- Future replay: reconstruct session decision logic from stored trace
+- Debugging production issues without exposing candidate data
+
+**Consequences:**
+- `ReasoningTrace` is passed through `ReasonerDecision` but stored compactly (only last N=5 traces in `ReasoningHistory`).
+- `ReasoningTraceStep.summary` must be a Reasoner-generated string — never an interpolation of candidate-supplied text (security constraint, consistent with ADR-035).
+
+---
+
