@@ -21,6 +21,7 @@ from app.graph.nodes.report_node import report_node
 from app.graph.nodes.evaluation_aggregate_node import EvaluationAggregateNode
 from app.graph.nodes.start_processing_node import start_processing_node
 from app.graph.nodes.question_node import build_question_node
+from app.graph.nodes.reasoner_node import reasoner_node
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
@@ -105,6 +106,7 @@ def build_interview_graph(
     graph.add_node("evaluation", EvaluationNode())
     graph.add_node("evaluation_aggregate", EvaluationAggregateNode(evaluation_service))
     graph.add_node("feedback", FeedbackNode(llm))
+    graph.add_node("reasoner", reasoner_node)
     graph.add_node("hint", HintNode(hint_service))
     graph.add_node("decision", DecisionNode())
     graph.add_node("written", WrittenEvaluationNode(llm))
@@ -159,7 +161,8 @@ def build_interview_graph(
     # Shared tail
     # -----------------------------------------------------
 
-    graph.add_edge("feedback", "decision")
+    graph.add_edge("feedback", "reasoner")
+    graph.add_edge("reasoner", "decision")
 
     def route_after_decision(state: InterviewState) -> str:
 
