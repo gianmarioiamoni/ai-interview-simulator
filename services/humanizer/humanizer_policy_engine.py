@@ -3,14 +3,23 @@
 from app.settings.constants import MAX_FOLLOW_UPS_PER_INTERVIEW
 from services.humanizer.contracts.humanizer_input import HumanizerInput
 from services.humanizer.contracts.humanizer_decision import HumanizerDecision
-from infrastructure.config.evaluation import FOLLOW_UP_SCORE_THRESHOLD
+from infrastructure.config.settings import settings as _settings
 
 
 class HumanizerPolicyEngine:
 
     MAX_FOLLOW_UPS = MAX_FOLLOW_UPS_PER_INTERVIEW
 
-    FOLLOW_UP_THRESHOLD = FOLLOW_UP_SCORE_THRESHOLD
+    # Single source of truth: reads from settings singleton at access time.
+    # Class-level descriptor so HumanizerPolicyEngine.FOLLOW_UP_THRESHOLD works.
+    class _SettingsProxy:
+        def __set_name__(self, owner: type, name: str) -> None:
+            self._name = name
+
+        def __get__(self, obj: object, objtype: type | None = None) -> int:
+            return _settings.follow_up_score_threshold
+
+    FOLLOW_UP_THRESHOLD = _SettingsProxy()  # type: ignore[assignment]
 
     def __init__(self, follow_up_enabled: bool = True) -> None:
         self._follow_up_enabled = follow_up_enabled

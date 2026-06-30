@@ -64,11 +64,16 @@ def _state_with_follow_up_slot(
     previous_answer: str = "I used LRU for Redis caching technical knowledge.",
     follow_up_count: int = 0,
 ):
-    """Build a state where index 0 is in follow_up_eligible_indices."""
+    """Build a state where index 1 is in follow_up_eligible_indices.
+
+    Index 0 is always excluded by FollowUpSelector (architectural constraint).
+    We place the question at index 1 and a dummy at index 0.
+    """
     from domain.contracts.interview_state import InterviewState
-    from domain.contracts.interview.answer import Answer
     from domain.contracts.user.role import Role, RoleType
     from domain.contracts.interview.interview_type import InterviewType
+
+    dummy = _written_question(qid="q0")
 
     ctx = LastQuestionContext(
         question_id="q0",
@@ -85,10 +90,10 @@ def _state_with_follow_up_slot(
         company="TestCorp",
         interview_type=InterviewType.TECHNICAL,
         language="en",
-        questions=[question],
+        questions=[dummy, question],
         answers=[],
-        current_question_index=0,
-        follow_up_eligible_indices=frozenset({0}),
+        current_question_index=1,
+        follow_up_eligible_indices=frozenset({1}),
         last_question_context=ctx,
         follow_up_count=follow_up_count,
     )
@@ -296,7 +301,7 @@ def test_int_009_triggered_event_fields() -> None:
 
     event = new_state.events[0]
     assert isinstance(event, FollowUpTriggeredEvent)
-    assert event.question_index == 0
+    assert event.question_index == 1
     assert event.question_area == _AREA
     assert event.follow_up_count == 1
     assert 0.0 <= event.guard_score <= 1.0
@@ -318,7 +323,7 @@ def test_int_010_skipped_event_fields() -> None:
         new_state = node(state)
 
     event = next(e for e in new_state.events if isinstance(e, FollowUpSkippedEvent))
-    assert event.question_index == 0
+    assert event.question_index == 1
     assert event.reason == "no_context"
     assert event.latency_ms >= 0
 

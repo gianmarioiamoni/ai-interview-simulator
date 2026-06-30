@@ -28,6 +28,7 @@ def _is_follow_up_eligible(state: InterviewState, question) -> bool:
     return (
         state.current_question_index in state.follow_up_eligible_indices
         and question.supports_follow_up
+        and state.follow_up_count < settings.max_follow_ups_per_interview
     )
 
 
