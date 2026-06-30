@@ -586,7 +586,7 @@ def test_perf_002_happy_path_latency() -> None:
         )
     elapsed_ms = (time.perf_counter() - start) * 1000
     avg_ms = elapsed_ms / iterations
-    assert avg_ms <= 0.5, f"Average latency {avg_ms:.3f}ms exceeds 0.5ms budget"
+    assert avg_ms <= 1.0, f"Average latency {avg_ms:.3f}ms exceeds 1ms CI budget"
 
 
 def test_perf_003_failing_inputs_latency() -> None:

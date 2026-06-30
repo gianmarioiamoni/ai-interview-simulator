@@ -1,10 +1,18 @@
 # Architecture Review — M1-1: Follow-up Question Engine
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2026-06-30  
-**Status:** Approved for Audit  
-**Scope:** V1.1 Milestone M1-1  
-**Authoritative references:** PRD EPIC-03, TDS §9, ADR-010, ADR-019
+**Status:** SUPERSEDED by V1.1 M1 Implementation. Retained as design history.  
+**Scope:** V1.1 Milestone M1-1 (design phase)  
+**Authoritative references:** PRD EPIC-03 (COMPLETED), TDS §9 (revised), ADR-019 (revised), ADR-024–027
+
+> **NOTE:** This document describes the M1-1 architecture review (design phase). The shipped implementation deviates in the following areas:
+> - `humanizer_v2.txt` was NOT used; a dedicated `follow_up_generation.txt` was created instead (ADR-026).
+> - `FollowUpService` was NOT created; the pipeline lives in `HumanizerService.generate_follow_up()` and dedicated modules under `services/humanizer/follow_up/` and `services/humanizer/selector/`.
+> - Score gating was intentionally omitted from V1.1 (ADR-024).
+> - Guard retry was deferred to V1.2 (ADR-025).
+> - `FollowUpCapExceededEvent` was not implemented; `FollowUpSkippedEvent` covers all skip reasons.
+> The canonical description of the shipped system is **TDS §9 (revised)**.  
 
 ---
 
