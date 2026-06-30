@@ -1,6 +1,6 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1 M2 Contract Freeze (2026-06-30). ADR-028–041 added. EPIC-04 contracts frozen.
+**Status:** V1.1 M2 Contract Freeze (2026-06-30). ADR-028–047 added. EPIC-04 contracts frozen.
 
 | Document | File | Scope |
 |---|---|---|
@@ -88,3 +88,10 @@
 | 1.0 | 2026-06-29 | AI Architect | Initial master plan |
 | 1.1 | 2026-06-30 | Engineering | V1.1 M1 freeze: TDS §9 revised, ADR-019 revised, ADR-024–027 added, PRD EPIC-03 marked COMPLETED |
 | 1.2 | 2026-06-30 | Engineering | V1.1 M2 contract freeze: TDS §17 added, ADR-028–040 registered, EPIC-04 contracts frozen |
+| ADR-042 | CandidateProfile Internal Composition — Future Sub-profiles | **Accepted — Arch direction; V1.2** |
+| ADR-043 | ReasonerDecision Composition — Future Composed Decisions | **Accepted — Arch direction; V1.2** |
+| ADR-044 | Recommendation Hierarchy — Future Base Protocol | **Accepted — Arch direction; V1.2** |
+| ADR-045 | PatternDetector Metadata Model — Registry Introspection | **Accepted — Arch direction; M2-2** |
+| ADR-046 | EvidenceStore Responsibility Contract | **Accepted — Partially M2-1; extend M2-2** |
+| ADR-047 | ReasoningTrace Audit Hashes — input_hash/output_hash | **Accepted — Arch direction; V1.2** |
+| 1.3 | 2026-06-30 | Engineering | M2-1A freeze: ADR-042–047 added (future-proofing direction for CandidateProfile, ReasonerDecision, Recommendations, DetectorMetadata, EvidenceStore, ReasoningTrace) |

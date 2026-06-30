@@ -2713,3 +2713,172 @@ ReasoningTraceStep (frozen, extra=forbid):
 
 ---
 
+
+---
+
+### ADR-042: CandidateProfile Internal Composition (Future-Proofing)
+
+**Status: Accepted — Architecture direction; implementation reserved for V1.2+**
+
+**Context:** `CandidateProfile` currently holds a flat `dict[ProfileDimension, DimensionTrace]` and `dict[ProfileSignal, SignalTrace]`. As the Reasoner evolves across V1.2 and beyond, different consumers will need different slices (e.g., Knowledge Gap Engine needs knowledge signals; NarrativeGenerator needs communication signals). A flat profile will become a God Object.
+
+**Decision:** `CandidateProfile` is designated as the **Aggregate Root** of candidate assessment. In a future iteration it may be internally composed of independent sub-profiles:
+
+| Sub-profile | Responsibility |
+|---|---|
+| `DimensionProfile` | Aggregated dimension traces and trends |
+| `KnowledgeProfile` | Knowledge-specific dimension signals (TECHNICAL_DEPTH, ENGINEERING_JUDGMENT) |
+| `BehaviourProfile` | Consistency and confidence signal traces |
+| `CommunicationProfile` | COMMUNICATION dimension traces and EVIDENCE_QUALITY signals |
+| `EngineeringProfile` | SYSTEM_DESIGN, ENGINEERING_JUDGMENT, REASONING_DEPTH traces |
+| `OverallProfile` | Cross-dimension aggregates, session-level quality trend |
+
+Each sub-profile is independently frozen and independently queryable. `CandidateProfile` exposes all sub-profiles as named attributes.
+
+**Constraints:**
+- The current `CandidateProfile` contract (M2-1 frozen) is NOT changed.
+- Sub-profile decomposition is deferred to V1.2.
+- External consumers always access profile data through `CandidateProfile` — never by constructing sub-profiles directly.
+- `CandidateProfile` remains the single-writer boundary for `InterviewReasoner`.
+
+**Rationale:** Decomposing now prevents the flat dict from accumulating mixed concerns. Designating `CandidateProfile` as Aggregate Root ensures the boundary is clear before V1.2 adds more signals.
+
+---
+
+### ADR-043: ReasonerDecision Composition (Future-Proofing)
+
+**Status: Accepted — Architecture direction; implementation reserved for V1.2+**
+
+**Context:** `ReasonerDecision` currently contains `follow_up_recommendation`, `navigation_recommendation`, `new_evidence`, `candidate_profile_snapshot`, and `reasoning_basis`. As V1.2 adds coaching, coverage analysis, and confidence assessment, these will grow to ~10 fields if not structured.
+
+**Decision:** `ReasonerDecision` is designated a **Composed Decision** rather than a monolithic DTO. In a future iteration it may be composed of independent decisions:
+
+| Decision | Responsibility |
+|---|---|
+| `FollowUpDecision` | Should a follow-up be attempted? Which dimension? Why? |
+| `NavigationDecision` | Should next area change? Deepen or skip? |
+| `CoachingDecision` | What coaching signal should the session emit at this point? |
+| `CoverageDecision` | Is area coverage balanced? Any area at risk of over/under-representation? |
+| `ConfidenceAssessment` | What is the Reasoner's confidence in its own outputs this cycle? |
+
+**Constraints:**
+- The current `ReasonerDecision` contract (M2-1 frozen) is NOT changed.
+- The composed-decision model is deferred to V1.2.
+- `ReasonerDecision` continues to hold `skip: bool` as the top-level guard regardless of future composition.
+
+**Rationale:** Prevents `ReasonerDecision` from accumulating fields from unrelated concerns. Each composed decision can be independently consumed (e.g., `AdaptiveNavigationNode` reads only `NavigationDecision`).
+
+---
+
+### ADR-044: Recommendation Hierarchy (Future-Proofing)
+
+**Status: Accepted — Architecture direction; implementation reserved for V1.2+**
+
+**Context:** V1.1 M2 has two recommendation types: `FollowUpRecommendation` and `NavigationRecommendation`. V1.2 plans add coaching, study, and practice recommendations. Without a common base type, consuming code must handle each independently.
+
+**Decision:** A future `Recommendation` base protocol/contract is reserved. All recommendation types must be derivable from it:
+
+```
+Recommendation (base — future)
+  recommended: bool
+  trigger_types: list[EvidenceType]
+  priority: int  ← 1 (high) to 3 (low)
+  confidence: float
+
+Derived:
+  FollowUpRecommendation     ← current M2-1 contract; will gain base fields in V1.2
+  NavigationRecommendation   ← current M2-1 contract; will gain base fields in V1.2
+  KnowledgeRecommendation    ← V1.2: recommend specific knowledge area study
+  StudyRecommendation        ← V1.2: concrete study material recommendation (feeds Coaching Roadmap)
+  PracticeRecommendation     ← V1.2: recommend targeted practice question type
+```
+
+**Constraints:**
+- `FollowUpRecommendation` and `NavigationRecommendation` contracts (M2-1) are NOT changed.
+- The `Recommendation` base is NOT introduced as a Python type in M2.
+- When V1.2 introduces `KnowledgeRecommendation`, it must share the same field names for `recommended`, `trigger_types`, and `priority` to allow unified consumption.
+
+**Rationale:** Establishes a stable recommendation vocabulary before proliferation makes unification expensive.
+
+---
+
+### ADR-045: PatternDetector Metadata Model (Future-Proofing)
+
+**Status: Accepted — Architecture direction; implementation reserved for M2-2**
+
+**Context:** `PatternDetectorRegistry` is planned as the single registry of active detectors (ADR-034). Without a structured metadata model, the registry devolves into a list of callables with no introspection capability.
+
+**Decision:** Each `PatternDetector` registered in `PatternDetectorRegistry` must expose a **metadata descriptor**:
+
+```
+DetectorMetadata (frozen):
+  name: str          ← unique identifier; used in ReasoningTraceStep.component
+  version: str       ← semver string (e.g. "1.0.0")
+  priority: int      ← execution order within pipeline (lower = earlier)
+  enabled: bool      ← registry checks this before calling detect()
+  dependencies: list[str]  ← names of detectors that must run before this one
+```
+
+`PatternDetectionPipeline` uses `DetectorMetadata.enabled` and `DetectorMetadata.dependencies` instead of any hardcoded if/else logic. Registry ordering is derived from `priority` + topological sort of `dependencies`.
+
+**Constraints:**
+- `DetectorMetadata` contract is NOT implemented in M2-1.
+- All five M2 detectors must be retrofittable to expose `DetectorMetadata` without changing their `detect()` signature.
+- Feature flags map to `DetectorMetadata.enabled`; no `if feature_flag_X` in pipeline code.
+
+**Rationale:** Metadata-driven registry satisfies OCP: adding a detector is a registry registration, not a code change. Dependency declaration prevents ordering bugs silently.
+
+---
+
+### ADR-046: EvidenceStore Responsibilities
+
+**Status: Accepted — Architecture direction; partially implemented in M2-1**
+
+**Context:** `EvidenceStore` in M2-1 is a Pydantic frozen model with a `signals: list[EvidenceSignal]` field and helper methods on the model. As usage grows, query patterns will diversify and the model will accumulate query methods.
+
+**Decision:** `EvidenceStore` is designated the **single point of access** for all `EvidenceSignal` queries in the session. Its responsibility contract is frozen:
+
+| Method | Behaviour |
+|---|---|
+| `append(signal)` | Returns new `EvidenceStore` with signal appended (immutable; factory method) |
+| `by_dimension(dim)` | Filter by `ProfileDimension` |
+| `by_question(index)` | Filter by `question_index` |
+| `positive()` | Filter by `EvidencePolarity.POSITIVE` |
+| `negative()` | Filter by `EvidencePolarity.NEGATIVE` |
+| `recent(n)` | Last N signals by `timestamp_question_index` |
+| `statistics()` | Returns `EvidenceStoreStatistics` DTO (counts, mean strength per dimension, polarity ratio) |
+
+**Current state:** `by_dimension`, `positive`, `negative`, `by_type`, `by_source`, `strength_above` are implemented as model methods in M2-1. `append`, `by_question`, `recent`, `statistics` are deferred to M2-2.
+
+**Constraints:**
+- M2-1 `EvidenceStore` contract is NOT changed.
+- `append()` must be implemented as a factory method returning a new `EvidenceStore` (preserves immutability).
+- `EvidenceStoreStatistics` DTO is deferred to M2-2.
+- No code outside `EvidenceStore` iterates `signals` directly — all access goes through the above methods.
+
+**Rationale:** Centralising queries prevents scattered list comprehensions across the codebase. The `append` factory method preserves the frozen/immutable contract.
+
+---
+
+### ADR-047: ReasoningTrace Audit Metadata Extension (Future-Proofing)
+
+**Status: Accepted — Architecture direction; implementation reserved for V1.2**
+
+**Context:** `ReasoningTraceStep` in M2-1 captures `step_id`, `component`, `rule_name`, `confidence_delta`, `execution_time_ms`, and `summary`. For future replay and audit scenarios, it is necessary to verify that a trace step's inputs and outputs match without storing the full input/output (which could contain sensitive or large data).
+
+**Decision:** Future versions of `ReasoningTraceStep` may include:
+
+```
+input_hash: str | None   ← SHA-256 of the serialized detector input for this step
+output_hash: str | None  ← SHA-256 of the serialized EvidenceSignal list produced
+```
+
+**Constraints:**
+- `input_hash` and `output_hash` are hashes only — never the full input or output.
+- Full input (candidate answer, evaluation scores) is NEVER stored in `ReasoningTrace` (ADR-041 security constraint).
+- The hash is deterministic: same input → same hash → same output verifiable without re-running.
+- `input_hash` / `output_hash` fields are NOT added in M2-1 or M2-2.
+- When added in V1.2, they must be optional (`None` for historical entries) to preserve backward compatibility.
+
+**Rationale:** Hash-based audit trail enables verifying deterministic replay without storing sensitive data. Optional fields ensure zero migration cost for existing entries.
+
