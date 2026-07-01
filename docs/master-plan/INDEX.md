@@ -1,6 +1,14 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1 M2-8 Reasoner Consolidation & API Freeze (2026-07-01). Reasoner pipeline frozen. EvaluationSignalWriter shipped. EvaluationBridgeDetector deprecated. All 13 detectors active. 1042 tests passing. Release Candidate ready.
+**Status:** V1.1 M2-9 Release Candidate Certified (2026-07-01). VERSION=1.1.0. 2802 tests passing. Repository identity complete. Platform Engineering Manifest established.
+
+## Foundational Document
+
+| Document | File | Scope |
+|---|---|---|
+| **Platform Engineering Manifest** | **`PLATFORM_ENGINEERING_MANIFEST.md`** | **FOUNDATIONAL — Engineering constitution for all versions ≥ V1.1. Defines principles, workflow, invariants, quality standards, release policy, and technical debt policy. Highest authority document in the repository.** |
+
+## Master Plan Documents
 
 | Document | File | Scope |
 |---|---|---|
