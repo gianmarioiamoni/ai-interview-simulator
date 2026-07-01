@@ -61,7 +61,7 @@ def test_evidence_type_positive_and_negative():
     }
     assert len(positive) == 4
     assert len(negative) == 8
-    assert len(EvidenceType) == 21  # 12 original + 4 reasoning-depth (M2-7B) + 5 engineering/communication (M2-7C)
+    assert len(EvidenceType) == 26  # 21 (M2-7C) + 5 behavioral/cross-area (M2-7D)
 
 
 def test_profile_dimension_five_values():

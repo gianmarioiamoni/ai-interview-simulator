@@ -34,3 +34,12 @@ class EvidenceType(str, Enum):
     COMMUNICATION_CLEAR = "communication_clear"                # consistent clear communication
     COMMUNICATION_WEAK = "communication_weak"                  # persistent communication weakness
     COMMUNICATION_INCONSISTENT = "communication_inconsistent"  # inconsistent communication signals
+
+    # --- Behavioral patterns (M2-7D) ---
+    BEHAVIORAL_GROWTH = "behavioral_growth"            # confidence / competence growing over time
+    BEHAVIORAL_INSTABILITY = "behavioral_instability"  # inconsistent attitude / erratic answers
+    BEHAVIORAL_PLATEAU = "behavioral_plateau"          # stable but not improving over time
+
+    # --- Cross-interview consistency (M2-7D) ---
+    CROSS_AREA_CONSISTENT = "cross_area_consistent"    # consistent performance across question areas
+    CROSS_AREA_CONTRADICTORY = "cross_area_contradictory"  # contradictory performance across areas
