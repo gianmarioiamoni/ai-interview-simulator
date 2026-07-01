@@ -2882,3 +2882,665 @@ output_hash: str | None  ← SHA-256 of the serialized EvidenceSignal list produ
 
 **Rationale:** Hash-based audit trail enables verifying deterministic replay without storing sensitive data. Optional fields ensure zero migration cost for existing entries.
 
+---
+
+## §18 — Advanced Detector Architecture (M2-7A Freeze)
+
+> **Status: Frozen 2026-07-01 | Milestone: M2-7A**
+> This section is the authoritative contract for all detectors implemented from M2-7B onward.
+> Zero production code is modified by this section — it is documentation only.
+
+---
+
+### §18.1 — ProfileFeature Abstraction (V1.2 Reserved)
+
+#### Motivation
+
+The current `CandidateProfile` contains `dimension_scores: dict[ProfileDimension, DimensionTrace]`.  
+This model captures *what* a candidate knows but not *how* they demonstrate it (reasoning quality, communication style, leadership signals, etc.).
+
+A `ProfileFeature` is a named, versioned, computed characteristic that extends the profile beyond raw dimension scores — without requiring any change to the `CandidateProfile` schema.
+
+#### Definition
+
+```
+ProfileFeature
+├── name: str                       # stable identifier, e.g. "reasoning_depth"
+├── version: str                    # semver, for future migration
+├── value: float | None             # normalized [0.0, 1.0] or None (insufficient data)
+├── confidence: float               # [0.0, 1.0], grows with evidence
+├── evidence_count: int             # how many signals contributed
+├── last_updated_question_index: int
+└── metadata: dict                  # free-form, extensible tags
+```
+
+#### Lifecycle
+
+```
+PatternDetector (M2-7+)
+       ↓ produces EvidenceSignal + PatternMatch
+CandidateProfileEngine (M2-6C)
+       ↓ calls ProfileFeatureUpdater (V1.2)
+ProfileFeature stored in CandidateProfile.features
+       ↓ read by
+NarrativeGenerator (M2-8) + ReportBuilder (M2-9)
+```
+
+#### Ownership
+
+Single-writer: `CandidateProfileEngine`.  
+No detector, graph node, or external component writes directly to `ProfileFeature`.
+
+#### Update Strategy
+
+Incremental, O(new_signals). Never recomputes from full EvidenceStore.
+
+#### M2 Current State
+
+The M2-6C `CandidateProfileEngine` updates `DimensionTrace` only.  
+`ProfileFeatures` are **not yet present** in `CandidateProfile`.  
+They will be added in V1.2 as an optional `features: dict[str, ProfileFeature]` field with `default_factory=dict`.
+
+#### Migration Path
+
+```
+V1.1  CandidateProfile.dimension_scores only
+V1.2  CandidateProfile.features added (optional, backward-compatible)
+V1.3+ ProfileFeatures become primary profile signal for Narrative and Report
+```
+
+See **ADR-048** for the full decision record.
+
+---
+
+### §18.2 — Advanced Detector Catalog
+
+All detectors below comply with the `PatternDetector` contract (§17.3).  
+Execution order is defined by the `priority` field in `DetectorMetadata`.
+
+---
+
+#### DET-01: EvaluationSignalDetector (Successor of EvaluationBridgeDetector)
+
+| Field | Value |
+|---|---|
+| **Priority** | 5 |
+| **Status** | Active — replaces `EvaluationBridgeDetector` in M2-7B |
+| **Dependencies** | None |
+| **Complexity** | O(n) in EvidenceStore signals |
+
+**Purpose:** Bridge evaluation-origin signals into the PatternDetection pipeline. Succeeds `EvaluationBridgeDetector` with a richer output model including signal freshness weighting.
+
+**Input:** `ReasonerInput.interview_memory.evidence_store` (read-only)
+
+**Produced PatternMatch types:**
+- `KNOWLEDGE_GAP` — one match per dimension with fresh knowledge gap signals
+- `SHALLOW_ANSWER` — one match per dimension with fresh shallow answer signals
+- `REASONING_GAP` — one match per dimension with fresh reasoning gap signals
+
+**Produced EvidenceSignal types:** One derived `PATTERN_DETECTOR`-source signal per (type, dimension) — subject to idempotency guard.
+
+**Future ProfileFeatures affected:** `ReasoningDepthFeature`, `KnowledgeDensityFeature`
+
+**Acceptance Criteria:**
+- Bridges only signals from the current or previous `N` questions (configurable sliding window, default 3)
+- Does not re-bridge signals older than the window
+- Idempotency guard prevents duplicate derived signals
+- Deterministic; no LLM
+
+---
+
+#### DET-02: CoverageDetector (Existing)
+
+| Field | Value |
+|---|---|
+| **Priority** | 10 |
+| **Status** | Active — M2-3, updated M2-6A |
+| **Dependencies** | None |
+| **Complexity** | O(d) where d = len(ProfileDimension) |
+
+**Purpose:** Detect uncovered or under-covered profile dimensions.
+
+**Produced PatternMatch types:** `MISSING_EVIDENCE`, `REPEATED_WEAKNESS`
+
+**Produced EvidenceSignal types:** `MISSING_EVIDENCE`, `REPEATED_WEAKNESS`
+
+**Future ProfileFeatures affected:** `CoverageFeature`
+
+---
+
+#### DET-03: ConsistencyDetector (Existing)
+
+| Field | Value |
+|---|---|
+| **Priority** | 20 |
+| **Status** | Active — M2-3, updated M2-6A |
+| **Dependencies** | `CoverageDetector` |
+| **Complexity** | O(n) |
+
+**Purpose:** Detect duplicate signals, contradictions, confidence drops.
+
+**Produced PatternMatch types:** `REPEATED_WEAKNESS`, `CONTRADICTORY_ANSWER`, `CONFIDENCE_DROP`
+
+**Future ProfileFeatures affected:** `ConsistencyFeature`
+
+---
+
+#### DET-04: TrendDetector (Existing)
+
+| Field | Value |
+|---|---|
+| **Priority** | 30 |
+| **Status** | Active — M2-3, updated M2-6A |
+| **Dependencies** | `ConsistencyDetector` |
+| **Complexity** | O(d × h) where h = reasoning history length |
+
+**Purpose:** Detect score and confidence trends per dimension.
+
+**Produced PatternMatch types:** `IMPROVING`, `STABLE`, `DECLINING` (via polarity)
+
+**Future ProfileFeatures affected:** `TrendFeature`
+
+---
+
+#### DET-05: ReasoningDepthDetector
+
+| Field | Value |
+|---|---|
+| **Priority** | 40 |
+| **Milestone** | M2-7B |
+| **Dependencies** | `TrendDetector` |
+| **Complexity** | O(n) |
+
+**Purpose:** Assess the depth of reasoning demonstrated by the candidate by analysing the distribution and density of `REASONING_GAP` vs. `DEMONSTRATED_DEPTH` signals per dimension. Distinguishes surface-level correct answers from deep principled reasoning.
+
+**Input:**
+- `ReasonerInput.interview_memory.evidence_store` — signals with `signal_type ∈ {REASONING_GAP, DEMONSTRATED_DEPTH, SHALLOW_ANSWER}`
+- `ReasonerInput.interview_memory.candidate_profile.dimension_scores`
+
+**Produced PatternMatch types:**
+- `REASONING_GAP` — when reasoning signals show low depth ratio
+- `DEMONSTRATED_DEPTH` — when depth ratio is high across multiple dimensions
+
+**Produced EvidenceSignal types:**
+- `REASONING_GAP` (strength weighted by breadth of shallow answers)
+- `DEMONSTRATED_DEPTH` (strength weighted by depth ratio)
+
+**Acceptance Criteria:**
+- Depth ratio computed as `demonstrated_depth_count / (demonstrated_depth_count + reasoning_gap_count)`
+- Emits `DEMONSTRATED_DEPTH` only when ratio ≥ 0.6 and evidence_count ≥ 3
+- Emits `REASONING_GAP` only when ratio ≤ 0.3 and evidence_count ≥ 2
+- Silent otherwise
+
+**Future ProfileFeatures affected:** `ReasoningDepthFeature`
+
+---
+
+#### DET-06: EngineeringJudgmentDetector
+
+| Field | Value |
+|---|---|
+| **Priority** | 50 |
+| **Milestone** | M2-7C |
+| **Dependencies** | `ReasoningDepthDetector` |
+| **Complexity** | O(n) |
+
+**Purpose:** Detect whether the candidate demonstrates trade-off awareness, prioritisation skill, and operational reasoning — the `ENGINEERING_JUDGMENT` dimension. Uses `ENGINEERING_JUDGMENT_ARTICULATED` signals as positive evidence.
+
+**Input:**
+- Signals with `dimension = ENGINEERING_JUDGMENT` or `signal_type = ENGINEERING_JUDGMENT_ARTICULATED`
+- `DimensionTrace` for `ENGINEERING_JUDGMENT`
+
+**Produced PatternMatch types:**
+- `ENGINEERING_JUDGMENT_ARTICULATED` — positive match on trade-off/priority articulation
+- `SHALLOW_ANSWER` — when judgment questions yield shallow responses
+- `KNOWLEDGE_GAP` — when judgment dimension has zero evidence after threshold
+
+**Produced EvidenceSignal types:**
+- `ENGINEERING_JUDGMENT_ARTICULATED` (positive)
+- `KNOWLEDGE_GAP` (negative, when dimension absent)
+
+**Acceptance Criteria:**
+- Only fires after `reasoner_coverage_min_questions` threshold
+- Does not create phantom signals for unaddressed judgment questions
+- `ENGINEERING_JUDGMENT` dimension must have at least 1 evaluation-origin signal before firing
+
+**Future ProfileFeatures affected:** `EngineeringJudgmentFeature`
+
+---
+
+#### DET-07: CommunicationDetector
+
+| Field | Value |
+|---|---|
+| **Priority** | 60 |
+| **Milestone** | M2-7D |
+| **Dependencies** | `ConsistencyDetector` |
+| **Complexity** | O(n) |
+
+**Purpose:** Specifically assess the `COMMUNICATION` dimension by analysing signal ratios, pattern regularity, and consistency of communication evidence across the session. Separates technical communication gaps from content gaps.
+
+**Input:**
+- Signals with `dimension = COMMUNICATION`
+- `DimensionTrace` for `COMMUNICATION`
+
+**Produced PatternMatch types:**
+- `COMMUNICATION_GAP` — persistent communication weakness
+- `REPEATED_STRENGTH` (positive) — consistent communication quality
+- `CONTRADICTORY_ANSWER` — inconsistent communication signals
+
+**Produced EvidenceSignal types:**
+- `COMMUNICATION_GAP` (negative, on sustained weakness)
+- `REPEATED_STRENGTH` (positive, on sustained strength)
+
+**Acceptance Criteria:**
+- Fires only when `COMMUNICATION` dimension has ≥ 2 evidence signals
+- Does not confuse content gaps with communication gaps (uses source + polarity)
+- Silent if communication dimension has no evidence
+
+**Future ProfileFeatures affected:** `CommunicationFeature`
+
+---
+
+#### DET-08: BehavioralPatternDetector
+
+| Field | Value |
+|---|---|
+| **Priority** | 70 |
+| **Milestone** | M2-7E |
+| **Dependencies** | `TrendDetector` |
+| **Complexity** | O(n × d) |
+
+**Purpose:** Detect session-level behavioral patterns that span multiple dimensions: hesitation sequences (sustained SHALLOW_ANSWER across dims), rebound patterns (DECLINING followed by IMPROVING), and plateau patterns (STABLE across all dims for ≥ 3 consecutive questions).
+
+**Input:**
+- Full `ReasoningHistory` entries
+- Cross-dimension DimensionTrace map
+
+**Produced PatternMatch types:**
+- Custom `BEHAVIORAL_PATTERN` labels: `HESITATION_SEQUENCE`, `REBOUND_PATTERN`, `PLATEAU_PATTERN`
+- (uses `EvidenceType.REPEATED_WEAKNESS` with extended label field)
+
+**Produced EvidenceSignal types:**
+- None — produces PatternMatch only (no new EvidenceSignals to avoid inflation)
+
+**Acceptance Criteria:**
+- Requires ≥ 4 reasoning history entries before firing
+- Produces at most one PatternMatch per behavioral type per cycle
+- Each match carries a `confidence` derived from the number of confirming history entries
+- Deterministic
+
+**Future ProfileFeatures affected:** `BehavioralPatternFeature` (V1.2)
+
+---
+
+#### DET-09: ConsistencyAcrossInterviewDetector
+
+| Field | Value |
+|---|---|
+| **Priority** | 80 |
+| **Milestone** | M2-7F |
+| **Dependencies** | `ConsistencyDetector`, `TrendDetector` |
+| **Complexity** | O(n²) worst case; expected O(n log n) with dimension grouping |
+
+**Purpose:** Cross-interview consistency analysis — detects when the candidate's answers to semantically related question areas show contradictory trends. Example: strong in "concurrency" but weak in "distributed locking" (sub-areas of TECHNICAL_DEPTH).
+
+**Input:**
+- `EvidenceStore` signals grouped by `question_area`
+- `DimensionTrace` map
+
+**Produced PatternMatch types:**
+- `CONTRADICTORY_ANSWER` with cross-area label
+- `REPEATED_STRENGTH` for consistent cross-area performance
+
+**Produced EvidenceSignal types:**
+- `CONTRADICTORY_ANSWER` (when cross-area contradiction exceeds threshold)
+
+**Performance constraint:** Must complete in < 5ms for sessions up to 10 questions. If projected to exceed budget, return empty result with warning.
+
+**Acceptance Criteria:**
+- Only fires when ≥ 2 distinct question areas exist for the same dimension
+- Contradiction threshold: opposite polarity ratio ≥ 0.4
+- Deterministic
+
+**Future ProfileFeatures affected:** `CrossDomainConsistencyFeature` (V1.2)
+
+---
+
+#### DET-10: ConfidenceCalibrationDetector
+
+| Field | Value |
+|---|---|
+| **Priority** | 90 |
+| **Milestone** | M2-7G |
+| **Dependencies** | `ConsistencyAcrossInterviewDetector` |
+| **Complexity** | O(h) where h = reasoning history length |
+
+**Purpose:** Detect whether the candidate's self-assessment (confidence signals in `SignalTrace`) calibrates with actual performance (DimensionTrace scores). Identifies overconfidence (high claimed confidence, low score) and underconfidence (low claimed confidence, high score).
+
+**Input:**
+- `CandidateProfile.signals` (CONFIDENCE ProfileSignal observations)
+- `CandidateProfile.dimension_scores`
+
+**Produced PatternMatch types:**
+- `CONFIDENCE_DROP` — overconfidence detected (confidence claims > actual score by threshold)
+- Custom: `UNDERCONFIDENCE_PATTERN` (expressed as `REPEATED_WEAKNESS` with label)
+
+**Produced EvidenceSignal types:**
+- `CONFIDENCE_DROP` (on overconfidence)
+
+**Acceptance Criteria:**
+- Requires ≥ 3 confidence signal observations
+- Overconfidence threshold: confidence_claim > actual_score + 20 points
+- Underconfidence threshold: confidence_claim < actual_score - 20 points
+- Silent when insufficient SignalTrace data
+
+**Future ProfileFeatures affected:** `ConfidenceCalibrationFeature` (V1.2)
+
+---
+
+#### DET-11: LeadershipDetector (Reserved)
+
+| Field | Value |
+|---|---|
+| **Priority** | 100 |
+| **Milestone** | V1.2 |
+| **Dependencies** | `BehavioralPatternDetector` |
+| **Status** | Reserved — not implemented in V1.1 |
+
+**Purpose:** Detect leadership signals from behavioral questions: decision ownership, team facilitation references, escalation patterns. Requires behavioral interview type.
+
+**Gate:** Only enabled when `interview_type = "behavioral"` or `"leadership"`.
+
+**Future ProfileFeatures affected:** `LeadershipFeature` (V1.2)
+
+---
+
+#### DET-12: CollaborationDetector (Reserved)
+
+| Field | Value |
+|---|---|
+| **Priority** | 110 |
+| **Milestone** | V1.2 |
+| **Dependencies** | `LeadershipDetector` |
+| **Status** | Reserved — not implemented in V1.1 |
+
+**Purpose:** Detect collaboration and cross-functional signals: references to working with PMs, designers, other engineers. Requires behavioral interview data.
+
+**Future ProfileFeatures affected:** `CollaborationFeature` (V1.2)
+
+---
+
+#### DET-13: AdaptabilityDetector (Reserved)
+
+| Field | Value |
+|---|---|
+| **Priority** | 120 |
+| **Milestone** | V1.2 |
+| **Dependencies** | `BehavioralPatternDetector` |
+| **Status** | Reserved — not implemented in V1.1 |
+
+**Purpose:** Detect adaptability signals: response to novel/ambiguous problem framing, willingness to revise initial answers, recovery from incorrect paths.
+
+**Future ProfileFeatures affected:** `AdaptabilityFeature` (V1.2)
+
+---
+
+### §18.3 — Detector Pipeline (Frozen Execution Order)
+
+```
+Evaluation Pipeline (upstream)
+        ↓ writes EvidenceSignals to EvidenceStore
+─────────────────────────────────────────────────────
+ Priority │ Detector                       │ Milestone
+──────────┼────────────────────────────────┼──────────
+    5     │ EvaluationSignalDetector       │ M2-7B (replaces EvaluationBridgeDetector)
+   10     │ CoverageDetector               │ Active (M2-3)
+   20     │ ConsistencyDetector            │ Active (M2-3)
+   30     │ TrendDetector                  │ Active (M2-3)
+   40     │ ReasoningDepthDetector         │ M2-7B
+   50     │ EngineeringJudgmentDetector    │ M2-7C
+   60     │ CommunicationDetector          │ M2-7D
+   70     │ BehavioralPatternDetector      │ M2-7E
+   80     │ ConsistencyAcrossInterview     │ M2-7F
+   90     │ ConfidenceCalibrationDetector  │ M2-7G
+  100     │ LeadershipDetector             │ V1.2
+  110     │ CollaborationDetector          │ V1.2
+  120     │ AdaptabilityDetector           │ V1.2
+─────────────────────────────────────────────────────
+        ↓
+ReasonerService.aggregate()
+        ↓
+CandidateProfileEngine.update()
+        ↓
+ReasonerDecision
+```
+
+**Performance Budget per Detector:**
+
+| Tier | Target | Hard Limit |
+|---|---|---|
+| Foundation (priority ≤ 30) | < 1ms | 5ms |
+| Core analytic (priority 40–90) | < 3ms | 10ms |
+| Reserved (priority ≥ 100) | < 5ms | 20ms |
+| Total pipeline | < 20ms | 50ms |
+
+**Detector Dependency Graph:**
+
+```
+None ──→ EvaluationSignalDetector (5)
+None ──→ CoverageDetector (10)
+Coverage ──→ Consistency (20)
+Consistency ──→ Trend (30)
+Trend ──→ ReasoningDepth (40)
+ReasoningDepth ──→ EngineeringJudgment (50)
+Consistency ──→ Communication (60)
+Trend ──→ BehavioralPattern (70)
+Consistency + Trend ──→ ConsistencyAcrossInterview (80)
+ConsistencyAcrossInterview ──→ ConfidenceCalibration (90)
+BehavioralPattern ──→ Leadership (100)
+Leadership ──→ Collaboration (110)
+BehavioralPattern ──→ Adaptability (120)
+```
+
+---
+
+### §18.4 — Detector / ProfileFeature / Consumer Matrix
+
+| Detector | ProfileFeature | Dimension | NarrativeGenerator | ReportBuilder | CoachingEngine |
+|---|---|---|---|---|---|
+| EvaluationSignalDetector | KnowledgeDensityFeature | All | ✓ (M2-8) | ✓ (M2-9) | — |
+| CoverageDetector | CoverageFeature | All | ✓ | ✓ | ✓ |
+| ConsistencyDetector | ConsistencyFeature | All | ✓ | ✓ | — |
+| TrendDetector | TrendFeature | All | ✓ | ✓ | ✓ |
+| ReasoningDepthDetector | ReasoningDepthFeature | TECHNICAL_DEPTH, PROBLEM_SOLVING | ✓ | ✓ | ✓ |
+| EngineeringJudgmentDetector | EngineeringJudgmentFeature | ENGINEERING_JUDGMENT | ✓ | ✓ | ✓ |
+| CommunicationDetector | CommunicationFeature | COMMUNICATION | ✓ | ✓ | — |
+| BehavioralPatternDetector | BehavioralPatternFeature | All | ✓ | — | ✓ |
+| ConsistencyAcrossInterview | CrossDomainConsistencyFeature | All | — | ✓ | — |
+| ConfidenceCalibrationDetector | ConfidenceCalibrationFeature | All | ✓ | — | ✓ |
+| LeadershipDetector | LeadershipFeature | — | ✓ | ✓ | ✓ |
+| CollaborationDetector | CollaborationFeature | — | — | ✓ | ✓ |
+| AdaptabilityDetector | AdaptabilityFeature | — | ✓ | — | ✓ |
+
+> **NarrativeGenerator (M2-8):** Consumes ProfileFeatures, NOT raw detector outputs. Detectors are invisible to the narrative layer. This is enforced by ADR-051.
+
+---
+
+### §18.5 — Detector Extensibility Rules
+
+Every detector added to the system **MUST** comply with all of the following:
+
+#### Mandatory Contracts
+
+1. **Implements `PatternDetector`** — abstract base at `services/interview_reasoner/pattern_detection/base_detector.py`
+2. **Declares `DetectorMetadata`** — name (unique), version (semver), priority (integer), enabled, dependencies
+3. **Declares dependencies explicitly** — names of all detectors that must precede it in execution order; validated by `PatternDetectorRegistry`
+4. **Deterministic** — identical inputs always produce identical outputs; no random state
+5. **Stateless** — no instance-level mutable state; all state flows through `ReasonerInput`
+6. **Never mutates `InterviewMemory`** — `ReasonerInput` is a read-only snapshot
+7. **Never calls LLM** — no `openai`, `anthropic`, `langchain` imports
+8. **Never performs prompt engineering** — no string formatting for model consumption
+9. **Returns immutable `DetectorResult`** — all fields are frozen Pydantic models
+10. **Supports registry auto-discovery** — registered via `build_default_registry()` factory; no detector self-registers
+
+#### Idempotency Rule
+
+Every detector that emits `EvidenceSignal`s **MUST** call `filter_new_signals(candidates, store)` from `signal_idempotency.py` before returning, to prevent evidence inflation on re-runs.
+
+#### Performance Contract
+
+Detectors **MUST** complete within the tier budget defined in §18.3. Detectors exceeding the hard limit must return an empty result with a warning rather than blocking the pipeline.
+
+#### Design Guidelines
+
+- **SRP**: One detector, one responsibility. If a detector's `detect()` method exceeds ~60 lines of logic, split into helpers.
+- **OCP**: Detectors are never modified for new functionality. New requirements = new detector.
+- **DIP**: Detectors depend on abstract contracts (`ReasonerInput`, `EvidenceSignal`), never on concrete service classes.
+- **Naming**: `<Purpose>Detector`, e.g. `ReasoningDepthDetector`. Never `Util`, `Helper`, `Manager`.
+- **Testing**: Each detector requires tests for: empty input, single signal, multi-cycle idempotency, dependency boundary, and performance budget.
+- **File location**: `services/interview_reasoner/pattern_detection/detectors/<snake_name>.py`
+- **Registration**: Added to `build_default_registry()` in `detectors/default_registry.py` with a comment referencing the milestone.
+
+#### Detector Compatibility Policy (ADR-053)
+
+A registered detector **MUST NOT** be removed or have its priority changed without a new ADR.  
+Version bumps in `DetectorMetadata.version` are allowed for bug fixes.  
+Dependency additions require a new ADR if they break existing execution order.
+
+---
+
+### §18.6 — ADRs (M2-7A)
+
+---
+
+#### ADR-048: ProfileFeature Abstraction — V1.2 Extension Point
+
+**Status: Accepted — Architecture direction; implementation reserved for V1.2**
+
+**Context:** `CandidateProfile` in M2-6C contains only `dimension_scores: dict[ProfileDimension, DimensionTrace]`. Future detectors (M2-7B+) produce signals that describe *qualitative* candidate characteristics not expressible as dimension scores — reasoning depth, communication style, leadership signals, confidence calibration.
+
+**Decision:** A `ProfileFeature` abstraction is reserved in the architecture. `CandidateProfile` will gain a `features: dict[str, ProfileFeature]` field in V1.2 with `default_factory=dict`. All V1.1 code operates on `dimension_scores` only. V1.2 detectors write to `features` via the `CandidateProfileEngine`.
+
+**Constraints:**
+- `ProfileFeature` is NOT added to any V1.1 file.
+- The field addition in V1.2 must be backward-compatible (optional, default empty).
+- `CandidateProfileEngine.update()` signature does not change — the engine internally dispatches to a new `ProfileFeatureUpdater` in V1.2.
+
+**Rationale:** Separating DimensionTrace (quantitative scoring) from ProfileFeatures (qualitative characteristics) prevents the profile from becoming a god object. Future features can be added without modifying existing updaters.
+
+---
+
+#### ADR-049: Advanced Detector Layering
+
+**Status: Accepted — M2-7A**
+
+**Context:** The M2-6C pipeline has 4 detectors at priorities 5, 10, 20, 30. M2-7+ will add 9 more. Without a frozen layering contract, priority conflicts and dependency cycles will emerge.
+
+**Decision:** Detectors are organised into four tiers:
+
+| Tier | Priority Range | Purpose |
+|---|---|---|
+| Foundation | 1–30 | Core signal bridging, coverage, consistency, trend |
+| Analytic | 31–90 | Deep pattern analysis requiring foundation data |
+| Behavioral | 91–120 | Long-context session analysis |
+| Reserved | 121+ | Future V1.2+ detectors |
+
+New detectors MUST declare the tier in their `DetectorMetadata` description field. Tier boundaries are frozen — no detector can be inserted into a lower tier without a new ADR.
+
+**Constraints:** Priority slots 5, 10, 20, 30 are frozen for existing detectors. New detectors cannot claim these priorities.
+
+---
+
+#### ADR-050: NarrativeGenerator Consumes ProfileFeatures, Not Detector Outputs
+
+**Status: Accepted — Architecture direction; NarrativeGenerator deferred to M2-8**
+
+**Context:** A naive implementation of `NarrativeGenerator` (M2-8) would directly read detector outputs from `ReasonerDecision.reasoning_basis.detected_patterns`. This creates tight coupling between narrative and detection logic.
+
+**Decision:** `NarrativeGenerator` consumes only `CandidateProfile` (including future `ProfileFeatures`). It never reads `ReasoningBasis`, `PatternMatch`, or `DetectorResult` directly.
+
+**Enforcement:** `NarrativeGenerator` receives `CandidateProfile` as its sole profile input. Access to `ReasonerDecision` is limited to `follow_up_recommendation` and `navigation_recommendation`.
+
+**Rationale:** Decouples the display layer from detection internals. Adding or removing a detector does not require `NarrativeGenerator` changes.
+
+---
+
+#### ADR-051: Detector Extensibility Contract (Plugin Architecture)
+
+**Status: Accepted — M2-7A**
+
+**Context:** As the detector ecosystem grows to 13+ detectors, ad-hoc additions risk inconsistent quality, missing idempotency guards, and performance regressions.
+
+**Decision:** Every new detector is gated by a checklist enforced in code review. The checklist items are documented in §18.5. `PatternDetectorRegistry` validates priority uniqueness and dependency existence at registration time. Performance is validated in the detector's unit tests.
+
+**Enforcement mechanism:** A `test_detector_contract.py` shared fixture validates all registered detectors against the contract at test time. Any detector failing the contract causes a test failure.
+
+---
+
+#### ADR-052: Evidence Freshness — Sliding Window for EvaluationSignalDetector
+
+**Status: Accepted — M2-7B**
+
+**Context:** The current `EvaluationBridgeDetector` bridges ALL historical evaluation signals every cycle. This was identified in M2-6B as a P2 calibration issue: a single `SHALLOW_ANSWER` from Q1 permanently dominates patterns even after 7 consecutive strong answers.
+
+**Decision:** `EvaluationSignalDetector` (successor) implements a configurable sliding window: only signals from the last `N` questions are bridged (default N=3, configurable via `settings.reasoner_bridge_lookback_window`). Signals older than the window still exist in `EvidenceStore` (they are never deleted) but are not re-surfaced as active patterns.
+
+**Migration:** `EvaluationBridgeDetector` remains registered until `EvaluationSignalDetector` is fully implemented and validated in M2-7B. After M2-7B, `EvaluationBridgeDetector` is unregistered and removed.
+
+**Rationale:** Addresses M2-6B P2 calibration finding. Ensures pattern surface reflects recent session state, not entire session history.
+
+---
+
+#### ADR-053: Detector Compatibility Policy
+
+**Status: Accepted — M2-7A**
+
+**Context:** As the detector catalog grows, there must be a policy for versioning, deprecation, and removal.
+
+**Decision:**
+- **Addition**: Any new detector may be added by registering in `build_default_registry()` with an appropriate priority. A new ADR is required only if it modifies an existing dependency graph.
+- **Priority change**: Requires a new ADR. Cannot be done unilaterally.
+- **Removal**: Requires a new ADR and a deprecation period of at least one milestone.
+- **Bug fix**: Version bump in `DetectorMetadata.version` (e.g. `1.0.0 → 1.0.1`). No ADR required.
+- **Behavioral change**: Minor version bump (`1.0.0 → 1.1.0`). ADR required if it changes produced signal types.
+
+---
+
+#### ADR-054: Detector Performance Budget
+
+**Status: Accepted — M2-7A**
+
+**Context:** The total Reasoner pipeline must not introduce latency perceptible to the interview experience. M2-7G adds 7 new detectors.
+
+**Decision:** Each detector tier has a hard execution limit enforced at test time:
+
+| Tier | Soft Target | Hard Limit |
+|---|---|---|
+| Foundation (≤ 30) | 1ms | 5ms |
+| Analytic (31–90) | 3ms | 10ms |
+| Behavioral (91–120) | 5ms | 20ms |
+| Total pipeline | 20ms | 50ms |
+
+Unit tests for each detector MUST include a `test_perf_within_budget` case asserting execution time ≤ hard limit with a realistic input (5 questions, 20 signals per dimension).
+
+**Measurement:** `time.perf_counter()` wrapping `detector.detect()`. Budget applies to the pure computation, not imports or warmup.
+
+---
+
+### §18.7 — Implementation Roadmap
+
+| Milestone | Deliverable | Detectors | Key New Capability |
+|---|---|---|---|
+| **M2-7A** | Architecture freeze | — | This document |
+| **M2-7B** | EvaluationSignalDetector + ReasoningDepthDetector | DET-01 (v2), DET-05 | Sliding window bridging; reasoning depth scoring |
+| **M2-7C** | EngineeringJudgmentDetector | DET-06 | Judgment dimension fully assessed |
+| **M2-7D** | CommunicationDetector | DET-07 | Communication dimension separated from content gaps |
+| **M2-7E** | BehavioralPatternDetector | DET-08 | Session-level pattern recognition |
+| **M2-7F** | ConsistencyAcrossInterviewDetector | DET-09 | Cross-domain contradiction detection |
+| **M2-7G** | ConfidenceCalibrationDetector | DET-10 | Self-assessment calibration |
+| **M2-8** | NarrativeGenerator | — | Reads CandidateProfile; produces coaching text |
+| **M2-9** | ReportBuilder | — | Structured session report from ProfileFeatures |
+| **V1.2** | ProfileFeatures activation + Leadership/Collaboration/Adaptability | DET-11–13 | Full qualitative profile |
+| **V1.2** | CoachingEngine | — | Actionable improvement recommendations |
+

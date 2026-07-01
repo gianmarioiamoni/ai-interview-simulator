@@ -1,6 +1,6 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1 M2 Contract Freeze (2026-06-30). ADR-028–047 added. EPIC-04 contracts frozen.
+**Status:** V1.1 M2-7A Architecture Freeze (2026-07-01). ADR-048–054 added. Detector catalog and implementation roadmap frozen.
 
 | Document | File | Scope |
 |---|---|---|
@@ -13,12 +13,14 @@
 ## Usage Rules
 
 1. **Implementation:** every V1.1 and V1.2 task must reference the corresponding Epic and Milestone from this plan.
-2. **Architectural deviations:** require an ADR (continue numbering from ADR-040).
+2. **Architectural deviations:** require an ADR (continue numbering from ADR-054).
 3. **New ADRs supersede** the relevant TDS section but must be registered here.
 4. **PRD is the acceptance authority** — acceptance criteria in each Epic define done.
 5. **TDS §9 (revised) is the canonical description** of the shipped follow-up engine.
 6. **TDS §17 is the canonical description** of EPIC-04 Interview Reasoner frozen contracts.
-7. **ARCH-REVIEW-M1-1 is design history only** — deviations documented in ADR-019 revised and ADR-024–027.
+7. **TDS §18 is the canonical description** of the Advanced Detector Architecture (M2-7A freeze).
+8. **ARCH-REVIEW-M1-1 is design history only** — deviations documented in ADR-019 revised and ADR-024–027.
+9. **Every new detector** must comply with the extensibility rules in TDS §18.5 and ADR-051.
 
 ## M1 Frozen Baseline Summary
 
@@ -45,10 +47,30 @@
 | `ReasonerInput` (single immutable input DTO) | `domain/contracts/reasoning/reasoner_input.py` | **Frozen** |
 | `ReasonerDecision` (fully structured, no free text) | `domain/contracts/reasoning/reasoner_decision.py` | **Frozen** |
 | `PatternDetectorRegistry` + pipeline | `services/interview_reasoner/pattern_detection/` | **Frozen (architecture)** |
+| `CandidateProfileEngine` + updaters | `services/interview_reasoner/profile/` | **Frozen (M2-6C)** |
 | `ENGINEERING_JUDGMENT` ProfileDimension | `domain/contracts/reasoning/profile_dimension.py` | **Frozen** |
 | `EvidenceSource.DERIVED` | Reserved for V1.2 | **Reserved** |
 | Evidence freshness weighting | Reserved for V1.2 | **Reserved (ADR-039)** |
+| `ProfileFeature` abstraction | Reserved for V1.2 | **Reserved (ADR-048)** |
 | `InterviewMemoryContext` deprecation | `domain/contracts/interview/interview_memory_context.py` | **Deprecated M2 / Remove M3** |
+
+## M2-7A Detector Catalog (Frozen Execution Order)
+
+| Priority | Detector | Milestone | Status |
+|---|---|---|---|
+| 5 | `EvaluationBridgeDetector` → `EvaluationSignalDetector` | Active / M2-7B | Active (will be replaced in M2-7B) |
+| 10 | `CoverageDetector` | M2-3 | **Active** |
+| 20 | `ConsistencyDetector` | M2-3 | **Active** |
+| 30 | `TrendDetector` | M2-3 | **Active** |
+| 40 | `ReasoningDepthDetector` | M2-7B | Planned |
+| 50 | `EngineeringJudgmentDetector` | M2-7C | Planned |
+| 60 | `CommunicationDetector` | M2-7D | Planned |
+| 70 | `BehavioralPatternDetector` | M2-7E | Planned |
+| 80 | `ConsistencyAcrossInterviewDetector` | M2-7F | Planned |
+| 90 | `ConfidenceCalibrationDetector` | M2-7G | Planned |
+| 100 | `LeadershipDetector` | V1.2 | Reserved |
+| 110 | `CollaborationDetector` | V1.2 | Reserved |
+| 120 | `AdaptabilityDetector` | V1.2 | Reserved |
 
 ## Active ADRs
 
@@ -80,6 +102,19 @@
 | ADR-039 | Evidence Freshness — Architectural Reservation (V1.2) | **Accepted — Deferred** |
 | ADR-040 | ProfileDimension: ENGINEERING_JUDGMENT | **Accepted — M2** |
 | ADR-041 | Reasoner Explainability — Internal Audit Trail (ReasoningTrace) | **Accepted — Architecture; impl deferred** |
+| ADR-042 | CandidateProfile Internal Composition — Future Sub-profiles | **Accepted — Arch direction; V1.2** |
+| ADR-043 | ReasonerDecision Composition — Future Composed Decisions | **Accepted — Arch direction; V1.2** |
+| ADR-044 | Recommendation Hierarchy — Future Base Protocol | **Accepted — Arch direction; V1.2** |
+| ADR-045 | PatternDetector Metadata Model — Registry Introspection | **Accepted — Arch direction; M2-2** |
+| ADR-046 | EvidenceStore Responsibility Contract | **Accepted — Partially M2-1; extend M2-2** |
+| ADR-047 | ReasoningTrace Audit Hashes — input_hash/output_hash | **Accepted — Arch direction; V1.2** |
+| ADR-048 | ProfileFeature Abstraction — V1.2 Extension Point | **Accepted — Arch direction; V1.2** |
+| ADR-049 | Advanced Detector Layering (4 tiers, frozen priority ranges) | **Accepted — M2-7A** |
+| ADR-050 | NarrativeGenerator Consumes ProfileFeatures, Not Detector Outputs | **Accepted — Arch direction; M2-8** |
+| ADR-051 | Detector Extensibility Contract (Plugin Architecture) | **Accepted — M2-7A** |
+| ADR-052 | Evidence Freshness Sliding Window (EvaluationSignalDetector) | **Accepted — M2-7B** |
+| ADR-053 | Detector Compatibility Policy | **Accepted — M2-7A** |
+| ADR-054 | Detector Performance Budget | **Accepted — M2-7A** |
 
 ## Document Versions
 
@@ -88,10 +123,5 @@
 | 1.0 | 2026-06-29 | AI Architect | Initial master plan |
 | 1.1 | 2026-06-30 | Engineering | V1.1 M1 freeze: TDS §9 revised, ADR-019 revised, ADR-024–027 added, PRD EPIC-03 marked COMPLETED |
 | 1.2 | 2026-06-30 | Engineering | V1.1 M2 contract freeze: TDS §17 added, ADR-028–040 registered, EPIC-04 contracts frozen |
-| ADR-042 | CandidateProfile Internal Composition — Future Sub-profiles | **Accepted — Arch direction; V1.2** |
-| ADR-043 | ReasonerDecision Composition — Future Composed Decisions | **Accepted — Arch direction; V1.2** |
-| ADR-044 | Recommendation Hierarchy — Future Base Protocol | **Accepted — Arch direction; V1.2** |
-| ADR-045 | PatternDetector Metadata Model — Registry Introspection | **Accepted — Arch direction; M2-2** |
-| ADR-046 | EvidenceStore Responsibility Contract | **Accepted — Partially M2-1; extend M2-2** |
-| ADR-047 | ReasoningTrace Audit Hashes — input_hash/output_hash | **Accepted — Arch direction; V1.2** |
-| 1.3 | 2026-06-30 | Engineering | M2-1A freeze: ADR-042–047 added (future-proofing direction for CandidateProfile, ReasonerDecision, Recommendations, DetectorMetadata, EvidenceStore, ReasoningTrace) |
+| 1.3 | 2026-06-30 | Engineering | M2-1A freeze: ADR-042–047 added (future-proofing direction) |
+| 1.4 | 2026-07-01 | Engineering | M2-7A architecture freeze: TDS §18 added, ADR-048–054 registered, detector catalog and ProfileFeature abstraction frozen |
