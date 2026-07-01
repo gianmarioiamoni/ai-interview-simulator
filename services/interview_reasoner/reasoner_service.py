@@ -6,8 +6,9 @@ Responsibilities:
 2. Run all enabled PatternDetectors in priority order.
 3. Aggregate DetectorResult → PatternDetectionResult.
 4. Propagate new EvidenceSignals to InterviewMemory.evidence_store (immutable update).
-5. Build a ReasonerDecision with full ReasoningBasis.
-6. Produce an internal ReasoningTrace for debuggability (ADR-041, ADR-047).
+5. Update CandidateProfile via CandidateProfileEngine (M2-6C).
+6. Build a ReasonerDecision with full ReasoningBasis.
+7. Produce an internal ReasoningTrace for debuggability (ADR-041, ADR-047).
 
 No LLM calls. Fully deterministic. O(n) per detector call.
 """
@@ -35,6 +36,7 @@ from domain.contracts.reasoning.reasoning_confidence import ReasoningConfidence
 from domain.contracts.reasoning.reasoning_trace import ReasoningTrace, ReasoningTraceStep
 from domain.contracts.reasoning.trend import Trend
 from services.interview_reasoner.pattern_detection.registry import PatternDetectorRegistry
+from services.interview_reasoner.profile.candidate_profile_engine import CandidateProfileEngine
 
 _MIN_RELIABLE_EVIDENCE = 3
 _FOLLOW_UP_TRIGGER_TYPES = {
@@ -56,6 +58,7 @@ class ReasonerService:
 
     def __init__(self, registry: PatternDetectorRegistry) -> None:
         self._registry = registry
+        self._profile_engine = CandidateProfileEngine()
 
     # ------------------------------------------------------------------
     # Public API
@@ -79,7 +82,8 @@ class ReasonerService:
 
         aggregated = self._aggregate(detector_results, pipeline_ms)
         updated_memory = self._propagate_evidence(
-            reasoner_input.interview_memory, aggregated.generated_signals
+            reasoner_input.interview_memory, aggregated.generated_signals,
+            reasoner_input.question_index,
         )
         decision = self._build_decision(reasoner_input, aggregated, updated_memory)
         trace = ReasoningTrace(steps=trace_steps)
@@ -171,6 +175,7 @@ class ReasonerService:
         self,
         memory: InterviewMemory,
         new_signals: list[EvidenceSignal],
+        question_index: int,
     ) -> InterviewMemory:
         store = memory.evidence_store
         for sig in new_signals:
@@ -178,8 +183,14 @@ class ReasonerService:
                 store = store.append(sig)
             except ValueError:
                 break  # capacity reached; stop silently (ADR-046)
+
+        # Update CandidateProfile incrementally via CandidateProfileEngine (M2-6C).
+        updated_profile = self._profile_engine.update(
+            memory.candidate_profile, new_signals, question_index
+        )
+
         return InterviewMemory(
-            candidate_profile=memory.candidate_profile,
+            candidate_profile=updated_profile,
             evidence_store=store,
             coverage_state=memory.coverage_state,
             reasoning_history=memory.reasoning_history,
@@ -200,7 +211,10 @@ class ReasonerService:
         detected_types = aggregated.detected_types
         reasoning_confidence = self._compute_confidence(inp, aggregated)
 
-        dominant_dim = self._dominant_dimension(aggregated.generated_signals)
+        # Session-scoped dominant dimension from full profile (M2-6C).
+        dominant_dim = self._profile_engine.dominant_dimension(
+            updated_memory.candidate_profile
+        )
         session_trend = self._session_trend(updated_memory)
 
         follow_up_triggers = [t for t in detected_types if t in _FOLLOW_UP_TRIGGER_TYPES]
