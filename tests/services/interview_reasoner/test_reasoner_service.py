@@ -476,7 +476,7 @@ def test_integration_default_registry():
     inp = _base_input(q_idx=2, feedback="incorrect")
     decision, trace = svc.reason(inp)
     assert not decision.skip
-    assert len(trace.steps) == 12  # M2-7J: 11 (M2-7I) + AdaptabilityDetector
+    assert len(trace.steps) == 13  # M2-7K: 12 (M2-7J) + ConfidenceCalibrationDetector
 
 
 def test_integration_disabled_detector_excluded():

@@ -11,6 +11,7 @@ from services.interview_reasoner.pattern_detection.detectors.engineering_judgmen
 from services.interview_reasoner.pattern_detection.detectors.evaluation_signal_detector import EvaluationSignalDetector
 from services.interview_reasoner.pattern_detection.detectors.adaptability_detector import AdaptabilityDetector
 from services.interview_reasoner.pattern_detection.detectors.collaboration_detector import CollaborationDetector
+from services.interview_reasoner.pattern_detection.detectors.confidence_calibration_detector import ConfidenceCalibrationDetector
 from services.interview_reasoner.pattern_detection.detectors.leadership_detector import LeadershipDetector
 from services.interview_reasoner.pattern_detection.detectors.reasoning_depth_detector import ReasoningDepthDetector
 from services.interview_reasoner.pattern_detection.detectors.trend_detector import TrendDetector
@@ -30,6 +31,7 @@ def build_default_registry() -> PatternDetectorRegistry:
       → CommunicationDetector          (priority=60, depends on Consistency)  [M2-7C]
       → BehavioralPatternDetector      (priority=70, depends on Communication) [M2-7D]
       → ConsistencyAcrossInterviewDetector (priority=80, depends on Behavioral) [M2-7D]
+      → ConfidenceCalibrationDetector  (priority=90,  depends on ConsistencyAcrossInterview) [M2-7K]
       → LeadershipDetector             (priority=100, depends on ConsistencyAcrossInterview) [M2-7H]
       → CollaborationDetector          (priority=110, depends on Leadership) [M2-7I]
       → AdaptabilityDetector           (priority=120, depends on Collaboration) [M2-7J]
@@ -44,6 +46,7 @@ def build_default_registry() -> PatternDetectorRegistry:
     registry.register(CommunicationDetector())
     registry.register(BehavioralPatternDetector())
     registry.register(ConsistencyAcrossInterviewDetector())
+    registry.register(ConfidenceCalibrationDetector())
     registry.register(LeadershipDetector())
     registry.register(CollaborationDetector())
     registry.register(AdaptabilityDetector())
