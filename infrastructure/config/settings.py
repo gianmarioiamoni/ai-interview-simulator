@@ -118,6 +118,11 @@ class Settings(BaseSettings):
     # Enable domain vocabulary injection from CodingDomainProfile.vocabulary_hint.
     coding_domain_vocabulary_enabled: bool = True
 
+    # --- Interview Reasoner (V1.1 M2, ADR-034) ---
+    # CoverageDetector stays silent until this many questions have been answered.
+    # Prevents false navigation triggers at session start.
+    reasoner_coverage_min_questions: int = 2
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

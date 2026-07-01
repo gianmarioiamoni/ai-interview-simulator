@@ -476,7 +476,7 @@ def test_integration_default_registry():
     inp = _base_input(q_idx=2, feedback="incorrect")
     decision, trace = svc.reason(inp)
     assert not decision.skip
-    assert len(trace.steps) == 3  # CoverageDetector + ConsistencyDetector + TrendDetector
+    assert len(trace.steps) == 4  # Bridge + CoverageDetector + ConsistencyDetector + TrendDetector
 
 
 def test_integration_disabled_detector_excluded():
