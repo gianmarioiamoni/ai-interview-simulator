@@ -476,7 +476,7 @@ def test_integration_default_registry():
     inp = _base_input(q_idx=2, feedback="incorrect")
     decision, trace = svc.reason(inp)
     assert not decision.skip
-    assert len(trace.steps) == 9  # M2-7D: 7 + BehavioralPattern + ConsistencyAcrossInterview
+    assert len(trace.steps) == 10  # M2-7H: 9 (M2-7D) + LeadershipDetector
 
 
 def test_integration_disabled_detector_excluded():

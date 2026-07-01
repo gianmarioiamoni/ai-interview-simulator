@@ -43,3 +43,8 @@ class EvidenceType(str, Enum):
     # --- Cross-interview consistency (M2-7D) ---
     CROSS_AREA_CONSISTENT = "cross_area_consistent"    # consistent performance across question areas
     CROSS_AREA_CONTRADICTORY = "cross_area_contradictory"  # contradictory performance across areas
+
+    # --- Leadership (M2-7H, DET-11) ---
+    LEADERSHIP_STRONG   = "LEADERSHIP_STRONG"    # strong multi-dimension leadership signals
+    LEADERSHIP_EMERGING = "LEADERSHIP_EMERGING"  # early leadership pattern detected
+    LEADERSHIP_ABSENT   = "LEADERSHIP_ABSENT"    # behavioral data present but no leadership signals
