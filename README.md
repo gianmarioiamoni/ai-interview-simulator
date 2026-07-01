@@ -204,16 +204,17 @@ Push to the HF Space repository. The `Dockerfile` and `spaces.yml` are already c
 
 ## Current Status
 
-**Version:** 1.1.0 RC
+**Version:** 1.1.0 Stable
 
 - M1 (Humanizer / Follow-Up Engine) — Frozen
 - M2 (Interview Reasoner / 13 Detectors / EvaluationSignalWriter) — Frozen
 - API Freeze — Complete (M2-8)
 - Contract Freeze — Complete
 - Certification — Complete (M2-9)
+- Stable Release — Complete (SR-1, 2026-07-01)
 - Test suite: 2,802 passing / 0 failures
 
-V1.2 is under active architectural planning. See `docs/master-plan/PRD-V1.1-V1.2.md` and `docs/master-plan/INDEX.md`.
+V1.2 is planned. Extension points are reserved in V1.1 ADRs. See `docs/master-plan/PRD-V1.1-V1.2.md` and `docs/master-plan/INDEX.md`.
 
 ---
 

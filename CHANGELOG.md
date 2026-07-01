@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.0] — 2026-07-01
+
+### Stable Release (SR-1)
+
+- VERSION promoted from 1.1.0-rc1 to 1.1.0 stable
+- README Current Status updated to Stable Release
+- Enterprise Engineering Playbook added as FOUNDATIONAL DOCUMENT
+- INDEX updated to v1.7
+- 2,802 tests / 0 failures confirmed at stable tag
+- All Forbidden technical debt: zero
+- All V1.1 P0/P1 findings resolved
+- V1.2 extension points confirmed available (ADR-039, ADR-048, ADR-050, ADR-055, ADR-066, ADR-067)
+
+---
+
 ## [1.1.0-rc1] — 2026-07-01
 
 ### Architecture
