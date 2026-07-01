@@ -1,8 +1,8 @@
 # Product Requirements Document — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1 M1 Released  
-**Version:** 1.1  
-**Date:** 2026-06-30  
+**Status:** V1.1 Stable (Frozen 2026-06-30) — V1.2 Scope Freeze Active (2026-07-01)  
+**Version:** 1.2-K0  
+**Date:** 2026-07-01  
 **Owner:** Product  
 **Audience:** Engineering, Product, Stakeholders
 
@@ -126,12 +126,18 @@ The Hybrid Question Intelligence architecture (ADR-004) limits generation to con
 - LLM Reliability Framework (retry policy, structured output enforcement, fallback chain)
 - Coding Reliability Hardening (reference self-validation, hidden test JSON constraints)
 
-### V1.2 Headline Features
-- Interview Replay (session history, full transcript review, score comparison)
-- Progress Tracking (cross-session improvement metrics, dimensional trend charts)
-- Study Recommendations Engine (gap-to-resource mapping, prioritised study plan)
-- UI Refresh (design system tokens, accessibility (WCAG 2.1 AA), dark mode)
-- Cost Optimisation Framework (model routing, token budgeting, caching layer)
+### V1.2 Headline Features (Scope Frozen 2026-07-01)
+- **Language Independence Layer** — Python/JS/TS as first-class language config (Python-only / JS-TS-only / Mixed)
+- **Candidate Knowledge Model** — `ProfileFeature` activation: `NarrativeGenerator` and `ReportBuilder` consume `CandidateProfile`
+- **Observation Layer** — typed `ObservationStore` with lifecycle, decay, and expiry
+- **Narrative Generator V2** — profile-feature-aware coaching language
+- **Coaching Engine** — Study Recommendations Engine with gap-to-resource mapping
+- **Evidence Freshness** — observation decay preventing profile distortion
+- **Calibration Framework** — CI-integrated scoring constant validation
+- **Enterprise Extensibility** — tenant-context placeholder for V2 migration
+- **Interview Replay** (session persistence, full transcript review)
+- **Progress Tracking** (cross-session dimensional trends)
+- **Cost Optimisation Framework** (model routing, token budgeting, caching)
 
 ### V2 Future Vision
 - REST API surface for third-party integrations
@@ -625,30 +631,32 @@ The Hybrid Question Intelligence architecture (ADR-004) limits generation to con
 
 ## 7. Prioritisation Matrix
 
-### Must Have (V1.1)
+### Must Have (V1.2)
 
 | Feature | Epic |
 |---|---|
-| Humanizer Follow-Up Engine activation | EPIC-03 |
-| Prompt Security Layer | EPIC-05 |
-| LLM Reliability Framework (retry + fallback) | EPIC-06 |
-| Multi-language Coding (JS, TypeScript) | EPIC-08 |
-| Coding Reliability Hardening (reference self-validation, hidden test constraints) | EPIC-08 |
+| Language Independence Layer | EPIC-00 |
+| Candidate Knowledge Model (ProfileFeature activation) | EPIC-01 |
+| Observation Layer (ObservationStore lifecycle) | EPIC-02 |
+| Narrative Generator V2 (profile-feature-aware) | EPIC-03 |
+| Session Persistence (SQLite, forward-compatible schema) | EPIC-09 |
 
-### Should Have (V1.1 / V1.2)
+### Should Have (V1.2)
 
 | Feature | Epic | Target |
 |---|---|---|
-| Interview Reasoner (structured reasoning per dimension) | EPIC-04 | V1.1 |
-| Interview Replay | EPIC-09 | V1.2 |
+| Coaching Engine (Study Recommendations) | EPIC-04 | V1.2 |
+| Evidence Freshness (observation decay) | EPIC-05 | V1.2 |
+| Calibration Framework (CI gate) | EPIC-06 | V1.2 |
+| Interview Replay UI | EPIC-09 | V1.2 |
 | Progress Tracking | EPIC-10 | V1.2 |
-| Study Recommendations | EPIC-11 | V1.2 |
+| Cost Optimisation Framework | EPIC-07 | V1.2 |
 
 ### Could Have (V1.2)
 
 | Feature | Epic |
 |---|---|
-| Cost Optimisation Framework (model routing, caching) | EPIC-07 |
+| Enterprise Extensibility (tenant-context placeholder) | EPIC-07 (V1.2) |
 | UI Refresh (design system, accessibility, dark mode) | EPIC-12 |
 
 ### Won't Have (Post-V2)
