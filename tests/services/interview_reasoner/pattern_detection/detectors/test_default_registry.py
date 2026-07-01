@@ -7,7 +7,7 @@ from services.interview_reasoner.pattern_detection.detectors.default_registry im
 
 def test_registry_contains_nine_detectors():
     reg = build_default_registry()
-    assert len(reg.all()) == 11  # M2-7I: +CollaborationDetector
+    assert len(reg.all()) == 12  # M2-7J: +AdaptabilityDetector
 
 
 def test_registry_ordering():
@@ -25,12 +25,13 @@ def test_registry_ordering():
         "ConsistencyAcrossInterviewDetector",
         "LeadershipDetector",
         "CollaborationDetector",
+        "AdaptabilityDetector",
     ]
 
 
 def test_all_detectors_enabled():
     reg = build_default_registry()
-    assert len(reg.enabled()) == 11
+    assert len(reg.enabled()) == 12
 
 
 def test_dependency_chain_valid():

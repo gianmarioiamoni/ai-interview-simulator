@@ -53,3 +53,8 @@ class EvidenceType(str, Enum):
     COLLABORATION_STRONG    = "COLLABORATION_STRONG"    # strong multi-faceted collaboration pattern
     COLLABORATION_EFFECTIVE = "COLLABORATION_EFFECTIVE" # solid collaboration indicators present
     COLLABORATION_DEFICIT   = "COLLABORATION_DEFICIT"   # individualistic or conflict-avoidant pattern
+
+    # --- Adaptability (M2-7J, DET-13) ---
+    ADAPTABILITY_HIGH     = "ADAPTABILITY_HIGH"     # strong recovery and flexibility demonstrated
+    ADAPTABILITY_MODERATE = "ADAPTABILITY_MODERATE" # adequate adaptability present
+    ADAPTABILITY_LOW      = "ADAPTABILITY_LOW"      # rigidity pattern; low recovery rate

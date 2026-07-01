@@ -9,6 +9,7 @@ from services.interview_reasoner.pattern_detection.detectors.coverage_detector i
 from services.interview_reasoner.pattern_detection.detectors.consistency_detector import ConsistencyDetector
 from services.interview_reasoner.pattern_detection.detectors.engineering_judgment_detector import EngineeringJudgmentDetector
 from services.interview_reasoner.pattern_detection.detectors.evaluation_signal_detector import EvaluationSignalDetector
+from services.interview_reasoner.pattern_detection.detectors.adaptability_detector import AdaptabilityDetector
 from services.interview_reasoner.pattern_detection.detectors.collaboration_detector import CollaborationDetector
 from services.interview_reasoner.pattern_detection.detectors.leadership_detector import LeadershipDetector
 from services.interview_reasoner.pattern_detection.detectors.reasoning_depth_detector import ReasoningDepthDetector
@@ -31,6 +32,7 @@ def build_default_registry() -> PatternDetectorRegistry:
       → ConsistencyAcrossInterviewDetector (priority=80, depends on Behavioral) [M2-7D]
       → LeadershipDetector             (priority=100, depends on ConsistencyAcrossInterview) [M2-7H]
       → CollaborationDetector          (priority=110, depends on Leadership) [M2-7I]
+      → AdaptabilityDetector           (priority=120, depends on Collaboration) [M2-7J]
     """
     registry = PatternDetectorRegistry()
     registry.register(EvaluationSignalDetector())
@@ -44,4 +46,5 @@ def build_default_registry() -> PatternDetectorRegistry:
     registry.register(ConsistencyAcrossInterviewDetector())
     registry.register(LeadershipDetector())
     registry.register(CollaborationDetector())
+    registry.register(AdaptabilityDetector())
     return registry
