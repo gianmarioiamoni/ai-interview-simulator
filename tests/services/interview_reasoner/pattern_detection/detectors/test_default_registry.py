@@ -5,9 +5,9 @@ import pytest
 from services.interview_reasoner.pattern_detection.detectors.default_registry import build_default_registry
 
 
-def test_registry_contains_five_detectors():
+def test_registry_contains_seven_detectors():
     reg = build_default_registry()
-    assert len(reg.all()) == 5  # EvaluationSignal + Coverage + Consistency + Trend + ReasoningDepth
+    assert len(reg.all()) == 7  # EvaluationSignal + Coverage + Consistency + Trend + ReasoningDepth + EngineeringJudgment + Communication
 
 
 def test_registry_ordering():
@@ -19,12 +19,14 @@ def test_registry_ordering():
         "ConsistencyDetector",
         "TrendDetector",
         "ReasoningDepthDetector",
+        "EngineeringJudgmentDetector",
+        "CommunicationDetector",
     ]
 
 
 def test_all_detectors_enabled():
     reg = build_default_registry()
-    assert len(reg.enabled()) == 5
+    assert len(reg.enabled()) == 7
 
 
 def test_dependency_chain_valid():

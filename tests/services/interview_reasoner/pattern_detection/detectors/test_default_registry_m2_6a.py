@@ -4,9 +4,9 @@
 from services.interview_reasoner.pattern_detection.detectors.default_registry import build_default_registry
 
 
-def test_registry_contains_five_detectors():
+def test_registry_contains_seven_detectors():
     reg = build_default_registry()
-    assert len(reg.all()) == 5
+    assert len(reg.all()) == 7  # updated M2-7C: 5 + EngineeringJudgment + Communication
 
 
 def test_priority_order():
@@ -18,6 +18,8 @@ def test_priority_order():
         "ConsistencyDetector",
         "TrendDetector",
         "ReasoningDepthDetector",
+        "EngineeringJudgmentDetector",
+        "CommunicationDetector",
     ]
 
 
@@ -28,4 +30,4 @@ def test_evaluation_signal_is_first():
 
 
 def test_all_detectors_enabled():
-    assert len(build_default_registry().enabled()) == 5
+    assert len(build_default_registry().enabled()) == 7
