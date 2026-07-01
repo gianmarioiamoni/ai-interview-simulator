@@ -122,6 +122,11 @@ class Settings(BaseSettings):
     # CoverageDetector stays silent until this many questions have been answered.
     # Prevents false navigation triggers at session start.
     reasoner_coverage_min_questions: int = 2
+    # EvaluationSignalDetector sliding window (ADR-052):
+    # only evaluation signals from the last N answered questions are bridged
+    # into active PatternMatches. Older signals remain in EvidenceStore but
+    # no longer generate new derived patterns.
+    reasoner_bridge_window: int = 3
 
     model_config = SettingsConfigDict(
         env_file=".env",

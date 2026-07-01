@@ -5,20 +5,26 @@ import pytest
 from services.interview_reasoner.pattern_detection.detectors.default_registry import build_default_registry
 
 
-def test_registry_contains_three_detectors():
+def test_registry_contains_five_detectors():
     reg = build_default_registry()
-    assert len(reg.all()) == 4  # Bridge + Coverage + Consistency + Trend (M2-6A)
+    assert len(reg.all()) == 5  # EvaluationSignal + Coverage + Consistency + Trend + ReasoningDepth
 
 
 def test_registry_ordering():
     reg = build_default_registry()
     names = [d.metadata.name for d in reg.ordered()]
-    assert names == ["EvaluationBridgeDetector", "CoverageDetector", "ConsistencyDetector", "TrendDetector"]
+    assert names == [
+        "EvaluationSignalDetector",
+        "CoverageDetector",
+        "ConsistencyDetector",
+        "TrendDetector",
+        "ReasoningDepthDetector",
+    ]
 
 
 def test_all_detectors_enabled():
     reg = build_default_registry()
-    assert len(reg.enabled()) == 4  # M2-6A: +1 EvaluationBridgeDetector
+    assert len(reg.enabled()) == 5
 
 
 def test_dependency_chain_valid():
@@ -31,11 +37,19 @@ def test_dependency_chain_valid():
     assert trend is not None
     assert "ConsistencyDetector" in trend.metadata.dependencies
 
+    depth = reg.by_name("ReasoningDepthDetector")
+    assert depth is not None
+    assert "TrendDetector" in depth.metadata.dependencies
+
 
 def test_fresh_registry_on_each_call():
     reg1 = build_default_registry()
     reg2 = build_default_registry()
     assert reg1 is not reg2
+
+
+def test_evaluation_signal_detector_exists():
+    assert build_default_registry().exists("EvaluationSignalDetector")
 
 
 def test_coverage_detector_exists():
@@ -48,3 +62,12 @@ def test_consistency_detector_exists():
 
 def test_trend_detector_exists():
     assert build_default_registry().exists("TrendDetector")
+
+
+def test_reasoning_depth_detector_exists():
+    assert build_default_registry().exists("ReasoningDepthDetector")
+
+
+def test_evaluation_bridge_detector_removed():
+    """EvaluationBridgeDetector must no longer be in the default registry."""
+    assert not build_default_registry().exists("EvaluationBridgeDetector")
