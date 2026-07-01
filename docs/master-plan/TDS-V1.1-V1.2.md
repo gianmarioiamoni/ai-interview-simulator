@@ -2,7 +2,7 @@
 
 **Version:** 1.1  
 **Date:** 2026-06-30  
-**Status:** V1.1 M1 Frozen — Architecture Baseline  
+**Status:** V1.1 M2-8 Reasoner Consolidation & API Freeze — Reasoner production-ready  
 **Authors:** Engineering Team  
 **Supersedes:** ADRs 001–015 (V1.0 era)
 
@@ -5324,3 +5324,140 @@ V1.1 `ReasonerService`, `NarrativeGenerator`, `ReportBuilder`, or any existing d
 
 ---
 
+## 21. M2-8 Reasoner Consolidation & API Freeze
+
+> **Status: Implemented — 2026-07-01. Reasoner is production-ready.**  
+> This section is the canonical reference for the M2-8 consolidation milestone.  
+> All interfaces described here are frozen. Backward compatibility is 100%.
+
+### 21.1 — Scope
+
+M2-8 is the final V1.1 stabilization milestone for EPIC-04.  
+No new features, detectors, evidence types, or architectural changes are introduced.
+
+Consolidation scope:
+- API Freeze (all public interfaces)
+- Contract verification (immutability, `extra=forbid`, `schema_version`, ownership)
+- Pipeline ownership audit
+- Observability review
+- Performance boundary confirmation
+- Documentation update
+- Technical Debt Register
+
+### 21.2 — Public API Freeze Table
+
+All interfaces below are frozen as of M2-8. No breaking changes permitted without a new ADR and milestone boundary.
+
+| Component | Frozen Public API | Location |
+|---|---|---|
+| `ReasonerService` | `reason(ReasonerInput) → (ReasonerDecision, ReasoningTrace)` | `services/interview_reasoner/reasoner_service.py` |
+| `ReasoningContextBuilder` | `build(InterviewState) → ReasonerInput` | `services/interview_reasoner/reasoning_context_builder.py` |
+| `PatternDetector` (ABC) | `metadata → DetectorMetadata`, `detect(ReasonerInput) → DetectorResult` | `services/interview_reasoner/pattern_detection/base_detector.py` |
+| `PatternDetectorRegistry` | `register`, `unregister`, `enabled`, `ordered`, `by_name`, `exists`, `all` | `services/interview_reasoner/pattern_detection/registry.py` |
+| `CandidateProfileEngine` | `update(profile, signals, q_idx) → CandidateProfile`, `dominant_dimension(profile) → ProfileDimension\|None` | `services/interview_reasoner/profile/candidate_profile_engine.py` |
+| `EvaluationSignalWriter` | `write_evaluation_signals(evaluation, q_idx, area, store) → EvidenceStore` | `services/interview_reasoner/evaluation_signal_writer.py` |
+| `reasoner_node` | `reasoner_node(InterviewState) → InterviewState` | `app/graph/nodes/reasoner_node.py` |
+| `ReasonerDecision` | All fields, `schema_version="1.0"`, `extra=forbid`, `frozen=True` | `domain/contracts/reasoning/reasoner_decision.py` |
+| `ReasonerInput` | All fields, `extra=forbid`, `frozen=True` | `domain/contracts/reasoning/reasoner_input.py` |
+| `InterviewMemory` | 5-substructure composition, `extra=forbid`, `frozen=True` | `domain/contracts/reasoning/interview_memory.py` |
+| `CandidateProfile` | `dimension_scores`, `signals`(reserved), `questions_answered`, `areas_covered`, `last_updated_at_question_index` | `domain/contracts/reasoning/candidate_profile.py` |
+| `EvidenceSignal` | All fields, `schema_version="1.0"`, `extra=forbid`, `frozen=True` | `domain/contracts/reasoning/evidence_signal.py` |
+| `PatternMatch` / `PatternDetectionResult` | All fields, `extra=forbid`, `frozen=True` | `domain/contracts/reasoning/pattern_match.py` |
+| `ReasoningTrace` / `ReasoningTraceStep` | All fields, INTERNAL ONLY, `extra=forbid`, `frozen=True` | `domain/contracts/reasoning/reasoning_trace.py` |
+| `DetectorResult` | All fields, `execution_time_ms` populated by pipeline | `domain/contracts/reasoning/detector_context.py` |
+
+### 21.3 — EvaluationSignalWriter Runtime Flow
+
+`EvaluationSignalWriter` is the production bridge (P0-1 fix, ADR-052) between the evaluation pipeline and the pattern detection pipeline.
+
+**Call sequence:**
+
+```
+reasoner_node
+  → _inject_evaluation_signals(state)          # pre-reason step
+      → write_evaluation_signals(evaluation, q_idx, area, store)
+          → idempotency guard: skip if source=EVALUATION + q_idx already in store
+          → _build_signals:
+              score ≥ 80    → [] (no negative signal)
+              50 ≤ score < 80 → [SHALLOW_ANSWER, NEGATIVE, TECHNICAL_DEPTH]
+              30 ≤ score < 50 → [REASONING_GAP,  NEGATIVE, TECHNICAL_DEPTH]
+              score < 30    → [KNOWLEDGE_GAP,   NEGATIVE, TECHNICAL_DEPTH]
+          → store.append(signal) per signal (immutable, raises ValueError at capacity)
+          → returns new EvidenceStore (never mutates input)
+      → state updated: interview_memory.evidence_store = updated_store
+  → ReasoningContextBuilder.build(state) → ReasonerInput
+  → ReasonerService.reason(ReasonerInput)
+      → EvaluationSignalDetector (priority=5) reads store → bridges to PatternMatch
+      → remaining 12 detectors execute in priority order
+      → aggregate → propagate → CandidateProfileEngine.update()
+      → ReasonerDecision + ReasoningTrace
+  → _append_reasoning_entry(state, decision) → updated InterviewMemory
+  → return state with updated interview_memory + current_reasoning_decision
+```
+
+**Same-cycle visibility contract:**
+
+| Signal origin | Visible to detectors this cycle? |
+|---|---|
+| `EvaluationSignalWriter` (written before `reason()`) | **Yes** — written to EvidenceStore before pipeline starts |
+| Signals generated by detector N | **No** — not visible to detector N+1 in the same cycle (ADR-046) |
+| All signals from previous cycles | **Yes** — always in EvidenceStore |
+
+### 21.4 — Pipeline Ownership Audit
+
+Single-writer rule verified for all InterviewMemory substructures:
+
+| Substructure | Writer | ADR |
+|---|---|---|
+| `EvidenceStore` | `EvaluationSignalWriter` (EVALUATION) + `ReasonerService._propagate_evidence()` (PATTERN_DETECTOR) + `reasoner_node._append_reasoning_entry()` | ADR-038, ADR-046 |
+| `CandidateProfile` | `CandidateProfileEngine.update()` via `ReasonerService` | ADR-037 |
+| `ReasoningHistory` | `reasoner_node._append_reasoning_entry()` | ADR-038 |
+| `SessionMetrics` | `ReasonerService._propagate_evidence()` | ADR-038 |
+| `CoverageState` | `CoverageUpdater` via `CandidateProfileEngine` | ADR-038 |
+
+No hidden coupling or duplicated responsibilities found.
+
+### 21.5 — Observability Confirmation
+
+| Log point | Level | Fields |
+|---|---|---|
+| `reasoner_node` success | INFO | `q_idx`, `detectors`, `signals`, `patterns`, `elapsed_ms`, `skip` |
+| `reasoner_node` failure | WARNING | `q_idx`, `error` (type only), `elapsed_ms` |
+| `EvidenceStore` capacity exceeded | WARNING | `q_idx`, `store_size`, `dropped_signals` |
+| Detector error (isolated) | WARNING (via `ReasoningTraceStep`) | `component`, `error_type` |
+
+PII protection: no prompts, no answers, no free text logged anywhere in the pipeline.
+
+### 21.6 — Performance Boundary Confirmation
+
+| Component | DDS Limit | Implementation |
+|---|---|---|
+| `EvidenceStore` max capacity | 200 signals | `_MAX_SIGNALS = 200` |
+| `ReasoningHistory` max entries | 20 entries | `_MAX_ENTRIES = 20` |
+| `ReasonerService` complexity | O(n × detectors) | 13 detectors, O(n) each |
+| `CandidateProfileEngine` complexity | O(\|new_signals\|) | Never O(\|EvidenceStore\|) |
+| Answer sanitization | max 2000 chars | `_MAX_ANSWER_CHARS = 2000` |
+| Detector failure isolation | Single failure does not break cycle | Per-detector try/except in `_run_detectors()` |
+
+### 21.7 — Contract Consistency Verification
+
+All 27 `domain/contracts/reasoning/` contracts verified:
+
+- Immutability: `frozen=True` on all models ✓
+- `extra=forbid`: present on all models ✓
+- `schema_version`: present on `EvidenceSignal`, `ReasonerDecision`, `ReasoningEntry`, `InterviewMemory` ✓
+- Ownership: single-writer for all substructures ✓
+- Field naming: consistent `snake_case` throughout ✓
+- Default values: all optional fields have explicit defaults ✓
+- Forward/backward compatibility: `schema_version` field supports future deserialization; no fields removed ✓
+
+Note: `CandidateProfile.signals` is present but never populated (reserved for V1.2 ProfileFeature layer, ADR-048).
+
+### 21.8 — Deprecated Components
+
+| Component | Status | Replacement | Removal |
+|---|---|---|---|
+| `EvaluationBridgeDetector` | Deprecated — not in `build_default_registry()` | `EvaluationSignalDetector` + `EvaluationSignalWriter` | V1.2 |
+| `InterviewMemoryContext` | Deprecated M2 | `InterviewMemory` | M3 |
+
+---

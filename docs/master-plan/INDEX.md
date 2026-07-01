@@ -1,6 +1,6 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1 M2-7F Design Freeze (2026-07-01). ADR-062–067 added. Leadership, Collaboration, Adaptability detectors fully specified. Behavioral detector family frozen.
+**Status:** V1.1 M2-8 Reasoner Consolidation & API Freeze (2026-07-01). Reasoner pipeline frozen. EvaluationSignalWriter shipped. EvaluationBridgeDetector deprecated. All 13 detectors active. 1042 tests passing. Release Candidate ready.
 
 | Document | File | Scope |
 |---|---|---|
@@ -13,15 +13,17 @@
 ## Usage Rules
 
 1. **Implementation:** every V1.1 and V1.2 task must reference the corresponding Epic and Milestone from this plan.
-2. **Architectural deviations:** require an ADR (continue numbering from ADR-054).
+2. **Architectural deviations:** require an ADR (continue numbering from ADR-068).
 3. **New ADRs supersede** the relevant TDS section but must be registered here.
 4. **PRD is the acceptance authority** — acceptance criteria in each Epic define done.
 5. **TDS §9 (revised) is the canonical description** of the shipped follow-up engine.
 6. **TDS §17 is the canonical description** of EPIC-04 Interview Reasoner frozen contracts.
 7. **TDS §18 is the canonical description** of the Advanced Detector Architecture (M2-7A freeze).
-8. **ARCH-REVIEW-M1-1 is design history only** — deviations documented in ADR-019 revised and ADR-024–027.
-9. **Every new detector** must comply with the extensibility rules in TDS §18.5 and ADR-051.
-10. **TDS §20 is the canonical specification** for LeadershipDetector, CollaborationDetector, and AdaptabilityDetector (M2-7F design freeze).
+8. **TDS §21 is the canonical description** of the M2-8 Reasoner Consolidation, API Freeze, EvaluationSignalWriter runtime flow, and same-cycle visibility contract.
+9. **ARCH-REVIEW-M1-1 is design history only** — deviations documented in ADR-019 revised and ADR-024–027.
+10. **Every new detector** must comply with the extensibility rules in TDS §18.5 and ADR-051.
+11. **TDS §20 is the canonical specification** for LeadershipDetector, CollaborationDetector, and AdaptabilityDetector (M2-7F design freeze).
+12. **Reasoner pipeline is frozen** — no new detectors, contracts, or API changes without a new ADR and milestone boundary.
 
 ## M1 Frozen Baseline Summary
 
@@ -37,11 +39,54 @@
 | `FollowUpTriggeredEvent` / `FollowUpSkippedEvent` | Frozen | `domain/events/` |
 | `settings.py` follow-up configuration | Frozen | `infrastructure/config/settings.py` |
 
-## M2 Contract Freeze Summary (EPIC-04)
+## M2-8 API Freeze Summary (Reasoner Consolidation)
+
+| Component | Public API | Status |
+|---|---|---|
+| `ReasonerService` | `reason(ReasonerInput) → (ReasonerDecision, ReasoningTrace)` | **Frozen** |
+| `ReasoningContextBuilder` | `build(InterviewState) → ReasonerInput` | **Frozen** |
+| `PatternDetector` (ABC) | `metadata → DetectorMetadata`, `detect(ReasonerInput) → DetectorResult` | **Frozen** |
+| `PatternDetectorRegistry` | `register`, `unregister`, `enabled`, `ordered`, `by_name`, `exists`, `all` | **Frozen** |
+| `CandidateProfileEngine` | `update(profile, signals, q_idx) → CandidateProfile`, `dominant_dimension(profile)` | **Frozen** |
+| `EvaluationSignalWriter` | `write_evaluation_signals(evaluation, q_idx, area, store) → EvidenceStore` | **Frozen** |
+| `reasoner_node` | `reasoner_node(InterviewState) → InterviewState` | **Frozen** |
+| `ReasonerDecision` | All fields frozen, `schema_version="1.0"` | **Frozen** |
+| `ReasonerInput` | All fields frozen, `extra=forbid` | **Frozen** |
+| `InterviewMemory` | 5-substructure composition, `extra=forbid` | **Frozen** |
+| `CandidateProfile` | `dimension_scores`, `signals` (reserved), `questions_answered`, `areas_covered`, `last_updated_at_question_index` | **Frozen** |
+| `EvidenceSignal` | All fields frozen, `schema_version="1.0"` | **Frozen** |
+| `PatternMatch` / `PatternDetectionResult` | All fields frozen | **Frozen** |
+| `ReasoningTrace` / `ReasoningTraceStep` | All fields frozen, INTERNAL ONLY | **Frozen** |
+| `DetectorResult` | All fields frozen, execution_time_ms populated by pipeline | **Frozen** |
+
+## M2-8 EvaluationSignalWriter — Runtime Flow
+
+```
+reasoner_node
+  → _inject_evaluation_signals(state)
+      → write_evaluation_signals(evaluation, q_idx, area, store)
+          → idempotency guard (source=EVALUATION, q_idx already written? → skip)
+          → _build_signals: score → EvidenceType mapping
+              score ≥ 80  → [] (no signal)
+              50 ≤ score < 80  → SHALLOW_ANSWER
+              30 ≤ score < 50  → REASONING_GAP
+              score < 30  → KNOWLEDGE_GAP
+          → store.append(signal) × N
+      → returns updated EvidenceStore (never mutates original)
+  → state updated with new evidence_store in interview_memory
+  → ReasoningContextBuilder.build(state) → ReasonerInput
+  → ReasonerService.reason(ReasonerInput)
+      → EvaluationSignalDetector reads store (same-cycle visibility guaranteed)
+```
+
+**Same-cycle visibility contract (ADR-046, ADR-052):**  
+Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE visible to detectors in the same cycle, because they are written to `EvidenceStore` before `ReasonerService.reason()` is called. Signals generated by detectors within the same cycle are NOT visible to subsequent detectors in the same cycle (isolated pipeline — ADR-046).
+
+
 
 | Contract | Location | Status |
 |---|---|---|
-| `domain/contracts/reasoning/` (19 files) | See TDS §17.1 | **Frozen** |
+| `domain/contracts/reasoning/` (27 files) | See TDS §17.1 | **Frozen** |
 | `InterviewMemory` (5-substructure composition) | `domain/contracts/reasoning/interview_memory.py` | **Frozen** |
 | `EvidenceSignal` (with id, polarity, type, source, strength, schema_version) | `domain/contracts/reasoning/evidence_signal.py` | **Frozen** |
 | `CandidateProfile` (DimensionTrace without raw scores) | `domain/contracts/reasoning/candidate_profile.py` | **Frozen** |
@@ -53,7 +98,8 @@
 | `EvidenceSource.DERIVED` | Reserved for V1.2 | **Reserved** |
 | Evidence freshness weighting | Reserved for V1.2 | **Reserved (ADR-039)** |
 | `ProfileFeature` abstraction | Reserved for V1.2 | **Reserved (ADR-048)** |
-| `InterviewMemoryContext` deprecation | `domain/contracts/interview/interview_memory_context.py` | **Deprecated M2 / Remove M3** |
+| `EvaluationSignalWriter` | `services/interview_reasoner/evaluation_signal_writer.py` | **Frozen (M2-8)** |
+| `EvaluationBridgeDetector` | `services/interview_reasoner/pattern_detection/detectors/evaluation_bridge_detector.py` | **Deprecated M2-7B / Remove V1.2** |
 | `LeadershipDetector` full specification | TDS §20.2 | **Design Frozen (M2-7F)** |
 | `CollaborationDetector` full specification | TDS §20.3 | **Design Frozen (M2-7F)** |
 | `AdaptabilityDetector` full specification | TDS §20.4 | **Design Frozen (M2-7F)** |
@@ -67,19 +113,20 @@
 
 | Priority | Detector | Milestone | Status |
 |---|---|---|---|
-| 5 | `EvaluationBridgeDetector` → `EvaluationSignalDetector` | Active / M2-7B | Active (will be replaced in M2-7B) |
+| 5 | `EvaluationSignalDetector` | M2-7B | **Active** |
 | 10 | `CoverageDetector` | M2-3 | **Active** |
 | 20 | `ConsistencyDetector` | M2-3 | **Active** |
 | 30 | `TrendDetector` | M2-3 | **Active** |
-| 40 | `ReasoningDepthDetector` | M2-7B | Planned |
-| 50 | `EngineeringJudgmentDetector` | M2-7C | Planned |
-| 60 | `CommunicationDetector` | M2-7D | Planned |
-| 70 | `BehavioralPatternDetector` | M2-7E | Planned |
-| 80 | `ConsistencyAcrossInterviewDetector` | M2-7F | Planned |
-| 90 | `ConfidenceCalibrationDetector` | M2-7G | Planned |
-| 100 | `LeadershipDetector` | V1.2 | **Design Frozen (M2-7F)** |
-| 110 | `CollaborationDetector` | V1.2 | **Design Frozen (M2-7F)** |
-| 120 | `AdaptabilityDetector` | V1.2 | **Design Frozen (M2-7F)** |
+| 40 | `ReasoningDepthDetector` | M2-7B | **Active** |
+| 50 | `EngineeringJudgmentDetector` | M2-7C | **Active** |
+| 60 | `CommunicationDetector` | M2-7D | **Active** |
+| 70 | `BehavioralPatternDetector` | M2-7E | **Active** |
+| 80 | `ConsistencyAcrossInterviewDetector` | M2-7F | **Active** |
+| 90 | `ConfidenceCalibrationDetector` | M2-7G/K | **Active** |
+| 100 | `LeadershipDetector` | M2-7H | **Active** |
+| 110 | `CollaborationDetector` | M2-7I | **Active** |
+| 120 | `AdaptabilityDetector` | M2-7J | **Active** |
+| — | `EvaluationBridgeDetector` | M2-6A (superseded) | **Deprecated — not in registry** |
 
 ## Active ADRs
 
@@ -148,3 +195,40 @@
 | 1.3 | 2026-06-30 | Engineering | M2-1A freeze: ADR-042–047 added (future-proofing direction) |
 | 1.4 | 2026-07-01 | Engineering | M2-7A architecture freeze: TDS §18 added, ADR-048–054 registered, detector catalog and ProfileFeature abstraction frozen |
 | 1.5 | 2026-07-01 | Engineering | M2-7F design freeze: TDS §20 added, ADR-062–067 registered, Leadership/Collaboration/Adaptability detectors and Behavioral family fully frozen |
+| 1.6 | 2026-07-01 | Engineering | M2-8 Reasoner Consolidation: INDEX updated, API Freeze table added, EvaluationSignalWriter flow documented, detector catalog corrected to Active, EvaluationBridgeDetector deprecated, TDS §21 added, Technical Debt Register added |
+
+## Technical Debt Register (M2-8)
+
+### V1.1 Closed
+
+| ID | Item | Resolution |
+|---|---|---|
+| TD-001 | EvaluationSignalWriter missing (P0-1 from M2-7M audit) | Shipped in M2-8; `evaluation_signal_writer.py` |
+| TD-002 | `questions_answered` counter not incremented per cycle (P0-2) | Fixed in `ReasonerService._propagate_evidence()` |
+| TD-003 | `EvaluationBridgeDetector` superseded but still present in codebase | Deprecated; removed from registry; file retained for V1.2 removal window |
+| TD-004 | `domain/contracts/reasoning/` count mismatch in INDEX (stated 19, actual 27) | Corrected in INDEX v1.6 |
+| TD-005 | Detector catalog in INDEX showed all detectors as "Planned" | Corrected to Active in INDEX v1.6 |
+
+### V1.1 Deferred
+
+| ID | Item | Priority | Reason | Planned Milestone | ADR |
+|---|---|---|---|---|---|
+| TD-006 | `EvaluationBridgeDetector` file deletion | P3 | Retained one-milestone per ADR-059 deprecation policy | V1.2 | ADR-059 |
+| TD-007 | `InterviewMemoryContext` full removal | P2 | Deprecated M2; safe to remove once all consumers verified | M3 | ADR-032 |
+| TD-008 | `ReasoningTrace` not attached to `ReasonerDecision` output (ADR-041 arch-only) | P3 | Internal audit only; no external consumer yet | V1.2 | ADR-041 |
+| TD-009 | `ReasoningTrace` audit hashes (`input_hash`/`output_hash`) not implemented | P3 | ADR-047 arch direction | V1.2 | ADR-047 |
+| TD-010 | `DetectorPipeline` abstraction (composable pipeline object) | P3 | ADR deferred; depends on NarrativeGenerator requirements | V1.2 | TDS §19.9.4 |
+| TD-011 | `CandidateProfile.signals` field never populated | P3 | Reserved for ProfileFeature layer (ADR-048) | V1.2 | ADR-048 |
+| TD-012 | `EvidenceSource.DERIVED` never used | P3 | Reserved for V1.2 | V1.2 | ADR-039 |
+| TD-013 | `_session_trend` only reads `reasoning_confidence` (not domain signals) | P3 | Sufficient for V1.1; signal-based trend is V1.2 scope | V1.2 | — |
+
+### V1.2 Planned
+
+| ID | Item | Priority | ADR |
+|---|---|---|---|
+| TD-014 | `ProfileFeature` abstraction activation | P1 | ADR-048 |
+| TD-015 | Evidence freshness weighting (sliding window) | P2 | ADR-039 |
+| TD-016 | `CoachingEngine` pipeline | P1 | ADR-067 |
+| TD-017 | `NarrativeGenerator` (M2-8 deferred) | P1 | ADR-050 |
+| TD-018 | `ObservationModel` (Leadership/Collaboration/Adaptability) | P2 | ADR-055, ADR-066 |
+
