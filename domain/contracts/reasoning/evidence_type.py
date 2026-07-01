@@ -19,3 +19,9 @@ class EvidenceType(str, Enum):
     MISSING_EVIDENCE = "missing_evidence"
     SHALLOW_ANSWER = "shallow_answer"
     CONTRADICTORY_ANSWER = "contradictory_answer"
+
+    # --- Reasoning depth (M2-7B) ---
+    REASONING_DEPTH_HIGH = "reasoning_depth_high"      # deep causal / trade-off reasoning
+    REASONING_DEPTH_LOW = "reasoning_depth_low"        # surface-level / memorised answers
+    REASONING_IMPROVING = "reasoning_improving"        # depth trend is upward
+    REASONING_STAGNATING = "reasoning_stagnating"      # depth not improving despite multiple signals
