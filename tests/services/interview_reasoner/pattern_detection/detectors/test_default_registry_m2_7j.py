@@ -52,6 +52,7 @@ def test_twelve_detectors_present():
         "CommunicationDetector",
         "BehavioralPatternDetector",
         "ConsistencyAcrossInterviewDetector",
+        "ConfidenceCalibrationDetector",
         "LeadershipDetector",
         "CollaborationDetector",
         "AdaptabilityDetector",

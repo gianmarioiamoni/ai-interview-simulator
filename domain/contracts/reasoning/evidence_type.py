@@ -58,3 +58,10 @@ class EvidenceType(str, Enum):
     ADAPTABILITY_HIGH     = "ADAPTABILITY_HIGH"     # strong recovery and flexibility demonstrated
     ADAPTABILITY_MODERATE = "ADAPTABILITY_MODERATE" # adequate adaptability present
     ADAPTABILITY_LOW      = "ADAPTABILITY_LOW"      # rigidity pattern; low recovery rate
+
+    # --- Confidence Calibration (M2-7K, DET-10) ---
+    CONFIDENCE_WELL_CALIBRATED = "CONFIDENCE_WELL_CALIBRATED"  # confidence track is stable and accurate
+    CONFIDENCE_OVERCONFIDENT   = "CONFIDENCE_OVERCONFIDENT"    # confidence exceeds actual performance
+    CONFIDENCE_UNDERCONFIDENT  = "CONFIDENCE_UNDERCONFIDENT"   # confidence below actual performance
+    CONFIDENCE_UNSTABLE        = "CONFIDENCE_UNSTABLE"         # oscillating or erratic confidence track
+    CONFIDENCE_SATURATED       = "CONFIDENCE_SATURATED"        # confidence clamped at max/min; no signal

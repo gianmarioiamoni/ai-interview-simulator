@@ -61,7 +61,7 @@ def test_evidence_type_positive_and_negative():
     }
     assert len(positive) == 4
     assert len(negative) == 8
-    assert len(EvidenceType) == 35  # 32 (M2-7I) + 3 adaptability (M2-7J)
+    assert len(EvidenceType) == 40  # 35 (M2-7J) + 5 calibration (M2-7K)
 
 
 def test_profile_dimension_five_values():
