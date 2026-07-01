@@ -31,6 +31,7 @@ from app.core.logger import get_logger
 from services.interview_reasoner.pattern_detection.detectors.default_registry import (
     build_default_registry,
 )
+from services.interview_reasoner.evaluation_signal_writer import write_evaluation_signals
 from services.interview_reasoner.reasoning_context_builder import ReasoningContextBuilder
 from services.interview_reasoner.reasoner_service import ReasonerService
 
@@ -45,6 +46,10 @@ def reasoner_node(state: InterviewState) -> InterviewState:
     """Execute one reasoning cycle and return the updated InterviewState."""
     t0 = time.perf_counter()
     try:
+        # P0-1 fix: inject EVALUATION-source signals from the current question's
+        # QuestionEvaluation into EvidenceStore before reasoning, so that
+        # EvaluationSignalDetector can bridge them (ADR-052).
+        state = _inject_evaluation_signals(state)
         reasoner_input = _builder.build(state)
         decision, trace = _service.reason(reasoner_input)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
@@ -85,6 +90,42 @@ def reasoner_node(state: InterviewState) -> InterviewState:
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _inject_evaluation_signals(state: InterviewState) -> InterviewState:
+    """Return state with EVALUATION-source signals written to EvidenceStore.
+
+    Reads the current question's QuestionEvaluation and writes evaluation
+    signals via EvaluationSignalWriter (P0-1 fix, ADR-052).
+    Returns state unchanged if no evaluation is available.
+    """
+    if state.interview_memory is None:
+        return state
+    if not state.asked_question_ids:
+        return state
+    last_qid = state.asked_question_ids[-1]
+    result = state.results_by_question.get(last_qid)
+    if result is None or result.evaluation is None:
+        return state
+
+    memory = state.interview_memory
+    q_idx = state.current_question_index
+    question_area = (
+        state.last_question_context.question_area
+        if state.last_question_context is not None
+        else "unknown"
+    )
+    updated_store = write_evaluation_signals(
+        evaluation=result.evaluation,
+        question_index=q_idx,
+        question_area=question_area,
+        store=memory.evidence_store,
+    )
+    if updated_store is memory.evidence_store:
+        return state
+
+    updated_memory = memory.model_copy(update={"evidence_store": updated_store})
+    return state.model_copy(update={"interview_memory": updated_memory})
+
+
 def _append_reasoning_entry(
     state: InterviewState,
     decision,
@@ -117,7 +158,13 @@ def _append_reasoning_entry(
         try:
             store = store.append(sig)
         except ValueError:
-            break  # capacity reached
+            logger.warning(
+                "evidence_store_capacity_exceeded in reasoner_node | "
+                "q_idx=%d store_size=%d",
+                state.current_question_index,
+                len(store.signals),
+            )
+            break
 
     return InterviewMemory(
         candidate_profile=decision.candidate_profile_snapshot,

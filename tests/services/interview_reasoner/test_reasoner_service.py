@@ -389,11 +389,13 @@ def test_no_navigation_without_triggers():
 # Confidence computation
 # ---------------------------------------------------------------------------
 
-def test_insufficient_when_zero_questions():
+def test_tentative_after_first_cycle():
+    # After P0-2 fix, questions_answered is incremented to 1 each cycle, so
+    # the first reasoning cycle yields TENTATIVE (not INSUFFICIENT).
     from domain.contracts.reasoning.data_sufficiency import DataSufficiency
     svc = ReasonerService(PatternDetectorRegistry())
     decision, _ = svc.reason(_base_input())
-    assert decision.reasoning_basis.reasoning_confidence.data_sufficiency == DataSufficiency.INSUFFICIENT
+    assert decision.reasoning_basis.reasoning_confidence.data_sufficiency == DataSufficiency.TENTATIVE
 
 
 def test_confident_with_enough_questions():

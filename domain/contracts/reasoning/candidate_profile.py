@@ -21,6 +21,9 @@ class CandidateProfile(BaseModel):
     dimension_scores: dict[ProfileDimension, DimensionTrace] = Field(
         default_factory=dict
     )
+    # TODO(V1.2): signals is reserved for the ProfileFeature layer (ADR-039).
+    # Not populated or read in V1.1. Will be activated when the Observation
+    # Layer and ProfileFeature mapping are introduced in V1.2.
     signals: dict[ProfileSignal, SignalTrace] = Field(default_factory=dict)
     questions_answered: int = Field(default=0, ge=0)
     areas_covered: list[str] = Field(default_factory=list)
