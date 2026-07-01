@@ -56,6 +56,7 @@ def test_ten_detectors_present():
         "BehavioralPatternDetector",
         "ConsistencyAcrossInterviewDetector",
         "LeadershipDetector",
+        "CollaborationDetector",
     }
     assert expected.issubset(names)
 
@@ -65,7 +66,7 @@ def test_registry_order_strictly_by_priority():
     assert priorities == sorted(priorities)
 
 
-def test_leadership_is_last_registered():
+def test_leadership_is_before_collaboration():
     ordered = list(build_default_registry().ordered())
     names = [d.metadata.name for d in ordered]
-    assert names[-1] == "LeadershipDetector"
+    assert names.index("LeadershipDetector") < names.index("CollaborationDetector")
