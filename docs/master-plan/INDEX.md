@@ -1,12 +1,13 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1 M2-9 Release Candidate Certified (2026-07-01). VERSION=1.1.0. 2802 tests passing. Repository identity complete. Platform Engineering Manifest established.
+**Status:** V1.1.0 STABLE (2026-07-01). VERSION=1.1.0. 2802 tests passing. All P0/P1 findings resolved. Platform Engineering Manifest and Enterprise Engineering Playbook established. Stable Release Certificate issued (SR-1).
 
-## Foundational Document
+## Foundational Documents
 
 | Document | File | Scope |
 |---|---|---|
 | **Platform Engineering Manifest** | **`PLATFORM_ENGINEERING_MANIFEST.md`** | **FOUNDATIONAL — Engineering constitution for all versions ≥ V1.1. Defines principles, workflow, invariants, quality standards, release policy, and technical debt policy. Highest authority document in the repository.** |
+| **Enterprise Engineering Playbook** | **`ENTERPRISE_ENGINEERING_PLAYBOOK.md`** | **FOUNDATIONAL — Operational handbook for day-to-day engineering execution. Defines project lifecycle, milestone workflow, prompt methodology, ADR workflow, architecture reviews, technical debt workflow, testing strategy, release workflow, and AI collaboration model. Complements the Manifest. Reusable across all future enterprise projects.** |
 
 ## Master Plan Documents
 
@@ -204,6 +205,8 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | 1.4 | 2026-07-01 | Engineering | M2-7A architecture freeze: TDS §18 added, ADR-048–054 registered, detector catalog and ProfileFeature abstraction frozen |
 | 1.5 | 2026-07-01 | Engineering | M2-7F design freeze: TDS §20 added, ADR-062–067 registered, Leadership/Collaboration/Adaptability detectors and Behavioral family fully frozen |
 | 1.6 | 2026-07-01 | Engineering | M2-8 Reasoner Consolidation: INDEX updated, API Freeze table added, EvaluationSignalWriter flow documented, detector catalog corrected to Active, EvaluationBridgeDetector deprecated, TDS §21 added, Technical Debt Register added |
+| 1.7 | 2026-07-01 | Engineering | EP-1 Foundational documentation: ENTERPRISE_ENGINEERING_PLAYBOOK.md created and registered as second FOUNDATIONAL DOCUMENT |
+| 1.8 | 2026-07-01 | Engineering | SR-1 Stable Release: INDEX status promoted to V1.1.0 STABLE, Stable Release Certificate issued, V1.2 transition confirmed |
 
 ## Technical Debt Register (M2-8)
 
@@ -240,3 +243,109 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | TD-017 | `NarrativeGenerator` (M2-8 deferred) | P1 | ADR-050 |
 | TD-018 | `ObservationModel` (Leadership/Collaboration/Adaptability) | P2 | ADR-055, ADR-066 |
 
+---
+
+## V1.1.0 Stable Release Certificate
+
+**Certificate ID:** SR-1  
+**Version:** 1.1.0  
+**Date:** 2026-07-01  
+**Status:** CERTIFIED STABLE
+
+### Architecture
+
+| Item | Status |
+|---|---|
+| DDD layered architecture | Frozen |
+| 16-node LangGraph interview graph | Frozen |
+| InterviewMemory 5-substructure composition | Frozen |
+| PatternDetectorRegistry plugin architecture | Frozen |
+| All M1 and M2 public APIs | Frozen (extra=forbid, schema_version="1.0") |
+| 67 Architecture Decision Records | Accepted |
+
+### Tests
+
+| Metric | Value |
+|---|---|
+| Total tests | 2,802 |
+| Passed | 2,802 |
+| Failed | 0 |
+| Skipped | 0 |
+| Test modules | 280 |
+
+### Documentation
+
+| Document | Status |
+|---|---|
+| Platform Engineering Manifest | Current (v1.0) |
+| Enterprise Engineering Playbook | Current (v1.0) |
+| PRD-V1.1-V1.2.md | Current |
+| TDS-V1.1-V1.2.md (§9, §17, §18, §20, §21) | Current |
+| INDEX.md | Current (v1.8) |
+| README.md | Current — Stable status |
+| CHANGELOG.md | Current — [1.1.0] entry added |
+| Technical Debt Register | Current — 18 items registered |
+
+### Quantitative Summary
+
+| Metric | Value |
+|---|---|
+| ADR count | 67 |
+| Active detectors | 13 |
+| EvidenceType catalog entries | 35 |
+| Frozen contracts (domain/contracts/) | 27 files |
+| Deferred technical debt items | 13 (V1.1 deferred + V1.2 planned) |
+| Forbidden technical debt items | 0 |
+
+### Certification Verdict
+
+All Forbidden technical debt: **ZERO**  
+All P0/P1 audit findings: **RESOLVED**  
+Full test suite: **2,802 PASSED / 0 FAILED**  
+Documentation freeze: **COMPLETE**  
+API freeze: **COMPLETE**
+
+**RECOMMENDATION: CERTIFIED FOR V1.1.0 STABLE RELEASE**
+
+---
+
+## V1.2 Transition Summary
+
+### Protected Assets (Must Not Be Modified Without ADR)
+
+- All contracts in `domain/contracts/reasoning/` (27 files, extra=forbid, schema_version="1.0")
+- `ReasonerService`, `ReasoningContextBuilder`, `PatternDetectorRegistry`, `CandidateProfileEngine`, `EvaluationSignalWriter` public APIs
+- All 13 active detector implementations and their frozen execution priorities
+- `InterviewMemory` 5-substructure composition
+- `FollowUpSelector`, `FollowUpGuard`, `FollowUpPromptBuilder`, `FollowUpParser` (M1 frozen)
+- ADR-001 through ADR-067 (supersession requires new ADR, not modification)
+
+### Available Extension Points for V1.2
+
+| Extension Point | Governing ADR | Description |
+|---|---|---|
+| `ProfileFeature` abstraction | ADR-048 | Structured feature layer above raw detector outputs |
+| `NarrativeGenerator` consuming ProfileFeatures | ADR-050 | Narrative coaching from features, not raw signals |
+| `CoachingEngine` pipeline | ADR-067 | Decoupled coaching recommendation pipeline |
+| Evidence freshness weighting | ADR-039 | Sliding window on EvidenceStore signals |
+| `ObservationModel` (Leadership/Collaboration/Adaptability) | ADR-055, ADR-066 | Structured behavioral observations |
+| `EvidenceSource.DERIVED` | ADR-039 | Reserved evidence source variant |
+| `ReasoningTrace` audit hashes | ADR-047 | input_hash/output_hash for audit trail |
+| `DetectorPipeline` abstraction | TDS §19.9.4 | Composable pipeline object |
+| `CandidateProfile.signals` field | ADR-048 | ProfileFeature population target |
+
+### Next ADR Numbering
+
+V1.2 ADRs start from **ADR-068**.
+
+### First Planned V1.2 Milestones
+
+| Milestone | Scope | Governing ADRs |
+|---|---|---|
+| V1.2 M1 | ProfileFeature abstraction activation | ADR-048 |
+| V1.2 M2 | NarrativeGenerator (ProfileFeature-consuming) | ADR-050 |
+| V1.2 M3 | CoachingEngine pipeline | ADR-067 |
+| V1.2 M4 | Behavioral ObservationModel | ADR-055, ADR-066 |
+| V1.2 M5 | Evidence freshness weighting | ADR-039 |
+| V1.2 M6 | EvaluationBridgeDetector removal | ADR-059, TD-006 |
+| V1.2 M7 | Domain layer cleanup (InterviewMemoryContext removal) | ADR-032, TD-007 |
