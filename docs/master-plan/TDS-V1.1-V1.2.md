@@ -3507,6 +3507,50 @@ New detectors MUST declare the tier in their `DetectorMetadata` description fiel
 
 ---
 
+#### ADR-055: Observation Abstraction — Reserved for V1.2
+
+**Status: Proposed — M2-7C (documentation only; no production code)**
+
+**Context:** M2-7B introduced ReasoningDepthDetector with three collaborators: Analyzer, Scorer, SignalFactory. M2-7C introduces EngineeringJudgmentDetector and CommunicationDetector with the same decomposition. As the detector count grows to 10+, a recurring pattern emerges: each Analyzer produces raw classification statistics, and each detector individually decides which of those statistics constitute a meaningful observation worthy of a PatternMatch or EvidenceSignal. There is no shared vocabulary for the explanation layer between the detection step and the signal emission step. The future Coaching Engine (V1.2) will need to explain *why* a signal was produced — not just *that* it was produced.
+
+**Proposed Abstraction (V1.2):**
+
+```
+Evaluation (upstream)
+      ↓
+EvidenceStore (raw signals)
+      ↓
+Observation  ←─── NEW (V1.2)
+      │  Captures: what the detector saw, in human-readable terms.
+      │  Fields: observation_type, dimension, strength, description, supporting_signal_ids
+      ↓
+EvidenceSignal
+      ↓
+PatternMatch
+```
+
+An `Observation` is the intermediate explanation layer:
+- Produced by the Analyzer/Scorer collaborator
+- Carries a `description: str` field (short, non-candidate-facing explanation)
+- Consumed by SignalFactory to build `EvidenceSignal`
+- Consumed by CoachingEngine (V1.2) to generate human-readable coaching
+
+**Why not now (M2-7C):** The Observation abstraction requires a stable `CoachingEngine` contract. Without a consumer, the abstraction would be speculative. All V1.1 Analyzers produce raw dataclasses (`JudgmentStats`, `CommunicationStats`, `DimensionDepthStats`) that can be upgraded to Observations in V1.2 without changing the detector external contract.
+
+**V1.2 Migration Plan:**
+- `JudgmentStats` → `JudgmentObservation(Observation)`
+- `CommunicationStats` → `CommunicationObservation(Observation)`
+- `DimensionDepthStats` → `DepthObservation(Observation)`
+- `Observation` base class added to `domain/contracts/reasoning/observation.py`
+- No changes to `PatternDetector` ABC or `DetectorResult` contract
+
+**Constraints:**
+- V1.1 code MUST NOT introduce `Observation` class or import it
+- Analyzer return types remain plain dataclasses in V1.1
+- The field `description` is reserved in collaborator docstrings
+
+---
+
 #### ADR-054: Detector Performance Budget
 
 **Status: Accepted — M2-7A**
@@ -3534,8 +3578,8 @@ Unit tests for each detector MUST include a `test_perf_within_budget` case asser
 |---|---|---|---|
 | **M2-7A** | Architecture freeze | — | This document |
 | **M2-7B** | EvaluationSignalDetector + ReasoningDepthDetector | DET-01 (v2), DET-05 | Sliding window bridging; reasoning depth scoring |
-| **M2-7C** | EngineeringJudgmentDetector | DET-06 | Judgment dimension fully assessed |
-| **M2-7D** | CommunicationDetector | DET-07 | Communication dimension separated from content gaps |
+| **M2-7C** | EngineeringJudgmentDetector + CommunicationDetector | DET-06, DET-07 | Judgment + communication dimensions assessed; Observation ADR reserved (ADR-055) |
+| **M2-7D** | BehavioralPatternDetector | DET-08 | Session-level pattern recognition (advanced) |
 | **M2-7E** | BehavioralPatternDetector | DET-08 | Session-level pattern recognition |
 | **M2-7F** | ConsistencyAcrossInterviewDetector | DET-09 | Cross-domain contradiction detection |
 | **M2-7G** | ConfidenceCalibrationDetector | DET-10 | Self-assessment calibration |

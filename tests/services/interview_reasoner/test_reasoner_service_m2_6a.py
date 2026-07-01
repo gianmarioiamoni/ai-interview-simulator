@@ -103,7 +103,18 @@ def test_knowledge_gap_priority_1():
 
 
 def test_shallow_answer_priority_2():
-    inp = _inp(signals=[_eval_sig(EvidenceType.SHALLOW_ANSWER)])
+    # Provide an EJ eval signal to suppress KNOWLEDGE_GAP on ENGINEERING_JUDGMENT dim;
+    # only SHALLOW_ANSWER should drive the follow-up recommendation.
+    ej_sig = EvidenceSignal(
+        id=_uid(), question_index=1, question_area="api",
+        dimension=ProfileDimension.ENGINEERING_JUDGMENT,
+        polarity=EvidencePolarity.POSITIVE,
+        signal_type=EvidenceType.ENGINEERING_JUDGMENT_ARTICULATED,
+        strength=0.7,
+        source=EvidenceSource.EVALUATION,
+        timestamp_question_index=1,
+    )
+    inp = _inp(signals=[_eval_sig(EvidenceType.SHALLOW_ANSWER), ej_sig])
     d, _ = _svc().reason(inp)
     assert d.follow_up_recommendation.priority == 2
 
@@ -165,8 +176,9 @@ def test_no_new_signals_on_second_cycle_same_question():
         current_question_area="api",
     )
     d, _ = _svc().reason(inp)
-    # Bridge should produce 0 new derived signals (key already in store)
+    # Bridge should produce 0 new derived signals for TECHNICAL_DEPTH (key already in store)
     bridge_new = [s for s in d.new_evidence
                   if s.signal_type == EvidenceType.KNOWLEDGE_GAP
-                  and s.source == EvidenceSource.PATTERN_DETECTOR]
+                  and s.source == EvidenceSource.PATTERN_DETECTOR
+                  and s.dimension == ProfileDimension.TECHNICAL_DEPTH]
     assert bridge_new == []

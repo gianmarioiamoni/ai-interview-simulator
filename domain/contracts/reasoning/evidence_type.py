@@ -25,3 +25,12 @@ class EvidenceType(str, Enum):
     REASONING_DEPTH_LOW = "reasoning_depth_low"        # surface-level / memorised answers
     REASONING_IMPROVING = "reasoning_improving"        # depth trend is upward
     REASONING_STAGNATING = "reasoning_stagnating"      # depth not improving despite multiple signals
+
+    # --- Engineering judgment (M2-7C) ---
+    ENGINEERING_JUDGMENT_HIGH = "engineering_judgment_high"    # strong trade-off / operational reasoning
+    ENGINEERING_JUDGMENT_LOW = "engineering_judgment_low"      # shallow judgment dimension
+
+    # --- Communication quality (M2-7C) ---
+    COMMUNICATION_CLEAR = "communication_clear"                # consistent clear communication
+    COMMUNICATION_WEAK = "communication_weak"                  # persistent communication weakness
+    COMMUNICATION_INCONSISTENT = "communication_inconsistent"  # inconsistent communication signals
