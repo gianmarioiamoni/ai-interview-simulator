@@ -61,7 +61,7 @@ def test_evidence_type_positive_and_negative():
     }
     assert len(positive) == 4
     assert len(negative) == 8
-    assert len(EvidenceType) == 29  # 26 (M2-7D) + 3 leadership (M2-7H)
+    assert len(EvidenceType) == 32  # 29 (M2-7H) + 3 collaboration (M2-7I)
 
 
 def test_profile_dimension_five_values():

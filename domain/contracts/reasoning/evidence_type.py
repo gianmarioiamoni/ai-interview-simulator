@@ -48,3 +48,8 @@ class EvidenceType(str, Enum):
     LEADERSHIP_STRONG   = "LEADERSHIP_STRONG"    # strong multi-dimension leadership signals
     LEADERSHIP_EMERGING = "LEADERSHIP_EMERGING"  # early leadership pattern detected
     LEADERSHIP_ABSENT   = "LEADERSHIP_ABSENT"    # behavioral data present but no leadership signals
+
+    # --- Collaboration (M2-7I, DET-12) ---
+    COLLABORATION_STRONG    = "COLLABORATION_STRONG"    # strong multi-faceted collaboration pattern
+    COLLABORATION_EFFECTIVE = "COLLABORATION_EFFECTIVE" # solid collaboration indicators present
+    COLLABORATION_DEFICIT   = "COLLABORATION_DEFICIT"   # individualistic or conflict-avoidant pattern
