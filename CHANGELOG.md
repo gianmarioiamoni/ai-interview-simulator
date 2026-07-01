@@ -5,6 +5,82 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.0-rc1] — 2026-07-01
+
+### Architecture
+
+- DDD layered architecture formalised: `interface → app → services → domain ← infrastructure`
+- 67 Architecture Decision Records registered (ADR-001 through ADR-067)
+- Platform Engineering Manifest established as engineering constitution
+- LangGraph interview graph extended to 16 nodes with deterministic routing
+- `InterviewMemory` 5-substructure composition formalised (EvidenceStore, CandidateProfile, ReasoningHistory, RetrievalMemory, SessionMetrics)
+- All M1 and M2 public APIs frozen with `extra=forbid` and `schema_version="1.0"` on critical contracts
+
+### Humanizer & Follow-Up Engine (M1 — Frozen)
+
+- `FollowUpSelector` — deterministic pre-selection of eligible question indices (ADR-027)
+- `FollowUpPromptBuilder` — LLM follow-up generation with dedicated prompt file (ADR-026)
+- `FollowUpParser` — STRICT-mode JSON parser for LLM follow-up output
+- `FollowUpGuard` — 17-rule validation layer; all guard failures fall back to SKIP
+- `HumanizerService.generate_follow_up()` — integrated into `QuestionNode` with feature-flag gate
+- `FollowUpTriggeredEvent` / `FollowUpSkippedEvent` — typed domain events for follow-up lifecycle
+- 44/44 acceptance gates pass; 186 follow-up tests implemented
+
+### Interview Reasoner (M2 — Frozen)
+
+- `ReasonerService` — deterministic, LLM-free reasoning pipeline
+- `ReasoningContextBuilder` — `InterviewState → ReasonerInput` builder
+- `EvaluationSignalWriter` — maps evaluation scores to typed `EvidenceSignal` entries with idempotency guard
+- Same-cycle visibility contract: evaluation signals written before `ReasonerService.reason()` is called (ADR-052)
+- `CandidateProfileEngine` — accumulates dimension traces, coverage, trends across the session
+- `PatternDetectorRegistry` — plugin-architecture detector pipeline (ADR-051)
+- `ReasonerDecision` — fully structured advisory output; no free text (ADR-035)
+- Failure-safe `reasoner_node`: reasoning failure never stops the interview (ADR-030)
+
+### Detector Framework (M2-7A through M2-7J — Frozen)
+
+- 13 active detectors in priority order: EvaluationSignalDetector (5), CoverageDetector (10), ConsistencyDetector (20), TrendDetector (30), ReasoningDepthDetector (40), EngineeringJudgmentDetector (50), CommunicationDetector (60), BehavioralPatternDetector (70), ConsistencyAcrossInterviewDetector (80), ConfidenceCalibrationDetector (90), LeadershipDetector (100), CollaborationDetector (110), AdaptabilityDetector (120)
+- Detector extensibility contract frozen (ADR-051, ADR-053, ADR-054, ADR-058, ADR-059, ADR-060, ADR-061)
+- `EvaluationBridgeDetector` deprecated per ADR-059 deprecation policy; removed from registry
+
+### Behavioral Intelligence (M2-7F)
+
+- `LeadershipDetector` — initiative, influence, ownership signal pattern detection
+- `CollaborationDetector` — cross-functional, alignment, conflict-resolution patterns
+- `AdaptabilityDetector` — recovery-from-failure detection algorithm (ADR-065)
+- Behavioral detector family responsibility matrix frozen (ADR-062)
+- Behavioral Observation Model and CoachingEngine pipeline reserved for V1.2 (ADR-055, ADR-066, ADR-067)
+
+### Documentation
+
+- `PLATFORM_ENGINEERING_MANIFEST.md` — engineering constitution (engineering philosophy, workflow, invariants, quality standards, release policy, technical debt policy)
+- `README.md` — fully rewritten as enterprise open-source project documentation
+- `TDS-V1.1-V1.2.md` — sections §9 (revised), §17, §18, §20, §21 added and frozen
+- `INDEX.md` — updated to v1.6 with complete ADR registry and freeze status tables
+- `docs/technical-debt-register.md` — Technical Debt Register formalised (M2-8)
+- 16 architecture docs under `docs/architecture/`
+
+### Engineering Process
+
+- Structured milestone workflow adopted: Architecture → Contracts → ADRs → Implementation → Tests → Audit → Freeze → Certification
+- M2-9 Release Candidate Certification audit completed: 2,802 tests / 0 failures
+- M2-9A Architectural Compliance audit completed: layering verified, ownership map confirmed
+- M2-9B Repository Identity completed: VERSION=1.1.0, README rewritten
+
+### Testing
+
+- 2,802 tests passing / 0 failures at RC tag
+- 280 test modules covering services, domain, graph nodes, UI, infrastructure, hardening, integration
+- Factories and fakes for deterministic test isolation
+
+### Technical Debt
+
+- Technical Debt Register formalised with 25+ registered items
+- All V1.1 P0 blockers resolved (EvaluationSignalWriter, questions_answered counter, EvaluationBridgeDetector registry removal)
+- All remaining items accepted as V1.2 or V1.3 evolution
+
+---
+
 ## [1.0.0] — 2026-06-29
 
 ### Added

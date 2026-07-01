@@ -290,15 +290,19 @@ The Hybrid Question Intelligence architecture (ADR-004) limits generation to con
 | M2-6A | Stabilization sprint (P0/P1 fixes) | **Completed** |
 | M2-6B | Behavioural validation (15 scenarios) | **Completed** |
 | M2-6C/D | CandidateProfileEngine + behavioural revalidation (20 scenarios) | **Completed** |
-| M2-7A | Advanced detector architecture freeze | **Completed (this milestone)** |
-| M2-7B | EvaluationSignalDetector + ReasoningDepthDetector | Planned |
-| M2-7C | EngineeringJudgmentDetector | Planned |
-| M2-7D | CommunicationDetector | Planned |
-| M2-7E | BehavioralPatternDetector | Planned |
-| M2-7F | ConsistencyAcrossInterviewDetector | Planned |
-| M2-7G | ConfidenceCalibrationDetector | Planned |
-| M2-8 | NarrativeGenerator | Planned |
-| M2-9 | ReportBuilder | Planned |
+| M2-7A | Advanced detector architecture freeze | **Completed** |
+| M2-7B | EvaluationSignalDetector + ReasoningDepthDetector | **Completed** |
+| M2-7C | EngineeringJudgmentDetector | **Completed** |
+| M2-7D | CommunicationDetector | **Completed** |
+| M2-7E | BehavioralPatternDetector | **Completed** |
+| M2-7F | ConsistencyAcrossInterviewDetector | **Completed** |
+| M2-7G/K | ConfidenceCalibrationDetector | **Completed** |
+| M2-7H | LeadershipDetector | **Completed** |
+| M2-7I | CollaborationDetector | **Completed** |
+| M2-7J | AdaptabilityDetector | **Completed** |
+| M2-8 | Reasoner Consolidation & API Freeze | **Completed** |
+| M2-9 (NarrativeGenerator reads CandidateProfile) | NarrativeGenerator | **Deferred — V1.2** |
+| M2-9 (ReportBuilder reads ProfileFeatures) | ReportBuilder | **Deferred — V1.2** |
 
 **Priority:** P1  
 **Estimated Complexity:** L  
