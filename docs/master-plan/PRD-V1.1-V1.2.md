@@ -1,8 +1,8 @@
 # Product Requirements Document — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1 Stable (Frozen 2026-06-30) — V1.2 Scope Freeze Active (2026-07-01)  
-**Version:** 1.2-K0  
-**Date:** 2026-07-01  
+**Status:** V1.1 Stable (Frozen 2026-06-30) — **V1.2 Architecture Freeze COMPLETE (2026-07-02)** — Architecture: 100% — Ready for Implementation  
+**Version:** 1.2-AC  
+**Date:** 2026-07-02  
 **Owner:** Product  
 **Audience:** Engineering, Product, Stakeholders
 

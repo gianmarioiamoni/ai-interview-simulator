@@ -1,6 +1,23 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1.0 STABLE (2026-07-01). VERSION=1.1.0. 2802 tests passing. All P0/P1 findings resolved. Platform Engineering Manifest and Enterprise Engineering Playbook established. Stable Release Certificate issued (SR-1).
+**Status:** V1.1.0 STABLE (2026-07-01) · **V1.2 Architecture Freeze COMPLETE (2026-07-02)**. VERSION=1.1.0. 2802 tests passing. All P0/P1 findings resolved. Platform Engineering Manifest and Enterprise Engineering Playbook established. Stable Release Certificate issued (SR-1). V1.2 Architecture Certificate issued (AC-V1.2). Implementation Baseline frozen.
+
+## V1.2 Architecture Freeze Summary
+
+| Document | File | Status |
+|---|---|---|
+| **V1.2 Architecture Certificate** | **`V1.2-ARCHITECTURE-CERTIFICATE.md`** | **CERTIFIED — AC-V1.2 (2026-07-02)** |
+| **V1.2 Implementation Baseline** | **`V1.2-IMPLEMENTATION-BASELINE.md`** | **FROZEN — Implementation Baseline (2026-07-02)** |
+| **V1.2 Implementation Roadmap** | **`V1.2-IMPLEMENTATION-ROADMAP.md`** | **FROZEN — Construction Phase Operational Guide (2026-07-02)** |
+| V1.2 Domain Freeze | `V1.2-DOMAIN-FREEZE.md` | Frozen (K1 + K2 amendments) |
+| V1.2 ADR Backlog Audit | `V1.2-ADR-BACKLOG-AUDIT.md` | Frozen (K2) |
+| V1.2 Vision & Scope | `V1.2-VISION-SCOPE.md` | Frozen (K0) |
+
+**Architecture Freeze Certificate:** AC-V1.2 — 16 core ADRs certified — 6 architectural layers — Overall maturity 9/10  
+**Implementation Baseline:** Epic order frozen (EPIC-00 → EPIC-07) — Mandatory workflow frozen — Quality gates frozen  
+**Ready for Implementation:** Phase 1 parallel tracks may begin.
+
+---
 
 ## Foundational Documents
 
@@ -10,6 +27,7 @@
 | **Enterprise Engineering Playbook** | **`ENTERPRISE_ENGINEERING_PLAYBOOK.md`** | **FOUNDATIONAL — Operational handbook for day-to-day engineering execution. Defines project lifecycle, milestone workflow, prompt methodology, ADR workflow, architecture reviews, technical debt workflow, testing strategy, release workflow, and AI collaboration model. Complements the Manifest. Reusable across all future enterprise projects.** |
 
 ## Master Plan Documents
+
 
 | Document | File | Scope |
 |---|---|---|
@@ -141,23 +159,24 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 
 | ADR | Title | Status |
 |---|---|---|
-| ADR-016 | Multi-language Coding Engine Strategy | Planned |
-| ADR-017 | Prompt Security Layer Architecture | Planned |
-| ADR-018 | Output Validation Layer Position | Planned |
-| ADR-019 | Follow-up Question Engine Design (Revised) | **Accepted** |
-| ADR-020 | Knowledge Gap Engine Classification | Planned |
-| ADR-021 | Cost Optimization and Model Routing | Planned |
-| ADR-022 | Progress Tracking Persistence Backend | Planned |
-| ADR-023 | Replay Engine Storage Format | Planned |
-| ADR-024 | Score Gating Deferred from V1.1 | **Accepted** |
-| ADR-025 | Guard Retry Deferred to V1.2 | **Accepted** |
-| ADR-026 | Dedicated Follow-up Prompt File | **Accepted** |
-| ADR-027 | FollowUpSelector Determinism | **Accepted** |
-| ADR-028 | Interview Reasoner Is Deterministic (No LLM) | **Accepted — M2** |
-| ADR-029 | Reasoner Node Position: After Feedback, Before Decision | **Accepted — M2** |
-| ADR-030 | Reasoner Outputs Are Advisory Only | **Accepted — M2** |
-| ADR-031 | ReasonerDecision Transient; ReasoningHistory Persistent | **Accepted — M2** |
-| ADR-032 | InterviewMemory as Session-Scoped Accumulated Intelligence | **Accepted — M2** |
+| ADR-016 | Observation Schema & ObservationExtractor Design | **Accepted — V1.2 Architecture Freeze** |
+| ADR-016A | CandidateIdentity & Session Ownership | **Accepted — V1.2 Architecture Freeze** |
+| ADR-017 | ObservationStore Lifecycle & Temporal Semantics | **Accepted — V1.2 Architecture Freeze** |
+| ADR-018 | ProfileFeature Schema Freeze & Versioning Policy | **Accepted — V1.2 Architecture Freeze** |
+| ADR-019 | Language Independence Layer & LanguageConfig Architecture | **Accepted — V1.2 Architecture Freeze** |
+| ADR-020 | FeatureEngine Architecture — Knowledge Construction Engine | **Accepted — V1.2 Architecture Freeze** |
+| ADR-021 | Knowledge Freshness, Temporal Decay & Replay Strategy | **Accepted — V1.2 Architecture Freeze** |
+| ADR-022 | Knowledge Persistence & SessionHistory Architecture | **Accepted — V1.2 Architecture Freeze** |
+| ADR-023 | NarrativeGenerator Profile-Feature-Aware Prompt Design | **Accepted — V1.2 Architecture Freeze** |
+| ADR-024 | Calibration Framework CI Gate Design | Pending — Support ADR (non-blocking) |
+| ADR-025 | CoachingEngine Ranking Algorithm | **Accepted — V1.2 Architecture Freeze** |
+| ADR-026 | Replay Snapshot Model | **Accepted — V1.2 Architecture Freeze** |
+| ADR-027 | LanguageExecutor Abstraction — Runtime Dispatch Interface | **Accepted — V1.2 Architecture Freeze** |
+| ADR-028 | Language Selection Policy — Session Config Rules | **Accepted — V1.2 Architecture Freeze** |
+| ADR-029 | Enterprise Extensibility — TenantContext Placeholder Design | Pending — Support ADR (non-blocking) |
+| ADR-030 | StudyRecommendation Resource Library Governance | **Accepted — V1.2 Architecture Freeze** |
+| ADR-031 | LanguagePolicy Governance — Change Control & Calibration Impact | **Accepted — V1.2 Architecture Freeze** |
+| ADR-032 | CandidateProfileSnapshot Strategy | **Accepted — V1.2 Architecture Freeze** |
 | ADR-033 | EvidenceSignal as Universal Signal Abstraction | **Accepted — M2** |
 | ADR-034 | PatternDetector Decomposed into Registry-Backed Pipeline | **Accepted — M2** |
 | ADR-035 | ReasonerDecision Is Fully Structured — No Free Text | **Accepted — M2** |
@@ -207,6 +226,8 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | 1.6 | 2026-07-01 | Engineering | M2-8 Reasoner Consolidation: INDEX updated, API Freeze table added, EvaluationSignalWriter flow documented, detector catalog corrected to Active, EvaluationBridgeDetector deprecated, TDS §21 added, Technical Debt Register added |
 | 1.7 | 2026-07-01 | Engineering | EP-1 Foundational documentation: ENTERPRISE_ENGINEERING_PLAYBOOK.md created and registered as second FOUNDATIONAL DOCUMENT |
 | 1.8 | 2026-07-01 | Engineering | SR-1 Stable Release: INDEX status promoted to V1.1.0 STABLE, Stable Release Certificate issued, V1.2 transition confirmed |
+| 1.9 | 2026-07-02 | Engineering | AC-V1.2 Architecture Freeze: V1.2 Architecture Certificate and Implementation Baseline created; 16 V1.2 core ADRs certified; Architecture Freeze Summary added; STATUS promoted to V1.2 Architecture Freeze COMPLETE |
+| 2.0 | 2026-07-02 | Engineering | V1.2 Construction Phase: V1.2-IMPLEMENTATION-ROADMAP.md created; Construction Phase operational guide registered; Construction Readiness Assessment: GO |
 
 ## Technical Debt Register (M2-8)
 

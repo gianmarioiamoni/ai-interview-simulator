@@ -1,8 +1,8 @@
 # Technical Design Specification — AI Interview Simulator V1.1 / V1.2
 
-**Version:** 1.1  
-**Date:** 2026-06-30  
-**Status:** V1.1 M2-8 Reasoner Consolidation & API Freeze — Reasoner production-ready  
+**Version:** 1.2  
+**Date:** 2026-07-02  
+**Status:** **V1.2 Architecture Freeze COMPLETE — AC-V1.2 Issued — Ready for Implementation**  
 **Authors:** Engineering Team  
 **Supersedes:** ADRs 001–015 (V1.0 era)
 
@@ -26,6 +26,7 @@
 14. [Architecture Decision Records (V1.1/V1.2)](#14-architecture-decision-records-v11v12)
 15. [Migration Plan](#15-migration-plan)
 16. [Master Implementation Plan](#16-master-implementation-plan)
+22. [V1.2 Architecture Freeze](#22-v12-architecture-freeze)
 
 ---
 
@@ -5459,5 +5460,75 @@ Note: `CandidateProfile.signals` is present but never populated (reserved for V1
 |---|---|---|---|
 | `EvaluationBridgeDetector` | Deprecated — not in `build_default_registry()` | `EvaluationSignalDetector` + `EvaluationSignalWriter` | V1.2 |
 | `InterviewMemoryContext` | Deprecated M2 | `InterviewMemory` | M3 |
+
+---
+
+## 22 — V1.2 Architecture Freeze
+
+**Certificate:** AC-V1.2  
+**Date:** 2026-07-02  
+**Status:** ARCHITECTURE CERTIFIED — Ready for Implementation
+
+### 22.1 — Architecture Freeze Summary
+
+V1.2 architecture is formally frozen. The following six layers are defined, ownership-complete, and certified:
+
+| Layer | Key Components | Owner Pattern |
+|---|---|---|
+| **Knowledge Layer** | ObservationExtractor, ObservationStore, FeatureEngine, ProfileFeature, CandidateProfile | Single-writer per aggregate |
+| **Persistence Layer** | SessionHistory, KnowledgeSnapshot, CandidateProfileSnapshot, CandidateIdentity, LearningProgress | Write-once; additive schema |
+| **Action Layer** | KnowledgeGapEngine, CoachingEngine, CoachingPlan, ResourceLibrary | Single-writer; immutable after generation |
+| **Language Layer** | ProgrammingLanguage, LanguageRegistry, LanguageConfig, LanguagePolicy, LanguageExecutor | Plugin registry; abstract concept |
+| **Resource Layer** | NarrativeGenerator, Narrative, ReportBuilder, ReplayEngine | Evidence-anchored; zero-LLM replay |
+| **Governance** | CalibrationProfile, TenantContext, CostOptimisationFramework | Validation artifacts; no-op V1.2 |
+
+### 22.2 — Certified V1.2 ADRs
+
+| ADR | Subject | Status |
+|---|---|---|
+| ADR-016 | Observation Schema & ObservationExtractor Design | **Accepted** |
+| ADR-016A | CandidateIdentity & Session Ownership | **Accepted** |
+| ADR-017 | ObservationStore Lifecycle & Temporal Semantics | **Accepted** |
+| ADR-018 | ProfileFeature Schema Freeze & Versioning Policy | **Accepted** |
+| ADR-019 | Language Independence Layer & LanguageConfig Architecture | **Accepted** |
+| ADR-020 | FeatureEngine Architecture — Knowledge Construction Engine | **Accepted** |
+| ADR-021 | Knowledge Freshness, Temporal Decay & Replay Strategy | **Accepted** |
+| ADR-022 | Knowledge Persistence & SessionHistory Architecture | **Accepted** |
+| ADR-023 | NarrativeGenerator Profile-Feature-Aware Prompt Design | **Accepted** |
+| ADR-025 | CoachingEngine Ranking Algorithm | **Accepted** |
+| ADR-026 | Replay Snapshot Model | **Accepted** |
+| ADR-027 | LanguageExecutor Abstraction — Runtime Dispatch Interface | **Accepted** |
+| ADR-028 | Language Selection Policy — Session Config Rules | **Accepted** |
+| ADR-030 | StudyRecommendation Resource Library Governance | **Accepted** |
+| ADR-031 | LanguagePolicy Governance — Change Control & Calibration Impact | **Accepted** |
+| ADR-032 | CandidateProfileSnapshot Strategy | **Accepted** |
+
+**Support ADRs (pending, non-blocking):**
+- ADR-024: Calibration Framework CI Gate Design — required before EPIC-06
+- ADR-029: Enterprise Extensibility TenantContext Design — required before EPIC-07
+
+### 22.3 — Architecture Closure Audit Results
+
+| Concern | Result |
+|---|---|
+| Duplicated ownership | **None detected** — every aggregate has exactly one named writer |
+| Duplicated responsibilities | **None detected** — all component roles are disjoint |
+| Circular dependencies | **None detected** — all flows are one-directional (see K2 canonical runtime flow) |
+| Missing extension points | **None** — 10 extension points documented and protected in AC-V1.2 §A4 |
+| Runtime ambiguity | **None** — canonical runtime flow is single-owner at every stage (K2 §E) |
+| Architectural inconsistencies | **None** — all 16 ADRs are mutually consistent and non-contradictory |
+
+**Verdict: Architecture Freeze COMPLETE. No open issues.**
+
+### 22.4 — Implementation Baseline Reference
+
+The V1.2 Implementation Baseline is frozen in `docs/master-plan/V1.2-IMPLEMENTATION-BASELINE.md`.
+
+| Aspect | Frozen Value |
+|---|---|
+| Epic order | EPIC-00 → EPIC-01 → EPIC-02 → EPIC-03 → EPIC-04 → EPIC-05 → EPIC-06 → EPIC-07 |
+| Mandatory workflow | Architecture → Contracts → ADR → Implementation → Tests → Audit → Freeze → Certification |
+| Quality gate | ≥ 90% coverage per module; zero P0/P1 regressions; all contracts `extra=forbid` |
+| Single-writer rule | Absolute — no second writers permitted under any condition |
 
 ---
