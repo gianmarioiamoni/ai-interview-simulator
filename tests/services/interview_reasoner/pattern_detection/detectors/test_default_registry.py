@@ -7,18 +7,18 @@ from services.interview_reasoner.pattern_detection.detectors.default_registry im
 
 def test_registry_contains_three_detectors():
     reg = build_default_registry()
-    assert len(reg.all()) == 3
+    assert len(reg.all()) == 4  # Bridge + Coverage + Consistency + Trend (M2-6A)
 
 
 def test_registry_ordering():
     reg = build_default_registry()
     names = [d.metadata.name for d in reg.ordered()]
-    assert names == ["CoverageDetector", "ConsistencyDetector", "TrendDetector"]
+    assert names == ["EvaluationBridgeDetector", "CoverageDetector", "ConsistencyDetector", "TrendDetector"]
 
 
 def test_all_detectors_enabled():
     reg = build_default_registry()
-    assert len(reg.enabled()) == 3
+    assert len(reg.enabled()) == 4  # M2-6A: +1 EvaluationBridgeDetector
 
 
 def test_dependency_chain_valid():

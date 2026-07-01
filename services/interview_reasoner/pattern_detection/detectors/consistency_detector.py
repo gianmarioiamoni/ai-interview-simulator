@@ -27,6 +27,7 @@ from domain.contracts.reasoning.profile_dimension import ProfileDimension
 from domain.contracts.reasoning.reasoner_input import ReasonerInput
 from services.interview_reasoner.pattern_detection.base_detector import PatternDetector
 from services.interview_reasoner.pattern_detection.detector_metadata import DetectorMetadata
+from services.interview_reasoner.pattern_detection.signal_idempotency import filter_new_signals
 
 _DUPLICATE_SIGNAL_STRENGTH = 0.4
 _CONTRADICTION_SIGNAL_STRENGTH = 0.7
@@ -80,6 +81,7 @@ class ConsistencyDetector(PatternDetector):
             ))
 
         all_signals = dup_sigs + cont_sigs + drop_sigs
+        all_signals = filter_new_signals(all_signals, store)
 
         return DetectorResult(
             detector_name=_METADATA.name,

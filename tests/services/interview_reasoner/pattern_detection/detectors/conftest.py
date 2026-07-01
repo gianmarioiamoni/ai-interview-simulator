@@ -49,11 +49,18 @@ def make_input(
     question_index: int = 3,
     area: str = "databases",
     memory: InterviewMemory | None = None,
+    questions_answered: int = 3,
 ) -> ReasonerInput:
+    if memory is None:
+        metrics = SessionMetrics(questions_answered=questions_answered)
+        memory = InterviewMemory(session_metrics=metrics)
+    elif memory.session_metrics.questions_answered < questions_answered:
+        metrics = SessionMetrics(questions_answered=questions_answered)
+        memory = memory.model_copy(update={"session_metrics": metrics})
     return ReasonerInput(
         session_id="test-session",
         question_index=question_index,
-        interview_memory=memory or InterviewMemory(),
+        interview_memory=memory,
         current_question_area=area,
     )
 

@@ -26,6 +26,8 @@ from domain.contracts.reasoning.reasoner_input import ReasonerInput
 from domain.contracts.reasoning.trend import Trend
 from services.interview_reasoner.pattern_detection.base_detector import PatternDetector
 from services.interview_reasoner.pattern_detection.detector_metadata import DetectorMetadata
+from services.interview_reasoner.pattern_detection.signal_idempotency import filter_new_signals
+from infrastructure.config.settings import settings as _settings
 
 _LOW_COVERAGE_THRESHOLD = 2
 _COVERAGE_SIGNAL_STRENGTH = 0.6
@@ -48,6 +50,12 @@ class CoverageDetector(PatternDetector):
         return _METADATA
 
     def detect(self, reasoner_input: ReasonerInput) -> DetectorResult:
+        # Threshold guard: stay silent until enough questions have been answered.
+        questions_answered = reasoner_input.interview_memory.session_metrics.questions_answered
+        min_q = _settings.reasoner_coverage_min_questions
+        if questions_answered < min_q:
+            return DetectorResult(detector_name=_METADATA.name)
+
         store = reasoner_input.interview_memory.evidence_store
         profile = reasoner_input.interview_memory.candidate_profile
         q_idx = reasoner_input.question_index
@@ -98,21 +106,27 @@ class CoverageDetector(PatternDetector):
                     )
                 )
 
-        matches: list[PatternMatch] = []
-        if missing_sigs:
+        all_signals = missing_sigs + weak_sigs
+        # Idempotency: do not re-emit structurally identical signals.
+        all_signals = filter_new_signals(all_signals, store)
+        # Re-partition after filtering (matches should only reference surviving signals)
+        surviving_missing = [s for s in all_signals if s.signal_type == EvidenceType.MISSING_EVIDENCE]
+        surviving_weak = [s for s in all_signals if s.signal_type == EvidenceType.REPEATED_WEAKNESS]
+
+        matches = []
+        if surviving_missing:
             matches.append(PatternMatch(
                 pattern_type=EvidenceType.MISSING_EVIDENCE,
-                evidence_signals=missing_sigs,
-                label=f"{len(missing_sigs)} dimension(s) with no evidence",
+                evidence_signals=surviving_missing,
+                label=f"{len(surviving_missing)} dimension(s) with no evidence",
             ))
-        if weak_sigs:
+        if surviving_weak:
             matches.append(PatternMatch(
                 pattern_type=EvidenceType.REPEATED_WEAKNESS,
-                evidence_signals=weak_sigs,
-                label=f"{len(weak_sigs)} dimension(s) under coverage threshold",
+                evidence_signals=surviving_weak,
+                label=f"{len(surviving_weak)} dimension(s) under coverage threshold",
             ))
 
-        all_signals = missing_sigs + weak_sigs
         warnings: list[str] = []
         if len(all_signals) == len(list(ProfileDimension)):
             warnings.append("All dimensions lack sufficient coverage.")

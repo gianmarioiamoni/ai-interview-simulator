@@ -30,6 +30,7 @@ from domain.contracts.reasoning.reasoner_input import ReasonerInput
 from domain.contracts.reasoning.trend import Trend
 from services.interview_reasoner.pattern_detection.base_detector import PatternDetector
 from services.interview_reasoner.pattern_detection.detector_metadata import DetectorMetadata
+from services.interview_reasoner.pattern_detection.signal_idempotency import filter_new_signals
 
 _VOLATILITY_THRESHOLD = 15.0
 _SESSION_DROP_THRESHOLD = 0.1
@@ -52,6 +53,7 @@ class TrendDetector(PatternDetector):
         return _METADATA
 
     def detect(self, reasoner_input: ReasonerInput) -> DetectorResult:
+        store = reasoner_input.interview_memory.evidence_store
         profile = reasoner_input.interview_memory.candidate_profile
         history = reasoner_input.interview_memory.reasoning_history
         q_idx = reasoner_input.question_index
@@ -61,7 +63,7 @@ class TrendDetector(PatternDetector):
         volatility_sigs = self._detect_score_volatility(profile.dimension_scores, q_idx, area)
         session_drop_sigs = self._detect_session_confidence_drop(history.entries, q_idx, area)
 
-        all_sigs = trend_sigs + volatility_sigs + session_drop_sigs
+        all_sigs = filter_new_signals(trend_sigs + volatility_sigs + session_drop_sigs, store)
 
         matches: list[PatternMatch] = []
         pos_sigs = [s for s in trend_sigs if s.polarity == EvidencePolarity.POSITIVE]
