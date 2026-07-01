@@ -1,6 +1,6 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1 M2-7A Architecture Freeze (2026-07-01). ADR-048–054 added. Detector catalog and implementation roadmap frozen.
+**Status:** V1.1 M2-7F Design Freeze (2026-07-01). ADR-062–067 added. Leadership, Collaboration, Adaptability detectors fully specified. Behavioral detector family frozen.
 
 | Document | File | Scope |
 |---|---|---|
@@ -21,6 +21,7 @@
 7. **TDS §18 is the canonical description** of the Advanced Detector Architecture (M2-7A freeze).
 8. **ARCH-REVIEW-M1-1 is design history only** — deviations documented in ADR-019 revised and ADR-024–027.
 9. **Every new detector** must comply with the extensibility rules in TDS §18.5 and ADR-051.
+10. **TDS §20 is the canonical specification** for LeadershipDetector, CollaborationDetector, and AdaptabilityDetector (M2-7F design freeze).
 
 ## M1 Frozen Baseline Summary
 
@@ -53,6 +54,14 @@
 | Evidence freshness weighting | Reserved for V1.2 | **Reserved (ADR-039)** |
 | `ProfileFeature` abstraction | Reserved for V1.2 | **Reserved (ADR-048)** |
 | `InterviewMemoryContext` deprecation | `domain/contracts/interview/interview_memory_context.py` | **Deprecated M2 / Remove M3** |
+| `LeadershipDetector` full specification | TDS §20.2 | **Design Frozen (M2-7F)** |
+| `CollaborationDetector` full specification | TDS §20.3 | **Design Frozen (M2-7F)** |
+| `AdaptabilityDetector` full specification | TDS §20.4 | **Design Frozen (M2-7F)** |
+| Behavioral family responsibility matrix | TDS §20.5 | **Design Frozen (M2-7F)** |
+| `LeadershipObservation` / `CollaborationObservation` / `AdaptabilityObservation` | TDS §20.6 | **Reserved V1.2** |
+| `LeadershipFeature` / `CollaborationFeature` / `AdaptabilityFeature` | TDS §20.7 | **Reserved V1.2** |
+| `CoachingEngine` pipeline architecture | TDS §20.8 | **Reserved V1.2** |
+| EvidenceType catalog (35 total post-M2-7F) | TDS §20.5.5 | **Design Frozen** |
 
 ## M2-7A Detector Catalog (Frozen Execution Order)
 
@@ -68,9 +77,9 @@
 | 70 | `BehavioralPatternDetector` | M2-7E | Planned |
 | 80 | `ConsistencyAcrossInterviewDetector` | M2-7F | Planned |
 | 90 | `ConfidenceCalibrationDetector` | M2-7G | Planned |
-| 100 | `LeadershipDetector` | V1.2 | Reserved |
-| 110 | `CollaborationDetector` | V1.2 | Reserved |
-| 120 | `AdaptabilityDetector` | V1.2 | Reserved |
+| 100 | `LeadershipDetector` | V1.2 | **Design Frozen (M2-7F)** |
+| 110 | `CollaborationDetector` | V1.2 | **Design Frozen (M2-7F)** |
+| 120 | `AdaptabilityDetector` | V1.2 | **Design Frozen (M2-7F)** |
 
 ## Active ADRs
 
@@ -115,6 +124,19 @@
 | ADR-052 | Evidence Freshness Sliding Window (EvaluationSignalDetector) | **Accepted — M2-7B** |
 | ADR-053 | Detector Compatibility Policy | **Accepted — M2-7A** |
 | ADR-054 | Detector Performance Budget | **Accepted — M2-7A** |
+| ADR-055 | Observation Abstraction — Reserved for V1.2 | **Proposed — M2-7C** |
+| ADR-056 | Detector File Size Limits | **Accepted — M2-7E** |
+| ADR-057 | Detector Dependency Direction Enforcement | **Accepted — M2-7E** |
+| ADR-058 | Detector Versioning and Compatibility | **Accepted — M2-7E** |
+| ADR-059 | Detector Deprecation Policy | **Accepted — M2-7E** |
+| ADR-060 | Detector Test Coverage Standard | **Accepted — M2-7E** |
+| ADR-061 | Detector Framework Stability Guarantee | **Accepted — M2-7E** |
+| ADR-062 | Behavioral Detector Family — Responsibility Matrix | **Accepted — M2-7F** |
+| ADR-063 | LeadershipFeature — Dimension Anchor and Update Strategy | **Accepted — M2-7F** |
+| ADR-064 | CollaborationFeature — Dimension Anchor | **Accepted — M2-7F** |
+| ADR-065 | AdaptabilityDetector — Recovery Detection Algorithm | **Accepted — M2-7F** |
+| ADR-066 | Behavioral Observation Model — V1.2 Extension Contract | **Accepted — Arch direction; V1.2** |
+| ADR-067 | Behavioral Coaching Pipeline — Detector-to-CoachingEngine Decoupling | **Accepted — Arch direction; V1.2** |
 
 ## Document Versions
 
@@ -125,3 +147,4 @@
 | 1.2 | 2026-06-30 | Engineering | V1.1 M2 contract freeze: TDS §17 added, ADR-028–040 registered, EPIC-04 contracts frozen |
 | 1.3 | 2026-06-30 | Engineering | M2-1A freeze: ADR-042–047 added (future-proofing direction) |
 | 1.4 | 2026-07-01 | Engineering | M2-7A architecture freeze: TDS §18 added, ADR-048–054 registered, detector catalog and ProfileFeature abstraction frozen |
+| 1.5 | 2026-07-01 | Engineering | M2-7F design freeze: TDS §20 added, ADR-062–067 registered, Leadership/Collaboration/Adaptability detectors and Behavioral family fully frozen |
