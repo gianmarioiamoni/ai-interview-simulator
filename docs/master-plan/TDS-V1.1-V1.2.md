@@ -4213,3 +4213,1114 @@ The following checklist is mandatory for every new detector before merging:
 
 ---
 
+## §20 — M2-7F Design Freeze: Leadership, Collaboration & Adaptability Detectors
+
+> **Status: Frozen — 2026-07-01 | Milestone: M2-7F (Design Only)**
+> This section freezes the complete design of DET-11, DET-12, and DET-13 — the final behavioral
+> detector family. Zero production code is introduced here. Implementation in V1.2 must be purely
+> mechanical: all architectural decisions are resolved by this document.
+
+---
+
+### §20.1 — Behavioral Detector Family Overview
+
+The final three detectors complete the behavioral detection tier. They operate at the highest
+priority range (100–120) in the Behavioral Layer and are designed exclusively to assess
+**interpersonal and professional growth signals** — never technical correctness.
+
+```
+Behavioral Detection Tier (V1.1 foundation)
+  BehavioralPatternDetector              (70) ← growth/instability over session
+  ConsistencyAcrossInterviewDetector     (80) ← cross-domain signal consistency
+
+Behavioral Detection Tier (V1.2 completion)
+  LeadershipDetector                    (100) ← ownership, initiative, accountability
+  CollaborationDetector                 (110) ← teamwork, knowledge sharing, conflict
+  AdaptabilityDetector                  (120) ← recovery, flexibility, reframing
+```
+
+**Family ownership rules:**
+
+| Detector | Owns exclusively |
+|---|---|
+| `BehavioralPatternDetector` | Session-level growth/instability patterns over time |
+| `ConsistencyAcrossInterviewDetector` | Cross-domain signal coherence |
+| `LeadershipDetector` | Ownership, accountability, initiative, mentoring, strategic thinking |
+| `CollaborationDetector` | Team orientation, conflict management, knowledge sharing, feedback |
+| `AdaptabilityDetector` | Recovery, flexibility, context-switching, reframing, change acceptance |
+
+**Absolute forbidden overlaps:**
+
+- `LeadershipDetector` MUST NOT assess communication quality → owned by `CommunicationDetector`
+- `LeadershipDetector` MUST NOT assess technical correctness → owned by evaluation pipeline
+- `CollaborationDetector` MUST NOT assess reasoning depth → owned by `ReasoningDepthDetector`
+- `CollaborationDetector` MUST NOT assess grammar or language quality → owned by `CommunicationDetector`
+- `AdaptabilityDetector` MUST NOT assess whether answers are correct → outside its scope
+- `AdaptabilityDetector` MUST NOT assess domain knowledge → outside its scope
+- No behavioral detector may assess `ProfileDimension.ENGINEERING_JUDGMENT` → owned by `EngineeringJudgmentDetector`
+
+---
+
+### §20.2 — DET-11: LeadershipDetector (Full Specification)
+
+#### 20.2.1 — Identity
+
+| Field | Value |
+|---|---|
+| **Class name** | `LeadershipDetector` |
+| **Priority** | 100 |
+| **Tier** | Behavioral (V1.2) |
+| **Milestone** | V1.2 |
+| **Dependencies** | `ConsistencyAcrossInterviewDetector` |
+| **Version** | `1.0.0` |
+| **Performance budget** | < 5ms soft / 20ms hard |
+| **Complexity** | O(n) over EvidenceStore signals + O(h) over ReasoningHistory |
+
+#### 20.2.2 — Purpose and Scope
+
+Detect **leadership potential** emerging through interview behavior. Leadership signals are
+inferred from how the candidate describes their actions and role in situations — not from
+the technical quality of the actions themselves.
+
+**Signals within scope:**
+
+| Signal concept | Definition |
+|---|---|
+| Ownership | Candidate uses first-person accountability language; does not deflect responsibility |
+| Decision responsibility | Candidate describes making decisions, not just implementing others' decisions |
+| Initiative | Candidate describes proactively identifying problems or improvements without being asked |
+| Mentoring attitude | Candidate references teaching, explaining, guiding, or developing others |
+| Technical influence | Candidate describes shaping team direction, standards, or architectural choices |
+| Strategic thinking | Candidate demonstrates awareness of long-term trade-offs and context beyond the immediate task |
+| Accountability | Candidate owns failures, describes lessons learned, does not externalize blame |
+
+**Explicitly outside scope (never evaluate):**
+
+- Technical correctness of any described action
+- Knowledge depth on any technical topic
+- Communication quality, grammar, or fluency
+- Engineering judgment (owned by `EngineeringJudgmentDetector`)
+- Reasoning structure (owned by `ReasoningDepthDetector`)
+
+#### 20.2.3 — Input Contract
+
+| Source | Field | Usage |
+|---|---|---|
+| `ReasonerInput.interview_memory.evidence_store` | Behavioral signals from `BehavioralPatternDetector` | Primary signal source |
+| `ReasonerInput.interview_memory.reasoning_history` | Pattern continuity across recent cycles | Trend detection |
+| `ReasonerInput.interview_memory.candidate_profile.dimension_scores` | `PROBLEM_SOLVING` DimensionTrace | Baseline anchoring only |
+
+The detector reads signals with `EvidenceType` values from the behavioral family:
+`BEHAVIORAL_GROWTH`, `BEHAVIORAL_INSTABILITY`, `CROSS_AREA_CONSISTENT`, `CROSS_AREA_CONTRADICTORY`.
+
+It does NOT read signals from Analytical-layer detectors directly.
+
+#### 20.2.4 — Analyzer: `LeadershipAnalyzer`
+
+**Responsibility:** Single O(n) pass over behavioral signals in EvidenceStore. Classifies each
+signal as contributing to one or more leadership dimensions. Returns a frozen dataclass.
+
+**Output dataclass:**
+
+```
+@dataclass(frozen=True)
+class LeadershipStats:
+    ownership_signal_count: int       # signals tagged with ownership indicators
+    initiative_signal_count: int      # signals tagged with initiative indicators
+    accountability_signal_count: int  # signals tagged with accountability indicators
+    mentoring_signal_count: int       # signals tagged with mentoring indicators
+    strategic_signal_count: int       # signals tagged with strategic thinking indicators
+    total_behavioral_signals: int     # denominator for ratios
+    leadership_ratio: float           # (ownership + initiative + accountability) / total
+    trend: str                        # "RISING" | "STABLE" | "DECLINING" | "INSUFFICIENT"
+```
+
+**Classification rules:**
+
+| Leadership dimension | Evidence types that contribute |
+|---|---|
+| Ownership | `BEHAVIORAL_GROWTH` with `dimension=PROBLEM_SOLVING`, strong positive polarity |
+| Initiative | `BEHAVIORAL_GROWTH` with cross-area signals showing proactive action |
+| Accountability | `BEHAVIORAL_GROWTH` following a `BEHAVIORAL_INSTABILITY` (recovery pattern) |
+| Mentoring | Signal labels mentioning cross-area teaching or explaining patterns |
+| Strategic | `CROSS_AREA_CONSISTENT` patterns across >= 3 distinct question areas |
+
+**Guard condition:** Analyzer returns zeroed stats if `total_behavioral_signals < 2`.
+
+**V1.2 migration:** `LeadershipStats` → `LeadershipObservation(Observation)` with a
+`description: str` field summarizing the pattern.
+
+#### 20.2.5 — Scorer: `LeadershipScorer`
+
+**Responsibility:** Pure function. Receives `LeadershipStats`, returns `LeadershipVerdict`.
+
+```python
+class LeadershipVerdict(str, Enum):
+    STRONG_LEADER     = "STRONG_LEADER"      # leadership_ratio >= 0.6 and >= 2 dimensions
+    EMERGING_LEADER   = "EMERGING_LEADER"    # leadership_ratio >= 0.35 and >= 1 dimension
+    NEUTRAL           = "NEUTRAL"            # insufficient or mixed evidence
+    LEADERSHIP_ABSENT = "LEADERSHIP_ABSENT"  # behavioral signals present but none leadership-coded
+```
+
+**Threshold constants (module-level):**
+
+```python
+MIN_BEHAVIORAL_SIGNALS         = 3
+MIN_LEADERSHIP_RATIO_STRONG    = 0.60
+MIN_LEADERSHIP_RATIO_EMERGING  = 0.35
+MIN_DIMENSIONS_STRONG          = 2
+MIN_DIMENSIONS_EMERGING        = 1
+```
+
+**Guard condition:** Returns `NEUTRAL` if `total_behavioral_signals < MIN_BEHAVIORAL_SIGNALS`.
+
+**Verdict precedence:** STRONG_LEADER > EMERGING_LEADER > LEADERSHIP_ABSENT > NEUTRAL.
+NEUTRAL is returned only when guard conditions are not met (not when evidence is negative).
+
+#### 20.2.6 — SignalFactory: `LeadershipSignalFactory`
+
+**Responsibility:** Maps `LeadershipVerdict + LeadershipStats` → `EvidenceSignal | None`.
+
+| Verdict | EvidenceType | Polarity | Strength formula |
+|---|---|---|---|
+| `STRONG_LEADER` | `LEADERSHIP_STRONG` | POSITIVE | `min(1.0, leadership_ratio * 1.5)` |
+| `EMERGING_LEADER` | `LEADERSHIP_EMERGING` | POSITIVE | `leadership_ratio` |
+| `LEADERSHIP_ABSENT` | `LEADERSHIP_ABSENT` | NEGATIVE | `0.4` (fixed) |
+| `NEUTRAL` | — | — | Returns `None` |
+
+**Signal contract:**
+
+```python
+EvidenceSignal(
+    id=str(uuid.uuid4()),
+    source=EvidenceSource.PATTERN_DETECTOR,
+    dimension=ProfileDimension.PROBLEM_SOLVING,  # temporary V1.1 mapping; see ADR-063
+    polarity=<per verdict>,
+    signal_type=<per verdict>,
+    strength=<per formula, clamped [0.0, 1.0]>,
+    question_index=latest_question_index,
+    question_area=current_area,
+    timestamp_question_index=latest_question_index,
+)
+```
+
+**Rule:** `NEUTRAL` verdict → return `None`. No signal emitted.
+
+#### 20.2.7 — Main Detector: `LeadershipDetector`
+
+**Orchestration:**
+
+```
+detect(reasoner_input):
+    1. Guard: if insufficient behavioral signals → return empty DetectorResult
+    2. analyzer = LeadershipAnalyzer(); stats = analyzer.analyze(reasoner_input)
+    3. scorer = LeadershipScorer(); verdict = scorer.score(stats)
+    4. factory = LeadershipSignalFactory(); signal = factory.create(verdict, stats, reasoner_input)
+    5. candidates = [signal] if signal else []
+    6. new_signals = filter_new_signals(candidates, reasoner_input.interview_memory.evidence_store)
+    7. match = PatternMatch(pattern_type=verdict_to_evidence_type(verdict), ...)
+    8. return DetectorResult(detector_name=_METADATA.name, matches=[match], generated_signals=new_signals)
+```
+
+**PatternMatch label format:** `"Leadership[{verdict}]: ratio={ratio:.2f}, dims={dim_count}"`
+
+**LOC limits:** Main detector <= 150. Analyzer <= 120. Scorer <= 60. Factory <= 80.
+
+#### 20.2.8 — New EvidenceTypes (M2-7F)
+
+```python
+# --- M2-7F (Leadership) ---
+LEADERSHIP_STRONG   = "LEADERSHIP_STRONG"    # strong multi-dimension leadership signals
+LEADERSHIP_EMERGING = "LEADERSHIP_EMERGING"  # early leadership pattern detected
+LEADERSHIP_ABSENT   = "LEADERSHIP_ABSENT"    # behavioral data present but no leadership signals
+```
+
+#### 20.2.9 — Future Observation Mapping
+
+| V1.1 | V1.2 |
+|---|---|
+| `LeadershipStats` dataclass | `LeadershipObservation(Observation)` |
+| `stats.leadership_ratio` | `observation.value` |
+| — | `observation.description` (human-readable summary for CoachingEngine) |
+| — | `observation.observation_type = ObservationType.LEADERSHIP` |
+
+#### 20.2.10 — Future ProfileFeature Mapping
+
+| Field | Value |
+|---|---|
+| **Feature name** | `LeadershipFeature` |
+| **Key in CandidateProfile.features** | `"leadership"` |
+| **Value** | Normalized leadership score `[0.0, 1.0]` derived from `leadership_ratio` |
+| **Confidence** | Grows with `total_behavioral_signals` |
+| **Writer** | `CandidateProfileEngine` (V1.2 `ProfileFeatureUpdater`) |
+| **Consumers** | `NarrativeGenerator`, `ReportBuilder`, `CoachingEngine` |
+| **Update strategy** | EMA: `value = 0.3 * new_ratio + 0.7 * existing_value` |
+
+#### 20.2.11 — Acceptance Criteria
+
+- [ ] Fires only when `total_behavioral_signals >= 3`
+- [ ] STRONG_LEADER requires `leadership_ratio >= 0.60` AND `dim_count >= 2`
+- [ ] EMERGING_LEADER requires `leadership_ratio >= 0.35` AND `dim_count >= 1`
+- [ ] NEUTRAL returns empty `DetectorResult` with no signals
+- [ ] LEADERSHIP_ABSENT emits one negative signal at strength `0.4`
+- [ ] Never emits signals about technical correctness
+- [ ] Idempotency guard prevents signal re-emission
+- [ ] Deterministic: same input → same output
+- [ ] Performance: <= 20ms on 5-question, 20-signal input
+- [ ] >= 39 tests (8+8+8+15 minimum)
+
+---
+
+### §20.3 — DET-12: CollaborationDetector (Full Specification)
+
+#### 20.3.1 — Identity
+
+| Field | Value |
+|---|---|
+| **Class name** | `CollaborationDetector` |
+| **Priority** | 110 |
+| **Tier** | Behavioral (V1.2) |
+| **Milestone** | V1.2 |
+| **Dependencies** | `LeadershipDetector` |
+| **Version** | `1.0.0` |
+| **Performance budget** | < 5ms soft / 20ms hard |
+| **Complexity** | O(n) over EvidenceStore signals |
+
+#### 20.3.2 — Purpose and Scope
+
+Evaluate **collaborative behavior** emerging through interview responses. Collaboration signals
+are identified by how the candidate describes working with others, sharing knowledge, accepting
+feedback, and navigating conflict — never by technical knowledge or grammar quality.
+
+**Signals within scope:**
+
+| Signal concept | Definition |
+|---|---|
+| Team orientation | Candidate consistently frames problems and solutions in terms of team outcomes, not individual credit |
+| Conflict management | Candidate describes navigating disagreements constructively; does not avoid or escalate conflict |
+| Knowledge sharing | Candidate references proactively teaching, documenting, or enabling others |
+| Feedback acceptance | Candidate describes incorporating feedback without defensiveness |
+| Cross-functional collaboration | Candidate references working effectively across roles (PM, design, ops, etc.) |
+| Stakeholder awareness | Candidate demonstrates awareness of stakeholder needs and perspectives in decisions |
+| Pair-programming attitude | Candidate describes collaborative coding, code review culture, shared ownership |
+
+**Explicitly outside scope (never evaluate):**
+
+- Technical knowledge on any domain
+- Grammar or language quality (owned by `CommunicationDetector`)
+- Reasoning structure or depth (owned by `ReasoningDepthDetector`)
+- Engineering judgment on technical decisions (owned by `EngineeringJudgmentDetector`)
+- Leadership behaviors (owned by `LeadershipDetector`)
+
+#### 20.3.3 — Input Contract
+
+| Source | Field | Usage |
+|---|---|---|
+| `ReasonerInput.interview_memory.evidence_store` | Behavioral signals | Primary |
+| `ReasonerInput.interview_memory.reasoning_history` | Pattern continuity | Trend detection |
+| `ReasonerInput.interview_memory.candidate_profile.dimension_scores` | `COMMUNICATION` DimensionTrace | Baseline anchoring |
+
+Input signals consumed: `BEHAVIORAL_GROWTH`, `BEHAVIORAL_INSTABILITY`, `CROSS_AREA_CONSISTENT`,
+`CROSS_AREA_CONTRADICTORY`, `LEADERSHIP_EMERGING`, `LEADERSHIP_STRONG` (from DET-11, read-only).
+
+**Note on DET-11 dependency:** `CollaborationDetector` MAY read `LEADERSHIP_*` signals to
+distinguish collaborative leadership from solo leadership. It MUST NOT overwrite or re-score
+any leadership signal.
+
+#### 20.3.4 — Analyzer: `CollaborationAnalyzer`
+
+**Output dataclass:**
+
+```
+@dataclass(frozen=True)
+class CollaborationStats:
+    team_orientation_count: int       # signals showing team-first framing
+    knowledge_sharing_count: int      # signals showing teaching/enabling others
+    conflict_signals_count: int       # signals (positive=managed well, negative=avoided/escalated)
+    feedback_acceptance_count: int    # signals showing feedback incorporation
+    cross_functional_count: int       # signals referencing cross-role collaboration
+    total_behavioral_signals: int     # denominator
+    collaboration_ratio: float        # weighted: (team + sharing + feedback) / total
+    conflict_resolution_ratio: float  # positive_conflict / total_conflict (1.0 if no conflicts)
+    trend: str                        # "RISING" | "STABLE" | "DECLINING" | "INSUFFICIENT"
+```
+
+**Guard condition:** Analyzer returns zeroed stats if `total_behavioral_signals < 2`.
+
+**V1.2 migration:** `CollaborationStats` → `CollaborationObservation(Observation)`.
+
+#### 20.3.5 — Scorer: `CollaborationScorer`
+
+```python
+class CollaborationVerdict(str, Enum):
+    STRONG_COLLABORATOR    = "STRONG_COLLABORATOR"    # ratio >= 0.55 and conflict_resolution >= 0.6
+    EFFECTIVE_COLLABORATOR = "EFFECTIVE_COLLABORATOR" # ratio >= 0.30 or cross_functional >= 2
+    NEUTRAL                = "NEUTRAL"                # insufficient evidence
+    COLLABORATION_DEFICIT  = "COLLABORATION_DEFICIT"  # individualistic pattern detected
+```
+
+**Threshold constants:**
+
+```python
+MIN_BEHAVIORAL_SIGNALS         = 3
+MIN_COLLAB_RATIO_STRONG        = 0.55
+MIN_COLLAB_RATIO_EFFECTIVE     = 0.30
+MIN_CONFLICT_RESOLUTION_STRONG = 0.60
+MIN_CROSS_FUNCTIONAL_EFFECTIVE = 2
+```
+
+**Guard:** Returns `NEUTRAL` if `total_behavioral_signals < MIN_BEHAVIORAL_SIGNALS`.
+
+**Verdict precedence:** STRONG_COLLABORATOR > EFFECTIVE_COLLABORATOR > COLLABORATION_DEFICIT > NEUTRAL.
+
+#### 20.3.6 — SignalFactory: `CollaborationSignalFactory`
+
+| Verdict | EvidenceType | Polarity | Strength |
+|---|---|---|---|
+| `STRONG_COLLABORATOR` | `COLLABORATION_STRONG` | POSITIVE | `min(1.0, collaboration_ratio * 1.6)` |
+| `EFFECTIVE_COLLABORATOR` | `COLLABORATION_EFFECTIVE` | POSITIVE | `collaboration_ratio` |
+| `COLLABORATION_DEFICIT` | `COLLABORATION_DEFICIT` | NEGATIVE | `0.45` (fixed) |
+| `NEUTRAL` | — | — | `None` |
+
+**Signal dimension:** `ProfileDimension.COMMUNICATION` (temporary V1.1 mapping; see ADR-064).
+
+#### 20.3.7 — New EvidenceTypes (M2-7F)
+
+```python
+# --- M2-7F (Collaboration) ---
+COLLABORATION_STRONG    = "COLLABORATION_STRONG"    # strong multi-faceted collaboration pattern
+COLLABORATION_EFFECTIVE = "COLLABORATION_EFFECTIVE" # solid collaboration indicators present
+COLLABORATION_DEFICIT   = "COLLABORATION_DEFICIT"   # individualistic or conflict-avoidant pattern
+```
+
+#### 20.3.8 — Future Observation Mapping
+
+| V1.1 | V1.2 |
+|---|---|
+| `CollaborationStats` dataclass | `CollaborationObservation(Observation)` |
+| `stats.collaboration_ratio` | `observation.value` |
+| — | `observation.description` |
+| — | `observation.observation_type = ObservationType.COLLABORATION` |
+
+#### 20.3.9 — Future ProfileFeature Mapping
+
+| Field | Value |
+|---|---|
+| **Feature name** | `CollaborationFeature` |
+| **Key in CandidateProfile.features** | `"collaboration"` |
+| **Value** | Normalized `[0.0, 1.0]` from `collaboration_ratio` |
+| **Confidence** | Grows with `total_behavioral_signals` |
+| **Writer** | `CandidateProfileEngine` (V1.2 `ProfileFeatureUpdater`) |
+| **Consumers** | `ReportBuilder`, `CoachingEngine` |
+| **Update strategy** | EMA with alpha=0.3 |
+
+#### 20.3.10 — Acceptance Criteria
+
+- [ ] Fires only when `total_behavioral_signals >= 3`
+- [ ] STRONG_COLLABORATOR requires both `collaboration_ratio >= 0.55` AND `conflict_resolution_ratio >= 0.60`
+- [ ] EFFECTIVE_COLLABORATOR requires `ratio >= 0.30` OR `cross_functional_count >= 2`
+- [ ] COLLABORATION_DEFICIT emits a negative signal (strength `0.45`)
+- [ ] NEUTRAL returns empty result
+- [ ] Never evaluates grammar, technical knowledge, or reasoning depth
+- [ ] Does not overwrite any `LEADERSHIP_*` signal
+- [ ] Idempotency guard in place
+- [ ] Deterministic
+- [ ] Performance <= 20ms
+- [ ] >= 39 tests
+
+---
+
+### §20.4 — DET-13: AdaptabilityDetector (Full Specification)
+
+#### 20.4.1 — Identity
+
+| Field | Value |
+|---|---|
+| **Class name** | `AdaptabilityDetector` |
+| **Priority** | 120 |
+| **Tier** | Behavioral (V1.2) |
+| **Milestone** | V1.2 |
+| **Dependencies** | `CollaborationDetector` |
+| **Version** | `1.0.0` |
+| **Performance budget** | < 5ms soft / 20ms hard |
+| **Complexity** | O(n) over EvidenceStore signals |
+
+#### 20.4.2 — Purpose and Scope
+
+Detect **adaptability** demonstrated during the interview — the candidate's ability to respond
+constructively to novel situations, feedback, mistakes, and changing contexts.
+
+**Signals within scope:**
+
+| Signal concept | Definition |
+|---|---|
+| Reaction to feedback | Candidate incorporates or meaningfully engages with interviewer cues and pivots |
+| Recovery after mistakes | After an incorrect path or `BEHAVIORAL_INSTABILITY` signal, candidate course-corrects |
+| Learning speed | Candidate demonstrates rapid uptake of new constraints or revised problem framing |
+| Flexibility | Candidate shifts approach when initial solution proves insufficient |
+| Change acceptance | Candidate describes embracing change rather than resisting it |
+| Context switching | Candidate moves fluidly across different domains or question types |
+| Problem reframing | Candidate redefines a problem when the initial framing is unproductive |
+
+**Explicitly outside scope (never evaluate):**
+
+- Whether the adapted answer is technically correct (evaluation pipeline scope)
+- Domain knowledge depth (evaluation pipeline scope)
+- Communication style (owned by `CommunicationDetector`)
+- Leadership behaviors (owned by `LeadershipDetector`)
+- Collaboration quality (owned by `CollaborationDetector`)
+
+#### 20.4.3 — Input Contract
+
+| Source | Field | Usage |
+|---|---|---|
+| `ReasonerInput.interview_memory.evidence_store` | Behavioral signals (especially recovery patterns) | Primary |
+| `ReasonerInput.interview_memory.reasoning_history` | Cross-cycle patterns | Recovery trend |
+| `ReasonerInput.interview_memory.candidate_profile.dimension_scores` | `PROBLEM_SOLVING` DimensionTrace | Trend baseline |
+
+**Key signal patterns consumed:**
+
+- `BEHAVIORAL_INSTABILITY` followed by `BEHAVIORAL_GROWTH` → recovery indicator (positive adaptability)
+- `BEHAVIORAL_INSTABILITY` with no follow-up growth → rigidity indicator (negative adaptability)
+- `CROSS_AREA_CONSISTENT` with rising trend across distinct areas → flexibility indicator
+- `CROSS_AREA_CONTRADICTORY` → may indicate poor context switching OR reframing (context-dependent)
+
+#### 20.4.4 — Analyzer: `AdaptabilityAnalyzer`
+
+**Output dataclass:**
+
+```
+@dataclass(frozen=True)
+class AdaptabilityStats:
+    recovery_count: int           # INSTABILITY -> GROWTH sequences detected (window: 3 questions)
+    rigidity_count: int           # INSTABILITY with no recovery within next 3 cycles
+    flexibility_count: int        # CROSS_AREA_CONSISTENT with rising trend
+    context_switch_count: int     # distinct area transitions with consistent performance
+    reframing_events: int         # CROSS_AREA_CONTRADICTORY resolved positively
+    total_instability_events: int
+    adaptability_ratio: float     # recovery_count / max(1, total_instability_events)
+    flexibility_ratio: float      # flexibility_count / max(1, distinct_areas_count)
+    trend: str                    # "IMPROVING" | "STABLE" | "DECLINING" | "INSUFFICIENT"
+```
+
+**Recovery detection rule (ADR-065):** An INSTABILITY event at question index `i` is "recovered"
+if a BEHAVIORAL_GROWTH signal appears within questions `i+1` to `i+3` in the same or adjacent
+dimension. Window size `RECOVERY_WINDOW_QUESTIONS = 3` is a module-level constant.
+
+**Guard condition:** Analyzer returns zeroed stats if `total_behavioral_signals < 2`.
+
+**V1.2 migration:** `AdaptabilityStats` → `AdaptabilityObservation(Observation)`.
+
+#### 20.4.5 — Scorer: `AdaptabilityScorer`
+
+```python
+class AdaptabilityVerdict(str, Enum):
+    HIGHLY_ADAPTABLE = "HIGHLY_ADAPTABLE"  # adaptability_ratio >= 0.7 and trend != DECLINING
+    ADAPTABLE        = "ADAPTABLE"         # ratio >= 0.4 or flexibility_ratio >= 0.5
+    NEUTRAL          = "NEUTRAL"           # insufficient data
+    LOW_ADAPTABILITY = "LOW_ADAPTABILITY"  # rigidity_count > recovery_count and rigidity >= 2
+```
+
+**Threshold constants:**
+
+```python
+MIN_INSTABILITY_EVENTS           = 2
+RECOVERY_WINDOW_QUESTIONS        = 3     # also used by Analyzer (same constant, imported)
+MIN_ADAPTABILITY_RATIO_HIGH      = 0.70
+MIN_ADAPTABILITY_RATIO_ADAPTABLE = 0.40
+MIN_FLEXIBILITY_RATIO_ADAPTABLE  = 0.50
+LOW_ADAPTABILITY_RIGIDITY_FLOOR  = 2
+```
+
+**Special rule:** If `total_instability_events == 0` but `flexibility_count >= 3`, verdict is
+`ADAPTABLE` (proactive flexibility without instability is a positive signal).
+
+**Guard:** Returns `NEUTRAL` if `total_instability_events < MIN_INSTABILITY_EVENTS AND flexibility_count < 3`.
+
+**Verdict precedence:** HIGHLY_ADAPTABLE > ADAPTABLE > LOW_ADAPTABILITY > NEUTRAL.
+
+#### 20.4.6 — SignalFactory: `AdaptabilitySignalFactory`
+
+| Verdict | EvidenceType | Polarity | Strength |
+|---|---|---|---|
+| `HIGHLY_ADAPTABLE` | `ADAPTABILITY_HIGH` | POSITIVE | `min(1.0, adaptability_ratio * 1.3)` |
+| `ADAPTABLE` | `ADAPTABILITY_MODERATE` | POSITIVE | `max(adaptability_ratio, flexibility_ratio)` |
+| `LOW_ADAPTABILITY` | `ADAPTABILITY_LOW` | NEGATIVE | `min(1.0, rigidity_count / 5.0)` |
+| `NEUTRAL` | — | — | `None` |
+
+**Signal dimension:** `ProfileDimension.PROBLEM_SOLVING` (temporary V1.1 mapping).
+
+#### 20.4.7 — New EvidenceTypes (M2-7F)
+
+```python
+# --- M2-7F (Adaptability) ---
+ADAPTABILITY_HIGH     = "ADAPTABILITY_HIGH"     # strong recovery and flexibility demonstrated
+ADAPTABILITY_MODERATE = "ADAPTABILITY_MODERATE" # adequate adaptability present
+ADAPTABILITY_LOW      = "ADAPTABILITY_LOW"      # rigidity pattern; low recovery rate
+```
+
+#### 20.4.8 — Future Observation Mapping
+
+| V1.1 | V1.2 |
+|---|---|
+| `AdaptabilityStats` dataclass | `AdaptabilityObservation(Observation)` |
+| `stats.adaptability_ratio` | `observation.value` |
+| — | `observation.description` |
+| — | `observation.observation_type = ObservationType.ADAPTABILITY` |
+
+#### 20.4.9 — Future ProfileFeature Mapping
+
+| Field | Value |
+|---|---|
+| **Feature name** | `AdaptabilityFeature` |
+| **Key in CandidateProfile.features** | `"adaptability"` |
+| **Value** | Normalized `[0.0, 1.0]` from `max(adaptability_ratio, flexibility_ratio)` |
+| **Confidence** | Grows with `total_instability_events + flexibility_count` |
+| **Writer** | `CandidateProfileEngine` (V1.2 `ProfileFeatureUpdater`) |
+| **Consumers** | `NarrativeGenerator`, `CoachingEngine` |
+| **Update strategy** | EMA with alpha=0.3 |
+
+#### 20.4.10 — Acceptance Criteria
+
+- [ ] Requires `total_instability_events >= 2` OR `flexibility_count >= 3` to score
+- [ ] HIGHLY_ADAPTABLE requires `adaptability_ratio >= 0.70` AND `trend != DECLINING`
+- [ ] ADAPTABLE requires `ratio >= 0.40` OR `flexibility_ratio >= 0.50`
+- [ ] Low adaptability requires `rigidity_count > recovery_count AND rigidity_count >= 2`
+- [ ] Recovery detection: INSTABILITY -> GROWTH within 3 questions in adjacent dimension (ADR-065)
+- [ ] Zero instability + flexibility >= 3 → ADAPTABLE (proactive path)
+- [ ] Never evaluates technical correctness
+- [ ] Idempotency guard in place
+- [ ] Deterministic
+- [ ] Performance <= 20ms
+- [ ] >= 39 tests
+
+---
+
+### §20.5 — Complete Behavioral Detector Family Freeze
+
+#### 20.5.1 — Responsibility Matrix (Final)
+
+| Behavioral Signal | Detector | ProfileFeature | Notes |
+|---|---|---|---|
+| Session growth over time | `BehavioralPatternDetector` (70) | `BehavioralPatternFeature` | V1.1 |
+| Cross-domain consistency | `ConsistencyAcrossInterviewDetector` (80) | `CrossDomainConsistencyFeature` | V1.1 |
+| Ownership & accountability | `LeadershipDetector` (100) | `LeadershipFeature` | V1.2 |
+| Decision responsibility | `LeadershipDetector` (100) | `LeadershipFeature` | V1.2 |
+| Initiative & proactivity | `LeadershipDetector` (100) | `LeadershipFeature` | V1.2 |
+| Mentoring attitude | `LeadershipDetector` (100) | `LeadershipFeature` | V1.2 |
+| Strategic thinking | `LeadershipDetector` (100) | `LeadershipFeature` | V1.2 |
+| Team orientation | `CollaborationDetector` (110) | `CollaborationFeature` | V1.2 |
+| Conflict management | `CollaborationDetector` (110) | `CollaborationFeature` | V1.2 |
+| Knowledge sharing | `CollaborationDetector` (110) | `CollaborationFeature` | V1.2 |
+| Feedback acceptance | `CollaborationDetector` (110) | `CollaborationFeature` | V1.2 |
+| Cross-functional work | `CollaborationDetector` (110) | `CollaborationFeature` | V1.2 |
+| Stakeholder awareness | `CollaborationDetector` (110) | `CollaborationFeature` | V1.2 |
+| Recovery after mistakes | `AdaptabilityDetector` (120) | `AdaptabilityFeature` | V1.2 |
+| Flexibility under pressure | `AdaptabilityDetector` (120) | `AdaptabilityFeature` | V1.2 |
+| Learning speed | `AdaptabilityDetector` (120) | `AdaptabilityFeature` | V1.2 |
+| Problem reframing | `AdaptabilityDetector` (120) | `AdaptabilityFeature` | V1.2 |
+| Context switching | `AdaptabilityDetector` (120) | `AdaptabilityFeature` | V1.2 |
+| Change acceptance | `AdaptabilityDetector` (120) | `AdaptabilityFeature` | V1.2 |
+
+#### 20.5.2 — Forbidden Signal Overlap Contracts
+
+The following assignments are binding and enforced at code review:
+
+```
+Technical correctness → evaluation pipeline ONLY
+Grammar / fluency     → CommunicationDetector ONLY
+Reasoning depth       → ReasoningDepthDetector ONLY
+Engineering judgment  → EngineeringJudgmentDetector ONLY
+Leadership signals    → LeadershipDetector ONLY
+Collaboration signals → CollaborationDetector ONLY
+Adaptability signals  → AdaptabilityDetector ONLY
+Growth/instability    → BehavioralPatternDetector ONLY (produces; others READ)
+Cross-area consistency → ConsistencyAcrossInterviewDetector ONLY (produces; others READ)
+```
+
+#### 20.5.3 — Shared Behavioral Concepts (Read-only across detectors)
+
+`BEHAVIORAL_GROWTH` and `BEHAVIORAL_INSTABILITY` are **produced only by `BehavioralPatternDetector`**.
+`LeadershipDetector`, `CollaborationDetector`, and `AdaptabilityDetector` **read** these signals
+as their primary input but MUST NOT produce them.
+
+`CROSS_AREA_CONSISTENT` and `CROSS_AREA_CONTRADICTORY` are **produced only by
+`ConsistencyAcrossInterviewDetector`**. All downstream behavioral detectors read these signals
+as context. No detector may re-produce them.
+
+#### 20.5.4 — Dependency Chain (Behavioral Tier, Complete)
+
+```
+BehavioralPatternDetector (70)
+        ↓ produces BEHAVIORAL_GROWTH, BEHAVIORAL_INSTABILITY
+ConsistencyAcrossInterviewDetector (80)
+        ↓ produces CROSS_AREA_CONSISTENT, CROSS_AREA_CONTRADICTORY
+[Both above read-accessible by downstream detectors]
+LeadershipDetector (100)
+        ↓ produces LEADERSHIP_STRONG, LEADERSHIP_EMERGING, LEADERSHIP_ABSENT
+CollaborationDetector (110)    [reads LEADERSHIP_* for context; does not own them]
+        ↓ produces COLLABORATION_STRONG, COLLABORATION_EFFECTIVE, COLLABORATION_DEFICIT
+AdaptabilityDetector (120)     [reads all above for context; does not own them]
+        ↓ produces ADAPTABILITY_HIGH, ADAPTABILITY_MODERATE, ADAPTABILITY_LOW
+```
+
+All edges are downward. No upward dependency permitted. Enforced by `PatternDetectorRegistry`
+cycle-check and DDS §19.2.
+
+#### 20.5.5 — Complete EvidenceType Catalog (Post-M2-7F Design Freeze)
+
+```
+Original (12):        REPEATED_STRENGTH, RECOVERED_WEAKNESS, DEMONSTRATED_DEPTH,
+                      ENGINEERING_JUDGMENT_ARTICULATED, REPEATED_WEAKNESS, KNOWLEDGE_GAP,
+                      COMMUNICATION_GAP, REASONING_GAP, CONFIDENCE_DROP, MISSING_EVIDENCE,
+                      SHALLOW_ANSWER, CONTRADICTORY_ANSWER
+
+M2-7B (4):            REASONING_DEPTH_HIGH, REASONING_DEPTH_LOW,
+                      REASONING_IMPROVING, REASONING_STAGNATING
+
+M2-7C (5):            ENGINEERING_JUDGMENT_HIGH, ENGINEERING_JUDGMENT_LOW,
+                      COMMUNICATION_CLEAR, COMMUNICATION_WEAK, COMMUNICATION_INCONSISTENT
+
+M2-7D (5):            BEHAVIORAL_GROWTH, BEHAVIORAL_INSTABILITY, BEHAVIORAL_PLATEAU,
+                      CROSS_AREA_CONSISTENT, CROSS_AREA_CONTRADICTORY
+
+M2-7F Leadership (3): LEADERSHIP_STRONG, LEADERSHIP_EMERGING, LEADERSHIP_ABSENT
+
+M2-7F Collaboration (3): COLLABORATION_STRONG, COLLABORATION_EFFECTIVE, COLLABORATION_DEFICIT
+
+M2-7F Adaptability (3): ADAPTABILITY_HIGH, ADAPTABILITY_MODERATE, ADAPTABILITY_LOW
+
+Total post-M2-7F: 35
+```
+
+---
+
+### §20.6 — Future Observation Layer Architecture (V1.2)
+
+> No production code is defined here. This section freezes the Observation Layer design so that
+> V1.2 implementation requires no architectural decisions.
+
+#### 20.6.1 — New Observation Subtypes
+
+The `Observation` base class (ADR-055) will be extended in V1.2 with three new subclasses:
+
+```
+Observation (base — domain/contracts/reasoning/observation.py)
+├── observation_type: ObservationType
+├── dimension: ProfileDimension | None
+├── value: float | None         # normalized [0.0, 1.0]
+├── strength: float
+├── description: str            # short, non-candidate-facing explanation
+└── supporting_signal_ids: list[str]
+
+LeadershipObservation(Observation)
+├── leadership_dimensions_detected: list[str]
+├── ownership_signal_count: int
+├── initiative_signal_count: int
+├── accountability_signal_count: int
+└── leadership_ratio: float
+
+CollaborationObservation(Observation)
+├── team_orientation_count: int
+├── conflict_resolution_ratio: float
+├── cross_functional_count: int
+└── collaboration_ratio: float
+
+AdaptabilityObservation(Observation)
+├── recovery_count: int
+├── rigidity_count: int
+├── adaptability_ratio: float
+└── flexibility_ratio: float
+```
+
+**ObservationType enum additions (V1.2):**
+
+```python
+class ObservationType(str, Enum):
+    # ... existing values ...
+    LEADERSHIP    = "LEADERSHIP"
+    COLLABORATION = "COLLABORATION"
+    ADAPTABILITY  = "ADAPTABILITY"
+```
+
+#### 20.6.2 — Observation Lifecycle
+
+```
+Analyzer.analyze(reasoner_input) → stats: *Stats (V1.1) | *Observation (V1.2)
+        ↓
+Scorer.score(stats) → verdict: *Verdict
+        ↓
+SignalFactory.create(verdict, stats, reasoner_input) → EvidenceSignal | None
+        ↓                                ↓
+  EvidenceStore                    Observation (V1.2 only)
+        ↓                                ↓
+  PatternMatch                    CoachingEngine (V1.2)
+        ↓
+  DetectorResult → ReasonerDecision → NarrativeGenerator / ReportBuilder
+```
+
+#### 20.6.3 — Observation Ownership Rules
+
+| Rule | Detail |
+|---|---|
+| Single producer | Each Observation type produced by exactly one detector |
+| Read-only for consumers | NarrativeGenerator, CoachingEngine read; never write |
+| Immutable | All Observation subclasses are frozen dataclasses |
+| Non-candidate-facing | `description` field is internal; never shown to candidate |
+| Lifecycle scope | Observation is transient per detection cycle; persisted only as `EvidenceSignal` |
+
+#### 20.6.4 — Relationship Diagram
+
+```
+EvidenceSignal  ← atomic unit; persisted in EvidenceStore; polarity, strength, type
+PatternMatch    ← aggregation of EvidenceSignals; in ReasonerDecision.reasoning_basis
+Observation     ← richer intermediate: captures WHY a signal was emitted
+ProfileFeature  ← derived characteristic; persisted in CandidateProfile; incremental
+NarrativeGenerator ← reads ProfileFeatures only; never reads Observations directly
+CoachingEngine  ← reads Observations (for why) + ProfileFeatures (for current state)
+```
+
+---
+
+### §20.7 — Future ProfileFeatures (V1.2 Design Freeze)
+
+> Frozen for V1.2 planning. No production code changes.
+
+#### 20.7.1 — LeadershipFeature
+
+| Attribute | Value |
+|---|---|
+| **Key** | `"leadership"` |
+| **Value type** | `float | None` in `[0.0, 1.0]` |
+| **Inputs** | `LEADERSHIP_STRONG`, `LEADERSHIP_EMERGING`, `LEADERSHIP_ABSENT` signals |
+| **Owner (writer)** | `CandidateProfileEngine` via `LeadershipProfileFeatureUpdater` |
+| **Consumers** | `NarrativeGenerator` (leadership coaching text), `ReportBuilder` (leadership section), `CoachingEngine` (leadership roadmap) |
+| **Update strategy** | EMA: `value = 0.3 * new_ratio + 0.7 * existing_value` |
+| **Confidence** | `min(1.0, evidence_count / 10)` |
+| **Future coaching** | Leadership development, managerial readiness |
+
+#### 20.7.2 — CollaborationFeature
+
+| Attribute | Value |
+|---|---|
+| **Key** | `"collaboration"` |
+| **Value type** | `float | None` in `[0.0, 1.0]` |
+| **Inputs** | `COLLABORATION_STRONG`, `COLLABORATION_EFFECTIVE`, `COLLABORATION_DEFICIT` signals |
+| **Owner (writer)** | `CandidateProfileEngine` via `CollaborationProfileFeatureUpdater` |
+| **Consumers** | `ReportBuilder` (team fit section), `CoachingEngine` (collaboration coaching) |
+| **Update strategy** | EMA with alpha=0.3 |
+| **Confidence** | `min(1.0, evidence_count / 8)` |
+| **Future coaching** | Team dynamics, conflict resolution, feedback skills |
+
+#### 20.7.3 — AdaptabilityFeature
+
+| Attribute | Value |
+|---|---|
+| **Key** | `"adaptability"` |
+| **Value type** | `float | None` in `[0.0, 1.0]` |
+| **Inputs** | `ADAPTABILITY_HIGH`, `ADAPTABILITY_MODERATE`, `ADAPTABILITY_LOW` signals |
+| **Owner (writer)** | `CandidateProfileEngine` via `AdaptabilityProfileFeatureUpdater` |
+| **Consumers** | `NarrativeGenerator` (resilience coaching), `CoachingEngine` (adaptability roadmap) |
+| **Update strategy** | EMA with alpha=0.3 |
+| **Confidence** | `min(1.0, (recovery_count + flexibility_count) / 8)` |
+| **Future coaching** | Learning agility, change readiness |
+
+#### 20.7.4 — V1.2 ProfileFeature Catalog (Complete)
+
+| Feature key | Feature class | Source detector | V1.2 writer |
+|---|---|---|---|
+| `"reasoning_depth"` | `ReasoningDepthFeature` | `ReasoningDepthDetector` | `CandidateProfileEngine` |
+| `"engineering_judgment"` | `EngineeringJudgmentFeature` | `EngineeringJudgmentDetector` | `CandidateProfileEngine` |
+| `"communication"` | `CommunicationFeature` | `CommunicationDetector` | `CandidateProfileEngine` |
+| `"behavioral_pattern"` | `BehavioralPatternFeature` | `BehavioralPatternDetector` | `CandidateProfileEngine` |
+| `"cross_domain_consistency"` | `CrossDomainConsistencyFeature` | `ConsistencyAcrossInterviewDetector` | `CandidateProfileEngine` |
+| `"confidence_calibration"` | `ConfidenceCalibrationFeature` | `ConfidenceCalibrationDetector` | `CandidateProfileEngine` |
+| `"leadership"` | `LeadershipFeature` | `LeadershipDetector` | `CandidateProfileEngine` |
+| `"collaboration"` | `CollaborationFeature` | `CollaborationDetector` | `CandidateProfileEngine` |
+| `"adaptability"` | `AdaptabilityFeature` | `AdaptabilityDetector` | `CandidateProfileEngine` |
+
+---
+
+### §20.8 — Future Coaching Engine Integration (V1.2)
+
+> Architecture only. No production code. No coupling to existing components.
+
+#### 20.8.1 — CoachingEngine Purpose
+
+The `CoachingEngine` (V1.2) produces **actionable improvement recommendations** for the candidate
+based on their `ProfileFeatures` and the `Observations` produced during the session. It is
+deliberately decoupled from both detectors and `NarrativeGenerator`.
+
+#### 20.8.2 — Decoupling Architecture
+
+```
+PatternDetector → EvidenceSignal + Observation
+                        ↓
+         CandidateProfileEngine → ProfileFeature
+                        ↓
+┌───────────────────────────────────────────────────┐
+│              CoachingEngine (V1.2)                │
+│  Input: CandidateProfile.features                 │
+│  Input: Session Observations (from Analyzers)     │
+│  Output: CoachingPlan (list[CoachingRecommendation])│
+└───────────────────────────────────────────────────┘
+                        ↓
+         NarrativeGenerator (M2-8) reads CoachingPlan
+         ReportBuilder (M2-9) reads CoachingPlan
+```
+
+**Critical constraint:** `NarrativeGenerator` does NOT call `CoachingEngine`. Both consume
+`CandidateProfile` independently. `CoachingEngine` outputs are separate artifacts read by
+report and UI layers without coupling to narrative text generation.
+
+#### 20.8.3 — Coaching Domains Enabled by the Three New Features
+
+| Feature(s) | Coaching domain | Coaching output |
+|---|---|---|
+| `LeadershipFeature` | Leadership coaching | Leadership development recommendations |
+| `LeadershipFeature` | Managerial readiness | Management track readiness assessment |
+| `CollaborationFeature` | Collaboration coaching | Team dynamics, feedback, conflict resolution |
+| `AdaptabilityFeature` | Adaptability coaching | Learning agility, change readiness |
+| `LeadershipFeature` + `CollaborationFeature` | Managerial communication coaching | How to communicate decisions to teams |
+| `CollaborationFeature` + `AdaptabilityFeature` | Team resilience coaching | Managing team ambiguity |
+
+#### 20.8.4 — CoachingRecommendation Contract (V1.2 Reserved)
+
+```
+CoachingRecommendation (V1.2, not yet implemented)
+├── coaching_type: CoachingType       # LEADERSHIP | COLLABORATION | ADAPTABILITY | ...
+├── priority: int                     # 1 (high) to 3 (low)
+├── evidence_features: list[str]      # feature keys that triggered this recommendation
+├── recommendation_text: str          # coaching content
+├── action_items: list[str]           # concrete steps
+└── confidence: float                 # [0.0, 1.0]
+```
+
+**Decoupling guarantee:** Detectors NEVER produce `CoachingRecommendation` directly.
+Chain: `Detector → EvidenceSignal → ProfileFeature → CoachingEngine → Recommendation`.
+No detector-specific code exists in `CoachingEngine`.
+
+#### 20.8.5 — NarrativeGenerator Boundary (ADR-050 Preserved)
+
+`NarrativeGenerator` (M2-8) continues to consume only `CandidateProfile.features` and NEVER
+directly accesses `DetectorResult`, `PatternMatch`, `Observation`, or `CoachingRecommendation`.
+This boundary is enforced by ADR-050 and is not altered by the addition of the three new features.
+
+---
+
+### §20.9 — New ADRs (M2-7F)
+
+---
+
+#### ADR-062: Behavioral Detector Family — Responsibility Matrix
+
+**Status: Accepted — M2-7F Design Freeze**
+
+**Context:** With the design of `LeadershipDetector`, `CollaborationDetector`, and
+`AdaptabilityDetector`, the behavioral tier is complete. Without a formal responsibility
+boundary, signal assignment ambiguity risks duplicate detection.
+
+**Decision:** The responsibility matrix in §20.5.1 is the binding ownership contract for all
+behavioral signals. Each signal category is owned by exactly one detector. Signal assignment
+cannot be changed without a new ADR.
+
+**Enforcement:** Code review gate. Any detector producing a signal type outside its ownership
+scope fails the DDS checklist (§19.11).
+
+**Consequences:** `CommunicationDetector` owns grammar/fluency signals only. `CollaborationDetector`
+owns all team-interaction signals. `LeadershipDetector` owns all ownership/accountability signals.
+`AdaptabilityDetector` owns all recovery/flexibility signals.
+
+---
+
+#### ADR-063: LeadershipFeature — Dimension Anchor and Update Strategy
+
+**Status: Accepted — M2-7F Design Freeze**
+
+**Context:** No `LEADERSHIP` dimension exists in the V1.1 `ProfileDimension` enum. A temporary
+dimension anchor is needed for V1.1 signal emission.
+
+**Decision:**
+1. In V1.1: `LeadershipDetector` signals use `ProfileDimension.PROBLEM_SOLVING` as the closest
+   behavioral proxy. This temporary mapping is declared in the module docstring.
+2. In V1.2: `ProfileDimension.LEADERSHIP` is added. A migration script re-maps existing signals.
+3. `LeadershipFeature` uses EMA with alpha=0.3.
+4. Single writer: `CandidateProfileEngine` via `LeadershipProfileFeatureUpdater`.
+
+**Constraints:** No V1.1 code references `ProfileDimension.LEADERSHIP`.
+
+---
+
+#### ADR-064: CollaborationFeature — Dimension Anchor
+
+**Status: Accepted — M2-7F Design Freeze**
+
+**Context:** No `COLLABORATION` dimension exists in V1.1. Collaboration overlaps with both
+`COMMUNICATION` and `PROBLEM_SOLVING` dimensions.
+
+**Decision:**
+1. In V1.1: `CollaborationDetector` signals use `ProfileDimension.COMMUNICATION` as anchor.
+   Collaboration is fundamentally interpersonal communication in interview context.
+2. In V1.2: `ProfileDimension.COLLABORATION` reserved for future addition if needed.
+3. `CollaborationFeature` uses EMA with alpha=0.3.
+4. Single writer: `CandidateProfileEngine` via `CollaborationProfileFeatureUpdater`.
+
+---
+
+#### ADR-065: AdaptabilityDetector — Recovery Detection Algorithm
+
+**Status: Accepted — M2-7F Design Freeze**
+
+**Context:** `AdaptabilityDetector` relies on detecting INSTABILITY→GROWTH sequences. The window
+size and proximity rule must be frozen to ensure deterministic behavior across all future
+implementations.
+
+**Decision:**
+1. Recovery window: INSTABILITY at index `i` is matched to GROWTH at index `j` where `j > i`
+   and `j <= i + 3`.
+2. Dimension proximity: growth signal must be in the same dimension OR an adjacent dimension
+   (adjacent = sharing the same question area).
+3. Unmatched INSTABILITY events after the window count as `rigidity_count`.
+4. Algorithm is O(n) via single forward pass with sliding window queue.
+5. `RECOVERY_WINDOW_QUESTIONS = 3` is a module-level constant.
+
+**Constraints:** Idempotency guaranteed by algorithm structure; same input always produces
+same output regardless of call count.
+
+---
+
+#### ADR-066: Behavioral Observation Model — V1.2 Extension Contract
+
+**Status: Accepted — Architecture direction; implementation V1.2**
+
+**Context:** ADR-055 reserved the `Observation` abstraction. Three new subtypes are now designed.
+The V1.2 migration contract must be explicitly frozen.
+
+**Decision:**
+1. V1.1 Analyzers produce plain `@dataclass(frozen=True)` stat objects.
+2. V1.2 migration: stat objects become `Observation` subclasses by adding `description: str`
+   and inheriting from `Observation`. No existing fields are removed.
+3. `ObservationType.LEADERSHIP`, `COLLABORATION`, `ADAPTABILITY` are added to the enum.
+4. `PatternDetector` ABC contract does not change.
+
+**Constraints:** V1.1 code MUST NOT import or reference `Observation` class.
+The `description` field is reserved in V1.1 Analyzer docstrings with a V1.2 note.
+
+---
+
+#### ADR-067: Behavioral Coaching Pipeline — Detector-to-CoachingEngine Decoupling
+
+**Status: Accepted — Architecture direction; CoachingEngine deferred to V1.2**
+
+**Context:** With nine ProfileFeatures now designed (§20.7.4), it is critical to freeze the
+data flow from detectors to the eventual CoachingEngine.
+
+**Decision:** The coaching pipeline follows a strict chain:
+```
+Detector → EvidenceSignal → ProfileFeature → CoachingEngine → CoachingRecommendation
+```
+No detector may produce a `CoachingRecommendation`. No `CoachingEngine` code may import
+any detector class or collaborator. The only interface between detectors and the coaching
+layer is `CandidateProfile.features: dict[str, ProfileFeature]`.
+
+**Constraints:**
+- `CoachingEngine` is NOT implemented in V1.1.
+- `CoachingRecommendation` is NOT implemented in V1.1.
+- `CandidateProfile.features` remains absent in V1.1; added in V1.2 (ADR-048).
+- `NarrativeGenerator` (M2-8) MUST NOT call `CoachingEngine` (ADR-050 boundary preserved).
+
+---
+
+### §20.10 — Updated Detector Catalog (Post-M2-7F Design Freeze)
+
+| Priority | Detector | Milestone | Status | Layer |
+|---|---|---|---|---|
+| 5 | `EvaluationSignalDetector` | M2-7B | Active | Foundation |
+| 10 | `CoverageDetector` | M2-3 | Active | Foundation |
+| 20 | `ConsistencyDetector` | M2-3 | Active | Foundation |
+| 30 | `TrendDetector` | M2-3 | Active | Foundation |
+| 40 | `ReasoningDepthDetector` | M2-7B | Active | Analytical |
+| 50 | `EngineeringJudgmentDetector` | M2-7C | Active | Analytical |
+| 60 | `CommunicationDetector` | M2-7D | Active | Analytical |
+| 70 | `BehavioralPatternDetector` | M2-7E | Active | Behavioral |
+| 80 | `ConsistencyAcrossInterviewDetector` | M2-7F | Active | Behavioral |
+| 90 | `ConfidenceCalibrationDetector` | M2-7G | Planned | Calibration |
+| 100 | `LeadershipDetector` | V1.2 | **Design Frozen** | Behavioral |
+| 110 | `CollaborationDetector` | V1.2 | **Design Frozen** | Behavioral |
+| 120 | `AdaptabilityDetector` | V1.2 | **Design Frozen** | Behavioral |
+
+---
+
+### §20.11 — M2-7F Acceptance Checklist
+
+| Item | Status |
+|---|---|
+| `LeadershipDetector` fully specified (§20.2) | Frozen |
+| `CollaborationDetector` fully specified (§20.3) | Frozen |
+| `AdaptabilityDetector` fully specified (§20.4) | Frozen |
+| Behavioral detector family responsibility matrix (§20.5.1) | Frozen |
+| Forbidden overlap contracts (§20.5.2) | Frozen |
+| Shared behavioral concept ownership (§20.5.3) | Frozen |
+| Complete EvidenceType catalog (§20.5.5, total 35) | Frozen |
+| Observation Layer architecture (§20.6) | Frozen |
+| V1.2 Observation migration contracts (§20.6.1) | Frozen |
+| `LeadershipFeature` ProfileFeature design (§20.7.1) | Frozen |
+| `CollaborationFeature` ProfileFeature design (§20.7.2) | Frozen |
+| `AdaptabilityFeature` ProfileFeature design (§20.7.3) | Frozen |
+| V1.2 ProfileFeature catalog complete (§20.7.4, total 9) | Frozen |
+| CoachingEngine integration architecture (§20.8) | Frozen |
+| Detector-to-CoachingEngine decoupling (ADR-067) | Frozen |
+| ADR-062 (Responsibility Matrix) | Accepted |
+| ADR-063 (LeadershipFeature dimension anchor) | Accepted |
+| ADR-064 (CollaborationFeature dimension anchor) | Accepted |
+| ADR-065 (AdaptabilityFeature recovery algorithm) | Accepted |
+| ADR-066 (Observation Model extension contract) | Accepted |
+| ADR-067 (Coaching Pipeline decoupling) | Accepted |
+| DDS fully respected by all three detectors | Verified |
+| Zero production code modified | Confirmed |
+| Zero tests modified | Confirmed |
+
+---
+
+### §20.12 — Implementation Recommendation (V1.2)
+
+The three detectors must be implemented in the following order to respect the dependency chain:
+
+```
+Step 1: LeadershipDetector (DET-11, priority 100)
+  ├── Implement LeadershipAnalyzer, LeadershipScorer, LeadershipSignalFactory
+  ├── Add EvidenceTypes: LEADERSHIP_STRONG, LEADERSHIP_EMERGING, LEADERSHIP_ABSENT
+  ├── Register in build_default_registry() with dependency=ConsistencyAcrossInterviewDetector
+  └── 39+ tests
+
+Step 2: CollaborationDetector (DET-12, priority 110)
+  ├── Implement CollaborationAnalyzer, CollaborationScorer, CollaborationSignalFactory
+  ├── Add EvidenceTypes: COLLABORATION_STRONG, COLLABORATION_EFFECTIVE, COLLABORATION_DEFICIT
+  ├── Register with dependency=LeadershipDetector
+  └── 39+ tests
+
+Step 3: AdaptabilityDetector (DET-13, priority 120)
+  ├── Implement AdaptabilityAnalyzer (recovery algorithm per ADR-065)
+  ├── Implement AdaptabilityScorer (including zero-instability / high-flexibility path)
+  ├── Implement AdaptabilitySignalFactory
+  ├── Add EvidenceTypes: ADAPTABILITY_HIGH, ADAPTABILITY_MODERATE, ADAPTABILITY_LOW
+  ├── Register with dependency=CollaborationDetector
+  └── 39+ tests
+
+Step 4: ProfileFeatureUpdaters (CandidateProfileEngine extension)
+  ├── LeadershipProfileFeatureUpdater
+  ├── CollaborationProfileFeatureUpdater
+  ├── AdaptabilityProfileFeatureUpdater
+  └── Add CandidateProfile.features: dict[str, ProfileFeature] (backward-compatible, ADR-048)
+
+Step 5: Observation Layer (V1.2 — after all detectors pass regression)
+  ├── Promote *Stats to *Observation subclasses
+  ├── Add ObservationType enum values (ADR-066)
+  └── Wire CoachingEngine input pipeline (ADR-067)
+```
+
+Each step is independently deliverable and independently testable. No step requires changes to
+V1.1 `ReasonerService`, `NarrativeGenerator`, `ReportBuilder`, or any existing detector.
+
+---
+
