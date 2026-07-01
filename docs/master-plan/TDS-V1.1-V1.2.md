@@ -3579,12 +3579,637 @@ Unit tests for each detector MUST include a `test_perf_within_budget` case asser
 | **M2-7A** | Architecture freeze | — | This document |
 | **M2-7B** | EvaluationSignalDetector + ReasoningDepthDetector | DET-01 (v2), DET-05 | Sliding window bridging; reasoning depth scoring |
 | **M2-7C** | EngineeringJudgmentDetector + CommunicationDetector | DET-06, DET-07 | Judgment + communication dimensions assessed; Observation ADR reserved (ADR-055) |
-| **M2-7D** | BehavioralPatternDetector | DET-08 | Session-level pattern recognition (advanced) |
-| **M2-7E** | BehavioralPatternDetector | DET-08 | Session-level pattern recognition |
-| **M2-7F** | ConsistencyAcrossInterviewDetector | DET-09 | Cross-domain contradiction detection |
-| **M2-7G** | ConfidenceCalibrationDetector | DET-10 | Self-assessment calibration |
+| **M2-7D** | BehavioralPatternDetector + ConsistencyAcrossInterviewDetector | DET-08, DET-09 | Behavioral + cross-area consistency detection |
+| **M2-7E** | Framework Consolidation (DDS + ADRs) | — | Detector Development Standard frozen |
+| **M2-7F** | ConfidenceCalibrationDetector | DET-10 | Self-assessment calibration |
 | **M2-8** | NarrativeGenerator | — | Reads CandidateProfile; produces coaching text |
 | **M2-9** | ReportBuilder | — | Structured session report from ProfileFeatures |
 | **V1.2** | ProfileFeatures activation + Leadership/Collaboration/Adaptability | DET-11–13 | Full qualitative profile |
 | **V1.2** | CoachingEngine | — | Actionable improvement recommendations |
+
+
+---
+
+## §19 — Detector Development Standard (DDS) — M2-7E Freeze
+
+> **Status: Frozen — M2-7E**
+> This section is the single authoritative reference for implementing, testing, registering, and evolving any Pattern Detector in this project. It supersedes any informal conventions established in M2-3 through M2-7D. All future detectors (M2-7F onward) must comply with this standard.
+
+---
+
+### §19.1 — Detector Taxonomy (Layer Model)
+
+Detectors are organised into four layers. Layer membership is determined by the **nature of input consumed**, not by the signals produced.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Layer 1: Foundation Detectors  (priority 1–30)              │
+│  Input: Raw EvidenceStore signals from Evaluation pipeline   │
+│  Purpose: Surface and normalise evaluation evidence          │
+│  Examples: EvaluationSignalDetector, CoverageDetector,       │
+│            ConsistencyDetector, TrendDetector                │
+├──────────────────────────────────────────────────────────────┤
+│  Layer 2: Analytical Detectors  (priority 31–69)             │
+│  Input: Enriched EvidenceStore (after Foundation pass)       │
+│  Purpose: Dimension-specific deep analysis                   │
+│  Examples: ReasoningDepthDetector, EngineeringJudgmentDet.,  │
+│            CommunicationDetector                             │
+├──────────────────────────────────────────────────────────────┤
+│  Layer 3: Behavioral Detectors  (priority 70–99)             │
+│  Input: ReasoningHistory + full EvidenceStore                │
+│  Purpose: Session-level patterns across multiple answers     │
+│  Examples: BehavioralPatternDetector,                        │
+│            ConsistencyAcrossInterviewDetector,               │
+│            Leadership, Collaboration, Adaptability (V1.2)   │
+├──────────────────────────────────────────────────────────────┤
+│  Layer 4: Calibration Detectors  (priority 100–130)          │
+│  Input: CandidateProfile (dimension_scores + signals)        │
+│  Purpose: Meta-analysis of candidate self-assessment         │
+│  Examples: ConfidenceCalibrationDetector (DET-10, M2-7F)    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Layer ownership rules:**
+
+| Layer | Reads from | May NOT read from |
+|---|---|---|
+| Foundation | `EvidenceStore` (raw signals only) | `ReasoningHistory`, `CandidateProfile` |
+| Analytical | `EvidenceStore` (enriched) | `ReasoningHistory`, `CandidateProfile.dimension_scores` |
+| Behavioral | `ReasoningHistory`, `EvidenceStore` | `CandidateProfile.dimension_scores` (use scores only if unavoidable) |
+| Calibration | `CandidateProfile` (full) | — (may read everything) |
+
+---
+
+### §19.2 — Dependency Rules
+
+**Formal rule: dependencies are strictly downward within the layer graph.**
+
+```
+Foundation (1–30)
+    ↓ (allowed)
+Analytical (31–69)
+    ↓ (allowed)
+Behavioral (70–99)
+    ↓ (allowed)
+Calibration (100–130)
+```
+
+**Forbidden dependency directions:**
+
+- A Foundation detector may NOT depend on Analytical, Behavioral, or Calibration.
+- An Analytical detector may NOT depend on another Analytical detector in a higher priority slot unless explicitly documented with an ADR rationale.
+- A Behavioral detector may NOT depend on Calibration.
+- No detector may have a cyclic dependency. The `PatternDetectorRegistry` enforces this via DFS at registration time.
+
+**Within-layer dependencies** (same-layer priority constraints):
+
+- Within Analytical: `ReasoningDepthDetector(40)` → `EngineeringJudgmentDetector(50)` → `CommunicationDetector(60)` is the canonical chain. New Analytical detectors must choose a priority > 60 and < 70.
+- Within Behavioral: `BehavioralPatternDetector(70)` → `ConsistencyAcrossInterviewDetector(80)`. New Behavioral detectors must be in range 70–99.
+- Within Calibration: `ConfidenceCalibrationDetector(90)` (NOTE: priority 90 is in Behavioral range; effective layer is Calibration by input type). Future calibration detectors: 100–130.
+
+**Priority slot policy (ADR-049, supplemented here):**
+
+- Priorities 5, 10, 20, 30, 40, 50, 60, 70, 80 are occupied by existing detectors.
+- New detectors must NOT claim an occupied priority.
+- Priority changes require a new ADR.
+
+---
+
+### §19.3 — Mandatory Detector Contract
+
+Every `PatternDetector` subclass MUST expose these elements without exception:
+
+#### 19.3.1 — Metadata
+
+```python
+_METADATA = DetectorMetadata(
+    name="<DetectorName>",     # unique, PascalCase, ends with "Detector"
+    version="1.0.0",           # semver; bump on behavioral changes
+    priority=<int>,            # unique; must comply with layer range
+    enabled=True,              # default; feature-flag gate
+    dependencies=["<Name>"],   # must be registered before this detector
+)
+```
+
+- `name` must exactly match the class name.
+- `version` follows semantic versioning: `MAJOR.MINOR.PATCH`.
+  - PATCH: bug fix, no signal type change.
+  - MINOR: new produced signal types added (backward-compatible).
+  - MAJOR: produced signal types removed or renamed (breaking change → new ADR required).
+
+#### 19.3.2 — detect() Contract
+
+```python
+def detect(self, reasoner_input: ReasonerInput) -> DetectorResult:
+    ...
+```
+
+**Mandatory invariants:**
+
+1. **Deterministic**: same input → same output, always.
+2. **Stateless**: no instance-level mutable state; all state from `reasoner_input`.
+3. **Side-effect-free**: no writes, no I/O, no networking, no database.
+4. **No LLM calls**: ADR-028, absolute prohibition.
+5. **O(n)** over session history (or bounded polynomial for cross-area analysis).
+6. **Idempotency guard**: every candidate signal must pass through `filter_new_signals()` before being placed in `generated_signals`.
+7. **Empty result on insufficient data**: never emit signals when guard conditions are not met. Return `DetectorResult(detector_name=_METADATA.name)`.
+
+#### 19.3.3 — DetectorResult Fields
+
+| Field | Required | Notes |
+|---|---|---|
+| `detector_name` | ✓ | Must equal `_METADATA.name` |
+| `matches` | When non-empty | List of `PatternMatch`; one per detected rule |
+| `generated_signals` | When non-empty | Output of `filter_new_signals()` |
+| `confidence` | Optional | Default `ReasoningConfidence()` |
+| `warnings` | Optional | Internal diagnostics only; NEVER candidate-facing |
+| `execution_time_ms` | Auto | Populated by `ReasonerService` pipeline |
+
+#### 19.3.4 — PatternMatch Contract
+
+```python
+PatternMatch(
+    pattern_type=EvidenceType.<VALUE>,   # signal type produced
+    evidence_signals=[sig],              # supporting evidence
+    label="<context>: <details>",       # max 200 chars; no candidate text
+)
+```
+
+- `label` must NEVER contain candidate-supplied text.
+- `label` must identify the detector context and key metric.
+
+#### 19.3.5 — EvidenceSignal Contract
+
+All signals produced by detectors MUST have:
+
+```python
+EvidenceSignal(
+    id=str(uuid.uuid4()),           # unique per signal
+    source=EvidenceSource.PATTERN_DETECTOR,  # always
+    dimension=ProfileDimension.<X>, # the dimension this signal relates to
+    polarity=EvidencePolarity.<P>,  # POSITIVE or NEGATIVE
+    signal_type=EvidenceType.<T>,   # must be defined in EvidenceType enum
+    strength=<float in [0.0, 1.0]>, # derived from analysis metrics
+    question_index=q_idx,
+    question_area=area,
+    timestamp_question_index=q_idx,
+)
+```
+
+---
+
+### §19.4 — Decomposition Standard (Collaborator Pattern)
+
+Every non-trivial detector MUST be decomposed into three collaborators:
+
+```
+detectors/<feature_name>/
+    analyzer.py        ← BoundedObservationExtractor (or *Analyzer)
+    scorer.py          ← *Scorer
+    signal_factory.py  ← *SignalFactory
+```
+
+**Analyzer responsibility:**
+- Single O(n) pass over input data.
+- Returns a plain `@dataclass(frozen=True)` stats object.
+- No business logic — only classification and counting.
+- V1.2: this dataclass will be promoted to an `Observation` subclass.
+
+**Scorer responsibility:**
+- Pure function: receives stats object, returns Verdict enum.
+- No I/O; no side effects.
+- Threshold constants defined at module level (not inside methods).
+- All guard conditions checked here (min evidence, min entries, etc.).
+
+**SignalFactory responsibility:**
+- Maps Verdict + stats → `EvidenceSignal | None`.
+- `None` returned for NEUTRAL verdict.
+- All signals have `source=EvidenceSource.PATTERN_DETECTOR`.
+- Strength derived from analysis metrics, clamped to `[0.0, 1.0]`.
+
+**Main Detector responsibility:**
+- Orchestrates Analyzer → Scorer → SignalFactory.
+- Builds `PatternMatch` objects.
+- Calls `filter_new_signals()` before returning.
+- No business logic beyond orchestration.
+
+**Size limits (ADR-056):**
+
+| File | Max LOC |
+|---|---|
+| Main Detector | 150 |
+| Analyzer | 120 |
+| Scorer | 60 |
+| SignalFactory | 80 |
+
+---
+
+### §19.5 — Performance Standard
+
+**Mandatory rules (ADR-054, extended here):**
+
+| Rule | Requirement |
+|---|---|
+| Algorithmic complexity | O(n) over EvidenceStore signals |
+| Cross-dimension comparison | O(d × a²) permitted; d,a bounded (≤5 dims, ≤10 areas) |
+| History traversal | O(h) where h ≤ 20 (ReasoningHistory.MAX_ENTRIES) |
+| Nested scans | Forbidden unless both dimensions are bounded and documented |
+| Global mutable state | Forbidden (no module-level caches, no class-level mutation) |
+| I/O | Forbidden (no file reads, no DB queries, no network calls) |
+| LLM calls | Forbidden (ADR-028) |
+| Prompt templates | Forbidden |
+| External process | Forbidden |
+
+**Performance budget (ADR-054):**
+
+| Layer | Soft Target | Hard Limit |
+|---|---|---|
+| Foundation (≤ 30) | < 1ms | 5ms |
+| Analytical (31–69) | < 3ms | 10ms |
+| Behavioral (70–99) | < 5ms | 10ms |
+| Calibration (100–130) | < 5ms | 20ms |
+| Total pipeline | < 20ms | 50ms |
+
+**Measurement standard:** `time.perf_counter()` wrapping `detector.detect()`. Warmup excluded.
+
+---
+
+### §19.6 — Test Standard
+
+Every detector requires four test files:
+
+```
+tests/services/interview_reasoner/pattern_detection/detectors/
+    <feature>/
+        test_analyzer.py       ← unit tests for Analyzer
+        test_scorer.py         ← unit tests for Scorer
+        test_signal_factory.py ← unit tests for SignalFactory
+    test_<feature>_detector.py ← integration tests for main Detector
+```
+
+**Mandatory test coverage per collaborator:**
+
+**Analyzer tests (minimum 8 cases):**
+- Empty input → neutral stats
+- Single signal of each relevant type
+- Wrong polarity on correct type → not counted
+- Multi-dimension split
+- Irrelevant signal types ignored
+- Ratio/count properties
+
+**Scorer tests (minimum 8 cases):**
+- NEUTRAL when below minimum evidence/entries
+- Each non-neutral verdict
+- Threshold boundary cases (both sides)
+- Verdict precedence (if multiple verdicts possible)
+
+**SignalFactory tests (minimum 8 cases):**
+- Each verdict → correct signal type
+- NEUTRAL → None
+- Polarity correct per verdict
+- Strength derivation
+- `source = PATTERN_DETECTOR`
+- `dimension` correct
+- Unique IDs across calls
+- Strength clamped to [0.0, 1.0]
+
+**Main Detector tests (minimum 15 cases):**
+- Metadata: name, priority, dependencies, version
+- Each positive verdict scenario
+- Each negative verdict scenario
+- Guard condition: insufficient data → empty result
+- Idempotency: no re-emission after signal already in store
+- False positive: wrong dimension/area signals ignored
+- Signal contract: source, dimension correct
+- Label content verification
+
+**Target: 40–50 new tests per detector.**
+
+---
+
+### §19.7 — EvidenceType Registration Policy
+
+New `EvidenceType` values added by a detector must:
+
+1. Be grouped with a comment identifying the milestone (e.g., `# --- M2-7D ---`).
+2. Follow the naming convention: `<DIMENSION_OR_CONCEPT>_<QUALIFIER>` (e.g., `BEHAVIORAL_GROWTH`, `CROSS_AREA_CONSISTENT`).
+3. Be positive-leaning values for positive polarity signals.
+4. Be documented in the detector's module docstring under "Signals emitted".
+5. Never be re-used across detectors with different semantics.
+
+**Existing EvidenceType enum as of M2-7D:**
+
+```
+Original (12):  REPEATED_STRENGTH, RECOVERED_WEAKNESS, DEMONSTRATED_DEPTH,
+                ENGINEERING_JUDGMENT_ARTICULATED, REPEATED_WEAKNESS, KNOWLEDGE_GAP,
+                COMMUNICATION_GAP, REASONING_GAP, CONFIDENCE_DROP, MISSING_EVIDENCE,
+                SHALLOW_ANSWER, CONTRADICTORY_ANSWER
+
+M2-7B (4):      REASONING_DEPTH_HIGH, REASONING_DEPTH_LOW,
+                REASONING_IMPROVING, REASONING_STAGNATING
+
+M2-7C (5):      ENGINEERING_JUDGMENT_HIGH, ENGINEERING_JUDGMENT_LOW,
+                COMMUNICATION_CLEAR, COMMUNICATION_WEAK, COMMUNICATION_INCONSISTENT
+
+M2-7D (5):      BEHAVIORAL_GROWTH, BEHAVIORAL_INSTABILITY, BEHAVIORAL_PLATEAU,
+                CROSS_AREA_CONSISTENT, CROSS_AREA_CONTRADICTORY
+
+Total: 26
+```
+
+---
+
+### §19.8 — Detector Lifecycle
+
+Every detector passes through the following lifecycle stages. No stage may be skipped.
+
+```
+1. DESIGN
+   ├── Requirements from TDS §18 DET-XX
+   ├── Input/output contract documented
+   ├── Layer assignment determined
+   └── ADR created if decisions deviate from TDS
+
+2. IMPLEMENTATION
+   ├── Collaborators (Analyzer, Scorer, SignalFactory) implemented first
+   ├── Main Detector orchestrates collaborators
+   └── All files < LOC limits (§19.4)
+
+3. TESTING
+   ├── Unit tests per collaborator
+   ├── Integration tests per main Detector
+   └── Coverage ≥ 40 test cases
+
+4. REGISTRY
+   ├── Registered in build_default_registry()
+   ├── Priority unique and within layer range
+   ├── Dependencies declared and already registered
+   └── Registry cycle-check passes
+
+5. AUDIT
+   ├── Code review against DDS §19.3–§19.6
+   ├── Performance budget verified
+   └── No detector-specific code in ReasonerService
+
+6. DOCUMENTATION
+   ├── DET-XX entry in TDS §18.2
+   ├── Module-level docstring complete
+   ├── V1.2 Observation/ProfileFeature mapping documented
+   └── Roadmap table updated
+
+7. RELEASE
+   ├── Included in milestone tag
+   └── Regression suite green
+
+8. MONITORING (V1.2+)
+   ├── Execution time metrics
+   ├── Signal emission rates
+   └── False positive / false negative rates (future Diagnostics layer)
+
+9. FUTURE EXTENSION
+   ├── Version bump if behavior changes (§19.3.1)
+   ├── New ADR if signal types change
+   └── Observation upgrade path ready (§19.9)
+```
+
+---
+
+### §19.9 — V1.2 Evolution Path
+
+**No production code changes are defined here. This section freezes the V1.2 migration path so that V1.1 implementation decisions are forward-compatible.**
+
+#### 19.9.1 — Observation Layer
+
+The `Observation` abstraction (ADR-055) will be introduced in V1.2:
+
+```
+V1.1 Analyzer returns:   @dataclass(frozen=True) stats
+V1.2 Analyzer returns:   Observation(stats + description: str + observation_type: ObservationType)
+```
+
+**Migration strategy per detector:**
+
+| V1.1 Dataclass | V1.2 Observation |
+|---|---|
+| `DimensionDepthStats` | `DepthObservation` |
+| `JudgmentStats` | `JudgmentObservation` |
+| `CommunicationStats` | `CommunicationObservation` |
+| `BehavioralStats` | `BehavioralObservation` |
+| `CrossAreaResult` | `ConsistencyObservation` |
+
+The `description` field on each `Observation` will be the input to the `CoachingEngine`.
+
+**V1.1 detectors are forward-compatible because:**
+- Dataclasses are frozen and immutable — no changes needed to existing code.
+- The V1.2 migration wraps existing dataclasses rather than replacing them.
+- `PatternDetector` ABC signature does not change.
+- `DetectorResult` contract does not change.
+
+#### 19.9.2 — ProfileFeature Layer
+
+The `ProfileFeature` abstraction (ADR-048) will be activated in V1.2:
+
+```
+V1.1: CandidateProfile.dimension_scores only
+V1.2: CandidateProfile.dimension_scores + CandidateProfile.features: dict[str, ProfileFeature]
+```
+
+**Detector → ProfileFeature mapping (frozen for V1.2 planning):**
+
+| Detector | ProfileFeature class | V1.2 writer |
+|---|---|---|
+| ReasoningDepthDetector | `ReasoningDepthFeature` | `CandidateProfileEngine` |
+| EngineeringJudgmentDetector | `EngineeringJudgmentFeature` | `CandidateProfileEngine` |
+| CommunicationDetector | `CommunicationFeature` | `CandidateProfileEngine` |
+| BehavioralPatternDetector | `BehavioralPatternFeature` | `CandidateProfileEngine` |
+| ConsistencyAcrossInterviewDetector | `CrossDomainConsistencyFeature` | `CandidateProfileEngine` |
+| ConfidenceCalibrationDetector | `ConfidenceCalibrationFeature` | `CandidateProfileEngine` |
+
+#### 19.9.3 — AbstractAnalyticalDetector (Reserved)
+
+A future base class `AbstractAnalyticalDetector` may be introduced in V1.2 to reduce boilerplate across the Analyzer→Scorer→SignalFactory chain. The pattern is sufficiently uniform that extraction is mechanical. The V1.2 decision will depend on:
+- Whether ≥ 5 Analytical-layer detectors exist and share ≥ 50% of orchestration code.
+- Whether the abstraction improves testability without adding indirection cost.
+
+**V1.1 detectors are forward-compatible because:** the base class would inject the orchestration as a template method, not replace the existing orchestration.
+
+#### 19.9.4 — DetectorPipeline
+
+A future `DetectorPipeline` abstraction could replace `ReasonerService._run_detectors()` with a composable, configurable pipeline object. This is deferred to V1.2 pending `NarrativeGenerator` and `CoachingEngine` requirements.
+
+#### 19.9.5 — Detector Diagnostics (V1.2+)
+
+A `DetectorDiagnostics` subsystem will be introduced to track:
+- Per-detector emission rates (signals emitted / calls)
+- Per-detector execution time percentiles
+- False positive indicators (signals emitted but no follow-up action taken)
+- Version compatibility tracking
+
+**V1.1 compatibility:** `DetectorResult.warnings` is the existing hook for diagnostic messages. No changes needed to V1.1 detectors.
+
+---
+
+### §19.10 — New ADRs (M2-7E)
+
+---
+
+#### ADR-056: Detector File Size Limits
+
+**Status: Accepted — M2-7E**
+
+**Context:** As the detector ecosystem grows, individual files risk exceeding maintainability thresholds. Experience from M2-7B through M2-7D shows that detectors decomposed into Analyzer/Scorer/SignalFactory naturally stay within 60–120 LOC per file.
+
+**Decision:** Enforce the following soft limits:
+
+| File | Soft Limit | Hard Limit |
+|---|---|---|
+| Main Detector | 120 LOC | 150 LOC |
+| Analyzer | 100 LOC | 120 LOC |
+| Scorer | 50 LOC | 60 LOC |
+| SignalFactory | 70 LOC | 80 LOC |
+
+Files exceeding the hard limit require documented justification in the code review. A detector exceeding the soft limit is a signal that SRP is being violated.
+
+**Rationale:** Enforces SRP at the file level. Large files are a leading indicator of mixed responsibilities.
+
+---
+
+#### ADR-057: Detector Dependency Direction Enforcement
+
+**Status: Accepted — M2-7E**
+
+**Context:** The detector layer model (§19.1) defines four layers. Without explicit rules, future detectors could introduce upward dependencies (e.g., a Foundation detector depending on an Analytical one), breaking the layering contract.
+
+**Decision:** Dependency direction must be downward only (higher priority → lower priority allowed as dependency, but only within documented allowed patterns). The `PatternDetectorRegistry` validates existence and cycle-freedom at registration time. Layer direction is validated by the DDS checklist at code review time (not yet automated).
+
+**V1.2 enforcement:** A `LayerValidator` utility will be introduced to automate the direction check at registration time.
+
+**Rationale:** Prevents architectural debt. Ensures the detector pipeline remains a DAG, not a mesh.
+
+---
+
+#### ADR-058: Detector Versioning and Compatibility
+
+**Status: Accepted — M2-7E**
+
+**Context:** Detectors produce `EvidenceSignal` records that flow into `EvidenceStore`, `CandidateProfile`, and eventually `ReasonerDecision`. A behavioral change in a detector without a version bump is silent and hard to debug.
+
+**Decision:**
+
+| Change type | Version action | ADR required? |
+|---|---|---|
+| Bug fix (same signals) | `PATCH` bump | No |
+| New signal types added | `MINOR` bump | No |
+| Signal types removed/renamed | `MAJOR` bump | Yes |
+| Priority change | `MINOR` bump | Yes |
+| Dependency change | `MINOR` bump | Yes |
+| Enabled→Disabled | `MINOR` bump | No |
+
+The `DetectorMetadata.version` field is the single source of truth for detector version.
+
+**Monitoring hook:** `ReasonerService` logs `detector_name + version` per cycle in `ReasoningTraceStep.summary`. Future `DetectorDiagnostics` will use this for version-drift detection.
+
+---
+
+#### ADR-059: Detector Deprecation Policy
+
+**Status: Accepted — M2-7E**
+
+**Context:** As the detector catalog matures, some detectors will be superseded (e.g., `EvaluationBridgeDetector` was superseded by `EvaluationSignalDetector` in M2-7B). Without a formal policy, deprecated detectors accumulate.
+
+**Decision:**
+
+1. **Deprecation notice**: Set `enabled=False` in `DetectorMetadata`. Add `# DEPRECATED: <reason>` to the class docstring. Bump `MINOR` version.
+2. **Deprecation period**: Minimum one milestone (≈ 1–2 weeks).
+3. **Removal**: Remove from `build_default_registry()`. Keep file for one additional milestone. Then delete.
+4. **Signal type retirement**: Signal types produced exclusively by a removed detector must be added to a `DEPRECATED_EVIDENCE_TYPES` frozenset in `evidence_type.py` for one milestone before removal from the enum.
+
+**Existing deprecated detector:** `EvaluationBridgeDetector` — deprecated M2-7B, removed from registry. May be deleted from codebase in M2-8.
+
+---
+
+#### ADR-060: Detector Test Coverage Standard
+
+**Status: Accepted — M2-7E**
+
+**Context:** Detector tests in M2-7B through M2-7D were written ad-hoc. The test counts (40–50 per detector) and coverage patterns were consistent but undocumented. Formalising the standard ensures consistency for future detectors.
+
+**Decision:** The minimum test requirement per detector is:
+
+| Test file | Minimum cases | Coverage focus |
+|---|---|---|
+| `test_analyzer.py` | 8 | Empty, signal classification, polarity rules, multi-dim |
+| `test_scorer.py` | 8 | Guard conditions, each verdict, boundaries, precedence |
+| `test_signal_factory.py` | 8 | Each verdict → correct signal, NEUTRAL→None, contract fields |
+| `test_<name>_detector.py` | 15 | Metadata, scenarios, guards, idempotency, false positives |
+
+**Total minimum:** 39 tests per detector. Target: 40–50.
+
+Any pull request introducing a new detector with fewer than 39 tests must be rejected.
+
+---
+
+#### ADR-061: Detector Framework Stability Guarantee
+
+**Status: Accepted — M2-7E**
+
+**Context:** The DDS (§19) defines the architecture for all V1.1 detectors. V1.2 will introduce `Observation`, `ProfileFeature`, and potentially `AbstractAnalyticalDetector`. It is critical that the V1.2 evolution does not require rewriting V1.1 detectors.
+
+**Decision:** The following are **frozen and backward-compatible guarantees** for V1.2:
+
+1. `PatternDetector` ABC signature (`metadata` + `detect(ReasonerInput) → DetectorResult`) does not change.
+2. `DetectorMetadata` fields do not change (new fields are additive and optional).
+3. `DetectorResult` contract does not change.
+4. `EvidenceSignal` contract does not change.
+5. `filter_new_signals()` identity key does not change.
+6. `PatternDetectorRegistry` interface does not change.
+7. All V1.1 `EvidenceType` values are preserved (no renames, no removals in V1.2).
+8. All V1.1 detectors remain registered and enabled unless explicitly deprecated.
+
+**V1.2 additions are purely additive:** new dataclasses, new fields, new classes. No breaking changes to V1.1 interfaces.
+
+---
+
+### §19.11 — Detector Implementation Checklist
+
+The following checklist is mandatory for every new detector before merging:
+
+**Design**
+- [ ] DET-XX entry created in TDS §18.2 with input/output/acceptance criteria
+- [ ] Layer assignment documented (Foundation / Analytical / Behavioral / Calibration)
+- [ ] Priority slot unique and within layer range
+- [ ] Dependencies declared and within allowed direction rules
+- [ ] New `EvidenceType` values added with milestone comment
+- [ ] V1.2 Observation mapping documented in module docstring
+
+**Implementation**
+- [ ] Collaborators created in `detectors/<feature>/` subfolder
+- [ ] Analyzer: O(n) pass, frozen dataclass output, no business logic
+- [ ] Scorer: pure function, thresholds as module constants, guard conditions first
+- [ ] SignalFactory: NEUTRAL → None, `source=PATTERN_DETECTOR`, strength clamped [0,1]
+- [ ] Main Detector: < 150 LOC, orchestration only, calls `filter_new_signals()`
+- [ ] No detector-specific code added to `ReasonerService`
+- [ ] No LLM calls anywhere in the detector
+
+**Testing**
+- [ ] `test_analyzer.py` ≥ 8 cases
+- [ ] `test_scorer.py` ≥ 8 cases
+- [ ] `test_signal_factory.py` ≥ 8 cases
+- [ ] `test_<name>_detector.py` ≥ 15 cases (total ≥ 39)
+- [ ] Idempotency test present
+- [ ] False positive test present
+- [ ] Guard condition test present
+
+**Registry**
+- [ ] Registered in `build_default_registry()`
+- [ ] Dependency declared in `_METADATA.dependencies`
+- [ ] All dependencies already in registry before this detector
+- [ ] `build_default_registry()` cycle-check passes
+
+**Documentation**
+- [ ] Roadmap table §18.7 updated
+- [ ] Module docstring complete (purpose, priority, deps, signals, V1.2 notes)
+- [ ] Regression suite green
+
+---
 
