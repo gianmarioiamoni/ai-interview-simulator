@@ -231,8 +231,11 @@ class TestNoNodeReadsNewFields:
         return offenders
 
     def test_no_node_reads_observation_store(self) -> None:
-        assert self._nodes_referencing("observation_store") == [], (
-            "A graph node references observation_store before MIG-02"
+        # MIG-02A activated: reasoner_node is now the sole permitted writer.
+        permitted = {"reasoner_node.py"}
+        offenders = set(self._nodes_referencing("observation_store")) - permitted
+        assert offenders == set(), (
+            f"Unexpected graph node(s) reference observation_store: {offenders}"
         )
 
     def test_no_node_reads_candidate_profile_v2(self) -> None:

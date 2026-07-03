@@ -35,11 +35,22 @@ from services.interview_reasoner.evaluation_signal_writer import write_evaluatio
 from services.interview_reasoner.reasoning_context_builder import ReasoningContextBuilder
 from services.interview_reasoner.reasoner_service import ReasonerService
 
+# MIG-02: Phase C imports — ObservationExtractor pipeline
+from domain.contracts.observation.extraction.observation_extractor import ObservationExtractor
+from domain.contracts.observation.extraction.observation_extraction_context import (
+    ObservationExtractionContext,
+)
+from domain.observation.runtime.in_memory_observation_store import InMemoryObservationStore
+from domain.observation.runtime.default_observation_registry import build_default_observation_registry
+
 logger = get_logger(__name__)
 
 _registry = build_default_registry()
 _service = ReasonerService(_registry)
 _builder = ReasoningContextBuilder()
+
+# MIG-02: shared frozen rule registry for ObservationExtractor (one per process).
+_observation_rule_registry = build_default_observation_registry()
 
 
 def reasoner_node(state: InterviewState) -> InterviewState:
@@ -67,10 +78,22 @@ def reasoner_node(state: InterviewState) -> InterviewState:
 
         updated_memory = _append_reasoning_entry(state, decision)
 
+        # ------------------------------------------------------------------
+        # Phase C — MIG-02: ObservationExtractor pipeline
+        # Reads all EvidenceSignals for the current question from the updated
+        # EvidenceStore and appends typed Observations to the session-scoped
+        # ObservationStore.  Failures are non-fatal (interview continues).
+        # ------------------------------------------------------------------
+        updated_observation_store = _run_observation_extraction(
+            state=state,
+            updated_memory=updated_memory,
+        )
+
         return state.model_copy(
             update={
                 "interview_memory": updated_memory,
                 "current_reasoning_decision": decision,
+                "observation_store": updated_observation_store,
             }
         )
 
@@ -124,6 +147,80 @@ def _inject_evaluation_signals(state: InterviewState) -> InterviewState:
 
     updated_memory = memory.model_copy(update={"evidence_store": updated_store})
     return state.model_copy(update={"interview_memory": updated_memory})
+
+
+# ---------------------------------------------------------------------------
+# Phase C — MIG-02: ObservationExtractor helper
+# ---------------------------------------------------------------------------
+
+def _run_observation_extraction(
+    state: InterviewState,
+    updated_memory: InterviewMemory,
+) -> "InMemoryObservationStore | None":
+    """Extract Observations from the current cycle's EvidenceSignals.
+
+    Retrieves or creates the session-scoped ObservationStore, builds an
+    ObservationExtractor, and runs one extraction cycle for the signals
+    belonging to the current question index.
+
+    Returns the updated ObservationStore, or the prior store (unchanged) if no
+    signals are available for the current question.  Never raises.
+    """
+    try:
+        q_idx = state.current_question_index
+        store = state.observation_store
+
+        # Initialise store on first cycle (session start).
+        if store is None:
+            store = InMemoryObservationStore(session_id=state.interview_id)
+
+        # Collect signals for the current question index only.
+        # ObservationExtractionContext requires all signals to share the same
+        # question_index (ADR-016 §3 context validator).
+        current_signals = tuple(
+            sig
+            for sig in updated_memory.evidence_store.signals
+            if sig.question_index == q_idx
+        )
+
+        if not current_signals:
+            logger.debug(
+                "observation_extraction skipped — no signals for q_idx=%d", q_idx
+            )
+            return store
+
+        extractor = ObservationExtractor(
+            registry=_observation_rule_registry,
+            store=store,
+        )
+
+        context = ObservationExtractionContext(
+            signals=current_signals,
+            question_index=q_idx,
+            session_id=state.interview_id,
+        )
+
+        result = extractor.extract(context)
+
+        logger.debug(
+            "observation_extraction completed | "
+            "q_idx=%d signals=%d observations=%d store_count=%d",
+            q_idx,
+            len(current_signals),
+            len(result.observations) if result is not None else 0,
+            store.count(),
+        )
+
+        return store
+
+    except Exception as exc:
+        logger.warning(
+            "observation_extraction failed — store unchanged | "
+            "q_idx=%d error=%s",
+            state.current_question_index,
+            type(exc).__name__,
+        )
+        return state.observation_store
 
 
 def _append_reasoning_entry(
