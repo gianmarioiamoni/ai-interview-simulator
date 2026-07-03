@@ -29,6 +29,14 @@ from domain.events.interview_event import InterviewEvent
 from domain.contracts.reasoning.interview_memory import InterviewMemory
 from domain.contracts.reasoning.reasoner_decision import ReasonerDecision
 
+# V1.2 TCP imports (PAT-04 — Temporary Construction Placeholders)
+# These types are imported lazily at class level; they do not introduce
+# circular dependencies (verified: all three modules have no path back to
+# interview_state).
+from domain.contracts.observation.observation_store import ObservationStore
+from domain.contracts.reasoning.candidate_profile import CandidateProfile as _CandidateProfileV12
+from domain.contracts.session_history.session_history import SessionHistory
+
 
 class InterviewStateBase(BaseModel):
 
@@ -102,6 +110,54 @@ class InterviewStateBase(BaseModel):
     # Reset to None at the start of each new question cycle.
     current_reasoning_decision: ReasonerDecision | None = None
 
+    # ----------------------------------------------------------------
+    # V1.2 TCP fields (PAT-04 — Temporary Construction Placeholders)
+    # RIB-01 MIG-01: additive, nullable, no-op until activated by MIG-02/03/04.
+    # No V1.1 node reads or writes these fields.
+    # ----------------------------------------------------------------
+
+    # Populated by reasoner_node Phase C (MIG-02).
+    # Sole writer: ObservationExtractor (via KnowledgePipeline).
+    # Sole reader: KnowledgePipeline, session_close_node.
+    # Lifetime: session-scoped; None until first ObservationExtractor cycle.
+    observation_store: ObservationStore | None = Field(
+        default=None,
+        description=(
+            "[V1.2 TCP] Session-scoped ObservationStore. "
+            "Populated by reasoner_node Phase C (MIG-02). "
+            "None until activated. No V1.1 node reads this field."
+        ),
+    )
+
+    # Populated by reasoner_node Phase D (MIG-03) via KnowledgePipeline.
+    # Sole writer: CandidateProfileBuilder (via FeatureEngine / KnowledgePipeline).
+    # Sole reader: NarrativeGenerator, CoachingEngine, SessionClosePipeline.
+    # Lifetime: session-scoped; updated each reasoning cycle (MIG-03+).
+    # Type: same CandidateProfile contract as V1.1; populated via ProfileFeature[]
+    #       path (FeatureEngine → CandidateProfileBuilder) rather than
+    #       CandidateProfileEngine (dimension_scores) path.
+    candidate_profile_v2: _CandidateProfileV12 | None = Field(
+        default=None,
+        description=(
+            "[V1.2 TCP] CandidateProfile produced by FeatureEngine path. "
+            "Populated by KnowledgePipeline in reasoner_node Phase D (MIG-03). "
+            "None until activated. No V1.1 node reads this field."
+        ),
+    )
+
+    # Populated by session_close_node (MIG-04) via SessionClosePipeline.
+    # Sole writer: SessionHistoryBuilder (via SessionClosePipeline).
+    # Sole reader: report_node (MIG-05).
+    # Lifetime: written once at session completion; never mutated.
+    session_history: SessionHistory | None = Field(
+        default=None,
+        description=(
+            "[V1.2 TCP] Write-once SessionHistory. "
+            "Populated by session_close_node (MIG-04). "
+            "None until session completion. No V1.1 node reads this field."
+        ),
+    )
+
     # DEPRECATED (V1.1 M2) — use interview_memory instead.
     # Still populated by AdaptiveInterviewMemoryBridge for backward compat.
     # Will be removed in M3 (ADR-032).
@@ -127,4 +183,7 @@ class InterviewStateBase(BaseModel):
 
     model_config = {
         "extra": "forbid",
+        # Required for ObservationStore (ABC) and SessionHistory TCP fields.
+        # Does not loosen any other validation constraint.
+        "arbitrary_types_allowed": True,
     }
