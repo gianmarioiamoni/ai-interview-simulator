@@ -231,22 +231,25 @@ class TestNoNodeReadsNewFields:
         return offenders
 
     def test_no_node_reads_observation_store(self) -> None:
-        # MIG-02A activated: reasoner_node is now the sole permitted writer.
-        permitted = {"reasoner_node.py"}
+        # MIG-02: reasoner_node (writer); MIG-04: session_close_node (reader).
+        permitted = {"reasoner_node.py", "session_close_node.py"}
         offenders = set(self._nodes_referencing("observation_store")) - permitted
         assert offenders == set(), (
             f"Unexpected graph node(s) reference observation_store: {offenders}"
         )
 
     def test_no_node_reads_candidate_profile_v2(self) -> None:
-        # MIG-03A activated: reasoner_node is now the sole permitted writer.
-        permitted = {"reasoner_node.py"}
+        # MIG-03: reasoner_node (writer); MIG-04: session_close_node (reader).
+        permitted = {"reasoner_node.py", "session_close_node.py"}
         offenders = set(self._nodes_referencing("candidate_profile_v2")) - permitted
         assert offenders == set(), (
             f"Unexpected graph node(s) reference candidate_profile_v2: {offenders}"
         )
 
     def test_no_node_reads_session_history(self) -> None:
-        assert self._nodes_referencing("session_history") == [], (
-            "A graph node references session_history before MIG-04"
+        # MIG-04: session_close_node is the sole writer of session_history.
+        permitted = {"session_close_node.py"}
+        offenders = set(self._nodes_referencing("session_history")) - permitted
+        assert offenders == set(), (
+            f"Unexpected graph node(s) reference session_history: {offenders}"
         )

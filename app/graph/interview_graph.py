@@ -22,6 +22,7 @@ from app.graph.nodes.evaluation_aggregate_node import EvaluationAggregateNode
 from app.graph.nodes.start_processing_node import start_processing_node
 from app.graph.nodes.question_node import build_question_node
 from app.graph.nodes.reasoner_node import reasoner_node
+from app.graph.nodes.session_close_node import session_close_node
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
@@ -111,6 +112,7 @@ def build_interview_graph(
     graph.add_node("decision", DecisionNode())
     graph.add_node("written", WrittenEvaluationNode(llm))
     graph.add_node("completion", completion_node)
+    graph.add_node("session_close", session_close_node)
     graph.add_node("report", report_node)
     graph.add_node("start_processing", start_processing_node)
 
@@ -195,7 +197,7 @@ def build_interview_graph(
         logger.debug("route_after_completion: is_completed=%s", state.is_completed)
 
         if state.is_completed:
-            return "report"
+            return "session_close"
 
         return END
 
@@ -203,11 +205,12 @@ def build_interview_graph(
         "evaluation_aggregate",
         route_after_completion,
         {
-            "report": "report",
+            "session_close": "session_close",
             END: END,
         },
     )
 
+    graph.add_edge("session_close", "report")
     graph.add_edge("report", END)
 
     return graph.compile()

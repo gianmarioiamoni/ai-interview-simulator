@@ -191,10 +191,11 @@ class TestArchitecturalGuard:
         nodes_dir = Path(__file__).parents[4] / "app" / "graph" / "nodes"
         return list(nodes_dir.glob("*.py"))
 
-    def test_no_node_references_candidate_identity_id_except_reasoner(self):
-        """Only reasoner_node may reference candidate_identity_id (via helper)."""
+    def test_no_node_references_candidate_identity_id_except_permitted(self):
+        """Only reasoner_node and session_close_node may reference candidate_identity_id."""
+        permitted = {"reasoner_node.py", "session_close_node.py"}
         for path in self._node_sources():
-            if path.name == "reasoner_node.py":
+            if path.name in permitted:
                 continue
             source = path.read_text(encoding="utf-8")
             assert "candidate_identity_id" not in source, (
