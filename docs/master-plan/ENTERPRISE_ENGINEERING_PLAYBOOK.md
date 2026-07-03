@@ -1,8 +1,8 @@
 # Enterprise Engineering Playbook
 ## AI Interview Simulator — and All Future Enterprise Projects
 
-**Version:** 1.0  
-**Date:** 2026-07-01  
+**Version:** 1.1  
+**Date:** 2026-07-02  
 **Status:** FOUNDATIONAL — Authoritative for all versions ≥ V1.1  
 **Classification:** FOUNDATIONAL DOCUMENT  
 **Supplements:** Platform Engineering Manifest
@@ -749,8 +749,53 @@ For AI platforms (RAG systems, coding agents, decision support systems):
 
 ---
 
+## Section N — Engineering Pattern Registry
+
+Engineering patterns are named, reusable practices that emerge from construction and are formally recorded after acceptance. They are not new architecture — they are implementations of existing Manifest principles, named for reuse and discoverability.
+
+### Pattern Catalogue (V1.2)
+
+Full documentation for all patterns lives in `V1.2-PATTERN-FREEZE.md`.
+
+| ID | Name | When to Apply | Manifest Principle |
+|---|---|---|---|
+| **PAT-01** | Engine Five-Artifact Pattern | Any domain engine with composable transformations and a persistent output aggregate | Small components; Composition over inheritance; Single Writer |
+| **PAT-02** | Runtime First, Orchestration Second | Any milestone sequence where an engine has both a runtime contract and a wiring/orchestration contract | Contracts before Code |
+| **PAT-03** | Construction Parallelism Review (CPR) | Before any construction phase with ≥ 3 Epics or cross-Epic dependencies | Architecture before Implementation; Progressive Evolution |
+| **PAT-04** | Temporary Construction Placeholder (TCP) | When a future-milestone capability requires a schema field that has no V1.x behaviour | Progressive Evolution; Backward Compatibility; Immutability |
+
+### Pattern Lifecycle
+
+| Stage | Definition |
+|---|---|
+| **Observed** | Pattern is applied in construction but not yet named or documented |
+| **Proposed** | Pattern is named and a documentation draft is circulated |
+| **Accepted** | Pattern is reviewed, formally documented, and registered in this section |
+| **Deprecated** | Pattern has been superseded by a newer pattern or a Manifest principle update |
+
+Patterns are accepted by the human architect. AI tooling may propose patterns; it does not accept them.
+
+### Adding a New Pattern
+
+1. Observe the pattern recurring in ≥ 2 independent construction contexts.
+2. Name it. A pattern without a name cannot be referenced or enforced.
+3. Draft the documentation: Purpose, Motivation, Responsibilities, Benefits, When to use, When NOT to use, ADR relationships, Examples.
+4. Review against existing Manifest principles — ensure the pattern implements, not contradicts, them.
+5. Register in `V1.2-PATTERN-FREEZE.md` (or the relevant version's pattern freeze document).
+6. Add to the catalogue table in this Section N.
+7. Update the Pattern Registry in the Manifest.
+
+### What Patterns Are NOT
+
+- Patterns are not ADRs. ADRs record architectural decisions. Patterns record reusable construction practices.
+- Patterns are not new architecture. If a pattern introduces new components or contract boundaries, it requires an ADR.
+- Patterns are not optional guidelines. An accepted pattern is the default practice. Deviating from an accepted pattern requires explicit justification documented in the relevant milestone ADR or audit report.
+
+---
+
 ## Document History
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-07-01 | Initial Playbook — V1.1 RC foundation |
+| 1.1 | 2026-07-02 | DOC-M1 Pattern Freeze: Section N (Engineering Pattern Registry) added; PAT-01 to PAT-04 registered |

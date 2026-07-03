@@ -50,7 +50,8 @@ docs/
 ├── master-plan/
 │   ├── INDEX.md                          ← master plan index [Required]
 │   ├── PRD-V1.1-V1.2.md                 ← Product Requirements Document V1.1/V1.2 [Required]
-│   └── TDS-V1.1-V1.2.md                 ← Technical Design Specification V1.1/V1.2 [Required]
+│   ├── TDS-V1.1-V1.2.md                 ← Technical Design Specification V1.1/V1.2 [Required]
+│   └── V1.2-PATTERN-FREEZE.md           ← V1.2 Engineering Pattern Freeze DOC-M1 [Required]
 │
 └── roadmap/
     └── roadmap.md                        ← feature roadmap [Required]

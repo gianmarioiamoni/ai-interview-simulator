@@ -1,8 +1,8 @@
 # Platform Engineering Manifest
 ## AI Interview Simulator
 
-**Version:** 1.0  
-**Date:** 2026-07-01  
+**Version:** 1.1  
+**Date:** 2026-07-02  
 **Status:** FOUNDATIONAL — Authoritative for all versions ≥ V1.1  
 **Supersedes:** Nothing. Supplements all other documents.
 
@@ -438,8 +438,24 @@ The `CoachingEngine` (ADR-067) will consume `ProfileFeatures` derived from detec
 
 ---
 
+## Engineering Pattern Registry
+
+Named engineering patterns accepted and applied in V1.2 Construction. Full documentation: `V1.2-PATTERN-FREEZE.md`.
+
+| ID | Name | Manifest Principle | Epic(s) Applied |
+|---|---|---|---|
+| PAT-01 | Engine Five-Artifact Pattern | Small components; Composition over inheritance; Single Writer | EPIC-01, EPIC-02, EPIC-04 |
+| PAT-02 | Runtime First, Orchestration Second | Contracts before Code | EPIC-01, EPIC-02 |
+| PAT-03 | Construction Parallelism Review (CPR) | Architecture before Implementation; Progressive Evolution | All Epics (EPIC-00–07) |
+| PAT-04 | Temporary Construction Placeholder (TCP) | Progressive Evolution; Backward Compatibility; Immutability | EPIC-07 |
+
+These patterns do not supersede any principle in this Manifest. They are named implementations of existing principles.
+
+---
+
 ## Document History
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-07-01 | Initial Manifest — V1.1 RC foundation |
+| 1.1 | 2026-07-02 | DOC-M1 Pattern Freeze: Engineering Pattern Registry added (PAT-01 to PAT-04) |
