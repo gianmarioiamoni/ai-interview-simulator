@@ -1,27 +1,19 @@
 # app/graph/nodes/session_close_node.py
-"""SessionCloseNode — MIG-04 + RS-01 (PAT-06: LangGraph sole orchestrator).
+"""SessionCloseNode — MIG-04, RS-02B (PAT-06: LangGraph sole orchestrator).
 
 Responsibilities (orchestration only):
-1. Derive final ProfileFeature[] from ObservationStore (RS-01 F-03 remediation).
-2. Assemble KnowledgeSnapshot via KnowledgeSnapshotBuilder.
-3. Assemble SessionCloseContext from InterviewState fields.
-4. Run SessionClosePipeline.run(context) — sole invocation per session.
-5. Write state.session_history on success.
-6. Return state unchanged (with session_history populated or None on failure).
+1. Idempotency guard: return immediately if state.session_history is not None.
+2. Read ProfileFeature[] from state.candidate_profile_v2.features (RS-02A).
+3. Assemble KnowledgeSnapshot via KnowledgeSnapshotBuilder.
+4. Assemble SessionCloseContext from InterviewState fields.
+5. Run SessionClosePipeline.run(context) — sole invocation per session.
+6. Write state.session_history on success.
 
-RS-01 — Feature Propagation:
-ProfileFeature[] are re-derived at close time by running KnowledgePipeline
-with skip_extraction_if_store_populated=True (extraction already ran in Phase C).
-This is a read-only, deterministic re-derivation — not a second extraction.
-Features are never duplicated on state; they exist only within the close path.
+RS-02B: KnowledgePipeline is NOT executed here. Features come from
+state.candidate_profile_v2.features, populated by FeatureEngine in Phase D
+of the reasoner cycle (ADS-01 Strategy A, ADR-018, ADR-020).
 
 Sole writer: this node only. SessionClosePipeline never writes state.
-Sole execution: guarded by state.is_completed; graph routing prevents re-entry.
-
-Out of scope (PAT-06 / ADR-022):
-- No LLM calls.
-- No persistence.
-- No CandidateProfile mutation on state.
 """
 
 from __future__ import annotations
@@ -47,10 +39,6 @@ from domain.contracts.session_history.session_history import (
     QuestionTimelineEntry,
     TranscriptEntry,
 )
-from services.knowledge_pipeline.default_knowledge_pipeline_factory import (
-    build_default_knowledge_pipeline,
-)
-from services.knowledge_pipeline.knowledge_pipeline_context import KnowledgePipelineContext
 from services.session_close.session_close_context import SessionCloseContext
 from services.session_close.session_close_pipeline import SessionClosePipeline
 from app.core.logger import get_logger
@@ -90,8 +78,13 @@ _DEFAULT_LANG = ProgrammingLanguage(
 def session_close_node(state: InterviewState) -> InterviewState:
     """Execute session close pipeline. Sole writer of state.session_history.
 
+    Idempotency: returns state unchanged if session_history is already set.
     Non-fatal: any failure logs a warning and returns state with session_history=None.
     """
+    if state.session_history is not None:
+        logger.debug("session_close_node: session_history already set — skipping (idempotency)")
+        return state
+
     try:
         candidate_identity_id = state.candidate_identity_id or state.interview_id
         session_id = state.interview_id
@@ -137,8 +130,16 @@ def _build_knowledge_snapshot(
     session_id: str,
     candidate_identity_id: str,
 ):
-    """Assemble KnowledgeSnapshot from state artifacts (KnowledgeSnapshotBuilder sole path)."""
-    features = _derive_features_at_close(state, candidate_identity_id)
+    """Assemble KnowledgeSnapshot from state artifacts (KnowledgeSnapshotBuilder sole path).
+
+    RS-02B: features come from state.candidate_profile_v2.features (ADS-01 Strategy A).
+    No KnowledgePipeline execution at close time.
+    """
+    features: tuple[ProfileFeature, ...] = (
+        state.candidate_profile_v2.features
+        if state.candidate_profile_v2 is not None
+        else ()
+    )
     profile_snapshot = CandidateProfileSnapshot(
         candidate_identity_id=candidate_identity_id,
         features=features,
@@ -204,55 +205,6 @@ def _build_context(
 # ------------------------------------------------------------------
 # Domain helpers (pure functions, no side effects)
 # ------------------------------------------------------------------
-
-
-def _derive_features_at_close(
-    state: InterviewState,
-    candidate_identity_id: str,
-) -> tuple[ProfileFeature, ...]:
-    """Re-derive ProfileFeature[] from ObservationStore at session close (RS-01).
-
-    Runs KnowledgePipeline with skip_extraction_if_store_populated=True so
-    ObservationExtractor is skipped (it ran in Phase C).  Only FeatureEngine +
-    CandidateProfileBuilder execute — deterministic, no side effects, no state mutation.
-
-    Returns empty tuple when:
-    - observation_store is None or empty (no observations collected)
-    - pipeline fails (non-fatal; closure proceeds with empty features)
-    """
-    store = state.observation_store
-    if store is None or store.count() == 0:
-        logger.debug("_derive_features_at_close: no observations — features=()")
-        return ()
-
-    try:
-        pipeline = build_default_knowledge_pipeline(store=store)
-        ctx = KnowledgePipelineContext(
-            session_id=state.interview_id,
-            candidate_identity_id=candidate_identity_id,
-            question_index=state.current_question_index,
-            signals=(),
-            prior_profile=state.candidate_profile_v2,
-        )
-        result = pipeline.run(ctx)
-
-        if result.is_successful:
-            logger.debug(
-                "_derive_features_at_close: features=%d", result.feature_count
-            )
-            return result.features
-
-        logger.debug(
-            "_derive_features_at_close: pipeline unsuccessful reason=%s",
-            result.failure_reason,
-        )
-        return ()
-
-    except Exception as exc:
-        logger.warning(
-            "_derive_features_at_close failed | error=%s — features=()", type(exc).__name__
-        )
-        return ()
 
 
 def _collect_observation_ids(state: InterviewState) -> tuple[str, ...]:
