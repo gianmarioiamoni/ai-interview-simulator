@@ -87,12 +87,10 @@ class CandidateProfileBuilder:
     def with_profile_features(
         self, features: tuple[ProfileFeature, ...] | list[ProfileFeature]
     ) -> "CandidateProfileBuilder":
-        """Accept ProfileFeature[] from FeatureEngine (V1.2 path, MIG-02.5).
+        """Accept ProfileFeature[] from FeatureEngine (V1.2 path, RS-02A).
 
-        Features are carried internally and forwarded via the pipeline result.
-        They are NOT yet stored in CandidateProfile directly (pending MIG-03).
-        This method ensures CandidateProfileBuilder is the sole construction
-        path for V1.2 profiles (ADR-037).
+        Features are stored internally and emitted via build() into
+        CandidateProfile.features (ADR-018, ADR-020, ADR-037).
         """
         if isinstance(features, list):
             self._profile_features = tuple(features)
@@ -126,7 +124,7 @@ class CandidateProfileBuilder:
         builder._questions_answered = profile.questions_answered
         builder._areas_covered = list(profile.areas_covered)
         builder._last_updated_at_question_index = profile.last_updated_at_question_index
-        # profile_features are not persisted in CandidateProfile yet; start empty.
+        builder._profile_features = profile.features
         return builder
 
     # ------------------------------------------------------------------
@@ -141,4 +139,5 @@ class CandidateProfileBuilder:
             questions_answered=self._questions_answered,
             areas_covered=self._areas_covered,
             last_updated_at_question_index=self._last_updated_at_question_index,
+            features=self._profile_features,
         )
