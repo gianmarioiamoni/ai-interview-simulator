@@ -239,8 +239,11 @@ class TestNoNodeReadsNewFields:
         )
 
     def test_no_node_reads_candidate_profile_v2(self) -> None:
-        assert self._nodes_referencing("candidate_profile_v2") == [], (
-            "A graph node references candidate_profile_v2 before MIG-03"
+        # MIG-03A activated: reasoner_node is now the sole permitted writer.
+        permitted = {"reasoner_node.py"}
+        offenders = set(self._nodes_referencing("candidate_profile_v2")) - permitted
+        assert offenders == set(), (
+            f"Unexpected graph node(s) reference candidate_profile_v2: {offenders}"
         )
 
     def test_no_node_reads_session_history(self) -> None:

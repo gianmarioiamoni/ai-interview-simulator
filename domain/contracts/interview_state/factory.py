@@ -1,5 +1,5 @@
 from typing import Self
-from uuid import uuid4
+from uuid import uuid4, uuid5, NAMESPACE_URL
 
 from domain.contracts.user.role import Role, RoleType
 from domain.contracts.interview.interview_type import InterviewType
@@ -27,8 +27,11 @@ class InterviewStateFactoryMixin:
         enable_humanizer: bool = True,
     ) -> Self:
 
+        candidate_identity_id = str(uuid5(NAMESPACE_URL, f"candidate:{interview_id}"))
+
         return cls(
             interview_id=interview_id,
+            candidate_identity_id=candidate_identity_id,
             role=Role(type=role_type, custom_name=role_custom_name),
             interview_type=interview_type,
             company=company.strip(),
@@ -48,8 +51,10 @@ class InterviewStateFactoryMixin:
     @classmethod
     def create_empty(cls) -> Self:
 
+        _interview_id = f"session-{uuid4().hex[:8]}"
         return cls(
-            interview_id=f"session-{uuid4().hex[:8]}",
+            interview_id=_interview_id,
+            candidate_identity_id=str(uuid5(NAMESPACE_URL, f"candidate:{_interview_id}")),
             # -------------------------------------------------
             # CORE DOMAIN (NO None → stato sempre valido)
             # -------------------------------------------------
@@ -59,6 +64,7 @@ class InterviewStateFactoryMixin:
             # -------------------------------------------------
             # BASIC INFO
             # -------------------------------------------------
+            # BASIC INFO
             company="",
             language="en",
             # -------------------------------------------------

@@ -1,6 +1,6 @@
 # domain/contracts/interview_state/base.py
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from typing import Optional, Dict, List, FrozenSet
 
 from domain.contracts.shared.performance_dimension_type import PerformanceDimensionType
@@ -115,6 +115,20 @@ class InterviewStateBase(BaseModel):
     # RIB-01 MIG-01: additive, nullable, no-op until activated by MIG-02/03/04.
     # No V1.1 node reads or writes these fields.
     # ----------------------------------------------------------------
+
+    # Set once at session creation (MIG-03B). Immutable for session lifetime.
+    # Sole writer: InterviewStateFactoryMixin.create_initial / create_empty.
+    # Consumed by: KnowledgePipelineContext (MIG-03), SessionHistory (MIG-04).
+    # Surrogate fallback: interview_id (used by MIG-02 hook until this field existed).
+    candidate_identity_id: str | None = Field(
+        default=None,
+        description=(
+            "[V1.2 TCP] Stable candidate identity for pipeline context. "
+            "Set once at session start; immutable for session lifetime. "
+            "Consumed by KnowledgePipelineContext (MIG-03). "
+            "None only in legacy states predating MIG-03B."
+        ),
+    )
 
     # Populated by reasoner_node Phase C (MIG-02).
     # Sole writer: ObservationExtractor (via KnowledgePipeline).

@@ -243,13 +243,24 @@ class TestProfileFeatureWiring:
 # ---------------------------------------------------------------------------
 
 class TestCandidateIdentityIdHook:
-    def test_resolve_returns_interview_id(self) -> None:
+    def test_resolve_returns_candidate_identity_id_when_set(self) -> None:
+        # MIG-03B: resolver prefers state.candidate_identity_id over interview_id.
         state = MagicMock()
+        state.candidate_identity_id = "cand-uuid-abc"
+        state.interview_id = "session-xyz"
+        result = _resolve_candidate_identity_id(state)
+        assert result == "cand-uuid-abc"
+
+    def test_resolve_falls_back_to_interview_id_when_none(self) -> None:
+        # Legacy states (predating MIG-03B) have candidate_identity_id=None.
+        state = MagicMock()
+        state.candidate_identity_id = None
         state.interview_id = "session-xyz"
         result = _resolve_candidate_identity_id(state)
         assert result == "session-xyz"
 
     def test_resolve_is_deterministic(self) -> None:
         state = MagicMock()
+        state.candidate_identity_id = "cand-det-001"
         state.interview_id = "s-abc"
         assert _resolve_candidate_identity_id(state) == _resolve_candidate_identity_id(state)

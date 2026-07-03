@@ -43,6 +43,12 @@ from domain.contracts.observation.extraction.observation_extraction_context impo
 from domain.observation.runtime.in_memory_observation_store import InMemoryObservationStore
 from domain.observation.runtime.default_observation_registry import build_default_observation_registry
 
+# MIG-03A: Phase D imports — KnowledgePipeline activation
+from services.knowledge_pipeline.default_knowledge_pipeline_factory import (
+    build_default_knowledge_pipeline,
+)
+from services.knowledge_pipeline.knowledge_pipeline_context import KnowledgePipelineContext
+
 logger = get_logger(__name__)
 
 _registry = build_default_registry()
@@ -89,11 +95,23 @@ def reasoner_node(state: InterviewState) -> InterviewState:
             updated_memory=updated_memory,
         )
 
+        # ------------------------------------------------------------------
+        # Phase D — MIG-03A: KnowledgePipeline activation
+        # Runs FeatureEngine → CandidateProfileBuilder → CandidateProfile
+        # using the already-populated ObservationStore.  Extraction is skipped
+        # (skip_extraction_if_store_populated=True).  Failures are non-fatal.
+        # ------------------------------------------------------------------
+        updated_candidate_profile_v2 = _run_knowledge_pipeline(
+            state=state,
+            updated_observation_store=updated_observation_store,
+        )
+
         return state.model_copy(
             update={
                 "interview_memory": updated_memory,
                 "current_reasoning_decision": decision,
                 "observation_store": updated_observation_store,
+                "candidate_profile_v2": updated_candidate_profile_v2,
             }
         )
 
@@ -153,19 +171,77 @@ def _inject_evaluation_signals(state: InterviewState) -> InterviewState:
 # Phase C — MIG-02: ObservationExtractor helper
 # ---------------------------------------------------------------------------
 
-# MIG-02.5 hook: candidate_identity_id is required by KnowledgePipelineContext
-# (MIG-03).  InterviewState does not yet expose a candidate_identity_id field
-# (pending MIG-03 or a future InterviewState evolution).  Until that field is
-# available, the session interview_id is used as a stable surrogate.
-# When MIG-03 wires KnowledgePipeline, replace _resolve_candidate_identity_id()
-# with a direct read of state.candidate_identity_id (once added to InterviewState).
+# MIG-03B: candidate_identity_id is now a TCP field on InterviewState.
+# Fallback to interview_id for legacy states predating MIG-03B (backward compat).
 def _resolve_candidate_identity_id(state: InterviewState) -> str:
     """Return the candidate identity id for pipeline context construction.
 
-    Surrogate: uses interview_id until InterviewState exposes a dedicated field
-    (MIG-03 hook — do not remove until that migration is complete).
+    Reads state.candidate_identity_id (MIG-03B TCP field).
+    Falls back to interview_id for legacy states without the field.
     """
-    return state.interview_id
+    return state.candidate_identity_id or state.interview_id
+
+
+# ---------------------------------------------------------------------------
+# Phase D — MIG-03A: KnowledgePipeline helper
+# ---------------------------------------------------------------------------
+
+def _run_knowledge_pipeline(
+    state: InterviewState,
+    updated_observation_store,
+) -> object:
+    """Run KnowledgePipeline to produce CandidateProfile V2.
+
+    Uses the session-scoped ObservationStore (already populated by Phase C).
+    Extraction is skipped (skip_extraction_if_store_populated=True).
+    Returns the new CandidateProfile, or the prior candidate_profile_v2
+    (unchanged) if the pipeline fails.  Never raises.
+    """
+    try:
+        if updated_observation_store is None or updated_observation_store.count() == 0:
+            logger.debug(
+                "knowledge_pipeline skipped — no observations in store | q_idx=%d",
+                state.current_question_index,
+            )
+            return state.candidate_profile_v2
+
+        pipeline = build_default_knowledge_pipeline(store=updated_observation_store)
+
+        ctx = KnowledgePipelineContext(
+            session_id=state.interview_id,
+            candidate_identity_id=_resolve_candidate_identity_id(state),
+            question_index=state.current_question_index,
+            signals=(),
+            prior_profile=state.candidate_profile_v2,
+        )
+
+        result = pipeline.run(ctx)
+
+        if result.is_successful and result.profile is not None:
+            logger.debug(
+                "knowledge_pipeline completed | "
+                "q_idx=%d features=%d profile_built=True",
+                state.current_question_index,
+                result.feature_count,
+            )
+            return result.profile
+
+        logger.debug(
+            "knowledge_pipeline produced no profile | "
+            "q_idx=%d reason=%s",
+            state.current_question_index,
+            result.failure_reason,
+        )
+        return state.candidate_profile_v2
+
+    except Exception as exc:
+        logger.warning(
+            "knowledge_pipeline failed — candidate_profile_v2 unchanged | "
+            "q_idx=%d error=%s",
+            state.current_question_index,
+            type(exc).__name__,
+        )
+        return state.candidate_profile_v2
 
 
 def _run_observation_extraction(
