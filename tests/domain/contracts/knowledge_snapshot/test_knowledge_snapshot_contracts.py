@@ -437,3 +437,121 @@ class TestKnowledgeSnapshotArchitecture:
     def test_summary_does_not_construct_snapshots(self):
         source = (SNAPSHOT_ROOT / "knowledge_snapshot_summary.py").read_text()
         assert "KnowledgeSnapshotBuilder" not in source
+
+
+# ===========================================================================
+# CANDIDATE PROFILE SNAPSHOT — Ownership & Single-Writer Invariants (ADR-032)
+# ===========================================================================
+
+class TestCandidateProfileSnapshotOwnership:
+    """Verify ADR-032 Single-Writer invariant for CandidateProfileSnapshot.
+
+    The sole producer is FeatureEngine at session close. These tests confirm:
+    - The contract itself is immutable and self-contained.
+    - No construction pathway exists outside FeatureEngine in production code.
+    - The snapshot does not reference live CandidateProfile.
+    - Read-only consumers (KnowledgeSnapshot, Report, Replay, LearningProgress)
+      only receive, never construct.
+    """
+
+    def test_candidate_profile_snapshot_is_frozen(
+        self, profile_snapshot: CandidateProfileSnapshot
+    ) -> None:
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            profile_snapshot.candidate_identity_id = "mutated"  # type: ignore[misc]
+
+    def test_snapshot_self_contained_no_live_profile_import(self) -> None:
+        source = (SNAPSHOT_ROOT / "candidate_profile_snapshot.py").read_text()
+        assert "from domain.contracts.reasoning" not in source, (
+            "CandidateProfileSnapshot must not import live CandidateProfile (ADR-032)"
+        )
+        assert "CandidateProfile" not in source or "CandidateProfileSnapshot" in source, (
+            "Only CandidateProfileSnapshot reference is permitted — no live CandidateProfile"
+        )
+
+    def test_snapshot_ownership_documentation_present(self) -> None:
+        source = (SNAPSHOT_ROOT / "candidate_profile_snapshot.py").read_text()
+        assert "OWNERSHIP" in source, (
+            "ADR-032 ownership documentation must be present in candidate_profile_snapshot.py"
+        )
+        assert "FeatureEngine" in source, (
+            "FeatureEngine must be named as sole producer in ownership documentation"
+        )
+        assert "Single-Writer" in source or "sole producer" in source.lower(), (
+            "Single-Writer invariant must be documented"
+        )
+
+    def test_snapshot_total_feature_count_invariant(
+        self, profile_snapshot: CandidateProfileSnapshot
+    ) -> None:
+        assert profile_snapshot.total_feature_count == len(profile_snapshot.features)
+
+    def test_snapshot_all_features_belong_to_same_candidate(
+        self, profile_snapshot: CandidateProfileSnapshot
+    ) -> None:
+        for feature in profile_snapshot.features:
+            assert feature.candidate_identity_id == profile_snapshot.candidate_identity_id
+
+    def test_snapshot_rejects_total_feature_count_mismatch(
+        self, profile_snapshot: CandidateProfileSnapshot
+    ) -> None:
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError, match="total_feature_count"):
+            CandidateProfileSnapshot(
+                candidate_identity_id=profile_snapshot.candidate_identity_id,
+                features=profile_snapshot.features,
+                closed_at_question_index=profile_snapshot.closed_at_question_index,
+                total_feature_count=999,
+            )
+
+    def test_snapshot_rejects_cross_candidate_features(self) -> None:
+        from pydantic import ValidationError
+        from tests.domain.contracts.knowledge_snapshot.conftest import (
+            make_profile_feature,
+            CANDIDATE_ID,
+        )
+        wrong_feature = make_profile_feature(candidate_id="other-candidate")
+        with pytest.raises(ValidationError):
+            CandidateProfileSnapshot(
+                candidate_identity_id=CANDIDATE_ID,
+                features=(wrong_feature,),
+                closed_at_question_index=1,
+                total_feature_count=1,
+            )
+
+    def test_no_candidate_profile_snapshot_builder_exists_in_production(self) -> None:
+        import pathlib
+        snapshot_root = pathlib.Path(
+            "domain/contracts/knowledge_snapshot"
+        )
+        builder_files = list(snapshot_root.glob("*snapshot_builder*"))
+        # Only knowledge_snapshot_builder.py should exist — no profile snapshot builder
+        builder_names = [f.name for f in builder_files]
+        assert "candidate_profile_snapshot_builder.py" not in builder_names, (
+            "CandidateProfileSnapshotBuilder does not exist yet (TCP — session-close sprint). "
+            "If this test fails it means a builder was added without updating this test."
+        )
+
+    def test_services_do_not_construct_candidate_profile_snapshot(self) -> None:
+        import pathlib
+        services_root = pathlib.Path("services")
+        violations: list[str] = []
+        for py_file in services_root.rglob("*.py"):
+            source = py_file.read_text()
+            if "CandidateProfileSnapshot(" in source:
+                violations.append(str(py_file))
+        assert not violations, (
+            f"Services must not construct CandidateProfileSnapshot directly (ADR-032). "
+            f"Violations: {violations}"
+        )
+
+    def test_knowledge_snapshot_builder_accepts_not_constructs_profile_snapshot(
+        self,
+    ) -> None:
+        source = (SNAPSHOT_ROOT / "knowledge_snapshot_builder.py").read_text()
+        assert "CandidateProfileSnapshot(" not in source, (
+            "KnowledgeSnapshotBuilder must receive CandidateProfileSnapshot "
+            "as input — it must not construct one itself (ADR-032)"
+        )
+

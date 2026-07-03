@@ -19,6 +19,17 @@ class CandidateProfileSnapshot(BaseModel):
     - Versioned — profile_schema_version always present
     - Auditable — candidate_identity_id, closed_at_question_index present
     - Self-contained — no references back to live CandidateProfile
+
+    OWNERSHIP (ADR-032 §D — Single-Writer Invariant):
+    - Sole producer: FeatureEngine, during the final feature computation cycle
+      at session close. No other component may construct a CandidateProfileSnapshot
+      that enters a KnowledgeSnapshot.
+    - Construction for tests uses direct Pydantic instantiation; this is
+      permitted only in the test layer and must never be replicated in services.
+    - A dedicated CandidateProfileSnapshotBuilder will be introduced as part of
+      the session-close pipeline sprint (TCP — future roadmap, not Technical Debt).
+    - Read-only consumers: KnowledgeSnapshotBuilder, ReplaySession, ReportBuilder,
+      LearningProgressBuilder. None of these may modify the snapshot once created.
     """
 
     candidate_identity_id: str = Field(

@@ -1,11 +1,11 @@
 # services/coaching_engine/coaching_engine.py
-# CoachingEngine — orchestrates CoachingPlan generation from knowledge inputs (ADR-025, E04-M1)
+# CoachingEngine — orchestrates CoachingSnapshot generation from knowledge inputs (ADR-025, E04-M1)
 #
 # Orchestration stages:
 #   ProfileFeatures + KnowledgeGapIDs + CandidateProfile
 #   → GapAnalysis → ObjectiveDerivation → ActionDerivation
 #   → RecommendationDerivation → PlanAssembly (CoachingBuilder)
-#   → CoachingSnapshot (CoachingPlan)
+#   → CoachingSnapshot
 #
 # Invariants (ADR-025):
 # - Owns orchestration ONLY; no business logic implemented here.
@@ -77,7 +77,7 @@ _FEATURE_TYPE_TO_RESOURCE_TYPE: dict[FeatureType, ResourceType] = {
 
 
 class CoachingEngine:
-    """Orchestrates CoachingPlan generation from current knowledge inputs.
+    """Orchestrates CoachingSnapshot generation from current knowledge inputs.
 
     Accepts ProfileFeatures, KnowledgeGapIDs, CandidateProfile, and interview
     metadata. Produces a CoachingResult containing a CoachingSnapshot via

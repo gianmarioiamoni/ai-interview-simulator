@@ -12,7 +12,6 @@ from domain.contracts.coaching.coaching_builder import CoachingSnapshot
 from domain.contracts.knowledge_snapshot.candidate_profile_snapshot import (
     CandidateProfileSnapshot,
 )
-from domain.contracts.knowledge_snapshot.knowledge_snapshot import KnowledgeSnapshot
 from domain.contracts.narrative.narrative import Narrative
 from domain.contracts.session_history.session_history import SessionHistory
 
@@ -47,7 +46,7 @@ class Report(BaseModel):
         ..., description="Stored Narrative from KnowledgeSnapshot (ADR-023)"
     )
     coaching_snapshot: CoachingSnapshot = Field(
-        ..., description="Stored CoachingPlan from KnowledgeSnapshot (ADR-025)"
+        ..., description="Stored CoachingSnapshot from KnowledgeSnapshot (ADR-025)"
     )
 
     role: str = Field(..., min_length=1, description="Interview role from session metadata")
@@ -68,31 +67,17 @@ class Report(BaseModel):
 
     @classmethod
     def from_session_history(cls, report_id: str, history: SessionHistory) -> "Report":
-        """Assemble a Report directly from a closed SessionHistory.
+        """Assemble a Report from a closed SessionHistory via ReportBuilder.
 
-        This is the canonical factory for tests or direct construction.
-        For production use, prefer ReportBuilder.
+        Delegates to ReportBuilder (sole creation path — PAT-05).
         """
-        import uuid
-        from datetime import timezone
+        from domain.contracts.report.report_builder import ReportBuilder
 
-        snapshot: KnowledgeSnapshot = history.knowledge_snapshot
-        meta = history.interview_metadata
-
-        return cls(
-            report_id=report_id or str(uuid.uuid4()),
-            session_id=history.session_id,
-            candidate_identity_id=history.candidate_identity_id,
-            interview_index=history.interview_index,
-            profile_snapshot=snapshot.profile_snapshot,
-            narrative=snapshot.narrative,
-            coaching_snapshot=snapshot.coaching_snapshot,
-            role=meta.role,
-            seniority=meta.seniority,
-            interview_type=meta.interview_type,
-            question_count=history.question_count,
-            knowledge_epoch=history.knowledge_epoch,
-            created_at=datetime.now(tz=timezone.utc),
+        return (
+            ReportBuilder()
+            .with_session_history(history)
+            .with_report_id(report_id)
+            .build()
         )
 
     @property

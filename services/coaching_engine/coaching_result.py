@@ -12,7 +12,7 @@ from services.coaching_engine.coaching_diagnostics import CoachingDiagnostics
 class CoachingResult(BaseModel):
     """Immutable output of a single CoachingEngine run.
 
-    Contains the assembled CoachingSnapshot (CoachingPlan) and full
+    Contains the assembled CoachingSnapshot and full
     diagnostics for this cycle.
 
     Invariants (ADR-025):
@@ -27,7 +27,7 @@ class CoachingResult(BaseModel):
     question_index: int = Field(..., ge=0)
 
     snapshot: CoachingSnapshot = Field(
-        ..., description="Assembled CoachingPlan; may be empty on failure."
+        ..., description="Assembled CoachingSnapshot; may be empty on failure."
     )
     diagnostics: CoachingDiagnostics = Field(
         ..., description="Full audit trail for this engine cycle."

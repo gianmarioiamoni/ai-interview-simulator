@@ -14,8 +14,8 @@ from domain.contracts.reasoning.candidate_profile import CandidateProfile
 class CoachingContext(BaseModel):
     """Immutable input bundle for one CoachingEngine invocation.
 
-    Carries all inputs required for the engine to produce a CoachingPlan
-    (CoachingSnapshot) without accessing ObservationStore, FeatureEngine,
+    Carries all inputs required for the engine to produce a CoachingSnapshot
+    without accessing ObservationStore, FeatureEngine,
     detectors, or Narrative.
 
     Invariants (ADR-025):

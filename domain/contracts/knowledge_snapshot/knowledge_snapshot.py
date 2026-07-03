@@ -49,7 +49,7 @@ class PolicyVersions(BaseModel):
 class KnowledgeSnapshot(BaseModel):
     """Immutable closure artifact produced at session close (ADR-022 §E).
 
-    Assembles CandidateProfileSnapshot + Narrative + CoachingPlan + policy
+    Assembles CandidateProfileSnapshot + Narrative + CoachingSnapshot + policy
     versions into a single sealed record. Cannot be modified after creation.
 
     ADR-022 invariants enforced:
@@ -78,7 +78,7 @@ class KnowledgeSnapshot(BaseModel):
         ..., description="Immutable Narrative produced by NarrativeGenerator (ADR-023)"
     )
     coaching_snapshot: CoachingSnapshot = Field(
-        ..., description="CoachingPlan equivalent: runtime coaching closure (ADR-025)"
+        ..., description="Assembled CoachingSnapshot: runtime coaching closure (ADR-025)"
     )
     policy_versions: PolicyVersions = Field(
         ..., description="All policy/schema versions in effect at closure (ADR-022 §E)"
