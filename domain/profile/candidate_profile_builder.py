@@ -10,6 +10,7 @@ Constraints (ADR-037, ADR-032):
 
 from __future__ import annotations
 
+from domain.contracts.feature.profile_feature import ProfileFeature
 from domain.contracts.reasoning.candidate_profile import CandidateProfile
 from domain.contracts.reasoning.dimension_trace import DimensionTrace
 from domain.contracts.reasoning.profile_dimension import ProfileDimension
@@ -38,6 +39,10 @@ class CandidateProfileBuilder:
         self._questions_answered: int = 0
         self._areas_covered: list[str] = []
         self._last_updated_at_question_index: int = -1
+        # MIG-02.5: V1.2 ProfileFeature[] from FeatureEngine (ADR-018, ADR-020).
+        # Stored internally; surfaced via KnowledgePipelineResult.features.
+        # CandidateProfile schema does not yet carry them directly (MIG-03+).
+        self._profile_features: tuple[ProfileFeature, ...] = ()
 
     # ------------------------------------------------------------------
     # Fluent setters
@@ -79,6 +84,27 @@ class CandidateProfileBuilder:
         self._questions_answered = count
         return self
 
+    def with_profile_features(
+        self, features: tuple[ProfileFeature, ...] | list[ProfileFeature]
+    ) -> "CandidateProfileBuilder":
+        """Accept ProfileFeature[] from FeatureEngine (V1.2 path, MIG-02.5).
+
+        Features are carried internally and forwarded via the pipeline result.
+        They are NOT yet stored in CandidateProfile directly (pending MIG-03).
+        This method ensures CandidateProfileBuilder is the sole construction
+        path for V1.2 profiles (ADR-037).
+        """
+        if isinstance(features, list):
+            self._profile_features = tuple(features)
+        else:
+            self._profile_features = features
+        return self
+
+    @property
+    def profile_features(self) -> tuple[ProfileFeature, ...]:
+        """Expose accumulated ProfileFeatures for pipeline result assembly."""
+        return self._profile_features
+
     def with_areas_covered(self, areas: list[str]) -> "CandidateProfileBuilder":
         self._areas_covered = list(areas)
         return self
@@ -100,6 +126,7 @@ class CandidateProfileBuilder:
         builder._questions_answered = profile.questions_answered
         builder._areas_covered = list(profile.areas_covered)
         builder._last_updated_at_question_index = profile.last_updated_at_question_index
+        # profile_features are not persisted in CandidateProfile yet; start empty.
         return builder
 
     # ------------------------------------------------------------------

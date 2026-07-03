@@ -153,6 +153,21 @@ def _inject_evaluation_signals(state: InterviewState) -> InterviewState:
 # Phase C — MIG-02: ObservationExtractor helper
 # ---------------------------------------------------------------------------
 
+# MIG-02.5 hook: candidate_identity_id is required by KnowledgePipelineContext
+# (MIG-03).  InterviewState does not yet expose a candidate_identity_id field
+# (pending MIG-03 or a future InterviewState evolution).  Until that field is
+# available, the session interview_id is used as a stable surrogate.
+# When MIG-03 wires KnowledgePipeline, replace _resolve_candidate_identity_id()
+# with a direct read of state.candidate_identity_id (once added to InterviewState).
+def _resolve_candidate_identity_id(state: InterviewState) -> str:
+    """Return the candidate identity id for pipeline context construction.
+
+    Surrogate: uses interview_id until InterviewState exposes a dedicated field
+    (MIG-03 hook — do not remove until that migration is complete).
+    """
+    return state.interview_id
+
+
 def _run_observation_extraction(
     state: InterviewState,
     updated_memory: InterviewMemory,

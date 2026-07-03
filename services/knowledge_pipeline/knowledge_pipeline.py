@@ -113,31 +113,48 @@ class KnowledgePipeline:
             )
 
         # --- Stage 1: Extraction ---
+        # MIG-02.5: skip extraction when the store is already populated and
+        # skip_extraction_if_store_populated is enabled (prevents double extraction
+        # after reasoner_node Phase C has already run ObservationExtractor).
         t0 = time.monotonic()
-        extraction_result, extraction_record = self._run_extraction(context)
-        extraction_ms = (time.monotonic() - t0) * 1000.0
-        stage_records.append(extraction_record)
-
-        if not extraction_record.completed and self._configuration.abort_on_stage_failure:
-            return self._abort(
-                context=context,
-                stage_records=stage_records,
-                failure_stage=PipelineStage.EXTRACTION,
-                failure_reason=extraction_record.error_message or "Extraction failed.",
-                cycle_start=cycle_start,
-                signals_received=len(context.signals),
-                observations_produced=0,
-                observations_in_store=0,
-                features_computed=0,
-                extraction_ms=extraction_ms,
-                store_ms=0.0,
-                feature_ms=0.0,
-                profile_ms=0.0,
-            )
-
-        observations_produced = (
-            len(extraction_result.observations) if extraction_result is not None else 0
+        skip_extraction = (
+            self._configuration.skip_extraction_if_store_populated
+            and self._store.count() > 0
         )
+        if skip_extraction:
+            extraction_ms = (time.monotonic() - t0) * 1000.0
+            extraction_record = StageAuditRecord(
+                stage=PipelineStage.EXTRACTION,
+                completed=True,
+                duration_ms=extraction_ms,
+            )
+            stage_records.append(extraction_record)
+            observations_produced = 0
+        else:
+            extraction_result, extraction_record = self._run_extraction(context)
+            extraction_ms = (time.monotonic() - t0) * 1000.0
+            stage_records.append(extraction_record)
+
+            if not extraction_record.completed and self._configuration.abort_on_stage_failure:
+                return self._abort(
+                    context=context,
+                    stage_records=stage_records,
+                    failure_stage=PipelineStage.EXTRACTION,
+                    failure_reason=extraction_record.error_message or "Extraction failed.",
+                    cycle_start=cycle_start,
+                    signals_received=len(context.signals),
+                    observations_produced=0,
+                    observations_in_store=0,
+                    features_computed=0,
+                    extraction_ms=extraction_ms,
+                    store_ms=0.0,
+                    feature_ms=0.0,
+                    profile_ms=0.0,
+                )
+
+            observations_produced = (
+                len(extraction_result.observations) if extraction_result is not None else 0
+            )
 
         # --- Stage 2: ObservationBatch → ObservationStore (append) ---
         # ObservationExtractor already appended to store during extract().
@@ -191,7 +208,7 @@ class KnowledgePipeline:
 
         # --- Stage 5: CandidateProfileBuilder ---
         t4 = time.monotonic()
-        profile, profile_record = self._run_profile_build(context, features)
+        profile, profile_builder, profile_record = self._run_profile_build(context, features)
         profile_ms = (time.monotonic() - t4) * 1000.0
         stage_records.append(profile_record)
 
@@ -232,12 +249,16 @@ class KnowledgePipeline:
             stage_records=tuple(stage_records),
             metrics=metrics,
         )
+        # Use features from the builder to ensure CandidateProfileBuilder is the
+        # sole V1.2 construction path (MIG-02.5, ADR-037).
+        committed_features = profile_builder.profile_features if profile_builder is not None else features
+
         return KnowledgePipelineResult(
             session_id=context.session_id,
             candidate_identity_id=context.candidate_identity_id,
             question_index=context.question_index,
             profile=profile,
-            features=features,
+            features=committed_features,
             diagnostics=diagnostics,
             is_successful=True,
         )
@@ -312,7 +333,7 @@ class KnowledgePipeline:
         context: KnowledgePipelineContext,
         features: tuple,
     ) -> tuple:
-        """Run CandidateProfileBuilder. Returns (profile | None, StageAuditRecord)."""
+        """Run CandidateProfileBuilder. Returns (profile | None, builder | None, StageAuditRecord)."""
         t0 = time.monotonic()
         try:
             if context.prior_profile is not None:
@@ -320,21 +341,25 @@ class KnowledgePipeline:
             else:
                 builder = CandidateProfileBuilder()
 
+            # MIG-02.5: wire ProfileFeature[] from FeatureEngine into the builder.
+            # CandidateProfileBuilder is the sole V1.2 CandidateProfile construction
+            # path (ADR-037). Features are surfaced via KnowledgePipelineResult.features.
             profile = (
                 builder
+                .with_profile_features(features)
                 .with_questions_answered(context.question_index + 1)
                 .with_last_updated_at(context.question_index)
                 .build()
             )
             duration_ms = (time.monotonic() - t0) * 1000.0
-            return profile, StageAuditRecord(
+            return profile, builder, StageAuditRecord(
                 stage=PipelineStage.PROFILE_BUILD,
                 completed=True,
                 duration_ms=duration_ms,
             )
         except Exception as exc:  # noqa: BLE001
             duration_ms = (time.monotonic() - t0) * 1000.0
-            return None, StageAuditRecord(
+            return None, None, StageAuditRecord(
                 stage=PipelineStage.PROFILE_BUILD,
                 completed=False,
                 error_message=str(exc),
