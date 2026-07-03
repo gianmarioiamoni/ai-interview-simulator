@@ -1,12 +1,19 @@
 # app/graph/nodes/session_close_node.py
-"""SessionCloseNode — MIG-04 (PAT-06: LangGraph sole orchestrator).
+"""SessionCloseNode — MIG-04 + RS-01 (PAT-06: LangGraph sole orchestrator).
 
 Responsibilities (orchestration only):
-1. Assemble KnowledgeSnapshot via KnowledgeSnapshotBuilder.
-2. Assemble SessionCloseContext from InterviewState fields.
-3. Run SessionClosePipeline.run(context) — sole invocation per session.
-4. Write state.session_history on success.
-5. Return state unchanged (with session_history populated or None on failure).
+1. Derive final ProfileFeature[] from ObservationStore (RS-01 F-03 remediation).
+2. Assemble KnowledgeSnapshot via KnowledgeSnapshotBuilder.
+3. Assemble SessionCloseContext from InterviewState fields.
+4. Run SessionClosePipeline.run(context) — sole invocation per session.
+5. Write state.session_history on success.
+6. Return state unchanged (with session_history populated or None on failure).
+
+RS-01 — Feature Propagation:
+ProfileFeature[] are re-derived at close time by running KnowledgePipeline
+with skip_extraction_if_store_populated=True (extraction already ran in Phase C).
+This is a read-only, deterministic re-derivation — not a second extraction.
+Features are never duplicated on state; they exist only within the close path.
 
 Sole writer: this node only. SessionClosePipeline never writes state.
 Sole execution: guarded by state.is_completed; graph routing prevents re-entry.
@@ -14,13 +21,13 @@ Sole execution: guarded by state.is_completed; graph routing prevents re-entry.
 Out of scope (PAT-06 / ADR-022):
 - No LLM calls.
 - No persistence.
-- No second KnowledgePipeline invocation.
-- No CandidateProfile mutation.
+- No CandidateProfile mutation on state.
 """
 
 from __future__ import annotations
 
 from domain.contracts.coaching.coaching_builder import CoachingBuilder
+from domain.contracts.feature.profile_feature import ProfileFeature
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.knowledge_snapshot.candidate_profile_snapshot import (
     CandidateProfileSnapshot,
@@ -40,6 +47,10 @@ from domain.contracts.session_history.session_history import (
     QuestionTimelineEntry,
     TranscriptEntry,
 )
+from services.knowledge_pipeline.default_knowledge_pipeline_factory import (
+    build_default_knowledge_pipeline,
+)
+from services.knowledge_pipeline.knowledge_pipeline_context import KnowledgePipelineContext
 from services.session_close.session_close_context import SessionCloseContext
 from services.session_close.session_close_pipeline import SessionClosePipeline
 from app.core.logger import get_logger
@@ -127,7 +138,7 @@ def _build_knowledge_snapshot(
     candidate_identity_id: str,
 ):
     """Assemble KnowledgeSnapshot from state artifacts (KnowledgeSnapshotBuilder sole path)."""
-    features = _collect_features(state, candidate_identity_id)
+    features = _derive_features_at_close(state, candidate_identity_id)
     profile_snapshot = CandidateProfileSnapshot(
         candidate_identity_id=candidate_identity_id,
         features=features,
@@ -195,19 +206,53 @@ def _build_context(
 # ------------------------------------------------------------------
 
 
-def _collect_features(
+def _derive_features_at_close(
     state: InterviewState,
     candidate_identity_id: str,
-) -> tuple:
-    """Extract ProfileFeatures from candidate_profile_v2 (MIG-03 path) or empty."""
-    profile = state.candidate_profile_v2
-    if profile is None:
+) -> tuple[ProfileFeature, ...]:
+    """Re-derive ProfileFeature[] from ObservationStore at session close (RS-01).
+
+    Runs KnowledgePipeline with skip_extraction_if_store_populated=True so
+    ObservationExtractor is skipped (it ran in Phase C).  Only FeatureEngine +
+    CandidateProfileBuilder execute — deterministic, no side effects, no state mutation.
+
+    Returns empty tuple when:
+    - observation_store is None or empty (no observations collected)
+    - pipeline fails (non-fatal; closure proceeds with empty features)
+    """
+    store = state.observation_store
+    if store is None or store.count() == 0:
+        logger.debug("_derive_features_at_close: no observations — features=()")
         return ()
-    # candidate_profile_v2 is a CandidateProfile (V1.1 type); has no features[] field.
-    # ProfileFeatures live on CandidateProfileBuilder.profile_features (pipeline result).
-    # Until MIG-03 writes features onto state, return empty tuple.
-    # CandidateProfileSnapshot.features=() is valid (total_feature_count=0).
-    return ()
+
+    try:
+        pipeline = build_default_knowledge_pipeline(store=store)
+        ctx = KnowledgePipelineContext(
+            session_id=state.interview_id,
+            candidate_identity_id=candidate_identity_id,
+            question_index=state.current_question_index,
+            signals=(),
+            prior_profile=state.candidate_profile_v2,
+        )
+        result = pipeline.run(ctx)
+
+        if result.is_successful:
+            logger.debug(
+                "_derive_features_at_close: features=%d", result.feature_count
+            )
+            return result.features
+
+        logger.debug(
+            "_derive_features_at_close: pipeline unsuccessful reason=%s",
+            result.failure_reason,
+        )
+        return ()
+
+    except Exception as exc:
+        logger.warning(
+            "_derive_features_at_close failed | error=%s — features=()", type(exc).__name__
+        )
+        return ()
 
 
 def _collect_observation_ids(state: InterviewState) -> tuple[str, ...]:
