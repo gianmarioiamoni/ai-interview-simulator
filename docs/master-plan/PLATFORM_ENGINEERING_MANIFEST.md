@@ -1,8 +1,8 @@
 # Platform Engineering Manifest
 ## AI Interview Simulator
 
-**Version:** 1.1  
-**Date:** 2026-07-02  
+**Version:** 1.2  
+**Date:** 2026-07-03  
 **Status:** FOUNDATIONAL — Authoritative for all versions ≥ V1.1  
 **Supersedes:** Nothing. Supplements all other documents.
 
@@ -106,9 +106,15 @@ The following order is permanent and non-negotiable.
         ↓
 7. Audit (layering, ownership, configuration, contract compliance)
         ↓
+7a. Construction Architecture Review (CAR) — after construction phase
+        ↓
+7b. Remediation Sprint — resolve all CAR P0/P1 findings
+        ↓
+7c. Pattern Extraction — extract and freeze recurring patterns
+        ↓
 8. Documentation (TDS update, INDEX update)
         ↓
-9. Freeze (API freeze, contract freeze, detector freeze)
+9. Freeze (API freeze, contract freeze, detector freeze, methodology freeze)
         ↓
 10. Release Certification
 ```
@@ -156,6 +162,10 @@ The detector framework is a first-class plugin architecture. A detector is a sel
 ### Single Writer Principle
 
 Every mutable domain object has exactly one designated writer. `InterviewMemory` is written only by `reasoner_node`. `ReasoningHistory` is written only by `reasoner_node`. `CandidateProfile` is updated only through `CandidateProfileEngine`. Shared mutable state with multiple uncoordinated writers is a design violation.
+
+### Runtime Ownership
+
+Exactly one runtime component owns workflow execution, branching, retries, recovery, and lifecycle management. In V1.2, this owner is **LangGraph**. Application services own only business capabilities. No application service may orchestrate another application service at the workflow level. A component that coordinates multiple services to produce a workflow outcome is a second runtime orchestrator — this is a design violation. The canonical V1.2 example: `InterviewPipeline` was removed because it violated this principle. See PAT-06 in `V1.2-PATTERN-FREEZE.md`.
 
 ### Immutable Contracts
 
@@ -375,7 +385,8 @@ These invariants are permanent. They cannot be overridden by any ADR, PRD, or im
 
 1. **Public APIs remain stable.** A frozen API does not change. Breaking changes require a new major version.
 2. **Contracts remain immutable after freeze.** `extra=forbid` is never relaxed on a frozen contract.
-3. **Runtime ownership is explicit.** Every mutable domain object has exactly one designated writer. This is documented.
+3. **Data ownership is explicit.** Every mutable domain object has exactly one designated writer. This is documented.
+3a. **Runtime ownership is explicit.** Exactly one runtime component owns workflow execution. In V1.2, this is LangGraph. No application service may become a second runtime orchestrator. Violation is a P1 CAR finding.
 4. **No circular dependencies in the production runtime path.** Import-time cycles in production modules are registered as technical debt and resolved in the next milestone.
 5. **Reasoning is deterministic.** The Interview Reasoner produces identical output for identical input. LLM calls are prohibited in deterministic services.
 6. **State transitions are explicit.** Every `InterviewState` field mutation is traceable to a specific graph node, documented as part of that node's contract.
@@ -440,7 +451,7 @@ The `CoachingEngine` (ADR-067) will consume `ProfileFeatures` derived from detec
 
 ## Engineering Pattern Registry
 
-Named engineering patterns accepted and applied in V1.2 Construction. Full documentation: `V1.2-PATTERN-FREEZE.md`.
+Named engineering patterns accepted and applied in V1.2 Construction and RC-C Methodology Freeze. Full documentation: `V1.2-PATTERN-FREEZE.md`.
 
 | ID | Name | Manifest Principle | Epic(s) Applied |
 |---|---|---|---|
@@ -448,6 +459,8 @@ Named engineering patterns accepted and applied in V1.2 Construction. Full docum
 | PAT-02 | Runtime First, Orchestration Second | Contracts before Code | EPIC-01, EPIC-02 |
 | PAT-03 | Construction Parallelism Review (CPR) | Architecture before Implementation; Progressive Evolution | All Epics (EPIC-00–07) |
 | PAT-04 | Temporary Construction Placeholder (TCP) | Progressive Evolution; Backward Compatibility; Immutability | EPIC-07 |
+| PAT-05 | Builder-only Construction | Single Writer Principle; Single Responsibility | EPIC-01, EPIC-04 |
+| PAT-06 | Single Runtime Orchestrator | Runtime Ownership; Single Writer Principle | All Epics — CAR finding |
 
 These patterns do not supersede any principle in this Manifest. They are named implementations of existing principles.
 
@@ -459,3 +472,4 @@ These patterns do not supersede any principle in this Manifest. They are named i
 |---|---|---|
 | 1.0 | 2026-07-01 | Initial Manifest — V1.1 RC foundation |
 | 1.1 | 2026-07-02 | DOC-M1 Pattern Freeze: Engineering Pattern Registry added (PAT-01 to PAT-04) |
+| 1.2 | 2026-07-03 | RC-C Methodology Freeze: PAT-05 and PAT-06 registered; Runtime Ownership principle added; CAR and Pattern Extraction added to Development Workflow; Engineering Invariant 3a added |

@@ -1,6 +1,6 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1.0 STABLE (2026-07-01) · **V1.2 Architecture Freeze COMPLETE (2026-07-02)** · **DOC-M1 Pattern Freeze COMPLETE (2026-07-02)**. VERSION=1.1.0. 2802 tests passing. All P0/P1 findings resolved. Platform Engineering Manifest and Enterprise Engineering Playbook established. Stable Release Certificate issued (SR-1). V1.2 Architecture Certificate issued (AC-V1.2). Implementation Baseline frozen. DOC-M1 Pattern Freeze issued: PAT-01 to PAT-04 accepted.
+**Status:** V1.1.0 STABLE (2026-07-01) · **V1.2 Architecture Freeze COMPLETE (2026-07-02)** · **DOC-M1 Pattern Freeze COMPLETE (2026-07-02)** · **RC-C Methodology Freeze COMPLETE (2026-07-03)**. VERSION=1.1.0. 2802 tests passing. All P0/P1 findings resolved. Platform Engineering Manifest and Enterprise Engineering Playbook established. Stable Release Certificate issued (SR-1). V1.2 Architecture Certificate issued (AC-V1.2). Implementation Baseline frozen. DOC-M1 Pattern Freeze issued: PAT-01 to PAT-04 accepted. RC-C Methodology Freeze: PAT-05 and PAT-06 accepted; CAR, Pattern Extraction, Runtime Ownership, and Methodology Evolution formalised.
 
 ## V1.2 Architecture Freeze Summary
 
@@ -214,7 +214,7 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | ADR-066 | Behavioral Observation Model — V1.2 Extension Contract | **Accepted — Arch direction; V1.2** |
 | ADR-067 | Behavioral Coaching Pipeline — Detector-to-CoachingEngine Decoupling | **Accepted — Arch direction; V1.2** |
 
-## Engineering Pattern Registry (DOC-M1)
+## Engineering Pattern Registry
 
 | ID | Name | Document | Status |
 |---|---|---|---|
@@ -222,10 +222,13 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | PAT-02 | Runtime First, Orchestration Second | `V1.2-PATTERN-FREEZE.md` | **Accepted — DOC-M1 (2026-07-02)** |
 | PAT-03 | Construction Parallelism Review (CPR) | `V1.2-PATTERN-FREEZE.md` | **Accepted — DOC-M1 (2026-07-02)** |
 | PAT-04 | Temporary Construction Placeholder (TCP) | `V1.2-PATTERN-FREEZE.md` | **Accepted — DOC-M1 (2026-07-02)** |
+| PAT-05 | Builder-only Construction | `V1.2-PATTERN-FREEZE.md` | **Accepted — RC-C (2026-07-03)** |
+| PAT-06 | Single Runtime Orchestrator | `V1.2-PATTERN-FREEZE.md` | **Accepted — RC-C (2026-07-03)** |
 
-**Pattern Freeze Authority:** Platform Engineering Manifest v1.1 §Engineering Pattern Registry  
-**Operational Guidance:** Enterprise Engineering Playbook v1.1 §Section N  
-**Implementation Reference:** V1.2-IMPLEMENTATION-BASELINE §B8
+**Pattern Freeze Authority:** Platform Engineering Manifest v1.2 §Engineering Pattern Registry  
+**Operational Guidance:** Enterprise Engineering Playbook v1.2 §Section N  
+**Implementation Reference:** V1.2-IMPLEMENTATION-BASELINE §B8  
+**CAR Authority:** Enterprise Engineering Playbook v1.2 §Section O; V1.2-PATTERN-FREEZE.md §Construction Architecture Review
 
 ---
 
@@ -245,6 +248,7 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | 1.9 | 2026-07-02 | Engineering | AC-V1.2 Architecture Freeze: V1.2 Architecture Certificate and Implementation Baseline created; 16 V1.2 core ADRs certified; Architecture Freeze Summary added; STATUS promoted to V1.2 Architecture Freeze COMPLETE |
 | 2.0 | 2026-07-02 | Engineering | V1.2 Construction Phase: V1.2-IMPLEMENTATION-ROADMAP.md created; Construction Phase operational guide registered; Construction Readiness Assessment: GO |
 | 2.1 | 2026-07-02 | Engineering | DOC-M1 Pattern Freeze: V1.2-PATTERN-FREEZE.md created; PAT-01 to PAT-04 registered; Pattern Registry section added; Manifest v1.1 and Playbook v1.1 updated |
+| 2.2 | 2026-07-03 | Engineering | RC-C Methodology Freeze: PAT-05 and PAT-06 registered; CAR, Pattern Extraction, Runtime Ownership, Methodology Evolution formalised; Manifest v1.2 and Playbook v1.2 updated; Implementation Baseline v1.2 updated; STATUS promoted to RC-C COMPLETE |
 
 ## Technical Debt Register (M2-8)
 

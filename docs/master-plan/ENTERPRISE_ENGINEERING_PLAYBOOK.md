@@ -1,8 +1,8 @@
 # Enterprise Engineering Playbook
 ## AI Interview Simulator — and All Future Enterprise Projects
 
-**Version:** 1.1  
-**Date:** 2026-07-02  
+**Version:** 1.2  
+**Date:** 2026-07-03  
 **Status:** FOUNDATIONAL — Authoritative for all versions ≥ V1.1  
 **Classification:** FOUNDATIONAL DOCUMENT  
 **Supplements:** Platform Engineering Manifest
@@ -121,12 +121,33 @@ Every enterprise software project follows this lifecycle. Each phase has a defin
 **Outputs:** Audit report with findings classified by severity. Technical Debt Register updates.  
 **Exit criteria:** No Forbidden debt present. All Accepted debt registered with target milestone. All P0/P1 findings resolved.
 
+### Phase 9a — Construction Architecture Review (CAR)
+
+**Purpose:** Identify architectural violations, structural regressions, and emerging patterns that appeared during construction but were not captured at design time. CAR is the mandatory gate between Construction and Freeze.  
+**Inputs:** Completed implementation, accepted ADRs, Implementation Baseline, Phase 9 audit reports.  
+**Outputs:** CAR Report (findings P0–P3), Remediation Backlog, Pattern Candidates, Runtime Ownership verification.  
+**Exit criteria:** CAR Report issued. All P0/P1 findings identified. Pattern candidates handed to Phase 9b. No second runtime orchestrator present (PAT-06).
+
+### Phase 9b — Remediation Sprint
+
+**Purpose:** Resolve all P0/P1 findings from the CAR before any freeze gate is opened.  
+**Inputs:** CAR Report, Remediation Backlog.  
+**Outputs:** Corrected implementation. Updated audit report.  
+**Exit criteria:** Zero P0/P1 open findings. Zero Forbidden technical debt. All corrections registered in Technical Debt Register.
+
+### Phase 9c — Pattern Extraction
+
+**Purpose:** Extract, name, document, and freeze engineering patterns identified during CAR that recurred ≥ 2 times in independent construction contexts.  
+**Inputs:** CAR Pattern Candidates, V1.2-PATTERN-FREEZE.md, Playbook §N.  
+**Outputs:** New named patterns registered in V1.2-PATTERN-FREEZE.md. Playbook §N updated. Manifest Pattern Registry updated.  
+**Exit criteria:** All accepted patterns documented with full structure. Cross-reference map updated. Methodology Evolution section updated.
+
 ### Phase 10 — Documentation Freeze
 
 **Purpose:** Ensure all documentation reflects the final shipped state.  
-**Inputs:** Audit-clean implementation, TDS, INDEX, ADRs.  
+**Inputs:** Audit-clean implementation, TDS, INDEX, ADRs, CAR Report, Pattern Freeze.  
 **Outputs:** Updated TDS sections, INDEX freeze table updates, README updates (if applicable).  
-**Exit criteria:** Every frozen component documented in INDEX. Every new ADR registered. TDS reflects actual shipped architecture.
+**Exit criteria:** Every frozen component documented in INDEX. Every new ADR registered. TDS reflects actual shipped architecture. Pattern Freeze registered.
 
 ### Phase 11 — Release Candidate
 
@@ -763,6 +784,8 @@ Full documentation for all patterns lives in `V1.2-PATTERN-FREEZE.md`.
 | **PAT-02** | Runtime First, Orchestration Second | Any milestone sequence where an engine has both a runtime contract and a wiring/orchestration contract | Contracts before Code |
 | **PAT-03** | Construction Parallelism Review (CPR) | Before any construction phase with ≥ 3 Epics or cross-Epic dependencies | Architecture before Implementation; Progressive Evolution |
 | **PAT-04** | Temporary Construction Placeholder (TCP) | When a future-milestone capability requires a schema field that has no V1.x behaviour | Progressive Evolution; Backward Compatibility; Immutability |
+| **PAT-05** | Builder-only Construction | When a domain object requires invariant validation during construction and multiple callers exist | Single Writer Principle; Single Responsibility |
+| **PAT-06** | Single Runtime Orchestrator | Always active. Any component coordinating multiple services at workflow level violates this pattern | Runtime Ownership; Single Writer Principle |
 
 ### Pattern Lifecycle
 
@@ -793,9 +816,76 @@ Patterns are accepted by the human architect. AI tooling may propose patterns; i
 
 ---
 
+## Section O — Construction Architecture Review (CAR)
+
+The CAR is a mandatory engineering activity that occurs after a construction phase and before the freeze gate. It is the primary mechanism for discovering PAT-06 violations (second runtime orchestrators), PAT-05 violations (duplicated construction paths), and other structural regressions that emerge during implementation.
+
+### CAR Checklist
+
+- [ ] Runtime ownership verified: exactly one runtime orchestrator present (LangGraph). No second orchestrator. (PAT-06)
+- [ ] Builder-only construction verified: every domain object with invariants has exactly one builder. (PAT-05)
+- [ ] Single writer verified per mutable aggregate: no second writer introduced during construction.
+- [ ] No service-to-service workflow coordination: services are stateless with respect to workflow.
+- [ ] All P0/P1 audit findings from Phase 9 are captured and classified.
+- [ ] Pattern candidates identified: recurring structures that appeared ≥ 2 times.
+- [ ] CAR Report issued and registered in INDEX.
+
+### CAR Findings Classification
+
+| Classification | Meaning | Required Action |
+|---|---|---|
+| **P0** | Second runtime orchestrator; correctness defect | Must resolve before any freeze gate |
+| **P1** | Duplicated construction path; second writer; hidden coupling | Must resolve or register as Accepted with target milestone |
+| **P2** | Missing pattern documentation; coverage gap | Register in Technical Debt Register |
+| **P3** | Style inconsistency; non-critical structural issue | Register; low priority |
+
+### Thin Orchestrator Rule
+
+A LangGraph node that calls application services is a Thin Orchestrator: it coordinates business capabilities but does not own any business logic itself. A Thin Orchestrator is the correct design. A node that contains business logic is a design violation (move logic to the service). A service that coordinates other services is a second orchestrator violation (move coordination to the node).
+
+---
+
+## Section P — Methodology Evolution
+
+The engineering methodology of this project evolves from implementation experience. This section documents how that evolution occurs and what has changed across versions.
+
+### How New Methodology Is Produced
+
+```
+Observation (something recurring is noticed during construction)
+    ↓
+Repeated occurrence (≥ 2 independent contexts)
+    ↓
+Engineering Pattern (named, extracted via Phase 9c Pattern Extraction)
+    ↓
+Pattern Freeze (registered in V1.2-PATTERN-FREEZE.md)
+    ↓
+Methodology (codified in this Playbook and the Manifest)
+    ↓
+Baseline (default practice for the next construction sprint)
+```
+
+### Methodology History
+
+| Version | Methodology Addition |
+|---|---|
+| V1.1 | Manifest and Playbook established. Lessons from V1.1 construction codified (§L). |
+| V1.2 DOC-M1 | PAT-01 to PAT-04 extracted and frozen. Section N (Engineering Pattern Registry) added. |
+| V1.2 RC-C | PAT-05 and PAT-06 extracted and frozen. CAR formalised (§O). Pattern Extraction formalised (§B Phase 9c). Runtime Ownership added to Manifest. Methodology Evolution documented (this section). |
+
+### Methodology Principles
+
+- Methodology is discovered, not imposed. No practice is codified before it has proven its value.
+- A pattern that appears only once is an observation, not a rule.
+- Patterns that contradict Manifest principles are not extracted — the implementation is corrected.
+- The human architect accepts patterns. AI tooling may propose candidates.
+
+---
+
 ## Document History
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-07-01 | Initial Playbook — V1.1 RC foundation |
 | 1.1 | 2026-07-02 | DOC-M1 Pattern Freeze: Section N (Engineering Pattern Registry) added; PAT-01 to PAT-04 registered |
+| 1.2 | 2026-07-03 | RC-C Methodology Freeze: PAT-05 and PAT-06 added to §N; CAR added to §B lifecycle (Phase 9a–9c) and formalised in §O; Methodology Evolution documented in §P; Thin Orchestrator rule added to §O |
