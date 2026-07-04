@@ -69,6 +69,7 @@ class ReasoningContextBuilder:
             session_id=state.interview_id,
             question_index=state.current_question_index,
             interview_memory=memory,
+            candidate_profile_v2=state.candidate_profile_v2,
             current_question_area=current_area,
             current_question_type=current_type,
             current_answer_content=answer_content,

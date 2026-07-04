@@ -41,6 +41,7 @@ from domain.contracts.reasoning.reasoning_trace import ReasoningTrace, Reasoning
 from domain.contracts.reasoning.trend import Trend
 from services.interview_reasoner.pattern_detection.registry import PatternDetectorRegistry
 from services.interview_reasoner.profile.candidate_profile_engine import CandidateProfileEngine
+from services.interview_reasoner.profile.dominant_dimension_calculator import DominantDimensionCalculator
 
 _MIN_RELIABLE_EVIDENCE = 3
 _FOLLOW_UP_TRIGGER_TYPES = {
@@ -63,6 +64,7 @@ class ReasonerService:
     def __init__(self, registry: PatternDetectorRegistry) -> None:
         self._registry = registry
         self._profile_engine = CandidateProfileEngine()
+        self._dominant_calc = DominantDimensionCalculator()
 
     # ------------------------------------------------------------------
     # Public API
@@ -242,9 +244,14 @@ class ReasonerService:
         detected_types = aggregated.detected_types
         reasoning_confidence = self._compute_confidence(updated_memory, aggregated)
 
-        # Session-scoped dominant dimension from full profile (M2-6C).
-        dominant_dim = self._profile_engine.dominant_dimension(
-            updated_memory.candidate_profile
+        # Session-scoped dominant dimension from V1.2 profile (ADS-06 Strategy A).
+        # Uses candidate_profile_v2 from the previous reasoning cycle (one-cycle lag
+        # is intentional and below the min_evidence_for_trend threshold — see ADS-06).
+        # Falls back to None on cycle 0 when no V2 profile yet exists.
+        dominant_dim = (
+            self._dominant_calc.calculate(inp.candidate_profile_v2)
+            if inp.candidate_profile_v2 is not None
+            else None
         )
         session_trend = self._session_trend(updated_memory)
 

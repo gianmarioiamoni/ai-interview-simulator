@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from domain.contracts.reasoning.candidate_profile import CandidateProfile
 from domain.contracts.reasoning.interview_memory import InterviewMemory
 
 
@@ -26,6 +27,9 @@ class ReasonerInput(BaseModel):
 
     # --- Accumulated intelligence ---
     interview_memory: InterviewMemory = Field(default_factory=InterviewMemory)
+    # V1.2 profile from the PREVIOUS reasoning cycle (Strategy A — ADS-06).
+    # None on cycle 0 or when KnowledgePipeline has not yet run.
+    candidate_profile_v2: CandidateProfile | None = Field(default=None)
 
     # --- Current cycle inputs ---
     current_question_area: str | None = None
