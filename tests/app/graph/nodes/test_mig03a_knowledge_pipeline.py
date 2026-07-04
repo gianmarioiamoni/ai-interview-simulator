@@ -236,7 +236,7 @@ class TestReasonerNodeCandidateProfileV2Integration:
         import app.graph.nodes.reasoner_node as rn
         with patch.object(rn, "_service") as mock_svc, patch.object(rn, "_builder") as mock_bld:
             mock_bld.build.return_value = MagicMock()
-            mock_svc.reason.return_value = (decision, trace)
+            mock_svc.reason.return_value = (decision, trace, InterviewMemory())
             return rn.reasoner_node(state)
 
     def test_candidate_profile_v2_type_when_set(self) -> None:

@@ -183,14 +183,14 @@ def test_log_does_not_contain_answer_content(caplog):
 def test_append_entry_creates_entry():
     state = _empty_state()
     decision = _make_decision(session_id=state.interview_id)
-    memory = _append_reasoning_entry(state, decision)
+    memory = _append_reasoning_entry(state, decision, state.interview_memory)
     assert len(memory.reasoning_history.entries) == 1
 
 
 def test_append_entry_records_correct_q_idx():
     state = _empty_state().model_copy(update={"current_question_index": 7})
     decision = _make_decision(session_id=state.interview_id)
-    memory = _append_reasoning_entry(state, decision)
+    memory = _append_reasoning_entry(state, decision, state.interview_memory)
     assert memory.reasoning_history.entries[-1].question_index == 7
 
 
@@ -200,7 +200,7 @@ def test_append_entry_follow_up_flag():
     rec = FollowUpRecommendation(recommended=True, trigger_types=[EvidenceType.KNOWLEDGE_GAP])
     state = _empty_state()
     decision = _make_decision(session_id=state.interview_id, follow_up_rec=rec)
-    memory = _append_reasoning_entry(state, decision)
+    memory = _append_reasoning_entry(state, decision, state.interview_memory)
     assert memory.reasoning_history.entries[-1].follow_up_recommended is True
 
 
@@ -209,7 +209,7 @@ def test_append_entry_navigation_flag():
     nav = NavigationRecommendation(deepen_current=True)
     state = _empty_state()
     decision = _make_decision(session_id=state.interview_id, navigation_rec=nav)
-    memory = _append_reasoning_entry(state, decision)
+    memory = _append_reasoning_entry(state, decision, state.interview_memory)
     assert memory.reasoning_history.entries[-1].navigation_recommended is True
 
 
@@ -220,7 +220,7 @@ def test_append_entry_caps_at_max_entries():
     memory = InterviewMemory(reasoning_history=history)
     state = _empty_state().model_copy(update={"interview_memory": memory})
     decision = _make_decision(session_id=state.interview_id)
-    new_memory = _append_reasoning_entry(state, decision)
+    new_memory = _append_reasoning_entry(state, decision, state.interview_memory)
     assert len(new_memory.reasoning_history.entries) == _MAX_ENTRIES
 
 
@@ -244,8 +244,72 @@ def test_append_entry_evidence_propagated():
     )
     state = _empty_state()
     decision = _make_decision(session_id=state.interview_id, new_evidence=[sig])
-    memory = _append_reasoning_entry(state, decision)
+    memory = _append_reasoning_entry(state, decision, state.interview_memory)
     assert len(memory.evidence_store.signals) == 1
+
+
+# ---------------------------------------------------------------------------
+# session_metrics persistence (ADR-038 regression)
+# ---------------------------------------------------------------------------
+
+
+def test_session_metrics_persisted_from_memory_with_metrics():
+    """session_metrics from memory_with_metrics must survive _append_reasoning_entry."""
+    from domain.contracts.reasoning.session_metrics import SessionMetrics
+
+    pre_metrics = SessionMetrics(questions_answered=3, total_evidence_signals=7)
+    memory_with_metrics = InterviewMemory(session_metrics=pre_metrics)
+    state = _empty_state()
+    decision = _make_decision(session_id=state.interview_id)
+
+    result = _append_reasoning_entry(state, decision, memory_with_metrics)
+
+    assert result.session_metrics.questions_answered == 3
+    assert result.session_metrics.total_evidence_signals == 7
+
+
+def test_session_metrics_stale_base_not_used():
+    """Stale session_metrics on state.interview_memory must NOT overwrite the updated ones."""
+    from domain.contracts.reasoning.session_metrics import SessionMetrics
+
+    stale_metrics = SessionMetrics(questions_answered=0)
+    state = _empty_state().model_copy(
+        update={"interview_memory": InterviewMemory(session_metrics=stale_metrics)}
+    )
+    updated_metrics = SessionMetrics(questions_answered=5, total_evidence_signals=10)
+    memory_with_metrics = InterviewMemory(session_metrics=updated_metrics)
+    decision = _make_decision(session_id=state.interview_id)
+
+    result = _append_reasoning_entry(state, decision, memory_with_metrics)
+
+    assert result.session_metrics.questions_answered == 5
+    assert result.session_metrics.total_evidence_signals == 10
+
+
+def test_no_other_interview_memory_field_lost():
+    """coverage_state, schema_version, reasoning_history must come from memory_with_metrics."""
+    from domain.contracts.reasoning.coverage_state import CoverageState
+
+    cov = CoverageState(covered_areas=["technical_background"])
+    memory_with_metrics = InterviewMemory(
+        coverage_state=cov,
+        schema_version="2.0",
+    )
+    state = _empty_state()
+    decision = _make_decision(session_id=state.interview_id)
+
+    result = _append_reasoning_entry(state, decision, memory_with_metrics)
+
+    assert result.coverage_state == cov
+    assert result.schema_version == "2.0"
+
+
+def test_reasoner_node_session_metrics_survive_cycle():
+    """Full reasoner_node integration: session_metrics must not reset after one cycle."""
+    state = _empty_state()
+    result = reasoner_node(state)
+    # session_metrics must not regress to empty default after the node runs
+    assert isinstance(result.interview_memory.session_metrics.questions_answered, int)
 
 
 # ---------------------------------------------------------------------------

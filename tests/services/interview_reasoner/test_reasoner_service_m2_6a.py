@@ -65,40 +65,40 @@ def _svc() -> ReasonerService:
 
 def test_follow_up_fires_on_knowledge_gap():
     inp = _inp(signals=[_eval_sig(EvidenceType.KNOWLEDGE_GAP)])
-    d, _ = _svc().reason(inp)
+    d, _, _ = _svc().reason(inp)
     assert d.follow_up_recommendation is not None
     assert d.follow_up_recommendation.recommended is True
 
 
 def test_follow_up_fires_on_shallow_answer():
     inp = _inp(signals=[_eval_sig(EvidenceType.SHALLOW_ANSWER)])
-    d, _ = _svc().reason(inp)
+    d, _, _ = _svc().reason(inp)
     assert d.follow_up_recommendation is not None
     assert d.follow_up_recommendation.recommended is True
 
 
 def test_follow_up_fires_on_reasoning_gap():
     inp = _inp(signals=[_eval_sig(EvidenceType.REASONING_GAP)])
-    d, _ = _svc().reason(inp)
+    d, _, _ = _svc().reason(inp)
     assert d.follow_up_recommendation is not None
     assert d.follow_up_recommendation.recommended is True
 
 
 def test_follow_up_not_fired_when_limit_reached():
     inp = _inp(signals=[_eval_sig(EvidenceType.KNOWLEDGE_GAP)], follow_up_count=2)
-    d, _ = _svc().reason(inp)
+    d, _, _ = _svc().reason(inp)
     assert d.follow_up_recommendation is None
 
 
 def test_follow_up_not_fired_when_not_eligible():
     inp = _inp(signals=[_eval_sig(EvidenceType.KNOWLEDGE_GAP)], eligible=frozenset({99}))
-    d, _ = _svc().reason(inp)
+    d, _, _ = _svc().reason(inp)
     assert d.follow_up_recommendation is None
 
 
 def test_knowledge_gap_priority_1():
     inp = _inp(signals=[_eval_sig(EvidenceType.KNOWLEDGE_GAP)])
-    d, _ = _svc().reason(inp)
+    d, _, _ = _svc().reason(inp)
     assert d.follow_up_recommendation.priority == 1
 
 
@@ -115,7 +115,7 @@ def test_shallow_answer_priority_2():
         timestamp_question_index=1,
     )
     inp = _inp(signals=[_eval_sig(EvidenceType.SHALLOW_ANSWER), ej_sig])
-    d, _ = _svc().reason(inp)
+    d, _, _ = _svc().reason(inp)
     assert d.follow_up_recommendation.priority == 2
 
 
@@ -139,13 +139,13 @@ def test_navigation_not_fired_at_early_questions():
         follow_up_eligible_indices=frozenset(),
         current_question_area="api",
     )
-    d, _ = _svc().reason(inp2)
+    d, _, _ = _svc().reason(inp2)
     assert d.navigation_recommendation is None
 
 
 def test_navigation_fired_after_threshold_when_dims_uncovered():
     inp = _inp(signals=[], questions_answered=3, q_idx=3)
-    d, _ = _svc().reason(inp)
+    d, _, _ = _svc().reason(inp)
     assert d.navigation_recommendation is not None
 
 
@@ -175,7 +175,7 @@ def test_no_new_signals_on_second_cycle_same_question():
         follow_up_eligible_indices=frozenset({3}),
         current_question_area="api",
     )
-    d, _ = _svc().reason(inp)
+    d, _, _ = _svc().reason(inp)
     # Bridge should produce 0 new derived signals for TECHNICAL_DEPTH (key already in store)
     bridge_new = [s for s in d.new_evidence
                   if s.signal_type == EvidenceType.KNOWLEDGE_GAP

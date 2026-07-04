@@ -281,7 +281,9 @@ class TestReasonerNodeObservationStoreIntegration:
             "app.graph.nodes.reasoner_node._builder"
         ) as mock_builder:
             mock_builder.build.return_value = MagicMock()
-            mock_service.reason.return_value = (decision, trace)
+            # memory_with_metrics must carry the existing evidence_store so Phase C
+            # can read signals from it (ReasonerService always preserves prior signals).
+            mock_service.reason.return_value = (decision, trace, state.interview_memory)
             result = __import__(
                 "app.graph.nodes.reasoner_node", fromlist=["reasoner_node"]
             ).reasoner_node(state)

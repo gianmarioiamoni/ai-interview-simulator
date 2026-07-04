@@ -68,7 +68,7 @@ def reasoner_node(state: InterviewState) -> InterviewState:
         # EvaluationSignalDetector can bridge them (ADR-052).
         state = _inject_evaluation_signals(state)
         reasoner_input = _builder.build(state)
-        decision, trace = _service.reason(reasoner_input)
+        decision, trace, memory_with_metrics = _service.reason(reasoner_input)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
         logger.info(
@@ -82,7 +82,7 @@ def reasoner_node(state: InterviewState) -> InterviewState:
             decision.skip,
         )
 
-        updated_memory = _append_reasoning_entry(state, decision)
+        updated_memory = _append_reasoning_entry(state, decision, memory_with_metrics)
 
         # ------------------------------------------------------------------
         # Phase C — MIG-02: ObservationExtractor pipeline
@@ -317,8 +317,13 @@ def _run_observation_extraction(
 def _append_reasoning_entry(
     state: InterviewState,
     decision,
+    memory_with_metrics: InterviewMemory,
 ) -> InterviewMemory:
-    """Return updated InterviewMemory with a new ReasoningEntry appended."""
+    """Return updated InterviewMemory with a new ReasoningEntry appended.
+
+    Uses memory_with_metrics (returned by ReasonerService.reason) so that
+    session_metrics updated by _propagate_evidence are preserved (ADR-038).
+    """
     memory = state.interview_memory
     basis = decision.reasoning_basis
 
@@ -340,8 +345,9 @@ def _append_reasoning_entry(
     new_entries = (existing_entries + [entry])[-_MAX_ENTRIES:]
     new_history = ReasoningHistory(entries=new_entries)
 
-    # Propagate new_evidence into evidence_store (immutable append)
-    store = memory.evidence_store
+    # Propagate new_evidence into evidence_store (immutable append).
+    # Use memory_with_metrics as base so session_metrics are already updated.
+    store = memory_with_metrics.evidence_store
     for sig in decision.new_evidence:
         try:
             store = store.append(sig)
@@ -356,8 +362,8 @@ def _append_reasoning_entry(
 
     return InterviewMemory(
         evidence_store=store,
-        coverage_state=memory.coverage_state,
+        coverage_state=memory_with_metrics.coverage_state,
         reasoning_history=new_history,
-        session_metrics=memory.session_metrics,
-        schema_version=memory.schema_version,
+        session_metrics=memory_with_metrics.session_metrics,
+        schema_version=memory_with_metrics.schema_version,
     )

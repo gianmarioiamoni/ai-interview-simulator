@@ -68,15 +68,21 @@ class ReasonerService:
 
     def reason(
         self, reasoner_input: ReasonerInput
-    ) -> tuple[ReasonerDecision, ReasoningTrace]:
+    ) -> tuple[ReasonerDecision, ReasoningTrace, InterviewMemory]:
         """Execute one reasoning cycle.
 
         Returns:
-            (ReasonerDecision, ReasoningTrace) — decision is the primary output;
-            trace is an internal audit record (ADR-041).
+            (ReasonerDecision, ReasoningTrace, InterviewMemory) — decision is the
+            primary output; trace is an internal audit record (ADR-041); the third
+            element is the updated InterviewMemory with correct session_metrics
+            (ADR-038 single-writer invariant).
         """
         if self._should_skip(reasoner_input):
-            return self._skip_decision(reasoner_input), ReasoningTrace()
+            return (
+                self._skip_decision(reasoner_input),
+                ReasoningTrace(),
+                reasoner_input.interview_memory,
+            )
 
         pipeline_start = time.perf_counter()
         detector_results, trace_steps = self._run_detectors(reasoner_input)
@@ -90,7 +96,7 @@ class ReasonerService:
         decision = self._build_decision(reasoner_input, aggregated, updated_memory)
         trace = ReasoningTrace(steps=trace_steps)
 
-        return decision, trace
+        return decision, trace, updated_memory
 
     # ------------------------------------------------------------------
     # Internal pipeline

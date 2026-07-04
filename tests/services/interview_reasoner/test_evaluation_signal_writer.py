@@ -120,7 +120,7 @@ class TestSessionMetricsIncrement:
             interview_memory=memory,
             current_feedback_quality="good",
         )
-        decision, _ = service.reason(inp)
+        decision, _, _ = service.reason(inp)
         # After 1 cycle, questions_answered = 1, reasoning_confidence = 1/3 ≈ 0.33
         conf = decision.reasoning_basis.reasoning_confidence.reasoning_confidence
         assert conf > 0.0
