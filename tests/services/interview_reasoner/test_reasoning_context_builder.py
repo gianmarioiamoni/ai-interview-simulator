@@ -341,17 +341,8 @@ def test_missing_interview_memory_raises(monkeypatch):
         ReasoningContextBuilder().build(state)
 
 
-def test_missing_candidate_profile_raises(monkeypatch):
-    bad_memory = MagicMock(spec=InterviewMemory)
-    del bad_memory.candidate_profile  # AttributeError on access
-    state = _empty_state().model_copy(update={"interview_memory": bad_memory})
-    with pytest.raises((MissingCandidateProfileError, AttributeError, Exception)):
-        ReasoningContextBuilder().build(state)
-
-
 def test_invalid_evidence_store_inaccessible(monkeypatch):
     bad_memory = MagicMock(spec=InterviewMemory)
-    bad_memory.candidate_profile = MagicMock()
     del bad_memory.evidence_store  # AttributeError on access
     state = _empty_state().model_copy(update={"interview_memory": bad_memory})
     with pytest.raises((InvalidEvidenceStoreError, AttributeError, Exception)):

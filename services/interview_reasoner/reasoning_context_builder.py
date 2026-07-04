@@ -27,7 +27,6 @@ def _get_settings():
 from services.interview_reasoner.context_builder_errors import (
     IncoherentQuestionHistoryError,
     InvalidEvidenceStoreError,
-    MissingCandidateProfileError,
     MissingInterviewMemoryError,
 )
 
@@ -50,7 +49,6 @@ class ReasoningContextBuilder:
         Raises:
             MissingInterviewMemoryError: if interview_memory is missing.
             IncoherentQuestionHistoryError: if asked_question_ids > len(questions).
-            MissingCandidateProfileError: if candidate_profile is inaccessible.
             InvalidEvidenceStoreError: if evidence_store has a negative signal count.
         """
         self._validate(state)
@@ -100,13 +98,7 @@ class ReasoningContextBuilder:
         if n_asked > n_available:
             raise IncoherentQuestionHistoryError(n_asked, n_available)
 
-        # 3. CandidateProfile accessible
-        try:
-            _ = state.interview_memory.candidate_profile
-        except AttributeError:
-            raise MissingCandidateProfileError()
-
-        # 4. EvidenceStore valid
+        # 3. EvidenceStore valid
         try:
             count = len(state.interview_memory.evidence_store.signals)
         except AttributeError:
