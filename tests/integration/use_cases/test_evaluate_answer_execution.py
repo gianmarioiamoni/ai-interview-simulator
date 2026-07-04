@@ -2,10 +2,13 @@
 
 # Integration test for execution via LangGraph inside EvaluateAnswerUseCase
 
+import pytest
 from unittest.mock import Mock
 
-from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
+import app.graph.nodes.navigation_node as _nav_module
 from app.graph.interview_graph import build_interview_graph
+from app.graph.nodes.navigation_node import configure_navigation_node
+from app.application.use_cases.evaluate_answer import EvaluateAnswerUseCase
 
 from domain.contracts.ai.ai_hint import AIHint
 from domain.contracts.interview_state import InterviewState
@@ -16,6 +19,13 @@ from tests.factories.interview_state_factory import (
     build_interview_state,
     build_state_with_execution,
 )
+
+
+@pytest.fixture(autouse=True)
+def _configure_node():
+    configure_navigation_node()
+    yield
+    _nav_module._default_navigation_node = None
 
 
 TEST_HINT = AIHint(explanation="test hint", suggestion="check your function name")

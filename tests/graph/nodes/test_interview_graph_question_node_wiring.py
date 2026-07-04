@@ -1,8 +1,11 @@
 # tests/graph/nodes/test_interview_graph_question_node_wiring.py
 
+import pytest
 from unittest.mock import Mock, MagicMock
 
+import app.graph.nodes.navigation_node as _nav_module
 from app.graph.interview_graph import build_interview_graph
+from app.graph.nodes.navigation_node import configure_navigation_node
 from tests.factories.interview_state_factory import build_interview_state
 from domain.contracts.shared.action_type import ActionType
 from domain.contracts.question.question import QuestionType
@@ -16,6 +19,13 @@ def _make_llm_mock() -> Mock:
         content='{"decision": "direct_question", "message": "humanized prompt"}'
     )
     return llm
+
+
+@pytest.fixture(autouse=True)
+def _configure_node():
+    configure_navigation_node()
+    yield
+    _nav_module._default_navigation_node = None
 
 
 def test_question_node_is_registered_in_graph() -> None:

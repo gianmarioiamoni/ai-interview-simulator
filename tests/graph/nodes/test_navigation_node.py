@@ -1,6 +1,14 @@
 # tests/graph/nodes/test_navigation_node.py
+"""Navigation node tests.
 
-from app.graph.nodes.navigation_node import navigation_node
+All tests configure the node via configure_navigation_node() before
+invocation — consistent with the startup contract (PAT-06).
+"""
+
+import pytest
+
+import app.graph.nodes.navigation_node as _nav_module
+from app.graph.nodes.navigation_node import configure_navigation_node, navigation_node
 from tests.factories.interview_state_factory import build_interview_state, build_question
 from domain.contracts.shared.action_type import ActionType
 from domain.contracts.interview.answer import Answer
@@ -10,10 +18,41 @@ from app.contracts.feedback_bundle import FeedbackBundle
 from domain.contracts.question.question import QuestionType
 
 
-def test_navigation_next_moves_forward():
+@pytest.fixture(autouse=True)
+def _configure_node():
+    """Configure the navigation node before every test and reset after."""
+    configure_navigation_node()
+    yield
+    _nav_module._default_navigation_node = None
 
+
+# ---------------------------------------------------------------------------
+# Invariant: unconfigured node must raise RuntimeError
+# ---------------------------------------------------------------------------
+
+
+def test_unconfigured_navigation_node_raises():
+    """PAT-06: navigation_node must raise RuntimeError when not configured."""
+    _nav_module._default_navigation_node = None
     state = build_interview_state()
+    with pytest.raises(RuntimeError, match="configure_navigation_node"):
+        navigation_node(state)
 
+
+def test_legacy_navigation_node_does_not_exist():
+    """_legacy_navigation_node must not exist in the module."""
+    assert not hasattr(_nav_module, "_legacy_navigation_node"), (
+        "_legacy_navigation_node still exists in navigation_node module"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Navigation behaviour (via AdaptiveNavigationNode)
+# ---------------------------------------------------------------------------
+
+
+def test_navigation_next_moves_forward():
+    state = build_interview_state()
     state = state.model_copy(
         update={
             "current_question_index": 0,
@@ -29,9 +68,7 @@ def test_navigation_next_moves_forward():
 
 
 def test_navigation_retry_keeps_same_question():
-
     state = build_interview_state()
-
     state = state.model_copy(
         update={
             "current_question_index": 1,
@@ -47,11 +84,8 @@ def test_navigation_retry_keeps_same_question():
 
 
 def test_navigation_does_not_overflow():
-
     state = build_interview_state()
-
     last_index = len(state.questions) - 1
-
     state = state.model_copy(
         update={
             "current_question_index": last_index,
@@ -65,9 +99,7 @@ def test_navigation_does_not_overflow():
 
 
 def test_navigation_with_no_questions_is_safe():
-
     state = build_interview_state()
-
     state = state.model_copy(update={"questions": []})
 
     new_state = navigation_node(state)
@@ -76,7 +108,6 @@ def test_navigation_with_no_questions_is_safe():
 
 
 def test_navigation_next_captures_last_question_context() -> None:
-
     q1 = build_question(qid="q1", qtype=QuestionType.WRITTEN)
     q2 = build_question(qid="q2", qtype=QuestionType.WRITTEN)
     answer = Answer(question_id="q1", content="My answer", attempt=1)
@@ -109,7 +140,6 @@ def test_navigation_next_captures_last_question_context() -> None:
 
 
 def test_navigation_next_context_none_on_last_question() -> None:
-
     state = build_interview_state()
     last = len(state.questions) - 1
     state = state.model_copy(
@@ -121,12 +151,10 @@ def test_navigation_next_context_none_on_last_question() -> None:
 
     new_state = navigation_node(state)
 
-    # No index advance → no snapshot update
     assert new_state.last_question_context is None
 
 
 def test_navigation_next_clears_question_display_text() -> None:
-
     q1 = build_question(qid="q1", qtype=QuestionType.WRITTEN)
     q2 = build_question(qid="q2", qtype=QuestionType.WRITTEN)
 
@@ -145,8 +173,6 @@ def test_navigation_next_clears_question_display_text() -> None:
 
 
 def test_navigation_next_snapshot_previous_area_populated() -> None:
-    from domain.contracts.interview.interview_area import InterviewArea
-
     q1 = build_question(qid="q1", qtype=QuestionType.WRITTEN)
     q2 = build_question(qid="q2", qtype=QuestionType.WRITTEN)
 

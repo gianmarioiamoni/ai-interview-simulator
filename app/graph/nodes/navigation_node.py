@@ -1,14 +1,10 @@
 # app/graph/nodes/navigation_node.py
 
-from domain.contracts.interview_state import InterviewState
-from domain.contracts.interview_state.last_question_context import LastQuestionContext
-from domain.contracts.shared.action_type import ActionType
-from domain.contracts.user.seniority_level import SeniorityLevel
-
-from app.ui.constants.loader_steps import LoaderStep
-
 from typing import Callable
 
+from domain.contracts.interview_state import InterviewState
+from domain.contracts.interview_state.last_question_context import LastQuestionContext
+from domain.contracts.user.seniority_level import SeniorityLevel
 from domain.contracts.question.question import Question
 
 from services.question_intelligence.lazy_adaptive_interview_service import (
@@ -36,11 +32,20 @@ def configure_navigation_node(
 
 
 def navigation_node(state: InterviewState) -> InterviewState:
+    """LangGraph navigation node.
 
-    if _default_navigation_node is not None:
-        return _default_navigation_node(state)
-
-    return _legacy_navigation_node(state)
+    Invariant (PAT-06): configure_navigation_node() MUST be called before the
+    first graph invocation.  If it has not been called, startup is broken and
+    the graph must not proceed.
+    """
+    if _default_navigation_node is None:
+        raise RuntimeError(
+            "navigation_node: AdaptiveNavigationNode has not been configured. "
+            "Call configure_navigation_node() during application startup before "
+            "invoking the interview graph. "
+            "(PAT-06: LangGraph is the sole runtime orchestrator — no fallback path.)"
+        )
+    return _default_navigation_node(state)
 
 
 def _build_last_question_context(state: InterviewState) -> LastQuestionContext | None:
@@ -70,75 +75,3 @@ def _build_last_question_context(state: InterviewState) -> LastQuestionContext |
     )
 
 
-def _legacy_navigation_node(state: InterviewState) -> InterviewState:
-
-    action = state.intent
-    questions = state.questions or []
-    current_index = state.current_question_index or 0
-
-    if not questions:
-        return state
-
-    last_index = len(questions) - 1
-
-    # ---------------------------------------------------------
-    # RETRY
-    # ---------------------------------------------------------
-    if action == ActionType.RETRY:
-
-        q = state.current_question
-        new_state = state
-
-        if q:
-            new_state = new_state.clear_result_for_question(q.id)
-
-        return new_state.model_copy(
-            update={
-                "awaiting_user_input": True,
-                "last_feedback_bundle": None,
-                "allowed_actions": [],
-                "intent": None,  
-            }
-        )
-
-    # ---------------------------------------------------------
-    # NEXT
-    # ---------------------------------------------------------
-    if action == ActionType.NEXT:
-
-        if current_index < last_index:
-            snapshot = _build_last_question_context(state)
-            return state.model_copy(
-                update={
-                    "current_question_index": current_index + 1,
-                    "last_question_context": snapshot,
-                    "question_display_text": None,
-                    "awaiting_user_input": True,
-                    "last_feedback_bundle": None,
-                    "allowed_actions": [],
-                    "intent": None,  
-                }
-            )
-
-        # LAST QUESTION → stay here
-        return state.model_copy(
-            update={
-                "awaiting_user_input": True,
-                "intent": None,  
-            }
-        )
-
-    # ---------------------------------------------------------
-    # GENERATE REPORT
-    # ---------------------------------------------------------
-    if action == ActionType.GENERATE_REPORT:
-
-        return state.model_copy(
-            update={
-                "awaiting_user_input": False,
-                "intent": None,  
-                "current_step": LoaderStep.GENERATING_REPORT,
-            }
-        )
-
-    return state
