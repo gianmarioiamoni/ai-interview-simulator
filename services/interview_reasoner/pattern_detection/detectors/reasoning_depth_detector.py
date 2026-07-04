@@ -65,7 +65,6 @@ class ReasoningDepthDetector(PatternDetector):
 
     def detect(self, reasoner_input: ReasonerInput) -> DetectorResult:
         store = reasoner_input.interview_memory.evidence_store
-        profile = reasoner_input.interview_memory.candidate_profile
         history = reasoner_input.interview_memory.reasoning_history
         q_idx = reasoner_input.question_index
         area = reasoner_input.current_question_area or "unknown"
