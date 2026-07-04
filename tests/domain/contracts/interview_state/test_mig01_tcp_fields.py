@@ -247,8 +247,8 @@ class TestNoNodeReadsNewFields:
         )
 
     def test_no_node_reads_session_history(self) -> None:
-        # MIG-04: session_close_node is the sole writer of session_history.
-        permitted = {"session_close_node.py"}
+        # session_close_node is the sole writer; report_node is the legitimate reader (MIG-05A).
+        permitted = {"session_close_node.py", "report_node.py"}
         offenders = set(self._nodes_referencing("session_history")) - permitted
         assert offenders == set(), (
             f"Unexpected graph node(s) reference session_history: {offenders}"

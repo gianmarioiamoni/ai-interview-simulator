@@ -212,13 +212,16 @@ class TestArchitecturalGuards:
         return [p for p in nodes_dir.glob("*.py") if not p.name.startswith("test_")]
 
     def test_no_other_node_writes_session_history(self):
-        """Only session_close_node may write session_history."""
+        """Only session_close_node may write session_history.
+        report_node reads session_history (MIG-05A) but never writes it.
+        """
+        permitted_readers = {"session_close_node.py", "report_node.py"}
         for path in self._all_node_sources():
-            if path.name == "session_close_node.py":
+            if path.name in permitted_readers:
                 continue
             source = path.read_text(encoding="utf-8")
             assert "session_history" not in source, (
-                f"{path.name} must not write session_history (single-writer invariant)"
+                f"{path.name} must not reference session_history (single-writer invariant)"
             )
 
     def test_no_other_node_imports_session_close_pipeline(self):

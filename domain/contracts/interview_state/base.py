@@ -31,11 +31,12 @@ from domain.contracts.reasoning.reasoner_decision import ReasonerDecision
 
 # V1.2 TCP imports (PAT-04 — Temporary Construction Placeholders)
 # These types are imported lazily at class level; they do not introduce
-# circular dependencies (verified: all three modules have no path back to
+# circular dependencies (verified: all modules have no path back to
 # interview_state).
 from domain.contracts.observation.observation_store import ObservationStore
 from domain.contracts.reasoning.candidate_profile import CandidateProfile as _CandidateProfileV12
 from domain.contracts.session_history.session_history import SessionHistory
+from domain.contracts.report.report import Report
 
 
 class InterviewStateBase(BaseModel):
@@ -169,6 +170,19 @@ class InterviewStateBase(BaseModel):
             "[V1.2 TCP] Write-once SessionHistory. "
             "Populated by session_close_node (MIG-04). "
             "None until session completion. No V1.1 node reads this field."
+        ),
+    )
+
+    # Populated by report_node (MIG-05) via ReportBuilder.
+    # Sole writer: ReportBuilder (via report_node). Write-once.
+    # Sole reader: UI layer / export pipeline (MIG-05+).
+    # Lifetime: written once at report generation; never mutated.
+    report: Report | None = Field(
+        default=None,
+        description=(
+            "[V1.2 TCP] Immutable Report assembled by report_node (MIG-05). "
+            "Populated from SessionHistory. None until report generation. "
+            "No V1.1 node reads this field."
         ),
     )
 
