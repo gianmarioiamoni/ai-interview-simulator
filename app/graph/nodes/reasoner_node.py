@@ -355,7 +355,7 @@ def _append_reasoning_entry(
             break
 
     return InterviewMemory(
-        candidate_profile=decision.candidate_profile_snapshot,
+        candidate_profile=memory.candidate_profile,
         evidence_store=store,
         coverage_state=memory.coverage_state,
         reasoning_history=new_history,

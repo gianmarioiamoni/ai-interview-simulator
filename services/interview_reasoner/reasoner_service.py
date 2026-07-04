@@ -271,7 +271,6 @@ class ReasonerService:
             follow_up_recommendation=follow_up_rec,
             navigation_recommendation=navigation_rec,
             new_evidence=aggregated.generated_signals,
-            candidate_profile_snapshot=updated_memory.candidate_profile,
             reasoning_basis=basis,
         )
 

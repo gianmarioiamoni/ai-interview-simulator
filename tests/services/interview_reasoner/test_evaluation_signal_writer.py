@@ -121,10 +121,6 @@ class TestSessionMetricsIncrement:
             current_feedback_quality="good",
         )
         decision, _ = service.reason(inp)
-        assert decision.candidate_profile_snapshot is not None
-        # questions_answered must have been incremented in _propagate_evidence
-        # The updated memory is embedded in the decision's profile snapshot context;
-        # we verify via reasoning_confidence which uses the counter.
         # After 1 cycle, questions_answered = 1, reasoning_confidence = 1/3 ≈ 0.33
         conf = decision.reasoning_basis.reasoning_confidence.reasoning_confidence
         assert conf > 0.0

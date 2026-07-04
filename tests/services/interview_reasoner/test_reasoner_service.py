@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import pytest
 
-from domain.contracts.reasoning.candidate_profile import CandidateProfile
 from domain.contracts.reasoning.detector_context import DetectorResult
 from domain.contracts.reasoning.evidence_polarity import EvidencePolarity
 from domain.contracts.reasoning.evidence_signal import EvidenceSignal
@@ -323,10 +322,6 @@ def test_decision_carries_question_index():
     decision, _ = ReasonerService(PatternDetectorRegistry()).reason(inp)
     assert decision.question_index == 5
 
-
-def test_decision_profile_snapshot_present():
-    decision, _ = ReasonerService(PatternDetectorRegistry()).reason(_base_input())
-    assert isinstance(decision.candidate_profile_snapshot, CandidateProfile)
 
 
 # ---------------------------------------------------------------------------
