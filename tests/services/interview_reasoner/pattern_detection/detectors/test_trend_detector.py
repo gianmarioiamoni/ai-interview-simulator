@@ -47,8 +47,7 @@ def test_empty_memory_no_output():
 def test_declining_trend_emits_weakness():
     trace = make_dim_trace(trend=Trend.DECLINING, evidence_count=3)
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
-    memory = InterviewMemory(candidate_profile=profile)
-    inp = make_input(memory=memory)
+    inp = make_input(candidate_profile_v2=profile)
     result = TrendDetector().detect(inp)
     weakness = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
     assert len(weakness) == 1
@@ -61,8 +60,8 @@ def test_declining_trend_strength_scales_with_evidence_count():
     trace_many = make_dim_trace(trend=Trend.DECLINING, evidence_count=10)
     profile_few = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_few})
     profile_many = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_many})
-    r_few = TrendDetector().detect(make_input(memory=InterviewMemory(candidate_profile=profile_few)))
-    r_many = TrendDetector().detect(make_input(memory=InterviewMemory(candidate_profile=profile_many)))
+    r_few = TrendDetector().detect(make_input(candidate_profile_v2=profile_few))
+    r_many = TrendDetector().detect(make_input(candidate_profile_v2=profile_many))
     s_few = r_few.generated_signals[0].strength
     s_many = r_many.generated_signals[0].strength
     assert s_many > s_few
@@ -73,8 +72,7 @@ def test_declining_trend_strength_scales_with_evidence_count():
 def test_improving_trend_emits_strength():
     trace = make_dim_trace(trend=Trend.IMPROVING, evidence_count=3)
     profile = CandidateProfile(dimension_scores={ProfileDimension.COMMUNICATION: trace})
-    memory = InterviewMemory(candidate_profile=profile)
-    result = TrendDetector().detect(make_input(memory=memory))
+    result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     strength = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_STRENGTH]
     assert len(strength) == 1
     assert strength[0].polarity == EvidencePolarity.POSITIVE
@@ -86,8 +84,8 @@ def test_improving_trend_strength_scales_with_evidence_count():
     trace_many = make_dim_trace(trend=Trend.IMPROVING, evidence_count=10)
     profile_few = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_few})
     profile_many = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_many})
-    r_few = TrendDetector().detect(make_input(memory=InterviewMemory(candidate_profile=profile_few)))
-    r_many = TrendDetector().detect(make_input(memory=InterviewMemory(candidate_profile=profile_many)))
+    r_few = TrendDetector().detect(make_input(candidate_profile_v2=profile_few))
+    r_many = TrendDetector().detect(make_input(candidate_profile_v2=profile_many))
     assert r_many.generated_signals[0].strength > r_few.generated_signals[0].strength
 
 
@@ -96,8 +94,7 @@ def test_improving_trend_strength_scales_with_evidence_count():
 def test_stable_trend_emits_strength():
     trace = make_dim_trace(trend=Trend.STABLE)
     profile = CandidateProfile(dimension_scores={ProfileDimension.PROBLEM_SOLVING: trace})
-    memory = InterviewMemory(candidate_profile=profile)
-    result = TrendDetector().detect(make_input(memory=memory))
+    result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     sigs = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_STRENGTH]
     assert len(sigs) == 1
     assert sigs[0].strength == 0.4  # _BASE_POSITIVE_STRENGTH
@@ -108,8 +105,7 @@ def test_stable_trend_emits_strength():
 def test_insufficient_data_no_signal():
     trace = make_dim_trace(trend=Trend.INSUFFICIENT_DATA)
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
-    memory = InterviewMemory(candidate_profile=profile)
-    result = TrendDetector().detect(make_input(memory=memory))
+    result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     assert result.generated_signals == []
 
 
@@ -118,8 +114,7 @@ def test_insufficient_data_no_signal():
 def test_volatile_score_emits_confidence_drop():
     trace = make_dim_trace(trend=Trend.STABLE, average_score=60.0, last_score=80.0)  # deviation 20 > threshold 15
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
-    memory = InterviewMemory(candidate_profile=profile)
-    result = TrendDetector().detect(make_input(memory=memory))
+    result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert len(drops) == 1
 
@@ -127,8 +122,7 @@ def test_volatile_score_emits_confidence_drop():
 def test_non_volatile_score_no_confidence_drop():
     trace = make_dim_trace(trend=Trend.STABLE, average_score=60.0, last_score=65.0)  # deviation 5 < threshold
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
-    memory = InterviewMemory(candidate_profile=profile)
-    result = TrendDetector().detect(make_input(memory=memory))
+    result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
 
@@ -136,8 +130,7 @@ def test_non_volatile_score_no_confidence_drop():
 def test_no_last_score_skips_volatility():
     trace = make_dim_trace(trend=Trend.STABLE, last_score=None)
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
-    memory = InterviewMemory(candidate_profile=profile)
-    result = TrendDetector().detect(make_input(memory=memory))
+    result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
 
@@ -145,8 +138,7 @@ def test_no_last_score_skips_volatility():
 def test_volatility_strength_capped_at_1():
     trace = make_dim_trace(trend=Trend.STABLE, average_score=0.0, last_score=100.0)  # max deviation
     profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
-    memory = InterviewMemory(candidate_profile=profile)
-    result = TrendDetector().detect(make_input(memory=memory))
+    result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert all(e.strength <= 1.0 for e in drops)
 

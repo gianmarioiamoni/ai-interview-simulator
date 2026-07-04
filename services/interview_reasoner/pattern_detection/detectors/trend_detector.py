@@ -54,13 +54,15 @@ class TrendDetector(PatternDetector):
 
     def detect(self, reasoner_input: ReasonerInput) -> DetectorResult:
         store = reasoner_input.interview_memory.evidence_store
-        profile = reasoner_input.interview_memory.candidate_profile
+        # V1.2 profile (ADS-06 Strategy A): one-cycle lag; None on cycle 0.
+        profile_v2 = reasoner_input.candidate_profile_v2
+        dim_scores = profile_v2.dimension_scores if profile_v2 is not None else {}
         history = reasoner_input.interview_memory.reasoning_history
         q_idx = reasoner_input.question_index
         area = reasoner_input.current_question_area or "unknown"
 
-        trend_sigs = self._analyse_dimension_trends(profile.dimension_scores, q_idx, area)
-        volatility_sigs = self._detect_score_volatility(profile.dimension_scores, q_idx, area)
+        trend_sigs = self._analyse_dimension_trends(dim_scores, q_idx, area)
+        volatility_sigs = self._detect_score_volatility(dim_scores, q_idx, area)
         session_drop_sigs = self._detect_session_confidence_drop(history.entries, q_idx, area)
 
         all_sigs = filter_new_signals(trend_sigs + volatility_sigs + session_drop_sigs, store)
