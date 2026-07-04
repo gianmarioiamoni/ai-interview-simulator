@@ -50,6 +50,7 @@ def make_input(
     area: str = "databases",
     memory: InterviewMemory | None = None,
     questions_answered: int = 3,
+    candidate_profile_v2: CandidateProfile | None = None,
 ) -> ReasonerInput:
     if memory is None:
         metrics = SessionMetrics(questions_answered=questions_answered)
@@ -62,6 +63,7 @@ def make_input(
         question_index=question_index,
         interview_memory=memory,
         current_question_area=area,
+        candidate_profile_v2=candidate_profile_v2,
     )
 
 

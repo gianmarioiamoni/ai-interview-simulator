@@ -91,8 +91,8 @@ def test_declining_trend_boosts_strength():
     profile = CandidateProfile(
         dimension_scores={ProfileDimension.PROBLEM_SOLVING: trace}
     )
-    memory = InterviewMemory(evidence_store=store, candidate_profile=profile)
-    inp = make_input(memory=memory)
+    memory = InterviewMemory(evidence_store=store)
+    inp = make_input(memory=memory, candidate_profile_v2=profile)
     result = CoverageDetector().detect(inp)
     ps_sigs = [e for e in result.generated_signals if e.dimension == ProfileDimension.PROBLEM_SOLVING]
     assert len(ps_sigs) == 1
@@ -106,8 +106,8 @@ def test_non_declining_trace_uses_base_strength():
     profile = CandidateProfile(
         dimension_scores={ProfileDimension.PROBLEM_SOLVING: trace}
     )
-    memory = InterviewMemory(evidence_store=store, candidate_profile=profile)
-    inp = make_input(memory=memory)
+    memory = InterviewMemory(evidence_store=store)
+    inp = make_input(memory=memory, candidate_profile_v2=profile)
     result = CoverageDetector().detect(inp)
     ps_sigs = [e for e in result.generated_signals if e.dimension == ProfileDimension.PROBLEM_SOLVING]
     assert ps_sigs[0].strength == 0.5  # _LOW_COVERAGE_SIGNAL_STRENGTH

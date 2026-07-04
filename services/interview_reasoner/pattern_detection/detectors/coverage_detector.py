@@ -57,7 +57,9 @@ class CoverageDetector(PatternDetector):
             return DetectorResult(detector_name=_METADATA.name)
 
         store = reasoner_input.interview_memory.evidence_store
-        profile = reasoner_input.interview_memory.candidate_profile
+        # V1.2 profile (ADS-06 Strategy A): one-cycle lag is intentional and
+        # below the min_evidence_for_trend threshold. None on cycle 0.
+        profile = reasoner_input.candidate_profile_v2
         q_idx = reasoner_input.question_index
         area = reasoner_input.current_question_area or "unknown"
 
@@ -72,7 +74,7 @@ class CoverageDetector(PatternDetector):
 
         for dim in ProfileDimension:
             count = evidence_per_dim[dim]
-            dim_trace = profile.dimension_scores.get(dim)
+            dim_trace = profile.dimension_scores.get(dim) if profile is not None else None
 
             if count == 0:
                 missing_sigs.append(
