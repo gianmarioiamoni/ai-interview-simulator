@@ -310,11 +310,14 @@ class TestTrendDerivation:
 
 
 class TestDominantWeakest:
-    def test_single_dimension_dominant_and_weakest_are_same(self) -> None:
-        f = _feature(FeatureType.TECHNICAL_SKILL, value="HIGH", computed_at=0)
+    def test_single_feature_type_produces_multiple_dimensions(self) -> None:
+        # TECHNICAL_SKILL now maps to TECHNICAL_DEPTH (1.0) and SYSTEM_DESIGN (0.5)
+        f = _feature(FeatureType.TECHNICAL_SKILL, value="HIGH", computed_at=0, confidence=1.0)
         result = _SVC.derive((f,))
-        assert result.dominant_dimension == ProfileDimension.TECHNICAL_DEPTH
-        assert result.weakest_dimension == ProfileDimension.TECHNICAL_DEPTH
+        assert ProfileDimension.TECHNICAL_DEPTH in result.dimension_scores
+        assert ProfileDimension.SYSTEM_DESIGN in result.dimension_scores
+        # Dominant has more evidence or lower score for tie; weakest differs
+        assert result.dominant_dimension != result.weakest_dimension
 
     def test_dominant_is_dimension_with_most_evidence(self) -> None:
         features = (
@@ -349,27 +352,24 @@ class TestDominantWeakest:
 
 
 class TestCoverageAndAreas:
-    def test_coverage_ratio_one_of_five_dimensions(self) -> None:
+    def test_coverage_ratio_one_feature_two_dimensions(self) -> None:
+        # TECHNICAL_SKILL → TECHNICAL_DEPTH + SYSTEM_DESIGN = 2 of 5 dimensions
         f = _feature(FeatureType.TECHNICAL_SKILL, computed_at=0)
         result = _SVC.derive((f,))
-        assert result.coverage_ratio == pytest.approx(round(1 / 5, 4))
+        assert result.coverage_ratio == pytest.approx(round(2 / 5, 4))
 
     def test_coverage_ratio_all_five_dimensions(self) -> None:
-        # Cover all 5 ProfileDimensions:
-        # TECHNICAL_SKILL → TECHNICAL_DEPTH
+        # TECHNICAL_SKILL → TECHNICAL_DEPTH + SYSTEM_DESIGN
         # COMMUNICATION   → COMMUNICATION
-        # REASONING       → PROBLEM_SOLVING + ENGINEERING_JUDGMENT
-        # LEADERSHIP      → ENGINEERING_JUDGMENT + PROBLEM_SOLVING
-        # We still need SYSTEM_DESIGN — no direct mapping in default rules.
-        # Use 4 covered dimensions (0.8) as realistic maximum with current rules.
+        # REASONING       → PROBLEM_SOLVING + ENGINEERING_JUDGMENT + SYSTEM_DESIGN
+        # Together: all 5 dimensions covered
         features = (
             _feature(FeatureType.TECHNICAL_SKILL, computed_at=0, confidence=1.0),
             _feature(FeatureType.COMMUNICATION, computed_at=1, confidence=1.0),
             _feature(FeatureType.REASONING, computed_at=2, confidence=1.0),
         )
         result = _SVC.derive(features)
-        # TECHNICAL_DEPTH, COMMUNICATION, PROBLEM_SOLVING, ENGINEERING_JUDGMENT = 4 of 5
-        assert result.coverage_ratio == pytest.approx(round(4 / 5, 4))
+        assert result.coverage_ratio == pytest.approx(1.0)
 
     def test_areas_covered_sorted(self) -> None:
         features = (

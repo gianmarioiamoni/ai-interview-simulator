@@ -129,7 +129,8 @@ class TestValidators:
             trend_override_max_delta=8.0,
         )
 
-    def test_weight_sum_exceeding_one_raises(self) -> None:
+    def test_same_feature_type_multiple_dimensions_sum_above_one_is_valid(self) -> None:
+        """SR-02: weights are evidence-strength coefficients, not a budget. Sum > 1 is allowed."""
         kwargs = self._minimal_valid_kwargs()
         kwargs["feature_dimension_map"] = (
             FeatureDimensionMapping(
@@ -141,27 +142,26 @@ class TestValidators:
                 feature_type=FeatureType.REASONING,
                 dimension=ProfileDimension.ENGINEERING_JUDGMENT,
                 weight=0.7,
-            ),
-        )
-        with pytest.raises(ValidationError, match="total weight"):
-            CandidateProfileDerivationRules(**kwargs)
-
-    def test_weight_sum_equal_to_one_is_valid(self) -> None:
-        kwargs = self._minimal_valid_kwargs()
-        kwargs["feature_dimension_map"] = (
-            FeatureDimensionMapping(
-                feature_type=FeatureType.REASONING,
-                dimension=ProfileDimension.PROBLEM_SOLVING,
-                weight=0.7,
-            ),
-            FeatureDimensionMapping(
-                feature_type=FeatureType.REASONING,
-                dimension=ProfileDimension.ENGINEERING_JUDGMENT,
-                weight=0.3,
             ),
         )
         rules = CandidateProfileDerivationRules(**kwargs)
         assert rules is not None
+
+    def test_individual_weight_above_one_raises(self) -> None:
+        with pytest.raises(ValidationError):
+            FeatureDimensionMapping(
+                feature_type=FeatureType.TECHNICAL_SKILL,
+                dimension=ProfileDimension.TECHNICAL_DEPTH,
+                weight=1.1,
+            )
+
+    def test_individual_weight_zero_raises(self) -> None:
+        with pytest.raises(ValidationError):
+            FeatureDimensionMapping(
+                feature_type=FeatureType.TECHNICAL_SKILL,
+                dimension=ProfileDimension.TECHNICAL_DEPTH,
+                weight=0.0,
+            )
 
     def test_missing_fallback_in_proxy_table_raises(self) -> None:
         kwargs = self._minimal_valid_kwargs()
@@ -206,22 +206,30 @@ class TestValidators:
 
 
 class TestDefaultRules:
-    def test_version_is_1_2(self, rules: CandidateProfileDerivationRules) -> None:
-        assert rules.rules_version == "1.2"
+    def test_version_is_1_2_1(self, rules: CandidateProfileDerivationRules) -> None:
+        assert rules.rules_version == "1.2.1"
 
     def test_technical_skill_maps_to_technical_depth_weight_1(
         self, rules: CandidateProfileDerivationRules
     ) -> None:
-        entries = [
-            e
-            for e in rules.feature_dimension_map
+        entry = next(
+            e for e in rules.feature_dimension_map
             if e.feature_type == FeatureType.TECHNICAL_SKILL
-        ]
-        assert len(entries) == 1
-        assert entries[0].dimension == ProfileDimension.TECHNICAL_DEPTH
-        assert entries[0].weight == 1.0
+            and e.dimension == ProfileDimension.TECHNICAL_DEPTH
+        )
+        assert entry.weight == 1.0
 
-    def test_reasoning_splits_to_two_dimensions(
+    def test_technical_skill_maps_to_system_design_weight_0_5(
+        self, rules: CandidateProfileDerivationRules
+    ) -> None:
+        entry = next(
+            e for e in rules.feature_dimension_map
+            if e.feature_type == FeatureType.TECHNICAL_SKILL
+            and e.dimension == ProfileDimension.SYSTEM_DESIGN
+        )
+        assert entry.weight == pytest.approx(0.5)
+
+    def test_reasoning_maps_to_three_dimensions(
         self, rules: CandidateProfileDerivationRules
     ) -> None:
         entries = {
@@ -231,6 +239,19 @@ class TestDefaultRules:
         }
         assert entries[ProfileDimension.PROBLEM_SOLVING] == pytest.approx(0.7)
         assert entries[ProfileDimension.ENGINEERING_JUDGMENT] == pytest.approx(0.3)
+        assert entries[ProfileDimension.SYSTEM_DESIGN] == pytest.approx(0.4)
+
+    def test_system_design_has_two_producers(
+        self, rules: CandidateProfileDerivationRules
+    ) -> None:
+        producers = [
+            e for e in rules.feature_dimension_map
+            if e.dimension == ProfileDimension.SYSTEM_DESIGN
+        ]
+        producer_types = {e.feature_type for e in producers}
+        assert FeatureType.TECHNICAL_SKILL in producer_types
+        assert FeatureType.REASONING in producer_types
+        assert len(producers) == 2
 
     def test_learning_splits_correctly(
         self, rules: CandidateProfileDerivationRules
@@ -313,22 +334,26 @@ class TestDefaultRules:
 
 
 class TestWeightInvariants:
-    def test_all_feature_types_weight_sum_at_most_one(
+    def test_individual_weights_in_valid_range(
         self, rules: CandidateProfileDerivationRules
     ) -> None:
-        by_feature: dict[FeatureType, float] = {}
+        """SR-02: each weight must be in (0.0, 1.0]. No cross-entry sum constraint."""
         for entry in rules.feature_dimension_map:
-            by_feature[entry.feature_type] = (
-                by_feature.get(entry.feature_type, 0.0) + entry.weight
+            assert 0.0 < entry.weight <= 1.0, (
+                f"{entry.feature_type.value}→{entry.dimension.value} weight "
+                f"{entry.weight} not in (0.0, 1.0]"
             )
-        for ft, total in by_feature.items():
-            assert total <= 1.0 + 1e-9, f"{ft.value} weight sum {total} > 1.0"
 
-    def test_individual_weights_positive(
+    def test_no_cross_entry_sum_constraint(
         self, rules: CandidateProfileDerivationRules
     ) -> None:
-        for entry in rules.feature_dimension_map:
-            assert entry.weight > 0.0
+        """SR-02: sum of weights per FeatureType may legitimately exceed 1.0."""
+        ts_total = sum(
+            e.weight for e in rules.feature_dimension_map
+            if e.feature_type == FeatureType.TECHNICAL_SKILL
+        )
+        # TECHNICAL_SKILL → TECHNICAL_DEPTH (1.0) + SYSTEM_DESIGN (0.5) = 1.5 > 1.0
+        assert ts_total > 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -341,15 +366,15 @@ class TestSerialization:
         self, rules: CandidateProfileDerivationRules
     ) -> None:
         data = rules.model_dump()
-        assert data["rules_version"] == "1.2"
+        assert data["rules_version"] == "1.2.1"
         assert isinstance(data["feature_dimension_map"], (list, tuple))
 
     def test_model_dump_json_round_trip(
         self, rules: CandidateProfileDerivationRules
     ) -> None:
         json_str = rules.model_dump_json()
-        assert "1.2" in json_str
-        assert "TECHNICAL_DEPTH" in json_str or "technical_depth" in json_str
+        assert "1.2.1" in json_str
+        assert "technical_depth" in json_str or "TECHNICAL_DEPTH" in json_str
 
     def test_default_called_twice_returns_equal_objects(self) -> None:
         r1 = CandidateProfileDerivationRules.default()

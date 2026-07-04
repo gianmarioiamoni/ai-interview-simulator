@@ -87,21 +87,6 @@ class CandidateProfileDerivationRules(BaseModel):
     # ------------------------------------------------------------------
 
     @model_validator(mode="after")
-    def _validate_weight_sums(self) -> "CandidateProfileDerivationRules":
-        """Per-FeatureType weight sum must be ≤ 1.0."""
-        by_feature: dict[FeatureType, float] = {}
-        for entry in self.feature_dimension_map:
-            by_feature[entry.feature_type] = (
-                by_feature.get(entry.feature_type, 0.0) + entry.weight
-            )
-        for ft, total in by_feature.items():
-            if total > 1.0 + 1e-9:
-                raise ValueError(
-                    f"FeatureType {ft.value} has total weight {total:.4f} > 1.0"
-                )
-        return self
-
-    @model_validator(mode="after")
     def _validate_value_proxy_fallback(self) -> "CandidateProfileDerivationRules":
         """Exactly one fallback entry must exist (value_string == '*')."""
         fallbacks = [e for e in self.value_proxy_table if e.value_string == "*"]
@@ -131,7 +116,7 @@ class CandidateProfileDerivationRules(BaseModel):
     def default(cls) -> "CandidateProfileDerivationRules":
         """Return the official V1.2 immutable rules instance."""
         return cls(
-            rules_version="1.2",
+            rules_version="1.2.1",
             feature_dimension_map=(
                 # TECHNICAL_SKILL → TECHNICAL_DEPTH (weight 1.0)
                 FeatureDimensionMapping(
@@ -205,6 +190,18 @@ class CandidateProfileDerivationRules(BaseModel):
                     feature_type=FeatureType.LANGUAGE_CAPABILITY,
                     dimension=ProfileDimension.COMMUNICATION,
                     weight=0.5,
+                ),
+                # TECHNICAL_SKILL → SYSTEM_DESIGN (0.5) — secondary signal (SR-02)
+                FeatureDimensionMapping(
+                    feature_type=FeatureType.TECHNICAL_SKILL,
+                    dimension=ProfileDimension.SYSTEM_DESIGN,
+                    weight=0.5,
+                ),
+                # REASONING → SYSTEM_DESIGN (0.4) — system design is reasoning-intensive (SR-02)
+                FeatureDimensionMapping(
+                    feature_type=FeatureType.REASONING,
+                    dimension=ProfileDimension.SYSTEM_DESIGN,
+                    weight=0.4,
                 ),
             ),
             value_proxy_table=(
