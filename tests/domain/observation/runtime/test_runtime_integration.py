@@ -15,7 +15,6 @@ from domain.observation.runtime.observation_delta import ObservationDelta
 from domain.observation.runtime.observation_ordering import ObservationOrdering, ObservationOrderingPolicy
 from domain.observation.runtime.observation_statistics import ObservationStatistics
 from domain.observation.runtime.observation_store_query_engine import ObservationStoreQueryEngine
-from domain.observation.runtime.observation_store_snapshot_builder import ObservationStoreSnapshotBuilder
 from tests.domain.observation.runtime.test_observation_store_query_engine import _Store
 from tests.domain.observation.runtime.conftest import make_obs, SESSION
 
@@ -57,9 +56,8 @@ class TestRuntimePipeline:
         added_ids = {o.id.value for o in delta.added}
         assert new_obs.id.value in added_ids
 
-    def test_snapshot_builder_ordering_invariant(self, populated_store: _Store):
-        builder = ObservationStoreSnapshotBuilder(populated_store)
-        snap = builder.full()
+    def test_store_snapshot_ordering_invariant(self, populated_store: _Store):
+        snap = populated_store.snapshot()
         assert ObservationOrdering.is_chronological(snap.observations)
 
     def test_collection_filter_statistics_consistent(self, populated_store: _Store):
@@ -68,10 +66,12 @@ class TestRuntimePipeline:
         stats = ObservationStatistics.from_observations(list(col.all))
         assert stats.distinct_types == 1
 
-    def test_snapshot_active_only_matches_engine_active(self, populated_store: _Store):
+    def test_engine_active_count_consistent_with_snapshot(self, populated_store: _Store):
         engine = ObservationStoreQueryEngine(populated_store)
-        builder = ObservationStoreSnapshotBuilder(populated_store)
-
+        snap = populated_store.snapshot()
         engine_active_count = engine.count_active()
-        snap_active = builder.active_only()
-        assert snap_active.total_count == engine_active_count
+        snap_active_count = sum(
+            1 for o in snap.observations
+            if o.status.value == "active"
+        )
+        assert snap_active_count == engine_active_count

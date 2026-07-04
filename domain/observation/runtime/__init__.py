@@ -8,7 +8,6 @@ from domain.observation.runtime.observation_collection import ObservationCollect
 from domain.observation.runtime.observation_statistics import ObservationStatistics
 from domain.observation.runtime.observation_delta import ObservationDelta
 from domain.observation.runtime.observation_store_query_engine import ObservationStoreQueryEngine
-from domain.observation.runtime.observation_store_snapshot_builder import ObservationStoreSnapshotBuilder
 
 __all__ = [
     "ObservationBatch",
@@ -19,5 +18,4 @@ __all__ = [
     "ObservationStatistics",
     "ObservationDelta",
     "ObservationStoreQueryEngine",
-    "ObservationStoreSnapshotBuilder",
 ]

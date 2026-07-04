@@ -1,6 +1,6 @@
 # tests/domain/contracts/feature/test_feature_runtime_layer.py
 # E01-M4 — FeatureBatch, FeatureCollection, FeatureStatistics, FeatureDelta,
-#           FeatureFilter, FeatureOrdering, FeatureComparison, FeatureSnapshotBuilder
+#           FeatureFilter, FeatureOrdering, FeatureComparison
 
 import pytest
 
@@ -24,7 +24,6 @@ from domain.contracts.feature.feature_quality import (
     STABILITY_UNSTABLE,
     STABILITY_EMERGING,
 )
-from domain.contracts.feature.feature_snapshot_builder import FeatureSnapshotBuilder
 from domain.contracts.feature.feature_statistics import FeatureStatistics
 from domain.contracts.feature.feature_type import FeatureType
 from domain.contracts.feature.profile_feature import ProfileFeature
@@ -408,33 +407,3 @@ class TestFeatureCollectionComparison:
         assert len(result.degraded) == 1
 
 
-# ===========================================================================
-# FeatureSnapshotBuilder
-# ===========================================================================
-
-
-class TestFeatureSnapshotBuilder:
-    def test_build_from_tuple(self, reasoning_feature, confidence_feature):
-        snapshot = FeatureSnapshotBuilder.build(
-            features=(reasoning_feature, confidence_feature),
-            session_id="session-1",
-            question_index=3,
-        )
-        assert snapshot.session_id == "session-1"
-        assert snapshot.question_index == 3
-        assert snapshot.collection.size == 2
-        assert snapshot.statistics.total_count == 2
-
-    def test_empty_snapshot(self):
-        snapshot = FeatureSnapshotBuilder.empty(session_id="s", question_index=0)
-        assert snapshot.collection.is_empty
-        assert snapshot.statistics.total_count == 0
-
-    def test_repr(self, reasoning_feature):
-        snapshot = FeatureSnapshotBuilder.build(
-            features=(reasoning_feature,),
-            session_id="s-1",
-            question_index=2,
-        )
-        assert "s-1" in repr(snapshot)
-        assert "q=2" in repr(snapshot)

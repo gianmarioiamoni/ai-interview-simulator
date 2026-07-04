@@ -39,9 +39,8 @@ class CandidateProfileBuilder:
         self._questions_answered: int = 0
         self._areas_covered: list[str] = []
         self._last_updated_at_question_index: int = -1
-        # MIG-02.5: V1.2 ProfileFeature[] from FeatureEngine (ADR-018, ADR-020).
-        # Stored internally; surfaced via KnowledgePipelineResult.features.
-        # CandidateProfile schema does not yet carry them directly (MIG-03+).
+        # V1.2 (RS-02A, ADR-018, ADR-020): ProfileFeature[] from FeatureEngine.
+        # Stored internally and emitted into CandidateProfile.features via build().
         self._profile_features: tuple[ProfileFeature, ...] = ()
 
     # ------------------------------------------------------------------
@@ -117,7 +116,11 @@ class CandidateProfileBuilder:
 
     @classmethod
     def from_profile(cls, profile: CandidateProfile) -> "CandidateProfileBuilder":
-        """Seed a new builder with the state of an existing profile."""
+        """Seed a new builder with the state of an existing profile.
+
+        Restores profile.features so the next build() cycle preserves accumulated
+        ProfileFeature[] (RS-02A, ADR-020).
+        """
         builder = cls()
         builder._dimension_scores = dict(profile.dimension_scores)
         builder._signals = dict(profile.signals)

@@ -15,7 +15,7 @@ class CoachingSnapshot:
 
     Combines CoachingCollection + CoachingStatistics.
     Immutable after construction. Not a Pydantic model — lightweight runtime
-    value object (mirrors FeatureSnapshot pattern from ADR-025).
+    value object.
     """
 
     __slots__ = ("_collection", "_statistics", "_question_index", "_session_id")
@@ -60,7 +60,6 @@ class CoachingBuilder:
     """Assembles a CoachingSnapshot from coaching runtime objects.
 
     Pure factory — no state, no narrative generation, no CandidateProfile mutation.
-    Follows FeatureSnapshotBuilder pattern (ADR-025).
     """
 
     @staticmethod

@@ -16,7 +16,6 @@ RUNTIME_MODULES = [
     "domain.observation.runtime.observation_statistics",
     "domain.observation.runtime.observation_delta",
     "domain.observation.runtime.observation_store_query_engine",
-    "domain.observation.runtime.observation_store_snapshot_builder",
 ]
 
 FORBIDDEN_IMPORTS = [
@@ -56,7 +55,6 @@ class TestRuntimeLayerBoundaries:
             ObservationStatistics,
             ObservationDelta,
             ObservationStoreQueryEngine,
-            ObservationStoreSnapshotBuilder,
         )
         # All symbols must be importable without error — reaching here is the assertion.
 

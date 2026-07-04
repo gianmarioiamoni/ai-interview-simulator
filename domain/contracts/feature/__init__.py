@@ -30,7 +30,6 @@ from domain.contracts.feature.feature_delta import DeltaDirection, FeatureDelta,
 from domain.contracts.feature.feature_filter import FeatureFilter, FeaturePredicate
 from domain.contracts.feature.feature_ordering import FeatureOrdering, FeatureSortKey
 from domain.contracts.feature.feature_comparison import FeatureComparison, FeatureCollectionComparison
-from domain.contracts.feature.feature_snapshot_builder import FeatureSnapshot, FeatureSnapshotBuilder
 
 __all__ = [
     "STABILITY_STABLE",
@@ -65,6 +64,4 @@ __all__ = [
     "FeatureSortKey",
     "FeatureComparison",
     "FeatureCollectionComparison",
-    "FeatureSnapshot",
-    "FeatureSnapshotBuilder",
 ]
