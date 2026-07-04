@@ -214,7 +214,6 @@ class ReasonerService:
         })
 
         return InterviewMemory(
-            candidate_profile=memory.candidate_profile,
             evidence_store=store,
             coverage_state=memory.coverage_state,
             reasoning_history=memory.reasoning_history,

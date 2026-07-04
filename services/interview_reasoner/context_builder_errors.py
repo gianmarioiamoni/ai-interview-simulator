@@ -27,15 +27,6 @@ class IncoherentQuestionHistoryError(ContextBuilderError):
         self.available = available
 
 
-class MissingCandidateProfileError(ContextBuilderError):
-    """Raised when CandidateProfile inside InterviewMemory cannot be accessed."""
-
-    def __init__(self) -> None:
-        super().__init__(
-            "CandidateProfile is unavailable inside InterviewMemory."
-        )
-
-
 class InvalidEvidenceStoreError(ContextBuilderError):
     """Raised when EvidenceStore inside InterviewMemory is in an invalid state."""
 

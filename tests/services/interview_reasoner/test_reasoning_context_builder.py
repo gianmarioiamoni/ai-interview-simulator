@@ -22,7 +22,6 @@ from domain.contracts.user.role import Role, RoleType
 from services.interview_reasoner.context_builder_errors import (
     IncoherentQuestionHistoryError,
     InvalidEvidenceStoreError,
-    MissingCandidateProfileError,
     MissingInterviewMemoryError,
 )
 from services.interview_reasoner.reasoning_context_builder import ReasoningContextBuilder
@@ -362,11 +361,6 @@ def test_incoherent_history_error_message():
     err = IncoherentQuestionHistoryError(3, 1)
     assert "3" in str(err)
     assert "1" in str(err)
-
-
-def test_missing_candidate_profile_error_message():
-    err = MissingCandidateProfileError()
-    assert "CandidateProfile" in str(err)
 
 
 def test_invalid_evidence_store_error_message():

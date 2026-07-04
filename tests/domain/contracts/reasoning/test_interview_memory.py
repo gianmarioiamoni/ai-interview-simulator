@@ -4,7 +4,6 @@ import pytest
 from pydantic import ValidationError
 
 from domain.contracts.reasoning.interview_memory import InterviewMemory
-from domain.contracts.reasoning.candidate_profile import CandidateProfile
 from domain.contracts.reasoning.evidence_store import EvidenceStore
 from domain.contracts.reasoning.coverage_state import CoverageState
 from domain.contracts.reasoning.reasoning_history import ReasoningHistory
@@ -13,7 +12,6 @@ from domain.contracts.reasoning.session_metrics import SessionMetrics
 
 def test_defaults():
     mem = InterviewMemory()
-    assert isinstance(mem.candidate_profile, CandidateProfile)
     assert isinstance(mem.evidence_store, EvidenceStore)
     assert isinstance(mem.coverage_state, CoverageState)
     assert isinstance(mem.reasoning_history, ReasoningHistory)
@@ -32,10 +30,9 @@ def test_extra_fields_forbidden():
         InterviewMemory(unknown="x")
 
 
-def test_five_substructures_only():
+def test_four_substructures_only():
     fields = set(InterviewMemory.model_fields.keys())
     expected = {
-        "candidate_profile",
         "evidence_store",
         "coverage_state",
         "reasoning_history",

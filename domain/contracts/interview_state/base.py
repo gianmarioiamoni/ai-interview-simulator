@@ -148,9 +148,7 @@ class InterviewStateBase(BaseModel):
     # Sole writer: CandidateProfileBuilder (via FeatureEngine / KnowledgePipeline).
     # Sole reader: NarrativeGenerator, CoachingEngine, SessionClosePipeline.
     # Lifetime: session-scoped; updated each reasoning cycle (MIG-03+).
-    # Type: same CandidateProfile contract as V1.1; populated via ProfileFeature[]
-    #       path (FeatureEngine → CandidateProfileBuilder) rather than
-    #       CandidateProfileEngine (dimension_scores) path.
+    # Populated via ProfileFeature[] path (FeatureEngine → CandidateProfileBuilder).
     candidate_profile_v2: _CandidateProfileV12 | None = Field(
         default=None,
         description=(

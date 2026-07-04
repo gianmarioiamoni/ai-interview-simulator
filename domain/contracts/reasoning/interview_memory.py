@@ -2,7 +2,6 @@
 
 from pydantic import BaseModel, Field
 
-from domain.contracts.reasoning.candidate_profile import CandidateProfile
 from domain.contracts.reasoning.coverage_state import CoverageState
 from domain.contracts.reasoning.evidence_store import EvidenceStore
 from domain.contracts.reasoning.reasoning_history import ReasoningHistory
@@ -12,16 +11,13 @@ from domain.contracts.reasoning.session_metrics import SessionMetrics
 class InterviewMemory(BaseModel):
     """Session-scoped accumulated intelligence owned by InterviewReasoner.
 
-    Composed of five independent immutable substructures (ADR-038).
+    Composed of four independent immutable substructures (ADR-038).
     Supersedes InterviewMemoryContext (deprecated M2, removed M3, ADR-032).
 
     Single-writer: InterviewReasoner.
     All other components read it; none write to it directly.
     """
 
-    candidate_profile: CandidateProfile = Field(
-        default_factory=CandidateProfile
-    )
     evidence_store: EvidenceStore = Field(
         default_factory=EvidenceStore
     )
