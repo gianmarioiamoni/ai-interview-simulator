@@ -56,13 +56,11 @@ def test_interview_state_current_reasoning_decision_default_none():
     assert state.current_reasoning_decision is None
 
 
-def test_interview_memory_context_still_present():
-    """InterviewMemoryContext must still be on InterviewState (deprecated, not removed)."""
+def test_interview_memory_context_removed():
+    """InterviewMemoryContext (ADR-032) must no longer exist on InterviewState."""
     from domain.contracts.interview_state.base import InterviewStateBase
     fields = InterviewStateBase.model_fields
-    assert "memory_context" in fields or "interview_memory_context" not in {
-        k for k in fields if "memory" in k and "interview_memory" not in k
-    }
+    assert "memory_context" not in fields
 
 
 def test_interview_state_existing_follow_up_fields_preserved():

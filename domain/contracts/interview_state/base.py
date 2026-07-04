@@ -14,8 +14,6 @@ from domain.contracts.interview.interview_cost_metrics import InterviewCostMetri
 from domain.contracts.interview.interview_metrics import InterviewMetrics
 from domain.contracts.user.role import Role
 from domain.contracts.shared.action_type import ActionType
-from domain.contracts.interview.interview_memory_context import InterviewMemoryContext
-
 from services.question_corpus.contracts.interview_retrieval_memory import (
     InterviewRetrievalMemory,
 )
@@ -68,8 +66,6 @@ class InterviewStateBase(BaseModel):
     current_question_index: int = 0
 
     awaiting_user_input: bool = False
-
-    memory_context: InterviewMemoryContext = Field(default_factory=InterviewMemoryContext)
 
     retrieval_memory: InterviewRetrievalMemory = Field(
         default_factory=InterviewRetrievalMemory,
@@ -183,10 +179,6 @@ class InterviewStateBase(BaseModel):
             "No V1.1 node reads this field."
         ),
     )
-
-    # DEPRECATED (V1.1 M2) — use interview_memory instead.
-    # Still populated by AdaptiveInterviewMemoryBridge for backward compat.
-    # Will be removed in M3 (ADR-032).
 
     allowed_actions: list[ActionType] = Field(default_factory=list)
 

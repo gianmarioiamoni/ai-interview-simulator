@@ -17,9 +17,6 @@ from services.question_corpus.contracts.interview_retrieval_memory import (
 from services.question_corpus.retrieval.interview_memory_updater import (
     InterviewMemoryUpdater,
 )
-from services.question_intelligence.adaptive_interview_memory_bridge import (
-    AdaptiveInterviewMemoryBridge,
-)
 from services.question_intelligence.lazy_adaptive_interview_service import (
     LazyAdaptiveInterviewService,
 )
@@ -79,7 +76,9 @@ def test_memory_updater_records_evaluation_signals() -> None:
     assert len(updated.difficulty_history) == 1
 
 
-def test_memory_bridge_updates_from_evaluation() -> None:
+def test_adaptive_navigation_updates_retrieval_memory_from_evaluation() -> None:
+    """Retrieval memory update logic (formerly AdaptiveInterviewMemoryBridge) is
+    inlined into AdaptiveNavigationNode — verify it still updates correctly."""
 
     question = _written_question(InterviewArea.TECH_CODING, "q-code")
     result = QuestionResult(
@@ -92,15 +91,20 @@ def test_memory_bridge_updates_from_evaluation() -> None:
             feedback="Strong answer",
         ),
     )
-
-    updated = AdaptiveInterviewMemoryBridge().update_from_question_result(
-        memory=InterviewRetrievalMemory(),
-        question=question,
-        result=result,
+    state = _build_adaptive_state(
+        questions=[question, _written_question(InterviewArea.TECH_BACKGROUND, "q-2")],
+        planned_areas=[InterviewArea.TECH_CODING.value, InterviewArea.TECH_BACKGROUND.value],
+        intent=ActionType.NEXT,
+    )
+    state = state.model_copy(
+        update={"results_by_question": {"q-code": result}}
     )
 
-    assert updated.strong_domains == [SqlDomain.TECHNICAL_DATABASE]
-    assert updated.average_score == 0.9
+    node = AdaptiveNavigationNode()
+    new_state = node(state)
+
+    assert new_state.retrieval_memory.average_score == 0.9
+    assert SqlDomain.TECHNICAL_DATABASE in new_state.retrieval_memory.strong_domains
 
 
 def test_adaptive_navigation_generates_next_question_on_next() -> None:

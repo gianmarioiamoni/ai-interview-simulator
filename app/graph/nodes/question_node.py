@@ -14,7 +14,6 @@ from services.humanizer.contracts.humanizer_decision import HumanizerDecision
 from services.humanizer.humanizer_service import HumanizerService
 from services.humanizer.follow_up.follow_up_prompt_input import FollowUpPromptInput
 from services.humanizer.follow_up.follow_up_parse_error import FollowUpParseError
-from services.interview_memory.interview_memory_updater import InterviewMemoryUpdater
 from infrastructure.config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -158,8 +157,6 @@ def build_question_node(llm):
         follow_up_enabled=settings.humanizer_follow_up_enabled,
     )
 
-    memory_updater = InterviewMemoryUpdater()
-
     def question_node(state: InterviewState) -> InterviewState:
 
         question = state.current_question
@@ -223,17 +220,12 @@ def build_question_node(llm):
                 _log_attempt(attempt)
 
             if attempt.accepted:
-                updated_memory = memory_updater.update_after_question(
-                    memory=state.memory_context,
-                    question=question,
-                )
                 return state.model_copy(
                     update={
                         "chat_history": state.chat_history + [attempt.follow_up_text],
                         "question_display_text": attempt.follow_up_text,
                         "follow_up_count": state.follow_up_count + 1,
                         "last_humanizer_follow_up": True,
-                        "memory_context": updated_memory,
                         "events": list(state.events) + extra_events,
                     }
                 )
@@ -292,18 +284,12 @@ def build_question_node(llm):
 
         new_history = state.chat_history + [humanized_text]
 
-        updated_memory = memory_updater.update_after_question(
-            memory=state.memory_context,
-            question=question,
-        )
-
         return state.model_copy(
             update={
                 "chat_history": new_history,
                 "question_display_text": humanized_text,
                 "follow_up_count": follow_up_count,
                 "last_humanizer_follow_up": is_follow_up,
-                "memory_context": updated_memory,
                 "events": list(state.events) + extra_events,
             }
         )
