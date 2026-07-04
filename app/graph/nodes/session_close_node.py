@@ -1,21 +1,21 @@
 # app/graph/nodes/session_close_node.py
-"""SessionCloseNode — MIG-04, RS-02B, MIG-08A (PAT-06: LangGraph sole orchestrator).
+"""SessionCloseNode — MIG-04, RS-02B, MIG-08A, MIG-08B (PAT-06: LangGraph sole orchestrator).
 
 Responsibilities (orchestration only):
 1. Idempotency guard: return immediately if state.session_history is not None.
 2. Read ProfileFeature[] from state.candidate_profile_v2.features (RS-02A).
 3. Generate Narrative via NarrativeGenerator (MIG-08A; sole Narrative producer).
-4. Assemble KnowledgeSnapshot via KnowledgeSnapshotBuilder.
-5. Assemble SessionCloseContext from InterviewState fields.
-6. Run SessionClosePipeline.run(context) — sole invocation per session.
-7. Write state.session_history on success.
+4. Generate CoachingSnapshot via CoachingEngine (MIG-08B; sole CoachingSnapshot producer).
+5. Assemble KnowledgeSnapshot via KnowledgeSnapshotBuilder.
+6. Assemble SessionCloseContext from InterviewState fields.
+7. Run SessionClosePipeline.run(context) — sole invocation per session.
+8. Write state.session_history on success.
 
 RS-02B: KnowledgePipeline is NOT executed here. Features come from
 state.candidate_profile_v2.features (ADS-01 Strategy A, ADR-018, ADR-020).
 
-MIG-08A: NarrativeGenerator replaces the structural stub. No LLM — deterministic
-placeholder prose (same engine, production contract). Failure is non-fatal: falls
-back to stub narrative so close always succeeds.
+MIG-08A: NarrativeGenerator replaces stub. Failure falls back to stub.
+MIG-08B: CoachingEngine replaces CoachingBuilder.empty(). Failure falls back to empty.
 
 Sole writer: this node only. SessionClosePipeline never writes state.
 """
@@ -46,6 +46,8 @@ from domain.contracts.session_history.session_history import (
     TranscriptEntry,
 )
 from domain.profile.candidate_profile_builder import CandidateProfileBuilder
+from services.coaching_engine.coaching_context import CoachingContext
+from services.coaching_engine.coaching_engine import CoachingEngine
 from services.narrative_generator.narrative_generation_context import NarrativeGenerationContext
 from services.narrative_generator.narrative_generator import NarrativeGenerator
 from services.session_close.session_close_context import SessionCloseContext
@@ -72,6 +74,9 @@ _pipeline = SessionClosePipeline()
 
 # Singleton NarrativeGenerator — stateless, safe to share (MIG-08A).
 _narrative_generator = NarrativeGenerator()
+
+# Singleton CoachingEngine — stateless, safe to share (MIG-08B).
+_coaching_engine = CoachingEngine()
 
 # Default coding language when no LanguageProfile exists on state (V1.2 gap).
 _DEFAULT_LANG = ProgrammingLanguage(
@@ -161,9 +166,11 @@ def _build_knowledge_snapshot(
         mean_confidence=_mean_confidence(features),
     )
 
-    coaching_snapshot = CoachingBuilder.empty(
+    coaching_snapshot = _generate_coaching_snapshot(
+        state=state,
+        features=features,
         session_id=session_id,
-        question_index=state.current_question_index,
+        candidate_identity_id=candidate_identity_id,
     )
 
     narrative = _generate_narrative(
@@ -311,6 +318,51 @@ def _build_stub_narrative() -> Narrative:
         .with_recommendations(_section(NarrativeSectionType.RECOMMENDATIONS))
         .build()
     )
+
+
+def _generate_coaching_snapshot(
+    state: InterviewState,
+    features: tuple[ProfileFeature, ...],
+    session_id: str,
+    candidate_identity_id: str,
+) -> "CoachingSnapshot":
+    """Generate CoachingSnapshot via CoachingEngine (MIG-08B — sole CoachingSnapshot producer).
+
+    Builds CoachingContext from available state artifacts without invoking
+    FeatureEngine, KnowledgePipeline, or ObservationExtractor.
+    Falls back to CoachingBuilder.empty() on failure (non-fatal; close always succeeds).
+    """
+    try:
+        profile = state.candidate_profile_v2 or CandidateProfileBuilder().build()
+        ctx = CoachingContext(
+            session_id=session_id,
+            candidate_identity_id=candidate_identity_id,
+            question_index=state.current_question_index,
+            profile=profile,
+            features=features,
+            interview_role=str(state.role.type.value),
+            interview_topic=state.interview_type.value,
+        )
+        result = _coaching_engine.run(ctx)
+        if result.is_successful:
+            logger.debug(
+                "_generate_coaching_snapshot succeeded | session=%s objectives=%d",
+                session_id,
+                result.objective_count,
+            )
+            return result.snapshot
+        logger.warning(
+            "_generate_coaching_snapshot unsuccessful — using empty | session=%s reason=%s",
+            session_id,
+            result.failure_reason,
+        )
+    except Exception as exc:
+        logger.warning(
+            "_generate_coaching_snapshot exception — using empty | session=%s error=%s",
+            session_id,
+            type(exc).__name__,
+        )
+    return CoachingBuilder.empty(session_id=session_id, question_index=state.current_question_index)
 
 
 def _build_language_profile(session_id: str) -> LanguageProfile:
