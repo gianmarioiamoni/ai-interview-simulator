@@ -6,9 +6,8 @@ Responsibilities:
 2. Run all enabled PatternDetectors in priority order.
 3. Aggregate DetectorResult → PatternDetectionResult.
 4. Propagate new EvidenceSignals to InterviewMemory.evidence_store (immutable update).
-5. Update CandidateProfile via CandidateProfileEngine (M2-6C).
-6. Build a ReasonerDecision with full ReasoningBasis.
-7. Produce an internal ReasoningTrace for debuggability (ADR-041, ADR-047).
+5. Build a ReasonerDecision with full ReasoningBasis.
+6. Produce an internal ReasoningTrace for debuggability (ADR-041, ADR-047).
 
 No LLM calls. Fully deterministic. O(n) per detector call.
 """
@@ -22,7 +21,6 @@ from app.core.logger import get_logger
 
 _logger = get_logger(__name__)
 
-from domain.contracts.reasoning.candidate_profile import CandidateProfile
 from domain.contracts.reasoning.data_sufficiency import DataSufficiency
 from domain.contracts.reasoning.detector_context import DetectorResult
 from domain.contracts.reasoning.evidence_polarity import EvidencePolarity
@@ -40,7 +38,6 @@ from domain.contracts.reasoning.reasoning_confidence import ReasoningConfidence
 from domain.contracts.reasoning.reasoning_trace import ReasoningTrace, ReasoningTraceStep
 from domain.contracts.reasoning.trend import Trend
 from services.interview_reasoner.pattern_detection.registry import PatternDetectorRegistry
-from services.interview_reasoner.profile.candidate_profile_engine import CandidateProfileEngine
 from services.interview_reasoner.profile.dominant_dimension_calculator import DominantDimensionCalculator
 
 _MIN_RELIABLE_EVIDENCE = 3
@@ -63,7 +60,6 @@ class ReasonerService:
 
     def __init__(self, registry: PatternDetectorRegistry) -> None:
         self._registry = registry
-        self._profile_engine = CandidateProfileEngine()
         self._dominant_calc = DominantDimensionCalculator()
 
     # ------------------------------------------------------------------
@@ -202,11 +198,6 @@ class ReasonerService:
                 )
                 break
 
-        # Update CandidateProfile incrementally via CandidateProfileEngine (M2-6C).
-        updated_profile = self._profile_engine.update(
-            memory.candidate_profile, new_signals, question_index
-        )
-
         # P0-2 fix: increment questions_answered so that _compute_confidence()
         # and CoverageDetector see the correct counter (single-writer: ADR-038).
         prev_metrics = memory.session_metrics
@@ -223,7 +214,7 @@ class ReasonerService:
         })
 
         return InterviewMemory(
-            candidate_profile=updated_profile,
+            candidate_profile=memory.candidate_profile,
             evidence_store=store,
             coverage_state=memory.coverage_state,
             reasoning_history=memory.reasoning_history,
