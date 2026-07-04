@@ -1,17 +1,21 @@
 # app/graph/nodes/session_close_node.py
-"""SessionCloseNode — MIG-04, RS-02B (PAT-06: LangGraph sole orchestrator).
+"""SessionCloseNode — MIG-04, RS-02B, MIG-08A (PAT-06: LangGraph sole orchestrator).
 
 Responsibilities (orchestration only):
 1. Idempotency guard: return immediately if state.session_history is not None.
 2. Read ProfileFeature[] from state.candidate_profile_v2.features (RS-02A).
-3. Assemble KnowledgeSnapshot via KnowledgeSnapshotBuilder.
-4. Assemble SessionCloseContext from InterviewState fields.
-5. Run SessionClosePipeline.run(context) — sole invocation per session.
-6. Write state.session_history on success.
+3. Generate Narrative via NarrativeGenerator (MIG-08A; sole Narrative producer).
+4. Assemble KnowledgeSnapshot via KnowledgeSnapshotBuilder.
+5. Assemble SessionCloseContext from InterviewState fields.
+6. Run SessionClosePipeline.run(context) — sole invocation per session.
+7. Write state.session_history on success.
 
 RS-02B: KnowledgePipeline is NOT executed here. Features come from
-state.candidate_profile_v2.features, populated by FeatureEngine in Phase D
-of the reasoner cycle (ADS-01 Strategy A, ADR-018, ADR-020).
+state.candidate_profile_v2.features (ADS-01 Strategy A, ADR-018, ADR-020).
+
+MIG-08A: NarrativeGenerator replaces the structural stub. No LLM — deterministic
+placeholder prose (same engine, production contract). Failure is non-fatal: falls
+back to stub narrative so close always succeeds.
 
 Sole writer: this node only. SessionClosePipeline never writes state.
 """
@@ -19,6 +23,7 @@ Sole writer: this node only. SessionClosePipeline never writes state.
 from __future__ import annotations
 
 from domain.contracts.coaching.coaching_builder import CoachingBuilder
+from domain.contracts.feature.feature_collection import FeatureCollection
 from domain.contracts.feature.profile_feature import ProfileFeature
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.knowledge_snapshot.candidate_profile_snapshot import (
@@ -31,6 +36,7 @@ from domain.contracts.language.language_policy import LanguagePolicy
 from domain.contracts.language.language_profile import LanguageProfile, SessionMode
 from domain.contracts.language.language_selection_strategy import LanguageSelectionStrategy
 from domain.contracts.language.programming_language import ProgrammingLanguage
+from domain.contracts.narrative.narrative import Narrative
 from domain.contracts.narrative.narrative_builder import NarrativeBuilder
 from domain.contracts.narrative.narrative_section import NarrativeSection
 from domain.contracts.narrative.narrative_section_type import NarrativeSectionType
@@ -39,6 +45,9 @@ from domain.contracts.session_history.session_history import (
     QuestionTimelineEntry,
     TranscriptEntry,
 )
+from domain.profile.candidate_profile_builder import CandidateProfileBuilder
+from services.narrative_generator.narrative_generation_context import NarrativeGenerationContext
+from services.narrative_generator.narrative_generator import NarrativeGenerator
 from services.session_close.session_close_context import SessionCloseContext
 from services.session_close.session_close_pipeline import SessionClosePipeline
 from app.core.logger import get_logger
@@ -60,6 +69,9 @@ _POLICY_VERSIONS = PolicyVersions(
 
 # Singleton pipeline — stateless, safe to share (ADR-022).
 _pipeline = SessionClosePipeline()
+
+# Singleton NarrativeGenerator — stateless, safe to share (MIG-08A).
+_narrative_generator = NarrativeGenerator()
 
 # Default coding language when no LanguageProfile exists on state (V1.2 gap).
 _DEFAULT_LANG = ProgrammingLanguage(
@@ -154,7 +166,12 @@ def _build_knowledge_snapshot(
         question_index=state.current_question_index,
     )
 
-    narrative = _build_stub_narrative()
+    narrative = _generate_narrative(
+        state=state,
+        features=features,
+        session_id=session_id,
+        candidate_identity_id=candidate_identity_id,
+    )
 
     return (
         KnowledgeSnapshotBuilder()
@@ -225,8 +242,53 @@ def _mean_confidence(features: tuple) -> float:
     return sum(f.quality.confidence.value for f in features) / len(features)
 
 
-def _build_stub_narrative():
-    """Build a minimal structural Narrative (no LLM — structural placeholder)."""
+def _generate_narrative(
+    state: InterviewState,
+    features: tuple[ProfileFeature, ...],
+    session_id: str,
+    candidate_identity_id: str,
+) -> Narrative:
+    """Generate Narrative via NarrativeGenerator (MIG-08A — sole Narrative producer).
+
+    Builds NarrativeGenerationContext from available state artifacts without
+    invoking FeatureEngine, KnowledgePipeline, or ObservationExtractor.
+    Falls back to structural stub on any failure (non-fatal; close always succeeds).
+    """
+    try:
+        profile = state.candidate_profile_v2 or CandidateProfileBuilder().build()
+        feature_collection = FeatureCollection.from_iterable(list(features))
+        ctx = NarrativeGenerationContext(
+            session_id=session_id,
+            candidate_identity_id=candidate_identity_id,
+            question_index=state.current_question_index,
+            profile=profile,
+            features=feature_collection,
+        )
+        result = _narrative_generator.generate(ctx)
+        if result.is_successful and result.narrative is not None:
+            logger.debug(
+                "_generate_narrative succeeded | session=%s features=%d insights=%d",
+                session_id,
+                feature_collection.size,
+                result.narrative.insight_count,
+            )
+            return result.narrative
+        logger.warning(
+            "_generate_narrative unsuccessful — using stub | session=%s reason=%s",
+            session_id,
+            result.failure_reason,
+        )
+    except Exception as exc:
+        logger.warning(
+            "_generate_narrative exception — using stub | session=%s error=%s",
+            session_id,
+            type(exc).__name__,
+        )
+    return _build_stub_narrative()
+
+
+def _build_stub_narrative() -> Narrative:
+    """Minimal structural Narrative — fallback only when NarrativeGenerator fails."""
     from domain.contracts.feature.feature_identity import FeatureIdentity
     from domain.contracts.feature.feature_type import FeatureType
 
@@ -237,7 +299,7 @@ def _build_stub_narrative():
             section_type=section_type,
             prose="Session closed.",
             feature_references=stub_ref,
-            confidence_context="Structural placeholder — no LLM narrative generated.",
+            confidence_context="Fallback — NarrativeGenerator unavailable.",
         )
 
     return (
