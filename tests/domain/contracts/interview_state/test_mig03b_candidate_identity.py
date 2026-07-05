@@ -1,5 +1,5 @@
 # tests/domain/contracts/interview_state/test_mig03b_candidate_identity.py
-# MIG-03B — candidate_identity_id TCP field tests (RIB-01, PAT-04, ADR-016A)
+# candidate_identity_id field tests (PAT-04, ADR-016A)
 #
 # Verifies:
 # 1. candidate_identity_id is present on InterviewState with correct type.
@@ -8,10 +8,10 @@
 # 4. Same interview_id always produces same candidate_identity_id (deterministic).
 # 5. Different interview_ids produce different candidate_identity_ids.
 # 6. candidate_identity_id is immutable across model_copy cycles.
-# 7. Legacy states (candidate_identity_id=None) are accepted (backward compat).
-# 8. No V1.1 node reads candidate_identity_id (architectural guard).
+# 7. Legacy states (candidate_identity_id=None) are still accepted by the model.
+# 8. No node reads candidate_identity_id directly except permitted sole-owner nodes.
 # 9. reasoner_node._resolve_candidate_identity_id returns identity from state.
-# 10. Fallback to interview_id when candidate_identity_id is None (legacy compat).
+# 10. Raises RuntimeError when candidate_identity_id is None (fail-fast invariant).
 
 from __future__ import annotations
 
@@ -225,12 +225,12 @@ class TestIdentityResolution:
         resolved = resolver(state)
         assert resolved == state.candidate_identity_id
 
-    def test_fallback_to_interview_id_when_none(self):
+    def test_raises_when_candidate_identity_id_is_none(self):
         resolver = self._import_resolver()
         state = _minimal_state()
         assert state.candidate_identity_id is None
-        resolved = resolver(state)
-        assert resolved == state.interview_id
+        with pytest.raises(RuntimeError, match="candidate_identity_id is None"):
+            resolver(state)
 
     def test_resolved_id_is_non_empty(self):
         resolver = self._import_resolver()

@@ -251,13 +251,14 @@ class TestCandidateIdentityIdHook:
         result = _resolve_candidate_identity_id(state)
         assert result == "cand-uuid-abc"
 
-    def test_resolve_falls_back_to_interview_id_when_none(self) -> None:
-        # Legacy states (predating MIG-03B) have candidate_identity_id=None.
+    def test_resolve_raises_when_candidate_identity_id_is_none(self) -> None:
+        # All production states have candidate_identity_id set; None is a fail-fast error.
+        import pytest
         state = MagicMock()
         state.candidate_identity_id = None
         state.interview_id = "session-xyz"
-        result = _resolve_candidate_identity_id(state)
-        assert result == "session-xyz"
+        with pytest.raises(RuntimeError, match="candidate_identity_id is None"):
+            _resolve_candidate_identity_id(state)
 
     def test_resolve_is_deterministic(self) -> None:
         state = MagicMock()

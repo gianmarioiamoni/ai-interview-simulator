@@ -76,7 +76,6 @@ class InterviewStateFactoryMixin:
             # -------------------------------------------------
             # RESULTS
             # -------------------------------------------------
-            report_output=None,
             interview_evaluation=None,
             interview_metrics=None,
             interview_cost_metrics=None,

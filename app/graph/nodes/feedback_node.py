@@ -91,7 +91,7 @@ class FeedbackNode:
         logger.debug("dimension_signals: %s", dimension_signals)
 
         # -----------------------------------------------------
-        # ENRICH BUNDLE (KEEP - backward compatibility)
+        # ENRICH BUNDLE (add dimension_signals to FeedbackBundle)
         # -----------------------------------------------------
 
         from app.contracts.feedback_bundle import FeedbackBundle

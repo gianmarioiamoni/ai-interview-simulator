@@ -53,7 +53,7 @@ def print_final_report(state: InterviewState):
     print(state.final_feedback)
 
     print("\n--- REPORT OUTPUT ---")
-    print(state.report_output)
+    print(state.report)
 
     print("\n--- INTERVIEW EVALUATION ---")
     eval = state.interview_evaluation

@@ -18,5 +18,5 @@ def serialize_state(state: InterviewState) -> dict:
             }
             for k, v in state.results_by_question.items()
         },
-        "report": state.report_output,
+        "report": state.report,
     }

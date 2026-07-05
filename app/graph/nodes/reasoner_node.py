@@ -171,15 +171,19 @@ def _inject_evaluation_signals(state: InterviewState) -> InterviewState:
 # Phase C — MIG-02: ObservationExtractor helper
 # ---------------------------------------------------------------------------
 
-# MIG-03B: candidate_identity_id is now a TCP field on InterviewState.
-# Fallback to interview_id for legacy states predating MIG-03B (backward compat).
 def _resolve_candidate_identity_id(state: InterviewState) -> str:
     """Return the candidate identity id for pipeline context construction.
 
-    Reads state.candidate_identity_id (MIG-03B TCP field).
-    Falls back to interview_id for legacy states without the field.
+    Reads state.candidate_identity_id (set by create_initial / create_empty).
+    Raises RuntimeError for states where the field was never populated — this
+    should never occur in production (all factory paths populate it).
     """
-    return state.candidate_identity_id or state.interview_id
+    if state.candidate_identity_id is None:
+        raise RuntimeError(
+            "candidate_identity_id is None — state was not created via "
+            "InterviewState.create_initial or create_empty"
+        )
+    return state.candidate_identity_id
 
 
 # ---------------------------------------------------------------------------
