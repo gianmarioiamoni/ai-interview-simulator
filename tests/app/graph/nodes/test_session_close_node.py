@@ -1,5 +1,5 @@
-# tests/app/graph/nodes/test_mig04_session_close_node.py
-# MIG-04 — session_close_node architectural and runtime tests
+# tests/app/graph/nodes/test_session_close_node.py
+# session_close_node architectural and runtime tests
 #
 # Verifies:
 # 1. session_close_node writes state.session_history when is_completed=True.

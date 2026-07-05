@@ -1,12 +1,12 @@
-# tests/services/knowledge_pipeline/test_mig025_blockers.py
-# MIG-02.5 — CAR-MIG-02 blocker removal tests
+# tests/services/knowledge_pipeline/test_knowledge_pipeline_behavior_ext.py
+# KnowledgePipeline behavioral invariants (skip-extraction, feature builder, identity resolver)
 #
 # Verifies:
 # 1. skip_extraction_if_store_populated skips Stage 1 when store is pre-populated.
 # 2. skip_extraction_if_store_populated=False (default) still runs extraction.
 # 3. CandidateProfileBuilder.with_profile_features() stores features correctly.
 # 4. KnowledgePipeline wires ProfileFeature[] through builder (sole creation path).
-# 5. candidate_identity_id hook: _resolve_candidate_identity_id() returns interview_id.
+# 5. candidate_identity_id hook: _resolve_candidate_identity_id() raises when id is None.
 # 6. Architecture: FeatureEngine is sole producer of ProfileFeature (validated via type check).
 # 7. Architecture: CandidateProfileBuilder is sole construction path for CandidateProfile.
 

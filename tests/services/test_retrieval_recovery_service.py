@@ -1,4 +1,4 @@
-# tests/services/test_retrieval_recovery_service_retrieval_migration.py
+# tests/services/test_retrieval_recovery_service.py
 
 from datetime import datetime, timezone
 import importlib

@@ -1,5 +1,5 @@
-# tests/app/graph/nodes/test_mig03a_knowledge_pipeline.py
-# MIG-03A — KnowledgePipeline activation in reasoner_node (Phase D)
+# tests/app/graph/nodes/test_knowledge_pipeline_node.py
+# KnowledgePipeline integration in reasoner_node
 #
 # Verifies:
 # 1. state.candidate_profile_v2 is populated after reasoner_node with observations.

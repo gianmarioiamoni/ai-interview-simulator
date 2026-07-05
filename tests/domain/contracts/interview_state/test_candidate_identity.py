@@ -1,4 +1,4 @@
-# tests/domain/contracts/interview_state/test_mig03b_candidate_identity.py
+# tests/domain/contracts/interview_state/test_candidate_identity.py
 # candidate_identity_id field tests (PAT-04, ADR-016A)
 #
 # Verifies:

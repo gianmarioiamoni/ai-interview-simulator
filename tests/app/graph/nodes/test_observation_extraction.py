@@ -1,5 +1,5 @@
-# tests/app/graph/nodes/test_mig02_observation_extraction.py
-# MIG-02 — Phase C: ObservationExtractor integration in reasoner_node
+# tests/app/graph/nodes/test_observation_extraction.py
+# ObservationExtractor integration in reasoner_node
 #
 # Verifies:
 # 1. state.observation_store is populated after reasoner_node runs.
@@ -304,9 +304,9 @@ class TestReasonerNodeObservationStoreIntegration:
         assert result.interview_memory is not None
         assert result.current_reasoning_decision is not None
 
-    def test_candidate_profile_v2_set_by_mig03a(self) -> None:
-        # MIG-03A activated: Phase D now populates candidate_profile_v2
-        # when observation_store has observations and pipeline succeeds.
+    def test_candidate_profile_v2_set_by_knowledge_pipeline(self) -> None:
+        # Phase D populates candidate_profile_v2 when observation_store has observations
+        # and the KnowledgePipeline succeeds.
         # This test validates that the field is set (not None) after a full cycle.
         from domain.contracts.reasoning.candidate_profile import CandidateProfile
         result = self._run_node_with_signal()

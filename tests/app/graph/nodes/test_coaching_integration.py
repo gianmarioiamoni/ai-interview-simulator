@@ -1,5 +1,5 @@
-# tests/app/graph/nodes/test_mig08b_coaching_integration.py
-# MIG-08B — Runtime Coaching Integration
+# tests/app/graph/nodes/test_coaching_integration.py
+# Runtime Coaching Integration
 #
 # Verifies:
 # 1. session_close_node invokes CoachingEngine (not CoachingBuilder.empty).

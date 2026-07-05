@@ -1,5 +1,5 @@
-# tests/app/graph/nodes/test_mig08a_narrative_integration.py
-# MIG-08A — Runtime Narrative Integration
+# tests/app/graph/nodes/test_narrative_integration.py
+# Runtime Narrative Integration
 #
 # Verifies:
 # 1. session_close_node invokes NarrativeGenerator (not stub) when profile present.
