@@ -2,15 +2,24 @@
 
 **Status:** READY FOR IMPLEMENTATION  
 **Date:** 2026-07-05  
+**Revision:** 2026-07-05 — Phases 7+8 (previously atomic) replaced with bridge-based sequence 7A→7B→7C to satisfy engineering rule: "Zero Known Failing Tests per phase/commit."  
 **Precondition:** Architecture Freeze passed (`EPIC-01-ARCHITECTURE-FREEZE.md`). No new architectural decisions permitted.  
 **Authority:** This document translates the frozen architecture into an executable implementation roadmap. All decisions reference ADR-033, EPIC-01-DOMAIN-CONTRACTS.md, and EPIC-01-DATA-MODEL.md.
 
 ---
 
+## Engineering Rule (adopted post-freeze)
+
+> **Zero Known Failing Tests:** Every phase, every commit, every save-token must leave the complete regression suite green. No phase may intentionally introduce known failing tests or broken runtime behaviour. Bridge phases must be used where needed.
+
+---
+
 ## Implementation Owner
 
-**EPIC-V13-01** owns Phases 1–7 (domain layer, pipeline, state migration).  
-**EPIC-V13-05** owns Phases 8–11 (presentation layer, DTO rebuild, new sections).
+**EPIC-V13-01** owns Phases 1–7C (domain layer, pipeline, state migration).  
+**EPIC-V13-05** owns Phases 8–10 (presentation layer, DTO rebuild, new sections).
+
+> Phase numbering: original Phases 9–11 are renumbered 8–10 following the split of the former atomic Phase 7+8 into 7A, 7B, 7C.
 
 Each phase is independently completable and testable. No phase should be merged with an incomplete test suite.
 
@@ -344,26 +353,20 @@ Phase 2 (`ScoringSnapshot`), Phase 3 (`ScoringNarrative`), Phase 1 (`ScoringDime
 
 ---
 
-## Phase 7 — `EvaluationAggregateNode` + `InterviewState` Migration
+## Phase 7A — `InterviewState` Extension (Bridge) [TRANSITION]
+
+> **Bridge phase.** Adds new fields to `InterviewState` **without removing** `interview_evaluation`. `EvaluationAggregateNode` updated to call `evaluate_scoring()` and write both old and new fields. Runtime and full suite stay green.
 
 ### Objective
 
-Update `EvaluationAggregateNode` to write `scoring_snapshot` and `scoring_narrative` to `InterviewState` instead of `interview_evaluation`. Remove `InterviewState.interview_evaluation`. Delete `InterviewEvaluation` contract.
+Extend `InterviewState` with `scoring_snapshot` and `scoring_narrative`; update `EvaluationAggregateNode` to populate them via `evaluate_scoring()` while also writing `interview_evaluation` via `evaluate()` (bridge). All downstream readers of `interview_evaluation` continue working.
 
 ### Production Files — Modify
 
 | File | Change |
 |------|--------|
-| `domain/contracts/interview_state/base.py` | Remove `interview_evaluation: Optional[InterviewEvaluation]`; add `scoring_snapshot: ScoringSnapshot \| None = None`; add `scoring_narrative: ScoringNarrative \| None = None` |
-| `app/graph/nodes/evaluation_aggregate_node.py` | Update idempotency guard to `state.scoring_snapshot is not None`; unpack `(scoring_snapshot, scoring_narrative)` from service; write both to state |
-| `domain/contracts/interview/interview_evaluation.py` | **Delete** |
-| `domain/contracts/interview_state/factory.py` | Update `create_initial` / `create_empty` — remove `interview_evaluation=None` init |
-
-### Production Files — Delete
-
-| File |
-|------|
-| `domain/contracts/interview/interview_evaluation.py` |
+| `domain/contracts/interview_state/base.py` | Add `scoring_snapshot: ScoringSnapshot \| None = None`; add `scoring_narrative: ScoringNarrative \| None = None`; **keep** `interview_evaluation: Optional[InterviewEvaluation]` |
+| `app/graph/nodes/evaluation_aggregate_node.py` | Call `evaluate_scoring()` to get `(scoring_snapshot, scoring_narrative)`; call `evaluate()` for `interview_evaluation`; update idempotency guard to check `state.scoring_snapshot is not None`; write all three fields to state |
 
 ### Domain Contracts Involved
 
@@ -375,71 +378,60 @@ Phase 6 complete.
 
 ### Implementation Order
 
-1. Update `InterviewStateBase` — remove `interview_evaluation`; add `scoring_snapshot`, `scoring_narrative`
-2. Update `EvaluationAggregateNode.__call__` — new idempotency guard; unpack tuple; write new fields
-3. Delete `interview_evaluation.py`
-4. Update `InterviewState` factory and any `model_copy(update={"interview_evaluation": ...})` call sites (none in production after node update)
-5. Update all test fixtures that set `interview_evaluation=` on `InterviewState`
+1. Add `scoring_snapshot` and `scoring_narrative` fields to `InterviewStateBase` (`None` default)
+2. Update `EvaluationAggregateNode.__call__` — new idempotency guard; call both service methods; write all three state fields
+3. Update test fixtures and architectural tests
 
 ### Expected Behavioural Changes
 
-- `state.interview_evaluation` no longer exists — any access raises `AttributeError`
-- `state.scoring_snapshot` and `state.scoring_narrative` carry the data
-- `EvaluationAggregateNode` idempotency guard now checks `scoring_snapshot`
+- `state.scoring_snapshot` and `state.scoring_narrative` populated after evaluation
+- `state.interview_evaluation` still populated — no downstream breakage
+- Idempotency guard uses `scoring_snapshot is not None`
 
 ### Regression Risks
 
-**High** — 14 test files reference `interview_evaluation` (see inventory). All must be updated.
+**Low** — additive only; no field removal. Test fixtures that set `interview_evaluation` continue to work.
 
-The following production files still read `state.interview_evaluation` and will break — they are addressed in Phase 8:
-- `app/ui/builders/ui_response_builder.py`
-- `app/ui/mappers/interview_state_mapper.py`
-- `app/ui/state_handlers/export_handlers.py` (indirectly)
-- `app/graph/nodes/session_close_node.py`
+### Required Tests
 
-**Phase 7 and Phase 8 must be committed together** to avoid a broken intermediate state. They are a single atomic migration unit.
-
-### Required Architectural Tests
-
-- `tests/domain/contracts/interview_state/test_interview_state_field_invariants.py` — assert `scoring_snapshot` field exists; assert `interview_evaluation` does not exist
-- `tests/graph/nodes/test_evaluation_aggregate_node.py` — assert writes `scoring_snapshot` and `scoring_narrative`; assert idempotency on `scoring_snapshot is not None`
+- `tests/domain/contracts/interview_state/test_interview_state_field_invariants.py` — assert `scoring_snapshot` and `scoring_narrative` fields exist; assert `interview_evaluation` still exists
+- `tests/graph/nodes/test_evaluation_aggregate_node.py` — assert writes all three fields; assert idempotency on `scoring_snapshot is not None`
 
 ### Completion Checklist
 
-- [ ] `interview_evaluation` field removed from `InterviewState`
-- [ ] `scoring_snapshot` and `scoring_narrative` fields added with `None` default
-- [ ] `EvaluationAggregateNode` writes both
-- [ ] `interview_evaluation.py` deleted — zero references in production code
-- [ ] All affected test fixtures updated
-- [ ] Phase 8 committed atomically with this phase
+- [ ] `scoring_snapshot` and `scoring_narrative` added with `None` default
+- [ ] `interview_evaluation` kept (bridge)
+- [ ] `EvaluationAggregateNode` writes all three fields
+- [ ] Idempotency guard checks `scoring_snapshot`
+- [ ] Full suite green
+
+### Commit boundary
+
+`feat(state): add scoring_snapshot and scoring_narrative to InterviewState (bridge)`
 
 ---
 
-## Phase 8 — `session_close_node` + `SessionHistory` Migration (atomic with Phase 7)
+## Phase 7B — `SessionHistory` Extension (Bridge) [TRANSITION]
+
+> **Bridge phase.** Extends `SessionHistory` and `session_close_node` to carry new fields **alongside** the legacy `evaluation_result`. `session_close_node` reads `state.scoring_snapshot` (available from 7A) and writes both old and new fields. Runtime and full suite stay green.
 
 ### Objective
 
-Update `session_close_node` to pass `scoring_snapshot`, `scoring_narrative`, `question_results`, `context_profile`, and `generation_metadata` to `SessionHistoryBuilder`. Update `SessionHistory` contract.
+Evolve `SessionHistory` to v1.5 (additive): add `scoring_snapshot`, `scoring_narrative`, `question_results`, `context_profile`, `generation_metadata` while keeping `evaluation_result`. Update `session_close_node` to populate all. Update `SessionCloseContext` accordingly.
 
 ### Production Files — Modify
 
 | File | Change |
 |------|--------|
-| `domain/contracts/session_history/session_history.py` | Add `question_results: tuple[QuestionResultRecord, ...]`; replace `evaluation_result` with `scoring_snapshot: ScoringSnapshot \| None`; add `scoring_narrative: ScoringNarrative \| None`; add `context_profile: InterviewContextProfile` (required); add `generation_metadata: GenerationMetadata \| None`; bump `schema_version` default to `"2.0"` |
-| `domain/contracts/session_history/session_history_builder.py` | Delete `with_evaluation_result`; add `with_question_results`, `with_scoring_snapshot`, `with_scoring_narrative`, `with_context_profile`, `with_generation_metadata`; add `context_profile` to mandatory validation; add V-SH-01 (scoring pair) |
-| `app/graph/nodes/session_close_node.py` | Read `state.scoring_snapshot`, `state.scoring_narrative`, `state.context_profile`, `state.interview_metrics`, `state.interview_cost_metrics`; build `QuestionResultRecord` per answered question from `state.results_by_question` + `state.questions` + `state.answers`; build `GenerationMetadata` from metrics; pass all to `SessionCloseContext` or `SessionHistoryBuilder` directly |
-| `services/session_close/session_close_pipeline.py` | Pass `question_results`, `scoring_snapshot`, `scoring_narrative`, `context_profile`, `generation_metadata` to builder; remove `evaluation_result` path |
-| `services/session_close/session_close_context.py` | Replace `evaluation_result: Optional[InterviewEvaluation]` with new fields; add `question_results`, `scoring_snapshot`, `scoring_narrative`, `context_profile`, `generation_metadata` |
-| `app/ui/builders/ui_response_builder.py` | Remove `state.interview_evaluation` read from `_build_report`; gate only on `state.report is not None` |
-| `app/ui/mappers/interview_state_mapper.py` | Remove `interview_evaluation` guard; call `FinalReportDTO.from_report(state.report)` (stub — full implementation in Phase 10) |
-
-### Production Files — Delete
-
-None in this phase (contracts only evolved).
+| `domain/contracts/session_history/session_history.py` | Add `question_results: tuple[QuestionResultRecord, ...] = ()`; add `scoring_snapshot: ScoringSnapshot \| None = None`; add `scoring_narrative: ScoringNarrative \| None = None`; add `context_profile: InterviewContextProfile \| None = None`; add `generation_metadata: GenerationMetadata \| None = None`; add soft V-SH-01 warning (not enforced yet); **keep** `evaluation_result` |
+| `domain/contracts/session_history/session_history_builder.py` | Add `with_question_results`, `with_scoring_snapshot`, `with_scoring_narrative`, `with_context_profile`, `with_generation_metadata`; **keep** `with_evaluation_result` |
+| `services/session_close/session_close_context.py` | Add `question_results`, `scoring_snapshot`, `scoring_narrative`, `context_profile`, `generation_metadata` fields alongside `evaluation_result` |
+| `services/session_close/session_close_pipeline.py` | Pass all new fields to builder alongside `evaluation_result` |
+| `app/graph/nodes/session_close_node.py` | Read `state.scoring_snapshot`, `state.scoring_narrative`, `state.context_profile`; build `QuestionResultRecord` per answered question; build `GenerationMetadata`; pass all to context alongside existing `evaluation_result` path |
 
 ### Domain Contracts Involved
 
-`SessionHistory v2.0`, `QuestionResultRecord`, `ScoringSnapshot`, `ScoringNarrative`, `GenerationMetadata`, `InterviewContextProfile`. Rules R-13, R-14, R-15. V-SH-01.
+`SessionHistory v1.5`, `QuestionResultRecord`, `ScoringSnapshot`, `ScoringNarrative`, `GenerationMetadata`, `InterviewContextProfile`. Rules R-13, R-14, R-15.
 
 ### Builders Involved
 
@@ -447,17 +439,7 @@ None in this phase (contracts only evolved).
 
 ### Prerequisites
 
-Phases 1–7.
-
-### Implementation Order
-
-1. Update `SessionHistory` contract and `SessionHistoryBuilder`
-2. Update `SessionCloseContext`
-3. Update `session_close_node` — add `QuestionResultRecord` construction loop; `GenerationMetadata` construction
-4. Update `session_close_pipeline.py` — remove `evaluation_result` path; add new fields
-5. Update `ui_response_builder._build_report` — remove `final_eval` read; gate on `state.report` only
-6. Update `interview_state_mapper.to_final_report_dto` — stub `from_report` call (Phase 10 completes it)
-7. Update all test fixtures that construct `SessionHistory` or `SessionHistoryBuilder`
+Phase 7A complete.
 
 ### `QuestionResultRecord` Construction (session_close_node)
 
@@ -475,37 +457,122 @@ For each `Question` in `state.questions` where `state.results_by_question.get(q.
 
 ### Expected Behavioural Changes
 
-- `UIResponseBuilder._build_report` no longer requires `state.interview_evaluation` — gates on `state.report` only
-- `SessionHistory` v2.0 has `context_profile`, `question_results`, `scoring_snapshot` in place of `evaluation_result`
-- `session_close_node` writes the full closure payload
+- `SessionHistory` now carries both old and new artifacts (dual-write)
+- `session_close_node` produces `QuestionResultRecord` and `GenerationMetadata`
+- No reader of `evaluation_result` breaks
 
 ### Regression Risks
 
-**High** — 15 test files reference `SessionHistory` or `SessionHistoryBuilder`. All fixtures must be updated.
+**Low-Medium** — additive only; `evaluation_result` and legacy builder methods kept.
 
-### Required Architectural Tests
+### Required Tests
 
-- `tests/domain/contracts/session_history/test_session_history_contracts.py` — assert `context_profile` required; assert `evaluation_result` does not exist; assert V-SH-01 enforced; assert `schema_version` default is `"2.0"`
+- `tests/domain/contracts/session_history/test_session_history_contracts.py` — assert new fields present; assert `evaluation_result` still present; assert new builder methods exist
 - `tests/app/graph/nodes/test_session_close_node.py` — assert `question_results` populated; assert `scoring_snapshot` embedded; assert `context_profile` embedded
 
 ### Completion Checklist
 
-- [ ] `SessionHistory.evaluation_result` does not exist
-- [ ] `SessionHistory.scoring_snapshot`, `scoring_narrative`, `question_results`, `context_profile`, `generation_metadata` exist
-- [ ] `SessionHistory.schema_version` defaults to `"2.0"`
-- [ ] V-SH-01 enforced in builder
-- [ ] R-13 enforced: `context_profile` required
-- [ ] `ui_response_builder` no longer reads `interview_evaluation`
-- [ ] All test fixtures updated
-- [ ] Full test suite passes
+- [ ] New fields added to `SessionHistory` (all optional, no breaking change)
+- [ ] `evaluation_result` kept (bridge)
+- [ ] Builder extended with new methods; `with_evaluation_result` kept
+- [ ] `session_close_node` builds `QuestionResultRecord` and `GenerationMetadata`
+- [ ] Full suite green
 
 ### Commit boundary
 
-Phases 7 + 8 committed atomically: `feat(migration): InterviewState + SessionHistory v2.0 — retire InterviewEvaluation`
+`feat(state): extend SessionHistory v1.5 — add scoring artifacts (bridge)`
 
 ---
 
-## Phase 9 — `ReportBuilder` + `Report` Migration
+## Phase 7C — Legacy Cleanup (Removal) [REMOVAL]
+
+> **Removal phase.** Removes `interview_evaluation` from `InterviewState`, removes `evaluation_result` from `SessionHistory`, deletes `InterviewEvaluation` contract, makes `context_profile` required in `SessionHistory`, enforces V-SH-01. Also migrates UI readers away from `interview_evaluation`. Full suite stays green.
+
+### Objective
+
+Complete the migration by removing all bridge fields and the legacy `InterviewEvaluation` artifact. Enforce `SessionHistory` v2.0 invariants. Update all UI readers.
+
+### Production Files — Modify
+
+| File | Change |
+|------|--------|
+| `domain/contracts/interview_state/base.py` | Remove `interview_evaluation`; remove import of `InterviewEvaluation` |
+| `domain/contracts/interview_state/factory.py` | Remove `interview_evaluation=None` init |
+| `domain/contracts/session_history/session_history.py` | Remove `evaluation_result`; make `context_profile: InterviewContextProfile` required; enforce V-SH-01 (scoring pair); bump `schema_version` default to `"2.0"` |
+| `domain/contracts/session_history/session_history_builder.py` | Remove `with_evaluation_result`; add `context_profile` to mandatory validation; enforce V-SH-01 |
+| `services/session_close/session_close_context.py` | Remove `evaluation_result` field |
+| `services/session_close/session_close_pipeline.py` | Remove `evaluation_result` path |
+| `app/graph/nodes/evaluation_aggregate_node.py` | Remove `evaluate()` call (legacy bridge); keep only `evaluate_scoring()` |
+| `app/ui/builders/ui_response_builder.py` | Remove `state.interview_evaluation` read from `_build_report`; gate only on `state.report is not None` |
+| `app/ui/mappers/interview_state_mapper.py` | Remove `interview_evaluation` guard; call `FinalReportDTO.from_report(state.report)` (stub — full implementation in Phase 9) |
+| `services/interview_evaluation_service.py` | Remove `evaluate()` bridge method; keep only `evaluate_scoring()` and `_compute()` |
+
+### Production Files — Delete
+
+| File |
+|------|
+| `domain/contracts/interview/interview_evaluation.py` |
+
+### Domain Contracts Involved
+
+`InterviewState`, `SessionHistory v2.0`, `InterviewEvaluation` (deleted). Rule R-08. V-SH-01. R-13.
+
+### Prerequisites
+
+Phase 7B complete.
+
+### Implementation Order
+
+1. Remove `interview_evaluation` from `InterviewStateBase`; update factory
+2. Update `EvaluationAggregateNode` — remove legacy `evaluate()` call
+3. Remove `evaluation_result` from `SessionHistory`; enforce invariants; bump schema version
+4. Remove `with_evaluation_result` from builder; add mandatory `context_profile` validation
+5. Update `SessionCloseContext` and `session_close_pipeline`
+6. Update `ui_response_builder` and `interview_state_mapper`
+7. Remove `evaluate()` bridge from `InterviewEvaluationService`
+8. Delete `interview_evaluation.py`
+9. Update all test fixtures
+
+### Expected Behavioural Changes
+
+- `state.interview_evaluation` does not exist
+- `session_history.evaluation_result` does not exist
+- `SessionHistory.schema_version` defaults to `"2.0"`
+- `SessionHistory.context_profile` required
+- V-SH-01 enforced
+- UI readers gate on `state.report` only
+
+### Regression Risks
+
+**High** — removes legacy fields. All 14+ test files that reference `interview_evaluation` or `evaluation_result` must be updated before this phase commits.
+
+### Required Tests
+
+- `tests/domain/contracts/interview_state/test_interview_state_field_invariants.py` — assert `interview_evaluation` does not exist
+- `tests/domain/contracts/session_history/test_session_history_contracts.py` — assert `evaluation_result` does not exist; assert V-SH-01 enforced; assert `schema_version` default `"2.0"`
+- All previously updated fixtures must continue passing
+
+### Completion Checklist
+
+- [ ] `interview_evaluation` removed from `InterviewState`
+- [ ] `interview_evaluation.py` deleted — zero production references
+- [ ] `evaluation_result` removed from `SessionHistory`
+- [ ] `context_profile` required in `SessionHistory`
+- [ ] V-SH-01 enforced in builder
+- [ ] `SessionHistory.schema_version` defaults to `"2.0"`
+- [ ] `ui_response_builder` no longer reads `interview_evaluation`
+- [ ] `evaluate()` bridge removed from `InterviewEvaluationService`
+- [ ] Full suite green
+
+### Commit boundary
+
+`refactor(migration): retire InterviewEvaluation — InterviewState + SessionHistory v2.0 cleanup`
+
+---
+
+## Phase 8 — `ReportBuilder` + `Report` Migration
+
+> _(was Phase 9)_
 
 ### Objective
 
@@ -535,7 +602,7 @@ Extend `ReportBuilder` and `Report` to carry `scoring`, `scoring_narrative`, `qu
 
 ### Prerequisites
 
-Phase 8 complete.
+Phase 7C complete.
 
 ### Implementation Order
 
@@ -574,7 +641,9 @@ Phase 8 complete.
 
 ---
 
-## Phase 10 — `FinalReportDTO` Rebuild (EPIC-V13-05)
+## Phase 9 — `FinalReportDTO` Rebuild (EPIC-V13-05)
+
+> _(was Phase 10)_
 
 ### Objective
 
@@ -603,7 +672,7 @@ Replace `FinalReportDTO.from_components(state, evaluation)` with `FinalReportDTO
 
 ### Prerequisites
 
-Phase 9 complete.
+Phase 8 complete.
 
 ### `from_report` Field Mapping Summary
 
@@ -678,7 +747,9 @@ Phase 9 complete.
 
 ---
 
-## Phase 11 — New Report Sections (EPIC-V13-05 Phase 3)
+## Phase 10 — New Report Sections (EPIC-V13-05 Phase 3)
+
+> _(was Phase 11)_
 
 ### Objective
 
@@ -702,7 +773,7 @@ Add narrative insights panel and coaching objectives panel to the Unified Report
 
 ### Prerequisites
 
-Phase 10 complete.
+Phase 9 complete.
 
 ### Expected Behavioural Changes
 
@@ -744,17 +815,19 @@ Phase 3  ─── depends on Phase 1 (ScoringNarrativeItem)
 
 Phase 6  ─── depends on Phase 2 + Phase 3
 
-Phases 7 + 8  ─── atomic; depends on Phase 6 + Phase 4 + Phase 5
+Phase 7A ─── depends on Phase 6 + Phase 4 + Phase 5    [bridge: additive InterviewState]
+Phase 7B ─── depends on Phase 7A                        [bridge: additive SessionHistory]
+Phase 7C ─── depends on Phase 7B                        [removal: retire InterviewEvaluation]
 
-Phase 9  ─── depends on Phases 7+8
+Phase 8  ─── depends on Phase 7C
+
+Phase 9  ─── depends on Phase 8
 
 Phase 10 ─── depends on Phase 9
-
-Phase 11 ─── depends on Phase 10
 ```
 
-**Critical path:** 1 → 2 → 6 → 7+8 → 9 → 10 → 11  
-(Phase 3 runs in parallel with Phase 2; Phase 4 and 5 run in parallel with Phases 1–3)
+**Critical path:** 1 → 2 → 6 → 7A → 7B → 7C → 8 → 9 → 10  
+(Phase 3 runs in parallel with Phase 2; Phases 4 and 5 run in parallel with Phases 1–3)
 
 ---
 
@@ -774,26 +847,29 @@ Phases 3, 4, and 5 can all be developed against their prerequisites independentl
 
 1. `ScoringDimension` (Phase 1) must exist before `ScoringSnapshot` (Phase 2)
 2. `ScoringSnapshotBuilder` (Phase 2) must exist before `InterviewEvaluationService` refactor (Phase 6)
-3. Service refactor (Phase 6) must exist before `EvaluationAggregateNode` migration (Phase 7)
-4. **Phases 7 and 8 are atomic** — they must be committed together
-5. `Report v2.0` (Phase 9) must exist before `FinalReportDTO.from_report` (Phase 10)
+3. Service refactor (Phase 6) must exist before `InterviewState` extension (Phase 7A)
+4. Phase 7A must exist before Phase 7B (new state fields needed by `session_close_node`)
+5. Phase 7B must exist before Phase 7C (new `SessionHistory` fields must be populated before legacy fields removed)
+6. `Report v2.0` (Phase 8) must exist before `FinalReportDTO.from_report` (Phase 9)
 
 ---
 
 ## Recommended Commit Boundaries
 
-| Commit | Phases | Description |
-|--------|--------|-------------|
-| C1 | 1 | New value types (leaf) |
-| C2 | 4 | `QuestionResultRecord` |
-| C3 | 5 | `Narrative` field rename |
-| C4 | 2 | `ScoringSnapshot` |
-| C5 | 3 | `ScoringNarrative` |
-| C6 | 6 | `InterviewEvaluationService` refactor |
-| C7 | 7 + 8 | **Atomic** — InterviewState + SessionHistory migration, InterviewEvaluation deletion |
-| C8 | 9 | Report v2.0 |
-| C9 | 10 | FinalReportDTO rebuild (EPIC-V13-05) |
-| C10 | 11 | New report sections (EPIC-V13-05) |
+| Commit | Phase | Type | Description |
+|--------|-------|------|-------------|
+| C1 | 1 | Feature | New value types (leaf) |
+| C2 | 4 | Feature | `QuestionResultRecord` |
+| C3 | 5 | Refactor | `Narrative` field rename |
+| C4 | 2 | Feature | `ScoringSnapshot` |
+| C5 | 3 | Feature | `ScoringNarrative` |
+| C6 | 6 | Refactor | `InterviewEvaluationService` bridge refactor |
+| C7 | 7A | Bridge | `InterviewState` extension — add scoring fields |
+| C8 | 7B | Bridge | `SessionHistory` v1.5 — add new fields, build `QuestionResultRecord` |
+| C9 | 7C | Removal | Retire `InterviewEvaluation`, enforce `SessionHistory` v2.0 |
+| C10 | 8 | Feature | Report v2.0 |
+| C11 | 9 | Feature | FinalReportDTO rebuild (EPIC-V13-05) |
+| C12 | 10 | Feature | New report sections (EPIC-V13-05) |
 
 ---
 
@@ -802,10 +878,11 @@ Phases 3, 4, and 5 can all be developed against their prerequisites independentl
 | Phase | Test files to update |
 |-------|---------------------|
 | 5 | `tests/domain/contracts/narrative/test_narrative_contracts.py`, `tests/services/narrative_generator/test_narrative_generator_architecture.py` |
-| 7 | `tests/graph/nodes/test_evaluation_aggregate_node.py`, `tests/domain/contracts/interview_state/test_interview_state_field_invariants.py`, `tests/domain/contracts/test_interview_state.py`, `tests/integration/use_cases/test_evaluate_answer_execution.py`, `tests/services/test_interview_evaluation_service.py`, `tests/services/test_signal_enrichment_step.py`, `tests/ui/mappers/test_final_report_dto_seniority.py`, `tests/ui/mappers/test_final_report_dto_context_profile.py`, `tests/ui/builders/test_ui_response_builder_completion.py`, `tests/hardening/test_r541_coaching_credibility.py`, `tests/infrastructure/llm/test_interview_metrics_integration.py` |
-| 8 | `tests/domain/contracts/session_history/test_session_history_contracts.py`, `tests/app/graph/nodes/test_session_close_node.py`, `tests/services/session_close/test_session_close_pipeline.py`, `tests/app/graph/nodes/test_coaching_integration.py`, `tests/app/graph/nodes/test_narrative_integration.py`, `tests/app/graph/nodes/test_rs01_feature_propagation.py`, `tests/domain/contracts/interview_state/test_candidate_identity.py`, `tests/services/knowledge_pipeline/test_knowledge_pipeline_architecture.py`, `tests/infrastructure/execution/test_domain_isolation.py` |
-| 9 | `tests/domain/contracts/report/test_report_contracts.py`, `tests/app/graph/nodes/test_report_node.py` |
-| 10 | `tests/ui/mappers/test_interview_state_mapper.py`, `tests/ui/mappers/test_final_report_dto_seniority.py`, `tests/ui/mappers/test_final_report_dto_context_profile.py`, `tests/ui/builders/test_ui_response_builder_completion.py`, `tests/services/test_report_export_service.py` |
+| 7A | `tests/graph/nodes/test_evaluation_aggregate_node.py`, `tests/domain/contracts/interview_state/test_interview_state_field_invariants.py`, `tests/integration/use_cases/test_evaluate_answer_execution.py` |
+| 7B | `tests/domain/contracts/session_history/test_session_history_contracts.py`, `tests/app/graph/nodes/test_session_close_node.py`, `tests/services/session_close/test_session_close_pipeline.py`, `tests/app/graph/nodes/test_narrative_integration.py`, `tests/app/graph/nodes/test_rs01_feature_propagation.py` |
+| 7C | `tests/domain/contracts/interview_state/test_interview_state_field_invariants.py` (update: assert removed), `tests/domain/contracts/session_history/test_session_history_contracts.py` (update: assert removal + v2.0), `tests/domain/contracts/test_interview_state.py`, `tests/services/test_interview_evaluation_service.py`, `tests/services/test_signal_enrichment_step.py`, `tests/ui/mappers/test_final_report_dto_seniority.py`, `tests/ui/mappers/test_final_report_dto_context_profile.py`, `tests/ui/builders/test_ui_response_builder_completion.py`, `tests/hardening/test_r541_coaching_credibility.py`, `tests/infrastructure/llm/test_interview_metrics_integration.py`, `tests/app/graph/nodes/test_coaching_integration.py` |
+| 8 | `tests/domain/contracts/report/test_report_contracts.py`, `tests/app/graph/nodes/test_report_node.py` |
+| 9 | `tests/ui/mappers/test_interview_state_mapper.py`, `tests/ui/mappers/test_final_report_dto_seniority.py`, `tests/ui/mappers/test_final_report_dto_context_profile.py`, `tests/ui/builders/test_ui_response_builder_completion.py`, `tests/services/test_report_export_service.py` |
 
 ---
 
@@ -816,3 +893,5 @@ If any phase reveals an unresolved architectural question, stop. Do not proceed.
 ---
 
 *This document is the executable implementation roadmap for EPIC-V13-01 and EPIC-V13-05. No architectural decisions may be made during implementation. All decisions are frozen in ADR-033, EPIC-01-DOMAIN-CONTRACTS.md, and EPIC-01-DATA-MODEL.md.*
+
+*Revision 2026-07-05: Replaced atomic Phases 7+8 with bridge sequence 7A (InterviewState extension) → 7B (SessionHistory extension) → 7C (legacy removal), renumbered downstream phases 9→8, 10→9, 11→10. Engineering rule "Zero Known Failing Tests" applied. Architecture unchanged.*
