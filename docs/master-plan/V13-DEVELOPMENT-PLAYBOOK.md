@@ -312,4 +312,110 @@ Begin every session with a save-token before making any changes. This ensures th
 
 ---
 
+## 8. Epic Planning Workflow
+
+The EPIC-01 planning process established the standard workflow for V1.3 epics. This section formalises that workflow and makes it mandatory for all subsequent epics.
+
+Two categories of epic exist. The category determines the mandatory pre-implementation workflow. Misclassifying an epic as Category A when it belongs in Category B is a process violation.
+
+---
+
+### Category A — Standard Epics
+
+Applies to epics that do not introduce new domain contracts, new persistent artifacts, new builders, new immutable models, or new serialization contracts.
+
+**Mandatory workflow:**
+
+1. **Master Plan** — Epic scope, purpose, dependencies, and success criteria defined in the Master Plan or in a dedicated epic planning document under `docs/master-plan/epics/`.
+2. **Architecture Review** — An explicit review pass that identifies affected subsystems, confirms no missing decisions, and declares the epic ready for ADR.
+3. **ADR** — One or more ADRs frozen in `docs/decisions/` that cover every architectural decision the epic requires.
+4. **Implementation** — Incremental implementation against frozen decisions. No architectural choices during coding.
+5. **CAR (Change Acceptance Report)** — Confirms the implementation satisfies the ADR decisions and the epic's success criteria.
+6. **RR (Regression Report)** — Confirms the full test suite passes and no regressions were introduced.
+7. **Epic Freeze** — Epic is declared complete. No further changes to the epic scope.
+
+---
+
+### Category B — Major Architectural Epics
+
+Applies whenever the epic introduces or substantially changes any of the following:
+
+- Domain contracts (`frozen=True` Pydantic models, enums, value types)
+- Persistent artifacts (anything written to `SessionHistory`, `Report`, or a future database)
+- Builders (`*Builder` classes)
+- Immutable models (any `frozen=True` or `__slots__`-based domain object)
+- Report structures (any change to `Report`, `FinalReportDTO`, or report section renderers)
+- Replay structures (any change to `SessionHistory`, `ReplaySession`, or `ReplayMetadata`)
+- Longitudinal models (`LongitudinalProfile`, `CandidateProfileSnapshot`, `LearningProgress`)
+- State contracts (`InterviewState` fields, their declared owners, or their write order)
+- Serialization models (any change to `schema_version` or stored data shape)
+
+**Mandatory workflow:**
+
+1. **Master Plan** — Epic scope, purpose, dependencies, non-goals, and success criteria.
+2. **Architecture Review** — Full analysis of current state, target state, all affected subsystems, open decisions, and structural gaps. Produces a structured report of confirmed decisions, missing decisions, and risks. Does not produce code.
+3. **ADR** — One or more ADRs in `docs/decisions/` that freeze every architectural decision identified in the Architecture Review. Implementation cannot begin until all blocking ADR decisions are frozen.
+4. **Domain Contracts** — A dedicated domain contract specification document under `docs/master-plan/epics/`. Specifies the complete field set, types, validation invariants, ownership, lifecycle, and relationships of every new artifact. Precise enough that implementation is mechanical.
+5. **Data Model Specification** — A dedicated data model document. Resolves all open modelling decisions left by the Domain Contracts document. Freezes the complete field tables for all affected artifacts. Verifies replay completeness. Evaluates future extensibility.
+6. **Architecture Freeze** — A formal gate (described below). Implementation cannot begin before Architecture Freeze passes.
+7. **Implementation** — Incremental implementation against frozen contracts. No architectural choices during coding. If an unresolved question emerges, apply the Stopping Rule (below).
+8. **CAR (Change Acceptance Report)** — Confirms the implementation satisfies all ADR decisions, domain contracts, and data model specifications.
+9. **RR (Regression Report)** — Confirms the full test suite passes with no regressions.
+10. **Epic Freeze** — Epic is declared complete. No further scope additions.
+
+---
+
+### Architecture Freeze
+
+Architecture Freeze is a mandatory gate between the planning phase (steps 1–5 of Category B) and the implementation phase (step 7). It is not a document — it is a verification checkpoint.
+
+**Purpose:** Confirm that all decisions required for implementation are frozen, unambiguous, and consistent before a single line of production code is written.
+
+**Architecture Freeze passes when all of the following are true:**
+
+- All architectural decisions are frozen in one or more accepted ADRs.
+- All domain contract field sets, types, validation invariants, and ownership rules are specified in the Domain Contracts document.
+- All data model decisions (field structures, serialization rules, replay completeness, extensibility) are frozen in the Data Model Specification.
+- No open architectural questions remain in any planning document. Questions marked "open issue" must be resolved before the freeze, not deferred to implementation.
+- Every new artifact has a declared sole writer, declared readers, and a declared lifecycle.
+- The `FinalReportDTO` field mapping from `Report` is complete and every field is traceable to a specific source.
+- Replay completeness has been verified: every report section can be reconstructed from `SessionHistory` without LLM calls.
+
+**Implementation cannot begin until Architecture Freeze passes.**
+
+If a planning document contains unresolved open issues at the time of the freeze, those issues must be resolved and the affected planning documents updated before the freeze is declared.
+
+---
+
+### Document Responsibilities
+
+Each planning document has a unique responsibility. Documents must not duplicate each other's content. If the same information appears in two documents, one of them is wrong.
+
+| Document | Unique Responsibility |
+|----------|-----------------------|
+| **Master Plan** | Epic scope, purpose, product goals, dependencies, non-goals, success criteria. Does not specify field-level data. |
+| **Architecture Review** | Analysis of current state vs target state. Identifies affected subsystems, confirmed decisions, missing decisions, and risks. Produces findings only — no decisions. |
+| **ADR** | Freezes decisions. Evaluates alternatives. Records rationale. Specifies migration impact. Each decision is owned by exactly one ADR. |
+| **Domain Contracts** | Field-level specification of every new or changed artifact: types, defaults, constraints, validators, ownership, lifecycle. Does not evaluate alternatives (that is the ADR's job). |
+| **Data Model Specification** | Resolves all open modelling questions left by the Domain Contracts document. Freezes complete field tables. Verifies replay completeness. Evaluates extensibility. Does not re-specify invariants (that is the Domain Contracts' job). |
+| **CAR (Change Acceptance Report)** | Post-implementation verification that the implementation matches the frozen decisions. Records any deviations and their justification. |
+| **RR (Regression Report)** | Test suite results. Regression counts. No architectural content. |
+| **Epic Freeze** | Declaration that the epic is complete, all criteria are met, and the codebase is stable. |
+
+---
+
+### Stopping Rule
+
+If, during implementation, an unresolved architectural question emerges — a decision that was not covered by the ADR, Domain Contracts, or Data Model documents — the following process is mandatory:
+
+1. **Stop implementation immediately.** Do not make the architectural decision in code. Do not proceed with an assumption.
+2. **Return to the Architecture Review / ADR phase.** Document the question, evaluate alternatives, and freeze a decision in a new or amended ADR.
+3. **Update the affected planning documents** (Domain Contracts or Data Model Specification) if the decision changes any specified field, type, invariant, or ownership rule.
+4. **Declare a new Architecture Freeze** for the affected scope before resuming.
+5. **Resume implementation** only after the decision is frozen and the planning documents are updated.
+
+**Architectural decisions must never be made while coding.** A decision made in code is a decision that bypasses all review, rationale recording, and traceability. It is a process violation regardless of whether the decision is technically correct.
+
+---
+
 *This playbook is the operational handbook for V1.3. It is a living document. Amendments are made when process lessons are learned, not when preferences change. Every amendment requires a recorded rationale.*
