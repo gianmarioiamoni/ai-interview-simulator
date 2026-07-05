@@ -11,6 +11,7 @@ from domain.contracts.shared.performance_dimension import PerformanceDimension
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from tests.factories.interview_state_factory import build_state_with_execution
+from tests.domain.contracts.report.conftest import make_report
 
 
 def _build_evaluation() -> InterviewEvaluation:
@@ -49,6 +50,7 @@ class TestFinalReportDTOSeniority:
         state = build_state_with_execution(passed_tests=2, total_tests=2)
         state = state.model_copy(update={
             "interview_evaluation": _build_evaluation(),
+            "report": make_report(),
             "seniority_level": "senior",
         })
 
@@ -60,6 +62,7 @@ class TestFinalReportDTOSeniority:
         state = build_state_with_execution(passed_tests=2, total_tests=2)
         state = state.model_copy(update={
             "interview_evaluation": _build_evaluation(),
+            "report": make_report(),
             "seniority_level": "junior",
         })
 
@@ -71,6 +74,7 @@ class TestFinalReportDTOSeniority:
         state = build_state_with_execution(passed_tests=2, total_tests=2)
         state = state.model_copy(update={
             "interview_evaluation": _build_evaluation(),
+            "report": make_report(),
         })
 
         report = InterviewStateMapper().to_final_report_dto(state)
@@ -82,6 +86,7 @@ class TestFinalReportDTOSeniority:
         evaluation = _build_evaluation()
         state = state.model_copy(update={
             "interview_evaluation": evaluation,
+            "report": make_report(),
             "seniority_level": "senior",
         })
 

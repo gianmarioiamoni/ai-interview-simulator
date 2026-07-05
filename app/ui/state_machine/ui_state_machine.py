@@ -18,7 +18,7 @@ class UIStateMachine:
             return UIState.SETUP
 
         # REPORT
-        if state.interview_evaluation is not None:
+        if state.report is not None:
             logger.debug("resolved UI state: REPORT")
             return UIState.REPORT
 

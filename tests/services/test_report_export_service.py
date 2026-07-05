@@ -12,6 +12,7 @@ from services.report_export_service import ReportExportService
 from tests.factories.interview_state_factory import build_state_with_execution
 from tests.ui.mappers.test_interview_state_mapper import build_interview_evaluation
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
+from tests.domain.contracts.report.conftest import make_report
 
 
 def _build_completed_report():
@@ -20,6 +21,7 @@ def _build_completed_report():
         update={
             "interview_evaluation": build_interview_evaluation(),
             "is_completed": True,
+            "report": make_report(),
         }
     )
     return InterviewStateMapper().to_final_report_dto(state)
@@ -164,6 +166,7 @@ def test_export_pdf_handler_calls_service_and_returns_visible_on_success():
         update={
             "interview_evaluation": build_interview_evaluation(),
             "is_completed": True,
+            "report": make_report(),
         }
     )
     with patch.object(handlers, "_service") as mock_svc:
@@ -179,6 +182,7 @@ def test_export_pdf_handler_keeps_button_visible_on_failure():
         update={
             "interview_evaluation": build_interview_evaluation(),
             "is_completed": True,
+            "report": make_report(),
         }
     )
     with patch.object(handlers, "_service") as mock_svc:
@@ -194,6 +198,7 @@ def test_export_pdf_handler_shows_warning_on_failure():
         update={
             "interview_evaluation": build_interview_evaluation(),
             "is_completed": True,
+            "report": make_report(),
         }
     )
     with patch.object(handlers, "_service") as mock_svc:
@@ -209,6 +214,7 @@ def test_export_json_handler_keeps_button_visible_on_failure():
         update={
             "interview_evaluation": build_interview_evaluation(),
             "is_completed": True,
+            "report": make_report(),
         }
     )
     with patch.object(handlers, "_service") as mock_svc:
@@ -224,6 +230,7 @@ def test_export_json_handler_shows_warning_on_failure():
         update={
             "interview_evaluation": build_interview_evaluation(),
             "is_completed": True,
+            "report": make_report(),
         }
     )
     with patch.object(handlers, "_service") as mock_svc:
@@ -239,6 +246,7 @@ def test_export_json_handler_calls_service_and_returns_visible_on_success():
         update={
             "interview_evaluation": build_interview_evaluation(),
             "is_completed": True,
+            "report": make_report(),
         }
     )
     with patch.object(handlers, "_service") as mock_svc:

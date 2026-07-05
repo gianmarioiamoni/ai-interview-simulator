@@ -19,6 +19,7 @@ from tests.factories.interview_state_factory import (
     build_state_with_execution,
     build_written_question_state,
 )
+from tests.domain.contracts.report.conftest import make_report
 
 
 # ---------------------------------------------------------
@@ -117,12 +118,17 @@ def test_session_dto_completed_returns_no_current_question():
 # ---------------------------------------------------------
 
 
-def test_final_report_requires_interview_evaluation():
-
+def test_final_report_requires_report():
+    """state.report must be set before to_final_report_dto() is called."""
     state = build_interview_state()
-
     mapper = InterviewStateMapper()
+    with pytest.raises(ValueError, match="state.report is required"):
+        mapper.to_final_report_dto(state)
 
+
+def test_final_report_requires_interview_evaluation():
+    state = build_interview_state().model_copy(update={"report": make_report()})
+    mapper = InterviewStateMapper()
     with pytest.raises(ValueError, match="Final evaluation is required"):
         mapper.to_final_report_dto(state)
 
@@ -132,7 +138,7 @@ def test_final_report_maps_evaluation_fields():
     state = build_state_with_execution(passed_tests=2, total_tests=2)
 
     evaluation = build_interview_evaluation(overall_score=75.0)
-    state = state.model_copy(update={"interview_evaluation": evaluation})
+    state = state.model_copy(update={"interview_evaluation": evaluation, "report": make_report()})
 
     mapper = InterviewStateMapper()
     report = mapper.to_final_report_dto(state)
@@ -150,7 +156,7 @@ def test_final_report_maps_dimension_scores():
     state = build_state_with_execution(passed_tests=1, total_tests=2)
 
     state = state.model_copy(
-        update={"interview_evaluation": build_interview_evaluation()}
+        update={"interview_evaluation": build_interview_evaluation(), "report": make_report()}
     )
 
     mapper = InterviewStateMapper()
@@ -167,7 +173,7 @@ def test_final_report_includes_question_assessments_from_results():
     state = build_state_with_execution(passed_tests=1, total_tests=2)
 
     state = state.model_copy(
-        update={"interview_evaluation": build_interview_evaluation()}
+        update={"interview_evaluation": build_interview_evaluation(), "report": make_report()}
     )
 
     mapper = InterviewStateMapper()
@@ -198,6 +204,7 @@ def test_final_report_maps_ai_hint_when_present():
         update={
             "results_by_question": {**state.results_by_question, question_id: updated_result},
             "interview_evaluation": build_interview_evaluation(),
+            "report": make_report(),
         }
     )
 
@@ -212,7 +219,7 @@ def test_final_report_maps_ai_hint_when_present():
 def test_final_report_ai_hint_fields_are_none_when_no_hint():
 
     state = build_state_with_execution(passed_tests=2, total_tests=2)
-    state = state.model_copy(update={"interview_evaluation": build_interview_evaluation()})
+    state = state.model_copy(update={"interview_evaluation": build_interview_evaluation(), "report": make_report()})
 
     mapper = InterviewStateMapper()
     report = mapper.to_final_report_dto(state)
@@ -241,6 +248,7 @@ def test_final_report_maps_strengths_and_weaknesses_for_written_question():
         update={
             "results_by_question": {question_id: result},
             "interview_evaluation": build_interview_evaluation(),
+            "report": make_report(),
         }
     )
 
@@ -255,7 +263,7 @@ def test_final_report_maps_strengths_and_weaknesses_for_written_question():
 def test_final_report_strengths_weaknesses_empty_for_coding_question():
 
     state = build_state_with_execution(passed_tests=2, total_tests=2)
-    state = state.model_copy(update={"interview_evaluation": build_interview_evaluation()})
+    state = state.model_copy(update={"interview_evaluation": build_interview_evaluation(), "report": make_report()})
 
     mapper = InterviewStateMapper()
     report = mapper.to_final_report_dto(state)
@@ -283,6 +291,7 @@ def test_final_report_maps_follow_up_question_for_written_question():
         update={
             "results_by_question": {question_id: result},
             "interview_evaluation": build_interview_evaluation(),
+            "report": make_report(),
         }
     )
 
@@ -296,7 +305,7 @@ def test_final_report_maps_follow_up_question_for_written_question():
 def test_final_report_follow_up_is_none_for_coding_question():
 
     state = build_state_with_execution(passed_tests=2, total_tests=2)
-    state = state.model_copy(update={"interview_evaluation": build_interview_evaluation()})
+    state = state.model_copy(update={"interview_evaluation": build_interview_evaluation(), "report": make_report()})
 
     mapper = InterviewStateMapper()
     report = mapper.to_final_report_dto(state)

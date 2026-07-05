@@ -12,6 +12,7 @@ from domain.contracts.shared.performance_dimension import PerformanceDimension
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from tests.factories.interview_state_factory import build_state_with_execution
+from tests.domain.contracts.report.conftest import make_report
 
 
 def _build_evaluation() -> InterviewEvaluation:
@@ -55,6 +56,7 @@ class TestFinalReportDTOContextProfile:
         state = state.model_copy(update={
             "interview_evaluation": _build_evaluation(),
             "context_profile": profile,
+            "report": make_report(),
         })
 
         report = InterviewStateMapper().to_final_report_dto(state)
@@ -64,7 +66,7 @@ class TestFinalReportDTOContextProfile:
 
     def test_report_context_profile_defaults_when_not_set(self):
         state = build_state_with_execution(passed_tests=2, total_tests=2)
-        state = state.model_copy(update={"interview_evaluation": _build_evaluation()})
+        state = state.model_copy(update={"interview_evaluation": _build_evaluation(), "report": make_report()})
 
         report = InterviewStateMapper().to_final_report_dto(state)
 
@@ -77,6 +79,7 @@ class TestFinalReportDTOContextProfile:
         state = state.model_copy(update={
             "interview_evaluation": _build_evaluation(),
             "context_profile": profile,
+            "report": make_report(),
         })
 
         report = InterviewStateMapper().to_final_report_dto(state)
@@ -89,6 +92,7 @@ class TestFinalReportDTOContextProfile:
         state = state.model_copy(update={
             "interview_evaluation": _build_evaluation(),
             "seniority_level": "senior",
+            "report": make_report(),
         })
 
         report = InterviewStateMapper().to_final_report_dto(state)

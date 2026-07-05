@@ -56,12 +56,14 @@ class InterviewStateMapper:
         state: InterviewState,
     ) -> FinalReportDTO:
 
+        if state.report is None:
+            raise ValueError("state.report is required — report_node must run before presentation")
+
         final_evaluation = state.interview_evaluation
 
         if final_evaluation is None:
             raise ValueError("Final evaluation is required")
 
-        # 👇 CORRETTO: delega tutto al DTO
         return FinalReportDTO.from_components(
             state=state,
             final_evaluation=final_evaluation,

@@ -245,7 +245,7 @@ class UIResponseBuilder:
 
         if state.is_processing:
             report_output = "<i>Generating your final report, please wait…</i>"
-        elif state.interview_evaluation is None:
+        elif state.report is None:
             report_output = (
                 "<i>Report generation failed.<br>"
                 "Please start a new interview session and try again.</i>"
@@ -285,14 +285,15 @@ class UIResponseBuilder:
     # =====================================================
     def _build_report(self, state: InterviewState) -> UIResponse:
 
+        # state.report is the authoritative runtime source (MIG-05 / RC1-04).
+        # interview_evaluation provides scoring data for FinalReportDTO.
         final_eval = state.interview_evaluation
 
-        # loader_visible = state.current_step is not None
         loader_visible = False
         loader_value = map_loader_text(state.current_step)
         progress = map_loader_progress(state.current_step)
 
-        if final_eval is None:
+        if state.report is None or final_eval is None:
             return UIResponse(
                 state=state,
                 role_visible=False,

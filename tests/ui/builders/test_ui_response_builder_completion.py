@@ -7,6 +7,7 @@ from tests.factories.interview_state_factory import build_interview_state
 from tests.factories.question_factory import build_question
 from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.question.question_evaluation import QuestionEvaluation
+from tests.domain.contracts.report.conftest import make_report
 
 
 def _completed_state():
@@ -66,14 +67,15 @@ def test_completion_shows_failure_message_when_not_processing_and_no_evaluation(
 
 
 def test_a4_report_state_still_renders_report():
-    """A4: REPORT state must still render the full report (regression guard)."""
+    """A4: REPORT state (state.report set) must render the full report (regression guard)."""
     from unittest.mock import patch, MagicMock
 
     builder = UIResponseBuilder()
     state = _completed_state()
 
     mock_eval = MagicMock()
-    state = state.model_copy(update={"interview_evaluation": mock_eval})
+    # state.report must be set for UIStateMachine to resolve REPORT state
+    state = state.model_copy(update={"interview_evaluation": mock_eval, "report": make_report()})
 
     with patch("app.ui.builders.ui_response_builder.FinalReportDTO") as mock_dto, \
          patch("app.ui.builders.ui_response_builder.build_report_markdown", return_value="<html>"):
@@ -82,3 +84,45 @@ def test_a4_report_state_still_renders_report():
 
     assert response.page_title == "## Final Report"
     assert response.report_section_visible is True
+
+
+# ---------------------------------------------------------
+# RC1-04 regression tests: state.report as authoritative signal
+# ---------------------------------------------------------
+
+def test_rc104_report_state_requires_state_report_for_report_ui_state():
+    """RC1-04: UIStateMachine resolves REPORT only when state.report is set."""
+    from unittest.mock import MagicMock
+    state = _completed_state()
+    # Only interview_evaluation set — no state.report → must NOT resolve REPORT
+    state = state.model_copy(update={"interview_evaluation": MagicMock()})
+    resolved = UIStateMachine.resolve(state)
+    assert resolved != UIState.REPORT
+
+
+def test_rc104_state_report_alone_triggers_report_ui_state():
+    """RC1-04: state.report (without interview_evaluation) routes to REPORT state."""
+    state = _completed_state()
+    state = state.model_copy(update={"report": make_report()})
+    resolved = UIStateMachine.resolve(state)
+    assert resolved == UIState.REPORT
+
+
+def test_rc104_state_report_and_evaluation_route_to_report():
+    """RC1-04: both state.report and interview_evaluation → REPORT state."""
+    from unittest.mock import MagicMock
+    state = _completed_state()
+    state = state.model_copy(update={"report": make_report(), "interview_evaluation": MagicMock()})
+    resolved = UIStateMachine.resolve(state)
+    assert resolved == UIState.REPORT
+
+
+def test_rc104_build_report_shows_unavailable_when_state_report_is_none():
+    """RC1-04: _build_report falls back to 'No report available' when state.report is None."""
+    from unittest.mock import MagicMock
+    builder = UIResponseBuilder()
+    state = _completed_state()
+    # interview_evaluation is set but state.report is None → no-report fallback
+    state = state.model_copy(update={"report": make_report(), "interview_evaluation": None})
+    response = builder.build(state)
+    assert "No report available" in response.report_output
