@@ -1,31 +1,31 @@
 # services/interview_evaluation/assemblers/evaluation_narrative_assembler.py
 
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from domain.contracts.feedback.confidence import Confidence
-from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
+from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.question.question_evaluation import QuestionEvaluation
-from domain.contracts.user.role import RoleType, ROLE_DISTRIBUTION
+from domain.contracts.report.scoring_narrative import ScoringNarrative
+from domain.contracts.report.scoring_narrative_item import ScoringNarrativeItem
+from domain.contracts.user.role import ROLE_DISTRIBUTION, RoleType
 
 from app.ports.llm_port import LLMPort
 
 from services.narrative_service import NarrativeService
-from services.interview_evaluation.mappers.readable_dimension_mapper import (
-    ReadableDimensionMapper,
-)
+from services.interview_evaluation.builders.dimension_builder import DimensionBuilder
+from services.interview_evaluation.builders.improvement_builder import ImprovementBuilder
 from services.interview_evaluation.generators.decision_explanation_generator import (
     DecisionExplanationGenerator,
 )
 from services.interview_evaluation.generators.executive_summary_generator import (
     ExecutiveSummaryGenerator,
 )
-from services.interview_evaluation.builders.dimension_builder import DimensionBuilder
-from services.interview_evaluation.builders.improvement_builder import (
-    ImprovementBuilder,
-)
 from services.interview_evaluation.generators.narrative_generator import (
     NarrativeGenerator,
+)
+from services.interview_evaluation.mappers.readable_dimension_mapper import (
+    ReadableDimensionMapper,
 )
 
 from app.core.logger import get_logger
@@ -47,6 +47,7 @@ class EvaluationNarrativeAssembler:
     - Generate per-dimension narrative
     - Build performance dimensions
     - Build improvement suggestions
+    - Construct ScoringNarrative (ADR-033)
     """
 
     def __init__(self, llm: LLMPort, narrative_service: NarrativeService) -> None:
@@ -73,14 +74,12 @@ class EvaluationNarrativeAssembler:
         role: RoleType,
         context_profile: Optional[InterviewContextProfile] = None,
         seniority_level: str = "mid",
-    ) -> Dict[str, Any]:
+    ) -> "AssemblerResult":
         """
-        Compute and return all narrative fields needed by InterviewEvaluation.
+        Compute and return all narrative fields as an AssemblerResult.
 
-        Returns a dict with keys:
-          readable, strongest, weakest, strongest_score, weakest_score,
-          decision_explanation, percentile, percentile_explanation, confidence,
-          executive_summary, narrative, performance_dimensions, improvement_suggestions
+        The result exposes both the legacy dict fields (for backward
+        compatibility within Phase 6 only) and the new ScoringNarrative.
         """
 
         # -------------------------------------------------
@@ -149,10 +148,10 @@ class EvaluationNarrativeAssembler:
             )
 
         # -------------------------------------------------
-        # NARRATIVE
+        # NARRATIVE (LLM dict)
         # -------------------------------------------------
 
-        narrative = self._narrative_generator.generate(
+        narrative_dict = self._narrative_generator.generate(
             evaluations,
             dimension_scores,
             interview_type,
@@ -166,31 +165,186 @@ class EvaluationNarrativeAssembler:
 
         performance_dimensions = self._dimension_builder.build(
             dimension_scores,
-            narrative,
+            narrative_dict,
         )
 
         improvement_suggestions = self._improvement_builder.build(
             dimension_scores,
-            narrative,
+            narrative_dict,
             evaluations=evaluations,
         )
 
-        return {
-            "readable": readable,
-            "strongest": strongest,
-            "weakest": weakest,
-            "strongest_score": strongest_score,
-            "weakest_score": weakest_score,
-            "decision_explanation": decision_explanation,
-            "percentile": percentile,
-            "percentile_explanation": percentile_explanation,
-            "confidence": confidence,
-            "executive_summary": executive_summary,
-            "narrative": narrative,
-            "performance_dimensions": performance_dimensions,
-            "improvement_suggestions": improvement_suggestions,
-            "went_well": narrative.get("went_well", []),
-            "held_you_back": narrative.get("held_you_back", []),
-            "knowledge_gaps": narrative.get("knowledge_gaps", []),
-            "next_strategy": narrative.get("next_strategy", []),
-        }
+        # -------------------------------------------------
+        # SCORING NARRATIVE (ADR-033)
+        # -------------------------------------------------
+
+        scoring_narrative = self._build_scoring_narrative(
+            executive_summary=executive_summary,
+            narrative_dict=narrative_dict,
+            improvement_suggestions_list=improvement_suggestions,
+        )
+
+        return AssemblerResult(
+            readable=readable,
+            strongest=strongest,
+            weakest=weakest,
+            strongest_score=strongest_score,
+            weakest_score=weakest_score,
+            decision_explanation=decision_explanation,
+            percentile=percentile,
+            percentile_explanation=percentile_explanation,
+            confidence=confidence,
+            executive_summary=executive_summary,
+            narrative_dict=narrative_dict,
+            performance_dimensions=performance_dimensions,
+            improvement_suggestions=improvement_suggestions,
+            scoring_narrative=scoring_narrative,
+        )
+
+    # ------------------------------------------------------------------
+    # PRIVATE
+    # ------------------------------------------------------------------
+
+    def _build_scoring_narrative(
+        self,
+        executive_summary: str,
+        narrative_dict: Dict[str, Any],
+        improvement_suggestions_list: list,
+    ) -> ScoringNarrative:
+        went_well = tuple(narrative_dict.get("went_well", []))
+
+        held_you_back = self._map_held_you_back(
+            narrative_dict.get("held_you_back", [])
+        )
+        knowledge_gaps = self._map_knowledge_gaps(
+            narrative_dict.get("knowledge_gaps", [])
+        )
+        next_strategy = self._map_next_strategy(
+            narrative_dict.get("next_strategy", [])
+        )
+
+        # improvement_suggestions come from ImprovementBuilder as list[str]
+        improvement_suggestions = tuple(
+            str(s) for s in improvement_suggestions_list if s
+        )
+
+        return ScoringNarrative(
+            executive_summary=executive_summary,
+            went_well=went_well,
+            held_you_back=held_you_back,
+            knowledge_gaps=knowledge_gaps,
+            next_strategy=next_strategy,
+            improvement_suggestions=improvement_suggestions,
+        )
+
+    @staticmethod
+    def _map_held_you_back(
+        items: List[Any],
+    ) -> tuple[ScoringNarrativeItem, ...]:
+        result = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            try:
+                result.append(
+                    ScoringNarrativeItem(
+                        category="held_you_back",
+                        description=str(item.get("behaviour") or "").strip() or "—",
+                        why_it_matters=str(item.get("why_it_matters") or "").strip() or "—",
+                        context_detail=str(item.get("impact") or "").strip() or None,
+                    )
+                )
+            except Exception:
+                logger.warning("held_you_back_item_skipped | item=%s", item)
+        return tuple(result)
+
+    @staticmethod
+    def _map_knowledge_gaps(
+        items: List[Any],
+    ) -> tuple[ScoringNarrativeItem, ...]:
+        result = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            try:
+                result.append(
+                    ScoringNarrativeItem(
+                        category=str(item.get("category") or "knowledge_gap").strip() or "knowledge_gap",
+                        description=str(item.get("concept") or "").strip() or "—",
+                        why_it_matters=str(item.get("why_it_matters") or "").strip() or "—",
+                        context_detail=str(item.get("interview_impact") or "").strip() or None,
+                    )
+                )
+            except Exception:
+                logger.warning("knowledge_gap_item_skipped | item=%s", item)
+        return tuple(result)
+
+    @staticmethod
+    def _map_next_strategy(
+        items: List[Any],
+    ) -> tuple[ScoringNarrativeItem, ...]:
+        result = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            try:
+                result.append(
+                    ScoringNarrativeItem(
+                        category=str(item.get("priority") or "").strip() or "—",
+                        description=str(item.get("why") or "").strip() or "—",
+                        why_it_matters=str(item.get("expected_improvement") or "").strip() or "—",
+                        context_detail=str(item.get("impact") or "").strip() or None,
+                    )
+                )
+            except Exception:
+                logger.warning("next_strategy_item_skipped | item=%s", item)
+        return tuple(result)
+
+
+class AssemblerResult:
+    """Structured result from EvaluationNarrativeAssembler.assemble().
+
+    Replaces the previous untyped dict return. Exposes all fields needed
+    by InterviewEvaluationService for building both InterviewEvaluation
+    (Phase 6 compat) and the new ScoringNarrative artifact (ADR-033).
+    """
+
+    __slots__ = (
+        "readable", "strongest", "weakest", "strongest_score", "weakest_score",
+        "decision_explanation", "percentile", "percentile_explanation",
+        "confidence", "executive_summary", "narrative_dict",
+        "performance_dimensions", "improvement_suggestions", "scoring_narrative",
+    )
+
+    def __init__(
+        self,
+        *,
+        readable,
+        strongest,
+        weakest,
+        strongest_score,
+        weakest_score,
+        decision_explanation,
+        percentile,
+        percentile_explanation,
+        confidence,
+        executive_summary,
+        narrative_dict,
+        performance_dimensions,
+        improvement_suggestions,
+        scoring_narrative: ScoringNarrative,
+    ) -> None:
+        self.readable = readable
+        self.strongest = strongest
+        self.weakest = weakest
+        self.strongest_score = strongest_score
+        self.weakest_score = weakest_score
+        self.decision_explanation = decision_explanation
+        self.percentile = percentile
+        self.percentile_explanation = percentile_explanation
+        self.confidence = confidence
+        self.executive_summary = executive_summary
+        self.narrative_dict = narrative_dict
+        self.performance_dimensions = performance_dimensions
+        self.improvement_suggestions = improvement_suggestions
+        self.scoring_narrative = scoring_narrative

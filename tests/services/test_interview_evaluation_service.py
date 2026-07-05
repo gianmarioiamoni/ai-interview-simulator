@@ -1,12 +1,11 @@
 # tests/services/test_interview_evaluation_service.py
 
-# Behavioral tests for the CURRENT InterviewEvaluationService architecture:
-# deterministic scoring engine + decision engine + signal enrichment,
-# with LLM used only for narrative generation (with deterministic fallbacks).
+# Behavioral tests for InterviewEvaluationService.
 #
-# The legacy suite targeted a removed LLM-JSON evaluation contract
-# (per_question_evaluations kwarg, JSON retry loops, dimension-set guards)
-# and was classified obsolete in Phase 7B-Z.
+# Phase 6 bridge: evaluate() still returns InterviewEvaluation (legacy path,
+# consumed by EvaluationAggregateNode). evaluate_scoring() returns the new
+# (ScoringSnapshot, ScoringNarrative) tuple (ADR-033, migrated in Phase 7).
+# Both delegate to _compute() — single pipeline, zero duplicated computation.
 
 import pytest
 
@@ -22,6 +21,8 @@ from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.question.question_result import QuestionResult
+from domain.contracts.report.scoring_narrative import ScoringNarrative
+from domain.contracts.report.scoring_snapshot import ScoringSnapshot
 from domain.contracts.user.role import RoleType
 
 from services.interview_evaluation_service import InterviewEvaluationService
@@ -102,6 +103,15 @@ def evaluate(service: InterviewEvaluationService, results, questions):
     )
 
 
+def evaluate_scoring(service: InterviewEvaluationService, results, questions):
+    return service.evaluate_scoring(
+        question_results=results,
+        questions=questions,
+        interview_type=InterviewType.TECHNICAL,
+        role=RoleType.BACKEND_ENGINEER,
+    )
+
+
 # ---------------------------------------------------------
 # GUARDS
 # ---------------------------------------------------------
@@ -127,11 +137,11 @@ def test_evaluate_raises_without_evaluations():
 
 
 # ---------------------------------------------------------
-# HAPPY PATH
+# LEGACY PATH — evaluate() → InterviewEvaluation
 # ---------------------------------------------------------
 
 
-def test_evaluate_returns_complete_interview_evaluation():
+def test_evaluate_returns_interview_evaluation():
 
     service = InterviewEvaluationService(build_llm())
 
@@ -184,6 +194,83 @@ def test_low_scores_produce_negative_leaning_decision():
         HireDecision.NO_HIRE,
         HireDecision.LEAN_NO_HIRE,
     )
+
+
+# ---------------------------------------------------------
+# NEW PATH — evaluate_scoring() → (ScoringSnapshot, ScoringNarrative)
+# ---------------------------------------------------------
+
+
+def test_evaluate_scoring_returns_tuple():
+
+    service = InterviewEvaluationService(build_llm())
+
+    questions = [build_question(qid="q1"), build_question(qid="q2")]
+    results = [
+        build_result("q1", score=80.0),
+        build_result("q2", score=60.0),
+    ]
+
+    result = evaluate_scoring(service, results, questions)
+
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    snapshot, narrative = result
+    assert isinstance(snapshot, ScoringSnapshot)
+    assert isinstance(narrative, ScoringNarrative)
+
+
+def test_evaluate_scoring_snapshot_fields():
+
+    service = InterviewEvaluationService(build_llm())
+
+    questions = [build_question(qid="q1"), build_question(qid="q2")]
+    results = [build_result("q1", score=80.0), build_result("q2", score=60.0)]
+
+    snapshot, _ = evaluate_scoring(service, results, questions)
+
+    assert 0.0 <= snapshot.overall_score <= 100.0
+    assert 0.0 <= snapshot.hiring_probability <= 100.0
+    assert 0.0 <= snapshot.percentile_rank <= 100.0
+    assert snapshot.hire_decision in HireDecision
+    assert snapshot.dimension_scores
+    assert snapshot.weighted_breakdown
+    assert len(snapshot.scoring_dimensions) >= 1
+
+
+def test_evaluate_scoring_dimensions_fields():
+
+    service = InterviewEvaluationService(build_llm())
+
+    questions = [build_question(qid="q1"), build_question(qid="q2")]
+    results = [build_result("q1", score=75.0), build_result("q2", score=55.0)]
+
+    snapshot, _ = evaluate_scoring(service, results, questions)
+
+    for dim in snapshot.scoring_dimensions:
+        assert 0.0 <= dim.score <= 100.0
+        assert 0.0 <= dim.signal <= 1.0
+        assert 0.0 <= dim.weighted_contribution <= 1.0
+        assert dim.level in ("strong", "moderate", "weak")
+        assert dim.justification
+
+
+def test_evaluate_scoring_narrative_fields():
+
+    service = InterviewEvaluationService(build_llm())
+
+    questions = [build_question(qid="q1")]
+    results = [build_result("q1", score=70.0)]
+
+    _, narrative = evaluate_scoring(service, results, questions)
+
+    assert isinstance(narrative, ScoringNarrative)
+    assert narrative.executive_summary.strip()
+    assert isinstance(narrative.went_well, tuple)
+    assert isinstance(narrative.held_you_back, tuple)
+    assert isinstance(narrative.knowledge_gaps, tuple)
+    assert isinstance(narrative.next_strategy, tuple)
+    assert isinstance(narrative.improvement_suggestions, tuple)
 
 
 # ---------------------------------------------------------
@@ -250,3 +337,16 @@ def test_executive_summary_falls_back_when_llm_returns_empty():
 
     assert evaluation.executive_summary.strip()
     assert "overall score" in evaluation.executive_summary.lower()
+
+
+def test_evaluate_scoring_executive_summary_falls_back():
+
+    service = InterviewEvaluationService(build_llm(summary=""))
+
+    questions = [build_question(qid="q1")]
+    results = [build_result("q1", score=70.0)]
+
+    _, narrative = evaluate_scoring(service, results, questions)
+
+    assert narrative.executive_summary.strip()
+    assert "overall score" in narrative.executive_summary.lower()
