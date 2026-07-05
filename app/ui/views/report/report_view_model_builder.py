@@ -1,4 +1,5 @@
 # app/ui/views/report/report_view_model_builder.py
+# EPIC-V13-05 Phase 10 — adds narrative_insights, coaching_objectives, study_recommendations.
 
 from services.report_insight_builder import ReportInsightBuilder
 
@@ -13,6 +14,25 @@ class ReportViewModelBuilder:
         strongest, weakest = DimensionRanking.compute(dims)
 
         builder = ReportInsightBuilder()
+
+        # Phase 10 — narrative insights (FinalReportDTO carries pre-mapped DTOs;
+        # domain Report carries NarrativeInsight objects; both are supported via getattr).
+        narrative_insights = list(
+            getattr(report, "narrative_insights", None)
+            or (report.narrative.insights if hasattr(report, "narrative") else [])
+        )
+
+        # Phase 10 — coaching objectives and study recommendations
+        # FinalReportDTO carries pre-mapped CoachingObjectiveDTO list.
+        # Domain Report carries CoachingSnapshot (fallback for direct Report rendering).
+        coaching_objectives = list(
+            getattr(report, "coaching_objectives", None)
+            or (report.coaching_snapshot.collection.objectives if hasattr(report, "coaching_snapshot") else [])
+        )
+        study_recommendations = list(
+            getattr(report, "study_recommendations", None)
+            or (report.coaching_snapshot.collection.recommendations if hasattr(report, "coaching_snapshot") else [])
+        )
 
         return {
             "report": report,
@@ -34,4 +54,7 @@ class ReportViewModelBuilder:
             "signal_insights": builder.build_signal_insights(
                 report.dimension_signals
             ),
+            "narrative_insights": narrative_insights,
+            "coaching_objectives": coaching_objectives,
+            "study_recommendations": study_recommendations,
         }

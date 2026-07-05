@@ -1,4 +1,5 @@
 # app/ui/views/report/report_renderer.py
+# EPIC-V13-05 Phase 10 — adds narrative insights, coaching objectives, study recommendations.
 
 from .sections.overall_section import render_overall
 from .sections.executive_section import render_executive
@@ -13,6 +14,9 @@ from .sections.dimension_section import render_dimensions
 from .sections.question_section import render_questions
 from .sections.roadmap_section import render_roadmap
 from .sections.signal_section import render_signals
+from .sections.narrative_section import render_narrative
+from .sections.coaching_section import render_coaching_objectives
+from .sections.study_recommendations_section import render_study_recommendations
 
 
 class ReportRenderer:
@@ -36,4 +40,7 @@ class ReportRenderer:
 {render_market(vm)}
 {render_decision(report)}
 {render_signals(vm)}
+{render_narrative(vm)}
+{render_coaching_objectives(vm)}
+{render_study_recommendations(vm)}
 """

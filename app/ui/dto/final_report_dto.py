@@ -1,7 +1,9 @@
 # app/ui/dto/final_report_dto.py
-# EPIC-V13-05 Phase 9 — FinalReportDTO sourced exclusively from Report v2.0.
+# EPIC-V13-05 Phase 9/10 — FinalReportDTO sourced exclusively from Report v2.0.
 # from_components deleted (R-05). from_report is the sole factory.
+# Phase 10 adds NarrativeInsightDTO, CoachingObjectiveDTO optional fields.
 
+from dataclasses import dataclass, field as dc_field
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 
@@ -16,6 +18,24 @@ from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.report.report import Report
 from domain.contracts.user.role import RoleType
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
+
+
+@dataclass(frozen=True)
+class NarrativeInsightDTO:
+    """DTO for a single NarrativeInsight (EPIC-V13-05 Phase 10)."""
+    insight_type: str
+    prose: str
+    confidence: float
+
+
+@dataclass(frozen=True)
+class CoachingObjectiveDTO:
+    """DTO for a single LearningObjective (EPIC-V13-05 Phase 10)."""
+    objective_id: str
+    description: str
+    priority: str
+    confidence: float
+    feature_type: str
 
 
 def _safe_role_type(role_str: str) -> RoleType:
@@ -66,6 +86,10 @@ class FinalReportDTO(BaseModel):
 
     context_profile: InterviewContextProfile
 
+    # Phase 10 — new optional sections (additive, default empty)
+    narrative_insights: List[NarrativeInsightDTO] = Field(default_factory=list)
+    coaching_objectives: List[CoachingObjectiveDTO] = Field(default_factory=list)
+
     @classmethod
     def from_report(cls, report: Report) -> "FinalReportDTO":
         """Build FinalReportDTO exclusively from Report v2.0 (ADR-033, R-05, EPIC-V13-05 Phase 9).
@@ -86,6 +110,26 @@ class FinalReportDTO(BaseModel):
             if report.generation_metadata is not None
             else 0
         )
+
+        narrative_insights = [
+            NarrativeInsightDTO(
+                insight_type=i.insight_type.value if hasattr(i.insight_type, "value") else str(i.insight_type),
+                prose=i.prose,
+                confidence=i.confidence,
+            )
+            for i in report.narrative.insights
+        ]
+
+        coaching_objectives = [
+            CoachingObjectiveDTO(
+                objective_id=obj.objective_id,
+                description=obj.description,
+                priority=obj.priority.value if hasattr(obj.priority, "value") else str(obj.priority),
+                confidence=obj.confidence,
+                feature_type=obj.feature_type.value if hasattr(obj.feature_type, "value") else str(obj.feature_type),
+            )
+            for obj in report.coaching_snapshot.collection.objectives
+        ]
 
         return cls(
             overall_score=scoring.overall_score,
@@ -113,4 +157,6 @@ class FinalReportDTO(BaseModel):
             role=_safe_role_type(report.role),
             seniority_level=report.seniority,
             context_profile=report.context_profile,
+            narrative_insights=narrative_insights,
+            coaching_objectives=coaching_objectives,
         )
