@@ -7,8 +7,11 @@ import ast
 import textwrap
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
+
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 
 from domain.contracts.session_history.session_history import (
     InterviewMetadata,
@@ -82,9 +85,9 @@ class TestSessionHistoryContract:
     ) -> None:
         assert isinstance(session_history.question_timeline, tuple)
 
-    def test_schema_version_defaults_to_1_0(self) -> None:
+    def test_schema_version_defaults_to_2_0(self) -> None:
         history = make_session_history()
-        assert history.schema_version == "1.0"
+        assert history.schema_version == "2.0"
 
     def test_transcript_entry_is_frozen(self) -> None:
         entry = TranscriptEntry(
@@ -566,8 +569,8 @@ class TestSessionHistoryIntegration:
 # ---------------------------------------------------------------------------
 
 
-class TestSessionHistoryPhase7BBridgeFields:
-    """Verify new bridge fields present alongside legacy evaluation_result."""
+class TestSessionHistoryPhase7CFields:
+    """Phase 7C: verify new scoring artifacts and removal of evaluation_result."""
 
     def test_session_history_has_scoring_snapshot_field(self) -> None:
         history = make_session_history()
@@ -588,17 +591,21 @@ class TestSessionHistoryPhase7BBridgeFields:
     def test_session_history_has_context_profile_field(self) -> None:
         history = make_session_history()
         assert hasattr(history, "context_profile")
-        assert history.context_profile is None
+        assert isinstance(history.context_profile, InterviewContextProfile)
 
     def test_session_history_has_generation_metadata_field(self) -> None:
         history = make_session_history()
         assert hasattr(history, "generation_metadata")
         assert history.generation_metadata is None
 
-    def test_evaluation_result_still_present(self) -> None:
+    def test_evaluation_result_removed(self) -> None:
+        """Phase 7C: evaluation_result must not exist on SessionHistory."""
         history = make_session_history()
-        assert hasattr(history, "evaluation_result")
-        assert history.evaluation_result is None
+        assert not hasattr(history, "evaluation_result")
+
+    def test_schema_version_defaults_to_v2(self) -> None:
+        history = make_session_history()
+        assert history.schema_version == "2.0"
 
     def test_builder_has_with_scoring_snapshot(self) -> None:
         assert hasattr(SessionHistoryBuilder, "with_scoring_snapshot")
@@ -615,18 +622,13 @@ class TestSessionHistoryPhase7BBridgeFields:
     def test_builder_has_with_generation_metadata(self) -> None:
         assert hasattr(SessionHistoryBuilder, "with_generation_metadata")
 
-    def test_builder_with_evaluation_result_still_present(self) -> None:
-        assert hasattr(SessionHistoryBuilder, "with_evaluation_result")
+    def test_builder_with_evaluation_result_removed(self) -> None:
+        """Phase 7C: with_evaluation_result must not exist on builder."""
+        assert not hasattr(SessionHistoryBuilder, "with_evaluation_result")
 
-    def test_builder_dual_writes_new_and_legacy_fields(self) -> None:
-        """Builder stores all Phase 7B fields; build() passes them to SessionHistory.
-
-        Uses only None / empty values for typed domain objects to avoid MagicMock
-        rejections from Pydantic — functional tests for individual fields are in
-        TestSessionHistoryPhase7BBridgeFields above.
-        """
+    def test_builder_writes_new_fields(self) -> None:
+        """Builder stores all Phase 7C fields; build() passes them to SessionHistory."""
         from domain.contracts.interview.generation_metadata import GenerationMetadata
-        from domain.contracts.interview.interview_context_profile import InterviewContextProfile
         from tests.domain.contracts.knowledge_snapshot.conftest import make_knowledge_snapshot
 
         real_context = InterviewContextProfile()
@@ -646,14 +648,30 @@ class TestSessionHistoryPhase7BBridgeFields:
             .build()
         )
 
-        # Legacy field absent (None)
-        assert history.evaluation_result is None
-        # New fields propagated
         assert history.scoring_snapshot is None
         assert history.scoring_narrative is None
         assert history.question_results == ()
         assert history.context_profile == real_context
         assert history.generation_metadata == gen_meta
+        assert history.schema_version == "2.0"
+
+    def test_v_sh_01_scoring_pair_both_set_or_both_none(self) -> None:
+        """V-SH-01: scoring_snapshot and scoring_narrative must be paired."""
+        from pydantic import ValidationError
+        from tests.domain.contracts.knowledge_snapshot.conftest import make_knowledge_snapshot
+
+        builder = (
+            SessionHistoryBuilder()
+            .with_session_id(SESSION_ID)
+            .with_candidate_identity_id(CANDIDATE_ID)
+            .with_interview_index(0)
+            .with_knowledge_snapshot(make_knowledge_snapshot())
+            .with_interview_metadata(make_interview_metadata())
+            .with_language_profile(make_language_profile())
+        )
+        builder._scoring_snapshot = MagicMock()  # set snapshot but not narrative
+        with pytest.raises((ValueError, ValidationError)):
+            builder.build()
 
 
 # ---------------------------------------------------------------------------

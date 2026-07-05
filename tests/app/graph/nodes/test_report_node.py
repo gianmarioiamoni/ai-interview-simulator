@@ -140,14 +140,14 @@ class TestReportNodeCore:
         result = _run_report(state)
         assert result.session_history is original_history
 
-    def test_interview_evaluation_preserved_across_report_node(self):
-        """report_node must not discard interview_evaluation when it exists."""
+    def test_scoring_snapshot_preserved_across_report_node(self):
+        """report_node must not discard scoring_snapshot when it exists."""
         from unittest.mock import Mock
         state = _make_base_state(with_history=False)
-        mock_eval = Mock()
-        state = state.model_copy(update={"interview_evaluation": mock_eval})
+        mock_snapshot = Mock()
+        state = state.model_copy(update={"scoring_snapshot": mock_snapshot})
         result = _run_report(state)
-        assert result.interview_evaluation is mock_eval
+        assert result.scoring_snapshot is mock_snapshot
 
 
 # ---------------------------------------------------------------------------

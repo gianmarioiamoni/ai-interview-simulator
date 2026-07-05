@@ -6,10 +6,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
-from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_setup import InterviewSetup
 from domain.contracts.interview.generation_metadata import GenerationMetadata
 from domain.contracts.knowledge_snapshot.knowledge_snapshot import KnowledgeSnapshot
@@ -128,14 +127,8 @@ class SessionHistory(BaseModel):
         default_factory=tuple,
         description="Per-question metadata: language, type, difficulty, timing"
     )
-    evaluation_result: Optional[InterviewEvaluation] = Field(
-        default=None,
-        description="Session-level evaluation aggregate (ADR-022 §E) — bridge: kept until Phase 7C"
-    )
-
-    # Phase 7B (ADR-033): new scoring artifacts — additive bridge fields.
+    # Phase 7C (ADR-033): evaluation_result removed; new scoring artifacts only.
     # Sole writer: session_close_node via SessionHistoryBuilder.
-    # Kept alongside evaluation_result until Phase 7C removes the legacy field.
     scoring_snapshot: ScoringSnapshot | None = Field(
         default=None,
         description="Immutable scoring snapshot (ADR-033 — Phase 7B bridge)"
@@ -148,9 +141,9 @@ class SessionHistory(BaseModel):
         default_factory=tuple,
         description="Per-question assessment records (ADR-033 — Phase 7B bridge)"
     )
-    context_profile: InterviewContextProfile | None = Field(
-        default=None,
-        description="Interview context profile frozen at session close (ADR-033 — Phase 7B bridge)"
+    context_profile: InterviewContextProfile = Field(
+        default_factory=InterviewContextProfile,
+        description="Interview context profile frozen at session close (ADR-033 — Phase 7C required)"
     )
     generation_metadata: GenerationMetadata | None = Field(
         default=None,
@@ -169,9 +162,9 @@ class SessionHistory(BaseModel):
     )
 
     schema_version: str = Field(
-        default="1.0",
+        default="2.0",
         min_length=1,
-        description="Schema version of the SessionHistory record itself (ADR-022 §G)"
+        description="Schema version of the SessionHistory record itself (ADR-022 §G, Phase 7C v2.0)"
     )
     created_at: datetime = Field(description="UTC timestamp of session close")
     metadata: dict[str, str] = Field(
@@ -180,6 +173,18 @@ class SessionHistory(BaseModel):
     )
 
     model_config = {"frozen": True, "extra": "forbid", "arbitrary_types_allowed": True}
+
+    @model_validator(mode="after")
+    def _validate_v_sh_01_scoring_pair(self) -> "SessionHistory":
+        """V-SH-01: scoring_snapshot and scoring_narrative must both be present or both absent."""
+        has_snapshot = self.scoring_snapshot is not None
+        has_narrative = self.scoring_narrative is not None
+        if has_snapshot != has_narrative:
+            raise ValueError(
+                "V-SH-01: scoring_snapshot and scoring_narrative must both be set or both be None. "
+                f"Got scoring_snapshot={has_snapshot}, scoring_narrative={has_narrative}."
+            )
+        return self
 
     @property
     def question_count(self) -> int:

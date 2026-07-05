@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 from app.graph.nodes.evaluation_aggregate_node import EvaluationAggregateNode
-from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_metrics import InterviewMetrics, OperationMetrics
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.shared.action_type import ActionType
@@ -82,10 +81,8 @@ def test_evaluation_aggregate_node_stores_interview_metrics(monkeypatch) -> None
         lambda: collector,
     )
 
-    mock_eval = MagicMock(spec=InterviewEvaluation)
-    mock_eval.overall_score = 80.0
     mock_service = MagicMock()
-    mock_service.evaluate_all.return_value = (mock_eval, MagicMock(), MagicMock())
+    mock_service.evaluate_scoring.return_value = (MagicMock(), MagicMock())
 
     node = EvaluationAggregateNode(mock_service)
     state = build_interview_state()
@@ -117,5 +114,5 @@ def test_evaluation_aggregate_node_stores_interview_metrics(monkeypatch) -> None
     assert updated.interview_cost_metrics is not None
     assert updated.interview_cost_metrics.total_cost_usd > 0.0
     assert updated.interview_cost_metrics.cost_per_question_usd > 0.0
-    assert updated.interview_evaluation is mock_eval
+    assert updated.scoring_snapshot is not None
     assert updated.intent == ActionType.NONE

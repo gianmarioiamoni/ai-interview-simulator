@@ -43,7 +43,7 @@ def test_interview_state_minimal_instantiation() -> None:
     assert state.questions == []
     assert state.answers == []
     assert state.results_by_question == {}
-    assert state.interview_evaluation is None
+    assert state.scoring_snapshot is None
     assert state.progress == InterviewProgress.SETUP
 
 

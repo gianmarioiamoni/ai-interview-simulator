@@ -8,7 +8,6 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
-from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.generation_metadata import GenerationMetadata
 from domain.contracts.knowledge_snapshot.knowledge_snapshot import KnowledgeSnapshot
 from domain.contracts.language.language_profile import LanguageProfile
@@ -57,8 +56,7 @@ class SessionHistoryBuilder:
         self._knowledge_snapshot: KnowledgeSnapshot | None = None
         self._transcript: list[TranscriptEntry] = []
         self._question_timeline: list[QuestionTimelineEntry] = []
-        self._evaluation_result: Optional[InterviewEvaluation] = None
-        # Phase 7B (ADR-033): new scoring artifacts
+        # Phase 7C (ADR-033): new scoring artifacts — evaluation_result removed
         self._scoring_snapshot: ScoringSnapshot | None = None
         self._scoring_narrative: ScoringNarrative | None = None
         self._question_results: list[QuestionResultRecord] = []
@@ -67,7 +65,7 @@ class SessionHistoryBuilder:
         self._interview_metadata: InterviewMetadata | None = None
         self._language_profile: LanguageProfile | None = None
         self._replay_metadata: ReplayMetadata = ReplayMetadata()
-        self._schema_version: str = "1.0"
+        self._schema_version: str = "2.0"
         self._created_at: datetime | None = None
         self._metadata: dict[str, str] = {}
 
@@ -119,14 +117,8 @@ class SessionHistoryBuilder:
         self._question_timeline = list(question_timeline)
         return self
 
-    def with_evaluation_result(
-        self, evaluation_result: InterviewEvaluation
-    ) -> "SessionHistoryBuilder":
-        self._evaluation_result = evaluation_result
-        return self
-
     # ------------------------------------------------------------------
-    # Fluent setters — Phase 7B new scoring artifacts (ADR-033)
+    # Fluent setters — Phase 7C new scoring artifacts (ADR-033)
     # ------------------------------------------------------------------
 
     def with_scoring_snapshot(self, snapshot: ScoringSnapshot) -> "SessionHistoryBuilder":
@@ -233,6 +225,14 @@ class SessionHistoryBuilder:
         assert self._interview_metadata is not None
         assert self._interview_index is not None
 
+        # V-SH-01 enforcement: scoring_snapshot and scoring_narrative must be paired.
+        if (self._scoring_snapshot is None) != (self._scoring_narrative is None):
+            raise ValueError(
+                "V-SH-01: scoring_snapshot and scoring_narrative must both be set or both be None. "
+                f"Got scoring_snapshot={self._scoring_snapshot is not None}, "
+                f"scoring_narrative={self._scoring_narrative is not None}."
+            )
+
         return SessionHistory(
             session_id=self._session_id,
             candidate_identity_id=self._candidate_identity_id,
@@ -240,11 +240,10 @@ class SessionHistoryBuilder:
             knowledge_snapshot=self._knowledge_snapshot,
             transcript=tuple(self._transcript),
             question_timeline=tuple(self._question_timeline),
-            evaluation_result=self._evaluation_result,
             scoring_snapshot=self._scoring_snapshot,
             scoring_narrative=self._scoring_narrative,
             question_results=tuple(self._question_results),
-            context_profile=self._context_profile,
+            context_profile=self._context_profile or InterviewContextProfile(),
             generation_metadata=self._generation_metadata,
             interview_metadata=self._interview_metadata,
             language_profile=self._language_profile,

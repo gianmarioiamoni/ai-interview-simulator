@@ -132,7 +132,7 @@ def test_pipeline_is_idempotent():
     assert result1.ai_hint == result2.ai_hint
 
     if first_state.is_completed:
-        assert first_state.interview_evaluation == second_state.interview_evaluation
+        assert first_state.scoring_snapshot == second_state.scoring_snapshot
 
 
 class FakeLLMResponse(str):
@@ -197,4 +197,4 @@ def test_report_generated_when_completed():
 
     assert new_state.is_completed is True
     assert new_state.is_processing is False
-    assert hasattr(new_state, "interview_evaluation")
+    assert hasattr(new_state, "scoring_snapshot")

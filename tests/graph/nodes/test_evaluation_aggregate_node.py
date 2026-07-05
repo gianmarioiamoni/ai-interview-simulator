@@ -1,7 +1,7 @@
 # tests/graph/nodes/test_evaluation_aggregate_node.py
 #
-# Phase 7A: EvaluationAggregateNode writes scoring_snapshot, scoring_narrative,
-# and interview_evaluation (bridge). Idempotency guard uses scoring_snapshot.
+# Phase 7C: EvaluationAggregateNode writes scoring_snapshot and scoring_narrative.
+# InterviewEvaluation bridge removed. Idempotency guard uses scoring_snapshot.
 
 from unittest.mock import MagicMock, Mock, patch
 
@@ -47,13 +47,12 @@ def _make_mock_narrative():
 
 
 def _make_service_mock(fail_evaluate: bool = False) -> Mock:
-    """Return a service mock that satisfies evaluate_all() (single _compute() call)."""
+    """Return a service mock that satisfies evaluate_scoring() (sole public surface)."""
     service = Mock()
     if fail_evaluate:
-        service.evaluate_all.side_effect = RuntimeError("LLM unavailable")
+        service.evaluate_scoring.side_effect = RuntimeError("LLM unavailable")
     else:
-        service.evaluate_all.return_value = (
-            MagicMock(),
+        service.evaluate_scoring.return_value = (
             _make_mock_snapshot(),
             _make_mock_narrative(),
         )
@@ -77,8 +76,7 @@ def test_a2_no_results_returns_state_without_crash():
 
     assert result_state is not None
     assert result_state.scoring_snapshot is None
-    assert result_state.interview_evaluation is None
-    service.evaluate_all.assert_not_called()
+    service.evaluate_scoring.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -98,7 +96,6 @@ def test_a2_service_exception_returns_state_without_crash():
 
     assert result_state is not None
     assert result_state.scoring_snapshot is None
-    assert result_state.interview_evaluation is None
 
 
 # ---------------------------------------------------------------------------
@@ -106,14 +103,13 @@ def test_a2_service_exception_returns_state_without_crash():
 # ---------------------------------------------------------------------------
 
 
-def test_a2_success_path_writes_all_three_artifacts():
-    """Phase 7A: node writes scoring_snapshot, scoring_narrative, and interview_evaluation."""
-    mock_eval = MagicMock()
+def test_a2_success_path_writes_scoring_artifacts():
+    """Phase 7C: node writes scoring_snapshot and scoring_narrative."""
     mock_snapshot = _make_mock_snapshot()
     mock_narrative = _make_mock_narrative()
 
     service = Mock()
-    service.evaluate_all.return_value = (mock_eval, mock_snapshot, mock_narrative)
+    service.evaluate_scoring.return_value = (mock_snapshot, mock_narrative)
 
     node = EvaluationAggregateNode(service=service)
 
@@ -122,26 +118,12 @@ def test_a2_success_path_writes_all_three_artifacts():
 
     result_state = node(state)
 
-    assert result_state.interview_evaluation is mock_eval
     assert result_state.scoring_snapshot is mock_snapshot
     assert result_state.scoring_narrative is mock_narrative
 
 
-def test_a2_success_path_sets_interview_evaluation():
-    """Bridge compat: interview_evaluation is still set after Phase 7A."""
-    service = _make_service_mock()
-    node = EvaluationAggregateNode(service=service)
-
-    state = build_interview_state()
-    state = _make_state_with_result(state)
-
-    result_state = node(state)
-
-    assert result_state.interview_evaluation is not None
-
-
 def test_single_compute_execution():
-    """Phase 7A refinement: evaluate_all() called exactly once per node invocation."""
+    """Phase 7C: evaluate_scoring() called exactly once per node invocation."""
     service = _make_service_mock()
     node = EvaluationAggregateNode(service=service)
 
@@ -150,7 +132,7 @@ def test_single_compute_execution():
 
     node(state)
 
-    service.evaluate_all.assert_called_once()
+    service.evaluate_scoring.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -171,21 +153,5 @@ def test_idempotency_guard_uses_scoring_snapshot():
     result_state = node(state)
 
     # Must not recompute
-    service.evaluate_all.assert_not_called()
+    service.evaluate_scoring.assert_not_called()
     assert result_state.scoring_snapshot is existing_snapshot
-
-
-def test_idempotency_does_not_trigger_on_interview_evaluation_only():
-    """Phase 7A: interview_evaluation alone does not satisfy idempotency guard."""
-    service = _make_service_mock()
-    node = EvaluationAggregateNode(service=service)
-
-    state = build_interview_state()
-    state = _make_state_with_result(state)
-    # Set interview_evaluation but NOT scoring_snapshot
-    state = state.model_copy(update={"interview_evaluation": MagicMock()})
-
-    result_state = node(state)
-
-    # Node must have re-run (scoring_snapshot was None)
-    service.evaluate_all.assert_called_once()

@@ -78,7 +78,7 @@ class SessionHistoryStatistics(BaseModel):
             interview_index=history.interview_index,
             question_count=history.question_count,
             timeline_entry_count=len(history.question_timeline),
-            has_evaluation=history.evaluation_result is not None,
+            has_evaluation=history.scoring_snapshot is not None,
             total_features=profile_snapshot.total_feature_count,
             total_objectives=coaching_stats.total_objectives,
             total_actions=coaching_stats.total_actions,

@@ -13,6 +13,7 @@ from app.ui.dto.builders.token_calculator import TokenCalculator
 
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.interview_state import InterviewState
+from domain.contracts.report.report import Report
 from domain.contracts.user.role import RoleType
 from domain.contracts.user.seniority_level import SeniorityLevel
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
@@ -58,6 +59,38 @@ class FinalReportDTO(BaseModel):
     seniority_level: str
 
     context_profile: InterviewContextProfile
+
+    @classmethod
+    def from_report(cls, report: Report) -> "FinalReportDTO":
+        """Phase 7C stub — Phase 9 provides the full implementation.
+
+        Returns a minimal placeholder FinalReportDTO. Phase 9 will implement
+        full report-based rendering using Report v2.0 fields.
+        """
+        from domain.contracts.feedback.confidence import Confidence
+        return cls(
+            overall_score=0.0,
+            raw_score=0.0,
+            adjusted_score=0.0,
+            hiring_probability=0.0,
+            hire_decision="Pending",
+            decision_explanation={},
+            dimension_signals={},
+            percentile_rank=0.0,
+            percentile_explanation="Report rendering will be available in Phase 9.",
+            executive_summary="Report summary pending Phase 9 implementation.",
+            gating_triggered=False,
+            gating_reason=None,
+            weighted_breakdown={},
+            dimension_scores=[],
+            question_assessments=[],
+            improvement_suggestions=[],
+            total_tokens_used=0,
+            confidence=Confidence(base=0.0, final=0.0),
+            role=RoleType.FULLSTACK_ENGINEER,
+            seniority_level="",
+            context_profile=InterviewContextProfile(),
+        )
 
     @classmethod
     def from_components(cls, state: InterviewState, final_evaluation):

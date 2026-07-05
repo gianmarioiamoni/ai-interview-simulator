@@ -228,7 +228,6 @@ def _build_context(
         language_profile=language_profile,
         transcript=tuple(transcript),
         question_timeline=tuple(question_timeline),
-        evaluation_result=state.interview_evaluation,
         scoring_snapshot=state.scoring_snapshot,
         scoring_narrative=state.scoring_narrative,
         question_results=tuple(question_results),

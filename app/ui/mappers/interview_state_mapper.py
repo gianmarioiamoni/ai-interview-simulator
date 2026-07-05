@@ -59,13 +59,6 @@ class InterviewStateMapper:
         if state.report is None:
             raise ValueError("state.report is required — report_node must run before presentation")
 
-        final_evaluation = state.interview_evaluation
-
-        if final_evaluation is None:
-            raise ValueError("Final evaluation is required")
-
-        return FinalReportDTO.from_components(
-            state=state,
-            final_evaluation=final_evaluation,
-        )
+        # Phase 7C: from_report() stub — full implementation in Phase 9.
+        return FinalReportDTO.from_report(state.report)
 

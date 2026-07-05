@@ -25,8 +25,6 @@ class EvaluationAggregateNode:
         # ---------------------------------------------------------
 
         # Already computed → no-op (idempotent).
-        # Phase 7A: guard uses scoring_snapshot (the new canonical field).
-        # interview_evaluation is kept as bridge until Phase 7C.
         if state.scoring_snapshot is not None:
             return state
 
@@ -51,17 +49,15 @@ class EvaluationAggregateNode:
         # ---------------------------------------------------------
 
         try:
-            # Phase 7A refinement: single _compute() execution via evaluate_all().
-            # All three artifacts are projected from the same computed result.
-            interview_eval, scoring_snapshot, scoring_narrative = (
-                self._service.evaluate_all(
-                    question_results=question_results,
-                    questions=state.questions,
-                    interview_type=state.interview_type,
-                    role=state.role.type,
-                    context_profile=state.context_profile,
-                    seniority_level=getattr(state, "seniority_level", "mid") or "mid",
-                )
+            # Phase 7C: single _compute() execution via evaluate_scoring().
+            # evaluate_all() bridge removed; InterviewEvaluation retired.
+            scoring_snapshot, scoring_narrative = self._service.evaluate_scoring(
+                question_results=question_results,
+                questions=state.questions,
+                interview_type=state.interview_type,
+                role=state.role.type,
+                context_profile=state.context_profile,
+                seniority_level=getattr(state, "seniority_level", "mid") or "mid",
             )
         except Exception as exc:
             logger.error("Interview evaluation failed: %s", exc)
@@ -88,7 +84,6 @@ class EvaluationAggregateNode:
 
         return state.model_copy(
             update={
-                "interview_evaluation": interview_eval,
                 "scoring_snapshot": scoring_snapshot,
                 "scoring_narrative": scoring_narrative,
                 "interview_metrics": interview_metrics,

@@ -2,10 +2,8 @@
 
 # Behavioral tests for InterviewEvaluationService.
 #
-# Phase 6 bridge: evaluate() still returns InterviewEvaluation (legacy path,
-# consumed by EvaluationAggregateNode). evaluate_scoring() returns the new
-# (ScoringSnapshot, ScoringNarrative) tuple (ADR-033, migrated in Phase 7).
-# Both delegate to _compute() — single pipeline, zero duplicated computation.
+# Phase 7C: evaluate_scoring() is the sole public surface.
+# evaluate() and evaluate_all() bridge methods removed (ADR-033).
 
 import pytest
 
@@ -17,7 +15,6 @@ from domain.contracts.execution.execution_result import (
     ExecutionType,
 )
 from domain.contracts.interview.hire_decision import HireDecision
-from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.question.question_evaluation import QuestionEvaluation
 from domain.contracts.question.question_result import QuestionResult
@@ -94,15 +91,6 @@ def build_result(
     )
 
 
-def evaluate(service: InterviewEvaluationService, results, questions):
-    return service.evaluate(
-        question_results=results,
-        questions=questions,
-        interview_type=InterviewType.TECHNICAL,
-        role=RoleType.BACKEND_ENGINEER,
-    )
-
-
 def evaluate_scoring(service: InterviewEvaluationService, results, questions):
     return service.evaluate_scoring(
         question_results=results,
@@ -117,15 +105,15 @@ def evaluate_scoring(service: InterviewEvaluationService, results, questions):
 # ---------------------------------------------------------
 
 
-def test_evaluate_raises_without_question_results():
+def test_evaluate_scoring_raises_without_question_results():
 
     service = InterviewEvaluationService(build_llm())
 
     with pytest.raises(ValueError, match="without question results"):
-        evaluate(service, [], [])
+        evaluate_scoring(service, [], [])
 
 
-def test_evaluate_raises_without_evaluations():
+def test_evaluate_scoring_raises_without_evaluations():
 
     service = InterviewEvaluationService(build_llm())
 
@@ -133,67 +121,7 @@ def test_evaluate_raises_without_evaluations():
     questions = [build_question(qid="q1")]
 
     with pytest.raises(ValueError, match="No question evaluations available"):
-        evaluate(service, results, questions)
-
-
-# ---------------------------------------------------------
-# LEGACY PATH — evaluate() → InterviewEvaluation
-# ---------------------------------------------------------
-
-
-def test_evaluate_returns_interview_evaluation():
-
-    service = InterviewEvaluationService(build_llm())
-
-    questions = [build_question(qid="q1"), build_question(qid="q2")]
-    results = [
-        build_result("q1", score=80.0),
-        build_result("q2", score=60.0),
-    ]
-
-    evaluation = evaluate(service, results, questions)
-
-    assert isinstance(evaluation, InterviewEvaluation)
-    assert 0.0 <= evaluation.overall_score <= 100.0
-    assert 0.0 <= evaluation.hiring_probability <= 100.0
-    assert 0.0 <= evaluation.percentile_rank <= 100.0
-    assert evaluation.hire_decision in HireDecision
-    assert evaluation.executive_summary.strip()
-    assert evaluation.per_question_assessment == [r.evaluation for r in results]
-    assert evaluation.dimension_scores
-    assert evaluation.weighted_breakdown
-
-
-def test_overall_score_is_decision_adjusted_and_bounded():
-
-    service = InterviewEvaluationService(build_llm())
-
-    questions = [build_question(qid="q1")]
-    results = [build_result("q1", score=100.0)]
-
-    evaluation = evaluate(service, results, questions)
-
-    assert 0.0 <= evaluation.overall_score <= 100.0
-    assert evaluation.adjusted_score == evaluation.overall_score
-    assert evaluation.raw_score is not None
-
-
-def test_low_scores_produce_negative_leaning_decision():
-
-    service = InterviewEvaluationService(build_llm())
-
-    questions = [build_question(qid="q1"), build_question(qid="q2")]
-    results = [
-        build_result("q1", score=5.0),
-        build_result("q2", score=10.0),
-    ]
-
-    evaluation = evaluate(service, results, questions)
-
-    assert evaluation.hire_decision in (
-        HireDecision.NO_HIRE,
-        HireDecision.LEAN_NO_HIRE,
-    )
+        evaluate_scoring(service, results, questions)
 
 
 # ---------------------------------------------------------
@@ -291,13 +219,11 @@ def test_dimension_signals_extracted_from_executions():
         )
     ]
 
-    evaluation = evaluate(service, results, questions)
+    snapshot, _ = evaluate_scoring(service, results, questions)
 
-    assert isinstance(evaluation.dimension_signals, dict)
-
-    for key, value in evaluation.dimension_signals.items():
-        assert isinstance(key, str)
-        assert 0.0 <= value <= 1.0
+    assert isinstance(snapshot.scoring_dimensions, tuple)
+    for dim in snapshot.scoring_dimensions:
+        assert 0.0 <= dim.signal <= 1.0
 
 
 # ---------------------------------------------------------
@@ -315,10 +241,10 @@ def test_confidence_within_bounds():
         build_result("q2", score=20.0),
     ]
 
-    evaluation = evaluate(service, results, questions)
+    snapshot, _ = evaluate_scoring(service, results, questions)
 
-    assert 0.0 <= evaluation.confidence.base <= 1.0
-    assert 0.0 <= evaluation.confidence.final <= 1.0
+    assert 0.0 <= snapshot.confidence.base <= 1.0
+    assert 0.0 <= snapshot.confidence.final <= 1.0
 
 
 # ---------------------------------------------------------
@@ -333,10 +259,10 @@ def test_executive_summary_falls_back_when_llm_returns_empty():
     questions = [build_question(qid="q1")]
     results = [build_result("q1", score=70.0)]
 
-    evaluation = evaluate(service, results, questions)
+    _, narrative = evaluate_scoring(service, results, questions)
 
-    assert evaluation.executive_summary.strip()
-    assert "overall score" in evaluation.executive_summary.lower()
+    assert narrative.executive_summary.strip()
+    assert "overall score" in narrative.executive_summary.lower()
 
 
 def test_evaluate_scoring_executive_summary_falls_back():

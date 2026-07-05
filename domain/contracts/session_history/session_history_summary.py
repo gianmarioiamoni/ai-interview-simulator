@@ -71,5 +71,5 @@ class SessionHistorySummary(BaseModel):
             total_narrative_insights=snapshot.narrative.insight_count,
             mean_feature_confidence=mean_feature_conf,
             is_replay_ready=history.is_replay_ready,
-            has_evaluation=history.evaluation_result is not None,
+            has_evaluation=history.scoring_snapshot is not None,
         )

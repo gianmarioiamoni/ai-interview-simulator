@@ -9,7 +9,6 @@ from domain.contracts.interview.answer import Answer
 from domain.contracts.question.question_result import QuestionResult
 from domain.contracts.interview.interview_progress import InterviewProgress
 from domain.contracts.interview.interview_type import InterviewType
-from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_cost_metrics import InterviewCostMetrics
 from domain.contracts.interview.interview_metrics import InterviewMetrics
 from domain.contracts.user.role import Role
@@ -49,12 +48,10 @@ class InterviewStateBase(BaseModel):
     asked_question_ids: list[str] = Field(default_factory=list)
     answers: list[Answer] = Field(default_factory=list)
 
-    interview_evaluation: Optional[InterviewEvaluation] = None
     interview_metrics: InterviewMetrics | None = None
     interview_cost_metrics: InterviewCostMetrics | None = None
 
     # Phase 7A (ADR-033): new scoring artifacts — sole writer: EvaluationAggregateNode.
-    # interview_evaluation is kept as bridge until Phase 7C removes it.
     scoring_snapshot: ScoringSnapshot | None = None
     scoring_narrative: ScoringNarrative | None = None
 

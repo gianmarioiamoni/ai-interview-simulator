@@ -9,7 +9,6 @@ from app.ports.llm_port import LLMPort
 
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.interview.hire_decision import HireDecision
-from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_level import InterviewLevel
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
@@ -82,13 +81,11 @@ class InterviewEvaluationService:
     """Public facade for the interview evaluation pipeline.
 
     Orchestrates scoring, signal enrichment, weight normalisation, decision,
-    and narrative assembly.  Exposes two public surfaces:
+    and narrative assembly.  Single public surface (Phase 7C):
 
-    - evaluate()         → InterviewEvaluation  (legacy; consumed by EvaluationAggregateNode)
-    - evaluate_scoring() → (ScoringSnapshot, ScoringNarrative)  (new; consumed from Phase 7)
+    - evaluate_scoring() → (ScoringSnapshot, ScoringNarrative)
 
-    Both surfaces delegate to _compute() which runs the pipeline exactly once.
-    No computation is duplicated between the two paths.
+    Delegates to _compute() which runs the pipeline exactly once.
     """
 
     def __init__(self, llm: LLMPort) -> None:
@@ -106,69 +103,7 @@ class InterviewEvaluationService:
         )
 
     # ------------------------------------------------------------------
-    # Public — legacy surface (consumed by EvaluationAggregateNode)
-    # ------------------------------------------------------------------
-
-    def evaluate(
-        self,
-        question_results: List[QuestionResult],
-        questions: List[Question],
-        interview_type: InterviewType,
-        role: RoleType,
-        context_profile: Optional[InterviewContextProfile] = None,
-        seniority_level: str = "mid",
-    ) -> InterviewEvaluation:
-        """Run the full pipeline and return an InterviewEvaluation.
-
-        Bridge method: kept for EvaluationAggregateNode compat until Phase 7.
-        All computation is shared with evaluate_scoring() via _compute().
-        """
-        computed = self._compute(
-            question_results=question_results,
-            questions=questions,
-            interview_type=interview_type,
-            role=role,
-            context_profile=context_profile,
-            seniority_level=seniority_level,
-        )
-        return self._build_interview_evaluation(computed)
-
-    # ------------------------------------------------------------------
-    # Public — bridge surface (Phase 7A; single _compute() execution)
-    # ------------------------------------------------------------------
-
-    def evaluate_all(
-        self,
-        question_results: List[QuestionResult],
-        questions: List[Question],
-        interview_type: InterviewType,
-        role: RoleType,
-        context_profile: Optional[InterviewContextProfile] = None,
-        seniority_level: str = "mid",
-    ) -> tuple[InterviewEvaluation, ScoringSnapshot, ScoringNarrative]:
-        """Run _compute() exactly once and project all three artifacts.
-
-        Introduced in Phase 7A to eliminate the dual _compute() call that
-        existed when evaluate() and evaluate_scoring() were called separately.
-        EvaluationAggregateNode uses this as the single call-site.
-        Phase 7C will retire evaluate() and rename this to evaluate_scoring().
-        """
-        computed = self._compute(
-            question_results=question_results,
-            questions=questions,
-            interview_type=interview_type,
-            role=role,
-            context_profile=context_profile,
-            seniority_level=seniority_level,
-        )
-        return (
-            self._build_interview_evaluation(computed),
-            self._build_scoring_snapshot(computed),
-            computed.assembled.scoring_narrative,
-        )
-
-    # ------------------------------------------------------------------
-    # Public — new surface (ADR-033; consumed from Phase 7 onward)
+    # Public — sole surface (ADR-033; Phase 7C)
     # ------------------------------------------------------------------
 
     def evaluate_scoring(
@@ -182,8 +117,7 @@ class InterviewEvaluationService:
     ) -> tuple[ScoringSnapshot, ScoringNarrative]:
         """Run the full pipeline and return (ScoringSnapshot, ScoringNarrative).
 
-        New surface introduced by ADR-033. EvaluationAggregateNode will be
-        migrated to this method in Phase 7.
+        Sole public surface (ADR-033, Phase 7C). InterviewEvaluation retired.
         """
         computed = self._compute(
             question_results=question_results,
@@ -366,46 +300,6 @@ class InterviewEvaluationService:
     # ------------------------------------------------------------------
     # Private — artifact construction from _ComputedEvaluation
     # ------------------------------------------------------------------
-
-    @staticmethod
-    def _build_interview_evaluation(c: _ComputedEvaluation) -> InterviewEvaluation:
-        assembled = c.assembled
-        narrative_dict = assembled.narrative_dict
-
-        dim_scores_str = {
-            k.value if hasattr(k, "value") else str(k): v
-            for k, v in c.dimension_scores.items()
-        }
-        wb_str = {
-            k.value if hasattr(k, "value") else str(k): v
-            for k, v in c.weighted_breakdown.items()
-        }
-
-        return InterviewEvaluation(
-            overall_score=c.overall_score,
-            raw_score=c.raw_score,
-            adjusted_score=c.adjusted_score,
-            executive_summary=assembled.executive_summary,
-            performance_dimensions=assembled.performance_dimensions,
-            dimension_scores=dim_scores_str,
-            dimension_signals=c.dimension_signals,
-            level=c.final_level,
-            hire_decision=c.hire_decision,
-            decision_explanation=assembled.decision_explanation,
-            hiring_probability=c.hiring_probability,
-            percentile_rank=assembled.percentile,
-            percentile_explanation=assembled.percentile_explanation,
-            gating_triggered=c.gating_triggered,
-            gating_reason=c.gating_reason,
-            weighted_breakdown=wb_str,
-            per_question_assessment=c.evaluations,
-            improvement_suggestions=assembled.improvement_suggestions,
-            went_well=list(narrative_dict.get("went_well", [])),
-            held_you_back=list(narrative_dict.get("held_you_back", [])),
-            knowledge_gaps=list(narrative_dict.get("knowledge_gaps", [])),
-            next_strategy=list(narrative_dict.get("next_strategy", [])),
-            confidence=assembled.confidence,
-        )
 
     @staticmethod
     def _build_scoring_snapshot(c: _ComputedEvaluation) -> ScoringSnapshot:

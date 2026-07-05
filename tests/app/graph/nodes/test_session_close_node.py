@@ -406,16 +406,15 @@ class TestSessionCloseNodePhase7BBridge:
         assert result.session_history is not None
         assert result.session_history.context_profile == profile
 
-    def test_evaluation_result_still_embedded_when_interview_evaluation_set(self):
-        """Bridge compat: evaluation_result is still written to session_history."""
+    def test_evaluation_result_removed_from_session_history(self):
+        """Phase 7C: evaluation_result must not exist on session_history."""
         state = _make_completed_state()
         result = _run_node(state)
         assert result.session_history is not None
-        # evaluation_result is None (no interview_evaluation on state) — field exists
-        assert hasattr(result.session_history, "evaluation_result")
+        assert not hasattr(result.session_history, "evaluation_result")
 
     def test_session_history_new_fields_exist_after_node(self):
-        """All Phase 7B bridge fields exist on session_history after node runs."""
+        """All Phase 7C fields exist on session_history after node runs."""
         state = _make_completed_state()
         result = _run_node(state)
         assert result.session_history is not None

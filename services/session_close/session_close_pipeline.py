@@ -187,10 +187,7 @@ class SessionClosePipeline:
             .with_metadata(dict(context.metadata))
         )
 
-        if context.evaluation_result is not None:
-            builder = builder.with_evaluation_result(context.evaluation_result)
-
-        # Phase 7B (ADR-033): dual-write new scoring artifacts alongside legacy field.
+        # Phase 7C (ADR-033): evaluation_result removed — new scoring artifacts only.
         if context.scoring_snapshot is not None:
             builder = builder.with_scoring_snapshot(context.scoring_snapshot)
         if context.scoring_narrative is not None:
