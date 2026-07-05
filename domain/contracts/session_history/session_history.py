@@ -4,14 +4,24 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from pydantic import BaseModel, Field
 
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
 from domain.contracts.interview.interview_setup import InterviewSetup
+from domain.contracts.interview.generation_metadata import GenerationMetadata
 from domain.contracts.knowledge_snapshot.knowledge_snapshot import KnowledgeSnapshot
 from domain.contracts.language.language_profile import LanguageProfile
+from domain.contracts.session_history.question_result_record import QuestionResultRecord
+
+if TYPE_CHECKING:
+    # Imported only for type-checking — avoids circular import with domain.contracts.report
+    # (report.py imports SessionHistory). At runtime, Pydantic v2 resolves these via
+    # model_rebuild() called at the bottom of this module.
+    from domain.contracts.report.scoring_narrative import ScoringNarrative
+    from domain.contracts.report.scoring_snapshot import ScoringSnapshot
 
 
 class TranscriptEntry(BaseModel):
@@ -120,7 +130,31 @@ class SessionHistory(BaseModel):
     )
     evaluation_result: Optional[InterviewEvaluation] = Field(
         default=None,
-        description="Session-level evaluation aggregate (ADR-022 §E)"
+        description="Session-level evaluation aggregate (ADR-022 §E) — bridge: kept until Phase 7C"
+    )
+
+    # Phase 7B (ADR-033): new scoring artifacts — additive bridge fields.
+    # Sole writer: session_close_node via SessionHistoryBuilder.
+    # Kept alongside evaluation_result until Phase 7C removes the legacy field.
+    scoring_snapshot: ScoringSnapshot | None = Field(
+        default=None,
+        description="Immutable scoring snapshot (ADR-033 — Phase 7B bridge)"
+    )
+    scoring_narrative: ScoringNarrative | None = Field(
+        default=None,
+        description="LLM-generated scoring narrative (ADR-033 — Phase 7B bridge)"
+    )
+    question_results: tuple[QuestionResultRecord, ...] = Field(
+        default_factory=tuple,
+        description="Per-question assessment records (ADR-033 — Phase 7B bridge)"
+    )
+    context_profile: InterviewContextProfile | None = Field(
+        default=None,
+        description="Interview context profile frozen at session close (ADR-033 — Phase 7B bridge)"
+    )
+    generation_metadata: GenerationMetadata | None = Field(
+        default=None,
+        description="LLM token/cost metrics for this session (ADR-033 — Phase 7B bridge)"
     )
 
     interview_metadata: InterviewMetadata = Field(
@@ -158,3 +192,18 @@ class SessionHistory(BaseModel):
     @property
     def is_replay_ready(self) -> bool:
         return self.replay_metadata.snapshot_is_complete
+
+
+# Resolve forward references broken by TYPE_CHECKING guard (Pydantic v2, ADR-033 Phase 7B).
+def _rebuild_session_history() -> None:
+    from domain.contracts.report.scoring_narrative import ScoringNarrative  # noqa: F401
+    from domain.contracts.report.scoring_snapshot import ScoringSnapshot  # noqa: F401
+    SessionHistory.model_rebuild(
+        _types_namespace={
+            "ScoringSnapshot": ScoringSnapshot,
+            "ScoringNarrative": ScoringNarrative,
+        }
+    )
+
+
+_rebuild_session_history()

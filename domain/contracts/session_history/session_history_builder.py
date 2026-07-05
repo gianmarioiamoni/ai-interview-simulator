@@ -7,9 +7,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
+from domain.contracts.interview.generation_metadata import GenerationMetadata
 from domain.contracts.knowledge_snapshot.knowledge_snapshot import KnowledgeSnapshot
 from domain.contracts.language.language_profile import LanguageProfile
+from domain.contracts.session_history.question_result_record import QuestionResultRecord
 from domain.contracts.session_history.session_history import (
     InterviewMetadata,
     QuestionTimelineEntry,
@@ -55,6 +58,12 @@ class SessionHistoryBuilder:
         self._transcript: list[TranscriptEntry] = []
         self._question_timeline: list[QuestionTimelineEntry] = []
         self._evaluation_result: Optional[InterviewEvaluation] = None
+        # Phase 7B (ADR-033): new scoring artifacts
+        self._scoring_snapshot: ScoringSnapshot | None = None
+        self._scoring_narrative: ScoringNarrative | None = None
+        self._question_results: list[QuestionResultRecord] = []
+        self._context_profile: InterviewContextProfile | None = None
+        self._generation_metadata: GenerationMetadata | None = None
         self._interview_metadata: InterviewMetadata | None = None
         self._language_profile: LanguageProfile | None = None
         self._replay_metadata: ReplayMetadata = ReplayMetadata()
@@ -114,6 +123,36 @@ class SessionHistoryBuilder:
         self, evaluation_result: InterviewEvaluation
     ) -> "SessionHistoryBuilder":
         self._evaluation_result = evaluation_result
+        return self
+
+    # ------------------------------------------------------------------
+    # Fluent setters — Phase 7B new scoring artifacts (ADR-033)
+    # ------------------------------------------------------------------
+
+    def with_scoring_snapshot(self, snapshot: ScoringSnapshot) -> "SessionHistoryBuilder":
+        self._scoring_snapshot = snapshot
+        return self
+
+    def with_scoring_narrative(self, narrative: ScoringNarrative) -> "SessionHistoryBuilder":
+        self._scoring_narrative = narrative
+        return self
+
+    def with_question_results(
+        self, results: list[QuestionResultRecord]
+    ) -> "SessionHistoryBuilder":
+        self._question_results = list(results)
+        return self
+
+    def with_context_profile(
+        self, context_profile: InterviewContextProfile
+    ) -> "SessionHistoryBuilder":
+        self._context_profile = context_profile
+        return self
+
+    def with_generation_metadata(
+        self, generation_metadata: GenerationMetadata
+    ) -> "SessionHistoryBuilder":
+        self._generation_metadata = generation_metadata
         return self
 
     def with_replay_metadata(
@@ -202,6 +241,11 @@ class SessionHistoryBuilder:
             transcript=tuple(self._transcript),
             question_timeline=tuple(self._question_timeline),
             evaluation_result=self._evaluation_result,
+            scoring_snapshot=self._scoring_snapshot,
+            scoring_narrative=self._scoring_narrative,
+            question_results=tuple(self._question_results),
+            context_profile=self._context_profile,
+            generation_metadata=self._generation_metadata,
             interview_metadata=self._interview_metadata,
             language_profile=self._language_profile,
             replay_metadata=self._replay_metadata,

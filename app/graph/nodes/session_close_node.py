@@ -25,10 +25,12 @@ from __future__ import annotations
 from domain.contracts.coaching.coaching_builder import CoachingBuilder
 from domain.contracts.feature.feature_collection import FeatureCollection
 from domain.contracts.feature.profile_feature import ProfileFeature
+from domain.contracts.interview.generation_metadata import GenerationMetadata
 from domain.contracts.interview_state import InterviewState
 from domain.contracts.knowledge_snapshot.candidate_profile_snapshot import (
     CandidateProfileSnapshot,
 )
+from domain.contracts.session_history.question_result_record import QuestionResultRecord
 from domain.contracts.knowledge_snapshot.knowledge_snapshot import PolicyVersions
 from domain.contracts.knowledge_snapshot.knowledge_snapshot_builder import KnowledgeSnapshotBuilder
 from domain.contracts.language.execution_policy import ExecutionPolicy
@@ -36,6 +38,7 @@ from domain.contracts.language.language_policy import LanguagePolicy
 from domain.contracts.language.language_profile import LanguageProfile, SessionMode
 from domain.contracts.language.language_selection_strategy import LanguageSelectionStrategy
 from domain.contracts.language.programming_language import ProgrammingLanguage
+from domain.contracts.interview.interview_cost_metrics import InterviewCostMetrics
 from domain.contracts.narrative.narrative import Narrative
 from domain.contracts.narrative.narrative_builder import NarrativeBuilder
 from domain.contracts.narrative.narrative_section import NarrativeSection
@@ -213,6 +216,9 @@ def _build_context(
     transcript = _build_transcript(state)
     question_timeline = _build_question_timeline(state)
 
+    question_results = _build_question_results(state)
+    generation_metadata = _build_generation_metadata(state)
+
     return SessionCloseContext(
         session_id=session_id,
         candidate_identity_id=candidate_identity_id,
@@ -223,6 +229,11 @@ def _build_context(
         transcript=tuple(transcript),
         question_timeline=tuple(question_timeline),
         evaluation_result=state.interview_evaluation,
+        scoring_snapshot=state.scoring_snapshot,
+        scoring_narrative=state.scoring_narrative,
+        question_results=tuple(question_results),
+        context_profile=state.context_profile if state.context_profile else None,
+        generation_metadata=generation_metadata,
     )
 
 
@@ -427,3 +438,91 @@ def _build_question_timeline(state: InterviewState) -> list[QuestionTimelineEntr
         )
         for idx, q in enumerate(state.questions)
     ]
+
+
+def _build_question_results(state: InterviewState) -> list[QuestionResultRecord]:
+    """Build QuestionResultRecord list from state (Phase 7B, ADR-033).
+
+    Constructs one record per answered question that has an evaluation.
+    Fields are sourced directly from QuestionResult — no recomputation.
+    """
+    from app.ui.mappers.interview_area_mapper import InterviewAreaMapper
+
+    records: list[QuestionResultRecord] = []
+    for idx, question in enumerate(state.questions):
+        result = state.results_by_question.get(question.id)
+        if result is None:
+            continue
+        evaluation = result.evaluation
+        if evaluation is None:
+            continue
+
+        attempts = sum(
+            1 for a in state.answers if a.question_id == question.id
+        ) or 1
+
+        execution = result.execution
+        passed_tests: int | None = None
+        total_tests: int | None = None
+        execution_status: str | None = None
+        if execution is not None:
+            passed_tests = getattr(execution, "passed_tests", None)
+            total_tests = getattr(execution, "total_tests", None)
+            execution_status = getattr(execution, "status", None)
+            if hasattr(execution_status, "value"):
+                execution_status = execution_status.value
+
+        hint = getattr(result, "ai_hint", None)
+        ai_hint_explanation: str | None = getattr(hint, "explanation", None) if hint else None
+        ai_hint_suggestion: str | None = getattr(hint, "suggestion", None) if hint else None
+
+        try:
+            area_label = InterviewAreaMapper.to_label(question.area)
+        except Exception:
+            area_label = question.area.value if hasattr(question.area, "value") else str(question.area)
+
+        strengths: tuple[str, ...] = tuple(getattr(evaluation, "strengths", None) or ())
+        weaknesses: tuple[str, ...] = tuple(getattr(evaluation, "weaknesses", None) or ())
+        follow_up_question: str | None = getattr(evaluation, "follow_up_question", None)
+
+        records.append(
+            QuestionResultRecord(
+                question_id=question.id,
+                question_index=idx,
+                question_type=question.type.value,
+                area_label=area_label,
+                question_prompt=question.prompt,
+                score=evaluation.score,
+                max_score=evaluation.max_score,
+                feedback=evaluation.feedback,
+                strengths=strengths,
+                weaknesses=weaknesses,
+                follow_up_question=follow_up_question,
+                passed_tests=passed_tests,
+                total_tests=total_tests,
+                execution_status=execution_status,
+                attempts=attempts,
+                ai_hint_explanation=ai_hint_explanation,
+                ai_hint_suggestion=ai_hint_suggestion,
+            )
+        )
+    return records
+
+
+def _build_generation_metadata(state: InterviewState) -> GenerationMetadata | None:
+    """Build GenerationMetadata from cost metrics already on state (Phase 7B, ADR-033).
+
+    Uses state.interview_cost_metrics if available. No recomputation.
+    """
+    cost: InterviewCostMetrics | None = state.interview_cost_metrics
+    if cost is None:
+        return None
+
+    metrics = state.interview_metrics
+    total_tokens = getattr(metrics, "total_tokens", 0) if metrics is not None else 0
+
+    return GenerationMetadata(
+        total_tokens_used=total_tokens,
+        total_cost_usd=cost.total_cost_usd,
+        cost_per_question_usd=cost.cost_per_question_usd,
+    )

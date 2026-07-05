@@ -562,6 +562,101 @@ class TestSessionHistoryIntegration:
 
 
 # ---------------------------------------------------------------------------
+# PHASE 7B — Bridge field contracts (ADR-033)
+# ---------------------------------------------------------------------------
+
+
+class TestSessionHistoryPhase7BBridgeFields:
+    """Verify new bridge fields present alongside legacy evaluation_result."""
+
+    def test_session_history_has_scoring_snapshot_field(self) -> None:
+        history = make_session_history()
+        assert hasattr(history, "scoring_snapshot")
+        assert history.scoring_snapshot is None
+
+    def test_session_history_has_scoring_narrative_field(self) -> None:
+        history = make_session_history()
+        assert hasattr(history, "scoring_narrative")
+        assert history.scoring_narrative is None
+
+    def test_session_history_has_question_results_field(self) -> None:
+        history = make_session_history()
+        assert hasattr(history, "question_results")
+        assert isinstance(history.question_results, tuple)
+        assert history.question_results == ()
+
+    def test_session_history_has_context_profile_field(self) -> None:
+        history = make_session_history()
+        assert hasattr(history, "context_profile")
+        assert history.context_profile is None
+
+    def test_session_history_has_generation_metadata_field(self) -> None:
+        history = make_session_history()
+        assert hasattr(history, "generation_metadata")
+        assert history.generation_metadata is None
+
+    def test_evaluation_result_still_present(self) -> None:
+        history = make_session_history()
+        assert hasattr(history, "evaluation_result")
+        assert history.evaluation_result is None
+
+    def test_builder_has_with_scoring_snapshot(self) -> None:
+        assert hasattr(SessionHistoryBuilder, "with_scoring_snapshot")
+
+    def test_builder_has_with_scoring_narrative(self) -> None:
+        assert hasattr(SessionHistoryBuilder, "with_scoring_narrative")
+
+    def test_builder_has_with_question_results(self) -> None:
+        assert hasattr(SessionHistoryBuilder, "with_question_results")
+
+    def test_builder_has_with_context_profile(self) -> None:
+        assert hasattr(SessionHistoryBuilder, "with_context_profile")
+
+    def test_builder_has_with_generation_metadata(self) -> None:
+        assert hasattr(SessionHistoryBuilder, "with_generation_metadata")
+
+    def test_builder_with_evaluation_result_still_present(self) -> None:
+        assert hasattr(SessionHistoryBuilder, "with_evaluation_result")
+
+    def test_builder_dual_writes_new_and_legacy_fields(self) -> None:
+        """Builder stores all Phase 7B fields; build() passes them to SessionHistory.
+
+        Uses only None / empty values for typed domain objects to avoid MagicMock
+        rejections from Pydantic — functional tests for individual fields are in
+        TestSessionHistoryPhase7BBridgeFields above.
+        """
+        from domain.contracts.interview.generation_metadata import GenerationMetadata
+        from domain.contracts.interview.interview_context_profile import InterviewContextProfile
+        from tests.domain.contracts.knowledge_snapshot.conftest import make_knowledge_snapshot
+
+        real_context = InterviewContextProfile()
+        gen_meta = GenerationMetadata(total_tokens_used=1500, total_cost_usd=0.03)
+
+        history = (
+            SessionHistoryBuilder()
+            .with_session_id(SESSION_ID)
+            .with_candidate_identity_id(CANDIDATE_ID)
+            .with_interview_index(0)
+            .with_knowledge_snapshot(make_knowledge_snapshot())
+            .with_interview_metadata(make_interview_metadata())
+            .with_language_profile(make_language_profile())
+            .with_question_results([])
+            .with_context_profile(real_context)
+            .with_generation_metadata(gen_meta)
+            .build()
+        )
+
+        # Legacy field absent (None)
+        assert history.evaluation_result is None
+        # New fields propagated
+        assert history.scoring_snapshot is None
+        assert history.scoring_narrative is None
+        assert history.question_results == ()
+        assert history.context_profile == real_context
+        assert history.generation_metadata == gen_meta
+
+
+# ---------------------------------------------------------------------------
 # ARCHITECTURE — Import guards (AST-based)
 # ---------------------------------------------------------------------------
 

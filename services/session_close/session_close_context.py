@@ -7,9 +7,14 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 from domain.contracts.interview.interview_evaluation import InterviewEvaluation
+from domain.contracts.interview.generation_metadata import GenerationMetadata
 from domain.contracts.knowledge_snapshot.knowledge_snapshot import KnowledgeSnapshot
 from domain.contracts.language.language_profile import LanguageProfile
+from domain.contracts.report.scoring_narrative import ScoringNarrative
+from domain.contracts.report.scoring_snapshot import ScoringSnapshot
+from domain.contracts.session_history.question_result_record import QuestionResultRecord
 from domain.contracts.session_history.session_history import (
     InterviewMetadata,
     QuestionTimelineEntry,
@@ -46,6 +51,13 @@ class SessionCloseContext(BaseModel):
     transcript: tuple[TranscriptEntry, ...] = Field(default_factory=tuple)
     question_timeline: tuple[QuestionTimelineEntry, ...] = Field(default_factory=tuple)
     evaluation_result: Optional[InterviewEvaluation] = Field(default=None)
+
+    # Phase 7B (ADR-033): new scoring artifacts — bridge fields alongside evaluation_result.
+    scoring_snapshot: ScoringSnapshot | None = Field(default=None)
+    scoring_narrative: ScoringNarrative | None = Field(default=None)
+    question_results: tuple[QuestionResultRecord, ...] = Field(default_factory=tuple)
+    context_profile: InterviewContextProfile | None = Field(default=None)
+    generation_metadata: GenerationMetadata | None = Field(default=None)
 
     close_reason: str = Field(
         default="normal",
