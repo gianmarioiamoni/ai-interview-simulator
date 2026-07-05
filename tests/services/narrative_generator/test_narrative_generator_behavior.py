@@ -46,7 +46,7 @@ class TestSectionAssembly:
             profile=profile,
         )
         result = generator.generate(ctx)
-        assert "7" in result.narrative.executive_summary.prose
+        assert "7" in result.narrative.overview_section.prose
 
     def test_executive_summary_contains_area(self, generator: NarrativeGenerator) -> None:
         profile = make_profile(questions_answered=3, areas_covered=["system-design"])
@@ -55,7 +55,7 @@ class TestSectionAssembly:
             profile=profile,
         )
         result = generator.generate(ctx)
-        assert "system-design" in result.narrative.executive_summary.prose
+        assert "system-design" in result.narrative.overview_section.prose
 
     def test_growth_section_contains_knowledge_gap(self, generator: NarrativeGenerator) -> None:
         ctx = make_context(

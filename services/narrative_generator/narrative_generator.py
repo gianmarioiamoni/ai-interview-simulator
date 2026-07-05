@@ -162,7 +162,7 @@ class NarrativeGenerator:
         try:
             builder = (
                 NarrativeBuilder()
-                .with_executive_summary(sections[NarrativeSectionType.EXECUTIVE_SUMMARY])
+                .with_overview_section(sections[NarrativeSectionType.EXECUTIVE_SUMMARY])
                 .with_strengths(sections[NarrativeSectionType.STRENGTHS])
                 .with_weaknesses(sections[NarrativeSectionType.WEAKNESSES])
                 .with_growth_areas(sections[NarrativeSectionType.GROWTH])

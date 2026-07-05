@@ -135,7 +135,7 @@ class TestNarrative:
 
     def test_all_sections_canonical_order(self, complete_narrative: Narrative):
         sections = complete_narrative.all_sections
-        assert sections[0].section_type == NarrativeSectionType.EXECUTIVE_SUMMARY
+        assert sections[0].section_type == NarrativeSectionType.EXECUTIVE_SUMMARY  # overview_section slot
         assert sections[1].section_type == NarrativeSectionType.STRENGTHS
         assert sections[2].section_type == NarrativeSectionType.WEAKNESSES
         assert sections[3].section_type == NarrativeSectionType.GROWTH
@@ -145,7 +145,7 @@ class TestNarrative:
         wrong_section = make_section(NarrativeSectionType.WEAKNESSES)
         with pytest.raises(ValidationError):
             Narrative(
-                executive_summary=wrong_section,  # wrong type
+                overview_section=wrong_section,  # wrong type
                 strengths=make_section(NarrativeSectionType.STRENGTHS),
                 weaknesses=make_section(NarrativeSectionType.WEAKNESSES),
                 growth_areas=make_section(NarrativeSectionType.GROWTH),
@@ -179,7 +179,7 @@ class TestNarrativeBuilder:
     def test_missing_section_raises(self):
         builder = (
             NarrativeBuilder()
-            .with_executive_summary(make_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
+            .with_overview_section(make_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
             .with_strengths(make_section(NarrativeSectionType.STRENGTHS))
         )
         with pytest.raises(ValueError, match="mandatory sections"):
@@ -189,14 +189,14 @@ class TestNarrativeBuilder:
         wrong = make_section(NarrativeSectionType.WEAKNESSES)
         builder = NarrativeBuilder()
         with pytest.raises(ValueError):
-            builder.with_executive_summary(wrong)
+            builder.with_overview_section(wrong)
 
     def test_with_insights_fluent(self):
         ins1 = make_insight(NarrativeInsightType.STRENGTH_SIGNAL)
         ins2 = make_insight(NarrativeInsightType.RISK_SIGNAL)
         n = (
             NarrativeBuilder()
-            .with_executive_summary(make_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
+            .with_overview_section(make_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
             .with_strengths(make_section(NarrativeSectionType.STRENGTHS))
             .with_weaknesses(make_section(NarrativeSectionType.WEAKNESSES))
             .with_growth_areas(make_section(NarrativeSectionType.GROWTH))
@@ -209,7 +209,7 @@ class TestNarrativeBuilder:
     def test_schema_version_override(self):
         n = (
             NarrativeBuilder()
-            .with_executive_summary(make_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
+            .with_overview_section(make_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
             .with_strengths(make_section(NarrativeSectionType.STRENGTHS))
             .with_weaknesses(make_section(NarrativeSectionType.WEAKNESSES))
             .with_growth_areas(make_section(NarrativeSectionType.GROWTH))

@@ -111,7 +111,7 @@ def make_section(section_type: NarrativeSectionType) -> NarrativeSection:
 def make_narrative() -> Narrative:
     return (
         NarrativeBuilder()
-        .with_executive_summary(make_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
+        .with_overview_section(make_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
         .with_strengths(make_section(NarrativeSectionType.STRENGTHS))
         .with_weaknesses(make_section(NarrativeSectionType.WEAKNESSES))
         .with_growth_areas(make_section(NarrativeSectionType.GROWTH))

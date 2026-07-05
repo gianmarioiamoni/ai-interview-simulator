@@ -24,7 +24,7 @@ class NarrativeBuilder:
 
         narrative = (
             NarrativeBuilder()
-            .with_executive_summary(exec_section)
+            .with_overview_section(exec_section)
             .with_strengths(str_section)
             .with_weaknesses(weak_section)
             .with_growth_areas(growth_section)
@@ -35,7 +35,7 @@ class NarrativeBuilder:
     """
 
     def __init__(self) -> None:
-        self._executive_summary: NarrativeSection | None = None
+        self._overview_section: NarrativeSection | None = None
         self._strengths: NarrativeSection | None = None
         self._weaknesses: NarrativeSection | None = None
         self._growth_areas: NarrativeSection | None = None
@@ -47,9 +47,9 @@ class NarrativeBuilder:
     # Fluent setters — mandatory sections
     # ------------------------------------------------------------------
 
-    def with_executive_summary(self, section: NarrativeSection) -> "NarrativeBuilder":
+    def with_overview_section(self, section: NarrativeSection) -> "NarrativeBuilder":
         self._validate_section_type(section, NarrativeSectionType.EXECUTIVE_SUMMARY)
-        self._executive_summary = section
+        self._overview_section = section
         return self
 
     def with_strengths(self, section: NarrativeSection) -> "NarrativeBuilder":
@@ -99,8 +99,8 @@ class NarrativeBuilder:
             ValueError: if any mandatory section is missing.
         """
         missing = []
-        if self._executive_summary is None:
-            missing.append("executive_summary")
+        if self._overview_section is None:
+            missing.append("overview_section")
         if self._strengths is None:
             missing.append("strengths")
         if self._weaknesses is None:
@@ -117,7 +117,7 @@ class NarrativeBuilder:
             )
 
         return Narrative(
-            executive_summary=self._executive_summary,
+            overview_section=self._overview_section,
             strengths=self._strengths,
             weaknesses=self._weaknesses,
             growth_areas=self._growth_areas,

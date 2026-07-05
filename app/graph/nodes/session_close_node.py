@@ -311,7 +311,7 @@ def _build_stub_narrative() -> Narrative:
 
     return (
         NarrativeBuilder()
-        .with_executive_summary(_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
+        .with_overview_section(_section(NarrativeSectionType.EXECUTIVE_SUMMARY))
         .with_strengths(_section(NarrativeSectionType.STRENGTHS))
         .with_weaknesses(_section(NarrativeSectionType.WEAKNESSES))
         .with_growth_areas(_section(NarrativeSectionType.GROWTH))

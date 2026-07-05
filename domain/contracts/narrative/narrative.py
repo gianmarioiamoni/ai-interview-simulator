@@ -28,8 +28,8 @@ class Narrative(BaseModel):
     Five mandatory sections enforce Principle 3 (deterministic structure).
     """
 
-    executive_summary: NarrativeSection = Field(
-        ..., description="Mandatory executive summary section"
+    overview_section: NarrativeSection = Field(
+        ..., description="Mandatory overview section (renamed from executive_summary — ADR-033)"
     )
     strengths: NarrativeSection = Field(
         ..., description="Mandatory strengths section"
@@ -58,7 +58,7 @@ class Narrative(BaseModel):
     def _section_type_invariant(self) -> "Narrative":
         """Each mandatory section must carry its declared section_type."""
         checks = [
-            (self.executive_summary, NarrativeSectionType.EXECUTIVE_SUMMARY, "executive_summary"),
+            (self.overview_section, NarrativeSectionType.EXECUTIVE_SUMMARY, "overview_section"),
             (self.strengths, NarrativeSectionType.STRENGTHS, "strengths"),
             (self.weaknesses, NarrativeSectionType.WEAKNESSES, "weaknesses"),
             (self.growth_areas, NarrativeSectionType.GROWTH, "growth_areas"),
@@ -81,7 +81,7 @@ class Narrative(BaseModel):
     def all_sections(self) -> tuple[NarrativeSection, ...]:
         """All five mandatory sections in canonical order."""
         return (
-            self.executive_summary,
+            self.overview_section,
             self.strengths,
             self.weaknesses,
             self.growth_areas,

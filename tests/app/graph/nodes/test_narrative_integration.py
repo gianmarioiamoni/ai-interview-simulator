@@ -128,7 +128,7 @@ class TestNarrativeGeneratorInvoked:
         narrative = _get_narrative(result)
         assert narrative is not None
         # NarrativeGenerator produces feature-derived prose, not the stub phrase
-        exec_prose = narrative.executive_summary.prose
+        exec_prose = narrative.overview_section.prose
         assert exec_prose != "Session closed."
 
     def test_narrative_all_five_sections_present(self):
@@ -235,7 +235,7 @@ class TestNarrativeFallback:
         narrative = _get_narrative(result)
         assert narrative is not None
         # Stub narrative uses the fallback prose
-        assert narrative.executive_summary.prose == "Session closed."
+        assert narrative.overview_section.prose == "Session closed."
 
     def test_unsuccessful_result_falls_back_to_stub(self):
         """NarrativeGenerationResult.is_successful=False → stub used."""
@@ -282,7 +282,7 @@ class TestNarrativeDeterminism:
         n2 = _get_narrative(r2)
         assert n1 is not None
         assert n2 is not None
-        assert n1.executive_summary.prose == n2.executive_summary.prose
+        assert n1.overview_section.prose == n2.overview_section.prose
 
 
 # ---------------------------------------------------------------------------
@@ -300,8 +300,8 @@ class TestReportCarriesNarrative:
         reported = report_node(closed)
         assert reported.report is not None
         # Report narrative comes from SessionHistory.KnowledgeSnapshot (pure projection)
-        expected_prose = closed.session_history.knowledge_snapshot.narrative.executive_summary.prose
-        assert reported.report.narrative.executive_summary.prose == expected_prose
+        expected_prose = closed.session_history.knowledge_snapshot.narrative.overview_section.prose
+        assert reported.report.narrative.overview_section.prose == expected_prose
 
     def test_report_narrative_not_stub_prose(self):
         from app.graph.nodes.report_node import report_node
@@ -310,7 +310,7 @@ class TestReportCarriesNarrative:
         closed = _run_close(state)
         reported = report_node(closed)
         assert reported.report is not None
-        assert reported.report.narrative.executive_summary.prose != "Session closed."
+        assert reported.report.narrative.overview_section.prose != "Session closed."
 
 
 # ---------------------------------------------------------------------------

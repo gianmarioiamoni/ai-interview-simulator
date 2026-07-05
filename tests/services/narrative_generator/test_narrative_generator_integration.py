@@ -73,7 +73,7 @@ class TestEndToEndGeneration:
         result = generator.generate(ctx)
         assert result.is_successful
         # When areas_covered is empty, fallback text is "general topics"
-        assert "general topics" in result.narrative.executive_summary.prose
+        assert "general topics" in result.narrative.overview_section.prose
 
     def test_empty_knowledge_gaps_handled(self, generator: NarrativeGenerator) -> None:
         ctx = make_context(
@@ -113,7 +113,7 @@ class TestEndToEndGeneration:
         narrative = result.narrative
 
         # ADR-023: all five sections must be present and in correct slots
-        assert narrative.executive_summary.section_type == NarrativeSectionType.EXECUTIVE_SUMMARY
+        assert narrative.overview_section.section_type == NarrativeSectionType.EXECUTIVE_SUMMARY
         assert narrative.strengths.section_type == NarrativeSectionType.STRENGTHS
         assert narrative.weaknesses.section_type == NarrativeSectionType.WEAKNESSES
         assert narrative.growth_areas.section_type == NarrativeSectionType.GROWTH
