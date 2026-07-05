@@ -85,8 +85,7 @@ def test_evaluation_aggregate_node_stores_interview_metrics(monkeypatch) -> None
     mock_eval = MagicMock(spec=InterviewEvaluation)
     mock_eval.overall_score = 80.0
     mock_service = MagicMock()
-    mock_service.evaluate.return_value = mock_eval
-    mock_service.evaluate_scoring.return_value = (MagicMock(), MagicMock())
+    mock_service.evaluate_all.return_value = (mock_eval, MagicMock(), MagicMock())
 
     node = EvaluationAggregateNode(mock_service)
     state = build_interview_state()

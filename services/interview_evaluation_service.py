@@ -134,6 +134,40 @@ class InterviewEvaluationService:
         return self._build_interview_evaluation(computed)
 
     # ------------------------------------------------------------------
+    # Public — bridge surface (Phase 7A; single _compute() execution)
+    # ------------------------------------------------------------------
+
+    def evaluate_all(
+        self,
+        question_results: List[QuestionResult],
+        questions: List[Question],
+        interview_type: InterviewType,
+        role: RoleType,
+        context_profile: Optional[InterviewContextProfile] = None,
+        seniority_level: str = "mid",
+    ) -> tuple[InterviewEvaluation, ScoringSnapshot, ScoringNarrative]:
+        """Run _compute() exactly once and project all three artifacts.
+
+        Introduced in Phase 7A to eliminate the dual _compute() call that
+        existed when evaluate() and evaluate_scoring() were called separately.
+        EvaluationAggregateNode uses this as the single call-site.
+        Phase 7C will retire evaluate() and rename this to evaluate_scoring().
+        """
+        computed = self._compute(
+            question_results=question_results,
+            questions=questions,
+            interview_type=interview_type,
+            role=role,
+            context_profile=context_profile,
+            seniority_level=seniority_level,
+        )
+        return (
+            self._build_interview_evaluation(computed),
+            self._build_scoring_snapshot(computed),
+            computed.assembled.scoring_narrative,
+        )
+
+    # ------------------------------------------------------------------
     # Public — new surface (ADR-033; consumed from Phase 7 onward)
     # ------------------------------------------------------------------
 

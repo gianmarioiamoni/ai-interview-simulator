@@ -51,22 +51,18 @@ class EvaluationAggregateNode:
         # ---------------------------------------------------------
 
         try:
-            _kwargs = dict(
-                question_results=question_results,
-                questions=state.questions,
-                interview_type=state.interview_type,
-                role=state.role.type,
-                context_profile=state.context_profile,
-                seniority_level=getattr(state, "seniority_level", "mid") or "mid",
+            # Phase 7A refinement: single _compute() execution via evaluate_all().
+            # All three artifacts are projected from the same computed result.
+            interview_eval, scoring_snapshot, scoring_narrative = (
+                self._service.evaluate_all(
+                    question_results=question_results,
+                    questions=state.questions,
+                    interview_type=state.interview_type,
+                    role=state.role.type,
+                    context_profile=state.context_profile,
+                    seniority_level=getattr(state, "seniority_level", "mid") or "mid",
+                )
             )
-            # Bridge (Phase 7A): produce legacy artifact for downstream readers.
-            interview_eval = self._service.evaluate(**_kwargs)
-            # New artifacts (ADR-033): produced via evaluate_scoring() which
-            # internally calls _compute() independently — no shared cache.
-            # Each call runs the full pipeline once; no computation is shared
-            # between evaluate() and evaluate_scoring() in the current bridge.
-            # Phase 7C will remove evaluate() and this dual-call.
-            scoring_snapshot, scoring_narrative = self._service.evaluate_scoring(**_kwargs)
         except Exception as exc:
             logger.error("Interview evaluation failed: %s", exc)
             return state.model_copy(
