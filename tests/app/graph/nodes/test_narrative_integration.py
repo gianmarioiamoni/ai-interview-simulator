@@ -293,8 +293,19 @@ class TestReportCarriesNarrative:
 
     def test_report_narrative_matches_knowledge_snapshot_narrative(self):
         from app.graph.nodes.report_node import report_node
+        from tests.domain.contracts.report.conftest import (
+            make_scoring_snapshot,
+            make_scoring_narrative,
+            make_context_profile,
+        )
         f = _make_feature("HIGH")
         state = _make_state_with_features((f,))
+        # Phase 8: Report v2.0 requires scoring_snapshot + scoring_narrative in SessionHistory
+        state = state.model_copy(update={
+            "scoring_snapshot": make_scoring_snapshot(),
+            "scoring_narrative": make_scoring_narrative(),
+            "context_profile": make_context_profile(),
+        })
         closed = _run_close(state)
         assert closed.session_history is not None
         reported = report_node(closed)
@@ -305,8 +316,19 @@ class TestReportCarriesNarrative:
 
     def test_report_narrative_not_stub_prose(self):
         from app.graph.nodes.report_node import report_node
+        from tests.domain.contracts.report.conftest import (
+            make_scoring_snapshot,
+            make_scoring_narrative,
+            make_context_profile,
+        )
         f = _make_feature("HIGH")
         state = _make_state_with_features((f,))
+        # Phase 8: Report v2.0 requires scoring_snapshot + scoring_narrative in SessionHistory
+        state = state.model_copy(update={
+            "scoring_snapshot": make_scoring_snapshot(),
+            "scoring_narrative": make_scoring_narrative(),
+            "context_profile": make_context_profile(),
+        })
         closed = _run_close(state)
         reported = report_node(closed)
         assert reported.report is not None

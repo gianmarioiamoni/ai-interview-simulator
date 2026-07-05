@@ -23,6 +23,9 @@ from tests.domain.contracts.report.conftest import (
     FIXED_REPORT_DT,
     make_report,
     make_session_history,
+    make_scoring_snapshot,
+    make_scoring_narrative,
+    make_context_profile,
 )
 from tests.domain.contracts.knowledge_snapshot.conftest import (
     make_knowledge_snapshot,
@@ -49,7 +52,7 @@ class TestReportContract:
         assert report.candidate_identity_id == CANDIDATE_ID
         assert report.interview_index == 0
         assert report.knowledge_epoch == "1"
-        assert report.schema_version == "1.0"
+        assert report.schema_version == "2.0"
         assert report.created_at == FIXED_REPORT_DT
 
     def test_report_metadata_is_empty_dict_by_default(self, report: Report) -> None:
@@ -95,7 +98,8 @@ class TestReportBuilderSingleCreationPath:
         assert report.role == history.interview_metadata.role
         assert report.seniority == history.interview_metadata.seniority
         assert report.interview_type == history.interview_metadata.interview_type
-        assert report.question_count == history.question_count
+        # question_count reflects assessed questions (len(question_results)), not transcript length
+        assert report.question_count == len(history.question_results)
 
     def test_builder_auto_generates_report_id(self) -> None:
         history = make_session_history()
@@ -168,10 +172,13 @@ class TestReportBuilderSingleCreationPath:
             .with_profile_snapshot(profile_snapshot)
             .with_narrative(narrative)
             .with_coaching_snapshot(coaching_snapshot)
+            .with_scoring(make_scoring_snapshot())
+            .with_scoring_narrative(make_scoring_narrative())
+            .with_context_profile(make_context_profile())
             .with_role("Software Engineer")
             .with_seniority("Senior")
             .with_interview_type("technical")
-            .with_question_count(5)
+            .with_question_count(0)
             .with_knowledge_epoch("1")
             .build()
         )
@@ -384,6 +391,126 @@ class TestArchitecture:
         forbidden = ["openai", "anthropic", "langchain", "llm", "ai_client"]
         for f in forbidden:
             assert not any(f in (i or "") for i in imports), f"Found LLM import: {f}"
+
+
+# ===========================================================================
+# PHASE 8 — Report v2.0 architectural contracts (ADR-033)
+# ===========================================================================
+
+class TestReportV20Architecture:
+    def test_report_schema_version_default_is_2_0(self, report: Report) -> None:
+        assert report.schema_version == "2.0"
+
+    def test_report_carries_scoring_snapshot(self, report: Report) -> None:
+        from domain.contracts.report.scoring_snapshot import ScoringSnapshot
+        assert isinstance(report.scoring, ScoringSnapshot)
+
+    def test_report_carries_scoring_narrative(self, report: Report) -> None:
+        from domain.contracts.report.scoring_narrative import ScoringNarrative
+        assert isinstance(report.scoring_narrative, ScoringNarrative)
+
+    def test_report_carries_context_profile(self, report: Report) -> None:
+        from domain.contracts.interview.interview_context_profile import InterviewContextProfile
+        assert isinstance(report.context_profile, InterviewContextProfile)
+
+    def test_report_carries_question_assessments_tuple(self, report: Report) -> None:
+        assert isinstance(report.question_assessments, tuple)
+
+    def test_v_r_01_question_assessments_count_matches_question_count(self, report: Report) -> None:
+        assert len(report.question_assessments) == report.question_count
+
+    def test_v_r_01_enforced_by_builder(self) -> None:
+        from pydantic import ValidationError
+        history = make_session_history()
+        builder = ReportBuilder().with_session_history(history)
+        builder._question_count = 5  # mismatch — 0 assessments vs 5
+        with pytest.raises(ValueError, match="V-R-01"):
+            builder.build()
+
+    def test_builder_raises_on_missing_scoring(self) -> None:
+        history = make_session_history()
+        builder = ReportBuilder().with_session_history(history)
+        builder._scoring = None
+        with pytest.raises(ValueError, match="scoring"):
+            builder.build()
+
+    def test_builder_raises_on_missing_scoring_narrative(self) -> None:
+        history = make_session_history()
+        builder = ReportBuilder().with_session_history(history)
+        builder._scoring_narrative = None
+        with pytest.raises(ValueError, match="scoring_narrative"):
+            builder.build()
+
+    def test_builder_raises_on_missing_context_profile(self) -> None:
+        history = make_session_history()
+        builder = ReportBuilder().with_session_history(history)
+        builder._context_profile = None
+        with pytest.raises(ValueError, match="context_profile"):
+            builder.build()
+
+    def test_builder_with_session_history_reads_scoring_snapshot(self) -> None:
+        history = make_session_history()
+        report = ReportBuilder().with_session_history(history).build()
+        assert report.scoring is history.scoring_snapshot
+
+    def test_builder_with_session_history_reads_scoring_narrative(self) -> None:
+        history = make_session_history()
+        report = ReportBuilder().with_session_history(history).build()
+        assert report.scoring_narrative is history.scoring_narrative
+
+    def test_builder_with_session_history_reads_context_profile(self) -> None:
+        history = make_session_history()
+        report = ReportBuilder().with_session_history(history).build()
+        assert report.context_profile is history.context_profile
+
+    def test_generation_metadata_is_optional(self, report: Report) -> None:
+        assert report.generation_metadata is None
+
+    def test_with_scoring_setter(self) -> None:
+        history = make_session_history()
+        new_scoring = make_scoring_snapshot()
+        report = (
+            ReportBuilder()
+            .with_session_history(history)
+            .with_scoring(new_scoring)
+            .build()
+        )
+        assert report.scoring is new_scoring
+
+    def test_with_scoring_narrative_setter(self) -> None:
+        history = make_session_history()
+        new_narrative = make_scoring_narrative()
+        report = (
+            ReportBuilder()
+            .with_session_history(history)
+            .with_scoring_narrative(new_narrative)
+            .build()
+        )
+        assert report.scoring_narrative is new_narrative
+
+    def test_with_context_profile_setter(self) -> None:
+        history = make_session_history()
+        new_profile = make_context_profile()
+        report = (
+            ReportBuilder()
+            .with_session_history(history)
+            .with_context_profile(new_profile)
+            .build()
+        )
+        assert report.context_profile is new_profile
+
+    def test_with_generation_metadata_setter(self) -> None:
+        from domain.contracts.interview.generation_metadata import GenerationMetadata
+        history = make_session_history()
+        gen_meta = GenerationMetadata(total_tokens_used=1500)
+        report = (
+            ReportBuilder()
+            .with_session_history(history)
+            .with_generation_metadata(gen_meta)
+            .build()
+        )
+        assert report.generation_metadata is gen_meta
+        assert report.generation_metadata.total_tokens_used == 1500
 
 
 # ===========================================================================
