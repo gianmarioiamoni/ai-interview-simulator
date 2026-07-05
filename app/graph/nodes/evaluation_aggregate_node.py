@@ -24,8 +24,10 @@ class EvaluationAggregateNode:
         # IDENTITY / GUARDS
         # ---------------------------------------------------------
 
-        # Already computed → no-op (idempotent)
-        if state.interview_evaluation is not None:
+        # Already computed → no-op (idempotent).
+        # Phase 7A: guard uses scoring_snapshot (the new canonical field).
+        # interview_evaluation is kept as bridge until Phase 7C.
+        if state.scoring_snapshot is not None:
             return state
 
         # Not finished → skip
@@ -49,7 +51,7 @@ class EvaluationAggregateNode:
         # ---------------------------------------------------------
 
         try:
-            interview_eval = self._service.evaluate(
+            _kwargs = dict(
                 question_results=question_results,
                 questions=state.questions,
                 interview_type=state.interview_type,
@@ -57,6 +59,14 @@ class EvaluationAggregateNode:
                 context_profile=state.context_profile,
                 seniority_level=getattr(state, "seniority_level", "mid") or "mid",
             )
+            # Bridge (Phase 7A): produce legacy artifact for downstream readers.
+            interview_eval = self._service.evaluate(**_kwargs)
+            # New artifacts (ADR-033): produced via evaluate_scoring() which
+            # internally calls _compute() independently — no shared cache.
+            # Each call runs the full pipeline once; no computation is shared
+            # between evaluate() and evaluate_scoring() in the current bridge.
+            # Phase 7C will remove evaluate() and this dual-call.
+            scoring_snapshot, scoring_narrative = self._service.evaluate_scoring(**_kwargs)
         except Exception as exc:
             logger.error("Interview evaluation failed: %s", exc)
             return state.model_copy(
@@ -83,6 +93,8 @@ class EvaluationAggregateNode:
         return state.model_copy(
             update={
                 "interview_evaluation": interview_eval,
+                "scoring_snapshot": scoring_snapshot,
+                "scoring_narrative": scoring_narrative,
                 "interview_metrics": interview_metrics,
                 "interview_cost_metrics": interview_cost_metrics,
                 "intent": ActionType.NONE,

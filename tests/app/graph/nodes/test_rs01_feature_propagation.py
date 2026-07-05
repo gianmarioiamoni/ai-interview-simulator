@@ -243,9 +243,15 @@ class TestArchitectureGuards:
 
     def test_no_new_tcp_field_introduced(self):
         from domain.contracts.interview_state.base import InterviewStateBase
+        # V1.2 TCP fields (three-component-protocol pattern)
         existing_tcp = {"observation_store", "candidate_profile_v2", "session_history", "candidate_identity_id"}
+        # Phase 7A: scoring_snapshot and scoring_narrative are intentional ADR-033 fields.
+        phase_7a_fields = {"scoring_snapshot", "scoring_narrative"}
         all_fields = set(InterviewStateBase.model_fields.keys())
-        new_tcp = {f for f in all_fields if f not in existing_tcp and ("v2" in f or "snapshot" in f)}
+        new_tcp = {
+            f for f in all_fields
+            if f not in existing_tcp and f not in phase_7a_fields and ("v2" in f or "snapshot" in f)
+        }
         assert not new_tcp, f"Unexpected new TCP fields: {new_tcp}"
 
     def test_no_candidate_profile_snapshot_builder_in_node(self):

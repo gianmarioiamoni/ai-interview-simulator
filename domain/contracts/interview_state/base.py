@@ -29,6 +29,8 @@ from domain.contracts.reasoning.reasoner_decision import ReasonerDecision
 
 from domain.contracts.observation.observation_store import ObservationStore
 from domain.contracts.reasoning.candidate_profile import CandidateProfile as _CandidateProfileV12
+from domain.contracts.report.scoring_narrative import ScoringNarrative
+from domain.contracts.report.scoring_snapshot import ScoringSnapshot
 from domain.contracts.session_history.session_history import SessionHistory
 from domain.contracts.report.report import Report
 
@@ -50,6 +52,11 @@ class InterviewStateBase(BaseModel):
     interview_evaluation: Optional[InterviewEvaluation] = None
     interview_metrics: InterviewMetrics | None = None
     interview_cost_metrics: InterviewCostMetrics | None = None
+
+    # Phase 7A (ADR-033): new scoring artifacts — sole writer: EvaluationAggregateNode.
+    # interview_evaluation is kept as bridge until Phase 7C removes it.
+    scoring_snapshot: ScoringSnapshot | None = None
+    scoring_narrative: ScoringNarrative | None = None
 
     chat_history: list[str] = Field(default_factory=list)
 
