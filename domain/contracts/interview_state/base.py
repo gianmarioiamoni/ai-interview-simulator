@@ -27,10 +27,6 @@ from domain.events.interview_event import InterviewEvent
 from domain.contracts.reasoning.interview_memory import InterviewMemory
 from domain.contracts.reasoning.reasoner_decision import ReasonerDecision
 
-# V1.2 TCP imports (PAT-04 — Temporary Construction Placeholders)
-# These types are imported lazily at class level; they do not introduce
-# circular dependencies (verified: all modules have no path back to
-# interview_state).
 from domain.contracts.observation.observation_store import ObservationStore
 from domain.contracts.reasoning.candidate_profile import CandidateProfile as _CandidateProfileV12
 from domain.contracts.session_history.session_history import SessionHistory
@@ -96,9 +92,7 @@ class InterviewStateBase(BaseModel):
 
     last_feedback_bundle: Optional[FeedbackBundle] = None
 
-    # --- Interview Reasoner (V1.1 M2, ADR-032) ---
-    # Single-writer: InterviewReasoner only.
-    # Supersedes interview_memory_context (deprecated below).
+    # Single-writer: InterviewReasoner only (ADR-032).
     interview_memory: InterviewMemory = Field(default_factory=InterviewMemory)
 
     # Advisory output of the last ReasonerNode cycle.
@@ -107,75 +101,63 @@ class InterviewStateBase(BaseModel):
     current_reasoning_decision: ReasonerDecision | None = None
 
     # ----------------------------------------------------------------
-    # V1.2 TCP fields (PAT-04 — Temporary Construction Placeholders)
-    # RIB-01 MIG-01: additive, nullable, no-op until activated by MIG-02/03/04.
-    # No V1.1 node reads or writes these fields.
+    # V1.2 fields — session-scoped, nullable until each pipeline stage runs.
     # ----------------------------------------------------------------
 
-    # Set once at session creation (MIG-03B). Immutable for session lifetime.
+    # Set once at session creation. Immutable for session lifetime.
     # Sole writer: InterviewStateFactoryMixin.create_initial / create_empty.
-    # Consumed by: KnowledgePipelineContext (MIG-03), SessionHistory (MIG-04).
-    # Surrogate fallback: interview_id (used by MIG-02 hook until this field existed).
+    # Consumed by: KnowledgePipelineContext, SessionHistory.
     candidate_identity_id: str | None = Field(
         default=None,
         description=(
             "[V1.2 TCP] Stable candidate identity for pipeline context. "
             "Set once at session start; immutable for session lifetime. "
-            "Consumed by KnowledgePipelineContext (MIG-03). "
-            "None only in legacy states predating MIG-03B."
+            "Consumed by KnowledgePipelineContext. "
+            "None only in legacy states predating V1.2."
         ),
     )
 
-    # Populated by reasoner_node Phase C (MIG-02).
-    # Sole writer: ObservationExtractor (via KnowledgePipeline).
+    # Sole writer: ObservationExtractor (via reasoner_node).
     # Sole reader: KnowledgePipeline, session_close_node.
-    # Lifetime: session-scoped; None until first ObservationExtractor cycle.
+    # Lifetime: session-scoped; None until first reasoner cycle.
     observation_store: ObservationStore | None = Field(
         default=None,
         description=(
             "[V1.2 TCP] Session-scoped ObservationStore. "
-            "Populated by reasoner_node Phase C (MIG-02). "
-            "None until activated. No V1.1 node reads this field."
+            "Populated by reasoner_node. None until activated."
         ),
     )
 
-    # Populated by reasoner_node Phase D (MIG-03) via KnowledgePipeline.
     # Sole writer: CandidateProfileBuilder (via FeatureEngine / KnowledgePipeline).
     # Sole reader: NarrativeGenerator, CoachingEngine, SessionClosePipeline.
-    # Lifetime: session-scoped; updated each reasoning cycle (MIG-03+).
-    # Populated via ProfileFeature[] path (FeatureEngine → CandidateProfileBuilder).
+    # Lifetime: session-scoped; updated each reasoning cycle.
     candidate_profile_v2: _CandidateProfileV12 | None = Field(
         default=None,
         description=(
             "[V1.2 TCP] CandidateProfile produced by FeatureEngine path. "
-            "Populated by KnowledgePipeline in reasoner_node Phase D (MIG-03). "
-            "None until activated. No V1.1 node reads this field."
+            "Populated by KnowledgePipeline in reasoner_node. None until activated."
         ),
     )
 
-    # Populated by session_close_node (MIG-04) via SessionClosePipeline.
-    # Sole writer: SessionHistoryBuilder (via SessionClosePipeline).
-    # Sole reader: report_node (MIG-05).
+    # Sole writer: SessionHistoryBuilder (via session_close_node).
+    # Sole reader: report_node.
     # Lifetime: written once at session completion; never mutated.
     session_history: SessionHistory | None = Field(
         default=None,
         description=(
             "[V1.2 TCP] Write-once SessionHistory. "
-            "Populated by session_close_node (MIG-04). "
-            "None until session completion. No V1.1 node reads this field."
+            "Populated by session_close_node. None until session completion."
         ),
     )
 
-    # Populated by report_node (MIG-05) via ReportBuilder.
     # Sole writer: ReportBuilder (via report_node). Write-once.
-    # Sole reader: UI layer / export pipeline (MIG-05+).
+    # Sole reader: UI layer / export pipeline.
     # Lifetime: written once at report generation; never mutated.
     report: Report | None = Field(
         default=None,
         description=(
-            "[V1.2 TCP] Immutable Report assembled by report_node (MIG-05). "
-            "Populated from SessionHistory. None until report generation. "
-            "No V1.1 node reads this field."
+            "[V1.2 TCP] Immutable Report assembled by report_node. "
+            "Populated from SessionHistory. None until report generation."
         ),
     )
 
@@ -200,7 +182,6 @@ class InterviewStateBase(BaseModel):
 
     model_config = {
         "extra": "forbid",
-        # Required for ObservationStore (ABC) and SessionHistory TCP fields.
-        # Does not loosen any other validation constraint.
+        # Required for ObservationStore (ABC) and SessionHistory fields.
         "arbitrary_types_allowed": True,
     }

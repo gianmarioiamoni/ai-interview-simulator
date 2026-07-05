@@ -285,7 +285,7 @@ class UIResponseBuilder:
     # =====================================================
     def _build_report(self, state: InterviewState) -> UIResponse:
 
-        # state.report is the authoritative runtime source (MIG-05 / RC1-04).
+        # state.report is the authoritative runtime source.
         # interview_evaluation provides scoring data for FinalReportDTO.
         final_eval = state.interview_evaluation
 

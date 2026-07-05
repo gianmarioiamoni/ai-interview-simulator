@@ -68,7 +68,6 @@ class Question(BaseModel):
     # =========================================================
     sql_test_cases: list[SQLTestCase] = Field(default_factory=list)
 
-    # Coding support (legacy)
     function_name: str = "solution"
 
     # Coding support
@@ -76,7 +75,7 @@ class Question(BaseModel):
 
     # Follow-up eligibility flag.
     # When False, question_node will not trigger a follow-up regardless of score.
-    # Default True preserves full backward compatibility for all existing questions.
+    # Default True: all existing questions support follow-up by default.
     supports_follow_up: bool = True
 
     # =========================================================

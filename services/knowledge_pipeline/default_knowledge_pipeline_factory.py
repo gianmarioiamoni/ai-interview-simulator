@@ -1,10 +1,10 @@
 # services/knowledge_pipeline/default_knowledge_pipeline_factory.py
 # Factory for the production KnowledgePipeline used in the live session path.
-# MIG-03A: wires ObservationStore → FeatureEngine → CandidateProfileBuilder → CandidateProfile.
+# Wires ObservationStore → FeatureEngine → CandidateProfileBuilder → CandidateProfile.
 #
-# Configuration: skip_extraction_if_store_populated=True because MIG-02A
-# (reasoner_node Phase C) already runs ObservationExtractor before this pipeline
-# is invoked.  No double extraction (MIG-02.5).
+# Configuration: skip_extraction_if_store_populated=True because reasoner_node
+# already runs ObservationExtractor before this pipeline is invoked.
+# No double extraction.
 
 from __future__ import annotations
 
@@ -30,12 +30,12 @@ def build_default_knowledge_pipeline(
 
     The extractor is constructed with a dummy frozen registry because
     skip_extraction_if_store_populated=True ensures Stage 1 is never executed
-    when the store is already populated (MIG-02.5).  ObservationExtractor is
+    when the store is already populated.  ObservationExtractor is
     constructed to satisfy the KnowledgePipeline constructor contract; it is
     never called when the store has observations.
 
     Args:
-        store: The session-scoped ObservationStore populated by reasoner_node Phase C.
+        store: The session-scoped ObservationStore populated by reasoner_node.
 
     Returns:
         A configured, ready-to-run KnowledgePipeline instance.

@@ -25,10 +25,6 @@ class ResultPresenter:
 
         feedback_md = bundle.markdown if bundle else ""
 
-        # -----------------------------------------------------
-        # REMOVE LEGACY EVALUATION DEPENDENCY
-        # -----------------------------------------------------
-
         score = 0.0
         passed = False
 

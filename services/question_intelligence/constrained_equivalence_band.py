@@ -40,8 +40,7 @@ KNOWLEDGE_FRESH_START_AREA = "technical_technical_knowledge"
 # Module-level tracker instance — owns the cross-interview pick counts.
 _TRACKER = CrossInterviewPickTracker()
 
-# Compatibility alias: tests that imported _CROSS_INTERVIEW_PICK_COUNTS directly
-# continue to work because this name points at the tracker's live internal dict.
+# Public alias pointing at the tracker's live internal dict (used by tests and scripts).
 _CROSS_INTERVIEW_PICK_COUNTS: dict[str, int] = _TRACKER.counts
 
 

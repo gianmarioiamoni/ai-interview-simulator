@@ -6,9 +6,8 @@
 # For a given feature_type_id, the first FeatureCandidate (in registration order)
 # is accepted; subsequent candidates for the same type are discarded.
 #
-# This is sufficient for Phase D (MIG-03A) where each Updater produces at most
-# one candidate per feature type.  A merge/replacement policy can be layered in
-# a future ADR without changing the contract.
+# Each Updater produces at most one candidate per feature type.
+# A merge/replacement policy can be layered in a future ADR without changing the contract.
 
 from __future__ import annotations
 

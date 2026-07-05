@@ -16,7 +16,6 @@ from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Preserved as module-level constants for backward compatibility.
 MAX_INVALID_JSON_ATTEMPTS = settings.coding_json_retry_attempts
 INVALID_JSON_PREFIX = "Invalid JSON from LLM:"
 

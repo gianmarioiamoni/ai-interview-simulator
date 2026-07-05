@@ -1,5 +1,5 @@
 # app/graph/nodes/report_node.py
-"""ReportNode — MIG-05A (PAT-06: LangGraph sole orchestrator).
+"""ReportNode (PAT-06: LangGraph sole orchestrator).
 
 Responsibilities (orchestration only):
 1. Guard: return immediately if session_history is None (no-op; session not closed).

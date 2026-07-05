@@ -1,21 +1,21 @@
 # app/graph/nodes/session_close_node.py
-"""SessionCloseNode — MIG-04, RS-02B, MIG-08A, MIG-08B (PAT-06: LangGraph sole orchestrator).
+"""SessionCloseNode (PAT-06: LangGraph sole orchestrator).
 
 Responsibilities (orchestration only):
 1. Idempotency guard: return immediately if state.session_history is not None.
-2. Read ProfileFeature[] from state.candidate_profile_v2.features (RS-02A).
-3. Generate Narrative via NarrativeGenerator (MIG-08A; sole Narrative producer).
-4. Generate CoachingSnapshot via CoachingEngine (MIG-08B; sole CoachingSnapshot producer).
+2. Read ProfileFeature[] from state.candidate_profile_v2.features.
+3. Generate Narrative via NarrativeGenerator (sole Narrative producer).
+4. Generate CoachingSnapshot via CoachingEngine (sole CoachingSnapshot producer).
 5. Assemble KnowledgeSnapshot via KnowledgeSnapshotBuilder.
 6. Assemble SessionCloseContext from InterviewState fields.
 7. Run SessionClosePipeline.run(context) — sole invocation per session.
 8. Write state.session_history on success.
 
-RS-02B: KnowledgePipeline is NOT executed here. Features come from
-state.candidate_profile_v2.features (ADS-01 Strategy A, ADR-018, ADR-020).
+KnowledgePipeline is NOT executed here. Features come from
+state.candidate_profile_v2.features (ADR-018, ADR-020).
 
-MIG-08A: NarrativeGenerator replaces stub. Failure falls back to stub.
-MIG-08B: CoachingEngine replaces CoachingBuilder.empty(). Failure falls back to empty.
+NarrativeGenerator failure falls back to structural stub.
+CoachingEngine failure falls back to CoachingBuilder.empty().
 
 Sole writer: this node only. SessionClosePipeline never writes state.
 """
@@ -57,7 +57,7 @@ from app.core.logger import get_logger
 logger = get_logger(__name__)
 
 # ------------------------------------------------------------------
-# Policy constants (PAT-04: frozen at MIG-04 baseline)
+# Policy constants
 # ------------------------------------------------------------------
 _POLICY_VERSIONS = PolicyVersions(
     feature_engine_version="1.0",
@@ -72,10 +72,10 @@ _POLICY_VERSIONS = PolicyVersions(
 # Singleton pipeline — stateless, safe to share (ADR-022).
 _pipeline = SessionClosePipeline()
 
-# Singleton NarrativeGenerator — stateless, safe to share (MIG-08A).
+# Singleton NarrativeGenerator — stateless, safe to share.
 _narrative_generator = NarrativeGenerator()
 
-# Singleton CoachingEngine — stateless, safe to share (MIG-08B).
+# Singleton CoachingEngine — stateless, safe to share.
 _coaching_engine = CoachingEngine()
 
 # Default coding language when no LanguageProfile exists on state (V1.2 gap).
@@ -255,7 +255,7 @@ def _generate_narrative(
     session_id: str,
     candidate_identity_id: str,
 ) -> Narrative:
-    """Generate Narrative via NarrativeGenerator (MIG-08A — sole Narrative producer).
+    """Generate Narrative via NarrativeGenerator (sole Narrative producer).
 
     Builds NarrativeGenerationContext from available state artifacts without
     invoking FeatureEngine, KnowledgePipeline, or ObservationExtractor.
@@ -326,7 +326,7 @@ def _generate_coaching_snapshot(
     session_id: str,
     candidate_identity_id: str,
 ) -> "CoachingSnapshot":
-    """Generate CoachingSnapshot via CoachingEngine (MIG-08B — sole CoachingSnapshot producer).
+    """Generate CoachingSnapshot via CoachingEngine (sole CoachingSnapshot producer).
 
     Builds CoachingContext from available state artifacts without invoking
     FeatureEngine, KnowledgePipeline, or ObservationExtractor.
@@ -368,9 +368,8 @@ def _generate_coaching_snapshot(
 def _build_language_profile(session_id: str) -> LanguageProfile:
     """Build a minimal SINGLE-mode LanguageProfile for the session.
 
-    V1.2 gap: LanguageProfile is not tracked on InterviewState.
-    A default Python profile is used as the structural placeholder.
-    MIG-05+ will derive this from session config.
+    LanguageProfile is not tracked on InterviewState; a default Python profile
+    is used as the structural placeholder.
     """
     return LanguageProfile(
         session_id=session_id,

@@ -35,15 +35,12 @@ from services.interview_reasoner.evaluation_signal_writer import write_evaluatio
 from services.interview_reasoner.reasoning_context_builder import ReasoningContextBuilder
 from services.interview_reasoner.reasoner_service import ReasonerService
 
-# MIG-02: Phase C imports — ObservationExtractor pipeline
 from domain.contracts.observation.extraction.observation_extractor import ObservationExtractor
 from domain.contracts.observation.extraction.observation_extraction_context import (
     ObservationExtractionContext,
 )
 from domain.observation.runtime.in_memory_observation_store import InMemoryObservationStore
 from domain.observation.runtime.default_observation_registry import build_default_observation_registry
-
-# MIG-03A: Phase D imports — KnowledgePipeline activation
 from services.knowledge_pipeline.default_knowledge_pipeline_factory import (
     build_default_knowledge_pipeline,
 )
@@ -55,7 +52,7 @@ _registry = build_default_registry()
 _service = ReasonerService(_registry)
 _builder = ReasoningContextBuilder()
 
-# MIG-02: shared frozen rule registry for ObservationExtractor (one per process).
+# Shared frozen rule registry for ObservationExtractor (one per process).
 _observation_rule_registry = build_default_observation_registry()
 
 
@@ -85,7 +82,7 @@ def reasoner_node(state: InterviewState) -> InterviewState:
         updated_memory = _append_reasoning_entry(state, decision, memory_with_metrics)
 
         # ------------------------------------------------------------------
-        # Phase C — MIG-02: ObservationExtractor pipeline
+        # ObservationExtractor pipeline
         # Reads all EvidenceSignals for the current question from the updated
         # EvidenceStore and appends typed Observations to the session-scoped
         # ObservationStore.  Failures are non-fatal (interview continues).
@@ -96,10 +93,9 @@ def reasoner_node(state: InterviewState) -> InterviewState:
         )
 
         # ------------------------------------------------------------------
-        # Phase D — MIG-03A: KnowledgePipeline activation
-        # Runs FeatureEngine → CandidateProfileBuilder → CandidateProfile
-        # using the already-populated ObservationStore.  Extraction is skipped
-        # (skip_extraction_if_store_populated=True).  Failures are non-fatal.
+        # KnowledgePipeline: FeatureEngine → CandidateProfileBuilder → CandidateProfile
+        # Uses the already-populated ObservationStore (extraction skipped).
+        # Failures are non-fatal.
         # ------------------------------------------------------------------
         updated_candidate_profile_v2 = _run_knowledge_pipeline(
             state=state,
@@ -168,7 +164,7 @@ def _inject_evaluation_signals(state: InterviewState) -> InterviewState:
 
 
 # ---------------------------------------------------------------------------
-# Phase C — MIG-02: ObservationExtractor helper
+# ObservationExtractor helper
 # ---------------------------------------------------------------------------
 
 def _resolve_candidate_identity_id(state: InterviewState) -> str:
@@ -187,16 +183,16 @@ def _resolve_candidate_identity_id(state: InterviewState) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Phase D — MIG-03A: KnowledgePipeline helper
+# KnowledgePipeline helper
 # ---------------------------------------------------------------------------
 
 def _run_knowledge_pipeline(
     state: InterviewState,
     updated_observation_store,
 ) -> object:
-    """Run KnowledgePipeline to produce CandidateProfile V2.
+    """Run KnowledgePipeline to produce CandidateProfile.
 
-    Uses the session-scoped ObservationStore (already populated by Phase C).
+    Uses the session-scoped ObservationStore (already populated by ObservationExtractor).
     Extraction is skipped (skip_extraction_if_store_populated=True).
     Returns the new CandidateProfile, or the prior candidate_profile_v2
     (unchanged) if the pipeline fails.  Never raises.

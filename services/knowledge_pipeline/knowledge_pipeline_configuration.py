@@ -38,10 +38,9 @@ class KnowledgePipelineConfiguration(BaseModel):
         description="When True, extraction proceeds even with zero EvidenceSignals.",
     )
 
-    # MIG-02.5: when True, Stage 1 (ObservationExtractor) is skipped if the
+    # When True, Stage 1 (ObservationExtractor) is skipped if the
     # ObservationStore passed into the pipeline already contains observations.
-    # This prevents double extraction when reasoner_node has already run
-    # ObservationExtractor during Phase C (MIG-02A).
+    # Prevents double extraction when reasoner_node already ran ObservationExtractor.
     # The pipeline still executes Stages 3–5 (snapshot → FeatureEngine → ProfileBuild).
     skip_extraction_if_store_populated: bool = Field(
         default=False,

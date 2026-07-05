@@ -12,7 +12,7 @@ class InterviewMemory(BaseModel):
     """Session-scoped accumulated intelligence owned by InterviewReasoner.
 
     Composed of four independent immutable substructures (ADR-038).
-    Supersedes InterviewMemoryContext (deprecated M2, removed M3, ADR-032).
+    Supersedes InterviewMemoryContext (removed, ADR-032).
 
     Single-writer: InterviewReasoner.
     All other components read it; none write to it directly.

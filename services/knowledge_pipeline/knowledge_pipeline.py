@@ -113,9 +113,9 @@ class KnowledgePipeline:
             )
 
         # --- Stage 1: Extraction ---
-        # MIG-02.5: skip extraction when the store is already populated and
+        # Skip extraction when the store is already populated and
         # skip_extraction_if_store_populated is enabled (prevents double extraction
-        # after reasoner_node Phase C has already run ObservationExtractor).
+        # when reasoner_node has already run ObservationExtractor).
         t0 = time.monotonic()
         skip_extraction = (
             self._configuration.skip_extraction_if_store_populated
@@ -250,7 +250,7 @@ class KnowledgePipeline:
             metrics=metrics,
         )
         # Use features from the builder to ensure CandidateProfileBuilder is the
-        # sole V1.2 construction path (MIG-02.5, ADR-037).
+        # sole CandidateProfile construction path (ADR-037).
         committed_features = profile_builder.profile_features if profile_builder is not None else features
 
         return KnowledgePipelineResult(
@@ -341,8 +341,8 @@ class KnowledgePipeline:
             else:
                 builder = CandidateProfileBuilder()
 
-            # MIG-02.5: wire ProfileFeature[] from FeatureEngine into the builder.
-            # CandidateProfileBuilder is the sole V1.2 CandidateProfile construction
+            # Wire ProfileFeature[] from FeatureEngine into the builder.
+            # CandidateProfileBuilder is the sole CandidateProfile construction
             # path (ADR-037). Features are surfaced via KnowledgePipelineResult.features.
             profile = (
                 builder

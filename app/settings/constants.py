@@ -34,8 +34,7 @@ DEFAULT_INTERVIEW_LENGTH = 20
 DEFAULT_FOLLOWUP_RATE = 0.20
 
 # Maximum consecutive follow-ups per interview.
-# Single source of truth: infrastructure/config/settings.py (max_follow_ups_per_interview).
-# This re-export preserves backward compatibility for all existing imports.
+# Derived from infrastructure/config/settings.py (max_follow_ups_per_interview).
 from infrastructure.config.settings import settings as _settings
 MAX_FOLLOW_UPS_PER_INTERVIEW: int = _settings.max_follow_ups_per_interview
 
