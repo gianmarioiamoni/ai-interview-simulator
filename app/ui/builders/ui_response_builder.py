@@ -285,7 +285,7 @@ class UIResponseBuilder:
     # =====================================================
     def _build_report(self, state: InterviewState) -> UIResponse:
 
-        # state.report is the sole authoritative runtime source (Phase 7C, ADR-033).
+        # state.report is the sole authoritative runtime source (ADR-033, Phase 9).
         loader_visible = False
         loader_value = map_loader_text(state.current_step)
         progress = map_loader_progress(state.current_step)
@@ -312,7 +312,6 @@ class UIResponseBuilder:
                 current_progress=progress,
             )
 
-        # Phase 7C: use from_report() stub (full implementation in Phase 9).
         report_dto = FinalReportDTO.from_report(state.report)
 
         report_html = build_report_markdown(report_dto)

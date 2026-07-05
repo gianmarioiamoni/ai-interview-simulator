@@ -1,4 +1,5 @@
 # app/ui/views/report/sections/next_strategy_section.py
+# EPIC-V13-05 Phase 9 — reads context_detail (was: expected_improvement) per ScoringNarrativeItem.to_dict() contract.
 
 _IMPACT_COLORS = {
     "High":   ("#dc2626", "#fef2f2", "#fca5a5"),
@@ -16,10 +17,10 @@ def render_next_strategy(report):
 
     items_html = ""
     for i, item in enumerate(items[:3], start=1):
-        priority = item.get("priority", f"Priority {i}")
-        why = item.get("why", "")
-        improvement = item.get("expected_improvement", "")
-        impact = item.get("impact", "Medium")
+        priority = item.get("description", item.get("priority", f"Priority {i}"))
+        why = item.get("why_it_matters", item.get("why", ""))
+        improvement = item.get("context_detail", "") or ""
+        impact = "Medium"
 
         text_color, bg_color, border_color = _IMPACT_COLORS.get(
             impact, _IMPACT_COLORS["Medium"]

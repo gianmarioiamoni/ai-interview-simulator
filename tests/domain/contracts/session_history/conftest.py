@@ -60,7 +60,7 @@ def make_language_profile(session_id: str = SESSION_ID) -> LanguageProfile:
 
 def make_interview_metadata() -> InterviewMetadata:
     return InterviewMetadata(
-        role="Software Engineer",
+        role="backend_engineer",
         seniority="Senior",
         interview_type="technical",
         interview_mode="written",

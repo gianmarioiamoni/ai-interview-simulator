@@ -1,4 +1,6 @@
 # app/ui/dto/final_report_dto.py
+# EPIC-V13-05 Phase 9 — FinalReportDTO sourced exclusively from Report v2.0.
+# from_components deleted (R-05). from_report is the sole factory.
 
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
@@ -8,15 +10,19 @@ from app.ui.dto.question_assessment_dto import QuestionAssessmentDTO
 
 from app.ui.mappers.hire_decision_mapper import HireDecisionMapper
 from app.ui.dto.builders.dimension_score_mapper import DimensionScoreMapper
-from app.ui.dto.builders.question_mapper import QuestionMapper
-from app.ui.dto.builders.token_calculator import TokenCalculator
+from app.ui.dto.builders.question_assessment_mapper import QuestionAssessmentMapper
 
 from domain.contracts.feedback.confidence import Confidence
-from domain.contracts.interview_state import InterviewState
 from domain.contracts.report.report import Report
 from domain.contracts.user.role import RoleType
-from domain.contracts.user.seniority_level import SeniorityLevel
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
+
+
+def _safe_role_type(role_str: str) -> RoleType:
+    try:
+        return RoleType(role_str)
+    except ValueError:
+        return RoleType.OTHER
 
 
 class FinalReportDTO(BaseModel):
@@ -62,82 +68,49 @@ class FinalReportDTO(BaseModel):
 
     @classmethod
     def from_report(cls, report: Report) -> "FinalReportDTO":
-        """Phase 7C stub — Phase 9 provides the full implementation.
+        """Build FinalReportDTO exclusively from Report v2.0 (ADR-033, R-05, EPIC-V13-05 Phase 9).
 
-        Returns a minimal placeholder FinalReportDTO. Phase 9 will implement
-        full report-based rendering using Report v2.0 fields.
+        No InterviewState reads. No SessionHistory reads.
         """
-        from domain.contracts.feedback.confidence import Confidence
-        return cls(
-            overall_score=0.0,
-            raw_score=0.0,
-            adjusted_score=0.0,
-            hiring_probability=0.0,
-            hire_decision="Pending",
-            decision_explanation={},
-            dimension_signals={},
-            percentile_rank=0.0,
-            percentile_explanation="Report rendering will be available in Phase 9.",
-            executive_summary="Report summary pending Phase 9 implementation.",
-            gating_triggered=False,
-            gating_reason=None,
-            weighted_breakdown={},
-            dimension_scores=[],
-            question_assessments=[],
-            improvement_suggestions=[],
-            total_tokens_used=0,
-            confidence=Confidence(base=0.0, final=0.0),
-            role=RoleType.FULLSTACK_ENGINEER,
-            seniority_level="",
-            context_profile=InterviewContextProfile(),
+        scoring = report.scoring
+        narrative = report.scoring_narrative
+
+        dimension_scores = DimensionScoreMapper().map(scoring.scoring_dimensions)
+
+        question_assessments = [
+            QuestionAssessmentMapper.to_dto(r) for r in report.question_assessments
+        ]
+
+        total_tokens = (
+            report.generation_metadata.total_tokens_used
+            if report.generation_metadata is not None
+            else 0
         )
 
-    @classmethod
-    def from_components(cls, state: InterviewState, final_evaluation):
-
-        question_mapper = QuestionMapper()
-        dimension_mapper = DimensionScoreMapper()
-        token_calculator = TokenCalculator()
-
-        question_assessments = question_mapper.map(state)
-        dimension_scores = dimension_mapper.map(
-            final_evaluation.dimension_scores,
-            final_evaluation.weighted_breakdown,
-            getattr(final_evaluation, "performance_dimensions", None),
-        )
-        tokens = token_calculator.calculate(state)
-
-        role = state.role.type
-
-        hire_decision = (HireDecisionMapper.to_label(final_evaluation.hire_decision))
-
-        seniority_level = state.seniority_level
-        context_profile = state.context_profile
-
         return cls(
-            overall_score=final_evaluation.overall_score,
-            raw_score=final_evaluation.raw_score,
-            adjusted_score=final_evaluation.adjusted_score,
-            hiring_probability=final_evaluation.hiring_probability,
-            hire_decision=hire_decision,
-            decision_explanation=final_evaluation.decision_explanation,
-            dimension_signals=final_evaluation.dimension_signals,
-            percentile_rank=final_evaluation.percentile_rank,
-            percentile_explanation=final_evaluation.percentile_explanation,
-            executive_summary=final_evaluation.executive_summary,
-            gating_triggered=final_evaluation.gating_triggered,
-            gating_reason=final_evaluation.gating_reason,
-            weighted_breakdown=final_evaluation.weighted_breakdown,
+            overall_score=scoring.overall_score,
+            raw_score=scoring.raw_score or 0.0,
+            adjusted_score=scoring.adjusted_score or scoring.overall_score,
+            hiring_probability=scoring.hiring_probability,
+            hire_decision=HireDecisionMapper.to_label(scoring.hire_decision),
+            decision_explanation=scoring.decision_explanation,
+            dimension_signals=scoring.dimension_signals,
+            percentile_rank=scoring.percentile_rank,
+            percentile_explanation=scoring.percentile_explanation,
+            executive_summary=narrative.executive_summary,
+            gating_triggered=scoring.gating_triggered,
+            gating_reason=scoring.gating_reason,
+            weighted_breakdown=scoring.weighted_breakdown,
             dimension_scores=dimension_scores,
             question_assessments=question_assessments,
-            improvement_suggestions=final_evaluation.improvement_suggestions,
-            went_well=getattr(final_evaluation, "went_well", []) or [],
-            held_you_back=getattr(final_evaluation, "held_you_back", []) or [],
-            knowledge_gaps=getattr(final_evaluation, "knowledge_gaps", []) or [],
-            next_strategy=getattr(final_evaluation, "next_strategy", []) or [],
-            total_tokens_used=tokens,
-            confidence=final_evaluation.confidence,
-            role=role,
-            seniority_level=seniority_level,
-            context_profile=context_profile,
+            improvement_suggestions=list(narrative.improvement_suggestions),
+            went_well=list(narrative.went_well),
+            held_you_back=[item.to_dict() for item in narrative.held_you_back],
+            knowledge_gaps=[item.to_dict() for item in narrative.knowledge_gaps],
+            next_strategy=[item.to_dict() for item in narrative.next_strategy],
+            total_tokens_used=total_tokens,
+            confidence=scoring.confidence,
+            role=_safe_role_type(report.role),
+            seniority_level=report.seniority,
+            context_profile=report.context_profile,
         )

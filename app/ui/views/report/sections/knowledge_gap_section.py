@@ -1,4 +1,5 @@
 # app/ui/views/report/sections/knowledge_gap_section.py
+# EPIC-V13-05 Phase 9 — reads context_detail (was: interview_impact) per ScoringNarrativeItem.to_dict() contract.
 
 from collections import defaultdict
 
@@ -20,9 +21,9 @@ def render_knowledge_gaps(report):
     for category, cat_gaps in by_category.items():
         gaps_html = ""
         for g in cat_gaps:
-            concept = g.get("concept", "")
+            concept = g.get("description", g.get("concept", ""))
             why = g.get("why_it_matters", "")
-            impact = g.get("interview_impact", "")
+            impact = g.get("context_detail", "") or ""
             gaps_html += f"""
 <div style="margin-bottom:10px;padding:10px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
 <div style="font-weight:600;color:#1e293b;margin-bottom:4px;">{concept}</div>

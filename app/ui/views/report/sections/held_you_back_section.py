@@ -1,4 +1,5 @@
 # app/ui/views/report/sections/held_you_back_section.py
+# EPIC-V13-05 Phase 9 — reads context_detail (was: impact) per ScoringNarrativeItem.to_dict() contract.
 
 
 def render_held_you_back(report):
@@ -10,9 +11,9 @@ def render_held_you_back(report):
 
     items_html = ""
     for item in items:
-        behaviour = item.get("behaviour", "")
+        behaviour = item.get("description", item.get("behaviour", ""))
         why = item.get("why_it_matters", "")
-        impact = item.get("impact", "")
+        impact = item.get("context_detail", "") or ""
         items_html += f"""
 <div style="border-left:3px solid #f59e0b;padding:10px 14px;margin-bottom:14px;background:#fffbeb;border-radius:0 6px 6px 0;">
 <div style="font-weight:600;color:#92400e;margin-bottom:4px;">{behaviour}</div>

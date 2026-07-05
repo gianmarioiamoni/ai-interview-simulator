@@ -59,6 +59,5 @@ class InterviewStateMapper:
         if state.report is None:
             raise ValueError("state.report is required — report_node must run before presentation")
 
-        # Phase 7C: from_report() stub — full implementation in Phase 9.
         return FinalReportDTO.from_report(state.report)
 

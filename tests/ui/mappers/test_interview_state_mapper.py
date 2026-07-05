@@ -85,8 +85,8 @@ def test_final_report_requires_report():
         mapper.to_final_report_dto(state)
 
 
-def test_final_report_calls_from_report_stub():
-    """Phase 7C: to_final_report_dto calls FinalReportDTO.from_report(state.report)."""
+def test_final_report_calls_from_report():
+    """Phase 9: to_final_report_dto calls FinalReportDTO.from_report(state.report)."""
     from unittest.mock import patch, MagicMock
 
     state = build_state_with_execution(passed_tests=2, total_tests=2)

@@ -125,7 +125,7 @@ class TestSessionProgressEntryContract:
 
     def test_entry_carries_role_seniority(self, learning_progress: LearningProgress) -> None:
         entry = learning_progress.session_entries[0]
-        assert entry.role == "Software Engineer"
+        assert entry.role == "backend_engineer"
         assert entry.seniority == "Senior"
 
     def test_entry_dimensional_scores_not_empty(self, learning_progress: LearningProgress) -> None:
