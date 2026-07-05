@@ -59,6 +59,10 @@ A component that does two things should be two components. This applies to nodes
 
 V1.3 is the production release. Completion and correctness of committed epics take priority over adding new scope. If a new idea surfaces during implementation, it is assessed against the Deferred Features list in the Master Plan. If it is not already there, it belongs there — not in V1.3.
 
+### Zero Known Failing Tests
+
+Every implementation phase, every commit, and every save-token milestone must leave the runtime operational and the complete regression suite green. Planned failing tests are never accepted. If a migration would temporarily break the runtime or the test suite, the implementation plan must introduce bridge phases that restore full green before the breaking removal is committed. A broken test suite is not a milestone — it is a process violation.
+
 ---
 
 ## 3. Epic Workflow
@@ -207,6 +211,14 @@ Every new domain contract (`frozen=True`) has a test that verifies: the contract
 
 Do not write tests that assert on: internal variable names; call order within a single service; private method return values; or LLM prompt content (prompt content is not a behavioral contract). These tests create brittleness without providing correctness guarantees.
 
+### Zero Known Failing Tests — Enforcement
+
+The Zero Known Failing Tests principle (§2) applies to every individual phase and commit, not only at epic boundaries. Specifically:
+
+- No commit may be tagged a save-token or a phase completion while any test in the suite is failing.
+- If implementing a migration phase in one commit would produce failing tests, that phase must be split: an additive bridge phase (which passes) must precede any removal phase (which also passes after all readers are updated).
+- A test that is expected to fail after a future phase is not a "known failing test" — it is scope for the next phase and must not exist in the committed codebase.
+
 ### Regression Baseline
 
 The V1.2 regression suite is the baseline. It must pass in full at every epic boundary. Any regression introduced by a V1.3 increment must be fixed before the increment is merged — regressions are never deferred to the end of an epic.
@@ -265,6 +277,19 @@ Trigger a CAR at the close of every epic (mandatory). Additionally trigger a CAR
 
 Trigger the Release Readiness Review when all epics are closed and all go-live checklist items in the Master Plan (§5) are believed to be satisfied. The RR is the final gate before the V1.3 release tag. It verifies all Success Metrics (Master Plan §9), runs the full regression suite, confirms zero open P0/P1 findings, and validates all production deployment criteria. The RR is not a review of code — it is a review of evidence: test results, deployment validation records, performance baseline reports, and architecture audit reports.
 
+### Freeze Integrity Check
+
+Whenever a frozen planning document is modified — including an ADR, Architecture Freeze report, Architecture Constitution, Implementation Plan, Domain Contracts, Data Model Specification, or Architecture Guide — a Freeze Integrity Check is mandatory before implementation resumes.
+
+**A Freeze Integrity Check confirms all of the following:**
+
+- The target architecture is unchanged; only sequencing, process rules, or editorial corrections are modified.
+- The document hierarchy remains internally consistent; no contradiction is introduced between the modified document and any document it references or that references it.
+- No new architectural decision is embedded in the modification (decisions require a new or amended ADR).
+- The scope of the modification is limited to the stated intent; no unrelated changes are introduced.
+
+The Freeze Integrity Check is performed by the author of the modification immediately after editing, before any implementation work continues. If the check reveals a contradiction or an undeclared decision, the modification is revised until the check passes. Verification is recorded in the session commit message (e.g., "Freeze Integrity Check passed — only sequencing revised, architecture unchanged").
+
 ### Review Gate Summary
 
 | Gate | Trigger | Blocks |
@@ -272,6 +297,7 @@ Trigger the Release Readiness Review when all epics are closed and all go-live c
 | ADR | New design decision before implementation | Implementation start |
 | CAR | Epic implementation complete | Epic close |
 | CAR (mid-epic) | Structural violation discovered during implementation | Continuation of affected increment |
+| Freeze Integrity Check | Any frozen document modified | Resumption of implementation |
 | RR | All epics closed; go-live checklist believed complete | V1.3 release tag |
 
 ---
@@ -358,7 +384,7 @@ Applies whenever the epic introduces or substantially changes any of the followi
 4. **Domain Contracts** — A dedicated domain contract specification document under `docs/master-plan/epics/`. Specifies the complete field set, types, validation invariants, ownership, lifecycle, and relationships of every new artifact. Precise enough that implementation is mechanical.
 5. **Data Model Specification** — A dedicated data model document. Resolves all open modelling decisions left by the Domain Contracts document. Freezes the complete field tables for all affected artifacts. Verifies replay completeness. Evaluates future extensibility.
 6. **Architecture Freeze** — A formal gate (described below). Implementation cannot begin before Architecture Freeze passes.
-7. **Implementation** — Incremental implementation against frozen contracts. No architectural choices during coding. If an unresolved question emerges, apply the Stopping Rule (below).
+7. **Implementation** — Incremental implementation against frozen contracts. No architectural choices during coding. Every phase must satisfy the Zero Known Failing Tests rule (§2). Bridge phases must be introduced wherever a migration would otherwise produce a temporarily broken runtime or test suite. If an unresolved question emerges, apply the Stopping Rule (below).
 8. **CAR (Change Acceptance Report)** — Confirms the implementation satisfies all ADR decisions, domain contracts, and data model specifications.
 9. **RR (Regression Report)** — Confirms the full test suite passes with no regressions.
 10. **Epic Freeze** — Epic is declared complete. No further scope additions.
@@ -411,11 +437,14 @@ If, during implementation, an unresolved architectural question emerges — a de
 1. **Stop implementation immediately.** Do not make the architectural decision in code. Do not proceed with an assumption.
 2. **Return to the Architecture Review / ADR phase.** Document the question, evaluate alternatives, and freeze a decision in a new or amended ADR.
 3. **Update the affected planning documents** (Domain Contracts or Data Model Specification) if the decision changes any specified field, type, invariant, or ownership rule.
-4. **Declare a new Architecture Freeze** for the affected scope before resuming.
-5. **Resume implementation** only after the decision is frozen and the planning documents are updated.
+4. **Perform a Freeze Integrity Check** (§9) on every modified frozen document before resuming implementation.
+5. **Declare a new Architecture Freeze** for the affected scope before resuming.
+6. **Resume implementation** only after the decision is frozen, the planning documents are updated, and the Freeze Integrity Check passes.
 
 **Architectural decisions must never be made while coding.** A decision made in code is a decision that bypasses all review, rationale recording, and traceability. It is a process violation regardless of whether the decision is technically correct.
 
 ---
 
 *This playbook is the operational handbook for V1.3. It is a living document. Amendments are made when process lessons are learned, not when preferences change. Every amendment requires a recorded rationale.*
+
+*Revision 2026-07-05: Added "Zero Known Failing Tests" engineering principle (§2), "Zero Known Failing Tests — Enforcement" testing rule (§7), "Freeze Integrity Check" review gate (§9), bridge-phase mandate in Category B workflow (§8 step 7), and Freeze Integrity Check in the Stopping Rule (§8). Derived from EPIC-01 Phase 6 implementation experience.*
