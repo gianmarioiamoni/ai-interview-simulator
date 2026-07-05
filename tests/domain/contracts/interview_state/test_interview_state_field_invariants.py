@@ -1,13 +1,12 @@
-# tests/domain/contracts/interview_state/test_mig01_tcp_fields.py
-# MIG-01 — TCP field tests (RIB-01, PAT-04)
+# tests/domain/contracts/interview_state/test_interview_state_field_invariants.py
+# Architectural invariants for InterviewState field contracts (PAT-04)
 #
 # Verifies:
-# 1. TCP fields present and default to None.
-# 2. InterviewState remains backward-compatible (all V1.1 tests pass).
-# 3. No LangGraph node references the new fields (architectural).
-# 4. extra=forbid preserved.
-# 5. arbitrary_types_allowed added correctly.
-# 6. Correct contract types used (no duplicates).
+# 1. V1.2 fields are present, optional, and correctly typed.
+# 2. Model configuration: extra=forbid, arbitrary_types_allowed.
+# 3. Core V1.1 fields remain present and correctly behave.
+# 4. Domain contract uniqueness: one class per concept.
+# 5. Sole-writer ownership: only declared nodes read/write each field.
 
 from __future__ import annotations
 
@@ -32,7 +31,7 @@ from domain.contracts.user.role import Role, RoleType
 
 def _base_kwargs() -> dict:
     return {
-        "interview_id": "mig01-test",
+        "interview_id": "field-invariants-test",
         "role": Role(type=RoleType.BACKEND_ENGINEER),
         "company": "ACME",
     }
@@ -43,10 +42,10 @@ def _make_state(**overrides) -> InterviewState:
 
 
 # ---------------------------------------------------------------------------
-# TCP field presence and defaults
+# V1.2 field presence and defaults
 # ---------------------------------------------------------------------------
 
-class TestTCPFieldsPresence:
+class TestV12FieldPresence:
     def test_observation_store_defaults_to_none(self) -> None:
         state = _make_state()
         assert state.observation_store is None
@@ -59,26 +58,31 @@ class TestTCPFieldsPresence:
         state = _make_state()
         assert state.session_history is None
 
-    def test_all_three_tcp_fields_exist_on_base(self) -> None:
+    def test_report_defaults_to_none(self) -> None:
+        state = _make_state()
+        assert state.report is None
+
+    def test_v12_fields_exist_on_base(self) -> None:
         fields = InterviewStateBase.model_fields
         assert "observation_store" in fields
         assert "candidate_profile_v2" in fields
         assert "session_history" in fields
+        assert "report" in fields
 
-    def test_tcp_fields_are_optional(self) -> None:
+    def test_v12_fields_are_optional(self) -> None:
         fields = InterviewStateBase.model_fields
-        for name in ("observation_store", "candidate_profile_v2", "session_history"):
+        for name in ("observation_store", "candidate_profile_v2", "session_history", "report"):
             assert fields[name].is_required() is False, f"{name} must not be required"
 
-    def test_tcp_field_descriptions_contain_v12_marker(self) -> None:
+    def test_v12_field_descriptions_contain_tcp_marker(self) -> None:
         fields = InterviewStateBase.model_fields
-        for name in ("observation_store", "candidate_profile_v2", "session_history"):
+        for name in ("observation_store", "candidate_profile_v2", "session_history", "report"):
             desc = fields[name].description or ""
             assert "V1.2 TCP" in desc, f"{name} description must contain 'V1.2 TCP'"
 
 
 # ---------------------------------------------------------------------------
-# model_config validation
+# Model configuration
 # ---------------------------------------------------------------------------
 
 class TestModelConfig:
@@ -94,10 +98,10 @@ class TestModelConfig:
 
 
 # ---------------------------------------------------------------------------
-# Backward compatibility — V1.1 fields still exist and behave correctly
+# Core field stability
 # ---------------------------------------------------------------------------
 
-class TestBackwardCompatibility:
+class TestCoreFieldStability:
     def test_interview_memory_still_present(self) -> None:
         from domain.contracts.reasoning.interview_memory import InterviewMemory
         state = _make_state()
@@ -111,30 +115,30 @@ class TestBackwardCompatibility:
         with pytest.raises(ValidationError):
             _make_state(follow_up_count=99)
 
-    def test_v11_state_serialises_with_tcp_as_none(self) -> None:
+    def test_v12_fields_serialize_as_none_by_default(self) -> None:
         state = _make_state()
         d = state.model_dump()
         assert d["observation_store"] is None
         assert d["candidate_profile_v2"] is None
         assert d["session_history"] is None
+        assert d["report"] is None
 
-    def test_model_copy_preserves_tcp_defaults(self) -> None:
+    def test_model_copy_preserves_v12_field_defaults(self) -> None:
         state = _make_state()
         new_state = state.model_copy(update={"follow_up_count": 1})
         assert new_state.observation_store is None
         assert new_state.candidate_profile_v2 is None
         assert new_state.session_history is None
+        assert new_state.report is None
 
 
 # ---------------------------------------------------------------------------
-# Contract uniqueness — correct types, no duplicates
+# Contract uniqueness — one class per domain concept
 # ---------------------------------------------------------------------------
 
 class TestContractUniqueness:
-    def test_candidate_profile_v2_type_is_v11_candidate_profile(self) -> None:
-        """candidate_profile_v2 uses the single CandidateProfile contract (domain/contracts/reasoning)."""
+    def test_candidate_profile_v2_type_is_candidate_profile(self) -> None:
         annotation = InterviewStateBase.model_fields["candidate_profile_v2"].annotation
-        # Optional[CandidateProfile] — unwrap Union
         import typing
         args = typing.get_args(annotation)
         non_none = [a for a in args if a is not type(None)]
@@ -158,7 +162,7 @@ class TestContractUniqueness:
         assert non_none[0] is SessionHistory
 
     def test_single_candidate_profile_class_in_domain(self) -> None:
-        """Architectural: exactly one class named CandidateProfile in domain/contracts."""
+        """Exactly one class named CandidateProfile must exist in domain/contracts."""
         domain_contracts = Path("domain/contracts")
         matches = []
         for py_file in domain_contracts.rglob("*.py"):
@@ -211,14 +215,13 @@ class TestContractUniqueness:
 
 
 # ---------------------------------------------------------------------------
-# Architectural: no LangGraph node reads TCP fields
+# Sole-writer ownership guards
 # ---------------------------------------------------------------------------
 
-class TestNoNodeReadsNewFields:
-    """Architectural guard: V1.1 nodes must not reference the TCP fields."""
+class TestSoleWriterOwnership:
+    """Ownership guards: only declared sole-writer nodes may reference each field."""
 
     _NODES_DIR = Path("app/graph/nodes")
-    _TCP_FIELD_NAMES = {"observation_store", "candidate_profile_v2", "session_history"}
 
     def _nodes_referencing(self, field: str) -> list[str]:
         offenders = []
@@ -230,24 +233,24 @@ class TestNoNodeReadsNewFields:
                 offenders.append(py_file.name)
         return offenders
 
-    def test_no_node_reads_observation_store(self) -> None:
-        # MIG-02: reasoner_node (writer); MIG-04: session_close_node (reader).
+    def test_observation_store_sole_owner_nodes(self) -> None:
+        """observation_store: sole writer = reasoner_node; permitted reader = session_close_node."""
         permitted = {"reasoner_node.py", "session_close_node.py"}
         offenders = set(self._nodes_referencing("observation_store")) - permitted
         assert offenders == set(), (
             f"Unexpected graph node(s) reference observation_store: {offenders}"
         )
 
-    def test_no_node_reads_candidate_profile_v2(self) -> None:
-        # MIG-03: reasoner_node (writer); MIG-04: session_close_node (reader).
+    def test_candidate_profile_v2_sole_owner_nodes(self) -> None:
+        """candidate_profile_v2: sole writer = reasoner_node; permitted reader = session_close_node."""
         permitted = {"reasoner_node.py", "session_close_node.py"}
         offenders = set(self._nodes_referencing("candidate_profile_v2")) - permitted
         assert offenders == set(), (
             f"Unexpected graph node(s) reference candidate_profile_v2: {offenders}"
         )
 
-    def test_no_node_reads_session_history(self) -> None:
-        # session_close_node is the sole writer; report_node is the legitimate reader (MIG-05A).
+    def test_session_history_sole_owner_nodes(self) -> None:
+        """session_history: sole writer = session_close_node; permitted reader = report_node."""
         permitted = {"session_close_node.py", "report_node.py"}
         offenders = set(self._nodes_referencing("session_history")) - permitted
         assert offenders == set(), (
