@@ -90,12 +90,9 @@ class TestFieldPresence:
         state = _minimal_state(candidate_identity_id="explicit-id-abc")
         assert state.candidate_identity_id == "explicit-id-abc"
 
-    def test_field_description_contains_tcp_marker(self):
+    def test_field_has_non_empty_description(self):
         field = InterviewStateBase.model_fields["candidate_identity_id"]
-        description = field.metadata[0].description if field.metadata else (field.description if hasattr(field, "description") else "")
-        # Check via the json_schema_extra or description kwarg on Field
-        # Access via model_fields metadata
-        assert "[V1.2 TCP]" in str(field)
+        assert field.description is not None and len(field.description) > 0
 
 
 # ---------------------------------------------------------------------------

@@ -110,10 +110,10 @@ class InterviewStateBase(BaseModel):
     candidate_identity_id: str | None = Field(
         default=None,
         description=(
-            "[V1.2 TCP] Stable candidate identity for pipeline context. "
+            "Stable candidate identity for pipeline context. "
             "Set once at session start; immutable for session lifetime. "
             "Consumed by KnowledgePipelineContext. "
-            "None only in legacy states predating V1.2."
+            "None only in states predating V1.2."
         ),
     )
 
@@ -123,7 +123,7 @@ class InterviewStateBase(BaseModel):
     observation_store: ObservationStore | None = Field(
         default=None,
         description=(
-            "[V1.2 TCP] Session-scoped ObservationStore. "
+            "Session-scoped ObservationStore. "
             "Populated by reasoner_node. None until activated."
         ),
     )
@@ -134,7 +134,7 @@ class InterviewStateBase(BaseModel):
     candidate_profile_v2: _CandidateProfileV12 | None = Field(
         default=None,
         description=(
-            "[V1.2 TCP] CandidateProfile produced by FeatureEngine path. "
+            "CandidateProfile produced by FeatureEngine path. "
             "Populated by KnowledgePipeline in reasoner_node. None until activated."
         ),
     )
@@ -145,7 +145,7 @@ class InterviewStateBase(BaseModel):
     session_history: SessionHistory | None = Field(
         default=None,
         description=(
-            "[V1.2 TCP] Write-once SessionHistory. "
+            "Write-once SessionHistory. "
             "Populated by session_close_node. None until session completion."
         ),
     )
@@ -156,7 +156,7 @@ class InterviewStateBase(BaseModel):
     report: Report | None = Field(
         default=None,
         description=(
-            "[V1.2 TCP] Immutable Report assembled by report_node. "
+            "Immutable Report assembled by report_node. "
             "Populated from SessionHistory. None until report generation."
         ),
     )

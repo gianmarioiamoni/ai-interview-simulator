@@ -23,12 +23,9 @@ class GenericDatasetAdapter(DatasetAdapter):
         dataset_version: str,
     ) -> RawQuestionRecord:
 
-        # TODO:
-        # add semantic tag normalization
-        # add skill extraction
-        # add taxonomy alignment
-        # add difficulty normalization
-
+        # Roadmap: add semantic tag normalization, skill extraction,
+        # taxonomy alignment, and difficulty normalization when ingestion
+        # enrichment pipeline is introduced.
         canonical_payload = {
             "text": (payload.get("prompt") or payload.get("question") or ""),
             "role": payload.get("role"),

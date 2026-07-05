@@ -74,11 +74,11 @@ class TestV12FieldPresence:
         for name in ("observation_store", "candidate_profile_v2", "session_history", "report"):
             assert fields[name].is_required() is False, f"{name} must not be required"
 
-    def test_v12_field_descriptions_contain_tcp_marker(self) -> None:
+    def test_v12_fields_have_non_empty_descriptions(self) -> None:
         fields = InterviewStateBase.model_fields
         for name in ("observation_store", "candidate_profile_v2", "session_history", "report"):
             desc = fields[name].description or ""
-            assert "V1.2 TCP" in desc, f"{name} description must contain 'V1.2 TCP'"
+            assert len(desc) > 0, f"{name} must have a non-empty field description"
 
 
 # ---------------------------------------------------------------------------

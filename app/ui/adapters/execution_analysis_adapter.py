@@ -31,16 +31,11 @@ class ExecutionAnalysisDTO:
         # -----------------------------------------------------
 
         self.primary_error = primary_error
-        self.error_type = error_type  # 🔥 FIX CRITICO
-
-    # ---------------------------------------------------------
-    # BACKWARD COMPATIBILITY (important)
-    # ---------------------------------------------------------
+        self.error_type = error_type
 
     @property
     def has_runtime_error(self) -> bool:
-        # Legacy compatibility flag.
-        
+        # Convenience aggregate: True when any runtime error is present.
         return self.has_global_runtime_error or self.has_test_runtime_errors
 
 

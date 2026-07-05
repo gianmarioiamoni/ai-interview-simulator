@@ -19,7 +19,5 @@ class RawQuestionRecord(BaseModel):
         "extra": "forbid",
     }
 
-    # TODO:
-    # add ingestion_batch_id
-    # add dataset_name
-    # add dataset_origin_url
+    # Roadmap: extend with ingestion_batch_id, dataset_name, dataset_origin_url
+    # when multi-source provenance tracking is required.

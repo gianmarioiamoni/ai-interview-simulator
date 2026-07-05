@@ -28,6 +28,10 @@ UNAVAILABLE_INDEX_INGESTION_TIMESTAMP_SENTINEL = datetime(
 
 CORPUS_INDEX_DATASET_VERSION = "corpus_index_unversioned"
 
+# These constants identify metadata lines embedded in page_content by the original
+# corpus ingestion format. Documents in the vector store were indexed before the
+# current structured-metadata schema was introduced. Both constants are still
+# required to correctly parse those historical documents; they are not dead code.
 LEGACY_PAGE_CONTENT_MARKERS = (
     "Role:",
     "Area:",
