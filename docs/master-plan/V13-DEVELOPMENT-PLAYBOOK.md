@@ -84,7 +84,9 @@ Every V1.3 epic follows this lifecycle. The sequence is mandatory. Steps may not
         ↓
 7. Documentation Update
         ↓
-8. Epic Close
+8. Final Review (FR)
+        ↓
+9. Epic Close
 ```
 
 ### Step 1 — Epic Planning
@@ -115,9 +117,13 @@ Run the full test suite. All V1.2 acceptance criteria must continue to pass. All
 
 Update all affected documents: the Master Plan (if epic scope changed), the Architecture Guide, relevant ADRs (status update), the INDEX (new frozen components, new ADRs), and the Technical Debt Register (new findings or closed items). Documentation is not optional and is not deferred.
 
-### Step 8 — Epic Close
+### Step 8 — Final Review (FR)
 
-The epic is closed when: all acceptance criteria are satisfied; zero P0/P1 architectural findings remain open; all documentation is updated; all legacy artifacts targeted for deletion are deleted; and the regression suite passes in full.
+Perform the Final Review after Documentation Update is complete. The FR is the mandatory Epic-closure gate. It verifies: all Epic objectives are satisfied as defined in the Master Plan and the Epic Overview document; all frozen planning documents have been fully implemented; no temporary bridges or compatibility layers remain unless explicitly planned with a named deletion target; the runtime architecture matches the frozen architecture; all ownership rules are satisfied; implementation debt is classified and registered; and lessons learned are captured. The FR produces a binary outcome: Closed or Blocked. A Blocked FR must enumerate blocking findings before any work on the next Epic begins.
+
+### Step 9 — Epic Close
+
+The Epic is formally closed when the FR passes. At this point: all acceptance criteria are satisfied; zero P0/P1 architectural findings remain open; all documentation is updated; all legacy artifacts targeted for deletion are deleted; the regression suite passes in full; and the FR has produced a Closed outcome.
 
 ---
 
@@ -147,6 +153,7 @@ An epic is done when all of the following are true:
 - All affected documentation has been updated (Architecture Guide, INDEX, ADRs, Technical Debt Register).
 - The Technical Debt Register reflects all P2/P3 findings from this epic with target milestones.
 - No deprecated-but-not-deleted artifacts from this epic remain in the codebase.
+- The Final Review (FR) has been performed and has produced a Closed outcome.
 
 ---
 
@@ -273,9 +280,35 @@ Trigger an ADR before beginning any implementation that involves a design decisi
 
 Trigger a CAR at the close of every epic (mandatory). Additionally trigger a CAR when: a mid-epic audit finds a structural violation; a previously unknown dependency between two epics is discovered; or an implementation increment introduces a change to a frozen contract. The CAR is not a heavyweight ceremony — it is a focused structural review against the Architecture Constitution, the operative PATs, and the epic's stated scope. P0/P1 findings block the epic from closing.
 
+### When to Trigger an FR (Final Review)
+
+Trigger the Final Review after the last implementation phase of an Epic is complete and all CAR P0/P1 findings are resolved, before starting the next Epic.
+
+The FR is not an Architecture Review, a CAR, or a Release Readiness Review. It is a dedicated Epic-closure gate. It certifies:
+
+- All Epic objectives have been achieved as defined in the Master Plan and the Epic Overview document.
+- All frozen planning documents (ADRs, Domain Contracts, Data Model Specification, Architecture Freeze) have been fully implemented — no partial implementations, no deferred decisions.
+- No temporary bridges remain in the codebase unless explicitly planned in the Epic planning documents with a named deletion target and a target Epic.
+- No temporary compatibility layers remain unless explicitly planned with the same conditions.
+- The runtime architecture matches the frozen architecture documented at Epic planning time.
+- All ownership rules for `InterviewState` fields introduced or modified by this Epic are satisfied.
+- Implementation debt introduced or discovered during the Epic is classified and registered in the Technical Debt Register with target milestones.
+- Lessons learned are captured (either in the Playbook revision note or in a dedicated session note).
+
+The FR produces a binary outcome: **Closed** or **Blocked**. A Blocked FR must enumerate the blocking findings. The Epic does not advance to Closed status until the FR passes.
+
+**FR vs other review types:**
+
+| Review | Closes | Purpose |
+|---|---|---|
+| CAR | An implementation phase | Structural compliance verification |
+| FR | An Epic | Epic objectives achieved; runtime matches frozen architecture |
+| RR | A Release Candidate | All Epics done; go-live criteria satisfied |
+| Go-Live Review | The product release | Production deployment validated |
+
 ### When to Trigger an RR (Release Readiness Review)
 
-Trigger the Release Readiness Review when all epics are closed and all go-live checklist items in the Master Plan (§5) are believed to be satisfied. The RR is the final gate before the V1.3 release tag. It verifies all Success Metrics (Master Plan §9), runs the full regression suite, confirms zero open P0/P1 findings, and validates all production deployment criteria. The RR is not a review of code — it is a review of evidence: test results, deployment validation records, performance baseline reports, and architecture audit reports.
+Trigger the Release Readiness Review when all Epics are closed (FR passed for each) and all go-live checklist items in the Master Plan (§5) are believed to be satisfied. The RR is the final gate before the V1.3 release tag. It verifies all Success Metrics (Master Plan §9), runs the full regression suite, confirms zero open P0/P1 findings, and validates all production deployment criteria. The RR is not a review of code — it is a review of evidence: test results, deployment validation records, performance baseline reports, and architecture audit reports.
 
 ### Freeze Integrity Check
 
@@ -292,13 +325,15 @@ The Freeze Integrity Check is performed by the author of the modification immedi
 
 ### Review Gate Summary
 
-| Gate | Trigger | Blocks |
-|---|---|---|
-| ADR | New design decision before implementation | Implementation start |
-| CAR | Epic implementation complete | Epic close |
-| CAR (mid-epic) | Structural violation discovered during implementation | Continuation of affected increment |
-| Freeze Integrity Check | Any frozen document modified | Resumption of implementation |
-| RR | All epics closed; go-live checklist believed complete | V1.3 release tag |
+| Gate | Trigger | Closes | Blocks |
+|---|---|---|---|
+| ADR | New design decision before implementation | — | Implementation start |
+| CAR | Epic implementation phase complete | Implementation phase | Epic advance |
+| CAR (mid-epic) | Structural violation discovered during implementation | — | Continuation of affected increment |
+| FR (Final Review) | All Epic phases complete; all CAR P0/P1 resolved | Epic | Next Epic start |
+| Freeze Integrity Check | Any frozen document modified | — | Resumption of implementation |
+| RR | All Epics closed (FR passed); go-live checklist complete | Release Candidate | V1.3 release tag |
+| Go-Live Review | RR passed; production deployment validated | Product Release | Production tag |
 
 ---
 
@@ -448,3 +483,5 @@ If, during implementation, an unresolved architectural question emerges — a de
 *This playbook is the operational handbook for V1.3. It is a living document. Amendments are made when process lessons are learned, not when preferences change. Every amendment requires a recorded rationale.*
 
 *Revision 2026-07-05: Added "Zero Known Failing Tests" engineering principle (§2), "Zero Known Failing Tests — Enforcement" testing rule (§7), "Freeze Integrity Check" review gate (§9), bridge-phase mandate in Category B workflow (§8 step 7), and Freeze Integrity Check in the Stopping Rule (§8). Derived from EPIC-01 Phase 6 implementation experience.*
+
+*Revision 2026-07-06: Added Final Review (FR) as a mandatory review type (§9). FR closes an Epic; RR closes a Release Candidate; Go-Live Review closes the product release. FR integrated into Epic Workflow as Step 8 (§3), Definition of Done (§5), and Review Gate Summary (§9). Derived from EPIC-01 Final Review experience — FR methodology proven valuable and made permanent.*
