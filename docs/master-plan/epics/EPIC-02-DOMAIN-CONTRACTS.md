@@ -67,8 +67,13 @@ Each entry in `session_snapshots` represents one closed session's contribution.
 | `question_count` | `int` | Yes | — | `ge=0` | Question count from `SessionHistory.interview_metadata.question_count`. |
 | `session_language` | `str` | Yes | — | `min_length=1` | UI language from `SessionHistory.interview_metadata.session_language`. |
 | `knowledge_epoch` | `str` | Yes | — | `min_length=1` | Knowledge epoch from `SessionHistory.knowledge_epoch`. |
+| `total_objectives` | `int` | Yes | `0` | `ge=0` | Count of `CoachingAction` objectives from `SessionHistory.knowledge_snapshot.coaching_snapshot.statistics.total_objectives`. Enables `SessionProgressEntry.total_objectives` without re-reading `SessionHistory`. |
+| `total_narrative_insights` | `int` | Yes | `0` | `ge=0` | Count of `NarrativeInsight` items from `SessionHistory.knowledge_snapshot.narrative.insight_count` (property). Enables `SessionProgressEntry.total_narrative_insights` without re-reading `SessionHistory`. |
+| `language_capabilities` | `tuple[LanguageCapability, ...]` | Yes | `()` | One entry per distinct `language_id`; `LanguageCapability` is immutable (`frozen=True`). | Session-scoped `LanguageCapability` instances captured at contribution time. Source: passed by `longitudinal_update_node` from live `InterviewState` before session close (see §3.2 — OI-03 resolved). Empty for sessions with no coding questions. |
 
 **Model configuration:** `frozen=True`, `extra=forbid`.
+
+**Import note:** `LongitudinalSessionMetadata` imports `LanguageCapability` from `domain.contracts.language.language_capability`. This is a domain-to-domain import within the contracts layer — no architectural boundary is crossed.
 
 ### 1.6 CrossSessionLanguageCapability
 
@@ -231,12 +236,19 @@ In V1.2, `LanguageCapability` is derived from evaluation signals for coding ques
 
 EPIC-02 activates `LanguageCapability` for cross-session accumulation. This activation does not modify the existing `LanguageCapability` contract — it adds the cross-session view via `CrossSessionLanguageCapability` (specified in §1.6).
 
+**OI-03 resolution (pre-freeze investigation):** `LanguageCapability` is a transient session-scoped object. It is **not** embedded in `KnowledgeSnapshot`, `SessionHistory`, or any closed artifact. It exists only in `domain/contracts/language/language_capability.py` and is produced during the live session. It is not persisted beyond session close. Therefore, `LongitudinalProfileBuilder` cannot extract `LanguageCapability` instances from `SessionHistory` alone.
+
+**Resolution:** `LanguageCapability` instances are captured in `LongitudinalSessionMetadata.language_capabilities` at contribution time. `longitudinal_update_node` receives the live `InterviewState` language capability data (available in session state before or at close) and passes it to `LongitudinalProfileBuilder` as part of the `session_history` contribution. Specifically, `longitudinal_update_node` reads `LanguageCapability` instances from the session and embeds them in the builder input before the live state expires. The builder receives them as part of the `LongitudinalSessionMetadata` assembly.
+
+**No `SessionHistory` contract change is required.** `LanguageCapability` is captured by the `longitudinal_update_node` from the live session, not from the closed `SessionHistory`. This preserves the `SessionHistory` v2.0 contract (ADR-033).
+
 **Activation rules:**
 
-- `CrossSessionLanguageCapability` is produced by `LongitudinalProfileBuilder` from the `ProfileFeature` records of type `"language_capability_feature"` embedded in each session's `CandidateProfileSnapshot.features`.
-- A session contributes a language entry to `CrossSessionLanguageCapability` only when its `CandidateProfileSnapshot` contains at least one `ProfileFeature` with `feature_type_id == "language_capability_feature"` and a `provenance.language_context` identifying the language.
-- Sessions with no coding questions, or coding questions not evaluated for language features, contribute no entries.
-- The `language_id` for each `CrossSessionLanguageCapability` entry is extracted from `ProfileFeature.provenance.language_context` (consistent with ADR-018 §L: language context appears in provenance only, never in `feature_type_id` or `value`).
+- `CrossSessionLanguageCapability` aggregate scores (`mean_composite_score`, `mean_idiomatic_score`, `mean_type_error_rate`, `total_questions_answered`) are derived from `LongitudinalSessionMetadata.language_capabilities` embedded at contribution time.
+- The `language_id` for each `CrossSessionLanguageCapability` entry is the `LanguageCapability.language_id` field (consistent with ADR-019).
+- A session contributes a language entry to `CrossSessionLanguageCapability` only when `LongitudinalSessionMetadata.language_capabilities` is non-empty for that session.
+- Sessions with no coding questions produce an empty `language_capabilities` tuple and contribute no entries.
+- `ProfileFeature.provenance.language_context` remains the secondary confirmation source (consistent with ADR-018 §L) but is not the primary extraction path for scores.
 
 ### 3.3 Ownership
 
@@ -276,9 +288,10 @@ The existing `LanguageCapability` contract (`domain/contracts/language/language_
 |---|---|---|---|
 | `prior_profile` | `Optional[LongitudinalProfile]` | No | Persistence layer (via `longitudinal_update_node`). `None` for first-session path. |
 | `session_history` | `SessionHistory` | Yes | `InterviewState.session_history` (closed). |
+| `language_capabilities` | `tuple[LanguageCapability, ...]` | Yes | Passed by `longitudinal_update_node` from live session state (resolved: OI-03). Default `()`. |
 | `current_timestamp` | `datetime` | Yes | UTC timestamp of this invocation. |
 
-The builder does not call the persistence layer. It does not read `InterviewState`. It receives pre-fetched inputs from `longitudinal_update_node`.
+The builder does not call the persistence layer. It does not read `InterviewState` directly. It receives pre-fetched inputs from `longitudinal_update_node`. The `language_capabilities` parameter is provided by the node from the session's language evaluation data before the live session state expires.
 
 ### 4.3 Responsibilities
 
@@ -286,11 +299,11 @@ The builder does not call the persistence layer. It does not read `InterviewStat
 
 2. **Guard idempotency:** If `prior_profile` already contains an entry for `session_history.interview_index`, return `prior_profile` unchanged. Emit no error — this is a no-op path (LP-07 invariant).
 
-3. **Assemble `LongitudinalSessionEntry`:** Extract `profile_snapshot` from `session_history.knowledge_snapshot.profile_snapshot`. Extract `session_metadata` fields from `session_history.interview_metadata`. Set `contributed_at = current_timestamp`.
+3. **Assemble `LongitudinalSessionEntry`:** Extract `profile_snapshot` from `session_history.knowledge_snapshot.profile_snapshot`. Extract `session_metadata` fields from `session_history.interview_metadata` plus: `total_objectives` from `session_history.knowledge_snapshot.coaching_snapshot.statistics.total_objectives`; `total_narrative_insights` from `session_history.knowledge_snapshot.narrative.insight_count`; `language_capabilities` from the `language_capabilities` input parameter. Set `contributed_at = current_timestamp`.
 
 4. **Assemble `session_snapshots`:** Append new `LongitudinalSessionEntry` to prior `session_snapshots` (or initialize from empty tuple). Sort by `interview_index` ascending.
 
-5. **Aggregate `language_capability_summary`:** For each `ProfileFeature` with `feature_type_id == "language_capability_feature"` in the new snapshot's `features`, extract `language_id` from `provenance.language_context`. Merge into the prior `language_capability_summary`: create new entry if `language_id` is not present; update existing entry by recalculating means and `trend_direction`. Apply invariant LC-V-03 for trend direction.
+5. **Aggregate `language_capability_summary`:** For each `LanguageCapability` in the `language_capabilities` input parameter, use `language_id` as the key. Merge into the prior `language_capability_summary`: create new entry if `language_id` is not present; update existing entry by recalculating running means (`mean_composite_score`, `mean_idiomatic_score`, `mean_type_error_rate`), incrementing `session_count_in_language`, incrementing `total_questions_answered`, and recalculating `trend_direction`. Apply invariant LC-V-03 for trend direction. If `language_capabilities` is empty, `language_capability_summary` is unchanged (no new entries added).
 
 6. **Set `knowledge_epoch`:** Equal to `session_history.knowledge_epoch`.
 
@@ -333,7 +346,10 @@ From a single `SessionHistory`, the following fields are extracted:
 | `LongitudinalSessionEntry.session_metadata.question_count` | `session_history.interview_metadata.question_count` |
 | `LongitudinalSessionEntry.session_metadata.session_language` | `session_history.interview_metadata.session_language` |
 | `LongitudinalSessionEntry.session_metadata.knowledge_epoch` | `session_history.knowledge_epoch` (property) |
-| `language_capability_summary` (delta) | `session_history.knowledge_snapshot.profile_snapshot.features` (filtered by `"language_capability_feature"`) |
+| `LongitudinalSessionEntry.session_metadata.total_objectives` | `session_history.knowledge_snapshot.coaching_snapshot.statistics.total_objectives` |
+| `LongitudinalSessionEntry.session_metadata.total_narrative_insights` | `session_history.knowledge_snapshot.narrative.insight_count` (property) |
+| `LongitudinalSessionEntry.session_metadata.language_capabilities` | Live session state passed by `longitudinal_update_node` (not from closed `SessionHistory` — OI-03 resolution) |
+| `language_capability_summary` (delta) | `LongitudinalSessionMetadata.language_capabilities` (each entry's `language_id`, `composite_score`, `idiomatic_usage_score`, `type_error_rate`, `questions_answered_in_language`) |
 | `knowledge_epoch` (profile-level) | `session_history.knowledge_epoch` (most recent session value) |
 
 **Fields not extracted from `SessionHistory`:** `scoring_snapshot`, `scoring_narrative`, `question_results`, `transcript`, `question_timeline`. These are session-specific artifacts; they do not accumulate in `LongitudinalProfile` (ADR-034 Decision 2: `LongitudinalProfile` does not carry `ScoringSnapshot` data).
@@ -494,3 +510,5 @@ This document specifies serialization rules at the domain layer. The concrete pe
 *This document is the frozen domain contract specification for EPIC-02. Implementation of any contract defined here may not begin until the Data Model Specification is also frozen and Architecture Freeze is declared. Any change to this document after Architecture Freeze requires a Freeze Integrity Check per V13-DEVELOPMENT-PLAYBOOK.md §9.*
 
 *Revision 2026-07-14: Initial frozen draft. Produced after ADR-034 acceptance.*
+
+*Revision 2026-07-14 (pre-freeze update): Added `total_objectives`, `total_narrative_insights`, `language_capabilities` to `LongitudinalSessionMetadata` (OI-01, OI-02 resolution). Updated `LongitudinalProfileBuilder` inputs and step 3/5. Resolved OI-03: `LanguageCapability` is not in `SessionHistory`; captured from live session by `longitudinal_update_node`. No `SessionHistory` contract change required. `LongitudinalProfileBuilder` receives `language_capabilities` as a direct input parameter. Freeze Integrity Check: additive-only changes; no architectural decision changed; no ADR required; no schema version increment.*

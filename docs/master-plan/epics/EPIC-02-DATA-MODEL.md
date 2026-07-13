@@ -68,6 +68,9 @@ The Domain Contracts specification (§3.2, §4.3) references `provenance.languag
 | `question_count` | `int` | `integer` | Yes | — | From `SessionHistory.interview_metadata.question_count`. |
 | `session_language` | `str` | `string` | Yes | — | From `SessionHistory.interview_metadata.session_language`. |
 | `knowledge_epoch` | `str` | `string` | Yes | — | From `SessionHistory.knowledge_epoch` (property). |
+| `total_objectives` | `int` | `integer` | Yes | `0` | From `SessionHistory.knowledge_snapshot.coaching_snapshot.statistics.total_objectives`. OI-01 resolved. |
+| `total_narrative_insights` | `int` | `integer` | Yes | `0` | From `SessionHistory.knowledge_snapshot.narrative.insight_count` (property). OI-02 resolved. |
+| `language_capabilities` | `tuple[LanguageCapability, ...]` | `array[LanguageCapability]` | Yes | `[]` | Passed by `longitudinal_update_node` from live session state. Not from `SessionHistory`. OI-03 resolved. |
 
 ### 1.4 CrossSessionLanguageCapability — Field Table
 
@@ -149,21 +152,12 @@ The Domain Contracts specification (§3.2, §4.3) references `provenance.languag
 | `dimensional_scores` | `tuple[DimensionalScore, ...]` | Existing | Yes | `()` | Derived from `LongitudinalSessionEntry.profile_snapshot.features` |
 | `mean_confidence` | `float` | Existing | Yes | `0.0` | `LongitudinalSessionEntry.profile_snapshot.mean_confidence` |
 | `total_features` | `int` | Existing | Yes | `0` | `LongitudinalSessionEntry.profile_snapshot.total_feature_count` |
-| `total_objectives` | `int` | Existing | Yes | `0` | Not available from `LongitudinalProfile` alone — source is `SessionHistory.knowledge_snapshot.coaching_snapshot` |
-| `total_narrative_insights` | `int` | Existing | Yes | `0` | Not available from `LongitudinalProfile` alone — source is `SessionHistory.knowledge_snapshot.narrative` |
+| `total_objectives` | `int` | Existing | Yes | `0` | From `LongitudinalSessionEntry.session_metadata.total_objectives` (resolved: OI-01). Source: `SessionHistory.knowledge_snapshot.coaching_snapshot.statistics.total_objectives`. |
+| `total_narrative_insights` | `int` | Existing | Yes | `0` | From `LongitudinalSessionEntry.session_metadata.total_narrative_insights` (resolved: OI-02). Source: `SessionHistory.knowledge_snapshot.narrative.insight_count`. |
 | `behavioral_scores` | `tuple[BehavioralScore, ...]` | **New** | Yes | `()` | Derived from `LongitudinalSessionEntry.profile_snapshot.features` |
 | `language_ids_present` | `tuple[str, ...]` | **New** | Yes | `()` | From `language_capability_feature` entries in `profile_snapshot.features[*].provenance.language_context` |
 
-**Data model resolution — `total_objectives` and `total_narrative_insights`:** These existing `SessionProgressEntry` fields cannot be derived from `LongitudinalProfile` alone (the profile embeds `CandidateProfileSnapshot` but not `KnowledgeSnapshot.coaching_snapshot` or `KnowledgeSnapshot.narrative`). 
-
-**Decision:** These two fields are set to `0` when `LearningProgressBuilder` derives from `LongitudinalProfile` without access to `SessionHistory`. This is a **schema evolution gap**: in V1.2, `LearningProgressBuilder` read from `SessionHistory[]` and could populate these fields. After ADR-034 Decision 5, the builder reads from `LongitudinalProfile`, which does not carry these counts.
-
-**Resolution options (deferred to implementation, not frozen here):**
-- Option A: Add `total_objectives` and `total_narrative_insights` to `LongitudinalSessionMetadata` — additive extension with safe defaults (`0`), no schema version increment, no new ADR.
-- Option B: Accept `0` values for these fields in V1.3 — consumers already handle `0` gracefully; the fields are informational.
-- Option C: `LearningProgressBuilder` optionally accepts a `SessionHistory[]` supplement for these fields only — but this partially reintroduces the `SessionHistory[]` dependency (ADR-034 Decision 5 violation risk if misused).
-
-**Recommendation: Option A** — add `total_objectives: int = 0` and `total_narrative_insights: int = 0` to `LongitudinalSessionMetadata`. This is an additive field change with safe defaults. It requires no schema version increment and no new ADR. It must be tracked as a pre-implementation decision.
+**Resolution (OI-01, OI-02 — CLOSED):** `total_objectives` and `total_narrative_insights` are populated from `LongitudinalSessionMetadata` fields added in the pre-freeze update. Sources: `SessionHistory.knowledge_snapshot.coaching_snapshot.statistics.total_objectives` and `SessionHistory.knowledge_snapshot.narrative.insight_count` respectively. Both are accessible from the closed `SessionHistory` without LLM calls. `LearningProgressBuilder` reads these values from `LongitudinalSessionEntry.session_metadata` — no `SessionHistory[]` fallback required.
 
 ### 2.4 BehavioralTrend — Field Table
 
@@ -220,15 +214,15 @@ For each such feature, `provenance.language_context` provides the `language_id`.
 
 **Score extraction:** The `ProfileFeature.value` field carries a string representation of the capability level (e.g., `"HIGH"`, `"MODERATE"`, `"LOW"`). The `ProfileFeature.quality.confidence` field carries the numeric confidence. The specific mapping from `value`/`confidence` to `composite_score`, `idiomatic_usage_score`, and `type_error_rate` represents a data model gap: `ProfileFeature` does not natively carry structured `LanguageCapability` scores (composite/idiomatic/type-error) — those live on the session-scoped `LanguageCapability` contract.
 
-**Data model resolution — language score extraction:** The `LanguageCapability` contract (session-scoped, in `domain/contracts/language/language_capability.py`) is not embedded in `CandidateProfileSnapshot`. The snapshot carries `ProfileFeature` records, not `LanguageCapability` records. To extract composite/idiomatic/type-error scores for `CrossSessionLanguageCapability`, one of the following paths is required:
+**OI-03 — RESOLVED (pre-freeze investigation):**
 
-- **Path A:** `LongitudinalProfileBuilder` reads `SessionHistory.language_profile` and related language-evaluation artifacts embedded in the closed session — but `LanguageCapability` is not persisted in `SessionHistory` (it is a transient session object). **Not viable without a `SessionHistory` extension.**
-- **Path B:** Add `language_capabilities: tuple[LanguageCapability, ...]` to `LongitudinalSessionMetadata` (or directly to `LongitudinalSessionEntry`). This carries the session-scoped `LanguageCapability` instances at contribution time, enabling exact score extraction. This is an additive extension with a safe default of `()`.
-- **Path C:** Derive `composite_score` from `ProfileFeature.quality.confidence` for `language_capability_feature` entries only, treating `confidence` as the longitudinal signal. `mean_idiomatic_score` and `mean_type_error_rate` are set to `0.0` in V1.3. This degrades the `CrossSessionLanguageCapability` data quality but avoids a contract change.
+`LanguageCapability` (`domain/contracts/language/language_capability.py`) is a **transient session-scoped object**. It is not embedded in `CandidateProfileSnapshot`, `KnowledgeSnapshot`, or `SessionHistory`. It is not persisted beyond session close. This was confirmed by codebase inspection: `LanguageCapability` appears only in `domain/contracts/language/` and has no presence in `domain/contracts/session_history/` or `domain/contracts/knowledge_snapshot/`.
 
-**Decision (frozen):** **Path B** — add `language_capabilities: tuple[LanguageCapability, ...]` (default `()`) to `LongitudinalSessionMetadata`. This is an additive field with a safe default. No schema version increment. No new ADR required. `LongitudinalProfileBuilder` extracts `LanguageCapability` instances from `session_history` via the session close pipeline — the source must be identified during implementation.
+**Resolution:** `language_capabilities: tuple[LanguageCapability, ...]` (default `()`) is added to `LongitudinalSessionMetadata` (Domain Contracts pre-freeze update). `longitudinal_update_node` receives the live session language capability data **before** the session state expires and passes it as an explicit input parameter to `LongitudinalProfileBuilder`. The builder embeds it in `LongitudinalSessionMetadata` at contribution time.
 
-**Pending pre-implementation action:** Confirm where `LanguageCapability` instances are accessible from a closed `SessionHistory`. If not currently persisted in `SessionHistory`, an additive extension to `SessionHistory` or `KnowledgeSnapshot` is required — this would need evaluation against the frozen `SessionHistory` v2.0 contract (ADR-033). This is an **open issue** (see §8).
+**No `SessionHistory` contract change is required.** `SessionHistory` v2.0 (ADR-033) is unchanged. Freeze Integrity Check on ADR-033 is **not** required.
+
+`LongitudinalProfileBuilder` extracts `CrossSessionLanguageCapability` aggregates from `LongitudinalSessionMetadata.language_capabilities` (not from `ProfileFeature.provenance.language_context`). The `provenance.language_context` field remains a secondary confirmation source but is not the primary score extraction path.
 
 ### 3.3 Evolution Rules
 
@@ -271,9 +265,9 @@ LongitudinalProfile {
                 question_count: integer
                 session_language: string
                 knowledge_epoch: string
-                total_objectives: integer           -- added per §2.3 Option A
-                total_narrative_insights: integer   -- added per §2.3 Option A
-                language_capabilities: [LanguageCapability]  -- added per §3.2 Path B
+                total_objectives: integer           -- from SessionHistory.knowledge_snapshot.coaching_snapshot.statistics.total_objectives
+                total_narrative_insights: integer   -- from SessionHistory.knowledge_snapshot.narrative.insight_count
+                language_capabilities: [LanguageCapability]  -- from live session state (not SessionHistory); empty if no coding questions
             }
         }
         ...
@@ -339,19 +333,19 @@ Every field in the persisted `LongitudinalProfile` must be traceable to one or m
 | `session_snapshots[i].session_metadata.question_count` | `SessionHistory.interview_metadata.question_count` | Direct copy |
 | `session_snapshots[i].session_metadata.session_language` | `SessionHistory.interview_metadata.session_language` | Direct copy |
 | `session_snapshots[i].session_metadata.knowledge_epoch` | `SessionHistory.knowledge_epoch` | Property copy |
-| `session_snapshots[i].session_metadata.total_objectives` | `SessionHistory.knowledge_snapshot.coaching_snapshot` | Count of `CoachingAction` objectives — requires coaching snapshot read (see §2.3 Option A, open issue §8) |
-| `session_snapshots[i].session_metadata.total_narrative_insights` | `SessionHistory.knowledge_snapshot.narrative` | Count of `NarrativeInsight` items — requires narrative read (see §2.3 Option A, open issue §8) |
-| `session_snapshots[i].session_metadata.language_capabilities` | `SessionHistory` (source TBD) | `LanguageCapability[]` for this session — source not yet in `SessionHistory` (open issue §8) |
-| `language_capability_summary[j].language_id` | `profile_snapshot.features[k].provenance.language_context` | From `language_capability_feature` features in `CandidateProfileSnapshot` |
+| `session_snapshots[i].session_metadata.total_objectives` | `SessionHistory.knowledge_snapshot.coaching_snapshot.statistics.total_objectives` | Direct field read (OI-01 resolved) |
+| `session_snapshots[i].session_metadata.total_narrative_insights` | `SessionHistory.knowledge_snapshot.narrative.insight_count` | Property read (OI-02 resolved) |
+| `session_snapshots[i].session_metadata.language_capabilities` | Live session state (passed by `longitudinal_update_node`) | Not from `SessionHistory` — captured before session state expires (OI-03 resolved) |
+| `language_capability_summary[j].language_id` | `session_metadata.language_capabilities[k].language_id` | From `LanguageCapability` instances embedded at contribution time |
 | `language_capability_summary[j].session_count_in_language` | Builder-accumulated | Count of sessions contributing this `language_id` |
-| `language_capability_summary[j].total_questions_answered` | `session_metadata.language_capabilities[k].questions_answered_in_language` | Requires Path B extension (§3.2) |
-| `language_capability_summary[j].mean_composite_score` | `session_metadata.language_capabilities[k].composite_score` | Running mean; requires Path B extension (§3.2) |
-| `language_capability_summary[j].mean_idiomatic_score` | `session_metadata.language_capabilities[k].idiomatic_usage_score` | Running mean; requires Path B extension (§3.2) |
-| `language_capability_summary[j].mean_type_error_rate` | `session_metadata.language_capabilities[k].type_error_rate` | Running mean; requires Path B extension (§3.2) |
+| `language_capability_summary[j].total_questions_answered` | `session_metadata.language_capabilities[k].questions_answered_in_language` | Running total (OI-02/OI-03 resolved) |
+| `language_capability_summary[j].mean_composite_score` | `session_metadata.language_capabilities[k].composite_score` | Running mean (OI-03 resolved) |
+| `language_capability_summary[j].mean_idiomatic_score` | `session_metadata.language_capabilities[k].idiomatic_usage_score` | Running mean (OI-03 resolved) |
+| `language_capability_summary[j].mean_type_error_rate` | `session_metadata.language_capabilities[k].type_error_rate` | Running mean (OI-03 resolved) |
 | `language_capability_summary[j].trend_direction` | Builder-computed | From composite score trend across sessions; `"insufficient_data"` when `session_count_in_language < 2` |
 | `language_capability_summary[j].schema_version` | Builder constant | `"1.0"` |
 
-**Traceability verdict:** All fields are traceable to `SessionHistory` fields, builder-computed values, or system constants. No field requires LLM calls or live computation. The reconstruction guarantee (ADR-034 Decision 3) holds for all fields that have a direct `SessionHistory` source. The three open fields (`total_objectives`, `total_narrative_insights`, `language_capabilities`) require the additive `SessionHistory` extensions identified in §2.3 and §3.2 before full traceability is complete.
+**Traceability verdict:** All fields are fully traceable. OI-01 (`total_objectives`), OI-02 (`total_narrative_insights`), and OI-03 (`language_capabilities`) are all resolved. No field requires LLM calls or live computation. `language_capabilities` is the one field sourced from live session state rather than closed `SessionHistory` — this is architecturally correct: the data is captured at contribution time by `longitudinal_update_node` and embedded permanently in `LongitudinalSessionMetadata`. Once embedded, it is part of the closed `LongitudinalProfile` artifact and requires no live state for subsequent reads or reconstruction.
 
 ---
 
@@ -395,14 +389,18 @@ For each field of the reconstructed `LongitudinalProfile`, verify it is derivabl
 | `session_snapshots[i].*` | No | Yes | All fields derive from `SessionHistory[i]` fields directly |
 | `profile_snapshot.*` | No | Yes | Verbatim copy from `SessionHistory[i].knowledge_snapshot.profile_snapshot` |
 | `session_metadata.*` (base fields) | No | Yes | From `SessionHistory[i].interview_metadata` and `knowledge_epoch` |
-| `session_metadata.total_objectives` | No | Yes | From `SessionHistory[i].knowledge_snapshot.coaching_snapshot` (pending §8 open issue) |
-| `session_metadata.total_narrative_insights` | No | Yes | From `SessionHistory[i].knowledge_snapshot.narrative` (pending §8 open issue) |
-| `session_metadata.language_capabilities` | No | Yes | From `SessionHistory[i]` extension (pending §8 open issue) |
-| `language_capability_summary[j].*` | No | Yes | Derived from `profile_snapshot.features` and `language_capabilities` (pending §8 open issue) |
+| `session_metadata.total_objectives` | No | Yes | From `SessionHistory[i].knowledge_snapshot.coaching_snapshot.statistics.total_objectives` (OI-01 resolved) |
+| `session_metadata.total_narrative_insights` | No | Yes | From `SessionHistory[i].knowledge_snapshot.narrative.insight_count` (OI-02 resolved) |
+| `session_metadata.language_capabilities` | No | **No*** | *Reconstruction gap: `LanguageCapability` is transient — not in `SessionHistory`. Reconstructed profile will have `language_capabilities = ()` for all sessions, causing `language_capability_summary = []`. See reconstruction note below. |
+| `language_capability_summary[j].*` | No | **Partial** | Reconstructable only if `language_capabilities` is reconstructable (see above) |
 
-**Reconstruction verdict:** `LongitudinalProfile` is **fully reconstructable** from `SessionHistory[]` without LLM calls, subject to resolution of the three open issues (§8) that require additive `SessionHistory` extensions. All reconstruction paths are deterministic. Timestamps (`created_at`, `last_updated_at`) will differ from live values but do not affect functional correctness.
+**Reconstruction verdict:** `LongitudinalProfile` is **substantially reconstructable** from `SessionHistory[]` without LLM calls. All knowledge fields (`profile_snapshot`, session metadata, `total_objectives`, `total_narrative_insights`) are reconstructable. Timestamps differ from live values (acceptable — audit fields only).
 
-**Domain invariant I-LP-REC (new):** `LongitudinalProfile` for any candidate is reconstructable from their ordered `SessionHistory[]`. This invariant must be verified by an architectural test over a synthetic 10-session dataset (EPIC-02 success criterion §12.8 in EPIC-02-LONGITUDINAL-PROFILE.md).
+**Reconstruction gap — `language_capability_summary`:** `LanguageCapability` is a transient object not persisted in `SessionHistory`. A profile reconstructed from `SessionHistory[]` will have `language_capability_summary = []` (empty). This means language capability trend data is **not reconstructable** from `SessionHistory` alone — it requires the original `LongitudinalProfile` persistence. If the profile is lost and reconstructed, language capability trend history is lost.
+
+**Mitigation:** This gap is acceptable in V1.3 for two reasons: (1) `LanguageCapability` trend data is supplementary — its loss does not affect core knowledge scoring or behavioral trend data; (2) in V1.3 there is no production persistence layer with real data. If language capability reconstruction becomes a V2 requirement, `LanguageCapability` persistence in `SessionHistory` or `KnowledgeSnapshot` can be added via a new ADR.
+
+**Domain invariant I-LP-REC (amended):** `LongitudinalProfile` for any candidate is reconstructable from their ordered `SessionHistory[]` for all fields **except** `language_capability_summary` (which will be empty in a reconstructed profile). This limitation is accepted for V1.3. The architectural test (EPIC-02 success criterion §12.8) must verify reconstruction completeness for all reconstructable fields and explicitly assert `language_capability_summary == []` for a reconstructed profile.
 
 ---
 
@@ -491,21 +489,23 @@ Fields typed `T | None` serialize as JSON `null` when `None`. Deserialization of
 | `last_updated_at >= created_at` (LP-V-06) | Yes | Builder sets both; constraint enforced by validator. |
 | `LearningProgress` never persisted (LP-LP-06) | Yes | §2.1 explicitly states no storage data model for `LearningProgress`. |
 | `FeatureProvenance.language_context` field name | **CONFIRMED** | Field exists (line 45 of `feature_provenance.py`). Domain Contracts §3.2 reference is correct. |
-| `total_objectives` / `total_narrative_insights` gap | **Open** | Source not available from `LongitudinalProfile` alone; Option A resolution (§2.3) deferred to implementation. Tracked in §8.3. |
-| `language_capabilities` source gap | **Open** | `LanguageCapability` not currently in `SessionHistory`; Path B resolution (§3.2) requires pre-implementation decision. Tracked in §8.3. |
+| `total_objectives` / `total_narrative_insights` gap | **CLOSED** | OI-01 / OI-02 resolved: fields added to `LongitudinalSessionMetadata`; sources confirmed in `SessionHistory.knowledge_snapshot`. |
+| `language_capabilities` source gap | **CLOSED** | OI-03 resolved: `LanguageCapability` is transient; captured from live session by `longitudinal_update_node`; embedded in `LongitudinalSessionMetadata`; no `SessionHistory` change required. Reconstruction gap accepted (§6). |
 
-### 8.3 Open Issues Requiring Pre-Implementation Resolution
+### 8.3 Resolved Pre-Freeze Issues
 
-The following issues must be resolved before Architecture Freeze is declared. None require a new ADR (all are additive extensions with safe defaults). They must be resolved and this document updated before the Architecture Freeze declaration.
+All pre-freeze open issues are closed. No further issues require resolution before Architecture Freeze.
 
-| # | Issue | Resolution | Impact |
+| # | Issue | Status | Resolution Summary |
 |---|---|---|---|
-| OI-01 | `total_objectives` and `total_narrative_insights` not derivable from `LongitudinalProfile` alone | Add `total_objectives: int = 0` and `total_narrative_insights: int = 0` to `LongitudinalSessionMetadata`. Builder populates from `SessionHistory.knowledge_snapshot.coaching_snapshot` and `.narrative`. | Additive field extension. No schema version increment. No ADR. |
-| OI-02 | `LanguageCapability` instances not persisted in `SessionHistory` | Add `language_capabilities: tuple[LanguageCapability, ...]` (default `()`) to `LongitudinalSessionMetadata`. Builder populates from `SessionHistory` source (to be located). If `LanguageCapability` is not accessible from `SessionHistory`, an additive extension to `SessionHistory` or `KnowledgeSnapshot` is required — must be evaluated against the frozen v2.0 contract. | Potentially requires `SessionHistory` evaluation. If `SessionHistory` extension needed: Freeze Integrity Check required on ADR-033 before Architecture Freeze. |
-| OI-03 | Confirm `LanguageCapability` accessibility from `SessionHistory` | Locate where `LanguageCapability` instances are produced and whether they are stored in `KnowledgeSnapshot`, `SessionHistory`, or only as transient session state. | Read-only investigation; no contract change if already persisted. |
+| OI-01 | `total_objectives` and `total_narrative_insights` not derivable from `LongitudinalProfile` alone | **CLOSED** | Added to `LongitudinalSessionMetadata` with safe defaults (`0`). Sources: `coaching_snapshot.statistics.total_objectives` and `narrative.insight_count` — both available in closed `SessionHistory`. No ADR. No version increment. |
+| OI-02 | Same as OI-01 (tracking item for `total_narrative_insights` specifically) | **CLOSED** | Merged with OI-01 resolution. |
+| OI-03 | `LanguageCapability` accessibility from `SessionHistory` | **CLOSED** | `LanguageCapability` is transient (not in any closed artifact). Captured from live session by `longitudinal_update_node`. No `SessionHistory` change. Freeze Integrity Check on ADR-033 **not required**. Reconstruction gap accepted for V1.3 (`language_capability_summary = []` in reconstructed profiles). |
 
 ---
 
 *This document is the frozen data model specification for EPIC-02. All open issues (§8.3) must be resolved and this document updated before Architecture Freeze is declared. Any change to this document after Architecture Freeze requires a Freeze Integrity Check per V13-DEVELOPMENT-PLAYBOOK.md §9.*
 
-*Revision 2026-07-14: Initial frozen draft. `FeatureProvenance.language_context` confirmed (line 45, `feature_provenance.py`). Three open issues identified (OI-01, OI-02, OI-03) pending pre-implementation resolution.*
+*Revision 2026-07-14: Initial frozen draft. `FeatureProvenance.language_context` confirmed (line 45, `feature_provenance.py`). Three open issues identified (OI-01, OI-02, OI-03).*
+
+*Revision 2026-07-14 (pre-freeze update): OI-01 resolved — `total_objectives`, `total_narrative_insights` added to `LongitudinalSessionMetadata`; sources confirmed in `SessionHistory.knowledge_snapshot`. OI-02 resolved — merged with OI-01. OI-03 resolved — `LanguageCapability` is transient; captured from live session by node; no `SessionHistory` change; Freeze Integrity Check on ADR-033 not required. Reconstruction gap documented for `language_capability_summary` (accepted for V1.3). All open issues closed. Architecture Freeze may now be declared.*
