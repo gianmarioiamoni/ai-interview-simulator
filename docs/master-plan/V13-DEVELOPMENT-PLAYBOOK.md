@@ -310,6 +310,27 @@ The FR produces a binary outcome: **Closed** or **Blocked**. A Blocked FR must e
 
 Trigger the Release Readiness Review when all Epics are closed (FR passed for each) and all go-live checklist items in the Master Plan (§5) are believed to be satisfied. The RR is the final gate before the V1.3 release tag. It verifies all Success Metrics (Master Plan §9), runs the full regression suite, confirms zero open P0/P1 findings, and validates all production deployment criteria. The RR is not a review of code — it is a review of evidence: test results, deployment validation records, performance baseline reports, and architecture audit reports.
 
+### Mini Architecture Freeze
+
+Triggered when an additive ADR is discovered and accepted during implementation — one that was not part of the original epic planning set but is required to resolve a lifecycle, ownership, or boundary gap identified during Domain Discovery or implementation.
+
+**Purpose:** Verify that the new ADR introduces no contradiction, no ownership conflict, no replay conflict, no builder conflict, and no freeze violation before implementation resumes. This review is mandatory. It does not repeat the full Epic Architecture Freeze workflow.
+
+**Mini Architecture Freeze passes when all of the following are true:**
+
+- The new ADR does not contradict any decision in any previously accepted ADR or frozen planning document.
+- No artifact introduced by the ADR has a second declared producer, writer, or builder elsewhere in the frozen set.
+- No replay path introduced or affected by the ADR violates the Replay Boundary (ARC-01 §3).
+- No builder introduced by the ADR contains computation logic (P-05).
+- The new ADR is internally consistent with the Architecture Constitution (P-01 through P-08).
+- The document hierarchy remains internally consistent after the ADR is accepted.
+
+**Gate:** Implementation of any component governed by the new ADR cannot begin until the Mini Architecture Freeze passes. The outcome is recorded in the session commit message.
+
+**Scope:** Mini Architecture Freeze covers the new ADR only. It does not re-verify the full epic planning set. It does not replace the Epic Architecture Freeze or the Freeze Integrity Check.
+
+---
+
 ### Freeze Integrity Check
 
 Whenever a frozen planning document is modified — including an ADR, Architecture Freeze report, Architecture Constitution, Implementation Plan, Domain Contracts, Data Model Specification, or Architecture Guide — a Freeze Integrity Check is mandatory before implementation resumes.
@@ -328,6 +349,7 @@ The Freeze Integrity Check is performed by the author of the modification immedi
 | Gate | Trigger | Closes | Blocks |
 |---|---|---|---|
 | ADR | New design decision before implementation | — | Implementation start |
+| Mini Architecture Freeze | Additive ADR accepted during implementation | — | Resumption of implementation for new ADR scope |
 | CAR | Epic implementation phase complete | Implementation phase | Epic advance |
 | CAR (mid-epic) | Structural violation discovered during implementation | — | Continuation of affected increment |
 | FR (Final Review) | All Epic phases complete; all CAR P0/P1 resolved | Epic | Next Epic start |
@@ -485,3 +507,5 @@ If, during implementation, an unresolved architectural question emerges — a de
 *Revision 2026-07-05: Added "Zero Known Failing Tests" engineering principle (§2), "Zero Known Failing Tests — Enforcement" testing rule (§7), "Freeze Integrity Check" review gate (§9), bridge-phase mandate in Category B workflow (§8 step 7), and Freeze Integrity Check in the Stopping Rule (§8). Derived from EPIC-01 Phase 6 implementation experience.*
 
 *Revision 2026-07-06: Added Final Review (FR) as a mandatory review type (§9). FR closes an Epic; RR closes a Release Candidate; Go-Live Review closes the product release. FR integrated into Epic Workflow as Step 8 (§3), Definition of Done (§5), and Review Gate Summary (§9). Derived from EPIC-01 Final Review experience — FR methodology proven valuable and made permanent.*
+
+*Revision 2026-07-14: Added Mini Architecture Freeze review gate (§9). Triggered when an additive ADR is accepted during implementation. Verifies no contradiction, ownership conflict, replay conflict, builder conflict, or freeze violation before implementation resumes. Derived from EPIC-02 Domain Discovery Review experience (ADR-035 lifecycle). Added to Review Gate Summary table.*
