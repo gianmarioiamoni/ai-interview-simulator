@@ -212,7 +212,7 @@ P-02 (Single Ownership) is the governing principle. Every artifact has exactly o
 | Role | Owner | Notes |
 |---|---|---|
 | Producer | `LongitudinalProfileBuilder` | Assembles the new profile from prior profile + new snapshot. No computation — pure assembly (P-05). |
-| Sole writer (runtime) | `longitudinal_update` node | New LangGraph node. Sole writer of `LongitudinalProfile` to persistence and to `InterviewState` (if a state field is added). |
+| Sole writer (runtime) | `longitudinal_update` node | New LangGraph node. Sole writer of `LongitudinalProfile` to persistence only. No `InterviewState` field is introduced for `LongitudinalProfile` (ADR-034 Decision 1). |
 | Persistence layer | To be decided by ADR | Which store, what schema. V1.3 scope: single-candidate, single-node persistence. |
 | Readers (declared) | `ProgressTracker`, Unified Report layer (EPIC-05), Replay UI progress panel (EPIC-04/05). |
 
@@ -368,7 +368,7 @@ EPIC-02 is architecturally successful when all of the following are verified:
 10. **`ProgressTracker` extended** — `LearningProgress` reflects behavioral feature trends, not only dimensional score trends.
 11. **`LanguageCapability` activated** — cross-session language feature accumulation is functional.
 12. **Schema versioning policy declared and implemented** — `LongitudinalProfile.schema_version = "1.0"` at initial implementation; policy for version increments documented.
-13. **All new `InterviewState` fields have declared sole writers** — if a state field for `LongitudinalProfile` reference is added, its sole writer is declared at the point of addition.
+13. **No `InterviewState` field for `LongitudinalProfile`** — `longitudinal_update_node` does not write a `LongitudinalProfile` reference to `InterviewState` (ADR-034 Decision 1). `LongitudinalProfile` is a cross-session artifact persisted outside session state.
 14. **Full regression suite passes** — all V1.2 and EPIC-01 acceptance criteria continue to pass.
 15. **FR-02 (Final Review) produces Closed outcome**.
 
@@ -470,3 +470,5 @@ Architecture Constitution (ARC-01)
 *This document is the architecture planning artifact for EPIC-02. It does not freeze decisions. All open questions identified in §3, §7, §9, and §11 must be resolved by ADR before implementation begins. The Architecture Freeze gate applies: implementation cannot begin until all decisions are frozen in accepted ADRs.*
 
 *Revision 2026-07-14: Initial draft. Produced during EPIC-02 Architecture Planning phase following FR-01 (EPIC-01 closure) and EPIC-02 preparation.*
+
+*Revision 2026-07-14 (editorial — post Architecture Freeze): §7.1 ownership table corrected to align with ADR-034 Decision 1. `longitudinal_update_node` does not write `LongitudinalProfile` to `InterviewState`. §12 criterion 13 updated accordingly. No architectural decision changed.*
