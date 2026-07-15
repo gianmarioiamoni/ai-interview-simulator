@@ -82,18 +82,19 @@ Each commit boundary must leave the test suite green and the runtime in a valid 
 | P2-C1 | Extend `domain/contracts/progress/learning_progress.py`: add `BehavioralTrend`, `FeatureTrend`, `BehavioralScore`; add `behavioral_trend`, `language_capability_summary`, `has_sufficient_data` to `LearningProgress`; add `behavioral_scores`, `language_ids_present` to `SessionProgressEntry` | Unit tests: existing `LearningProgress` fields unchanged; new fields have safe defaults; invariants LP-LP-01 through LP-LP-07 pass |
 | P2-C2 | Extend `domain/contracts/progress/learning_progress_builder.py`: migrate input from `SessionHistory[]` to `LongitudinalProfile`; implement `BehavioralTrend` derivation; implement `FeatureTrend` computation; implement `has_sufficient_data` | Unit tests: builder produces correct `LearningProgress` from a synthetic 3-session `LongitudinalProfile`; builder returns empty `LearningProgress` when profile is `None`; builder rejects `SessionHistory[]` input |
 
-### P3 — Repository Interface + Infrastructure Adapter (2 commits)
+### P3 — Repository Interface + Infrastructure Adapter (1 commit)
 
 | Commit | Content | Test gate |
 |---|---|---|
 | P3-C1 | `infrastructure/longitudinal/longitudinal_profile_repository_impl.py` — concrete implementation of `LongitudinalProfileRepository`; technology choice per infrastructure layer | Integration tests: `save` → `get` round-trip; `exists` returns `False` before first save, `True` after; replace-on-write semantics verified |
-| P3-C2 | Repository dependency injection wiring; `infrastructure/__init__.py` updates | Integration test: `longitudinal_update_node` can receive a repository instance via DI |
+
+**Sequencing note:** Repository dependency injection wiring (`infrastructure/__init__.py` updates) requires the existence of `longitudinal_update_node` (the sole DI consumer). It is therefore moved to P4-C1, where the node and its wiring are introduced together.
 
 ### P4 — Runtime Node (2 commits)
 
 | Commit | Content | Test gate |
 |---|---|---|
-| P4-C1 | `app/graph/nodes/longitudinal_update_node.py` — full node: read `InterviewState.session_history`; extract `language_capabilities` from session state; load prior profile from repository; call `LongitudinalProfileBuilder`; call `repository.save()`; non-fatal failure path with `WARNING` log | Unit tests: success path; persistence failure path (node returns without raising; logs `WARNING`; invariant LP-09); idempotency guard (same `interview_index` is no-op; LP-07) |
+| P4-C1 | `app/graph/nodes/longitudinal_update_node.py` — full node: read `InterviewState.session_history`; extract `language_capabilities` from session state; load prior profile from repository; call `LongitudinalProfileBuilder`; call `repository.save()`; non-fatal failure path with `WARNING` log. Repository dependency injection wiring; `infrastructure/__init__.py` updates | Unit tests: success path; persistence failure path (node returns without raising; logs `WARNING`; invariant LP-09); idempotency guard (same `interview_index` is no-op; LP-07); integration test: `longitudinal_update_node` can receive a repository instance via DI |
 | P4-C2 | `app/graph/` — wire `longitudinal_update_node` into graph: edge `report_node → longitudinal_update_node → END`; update graph definition | Integration test: full session close sequence (`session_close_node → report_node → longitudinal_update_node → END`) executes without error; `LongitudinalProfile` is persisted after session close |
 
 ### P5 — ProgressTracker + Service Migration (2 commits)
@@ -299,8 +300,12 @@ A Freeze Integrity Check is required if any frozen planning document must be mod
 - [ ] Serialization round-trip for `tuple[LanguageCapability, ...]` within `LongitudinalSessionMetadata` verified.
 - [ ] Existing regression suite: 100% pass.
 
+**Note:** Repository DI wiring is not part of P3 completion. It is committed in P4-C1 alongside the node that consumes the repository.
+
 ### P4 Complete when:
 - [ ] `longitudinal_update_node` committed with success and failure paths.
+- [ ] Repository DI wiring committed; `infrastructure/__init__.py` updated.
+- [ ] Integration test: `longitudinal_update_node` can receive a repository instance via DI.
 - [ ] Node is wired into the graph: `report_node → longitudinal_update_node → END`.
 - [ ] Integration test: full session close produces persisted `LongitudinalProfile`.
 - [ ] Failure path test: persistence failure → node completes → `WARNING` logged → session close unaffected.
@@ -337,11 +342,10 @@ BASELINE (HEAD ed9edb4)
 │   └── P2-C2: LearningProgressBuilder migration
 │
 ├── P3 — Repository + Infrastructure     ← may run ∥ with P2 after P1
-│   ├── P3-C1: repository implementation
-│   └── P3-C2: DI wiring
+│   └── P3-C1: repository implementation
 │
 ├── P4 — Runtime Node
-│   ├── P4-C1: longitudinal_update_node
+│   ├── P4-C1: longitudinal_update_node + DI wiring
 │   └── P4-C2: graph wiring
 │
 └── P5 — Service Migration
@@ -349,7 +353,7 @@ BASELINE (HEAD ed9edb4)
     └── P5-C2: end-to-end integration test + FR-02 eligibility
 ```
 
-**Total commits: 11 commits across 5 phases.**
+**Total commits: 10 commits across 5 phases.** (P3/C2 merged into P4-C1; sequencing correction 2026-07-15.)
 
 ---
 
@@ -368,3 +372,5 @@ This investigation is a **read-only codebase inspection** (no code changes). It 
 *This document governs EPIC-02 implementation. Any deviation from a frozen architectural decision requires a Freeze Integrity Check before the deviation is committed. Phase completion criteria are binding — a phase is not complete until all checklist items pass.*
 
 *Revision 2026-07-14: Initial implementation plan. Produced after Architecture Freeze declaration.*
+
+*Revision 2026-07-15: Sequencing correction only — no architectural changes. Removed P3/C2 (repository DI wiring) as a standalone commit. DI wiring merged into P4-C1 alongside `longitudinal_update_node`, which is the sole consumer of the injected repository. Total commits reduced from 11 to 10. No ADR changes. No contract changes. No data model changes. No architecture freeze changes.*
