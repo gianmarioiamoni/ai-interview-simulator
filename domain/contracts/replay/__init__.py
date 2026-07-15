@@ -11,6 +11,7 @@ from domain.contracts.replay.replay_timeline import ReplayTimeline, ReplayTimeli
 from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
 from domain.contracts.replay.replay_graph_state import ReplayGraphState
 from domain.contracts.replay.replay_feature_engine import ReplayFeatureEngine
+from domain.contracts.replay.replay_session_builder import ReplaySessionBuilder
 from domain.contracts.replay.replay_result import ReplayResult
 from domain.contracts.replay.replay_orchestrator import ReplayOrchestrator, ReplayError
 from domain.contracts.replay.replay_statistics import ReplayStatistics
@@ -31,6 +32,7 @@ __all__ = [
     "ReplaySessionV13",
     "ReplayGraphState",
     "ReplayFeatureEngine",
+    "ReplaySessionBuilder",
     "ReplayResult",
     "ReplayOrchestrator",
     "ReplayError",
