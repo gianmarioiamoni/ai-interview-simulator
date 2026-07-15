@@ -7,6 +7,7 @@ from domain.contracts.replay.replay_manifest import MigrationMetadata, ReplayMan
 from domain.contracts.replay.replay_request import ReplayRequest
 from domain.contracts.replay.replay_session_metadata import ReplaySessionMetadata
 from domain.contracts.replay.replay_question_record import ReplayQuestionRecord
+from domain.contracts.replay.replay_timeline import ReplayTimeline, ReplayTimelineEntry
 from domain.contracts.replay.replay_result import ReplayResult
 from domain.contracts.replay.replay_orchestrator import ReplayOrchestrator, ReplayError
 from domain.contracts.replay.replay_statistics import ReplayStatistics
@@ -22,6 +23,8 @@ __all__ = [
     "ReplayRequest",
     "ReplaySessionMetadata",
     "ReplayQuestionRecord",
+    "ReplayTimelineEntry",
+    "ReplayTimeline",
     "ReplayResult",
     "ReplayOrchestrator",
     "ReplayError",
