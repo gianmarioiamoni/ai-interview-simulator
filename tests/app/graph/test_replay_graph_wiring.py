@@ -19,7 +19,7 @@ import pytest
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode
 from domain.contracts.replay.replay_graph_state import ReplayGraphState
 from domain.contracts.replay.replay_request import ReplayRequest
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 from domain.contracts.session_history.session_history import SessionHistory
 from app.graph.replay_graph import build_replay_graph, _REPLAY_NODE_NAME
 
@@ -175,7 +175,7 @@ class TestReplayGraphTopology:
         graph = build_replay_graph(session_loader=_loader_returns(sh))
         state: ReplayGraphState = {"request": _make_request()}
         output = graph.invoke(state)
-        assert isinstance(output["result"], ReplaySessionV13)
+        assert isinstance(output["result"], ReplaySession)
 
     def test_invoke_result_is_successful(self) -> None:
         sh = _make_session_history_with_results()

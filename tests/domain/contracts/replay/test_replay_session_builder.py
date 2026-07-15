@@ -29,7 +29,7 @@ from tests.domain.contracts.knowledge_snapshot.conftest import make_knowledge_sn
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode
 from domain.contracts.replay.replay_question_record import ReplayQuestionRecord
 from domain.contracts.replay.replay_session_builder import ReplaySessionBuilder
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 from domain.contracts.replay.replay_timeline import ReplayTimeline
 from domain.contracts.session_history.question_result_record import QuestionResultRecord
 from domain.contracts.session_history.session_history import (
@@ -104,7 +104,7 @@ class TestReplaySessionBuilderBuild:
     def test_build_returns_replay_session_v13(self):
         sh = _make_session_with_results()
         result = ReplaySessionBuilder().with_session_history(sh).build()
-        assert isinstance(result, ReplaySessionV13)
+        assert isinstance(result, ReplaySession)
 
     def test_build_is_successful(self):
         sh = _make_session_with_results()
@@ -353,7 +353,7 @@ class TestReplaySessionBuilderAsFailed:
             candidate_identity_id=CANDIDATE_ID,
             failure_reason="Error.",
         )
-        assert isinstance(result, ReplaySessionV13)
+        assert isinstance(result, ReplaySession)
 
     def test_as_failed_empty_question_results(self):
         result = ReplaySessionBuilder.as_failed(
@@ -366,14 +366,14 @@ class TestReplaySessionBuilderAsFailed:
 
 
 class TestReplaySessionBuilderReconstructionCompleteness:
-    """P-08: Architectural test — every ReplaySessionV13 field must be explicitly
+    """P-08: Architectural test — every ReplaySession field must be explicitly
     assigned in ReplaySessionBuilder.build()."""
 
     def test_all_18_fields_explicitly_assigned_in_build(self):
         build_source = inspect.getsource(ReplaySessionBuilder.build)
-        session_fields = list(ReplaySessionV13.model_fields.keys())
+        session_fields = list(ReplaySession.model_fields.keys())
         missing = [f for f in session_fields if f not in build_source]
         assert missing == [], (
-            f"P-08 Reconstruction Completeness FAILURE: the following ReplaySessionV13 "
+            f"P-08 Reconstruction Completeness FAILURE: the following ReplaySession "
             f"fields are not explicitly referenced in ReplaySessionBuilder.build(): {missing}"
         )

@@ -9,7 +9,7 @@ from typing import Optional
 from typing_extensions import TypedDict
 
 from domain.contracts.replay.replay_request import ReplayRequest
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 
 
 class ReplayGraphState(TypedDict, total=False):
@@ -25,4 +25,4 @@ class ReplayGraphState(TypedDict, total=False):
     """
 
     request: ReplayRequest
-    result: Optional[ReplaySessionV13]
+    result: Optional[ReplaySession]

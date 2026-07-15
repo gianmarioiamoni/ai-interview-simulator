@@ -22,7 +22,7 @@ import pytest
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode
 from domain.contracts.replay.replay_graph_state import ReplayGraphState
 from domain.contracts.replay.replay_request import ReplayRequest
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 from domain.contracts.session_history.session_history import (
     ReplayMetadata,
     SessionHistory,
@@ -356,7 +356,7 @@ class TestIR07NoPersistenceWrites:
         output = replay_node(state, session_loader=_loader(sh))
         result = output["result"]
         # ReplaySession must be in-memory only (frozen Pydantic model, no persistence).
-        assert isinstance(result, ReplaySessionV13)
+        assert isinstance(result, ReplaySession)
         assert result.is_successful is True
 
     def test_graph_invoke_produces_no_checkpoint(self) -> None:

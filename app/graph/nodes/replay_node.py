@@ -21,7 +21,7 @@ from typing import Callable, Optional
 from domain.contracts.replay.replay_feature_engine import ReplayFeatureEngine
 from domain.contracts.replay.replay_graph_state import ReplayGraphState
 from domain.contracts.replay.replay_session_builder import ReplaySessionBuilder
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 from domain.contracts.session_history.session_history import SessionHistory
 from app.core.logger import get_logger
 
@@ -88,7 +88,7 @@ def replay_node(
         )
 
         # Delegate construction to ReplaySessionBuilder (sole construction path).
-        result: ReplaySessionV13 = (
+        result: ReplaySession = (
             ReplaySessionBuilder()
             .with_session_history(session_history)
             .with_replay_mode(request.replay_mode)

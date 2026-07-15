@@ -19,7 +19,6 @@ from knowledge_snapshot.conftest import (
 
 from domain.contracts.replay.replay_context import ReplayContext
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode
-from domain.contracts.replay.replay_orchestrator import ReplayOrchestrator
 
 
 @pytest.fixture
@@ -47,8 +46,3 @@ def knowledge_context(knowledge_snapshot):
         replay_mode=ReplayMode.STANDARD,
         replay_level=ReplayLevel.KNOWLEDGE,
     )
-
-
-@pytest.fixture
-def replay_session():
-    return ReplayOrchestrator(validate_on_run=True)

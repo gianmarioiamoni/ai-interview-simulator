@@ -32,7 +32,7 @@ import pytest
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode
 from domain.contracts.replay.replay_graph_state import ReplayGraphState
 from domain.contracts.replay.replay_request import ReplayRequest
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 from domain.contracts.session_history.question_result_record import QuestionResultRecord
 from domain.contracts.session_history.session_history import (
     InterviewMetadata,
@@ -228,7 +228,7 @@ def _loader_for(sh: SessionHistory):
 # Fields excluded from determinism assertion per Data Model §13.2.
 _MANIFEST_NON_DETERMINISTIC_FIELDS = frozenset({"replay_timestamp", "replay_engine_version"})
 
-# All knowledge fields of ReplaySessionV13 (18 fields per Data Model §2).
+# All knowledge fields of ReplaySession (18 fields per Data Model §2).
 _KNOWLEDGE_FIELDS = (
     "session_id",
     "candidate_identity_id",
@@ -260,7 +260,7 @@ _MANIFEST_DETERMINISTIC_FIELDS = (
 )
 
 
-def assert_deterministic(result1: ReplaySessionV13, result2: ReplaySessionV13) -> None:
+def assert_deterministic(result1: ReplaySession, result2: ReplaySession) -> None:
     """Assert field-level equality on all knowledge fields.
 
     Excludes manifest.replay_timestamp and manifest.replay_engine_version
@@ -301,8 +301,8 @@ def _run_twice_and_assert(sh: SessionHistory, replay_level: ReplayLevel = Replay
     r1 = out1["result"]
     r2 = out2["result"]
 
-    assert isinstance(r1, ReplaySessionV13)
-    assert isinstance(r2, ReplaySessionV13)
+    assert isinstance(r1, ReplaySession)
+    assert isinstance(r2, ReplaySession)
     assert_deterministic(r1, r2)
 
 

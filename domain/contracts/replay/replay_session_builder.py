@@ -1,5 +1,5 @@
 # domain/contracts/replay/replay_session_builder.py
-# EPIC-03 Phase 3b — ReplaySessionBuilder: sole construction path for ReplaySessionV13.
+# EPIC-03 Phase 3b — ReplaySessionBuilder: sole construction path for ReplaySession.
 # Specification per EPIC-03-DOMAIN-CONTRACTS.md §5 and EPIC-03-DATA-MODEL.md §2–§4.
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode, Replay
 from domain.contracts.replay.replay_manifest import ReplayManifest
 from domain.contracts.replay.replay_question_record import ReplayQuestionRecord
 from domain.contracts.replay.replay_session_metadata import ReplaySessionMetadata
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 from domain.contracts.replay.replay_timeline import ReplayTimeline, ReplayTimelineEntry
 from domain.contracts.report.scoring_snapshot import ScoringSnapshot
 from domain.contracts.session_history.session_history import SessionHistory
@@ -24,9 +24,9 @@ _REPLAY_ENGINE_VERSION = "1.3"
 
 
 class ReplaySessionBuilder:
-    """Sole construction path for ReplaySessionV13.
+    """Sole construction path for ReplaySession.
 
-    Assembles a ReplaySessionV13 from a SessionHistory by mapping each persisted
+    Assembles a ReplaySession from a SessionHistory by mapping each persisted
     field to its authoritative source per EPIC-03-DATA-MODEL.md §2–§4.
 
     SRP: object construction only. No business logic, no orchestration, no LLM calls.
@@ -66,8 +66,8 @@ class ReplaySessionBuilder:
     # build() — enforces RC-B-01 through RC-B-07
     # ------------------------------------------------------------------
 
-    def build(self) -> ReplaySessionV13:
-        """Assemble and return a frozen ReplaySessionV13.
+    def build(self) -> ReplaySession:
+        """Assemble and return a frozen ReplaySession.
 
         Raises:
             ValueError: when any RC-B invariant is violated.
@@ -102,10 +102,10 @@ class ReplaySessionBuilder:
 
         manifest = self._build_manifest(sh)
 
-        # RC-B-02 and RC-B-03 are enforced by ReplaySessionV13 validators V-RS-03/V-RS-04.
-        # RC-B-07 is enforced by ReplaySessionV13 validators V-RS-01/V-RS-02.
+        # RC-B-02 and RC-B-03 are enforced by ReplaySession validators V-RS-03/V-RS-04.
+        # RC-B-07 is enforced by ReplaySession validators V-RS-01/V-RS-02.
 
-        return ReplaySessionV13(
+        return ReplaySession(
             session_id=sh.session_id,
             candidate_identity_id=sh.candidate_identity_id,
             schema_version="1.0",
@@ -138,8 +138,8 @@ class ReplaySessionBuilder:
         failure_reason: str,
         replay_mode: ReplayMode = ReplayMode.STANDARD,
         replay_level: ReplayLevel = ReplayLevel.PRESENTATION,
-    ) -> ReplaySessionV13:
-        """Produce a minimal failed ReplaySessionV13.
+    ) -> ReplaySession:
+        """Produce a minimal failed ReplaySession.
 
         Only permitted alternate construction path per EPIC-03-DOMAIN-CONTRACTS.md §5.5.
         Used by replay_node when SessionHistory is not found or reconstruction fails.
@@ -224,7 +224,7 @@ class ReplaySessionBuilder:
             question_count=0,
         )
 
-        return ReplaySessionV13(
+        return ReplaySession(
             session_id=session_id,
             candidate_identity_id=candidate_identity_id,
             schema_version="1.0",

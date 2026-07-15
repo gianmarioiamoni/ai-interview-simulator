@@ -21,7 +21,7 @@ from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode
 from domain.contracts.replay.replay_graph_state import ReplayGraphState
 from domain.contracts.replay.replay_request import ReplayRequest
 from domain.contracts.replay.replay_session_builder import ReplaySessionBuilder
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 from domain.contracts.session_history.question_result_record import QuestionResultRecord
 from domain.contracts.session_history.session_history import (
     InterviewMetadata,
@@ -150,7 +150,7 @@ class TestReplayNodeProducesReplaySession:
         sh = _make_session_history_with_results()
         state = _make_state()
         output = replay_node(state, session_loader=_loader_returns(sh))
-        assert isinstance(output["result"], ReplaySessionV13)
+        assert isinstance(output["result"], ReplaySession)
 
     def test_result_is_successful(self) -> None:
         sh = _make_session_history_with_results()
@@ -273,7 +273,7 @@ class TestReplayNodeSessionNotFound:
     def test_result_is_replay_session_v13_type(self) -> None:
         state = _make_state(_make_request(session_id="missing-session"))
         output = replay_node(state, session_loader=_loader_returns(None))
-        assert isinstance(output["result"], ReplaySessionV13)
+        assert isinstance(output["result"], ReplaySession)
 
     def test_replay_mode_preserved_on_failure(self) -> None:
         state = _make_state(_make_request(session_id="missing", replay_mode=ReplayMode.STANDARD))
@@ -404,7 +404,7 @@ class TestReplayNodeSoleWriter:
         build_count = {"n": 0}
         original_build = ReplaySessionBuilder.build
 
-        def _counting_build(self) -> ReplaySessionV13:
+        def _counting_build(self) -> ReplaySession:
             build_count["n"] += 1
             return original_build(self)
 
@@ -414,14 +414,14 @@ class TestReplayNodeSoleWriter:
         assert build_count["n"] == 1
 
     def test_replay_session_builder_is_sole_construction_path(self) -> None:
-        """Verify ReplaySessionBuilder.build() is called — not direct ReplaySessionV13()."""
+        """Verify ReplaySessionBuilder.build() is called — not direct ReplaySession()."""
         sh = _make_session_history_with_results()
         state = _make_state()
 
         builder_build_called = {"called": False}
         original_build = ReplaySessionBuilder.build
 
-        def _spy_build(self) -> ReplaySessionV13:
+        def _spy_build(self) -> ReplaySession:
             builder_build_called["called"] = True
             return original_build(self)
 

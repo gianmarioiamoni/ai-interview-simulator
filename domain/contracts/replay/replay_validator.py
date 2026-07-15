@@ -1,13 +1,17 @@
 # domain/contracts/replay/replay_validator.py
 # ADR-026 §B4, §C — ReplayValidator (invariant enforcement for Replay layer)
+# V1.3: validate_result deleted; validate_session added (RS-V-01..RS-V-10).
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from domain.contracts.replay.replay_context import ReplayContext
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode, ReplaySourcePriority
-from domain.contracts.replay.replay_result import ReplayResult
+
+if TYPE_CHECKING:
+    from domain.contracts.replay.replay_session import ReplaySession
 
 
 @dataclass(frozen=True)
@@ -27,12 +31,11 @@ class ReplayValidationResult:
 
 
 class ReplayValidator:
-    """Validates ADR-026 invariants for ReplayContext and ReplayResult.
+    """Validates replay layer invariants for ReplayContext and ReplaySession (V1.3).
 
     Validates:
-    - Source priority hierarchy (SP-01 through SP-04)
-    - Consistency guarantees (RC-01 through RC-04)
-    - Migration policy invariants (MP-01 through MP-06)
+    - Context pre-replay invariants
+    - Session post-replay invariants RS-V-01 through RS-V-10
     - Read-only contract: no live pipeline references
 
     Responsibility: validation only. No construction, no mutation, no business logic.
@@ -91,93 +94,86 @@ class ReplayValidator:
         return ReplayValidationResult.ok()
 
     # -----------------------------------------------------------------
-    # Result validation (post-replay)
+    # Session validation (V1.3 — post-replay, replaces validate_result)
     # -----------------------------------------------------------------
 
     @staticmethod
-    def validate_result(result: ReplayResult, context: ReplayContext) -> ReplayValidationResult:
-        """Validate a completed ReplayResult against ADR-026 consistency guarantees."""
+    def validate_session(session: "ReplaySession") -> ReplayValidationResult:
+        """Validate a ReplaySession (V1.3) — RS-V-01 through RS-V-10."""
         violations: list[str] = []
 
-        # RC-01: session and candidate must be identical across result and snapshot
-        snap = context.knowledge_snapshot
-        if result.session_id != snap.session_id:
+        # RS-V-01
+        if session.manifest.session_id != session.session_id:
             violations.append(
-                f"RC-01: result.session_id='{result.session_id}' "
-                f"does not match snapshot.session_id='{snap.session_id}'."
-            )
-        if result.candidate_identity_id != snap.candidate_identity_id:
-            violations.append(
-                f"RC-01: result.candidate_identity_id='{result.candidate_identity_id}' "
-                f"does not match snapshot.candidate_identity_id='{snap.candidate_identity_id}'."
+                f"RS-V-01: manifest.session_id ({session.manifest.session_id!r}) "
+                f"must equal session_id ({session.session_id!r})."
             )
 
-        # RC-01/RC-03: All components must come from KnowledgeSnapshot, not recomputed
-        if result.profile_snapshot is not snap.profile_snapshot:
+        # RS-V-02
+        if session.manifest.candidate_identity_id != session.candidate_identity_id:
             violations.append(
-                "RC-03: result.profile_snapshot must be the exact object from "
-                "KnowledgeSnapshot — no recomputation or copy."
-            )
-        if result.narrative is not snap.narrative:
-            violations.append(
-                "RC-03: result.narrative must be the exact object from "
-                "KnowledgeSnapshot — no recomputation or copy."
-            )
-        if result.coaching_snapshot is not snap.coaching_snapshot:
-            violations.append(
-                "RC-03: result.coaching_snapshot must be the exact object from "
-                "KnowledgeSnapshot — no recomputation or copy."
-            )
-        if result.policy_versions is not snap.policy_versions:
-            violations.append(
-                "RC-03: result.policy_versions must be the exact object from "
-                "KnowledgeSnapshot — no recomputation or copy."
+                f"RS-V-02: manifest.candidate_identity_id ({session.manifest.candidate_identity_id!r}) "
+                f"must equal candidate_identity_id ({session.candidate_identity_id!r})."
             )
 
-        # RC-04: knowledge_epoch must match snapshot
-        if result.knowledge_epoch != snap.knowledge_epoch:
+        # RS-V-03
+        if session.is_successful and session.failure_reason is not None:
             violations.append(
-                f"RC-04: result.knowledge_epoch='{result.knowledge_epoch}' "
-                f"does not match snapshot.knowledge_epoch='{snap.knowledge_epoch}'."
+                "RS-V-03: is_successful=True requires failure_reason to be None."
             )
 
-        # SP-03: manifest must record source_per_component
-        manifest = result.manifest
-        required_components = {"profile", "narrative", "coaching", "policy_versions"}
-        missing = required_components - set(manifest.source_per_component.keys())
-        if missing:
+        # RS-V-04
+        if not session.is_successful and not session.failure_reason:
             violations.append(
-                f"SP-03: ReplayManifest.source_per_component missing keys: {sorted(missing)}."
+                "RS-V-04: is_successful=False requires a non-empty failure_reason."
             )
 
-        # SP-02: Priority 6 (FeatureEngine recomputation) not allowed in STANDARD mode
-        if result.replay_mode == ReplayMode.STANDARD:
-            for component, priority in manifest.source_per_component.items():
+        # RS-V-05
+        if session.replay_level == ReplayLevel.REASONING:
+            violations.append(
+                "RS-V-05: replay_level REASONING is reserved and not available in V1.3."
+            )
+
+        # RS-V-06
+        if (
+            session.replay_level == ReplayLevel.PRESENTATION
+            and session.observation_store_snapshot is not None
+        ):
+            violations.append(
+                "RS-V-06: observation_store_snapshot must be None for PRESENTATION replay level."
+            )
+
+        # RS-V-07
+        if len(session.question_results) != session.timeline.total_positions:
+            violations.append(
+                f"RS-V-07: len(question_results) ({len(session.question_results)}) "
+                f"must equal timeline.total_positions ({session.timeline.total_positions})."
+            )
+
+        # RS-V-08: all question_index values are unique
+        question_indices = [qr.question_index for qr in session.question_results]
+        if len(question_indices) != len(set(question_indices)):
+            violations.append(
+                "RS-V-08: All ReplayQuestionRecord question_index values must be unique."
+            )
+
+        # RS-V-09: timeline positions contiguous 0..N-1
+        positions = [e.position for e in session.timeline.entries]
+        expected_positions = list(range(len(positions)))
+        if sorted(positions) != expected_positions:
+            violations.append(
+                f"RS-V-09: ReplayTimelineEntry.position values must be contiguous 0..N-1. "
+                f"Got: {sorted(positions)}."
+            )
+
+        # RS-V-10: no FEATURE_ENGINE_RECOMPUTATION in STANDARD mode
+        if session.replay_mode == ReplayMode.STANDARD:
+            for component, priority in session.manifest.source_per_component.items():
                 if priority == ReplaySourcePriority.FEATURE_ENGINE_RECOMPUTATION:
                     violations.append(
-                        f"SP-02: Component '{component}' used Priority 6 "
-                        "(FeatureEngine recomputation) in STANDARD mode — forbidden."
+                        f"RS-V-10: Component '{component}' used FEATURE_ENGINE_RECOMPUTATION "
+                        "in STANDARD mode — forbidden."
                     )
-
-        # Migration metadata consistency (MP-03)
-        if result.replay_mode in (ReplayMode.MIGRATION, ReplayMode.RECOVERY):
-            if manifest.migration_metadata is None:
-                violations.append(
-                    "MP-03: migration_metadata must be present when "
-                    f"replay_mode={result.replay_mode.value}."
-                )
-        else:
-            if manifest.migration_metadata is not None:
-                violations.append(
-                    "MP-03: migration_metadata must be None in STANDARD mode."
-                )
-
-        # Manifest session/candidate consistency
-        if manifest.session_id != result.session_id:
-            violations.append(
-                f"SP-03: manifest.session_id='{manifest.session_id}' "
-                f"does not match result.session_id='{result.session_id}'."
-            )
 
         if violations:
             return ReplayValidationResult.failed(violations)

@@ -22,7 +22,7 @@ from domain.contracts.replay.replay_graph_state import ReplayGraphState
 from domain.contracts.replay.replay_manifest import ReplayManifest, ReplaySourcePriority
 from domain.contracts.replay.replay_request import ReplayRequest
 from domain.contracts.replay.replay_session_metadata import ReplaySessionMetadata
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 from domain.contracts.replay.replay_timeline import ReplayTimeline
 
 
@@ -48,8 +48,8 @@ def _make_manifest() -> ReplayManifest:
     )
 
 
-def _make_session() -> ReplaySessionV13:
-    return ReplaySessionV13(
+def _make_session() -> ReplaySession:
+    return ReplaySession(
         session_id=SESSION_ID,
         candidate_identity_id=CANDIDATE_ID,
         profile_snapshot=make_candidate_profile_snapshot(),
@@ -114,7 +114,7 @@ class TestReplayGraphStateConstruction:
         req = _make_request()
         session = _make_session()
         state: ReplayGraphState = {"request": req, "result": session}
-        assert isinstance(state["result"], ReplaySessionV13)
+        assert isinstance(state["result"], ReplaySession)
 
 
 class TestReplayGraphStateIsolation:

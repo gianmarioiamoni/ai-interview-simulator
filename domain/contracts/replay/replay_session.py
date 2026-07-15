@@ -1,8 +1,7 @@
-# domain/contracts/replay/replay_session_v13.py
-# EPIC-03 Phase 2e — ReplaySession (V1.3 Projection Artifact).
+# domain/contracts/replay/replay_session.py
+# EPIC-03 Phase 6b — ReplaySession (V1.3 Projection Artifact, final name after migration).
 # Canonical, immutable replay artifact per ADR-037 Decision 1.
 # Field specification per EPIC-03-DATA-MODEL.md §2 (18 fields).
-# _v13 suffix is a migration artifact only; renamed to replay_session.py in Phase 6b.
 
 from __future__ import annotations
 
@@ -22,7 +21,7 @@ from domain.contracts.replay.replay_timeline import ReplayTimeline
 from domain.contracts.report.scoring_snapshot import ScoringSnapshot
 
 
-class ReplaySessionV13(BaseModel, frozen=True, extra="forbid"):
+class ReplaySession(BaseModel, frozen=True, extra="forbid"):
     """V1.3 canonical, immutable Replay Projection Artifact.
 
     Produced exclusively by ReplaySessionBuilder (sole construction path).
@@ -83,7 +82,7 @@ class ReplaySessionV13(BaseModel, frozen=True, extra="forbid"):
     # ------------------------------------------------------------------
 
     @model_validator(mode="after")
-    def _v_rs_01(self) -> ReplaySessionV13:
+    def _v_rs_01(self) -> "ReplaySession":
         """V-RS-01: is_successful=False requires non-empty failure_reason."""
         if not self.is_successful and not self.failure_reason:
             raise ValueError(
@@ -92,7 +91,7 @@ class ReplaySessionV13(BaseModel, frozen=True, extra="forbid"):
         return self
 
     @model_validator(mode="after")
-    def _v_rs_02(self) -> ReplaySessionV13:
+    def _v_rs_02(self) -> "ReplaySession":
         """V-RS-02: is_successful=True requires failure_reason is None."""
         if self.is_successful and self.failure_reason is not None:
             raise ValueError(
@@ -101,7 +100,7 @@ class ReplaySessionV13(BaseModel, frozen=True, extra="forbid"):
         return self
 
     @model_validator(mode="after")
-    def _v_rs_03(self) -> ReplaySessionV13:
+    def _v_rs_03(self) -> "ReplaySession":
         """V-RS-03: manifest.session_id must equal session_id."""
         if self.manifest.session_id != self.session_id:
             raise ValueError(
@@ -111,7 +110,7 @@ class ReplaySessionV13(BaseModel, frozen=True, extra="forbid"):
         return self
 
     @model_validator(mode="after")
-    def _v_rs_04(self) -> ReplaySessionV13:
+    def _v_rs_04(self) -> "ReplaySession":
         """V-RS-04: manifest.candidate_identity_id must equal candidate_identity_id."""
         if self.manifest.candidate_identity_id != self.candidate_identity_id:
             raise ValueError(
@@ -121,7 +120,7 @@ class ReplaySessionV13(BaseModel, frozen=True, extra="forbid"):
         return self
 
     @model_validator(mode="after")
-    def _v_rs_05(self) -> ReplaySessionV13:
+    def _v_rs_05(self) -> "ReplaySession":
         """V-RS-05: replay_level must not be REASONING."""
         if self.replay_level == ReplayLevel.REASONING:
             raise ValueError(
@@ -130,7 +129,7 @@ class ReplaySessionV13(BaseModel, frozen=True, extra="forbid"):
         return self
 
     @model_validator(mode="after")
-    def _v_rs_06(self) -> ReplaySessionV13:
+    def _v_rs_06(self) -> "ReplaySession":
         """V-RS-06: observation_store_snapshot must be None for PRESENTATION level."""
         if (
             self.replay_level == ReplayLevel.PRESENTATION

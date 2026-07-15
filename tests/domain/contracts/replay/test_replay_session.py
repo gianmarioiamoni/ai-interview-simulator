@@ -1,5 +1,5 @@
-# tests/domain/contracts/replay/test_replay_session_v13.py
-# EPIC-03 Phase 2e — ReplaySessionV13 contract tests.
+# tests/domain/contracts/replay/test_replay_session.py
+# EPIC-03 Phase 2e — ReplaySession contract tests.
 # Validates frozen immutability, extra=forbid, 18-field set, and validators V-RS-01 to V-RS-06.
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from conftest import (  # noqa: E402
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode
 from domain.contracts.replay.replay_manifest import ReplayManifest, ReplaySourcePriority
 from domain.contracts.replay.replay_session_metadata import ReplaySessionMetadata
-from domain.contracts.replay.replay_session_v13 import ReplaySessionV13
+from domain.contracts.replay.replay_session import ReplaySession
 from domain.contracts.replay.replay_timeline import ReplayTimeline
 
 
@@ -72,7 +72,7 @@ def _make_timeline() -> ReplayTimeline:
     )
 
 
-def _make(**overrides) -> ReplaySessionV13:
+def _make(**overrides) -> ReplaySession:
     defaults = dict(
         session_id=SESSION_ID,
         candidate_identity_id=CANDIDATE_ID,
@@ -89,10 +89,10 @@ def _make(**overrides) -> ReplaySessionV13:
         failure_reason=None,
     )
     defaults.update(overrides)
-    return ReplaySessionV13(**defaults)
+    return ReplaySession(**defaults)
 
 
-class TestReplaySessionV13Construction:
+class TestReplaySessionConstruction:
 
     def test_minimal_construction(self):
         s = _make()
@@ -127,7 +127,7 @@ class TestReplaySessionV13Construction:
         assert s.failure_reason == "SessionHistory not found."
 
 
-class TestReplaySessionV13Immutability:
+class TestReplaySessionImmutability:
 
     def test_frozen_raises_on_session_id_mutation(self):
         s = _make()
@@ -140,14 +140,14 @@ class TestReplaySessionV13Immutability:
             s.is_successful = False
 
 
-class TestReplaySessionV13ExtraForbid:
+class TestReplaySessionExtraForbid:
 
     def test_extra_fields_rejected(self):
         with pytest.raises(ValidationError):
             _make(unknown_field="bad")  # type: ignore[call-arg]
 
 
-class TestReplaySessionV13ValidatorVRS01:
+class TestReplaySessionValidatorVRS01:
     """V-RS-01: is_successful=False requires non-empty failure_reason."""
 
     def test_failed_without_reason_rejected(self):
@@ -163,7 +163,7 @@ class TestReplaySessionV13ValidatorVRS01:
         assert s.is_successful is False
 
 
-class TestReplaySessionV13ValidatorVRS02:
+class TestReplaySessionValidatorVRS02:
     """V-RS-02: is_successful=True requires failure_reason is None."""
 
     def test_successful_with_reason_rejected(self):
@@ -175,7 +175,7 @@ class TestReplaySessionV13ValidatorVRS02:
         assert s.is_successful is True
 
 
-class TestReplaySessionV13ValidatorVRS03:
+class TestReplaySessionValidatorVRS03:
     """V-RS-03: manifest.session_id must equal session_id."""
 
     def test_manifest_session_id_mismatch_rejected(self):
@@ -184,7 +184,7 @@ class TestReplaySessionV13ValidatorVRS03:
             _make(manifest=wrong_manifest)
 
 
-class TestReplaySessionV13ValidatorVRS04:
+class TestReplaySessionValidatorVRS04:
     """V-RS-04: manifest.candidate_identity_id must equal candidate_identity_id."""
 
     def test_manifest_candidate_id_mismatch_rejected(self):
@@ -193,7 +193,7 @@ class TestReplaySessionV13ValidatorVRS04:
             _make(manifest=wrong_manifest)
 
 
-class TestReplaySessionV13ValidatorVRS05:
+class TestReplaySessionValidatorVRS05:
     """V-RS-05: replay_level must not be REASONING."""
 
     def test_reasoning_level_rejected(self):
@@ -204,7 +204,7 @@ class TestReplaySessionV13ValidatorVRS05:
             )
 
 
-class TestReplaySessionV13ValidatorVRS06:
+class TestReplaySessionValidatorVRS06:
     """V-RS-06: observation_store_snapshot must be None for PRESENTATION level."""
 
     def test_observation_store_in_presentation_rejected(self):
