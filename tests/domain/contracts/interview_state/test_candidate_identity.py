@@ -192,7 +192,15 @@ class TestArchitecturalGuard:
         """Only permitted nodes may reference candidate_identity_id.
         longitudinal_update_node reads it from session_history (EPIC-02 P4/C1).
         """
-        permitted = {"reasoner_node.py", "session_close_node.py", "report_node.py", "longitudinal_update_node.py"}
+        # replay_node.py uses candidate_identity_id from SessionHistory (domain type)
+        # as a read-only input — not from InterviewState (EPIC-03 Phase 4a).
+        permitted = {
+            "reasoner_node.py",
+            "session_close_node.py",
+            "report_node.py",
+            "longitudinal_update_node.py",
+            "replay_node.py",
+        }
         for path in self._node_sources():
             if path.name in permitted:
                 continue

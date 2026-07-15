@@ -250,8 +250,15 @@ class TestSoleWriterOwnership:
         )
 
     def test_session_history_sole_owner_nodes(self) -> None:
-        """session_history: sole writer = session_close_node; permitted readers = report_node, longitudinal_update_node."""
-        permitted = {"session_close_node.py", "report_node.py", "longitudinal_update_node.py"}
+        """session_history: sole writer = session_close_node; permitted readers = report_node, longitudinal_update_node.
+        replay_node.py references SessionHistory (domain type) read-only — not InterviewState.session_history (EPIC-03 Phase 4a).
+        """
+        permitted = {
+            "session_close_node.py",
+            "report_node.py",
+            "longitudinal_update_node.py",
+            "replay_node.py",
+        }
         offenders = set(self._nodes_referencing("session_history")) - permitted
         assert offenders == set(), (
             f"Unexpected graph node(s) reference session_history: {offenders}"
