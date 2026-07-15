@@ -189,8 +189,10 @@ class TestArchitecturalGuard:
         return list(nodes_dir.glob("*.py"))
 
     def test_no_node_references_candidate_identity_id_except_permitted(self):
-        """Only reasoner_node, session_close_node, and report_node may reference candidate_identity_id."""
-        permitted = {"reasoner_node.py", "session_close_node.py", "report_node.py"}
+        """Only permitted nodes may reference candidate_identity_id.
+        longitudinal_update_node reads it from session_history (EPIC-02 P4/C1).
+        """
+        permitted = {"reasoner_node.py", "session_close_node.py", "report_node.py", "longitudinal_update_node.py"}
         for path in self._node_sources():
             if path.name in permitted:
                 continue

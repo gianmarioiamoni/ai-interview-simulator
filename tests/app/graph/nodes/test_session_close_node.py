@@ -214,8 +214,9 @@ class TestArchitecturalGuards:
     def test_no_other_node_writes_session_history(self):
         """Only session_close_node may write session_history.
         report_node reads session_history (MIG-05A) but never writes it.
+        longitudinal_update_node reads session_history (EPIC-02 P4/C1) but never writes it.
         """
-        permitted_readers = {"session_close_node.py", "report_node.py"}
+        permitted_readers = {"session_close_node.py", "report_node.py", "longitudinal_update_node.py"}
         for path in self._all_node_sources():
             if path.name in permitted_readers:
                 continue
