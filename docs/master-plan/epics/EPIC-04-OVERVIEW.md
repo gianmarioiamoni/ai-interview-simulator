@@ -1,6 +1,6 @@
 # EPIC-04 — Replay UI Experience
 
-**Status:** ARCHITECTURE DISCOVERY COMPLETE — Domain Contracts not yet begun  
+**Status:** DOMAIN CONTRACTS COMPLETE — Data Model not yet begun  
 **Date:** 2026-07-15  
 **Epic ID:** EPIC-V13-04  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -94,9 +94,9 @@ A new ADR shall be created **only if** a genuine unresolved architectural decisi
 |---|---|---|---|---|
 | AA-01 | `ReplaySession` field set (ADR-037 D3) is sufficient to render all UI panels defined in Master Plan §4 EPIC-V13-04 | VERIFIED | EPIC-04-REPLAY-UI.md §5 | Verified by Architecture Discovery Traceability Matrix: all 17 requirements mapped to source fields; no gap found |
 | AA-02 | No LLM call is reachable from any Replay UI component render path | CONDITIONALLY VERIFIED | EPIC-04-ARCHITECTURE-FREEZE.md | Architectural constraint confirmed; enforcement test required in implementation |
-| AA-03 | ADR-003 (State-Driven UI) governs replay navigation state without requiring a new ADR | CONDITIONALLY VERIFIED | EPIC-04-DOMAIN-CONTRACTS.md | Navigation position is UI-scoped ephemeral state; ADR-003 sufficient; confirmed in Domain Contracts |
+| AA-03 | ADR-003 (State-Driven UI) governs replay navigation state without requiring a new ADR | VERIFIED | EPIC-04-DOMAIN-CONTRACTS.md §2.2 | Navigation position is UI-scoped ephemeral cursor; ADR-003 governs without modification; no new ADR required |
 | AA-04 | ADR-037 requires no modification to satisfy EPIC-04 UI requirements | VERIFIED | EPIC-04-RELAY-UI.md §5 | Verified by Architecture Discovery: all requirements covered by existing ADR-037 D3 field set |
-| AA-05 | Replay UI is fully read-only; no write path to `InterviewState`, `SessionHistory`, or any domain artifact | VERIFIED (architecturally) | EPIC-04-DOMAIN-CONTRACTS.md | All components read-only by design (§4); structural enforcement test is implementation artifact |
+| AA-05 | Replay UI is fully read-only; no write path to `InterviewState`, `SessionHistory`, or any domain artifact | VERIFIED | EPIC-04-DOMAIN-CONTRACTS.md §6 | Formally verified: read-only constraint table complete; `current_position` and `ReplayContext` are ephemeral UI-layer state |
 | AA-06 | `ReplaySession` is produced on demand per request; no caching or persistence is needed at the UI layer | VERIFIED | ADR-037 D1 §1.4 | ADR-037 D1 §1.4 confirms no persistence; Architecture Discovery confirms UI receives session in memory |
 | AA-07 | Responsive layout (mobile, tablet, desktop) is achievable within the existing frontend stack without new dependencies | UNVERIFIED | EPIC-04-IMPLEMENTATION-PLAN.md | Requires framework-specific verification; not a Domain Contracts blocker |
 | AA-08 | Performance is acceptable for sessions of 20+ questions without architectural changes | UNVERIFIED | EPIC-04-IMPLEMENTATION-PLAN.md | Requires 20-question fixture profiling; not a Domain Contracts blocker |
@@ -119,7 +119,7 @@ Architecture Discovery  ← COMPLETE
   → Evaluate ADR-003, ADR-033, ADR-037 applicability
   → Update Architecture Assumptions Register (AA-01, AA-03, AA-04)
         ↓
-Domain Contracts
+Domain Contracts  ← COMPLETE
   → EPIC-04-DOMAIN-CONTRACTS.md
   → All component props contracts
   → Navigation state contract
