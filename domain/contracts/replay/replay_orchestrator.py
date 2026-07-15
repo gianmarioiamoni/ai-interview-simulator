@@ -1,5 +1,6 @@
-# domain/contracts/replay/replay_session.py
-# ADR-026 §B6 — ReplaySession (runtime orchestrator for replay operations)
+# domain/contracts/replay/replay_orchestrator.py
+# ADR-026 §B6 — ReplayOrchestrator (runtime orchestrator for replay operations)
+# Migration bridge: renamed from ReplaySession (V1.2) per EPIC-03-DOMAIN-CONTRACTS.md §0.2.
 
 from __future__ import annotations
 
@@ -22,11 +23,11 @@ from domain.contracts.replay.replay_result import ReplayResult
 from domain.contracts.replay.replay_validator import ReplayValidator
 
 
-class ReplaySession:
+class ReplayOrchestrator:
     """Assembles a ReplayResult from a ReplayContext without invoking any live pipeline.
 
     ADR-026 §B6 canonical runtime flow:
-        SessionHistory (external) → ReplayContext → ReplaySession.run() → ReplayResult
+        SessionHistory (external) → ReplayContext → ReplayOrchestrator.run() → ReplayResult
 
     Contract:
     - Never invokes FeatureEngine (SP-02, ADR-026 rules).
@@ -36,7 +37,8 @@ class ReplaySession:
     - Produces ReplayManifest recording source used per component (SP-03).
     - Read-only: never writes to SessionHistory, ObservationStore, or any pipeline.
 
-    This is the single authoritative entry point for all replay operations.
+    Migration bridge: renamed from ReplaySession (V1.2) per EPIC-03-DOMAIN-CONTRACTS.md §0.2.
+    Deletion target: same increment as ReplaySession (V1.3) activation (Phase 6).
     """
 
     def __init__(self, validate_on_run: bool = True) -> None:

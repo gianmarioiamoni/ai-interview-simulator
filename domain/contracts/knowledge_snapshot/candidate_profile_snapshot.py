@@ -28,7 +28,7 @@ class CandidateProfileSnapshot(BaseModel):
       permitted only in the test layer and must never be replicated in services.
     - A dedicated CandidateProfileSnapshotBuilder will be introduced as part of
       the session-close pipeline sprint (TCP — future roadmap, not Technical Debt).
-    - Read-only consumers: KnowledgeSnapshotBuilder, ReplaySession, ReportBuilder,
+    - Read-only consumers: KnowledgeSnapshotBuilder, ReplayOrchestrator, ReportBuilder,
       LearningProgressBuilder. None of these may modify the snapshot once created.
     """
 

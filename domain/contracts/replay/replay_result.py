@@ -18,7 +18,7 @@ from domain.contracts.replay.replay_manifest import ReplayManifest
 class ReplayResult(BaseModel):
     """Immutable output of a completed replay operation (ADR-026 §B6).
 
-    Contains all components assembled by ReplaySession from KnowledgeSnapshot.
+    Contains all components assembled by ReplayOrchestrator from KnowledgeSnapshot.
     No live pipeline component is invoked to produce any field (RC-03).
 
     Consistency guarantees enforced (ADR-026 §B4):

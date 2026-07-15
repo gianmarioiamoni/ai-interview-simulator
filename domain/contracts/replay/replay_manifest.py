@@ -35,7 +35,7 @@ class MigrationMetadata(BaseModel):
 class ReplayManifest(BaseModel):
     """Runtime audit record of a single replay operation (ADR-026 §D).
 
-    Produced by ReplaySession at replay time. Not a stored domain object in V1.2;
+    Produced by ReplayOrchestrator at replay time. Not a stored domain object in V1.2;
     it is a runtime record logged for audit access.
 
     Invariants (SP-03, SP-04):

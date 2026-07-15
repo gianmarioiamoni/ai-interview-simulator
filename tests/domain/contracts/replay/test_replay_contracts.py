@@ -10,7 +10,7 @@ from domain.contracts.replay.replay_context import ReplayContext
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode, ReplaySourcePriority
 from domain.contracts.replay.replay_manifest import ReplayManifest
 from domain.contracts.replay.replay_result import ReplayResult
-from domain.contracts.replay.replay_session import ReplayError, ReplaySession
+from domain.contracts.replay.replay_orchestrator import ReplayError, ReplayOrchestrator
 from domain.contracts.replay.replay_statistics import ReplayStatistics
 from domain.contracts.replay.replay_validator import ReplayValidator
 
@@ -190,7 +190,7 @@ class TestReplayArchitectureInvariants:
         assert result.manifest.migration_metadata is None
 
     def test_no_pipeline_invocation_marker(self, replay_session, standard_context):
-        """Architectural: ReplaySession must be read-only (no side effects on snapshot)."""
+        """Architectural: ReplayOrchestrator must be read-only (no side effects on snapshot)."""
         snap_before = standard_context.knowledge_snapshot
         result = replay_session.run(standard_context)
         # Snapshot is frozen — any attempt to mutate would raise; object identity preserved
@@ -222,9 +222,9 @@ class TestReplayDeterminism:
         assert r1.manifest.source_per_component == r2.manifest.source_per_component
 
     def test_determinism_across_replay_instances(self, standard_context):
-        """Determinism is independent of ReplaySession instance."""
-        s1 = ReplaySession()
-        s2 = ReplaySession()
+        """Determinism is independent of ReplayOrchestrator instance."""
+        s1 = ReplayOrchestrator()
+        s2 = ReplayOrchestrator()
         r1 = s1.run(standard_context)
         r2 = s2.run(standard_context)
 
@@ -240,7 +240,7 @@ class TestReplayDeterminism:
 class TestReplayFailureHandling:
 
     def test_invalid_context_raises_replay_error(self, replay_session):
-        """ReplaySession must raise ReplayError for invalid context."""
+        """ReplayOrchestrator must raise ReplayError for invalid context."""
         snap = make_knowledge_snapshot()
         # Force a bad context by bypassing Pydantic (post-construction tampering not possible
         # because frozen=True; test via validator path)
