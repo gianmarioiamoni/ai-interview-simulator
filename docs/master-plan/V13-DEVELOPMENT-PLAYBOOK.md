@@ -59,6 +59,34 @@ A component that does two things should be two components. This applies to nodes
 
 V1.3 is the production release. Completion and correctness of committed epics take priority over adding new scope. If a new idea surfaces during implementation, it is assessed against the Deferred Features list in the Master Plan. If it is not already there, it belongs there — not in V1.3.
 
+### Implementation Dependency Validation
+
+Before implementation begins, every commit boundary in the Implementation Plan must be validated for self-containment. This review is mandatory and independent from Architecture Freeze. It verifies:
+
+- Every commit is independently implementable — it depends only on artefacts introduced by prior commits, not by later ones.
+- Every commit has an executable test gate — at least one test can be written and run at that commit boundary without requiring artefacts from future commits.
+- No circular implementation dependencies exist between commits within or across phases.
+- Every commit can leave the full regression suite green when applied in sequence.
+
+If a commit boundary fails this validation, the commit must be redesigned — either merged into an adjacent commit, resequenced, or split — before the Implementation Plan is accepted. This review is performed by the author of the Implementation Plan immediately after drafting the commit boundary table, before the plan is submitted for Architecture Freeze review.
+
+### Plan Correction Rule
+
+When an implementation sequencing issue is discovered during implementation — one that affects only the ordering of commits and not the target architecture, ADRs, ownership, contracts, data model, or target behaviour — it is permitted to update the Implementation Plan without a full Architecture Freeze.
+
+Such a correction requires only a Mini Architecture Freeze (§9), which verifies:
+
+- The target architecture is unchanged.
+- No ADR is modified.
+- No ownership rule changes.
+- No contract changes.
+- No data model changes.
+- No target behaviour changes.
+
+If all of these conditions are satisfied, the correction is recorded in the Implementation Plan revision note and committed as a documentation-only change. Implementation may resume immediately after the Mini Architecture Freeze passes.
+
+If any of these conditions is not satisfied, the correction is a design change — not a sequencing correction — and requires a full Freeze Integrity Check and potentially a new ADR before any modification is committed.
+
 ### Zero Known Failing Tests
 
 Every implementation phase, every commit, and every save-token milestone must leave the runtime operational and the complete regression suite green. Planned failing tests are never accepted. If a migration would temporarily break the runtime or the test suite, the implementation plan must introduce bridge phases that restore full green before the breaking removal is committed. A broken test suite is not a milestone — it is a process violation.
@@ -92,6 +120,8 @@ Every V1.3 epic follows this lifecycle. The sequence is mandatory. Steps may not
 ### Step 1 — Epic Planning
 
 Read the epic definition in the Master Plan. Confirm preconditions (prior epics, dependencies). Identify all artifacts the epic will produce, modify, or delete. Identify all `InterviewState` fields the epic touches and verify their declared ownership. Identify whether any new ADR or PAT is required before implementation can begin.
+
+When the Implementation Plan commit boundary table is drafted, apply the Implementation Dependency Validation rule (§2) before the plan is accepted. Each commit boundary must be independently implementable and testable. This review is recorded in the epic planning commit message.
 
 ### Step 2 — Architecture Governance
 
@@ -348,8 +378,9 @@ The Freeze Integrity Check is performed by the author of the modification immedi
 
 | Gate | Trigger | Closes | Blocks |
 |---|---|---|---|
+| Implementation Dependency Validation | Implementation Plan commit boundary table drafted | — | Plan acceptance |
 | ADR | New design decision before implementation | — | Implementation start |
-| Mini Architecture Freeze | Additive ADR accepted during implementation | — | Resumption of implementation for new ADR scope |
+| Mini Architecture Freeze | Additive ADR accepted during implementation; OR sequencing correction (Plan Correction Rule) | — | Resumption of implementation for new ADR scope; OR plan update |
 | CAR | Epic implementation phase complete | Implementation phase | Epic advance |
 | CAR (mid-epic) | Structural violation discovered during implementation | — | Continuation of affected increment |
 | FR (Final Review) | All Epic phases complete; all CAR P0/P1 resolved | Epic | Next Epic start |
@@ -492,11 +523,14 @@ Each planning document has a unique responsibility. Documents must not duplicate
 If, during implementation, an unresolved architectural question emerges — a decision that was not covered by the ADR, Domain Contracts, or Data Model documents — the following process is mandatory:
 
 1. **Stop implementation immediately.** Do not make the architectural decision in code. Do not proceed with an assumption.
-2. **Return to the Architecture Review / ADR phase.** Document the question, evaluate alternatives, and freeze a decision in a new or amended ADR.
-3. **Update the affected planning documents** (Domain Contracts or Data Model Specification) if the decision changes any specified field, type, invariant, or ownership rule.
-4. **Perform a Freeze Integrity Check** (§9) on every modified frozen document before resuming implementation.
-5. **Declare a new Architecture Freeze** for the affected scope before resuming.
-6. **Resume implementation** only after the decision is frozen, the planning documents are updated, and the Freeze Integrity Check passes.
+2. **Classify the issue.** Determine whether it is a sequencing issue (commit ordering only) or an architectural issue (affects contracts, ownership, data model, or behaviour).
+   - If it is a **sequencing issue only**, apply the Plan Correction Rule (§2): update the Implementation Plan, perform a Mini Architecture Freeze, and resume implementation.
+   - If it is an **architectural issue**, continue with steps 3–6 below.
+3. **Return to the Architecture Review / ADR phase.** Document the question, evaluate alternatives, and freeze a decision in a new or amended ADR.
+4. **Update the affected planning documents** (Domain Contracts or Data Model Specification) if the decision changes any specified field, type, invariant, or ownership rule.
+5. **Perform a Freeze Integrity Check** (§9) on every modified frozen document before resuming implementation.
+6. **Declare a new Architecture Freeze** for the affected scope before resuming.
+7. **Resume implementation** only after the decision is frozen, the planning documents are updated, and the Freeze Integrity Check passes.
 
 **Architectural decisions must never be made while coding.** A decision made in code is a decision that bypasses all review, rationale recording, and traceability. It is a process violation regardless of whether the decision is technically correct.
 
@@ -509,3 +543,5 @@ If, during implementation, an unresolved architectural question emerges — a de
 *Revision 2026-07-06: Added Final Review (FR) as a mandatory review type (§9). FR closes an Epic; RR closes a Release Candidate; Go-Live Review closes the product release. FR integrated into Epic Workflow as Step 8 (§3), Definition of Done (§5), and Review Gate Summary (§9). Derived from EPIC-01 Final Review experience — FR methodology proven valuable and made permanent.*
 
 *Revision 2026-07-14: Added Mini Architecture Freeze review gate (§9). Triggered when an additive ADR is accepted during implementation. Verifies no contradiction, ownership conflict, replay conflict, builder conflict, or freeze violation before implementation resumes. Derived from EPIC-02 Domain Discovery Review experience (ADR-035 lifecycle). Added to Review Gate Summary table.*
+
+*Revision 2026-07-15: Added two engineering principles (§2): "Implementation Dependency Validation" — mandatory commit-boundary self-containment review performed during Implementation Plan authoring, before plan acceptance; and "Plan Correction Rule" — sequencing-only corrections to the Implementation Plan require only a Mini Architecture Freeze, not a full Architecture Freeze. Mini Architecture Freeze (§9) updated to cover both ADR-triggered and sequencing-correction triggers. Review Gate Summary (§9) updated with Implementation Dependency Validation gate. Stopping Rule (§8) updated with issue-classification step: sequencing issues apply Plan Correction Rule; architectural issues follow the full ADR path. Epic Workflow Step 1 (§3) updated to mandate Implementation Dependency Validation when the commit boundary table is drafted. Derived from EPIC-02 P3/C2 sequencing correction experience.*
