@@ -6,20 +6,14 @@ from dataclasses import dataclass
 
 from app.graph.nodes.replay_node import SessionLoader
 from app.graph.replay_graph import build_replay_graph
+from app.ui.replay.replay_view_controller import ReplayViewController
 from domain.contracts.replay.replay_request import ReplayRequest
 from domain.contracts.replay.replay_session import ReplaySession
 
 
 @dataclass(frozen=True)
-class ReplayViewRoute:
-    """Phase 2 success routing token (C-02 target). Full controller is Phase 3."""
-
-    session: ReplaySession
-
-
-@dataclass(frozen=True)
 class ReplayErrorRoute:
-    """Phase 2 failure routing token (C-09 target). Full boundary is Phase 4."""
+    """Failure routing token (C-09 target). Full boundary arrives in Phase 4."""
 
     session: ReplaySession
 
@@ -50,13 +44,13 @@ class ReplayEntryPoint:
     def route(
         self,
         session: ReplaySession,
-    ) -> tuple[ReplayViewRoute | None, ReplayErrorRoute | None]:
+    ) -> tuple[ReplayViewController | None, ReplayErrorRoute | None]:
         """Route solely by ``ReplaySession.is_successful`` (I-C01-03).
 
-        Returns ``(view_route, error_route)`` with exactly one side set.
-        Concrete ``ReplayViewController`` / ``ReplayErrorBoundary`` arrive in
-        later phases; Phase 2 emits routing tokens only.
+        Returns ``(view_controller, error_route)`` with exactly one side set.
+        Success wires the concrete ``ReplayViewController`` (C-02).
+        Failure keeps the Phase-4 ``ReplayErrorBoundary`` routing token.
         """
         if session.is_successful:
-            return (ReplayViewRoute(session=session), None)
+            return (ReplayViewController(session), None)
         return (None, ReplayErrorRoute(session=session))

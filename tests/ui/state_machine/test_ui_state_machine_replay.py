@@ -1,21 +1,11 @@
 # tests/ui/state_machine/test_ui_state_machine_replay.py
 
-from types import SimpleNamespace
-
+from app.ui.replay.replay_context import ReplayContext
 from app.ui.state_machine.ui_state_machine import UIStateMachine
 from app.ui.ui_state import UIState
 from tests.domain.contracts.report.conftest import make_report
 from tests.factories.interview_state_factory import build_interview_state
 from tests.factories.question_factory import build_question
-
-
-def _active_replay_signal(session_id: str = "session-x") -> SimpleNamespace:
-    """Phase 1 stub — ReplayContext is Phase 2; only `.is_active` is required here."""
-    return SimpleNamespace(session_id=session_id, is_active=True)
-
-
-def _inactive_replay_signal(session_id: str = "session-x") -> SimpleNamespace:
-    return SimpleNamespace(session_id=session_id, is_active=False)
 
 
 def test_ui_state_replay_enum_value_exists() -> None:
@@ -26,7 +16,7 @@ def test_ui_state_replay_enum_value_exists() -> None:
 def test_resolve_returns_replay_when_replay_context_is_active() -> None:
     resolved = UIStateMachine.resolve(
         state=None,
-        replay_context=_active_replay_signal(),
+        replay_context=ReplayContext(session_id="session-x", is_active=True),
     )
     assert resolved == UIState.REPLAY
 
@@ -40,7 +30,7 @@ def test_resolve_does_not_return_replay_when_replay_context_is_none() -> None:
 def test_resolve_does_not_return_replay_when_is_active_false() -> None:
     resolved = UIStateMachine.resolve(
         state=None,
-        replay_context=_inactive_replay_signal(),
+        replay_context=ReplayContext(session_id="session-x", is_active=False),
     )
     assert resolved == UIState.SETUP
     assert resolved != UIState.REPLAY
@@ -55,7 +45,7 @@ def test_resolve_replay_takes_precedence_over_report() -> None:
 
     resolved = UIStateMachine.resolve(
         state=state,
-        replay_context=_active_replay_signal(),
+        replay_context=ReplayContext(session_id="session-x", is_active=True),
     )
     assert resolved == UIState.REPLAY
 

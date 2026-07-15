@@ -1,5 +1,6 @@
 # app/ui/state_machine/ui_state_machine.py
 
+from app.ui.replay.replay_context import ReplayContext
 from app.ui.ui_state import UIState
 from domain.contracts.interview_state import InterviewState
 
@@ -12,11 +13,10 @@ class UIStateMachine:
     @staticmethod
     def resolve(
         state: InterviewState | None,
-        replay_context: object | None = None,
+        replay_context: ReplayContext | None = None,
     ) -> UIState:
         # REPLAY — takes precedence when the UI-layer signal is active (I-C10-01).
-        # Duck-typed on `.is_active`; ReplayContext is introduced in Phase 2.
-        if replay_context is not None and getattr(replay_context, "is_active", False):
+        if replay_context is not None and replay_context.is_active:
             logger.debug("resolved UI state: REPLAY")
             return UIState.REPLAY
 

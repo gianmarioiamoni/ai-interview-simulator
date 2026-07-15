@@ -7,11 +7,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.ui.replay.replay_entry_point import (
-    ReplayEntryPoint,
-    ReplayErrorRoute,
-    ReplayViewRoute,
-)
+from app.ui.replay.replay_entry_point import ReplayEntryPoint, ReplayErrorRoute
+from app.ui.replay.replay_view_controller import ReplayViewController
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode
 from domain.contracts.replay.replay_manifest import ReplayManifest, ReplaySourcePriority
 from domain.contracts.replay.replay_session import ReplaySession
@@ -115,14 +112,15 @@ def test_load_does_not_persist_replay_session() -> None:
     assert getattr(entry, "_session_loader", None) is not None
 
 
-def test_route_successful_session_to_view_route() -> None:
+def test_route_successful_session_to_view_controller() -> None:
     entry = ReplayEntryPoint(session_loader=lambda _sid: None)
     session = _make_session(is_successful=True)
 
-    view_route, error_route = entry.route(session)
+    view_controller, error_route = entry.route(session)
 
-    assert isinstance(view_route, ReplayViewRoute)
-    assert view_route.session is session
+    assert isinstance(view_controller, ReplayViewController)
+    assert view_controller.session is session
+    assert view_controller.current_position == 0
     assert error_route is None
 
 
@@ -130,9 +128,9 @@ def test_route_failed_session_to_error_route() -> None:
     entry = ReplayEntryPoint(session_loader=lambda _sid: None)
     session = _make_session(is_successful=False)
 
-    view_route, error_route = entry.route(session)
+    view_controller, error_route = entry.route(session)
 
-    assert view_route is None
+    assert view_controller is None
     assert isinstance(error_route, ReplayErrorRoute)
     assert error_route.session is session
     assert error_route.session.failure_reason == "session_not_found"
