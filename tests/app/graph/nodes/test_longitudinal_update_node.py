@@ -271,7 +271,6 @@ def test_different_interview_index_triggers_save() -> None:
         FIXED_DT,
         LATER_DT,
         SESSION_ID_1,
-        make_session_entry,
         make_longitudinal_profile,
     )
     from domain.contracts.session_history.session_history_builder import SessionHistoryBuilder
@@ -326,9 +325,9 @@ def test_node_does_not_import_llm_services() -> None:
     import ast
     import pathlib
 
-    node_source = pathlib.Path(
-        "app/graph/nodes/longitudinal_update_node.py"
-    ).read_text(encoding="utf-8")
+    node_source = pathlib.Path("app/graph/nodes/longitudinal_update_node.py").read_text(
+        encoding="utf-8"
+    )
     tree = ast.parse(node_source)
 
     forbidden_patterns = {

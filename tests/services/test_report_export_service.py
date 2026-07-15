@@ -114,7 +114,6 @@ def test_export_json_serializes_enums_without_error():
 def _import_handlers():
     """Import export handlers directly, bypassing the state_handlers __init__
     which triggers start.py → langchain_openai → torch (SEGFAULT on Python 3.13 + anaconda)."""
-    import sys
     import importlib
     from unittest.mock import MagicMock
 

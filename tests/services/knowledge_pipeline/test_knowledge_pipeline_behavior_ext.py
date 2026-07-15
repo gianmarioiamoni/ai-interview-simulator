@@ -33,9 +33,11 @@ from domain.observation.runtime.in_memory_observation_store import InMemoryObser
 # Activity 1: skip_extraction_if_store_populated
 # ---------------------------------------------------------------------------
 
+
 class TestSkipExtractionWhenStorePopulated:
     def _make_populated_store(self) -> InMemoryObservationStore:
         from tests.services.knowledge_pipeline.conftest import InMemoryObservationStore as _S
+
         store = _S(session_id="s1")
         # Use a REPLAY origin to avoid source_ref validation requirement
         from domain.contracts.observation.observation import Observation
@@ -44,6 +46,7 @@ class TestSkipExtractionWhenStorePopulated:
         from domain.contracts.observation.observation_origin import ObservationOrigin
         from domain.contracts.observation.observation_status import ObservationStatus
         from domain.contracts.observation.observation_type import ObservationType
+
         obs = Observation(
             id=ObservationId(value=str(uuid.uuid4())),
             observation_type=ObservationType.KNOWLEDGE_GAP,
@@ -71,7 +74,9 @@ class TestSkipExtractionWhenStorePopulated:
         """When skip_extraction_if_store_populated=True and store.count()>0, extractor not called."""
         from services.knowledge_pipeline.knowledge_pipeline import KnowledgePipeline
         from services.knowledge_pipeline.knowledge_pipeline_context import KnowledgePipelineContext
-        from domain.observation.runtime.observation_store_query_engine import ObservationStoreQueryEngine
+        from domain.observation.runtime.observation_store_query_engine import (
+            ObservationStoreQueryEngine,
+        )
 
         store = self._make_populated_store()
         assert store.count() > 0
@@ -108,7 +113,9 @@ class TestSkipExtractionWhenStorePopulated:
         from tests.services.knowledge_pipeline.conftest import make_signal
         from services.knowledge_pipeline.knowledge_pipeline import KnowledgePipeline
         from services.knowledge_pipeline.knowledge_pipeline_context import KnowledgePipelineContext
-        from domain.observation.runtime.observation_store_query_engine import ObservationStoreQueryEngine
+        from domain.observation.runtime.observation_store_query_engine import (
+            ObservationStoreQueryEngine,
+        )
         from domain.contracts.observation.extraction.observation_extraction_result import (
             ObservationExtractionResult,
         )
@@ -124,9 +131,7 @@ class TestSkipExtractionWhenStorePopulated:
             observations=(),
             session_id="s1",
             question_index=0,
-            diagnostics=ObservationExtractionDiagnostics(
-                session_id="s1", question_index=0
-            ),
+            diagnostics=ObservationExtractionDiagnostics(session_id="s1", question_index=0),
         )
         mock_feature_engine = MagicMock()
         mock_feature_engine.run.return_value = MagicMock(features=())
@@ -158,6 +163,7 @@ class TestSkipExtractionWhenStorePopulated:
 # Activity 2: ProfileFeature wiring through CandidateProfileBuilder
 # ---------------------------------------------------------------------------
 
+
 class TestProfileFeatureWiring:
     def _make_profile_feature(self) -> ProfileFeature:
         from domain.contracts.feature.feature_identity import FeatureIdentity
@@ -169,6 +175,7 @@ class TestProfileFeatureWiring:
             FeatureStability,
         )
         from domain.contracts.feature.feature_type import FeatureType
+
         identity = FeatureIdentity.for_type(FeatureType.REASONING)
         return ProfileFeature(
             feature_identity=identity,
@@ -242,6 +249,7 @@ class TestProfileFeatureWiring:
 # Activity 3: candidate_identity_id hook
 # ---------------------------------------------------------------------------
 
+
 class TestCandidateIdentityIdHook:
     def test_resolve_returns_candidate_identity_id_when_set(self) -> None:
         # MIG-03B: resolver prefers state.candidate_identity_id over interview_id.
@@ -253,7 +261,6 @@ class TestCandidateIdentityIdHook:
 
     def test_resolve_raises_when_candidate_identity_id_is_none(self) -> None:
         # All production states have candidate_identity_id set; None is a fail-fast error.
-        import pytest
         state = MagicMock()
         state.candidate_identity_id = None
         state.interview_id = "session-xyz"

@@ -21,6 +21,7 @@ from app.graph.nodes.reasoner_node import reasoner_node, _append_reasoning_entry
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _empty_state() -> InterviewState:
     return InterviewState.create_empty()
 
@@ -40,15 +41,14 @@ def _make_decision(
         new_evidence=new_evidence or [],
         follow_up_recommendation=follow_up_rec,
         navigation_recommendation=navigation_rec,
-        reasoning_basis=ReasoningBasis(
-            reasoning_confidence=ReasoningConfidence()
-        ),
+        reasoning_basis=ReasoningBasis(reasoning_confidence=ReasoningConfidence()),
     )
 
 
 # ---------------------------------------------------------------------------
 # Node execution — happy path
 # ---------------------------------------------------------------------------
+
 
 def test_node_returns_interview_state():
     state = _empty_state()
@@ -92,6 +92,7 @@ def test_node_reasoning_entry_question_index():
 # ---------------------------------------------------------------------------
 # Failure policy
 # ---------------------------------------------------------------------------
+
 
 def test_node_survives_builder_failure():
     state = _empty_state()
@@ -144,6 +145,7 @@ def test_node_logs_info_on_success(caplog):
 # Logging content (never logs candidate data)
 # ---------------------------------------------------------------------------
 
+
 def test_log_contains_detector_count(caplog):
     with caplog.at_level(logging.INFO, logger="app.graph.nodes.reasoner_node"):
         reasoner_node(_empty_state())
@@ -180,6 +182,7 @@ def test_log_does_not_contain_answer_content(caplog):
 # _append_reasoning_entry helper
 # ---------------------------------------------------------------------------
 
+
 def test_append_entry_creates_entry():
     state = _empty_state()
     decision = _make_decision(session_id=state.interview_id)
@@ -197,6 +200,7 @@ def test_append_entry_records_correct_q_idx():
 def test_append_entry_follow_up_flag():
     from domain.contracts.reasoning.follow_up_recommendation import FollowUpRecommendation
     from domain.contracts.reasoning.evidence_type import EvidenceType
+
     rec = FollowUpRecommendation(recommended=True, trigger_types=[EvidenceType.KNOWLEDGE_GAP])
     state = _empty_state()
     decision = _make_decision(session_id=state.interview_id, follow_up_rec=rec)
@@ -206,6 +210,7 @@ def test_append_entry_follow_up_flag():
 
 def test_append_entry_navigation_flag():
     from domain.contracts.reasoning.navigation_recommendation import NavigationRecommendation
+
     nav = NavigationRecommendation(deepen_current=True)
     state = _empty_state()
     decision = _make_decision(session_id=state.interview_id, navigation_rec=nav)
@@ -214,7 +219,12 @@ def test_append_entry_navigation_flag():
 
 
 def test_append_entry_caps_at_max_entries():
-    from domain.contracts.reasoning.reasoning_history import ReasoningHistory, ReasoningEntry, _MAX_ENTRIES
+    from domain.contracts.reasoning.reasoning_history import (
+        ReasoningHistory,
+        ReasoningEntry,
+        _MAX_ENTRIES,
+    )
+
     entries = [ReasoningEntry(question_index=i) for i in range(_MAX_ENTRIES)]
     history = ReasoningHistory(entries=entries)
     memory = InterviewMemory(reasoning_history=history)
@@ -231,6 +241,7 @@ def test_append_entry_evidence_propagated():
     from domain.contracts.reasoning.evidence_source import EvidenceSource
     from domain.contracts.reasoning.evidence_type import EvidenceType
     from domain.contracts.reasoning.profile_dimension import ProfileDimension
+
     sig = EvidenceSignal(
         id=str(uuid.uuid4()),
         question_index=0,
@@ -316,9 +327,10 @@ def test_reasoner_node_session_metrics_survive_cycle():
 # Graph integration
 # ---------------------------------------------------------------------------
 
+
 def test_graph_has_reasoner_node():
     from app.graph.interview_graph import build_interview_graph
-    from unittest.mock import MagicMock
+
     llm = MagicMock()
     graph = build_interview_graph(llm)
     node_names = set(graph.get_graph().nodes)
@@ -327,7 +339,7 @@ def test_graph_has_reasoner_node():
 
 def test_reasoner_between_feedback_and_decision():
     from app.graph.interview_graph import build_interview_graph
-    from unittest.mock import MagicMock
+
     llm = MagicMock()
     graph = build_interview_graph(llm)
     edges = {(e.source, e.target) for e in graph.get_graph().edges}

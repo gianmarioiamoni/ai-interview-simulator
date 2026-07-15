@@ -27,6 +27,7 @@ from domain.contracts.question.question_result import QuestionResult
 # Helpers
 # ===========================================================
 
+
 def _tc(args, expected) -> CodingTestCase:
     return CodingTestCase(args=args, expected=expected)
 
@@ -76,8 +77,8 @@ _VISIBLE = [_tc([[2, 7, 11, 15], 9], [0, 1])]
 # F3 — Oracle enforcement: unvalidated hidden tests discarded
 # ===========================================================
 
-class TestOracleEnforcement:
 
+class TestOracleEnforcement:
     def _make_generator(self, question, lm_tests):
         from app.ai.test_generation.ai_test_generator import AITestGenerator
 
@@ -117,9 +118,7 @@ class TestOracleEnforcement:
         assert result == []
 
     def test_valid_reference_solution_retains_correct_hidden_tests(self):
-        question = _make_question(
-            reference_solution=CORRECT_TWO_SUM, visible_tests=_VISIBLE
-        )
+        question = _make_question(reference_solution=CORRECT_TWO_SUM, visible_tests=_VISIBLE)
         # two_sum([3,2,4], 6) → [1,2] (correct)
         hidden = [_tc([[3, 2, 4], 6], [1, 2])]
         gen = self._make_generator(question, hidden)
@@ -133,8 +132,8 @@ class TestOracleEnforcement:
 # F4 — Cache protection
 # ===========================================================
 
-class TestCacheProtection:
 
+class TestCacheProtection:
     def _make_generator(self, question, lm_tests, ref_solution=""):
         from app.ai.test_generation.ai_test_generator import AITestGenerator
 
@@ -162,6 +161,7 @@ class TestCacheProtection:
         question = _make_question(reference_solution=broken_ref, visible_tests=_VISIBLE)
 
         from app.ai.test_generation.ai_test_generator import AITestGenerator
+
         gen = AITestGenerator(llm=MagicMock())
         gen._cache.get_tests = MagicMock(return_value=None)
         gen._cache.store_tests = MagicMock()
@@ -175,12 +175,11 @@ class TestCacheProtection:
         gen._cache.store_tests.assert_not_called()
 
     def test_cache_called_only_with_validated_tests(self):
-        question = _make_question(
-            reference_solution=CORRECT_TWO_SUM, visible_tests=_VISIBLE
-        )
+        question = _make_question(reference_solution=CORRECT_TWO_SUM, visible_tests=_VISIBLE)
         valid_hidden = [_tc([[3, 2, 4], 6], [1, 2])]
 
         from app.ai.test_generation.ai_test_generator import AITestGenerator
+
         gen = AITestGenerator(llm=MagicMock())
         gen._cache.get_tests = MagicMock(return_value=None)
         gen._cache.store_tests = MagicMock()
@@ -197,12 +196,10 @@ class TestCacheProtection:
 # F6 — Hint refresh after retry
 # ===========================================================
 
-class TestHintRefreshOnRetry:
 
+class TestHintRefreshOnRetry:
     def _build_state_with_hint(self):
         from tests.factories.interview_state_factory import build_state_with_execution
-        from domain.contracts.ai.ai_hint import AIHint
-        from domain.contracts.ai.hint_level import HintLevel
 
         state = build_state_with_execution(passed_tests=0, total_tests=5)
         question = state.current_question
@@ -248,7 +245,6 @@ class TestHintRefreshOnRetry:
         from app.graph.nodes.hint_node import HintNode
         from tests.factories.interview_state_factory import build_state_with_execution
         from unittest.mock import Mock
-        from domain.contracts.ai.ai_hint import AIHint
 
         # Build state with existing result but NO hint (simulates post-retry new execution)
         state = build_state_with_execution(passed_tests=0, total_tests=5)
@@ -276,8 +272,8 @@ class TestHintRefreshOnRetry:
 # F1 — Comparator contract disclosure
 # ===========================================================
 
-class TestComparatorContractDisclosure:
 
+class TestComparatorContractDisclosure:
     def _build_contract(self, entrypoint="solve", parameters=None, visible_tests=None):
         from app.ui.response.sections.display_section import DisplaySection
 
@@ -319,9 +315,11 @@ class TestComparatorContractDisclosure:
 # F9 — Alignment validation: runtime blocking vs narrative warnings
 # ===========================================================
 
-class TestAlignmentValidation:
 
-    def _make_generated(self, prompt: str, entrypoint: str, parameters: list[str], spec_type: str = "function"):
+class TestAlignmentValidation:
+    def _make_generated(
+        self, prompt: str, entrypoint: str, parameters: list[str], spec_type: str = "function"
+    ):
         from services.question_intelligence.coding_question_generator import GeneratedCodingQuestion
         from domain.contracts.execution.coding_spec import CodingSpec
 
@@ -333,7 +331,10 @@ class TestAlignmentValidation:
         )
 
     def _make_pipeline(self):
-        from services.question_intelligence.pipelines.coding_question_pipeline import CodingQuestionPipeline
+        from services.question_intelligence.pipelines.coding_question_pipeline import (
+            CodingQuestionPipeline,
+        )
+
         return CodingQuestionPipeline(
             retrieval_service=MagicMock(),
             coding_generator=MagicMock(),
@@ -381,8 +382,11 @@ class TestAlignmentValidation:
         pipeline = self._make_pipeline()
         from domain.contracts.execution.coding_spec import CodingSpec
         from services.question_intelligence.coding_question_generator import GeneratedCodingQuestion
+
         spec = CodingSpec(type="function", entrypoint="two-sum", parameters=["nums"])
-        item = GeneratedCodingQuestion(prompt="Implement two-sum.", coding_spec=spec, visible_tests=[])
+        item = GeneratedCodingQuestion(
+            prompt="Implement two-sum.", coding_spec=spec, visible_tests=[]
+        )
         with pytest.raises(ValueError, match="valid Python identifier"):
             pipeline._validate_alignment(item, spec)
 
@@ -412,6 +416,7 @@ class TestAlignmentValidation:
 
     def test_coding_spec_strips_type_annotations(self):
         from domain.contracts.execution.coding_spec import CodingSpec
+
         spec = CodingSpec(
             type="function",
             entrypoint="get_deployment_strategy",
@@ -421,6 +426,7 @@ class TestAlignmentValidation:
 
     def test_coding_spec_strips_multiple_type_annotations(self):
         from domain.contracts.execution.coding_spec import CodingSpec
+
         spec = CodingSpec(
             type="function",
             entrypoint="process",
@@ -434,6 +440,7 @@ class TestAlignmentValidation:
 
     def test_class_method_without_method_name_raises(self):
         from domain.contracts.execution.coding_spec import CodingSpec
+
         with pytest.raises(ValueError, match="method_name required"):
             CodingSpec(type="class_method", entrypoint="LRUCache", parameters=["key"])
 
@@ -441,6 +448,7 @@ class TestAlignmentValidation:
         pipeline = self._make_pipeline()
         from domain.contracts.execution.coding_spec import CodingSpec
         from services.question_intelligence.coding_question_generator import GeneratedCodingQuestion
+
         spec = CodingSpec(
             type="class_method",
             entrypoint="LRUCache",

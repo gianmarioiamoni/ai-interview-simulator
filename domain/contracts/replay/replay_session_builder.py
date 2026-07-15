@@ -10,7 +10,6 @@ from typing import Optional
 from domain.contracts.coaching.coaching_builder import CoachingSnapshot
 from domain.contracts.knowledge_snapshot.candidate_profile_snapshot import CandidateProfileSnapshot
 from domain.contracts.knowledge_snapshot.knowledge_snapshot import PolicyVersions
-from domain.contracts.narrative.narrative import Narrative
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode, ReplaySourcePriority
 from domain.contracts.replay.replay_manifest import ReplayManifest
 from domain.contracts.replay.replay_question_record import ReplayQuestionRecord
@@ -144,7 +143,6 @@ class ReplaySessionBuilder:
         Only permitted alternate construction path per EPIC-03-DOMAIN-CONTRACTS.md §5.5.
         Used by replay_node when SessionHistory is not found or reconstruction fails.
         """
-        from domain.contracts.knowledge_snapshot.candidate_profile_snapshot import CandidateProfileSnapshot
         from domain.contracts.feature.profile_feature import ProfileFeature
 
         now = datetime.now(tz=timezone.utc)
@@ -164,8 +162,6 @@ class ReplaySessionBuilder:
         from domain.contracts.coaching.coaching_builder import CoachingBuilder
         from domain.contracts.feature.feature_identity import FeatureIdentity
         from domain.contracts.feature.feature_type import FeatureType
-        from domain.contracts.knowledge_snapshot.knowledge_snapshot import PolicyVersions
-        from domain.contracts.narrative.narrative import Narrative
         from domain.contracts.narrative.narrative_builder import NarrativeBuilder
         from domain.contracts.narrative.narrative_section import NarrativeSection
         from domain.contracts.narrative.narrative_section_type import NarrativeSectionType
@@ -196,9 +192,7 @@ class ReplaySessionBuilder:
             .with_recommendations(_placeholder_section(NarrativeSectionType.RECOMMENDATIONS))
             .build()
         )
-        empty_coaching = CoachingBuilder.empty(
-            session_id=session_id, question_index=0
-        )
+        empty_coaching = CoachingBuilder.empty(session_id=session_id, question_index=0)
         empty_policy = PolicyVersions(
             feature_engine_version="unknown",
             language_policy_version="unknown",
@@ -249,39 +243,38 @@ class ReplaySessionBuilder:
     # Private assembly helpers
     # ------------------------------------------------------------------
 
-    def _build_question_results(
-        self, sh: SessionHistory
-    ) -> tuple[ReplayQuestionRecord, ...]:
+    def _build_question_results(self, sh: SessionHistory) -> tuple[ReplayQuestionRecord, ...]:
         """Assemble ReplayQuestionRecord tuple from question_results + transcript join."""
         # Build lookup: question_id → candidate_answer from transcript.
         answer_by_question_id: dict[str, str] = {
-            entry.question_id: entry.answer_content
-            for entry in sh.transcript
+            entry.question_id: entry.answer_content for entry in sh.transcript
         }
 
         records = []
         for qr in sh.question_results:
             candidate_answer = answer_by_question_id.get(qr.question_id, "")
-            records.append(ReplayQuestionRecord(
-                question_id=qr.question_id,
-                question_index=qr.question_index,
-                question_type=qr.question_type,
-                area_label=qr.area_label,
-                question_prompt=qr.question_prompt,
-                candidate_answer=candidate_answer,
-                score=qr.score,
-                max_score=qr.max_score,
-                feedback=qr.feedback,
-                strengths=qr.strengths,
-                weaknesses=qr.weaknesses,
-                follow_up_question=qr.follow_up_question,
-                execution_status=qr.execution_status,
-                passed_tests=qr.passed_tests,
-                total_tests=qr.total_tests,
-                ai_hint_explanation=qr.ai_hint_explanation,
-                ai_hint_suggestion=qr.ai_hint_suggestion,
-                attempts=qr.attempts,
-            ))
+            records.append(
+                ReplayQuestionRecord(
+                    question_id=qr.question_id,
+                    question_index=qr.question_index,
+                    question_type=qr.question_type,
+                    area_label=qr.area_label,
+                    question_prompt=qr.question_prompt,
+                    candidate_answer=candidate_answer,
+                    score=qr.score,
+                    max_score=qr.max_score,
+                    feedback=qr.feedback,
+                    strengths=qr.strengths,
+                    weaknesses=qr.weaknesses,
+                    follow_up_question=qr.follow_up_question,
+                    execution_status=qr.execution_status,
+                    passed_tests=qr.passed_tests,
+                    total_tests=qr.total_tests,
+                    ai_hint_explanation=qr.ai_hint_explanation,
+                    ai_hint_suggestion=qr.ai_hint_suggestion,
+                    attempts=qr.attempts,
+                )
+            )
 
         # Sort by question_index ascending (RC-B-05).
         records.sort(key=lambda r: r.question_index)
@@ -299,19 +292,18 @@ class ReplaySessionBuilder:
             session_duration_seconds = None
 
         return ReplaySessionMetadata(
-            interview_index=sh.interview_index + 1,      # Data Model §3: ge=1; SessionHistory uses 0-based
-            session_date=sh.created_at,                  # RG-01: session_history.created_at
+            interview_index=sh.interview_index
+            + 1,  # Data Model §3: ge=1; SessionHistory uses 0-based
+            session_date=sh.created_at,  # RG-01: session_history.created_at
             role=im.role,
-            seniority_level=im.seniority,                # field rename: seniority → seniority_level
+            seniority_level=im.seniority,  # field rename: seniority → seniority_level
             interview_mode=im.interview_mode,
-            question_count=len(sh.question_results),     # source correction §1.6
+            question_count=len(sh.question_results),  # source correction §1.6
             session_duration_seconds=session_duration_seconds,
             company=im.company,
         )
 
-    def _build_timeline(
-        self, question_results: tuple[ReplayQuestionRecord, ...]
-    ) -> ReplayTimeline:
+    def _build_timeline(self, question_results: tuple[ReplayQuestionRecord, ...]) -> ReplayTimeline:
         """Derive ReplayTimeline from ordered question_results."""
         entries = tuple(
             ReplayTimelineEntry(

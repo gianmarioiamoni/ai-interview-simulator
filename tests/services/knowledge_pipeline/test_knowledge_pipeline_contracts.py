@@ -4,11 +4,12 @@
 import pytest
 from pydantic import ValidationError
 
-from services.knowledge_pipeline.knowledge_pipeline_configuration import KnowledgePipelineConfiguration
+from services.knowledge_pipeline.knowledge_pipeline_configuration import (
+    KnowledgePipelineConfiguration,
+)
 from services.knowledge_pipeline.knowledge_pipeline_context import KnowledgePipelineContext
 from services.knowledge_pipeline.knowledge_pipeline_diagnostics import (
     KnowledgePipelineDiagnostics,
-    KnowledgePipelineMetrics,
     PipelineStage,
     StageAuditRecord,
 )
@@ -125,9 +126,7 @@ class TestStageAuditRecord:
 
 class TestKnowledgePipelineDiagnostics:
     def _metrics(self) -> KnowledgePipelineMetrics:
-        return KnowledgePipelineMetrics(
-            session_id="s", candidate_identity_id="c", question_index=0
-        )
+        return KnowledgePipelineMetrics(session_id="s", candidate_identity_id="c", question_index=0)
 
     def test_successful_factory(self):
         diag = KnowledgePipelineDiagnostics.successful(
@@ -158,9 +157,7 @@ class TestKnowledgePipelineDiagnostics:
 
 class TestKnowledgePipelineResult:
     def _diag(self) -> KnowledgePipelineDiagnostics:
-        m = KnowledgePipelineMetrics(
-            session_id="s", candidate_identity_id="c", question_index=0
-        )
+        m = KnowledgePipelineMetrics(session_id="s", candidate_identity_id="c", question_index=0)
         return KnowledgePipelineDiagnostics.successful(
             session_id="s",
             candidate_identity_id="c",

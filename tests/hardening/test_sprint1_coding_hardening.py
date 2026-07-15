@@ -3,14 +3,23 @@
 # Regression suite for Coding Hardening Sprint 1.
 # Covers: P0-A (oracle integrity), P0-B (candidate feedback), P0-C (quarantine).
 
+import hashlib
 import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from domain.contracts.execution.coding_test_case import CodingTestCase
-from domain.contracts.execution.execution_result import ExecutionResult, ExecutionStatus, ExecutionType
-from domain.contracts.execution.execution_test_result import TestExecutionResult, TestStatus, TestType
+from domain.contracts.execution.execution_result import (
+    ExecutionResult,
+    ExecutionStatus,
+    ExecutionType,
+)
+from domain.contracts.execution.execution_test_result import (
+    TestExecutionResult,
+    TestStatus,
+    TestType,
+)
 from domain.contracts.interview.interview_area import InterviewArea
 from domain.contracts.question.question import Question, QuestionDifficulty, QuestionType
 
@@ -20,7 +29,9 @@ from domain.contracts.question.question import Question, QuestionDifficulty, Que
 # ===========================================================
 
 
-def _make_question(prompt="Implement solution(x) returning x * 2.", *, visible_tests=None, hidden_tests=None):
+def _make_question(
+    prompt="Implement solution(x) returning x * 2.", *, visible_tests=None, hidden_tests=None
+):
     return Question(
         id="q1",
         area=InterviewArea.TECH_CODING,
@@ -33,7 +44,9 @@ def _make_question(prompt="Implement solution(x) returning x * 2.", *, visible_t
     )
 
 
-def _make_execution(*, passed=1, total=1, success=True, test_results=None, hidden_failure_sample=None):
+def _make_execution(
+    *, passed=1, total=1, success=True, test_results=None, hidden_failure_sample=None
+):
     return ExecutionResult(
         question_id="q1",
         execution_type=ExecutionType.CODING,
@@ -54,7 +67,6 @@ def _make_execution(*, passed=1, total=1, success=True, test_results=None, hidde
 
 
 class TestRejectNullExpected:
-
     def test_generated_test_case_rejects_null_expected(self):
         from pydantic import ValidationError
         from services.question_intelligence.coding_question_generator import GeneratedTestCase
@@ -94,9 +106,9 @@ class TestRejectNullExpected:
 
 
 class TestComparatorNullGuard:
-
     def _get_comparator_code(self):
         from services.coding_engine.harness.blocks.comparator_block import ComparatorBlock
+
         lines = ComparatorBlock().render()
         return "\n".join(lines)
 
@@ -136,7 +148,6 @@ class TestComparatorNullGuard:
 
 
 class TestNoFallbackHiddenTests:
-
     def test_llm_failure_returns_empty_list(self):
         from app.ai.test_generation.ai_test_generator import AITestGenerator
 
@@ -146,6 +157,7 @@ class TestNoFallbackHiddenTests:
         generator = AITestGenerator(mock_llm)
 
         from domain.contracts.execution.coding_spec import CodingSpec
+
         question = Question(
             id="q2",
             area=InterviewArea.TECH_CODING,
@@ -168,10 +180,7 @@ class TestNoFallbackHiddenTests:
 
 
 class TestCacheNullGuard:
-
     def test_cache_skips_null_expected_entries(self, tmp_path):
-        import json
-        import hashlib
         from app.ai.test_generation.test_cache_service import TestCacheService
 
         cache_data = {}
@@ -195,8 +204,6 @@ class TestCacheNullGuard:
         assert result is None
 
     def test_cache_version_in_key_invalidates_old_entries(self, tmp_path):
-        import json
-        import hashlib
         from app.ai.test_generation.test_cache_service import TestCacheService
 
         question = _make_question()
@@ -218,9 +225,10 @@ class TestCacheNullGuard:
 
 
 class TestFailingInputsInFeedback:
-
     def test_failure_detail_builder_shows_input(self):
-        from app.ui.presenters.feedback.blocks.failure.failure_detail_builder import FailureDetailBuilder
+        from app.ui.presenters.feedback.blocks.failure.failure_detail_builder import (
+            FailureDetailBuilder,
+        )
 
         mock_test = MagicMock()
         mock_test.status = "failed"
@@ -236,7 +244,9 @@ class TestFailingInputsInFeedback:
         assert "[2]" in result
 
     def test_failure_detail_builder_no_input_when_args_empty(self):
-        from app.ui.presenters.feedback.blocks.failure.failure_detail_builder import FailureDetailBuilder
+        from app.ui.presenters.feedback.blocks.failure.failure_detail_builder import (
+            FailureDetailBuilder,
+        )
 
         mock_test = MagicMock()
         mock_test.status = "failed"
@@ -272,7 +282,6 @@ class TestFailingInputsInFeedback:
 
 
 class TestHiddenFailureSample:
-
     def test_harness_emits_hidden_failure_sample(self):
         from services.coding_engine.coding_executor import CodingExecutor
 
@@ -293,7 +302,9 @@ class TestHiddenFailureSample:
         from app.ui.presenters.feedback.blocks.failure_block import FailureBlock
 
         hidden_sample = {"args": [5], "expected": 99, "actual": 10}
-        execution = _make_execution(passed=1, total=2, success=False, hidden_failure_sample=hidden_sample)
+        execution = _make_execution(
+            passed=1, total=2, success=False, hidden_failure_sample=hidden_sample
+        )
 
         mock_analysis = MagicMock()
         mock_analysis.error_type = None
@@ -327,7 +338,6 @@ class TestHiddenFailureSample:
 
 
 class TestHintReceivesArgs:
-
     def test_extract_signals_uses_full_args(self):
         from app.graph.nodes.hint_node import HintNode
 
@@ -366,11 +376,13 @@ class TestHintReceivesArgs:
         mock_exec.execution_time_ms = 10
 
         from tests.factories.interview_state_factory import build_state_with_execution
+
         state = build_state_with_execution(passed_tests=1, total_tests=2, quality="partial")
 
         result = state.get_result_for_question("q1")
         updated = result.model_copy(update={"execution": mock_exec})
         from domain.contracts.interview_state import InterviewState
+
         new_results = dict(state.results_by_question)
         new_results["q1"] = updated
         state2 = state.model_copy(update={"results_by_question": new_results})
@@ -388,9 +400,11 @@ class TestHintReceivesArgs:
 
 
 class TestUnsupportedTypeQuarantine:
-
     def _make_pipeline(self):
-        from services.question_intelligence.pipelines.coding_question_pipeline import CodingQuestionPipeline
+        from services.question_intelligence.pipelines.coding_question_pipeline import (
+            CodingQuestionPipeline,
+        )
+
         return CodingQuestionPipeline(
             retrieval_service=MagicMock(),
             coding_generator=MagicMock(),
@@ -398,30 +412,40 @@ class TestUnsupportedTypeQuarantine:
 
     def test_treenode_prompt_detected(self):
         pipeline = self._make_pipeline()
-        assert pipeline._requires_unsupported_type(
-            "Given a TreeNode root, return the sum of all values."
-        ) is True
+        assert (
+            pipeline._requires_unsupported_type(
+                "Given a TreeNode root, return the sum of all values."
+            )
+            is True
+        )
 
     def test_listnode_prompt_detected(self):
         pipeline = self._make_pipeline()
-        assert pipeline._requires_unsupported_type(
-            "Given a ListNode head, reverse the linked list."
-        ) is True
+        assert (
+            pipeline._requires_unsupported_type("Given a ListNode head, reverse the linked list.")
+            is True
+        )
 
     def test_graphnode_prompt_detected(self):
         pipeline = self._make_pipeline()
-        assert pipeline._requires_unsupported_type(
-            "Given a GraphNode, return all neighbors."
-        ) is True
+        assert (
+            pipeline._requires_unsupported_type("Given a GraphNode, return all neighbors.") is True
+        )
 
     def test_normal_prompt_not_quarantined(self):
         pipeline = self._make_pipeline()
-        assert pipeline._requires_unsupported_type(
-            "Implement two_sum(nums, target) that returns indices."
-        ) is False
+        assert (
+            pipeline._requires_unsupported_type(
+                "Implement two_sum(nums, target) that returns indices."
+            )
+            is False
+        )
 
     def test_map_item_raises_for_treenode_prompt(self):
-        from services.question_intelligence.coding_question_generator import GeneratedCodingQuestion, GeneratedTestCase
+        from services.question_intelligence.coding_question_generator import (
+            GeneratedCodingQuestion,
+            GeneratedTestCase,
+        )
         from domain.contracts.execution.coding_spec import CodingSpec
 
         pipeline = self._make_pipeline()
@@ -436,7 +460,9 @@ class TestUnsupportedTypeQuarantine:
             pipeline._map_item(item, InterviewArea.TECH_CODING)
 
     def test_enrich_item_skips_treenode_corpus_seed(self):
-        from services.question_intelligence.pipelines.coding_question_pipeline import CodingQuestionPipeline
+        from services.question_intelligence.pipelines.coding_question_pipeline import (
+            CodingQuestionPipeline,
+        )
         from domain.contracts.question.question_bank_item import QuestionBankItem
         from domain.contracts.question.question_provenance import QuestionProvenance
         from domain.contracts.interview.interview_area import InterviewArea
