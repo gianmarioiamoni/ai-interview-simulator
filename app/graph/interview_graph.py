@@ -23,12 +23,16 @@ from app.graph.nodes.start_processing_node import start_processing_node
 from app.graph.nodes.question_node import build_question_node
 from app.graph.nodes.reasoner_node import reasoner_node
 from app.graph.nodes.session_close_node import session_close_node
+from app.graph.nodes.longitudinal_update_node import LongitudinalUpdateNode
 
 from services.execution_engine import ExecutionEngine
 from services.ai_hint_engine.ai_hint_service import AIHintService
 from services.interview_evaluation_service import InterviewEvaluationService
 
 from app.ports.llm_port import LLMPort
+from domain.contracts.longitudinal.longitudinal_profile_repository import (
+    LongitudinalProfileRepository,
+)
 
 
 # ---------------------------------------------------------
@@ -84,6 +88,7 @@ def router_node(state: InterviewState) -> InterviewState:
 def build_interview_graph(
     llm: LLMPort,
     hint_service: AIHintService | None = None,
+    longitudinal_repository: LongitudinalProfileRepository | None = None,
 ):
 
     graph = StateGraph(InterviewState)
@@ -95,6 +100,17 @@ def build_interview_graph(
     evaluation_service = InterviewEvaluationService(llm)
     execution_engine = ExecutionEngine()
     hint_service = hint_service or AIHintService(llm)
+
+    if longitudinal_repository is None:
+        from pathlib import Path
+        from infrastructure.longitudinal.longitudinal_profile_repository_impl import (
+            JsonFileLongitudinalProfileRepository,
+        )
+        longitudinal_repository = JsonFileLongitudinalProfileRepository(
+            storage_dir=Path("data/longitudinal")
+        )
+
+    longitudinal_update = LongitudinalUpdateNode(repository=longitudinal_repository)
 
     # -----------------------------------------------------
     # Nodes
@@ -114,6 +130,7 @@ def build_interview_graph(
     graph.add_node("completion", completion_node)
     graph.add_node("session_close", session_close_node)
     graph.add_node("report", report_node)
+    graph.add_node("longitudinal_update", longitudinal_update)
     graph.add_node("start_processing", start_processing_node)
 
     # -----------------------------------------------------
@@ -211,6 +228,7 @@ def build_interview_graph(
     )
 
     graph.add_edge("session_close", "report")
-    graph.add_edge("report", END)
+    graph.add_edge("report", "longitudinal_update")
+    graph.add_edge("longitudinal_update", END)
 
     return graph.compile()
