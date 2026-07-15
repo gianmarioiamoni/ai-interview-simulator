@@ -9,10 +9,16 @@ logger = get_logger(__name__)
 
 
 class UIStateMachine:
-
     @staticmethod
-    def resolve(state: InterviewState | None) -> UIState:
-
+    def resolve(
+        state: InterviewState | None,
+        replay_context: object | None = None,
+    ) -> UIState:
+        # REPLAY — takes precedence when the UI-layer signal is active (I-C10-01).
+        # Duck-typed on `.is_active`; ReplayContext is introduced in Phase 2.
+        if replay_context is not None and getattr(replay_context, "is_active", False):
+            logger.debug("resolved UI state: REPLAY")
+            return UIState.REPLAY
 
         if state is None:
             return UIState.SETUP

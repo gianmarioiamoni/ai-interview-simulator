@@ -4,7 +4,6 @@ from enum import Enum
 
 
 class UIState(str, Enum):
-
     SETUP = "setup"
     QUESTION = "question"
     FEEDBACK = "feedback"
@@ -12,6 +11,7 @@ class UIState(str, Enum):
     COMPLETION = "completion"
     REPORT = "report"
     PROCESSING = "processing"
+    REPLAY = "replay"
 
     def is_interview_state(self) -> bool:
         return self in {UIState.QUESTION, UIState.FEEDBACK}
