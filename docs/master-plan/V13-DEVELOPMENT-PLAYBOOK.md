@@ -87,6 +87,15 @@ If all of these conditions are satisfied, the correction is recorded in the Impl
 
 If any of these conditions is not satisfied, the correction is a design change — not a sequencing correction — and requires a full Freeze Integrity Check and potentially a new ADR before any modification is committed.
 
+### Architecture-First Discipline
+
+The frozen architecture is the implementation contract. Implementation follows architecture — architecture does not emerge from implementation.
+
+- **Frozen architecture is non-negotiable.** Implementation that contradicts a frozen ADR, Domain Contract, or Data Model is a violation, not a design improvement.
+- **No architectural drift.** Every file created or modified during implementation must be traceable to a frozen planning document. If it is not traceable, it is out-of-scope.
+- **No opportunistic refactoring.** Refactors that are not mandated by a frozen planning document are prohibited during implementation phases. They are Technical Debt Register items for the next applicable epic.
+- **Strict phase isolation.** Each implementation phase has a declared scope (§4 of the Implementation Plan). Work outside that scope is a phase violation, regardless of whether the out-of-scope change is beneficial.
+
 ### Zero Known Failing Tests
 
 Every implementation phase, every commit, and every save-token milestone must leave the runtime operational and the complete regression suite green. Planned failing tests are never accepted. If a migration would temporarily break the runtime or the test suite, the implementation plan must introduce bridge phases that restore full green before the breaking removal is committed. A broken test suite is not a milestone — it is a process violation.
@@ -104,18 +113,44 @@ Every V1.3 epic follows this lifecycle. The sequence is mandatory. Steps may not
         ↓
 3. Contract Definition
         ↓
-4. Implementation
+4. Architecture Freeze
         ↓
-5. Architectural Review (CAR)
+5. Implementation Plan
         ↓
-6. Regression
+6. Macro Phase
         ↓
-7. Documentation Update
+7. Architecture Checkpoint
         ↓
-8. Final Review (FR)
+8. Next Macro Phase (repeat 6–7 until all phases complete)
         ↓
-9. Epic Close
+9. Architectural Review (CAR)
+        ↓
+10. Regression
+        ↓
+11. Documentation Update
+        ↓
+12. Final Review (FR)
+        ↓
+13. Epic Close
 ```
+
+### Macro Phase Lifecycle
+
+Within Category B epics, implementation is structured into macro phases. Each macro phase follows this mandatory lifecycle:
+
+```
+Architecture Freeze
+        ↓
+Implementation Plan
+        ↓
+Macro Phase
+        ↓
+Architecture Checkpoint
+        ↓
+Next Macro Phase
+```
+
+No macro phase may begin until the Architecture Checkpoint for the preceding phase has been completed and has explicitly authorized the next macro phase. Architecture Checkpoints are mandatory — they may not be skipped.
 
 ### Step 1 — Epic Planning
 
@@ -219,6 +254,17 @@ The optional body explains why the change was made, not what it does. Code expla
 ### Delete Commits
 
 Deletion commits are first-class commits. A commit that deletes a legacy artifact is as important as a commit that adds a new one. It should be a standalone commit with a clear subject: "delete InterviewEvaluation and all construction paths".
+
+### Atomic Phase Commits
+
+Every implementation sub-phase ends with exactly one atomic commit. The commit must leave the regression suite green. If the automated commit flow is unavailable, the following commands must be provided as the completion artifact:
+
+```
+git add .
+git commit -m "<type>(<scope>): <subject>"
+```
+
+No sub-phase is complete without its commit. A sub-phase with uncommitted changes is not a milestone — it is incomplete work.
 
 ---
 
@@ -340,6 +386,31 @@ The FR produces a binary outcome: **Closed** or **Blocked**. A Blocked FR must e
 
 Trigger the Release Readiness Review when all Epics are closed (FR passed for each) and all go-live checklist items in the Master Plan (§5) are believed to be satisfied. The RR is the final gate before the V1.3 release tag. It verifies all Success Metrics (Master Plan §9), runs the full regression suite, confirms zero open P0/P1 findings, and validates all production deployment criteria. The RR is not a review of code — it is a review of evidence: test results, deployment validation records, performance baseline reports, and architecture audit reports.
 
+### Architecture Checkpoint
+
+Architecture Checkpoints are mandatory after every completed macro phase. An Architecture Checkpoint is a review-only activity: it performs no implementation and produces no code changes.
+
+**Trigger:** Every completed macro phase — automatically, without exception.
+
+**Purpose:** Verify that the implementation of the completed macro phase is architecturally compliant before the next macro phase is authorized to begin.
+
+**Each Architecture Checkpoint must:**
+
+- Review the completed macro phase against the frozen architecture documents (ADR, Domain Contracts, Data Model, Architecture Freeze).
+- Produce findings classified as PASS, WARNING, or BLOCKER for each review dimension.
+- Explicitly authorize (or block) the next macro phase.
+
+**Architecture Checkpoint passes when all of the following are true:**
+
+- All implementation in the completed phase matches the frozen architecture.
+- No P0/P1 architectural violations are open.
+- The regression suite is green at the phase boundary.
+- No temporary bridge, compatibility layer, or partial migration remains unless it has an explicit named deletion target in the Implementation Plan.
+
+**Outcome:** The Architecture Checkpoint produces a binary authorization: **AUTHORIZED** (next macro phase may begin) or **BLOCKED** (blocking findings must be resolved first). A BLOCKED checkpoint prevents the next macro phase from starting; it does not block P2/P3 finding resolution within the same phase.
+
+**Scope:** Architecture Checkpoints cover architecture only. They do not review code style, test coverage, or documentation completeness — those are covered by the CAR and FR.
+
 ### Mini Architecture Freeze
 
 Triggered when an additive ADR is discovered and accepted during implementation — one that was not part of the original epic planning set but is required to resolve a lifecycle, ownership, or boundary gap identified during Domain Discovery or implementation.
@@ -380,6 +451,7 @@ The Freeze Integrity Check is performed by the author of the modification immedi
 |---|---|---|---|
 | Implementation Dependency Validation | Implementation Plan commit boundary table drafted | — | Plan acceptance |
 | ADR | New design decision before implementation | — | Implementation start |
+| Architecture Checkpoint | Every completed macro phase | Macro phase | Next macro phase start |
 | Mini Architecture Freeze | Additive ADR accepted during implementation; OR sequencing correction (Plan Correction Rule) | — | Resumption of implementation for new ADR scope; OR plan update |
 | CAR | Epic implementation phase complete | Implementation phase | Epic advance |
 | CAR (mid-epic) | Structural violation discovered during implementation | — | Continuation of affected increment |
@@ -395,6 +467,43 @@ The Freeze Integrity Check is performed by the author of the modification immedi
 ### Purpose of Cursor in V1.3
 
 Cursor accelerates implementation and documentation work. It does not replace architectural judgment, ADR authoring decisions, or epic planning. Every Cursor output is reviewed before it is accepted into the codebase or documentation.
+
+### Cursor Chat Policy
+
+Every Cursor chat session is scoped to a single macro phase.
+
+- **Start a new Cursor chat** at the beginning of every macro phase.
+- **Continue the same chat** throughout all sub-phases within that macro phase.
+- **Start another new chat** only when the next macro phase begins.
+
+The rationale: a single chat accumulating context across multiple macro phases degrades prompt quality and increases token cost without benefit. Each macro phase has a well-defined, independent scope — that scope maps exactly to one chat session.
+
+### Implementation Prompt Structure
+
+Every implementation prompt sent to Cursor shall contain all of the following elements, in order:
+
+1. **Cursor Chat decision** — new or continue, with rationale (new macro phase → new chat; same macro phase → continue).
+2. **SAVE-TOKEN** — mandatory at the start of every prompt.
+3. **Regression baseline** — current passing test count from the previous phase completion.
+4. **Authoritative documents** — file paths to the frozen architecture documents governing this phase.
+5. **Mission** — what this phase must accomplish, stated precisely.
+6. **Allowed scope** — files and modules that may be created or modified.
+7. **Forbidden scope** — files and modules that must not be touched.
+8. **Validation requirements** — the specific gates that must pass before this phase is complete.
+9. **Completion criteria** — the observable conditions that define phase completion.
+10. **Architecture review requirements** — any architectural invariants that must be verified.
+11. **Commit instructions** — atomic commit required; commit message format specified.
+12. **Required output format** — what the response must contain (typically: modified files, test results, commit status).
+
+Any prompt missing one or more of these elements is incomplete and must not be submitted until corrected.
+
+### Regression Baseline Protocol
+
+Every completed implementation phase updates the regression baseline:
+
+- The baseline is the passing test count at the end of the completed phase.
+- The next implementation prompt must reference that updated baseline, not the baseline from the start of the epic.
+- No phase may begin with a stale or incorrect baseline in the prompt.
 
 ### For Implementation Work
 
@@ -545,3 +654,5 @@ If, during implementation, an unresolved architectural question emerges — a de
 *Revision 2026-07-14: Added Mini Architecture Freeze review gate (§9). Triggered when an additive ADR is accepted during implementation. Verifies no contradiction, ownership conflict, replay conflict, builder conflict, or freeze violation before implementation resumes. Derived from EPIC-02 Domain Discovery Review experience (ADR-035 lifecycle). Added to Review Gate Summary table.*
 
 *Revision 2026-07-15: Added two engineering principles (§2): "Implementation Dependency Validation" — mandatory commit-boundary self-containment review performed during Implementation Plan authoring, before plan acceptance; and "Plan Correction Rule" — sequencing-only corrections to the Implementation Plan require only a Mini Architecture Freeze, not a full Architecture Freeze. Mini Architecture Freeze (§9) updated to cover both ADR-triggered and sequencing-correction triggers. Review Gate Summary (§9) updated with Implementation Dependency Validation gate. Stopping Rule (§8) updated with issue-classification step: sequencing issues apply Plan Correction Rule; architectural issues follow the full ADR path. Epic Workflow Step 1 (§3) updated to mandate Implementation Dependency Validation when the commit boundary table is drafted. Derived from EPIC-02 P3/C2 sequencing correction experience.*
+
+*Revision 2026-07-15 (EPIC-03 close-out): Seven workflow improvements formalised from EPIC-03 Replay Engine implementation experience: (1) Macro Phase Lifecycle (§3) — added mandatory Architecture Freeze → Implementation Plan → Macro Phase → Architecture Checkpoint → Next Macro Phase lifecycle with diagram; (2) Cursor Chat Policy (§10) — formalised one-chat-per-macro-phase rule; new chat at every macro phase start, same chat for all sub-phases; (3) Architecture Checkpoint (§9) — added as mandatory review gate after every completed macro phase; produces PASS/WARNING/BLOCKER findings; explicitly authorises the next macro phase; added to Review Gate Summary; (4) Implementation Prompt Structure (§10) — defined 12 mandatory elements every Cursor implementation prompt must contain; (5) Regression Baseline Protocol (§10) — formalised that every completed phase updates the baseline and the next prompt must use the updated baseline; (6) Atomic Phase Commits (§6) — formalised that every sub-phase ends with one atomic commit; fallback git commands required when automated commit is unavailable; (7) Architecture-First Discipline (§2) — formalised as an engineering principle: frozen architecture is non-negotiable, no drift, no opportunistic refactoring, strict phase isolation.*
