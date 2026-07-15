@@ -1,6 +1,6 @@
 # EPIC-04 — Replay UI Experience
 
-**Status:** DOMAIN CONTRACTS COMPLETE — Data Model not yet begun  
+**Status:** DATA MODEL COMPLETE — Architecture Review / ADR (conditional) next  
 **Date:** 2026-07-15  
 **Epic ID:** EPIC-V13-04  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -98,8 +98,8 @@ A new ADR shall be created **only if** a genuine unresolved architectural decisi
 | AA-04 | ADR-037 requires no modification to satisfy EPIC-04 UI requirements | VERIFIED | EPIC-04-RELAY-UI.md §5 | Verified by Architecture Discovery: all requirements covered by existing ADR-037 D3 field set |
 | AA-05 | Replay UI is fully read-only; no write path to `InterviewState`, `SessionHistory`, or any domain artifact | VERIFIED | EPIC-04-DOMAIN-CONTRACTS.md §6 | Formally verified: read-only constraint table complete; `current_position` and `ReplayContext` are ephemeral UI-layer state |
 | AA-06 | `ReplaySession` is produced on demand per request; no caching or persistence is needed at the UI layer | VERIFIED | ADR-037 D1 §1.4 | ADR-037 D1 §1.4 confirms no persistence; Architecture Discovery confirms UI receives session in memory |
-| AA-07 | Responsive layout (mobile, tablet, desktop) is achievable within the existing frontend stack without new dependencies | UNVERIFIED | EPIC-04-IMPLEMENTATION-PLAN.md | Requires framework-specific verification; not a Domain Contracts blocker |
-| AA-08 | Performance is acceptable for sessions of 20+ questions without architectural changes | UNVERIFIED | EPIC-04-IMPLEMENTATION-PLAN.md | Requires 20-question fixture profiling; not a Domain Contracts blocker |
+| AA-07 | Responsive layout (mobile, tablet, desktop) is achievable within the existing frontend stack without new dependencies | VERIFIED | EPIC-04-DATA-MODEL.md §6 | Gradio framework confirmed; `gr.Row`, `gr.Column`, custom CSS injection sufficient for all three breakpoints; no new dependency required |
+| AA-08 | Performance is acceptable for sessions of 20+ questions without architectural changes | CONDITIONALLY VERIFIED | EPIC-04-DATA-MODEL.md §7 | O(1) navigation confirmed; no architectural blocker; profiling gates (load time, navigation step, memory) required in Implementation Plan |
 
 **All assumptions must reach status VERIFIED before Architecture Freeze.**
 
@@ -129,7 +129,7 @@ Domain Contracts  ← COMPLETE
   → Field-to-component mapping (every ReplaySession field traced)
   → Verify AA-05
         ↓
-Data Model
+Data Model  ← COMPLETE
   → EPIC-04-DATA-MODEL.md
   → Resolve open modelling questions from Domain Contracts
   → Freeze component data model field tables
