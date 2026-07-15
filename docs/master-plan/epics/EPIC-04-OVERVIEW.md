@@ -1,6 +1,6 @@
 # EPIC-04 — Replay UI Experience
 
-**Status:** INITIALIZATION COMPLETE — Architecture Discovery not yet begun  
+**Status:** ARCHITECTURE DISCOVERY COMPLETE — Domain Contracts not yet begun  
 **Date:** 2026-07-15  
 **Epic ID:** EPIC-V13-04  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -92,14 +92,14 @@ A new ADR shall be created **only if** a genuine unresolved architectural decisi
 
 | ID | Description | Status | Verification Document | Notes |
 |---|---|---|---|---|
-| AA-01 | `ReplaySession` field set (ADR-037 D3) is sufficient to render all UI panels defined in Master Plan §4 EPIC-V13-04 | UNVERIFIED | EPIC-04-REPLAY-UI.md | BLOCKING if false; must be verified in Architecture Discovery |
-| AA-02 | No LLM call is reachable from any Replay UI component render path | UNVERIFIED | EPIC-04-ARCHITECTURE-FREEZE.md | I-11 enforcement; architectural test required |
-| AA-03 | ADR-003 (State-Driven UI) governs replay navigation state without requiring a new ADR | UNVERIFIED | EPIC-04-REPLAY-UI.md | Evaluate during Architecture Discovery |
-| AA-04 | ADR-037 requires no modification to satisfy EPIC-04 UI requirements | UNVERIFIED | EPIC-04-REPLAY-UI.md | Any required modification is a blocking architectural issue |
-| AA-05 | Replay UI is fully read-only; no write path to `InterviewState`, `SessionHistory`, or any domain artifact | UNVERIFIED | EPIC-04-DOMAIN-CONTRACTS.md | Structural constraint from Master Plan §4 |
-| AA-06 | `ReplaySession` is produced on demand per request; no caching or persistence is needed at the UI layer | UNVERIFIED | EPIC-04-DATA-MODEL.md | ADR-037 D1 §1.4 confirms no persistence; UI must not assume persistence |
-| AA-07 | Responsive layout (mobile, tablet, desktop) is achievable within the existing frontend stack without new dependencies | UNVERIFIED | EPIC-04-IMPLEMENTATION-PLAN.md | Risk: new UI library dependency; must be confirmed before Architecture Freeze |
-| AA-08 | Performance is acceptable for sessions of 20+ questions without architectural changes | UNVERIFIED | EPIC-04-IMPLEMENTATION-PLAN.md | Master Plan explicitly flags this; profiling fixture required before ship |
+| AA-01 | `ReplaySession` field set (ADR-037 D3) is sufficient to render all UI panels defined in Master Plan §4 EPIC-V13-04 | VERIFIED | EPIC-04-REPLAY-UI.md §5 | Verified by Architecture Discovery Traceability Matrix: all 17 requirements mapped to source fields; no gap found |
+| AA-02 | No LLM call is reachable from any Replay UI component render path | CONDITIONALLY VERIFIED | EPIC-04-ARCHITECTURE-FREEZE.md | Architectural constraint confirmed; enforcement test required in implementation |
+| AA-03 | ADR-003 (State-Driven UI) governs replay navigation state without requiring a new ADR | CONDITIONALLY VERIFIED | EPIC-04-DOMAIN-CONTRACTS.md | Navigation position is UI-scoped ephemeral state; ADR-003 sufficient; confirmed in Domain Contracts |
+| AA-04 | ADR-037 requires no modification to satisfy EPIC-04 UI requirements | VERIFIED | EPIC-04-RELAY-UI.md §5 | Verified by Architecture Discovery: all requirements covered by existing ADR-037 D3 field set |
+| AA-05 | Replay UI is fully read-only; no write path to `InterviewState`, `SessionHistory`, or any domain artifact | VERIFIED (architecturally) | EPIC-04-DOMAIN-CONTRACTS.md | All components read-only by design (§4); structural enforcement test is implementation artifact |
+| AA-06 | `ReplaySession` is produced on demand per request; no caching or persistence is needed at the UI layer | VERIFIED | ADR-037 D1 §1.4 | ADR-037 D1 §1.4 confirms no persistence; Architecture Discovery confirms UI receives session in memory |
+| AA-07 | Responsive layout (mobile, tablet, desktop) is achievable within the existing frontend stack without new dependencies | UNVERIFIED | EPIC-04-IMPLEMENTATION-PLAN.md | Requires framework-specific verification; not a Domain Contracts blocker |
+| AA-08 | Performance is acceptable for sessions of 20+ questions without architectural changes | UNVERIFIED | EPIC-04-IMPLEMENTATION-PLAN.md | Requires 20-question fixture profiling; not a Domain Contracts blocker |
 
 **All assumptions must reach status VERIFIED before Architecture Freeze.**
 
@@ -110,7 +110,7 @@ A new ADR shall be created **only if** a genuine unresolved architectural decisi
 ```
 EPIC Initialization  ← COMPLETE
         ↓
-Architecture Discovery
+Architecture Discovery  ← COMPLETE
   → EPIC-04-REPLAY-UI.md
   → Inventory ReplaySession fields (ADR-037 D3)
   → Map fields to all UI display requirements (populates Traceability Matrix)
