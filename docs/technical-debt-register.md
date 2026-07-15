@@ -77,6 +77,12 @@
 | TD-TC-008 | Feedback aggregation untested | `services/feedback_aggregation/` | Medium | OPEN |
 | TD-TC-009 | `ReportExportService` untested | `services/report_export_service.py` | Low | OPEN |
 
+### EPIC-02 Accepted Architectural Limitations
+
+| ID | Item | Location | Severity | Status | ADR |
+|---|---|---|---|---|---|
+| TD-EP02-001 | `language_capability_summary` not reconstructable from `SessionHistory[]` — reconstructed `LongitudinalProfile` always has `language_capability_summary = []`; `LanguageCapability` is transient and not persisted in `SessionHistory` (OI-03 resolution) | `infrastructure/longitudinal/`, `domain/contracts/longitudinal/longitudinal_profile_builder.py` | Low | DEFERRED | ADR-034 D7, ADR-036 §6.5 |
+
 ---
 
 ## Closed Items

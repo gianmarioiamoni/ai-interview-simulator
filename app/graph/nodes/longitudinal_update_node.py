@@ -118,9 +118,11 @@ class LongitudinalUpdateNode:
         except Exception as exc:
             logger.warning(
                 "longitudinal_update_node failed — profile not updated | "
-                "candidate=%s session=%s error=%s",
+                "candidate=%s interview_index=%s session=%s timestamp=%s error=%s",
                 candidate_id,
-                state.interview_id,
+                interview_index,
+                session_history.session_id,
+                datetime.now(tz=timezone.utc).isoformat(),
                 type(exc).__name__,
             )
 
