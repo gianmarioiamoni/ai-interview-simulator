@@ -1,6 +1,6 @@
 # EPIC-04 — Replay UI Experience
 
-**Status:** DATA MODEL COMPLETE — Architecture Review / ADR (conditional) next  
+**Status:** ARCHITECTURE FREEZE APPROVED — Implementation Plan next  
 **Date:** 2026-07-15  
 **Epic ID:** EPIC-V13-04  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -137,13 +137,13 @@ Data Model  ← COMPLETE
   → Verify AA-06, AA-07, AA-08
   → All Architecture Assumptions must be VERIFIED at end of this step
         ↓
-Architecture Review / ADR  (conditional)
+Architecture Review / ADR  (conditional)  ← COMPLETE (skipped — no new ADR required)
   → Evaluate: does any genuine unresolved architectural decision remain?
     YES → Author new ADR; freeze decision
     NO  → Skip; record this decision in Architecture Freeze document
   → Verify AA-02 enforcement mechanism
         ↓
-Architecture Freeze
+Architecture Freeze  ← APPROVED
   → EPIC-04-ARCHITECTURE-FREEZE.md
   → All Architecture Exit Criteria satisfied (§8.6 of Playbook)
   → All Architecture Assumptions VERIFIED
