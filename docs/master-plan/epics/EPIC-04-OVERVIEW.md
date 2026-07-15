@@ -1,6 +1,6 @@
 # EPIC-04 — Replay UI Experience
 
-**Status:** ARCHITECTURE FREEZE APPROVED — Implementation Plan next  
+**Status:** IMPLEMENTATION PLAN ACCEPTED — Implementation ready to begin  
 **Date:** 2026-07-15  
 **Epic ID:** EPIC-V13-04  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -150,11 +150,11 @@ Architecture Freeze  ← APPROVED
   → Traceability Matrix and Component Inventory referenced
   → Zero open issues in any planning document
         ↓
-Implementation Plan
+Implementation Plan  ← ACCEPTED
   → EPIC-04-IMPLEMENTATION-PLAN.md
   → Commit boundary table + Implementation Dependency Validation
   → Phase breakdown
-  → Regression baseline declared
+  → Regression baseline declared (6574 passing)
         ↓
 Implementation
 ```
