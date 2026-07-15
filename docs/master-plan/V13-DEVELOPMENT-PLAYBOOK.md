@@ -576,15 +576,16 @@ Applies whenever the epic introduces or substantially changes any of the followi
 **Mandatory workflow:**
 
 1. **Master Plan** — Epic scope, purpose, dependencies, non-goals, and success criteria.
-2. **Architecture Review** — Full analysis of current state, target state, all affected subsystems, open decisions, and structural gaps. Produces a structured report of confirmed decisions, missing decisions, and risks. Does not produce code.
-3. **ADR** — One or more ADRs in `docs/decisions/` that freeze every architectural decision identified in the Architecture Review. Implementation cannot begin until all blocking ADR decisions are frozen.
-4. **Domain Contracts** — A dedicated domain contract specification document under `docs/master-plan/epics/`. Specifies the complete field set, types, validation invariants, ownership, lifecycle, and relationships of every new artifact. Precise enough that implementation is mechanical.
-5. **Data Model Specification** — A dedicated data model document. Resolves all open modelling decisions left by the Domain Contracts document. Freezes the complete field tables for all affected artifacts. Verifies replay completeness. Evaluates future extensibility.
-6. **Architecture Freeze** — A formal gate (described below). Implementation cannot begin before Architecture Freeze passes.
-7. **Implementation** — Incremental implementation against frozen contracts. No architectural choices during coding. Every phase must satisfy the Zero Known Failing Tests rule (§2). Bridge phases must be introduced wherever a migration would otherwise produce a temporarily broken runtime or test suite. If an unresolved question emerges, apply the Stopping Rule (below).
-8. **CAR (Change Acceptance Report)** — Confirms the implementation satisfies all ADR decisions, domain contracts, and data model specifications.
-9. **RR (Regression Report)** — Confirms the full test suite passes with no regressions.
-10. **Epic Freeze** — Epic is declared complete. No further scope additions.
+2. **Architecture Discovery** — Full analysis of current state, target state, all affected subsystems, open decisions, and structural gaps. Produces a structured report of confirmed decisions, missing decisions, and risks. Does not produce code. Must contain a Component Inventory section (for UI-bearing epics) and populates the Architecture Assumptions Register. See Definition of Done §8.1.
+3. **Domain Contracts** — A dedicated domain contract specification document under `docs/master-plan/epics/`. Specifies the complete field set, types, validation invariants, ownership, lifecycle, and relationships of every new artifact. Contains the Traceability Matrix linking Master Plan requirements to domain contract fields. Precise enough that implementation is mechanical. See Definition of Done §8.2.
+4. **Data Model Specification** — A dedicated data model document. Resolves all open modelling decisions left by the Domain Contracts document. Freezes the complete field tables for all affected artifacts. Verifies replay completeness. Evaluates future extensibility. All Architecture Assumptions must be VERIFIED before this document is declared complete. See Definition of Done §8.3.
+5. **Architecture Review / ADR (conditional)** — Evaluate whether any genuine unresolved architectural decision remains after Domain Contracts and Data Model. Existing ADRs shall be reused whenever possible. A new ADR shall be created only if a genuine unresolved architectural decision remains at this stage. Do not create ADRs proactively. See Definition of Done §8.4.
+6. **Architecture Freeze** — A formal gate (described below). Implementation cannot begin before Architecture Freeze passes. All Architecture Exit Criteria (§8.6) must be satisfied. See Definition of Done §8.5.
+7. **Implementation Plan** — Commit boundary table with Implementation Dependency Validation. Phase breakdown. Regression baseline declared. See Definition of Done §8.6 (Implementation Plan DoD).
+8. **Implementation** — Incremental implementation against frozen contracts. No architectural choices during coding. Every phase must satisfy the Zero Known Failing Tests rule (§2). Bridge phases must be introduced wherever a migration would otherwise produce a temporarily broken runtime or test suite. If an unresolved question emerges, apply the Stopping Rule (below).
+9. **CAR (Change Acceptance Report)** — Confirms the implementation satisfies all ADR decisions, domain contracts, and data model specifications.
+10. **RR (Regression Report)** — Confirms the full test suite passes with no regressions.
+11. **Epic Freeze** — Epic is declared complete. No further scope additions.
 
 ---
 
@@ -617,13 +618,160 @@ Each planning document has a unique responsibility. Documents must not duplicate
 | Document | Unique Responsibility |
 |----------|-----------------------|
 | **Master Plan** | Epic scope, purpose, product goals, dependencies, non-goals, success criteria. Does not specify field-level data. |
-| **Architecture Review** | Analysis of current state vs target state. Identifies affected subsystems, confirmed decisions, missing decisions, and risks. Produces findings only — no decisions. |
-| **ADR** | Freezes decisions. Evaluates alternatives. Records rationale. Specifies migration impact. Each decision is owned by exactly one ADR. |
-| **Domain Contracts** | Field-level specification of every new or changed artifact: types, defaults, constraints, validators, ownership, lifecycle. Does not evaluate alternatives (that is the ADR's job). |
-| **Data Model Specification** | Resolves all open modelling questions left by the Domain Contracts document. Freezes complete field tables. Verifies replay completeness. Evaluates extensibility. Does not re-specify invariants (that is the Domain Contracts' job). |
+| **Architecture Discovery** | Analysis of current state vs target state. Identifies affected subsystems, confirmed decisions, missing decisions, and risks. Contains Component Inventory (for UI-bearing epics). Populates Architecture Assumptions Register. Produces findings only — no decisions. |
+| **ADR** | Freezes decisions. Evaluates alternatives. Records rationale. Specifies migration impact. Each decision is owned by exactly one ADR. Created only when a genuine unresolved architectural decision cannot be resolved by existing ADRs. |
+| **Domain Contracts** | Field-level specification of every new or changed artifact: types, defaults, constraints, validators, ownership, lifecycle. Contains Traceability Matrix linking Master Plan requirements to domain fields. Does not evaluate alternatives (that is the ADR's job). |
+| **Data Model Specification** | Resolves all open modelling questions left by the Domain Contracts document. Freezes complete field tables. Verifies replay completeness. Evaluates extensibility. All Architecture Assumptions must be VERIFIED before this document is declared complete. Does not re-specify invariants (that is the Domain Contracts' job). |
+| **Architecture Freeze** | Formal gate document. Confirms all Architecture Exit Criteria are satisfied. Authorises implementation to begin. |
+| **Implementation Plan** | Commit boundary table with dependency validation. Phase breakdown. Regression baseline. |
 | **CAR (Change Acceptance Report)** | Post-implementation verification that the implementation matches the frozen decisions. Records any deviations and their justification. |
 | **RR (Regression Report)** | Test suite results. Regression counts. No architectural content. |
 | **Epic Freeze** | Declaration that the epic is complete, all criteria are met, and the codebase is stable. |
+
+---
+
+### Traceability Matrix
+
+The Traceability Matrix is a mandatory section within the Domain Contracts document. It must be complete before Architecture Freeze.
+
+**Purpose:** Provide end-to-end traceability from every Master Plan requirement to the artifact that satisfies it, the component that consumes it, and the verification artifact that proves it was implemented.
+
+**Format:** Each row links:
+
+| Master Plan Requirement | Domain Contract / Field | Consuming Component | Verification Artifact |
+|---|---|---|---|
+
+**Rules:**
+- Every Master Plan requirement for the epic must have at least one row.
+- Every domain contract field exposed to the UI must appear in at least one row.
+- A field with no consuming component is a dead field — it must be removed or justified.
+- A requirement with no domain contract field is an unmet requirement — it blocks Architecture Freeze.
+- The Traceability Matrix is not a substitute for the Component Inventory; both are required.
+
+---
+
+### Architecture Assumptions Register
+
+The Architecture Assumptions Register is a mandatory artifact for every Category B epic. It is initialized during Architecture Discovery and must be fully resolved before Architecture Freeze.
+
+**Purpose:** Make every assumption that underpins the architecture explicit and verifiable. An assumption that is never written down is a risk that is never mitigated.
+
+**Format:** Each entry includes:
+
+| ID | Description | Status | Verification Document | Notes |
+|---|---|---|---|---|
+
+**Status values:** `UNVERIFIED` (initial) → `VERIFIED` (confirmed by a planning document) → `INVALIDATED` (assumption is false; requires architectural response).
+
+**Rules:**
+- Every assumption identified during Architecture Discovery must be registered.
+- No assumption may remain `UNVERIFIED` at Architecture Freeze. Every unverified assumption is a blocking issue.
+- An `INVALIDATED` assumption requires returning to the Architecture Discovery / ADR phase before proceeding.
+- The register is maintained in the Architecture Discovery document (`EPIC-NN-*.md`) as a dedicated section.
+
+---
+
+### Component Inventory
+
+For every UI-bearing epic, the Architecture Discovery document must contain a dedicated **Component Inventory** section.
+
+**Purpose:** Enumerate every UI component and specify its data contract before domain contracts are authored. This prevents domain contracts from being written without a clear consumer.
+
+**For every UI component specify:**
+
+| Field | Required |
+|---|---|
+| Component name | Yes |
+| Responsibility | Yes |
+| Owner | Yes |
+| Input data | Yes |
+| Output | Yes |
+| Dependencies | Yes |
+| Read-only / write capability | Yes |
+| Domain artifact fields consumed | Yes |
+
+A component that consumes a field not present in the domain artifact is a gap — it blocks Architecture Freeze.
+
+---
+
+### Definition of Done — Architecture Documents
+
+Each planning document has mandatory completion criteria. A document that does not satisfy its DoD is not complete and may not be referenced as a basis for the next step.
+
+#### §8.1 Architecture Discovery
+
+- Current state vs. target state analysis is complete.
+- All affected subsystems are identified.
+- All confirmed decisions are listed with their governing ADR.
+- All missing decisions are listed as open items.
+- All risks are identified and classified.
+- Component Inventory section is complete (for UI-bearing epics).
+- Architecture Assumptions Register is populated (all assumptions are `UNVERIFIED` or `VERIFIED`; none are missing).
+- No code is produced or modified.
+
+#### §8.2 Domain Contracts
+
+- Every new or changed artifact has a complete field specification (types, defaults, constraints, validators).
+- Every artifact has a declared sole writer, declared readers, and a declared lifecycle.
+- Traceability Matrix is complete: every Master Plan requirement is linked to at least one domain field, one consuming component, and one verification artifact.
+- No field is untraced (dead field).
+- No requirement is unmet (missing field).
+- Does not contain alternatives evaluation (that belongs in ADRs).
+
+#### §8.3 Data Model Specification
+
+- All open modelling questions from Domain Contracts are resolved.
+- Complete field tables are frozen for all affected artifacts.
+- Replay completeness is verified (every UI panel has a source field).
+- Extensibility for next epics is evaluated.
+- All Architecture Assumptions are `VERIFIED` or `INVALIDATED`; none remain `UNVERIFIED`.
+- An `INVALIDATED` assumption has a recorded architectural response.
+
+#### §8.4 Architecture Review / ADR (conditional)
+
+- Applies only when a genuine unresolved architectural decision remains after Domain Contracts and Data Model.
+- Existing ADRs have been evaluated for applicability before a new ADR is proposed.
+- Each new ADR evaluates at least two alternatives.
+- Each new ADR records rationale and migration impact.
+- No ADR is created proactively or speculatively.
+- If no unresolved decision exists, this step is skipped and that decision is recorded in the Architecture Freeze document.
+
+#### §8.5 Architecture Freeze
+
+- All Architecture Exit Criteria (§8.6) are satisfied.
+- The freeze document explicitly records whether any new ADR was required and, if not, why it was skipped.
+- All Architecture Assumptions are `VERIFIED`.
+- The Traceability Matrix is complete and referenced.
+- The Component Inventory is complete and referenced.
+- No open issues remain in any planning document.
+
+#### §8.6 Implementation Plan
+
+- Commit boundary table is complete.
+- Implementation Dependency Validation (§2) has been applied to every commit boundary.
+- Every commit is independently implementable and has an executable test gate.
+- No circular implementation dependencies exist.
+- Regression baseline is declared.
+- Phase breakdown matches the Architecture Freeze scope.
+
+---
+
+### Architecture Exit Criteria
+
+Implementation may begin only if **ALL** of the following are true. This list is the mandatory gate between planning and implementation. It is evaluated as part of the Architecture Freeze.
+
+- [ ] Architecture Discovery is complete (§8.1 DoD satisfied).
+- [ ] Component Inventory is complete (for UI-bearing epics).
+- [ ] Traceability Matrix is complete (every Master Plan requirement traced to a field, a component, and a verification artifact).
+- [ ] Domain Contracts are frozen (§8.2 DoD satisfied).
+- [ ] Data Model is frozen (§8.3 DoD satisfied).
+- [ ] All Architecture Assumptions have status `VERIFIED`.
+- [ ] No `BLOCKER` findings remain open in any planning document.
+- [ ] All ADR decisions are complete and accepted (where an ADR was required).
+- [ ] Architecture Freeze is declared (§8.5 DoD satisfied).
+- [ ] Implementation Plan is accepted (§8.6 DoD satisfied; Implementation Dependency Validation passed).
+
+A single unchecked item blocks the start of implementation. There are no exceptions.
 
 ---
 
@@ -656,3 +804,5 @@ If, during implementation, an unresolved architectural question emerges — a de
 *Revision 2026-07-15: Added two engineering principles (§2): "Implementation Dependency Validation" — mandatory commit-boundary self-containment review performed during Implementation Plan authoring, before plan acceptance; and "Plan Correction Rule" — sequencing-only corrections to the Implementation Plan require only a Mini Architecture Freeze, not a full Architecture Freeze. Mini Architecture Freeze (§9) updated to cover both ADR-triggered and sequencing-correction triggers. Review Gate Summary (§9) updated with Implementation Dependency Validation gate. Stopping Rule (§8) updated with issue-classification step: sequencing issues apply Plan Correction Rule; architectural issues follow the full ADR path. Epic Workflow Step 1 (§3) updated to mandate Implementation Dependency Validation when the commit boundary table is drafted. Derived from EPIC-02 P3/C2 sequencing correction experience.*
 
 *Revision 2026-07-15 (EPIC-03 close-out): Seven workflow improvements formalised from EPIC-03 Replay Engine implementation experience: (1) Macro Phase Lifecycle (§3) — added mandatory Architecture Freeze → Implementation Plan → Macro Phase → Architecture Checkpoint → Next Macro Phase lifecycle with diagram; (2) Cursor Chat Policy (§10) — formalised one-chat-per-macro-phase rule; new chat at every macro phase start, same chat for all sub-phases; (3) Architecture Checkpoint (§9) — added as mandatory review gate after every completed macro phase; produces PASS/WARNING/BLOCKER findings; explicitly authorises the next macro phase; added to Review Gate Summary; (4) Implementation Prompt Structure (§10) — defined 12 mandatory elements every Cursor implementation prompt must contain; (5) Regression Baseline Protocol (§10) — formalised that every completed phase updates the baseline and the next prompt must use the updated baseline; (6) Atomic Phase Commits (§6) — formalised that every sub-phase ends with one atomic commit; fallback git commands required when automated commit is unavailable; (7) Architecture-First Discipline (§2) — formalised as an engineering principle: frozen architecture is non-negotiable, no drift, no opportunistic refactoring, strict phase isolation.*
+
+*Revision 2026-07-15 (EPIC-04 initialisation): Five governance improvements formalised from EPIC-04 initialisation experience: (1) Category B workflow resequenced (§8) — Architecture Discovery precedes Domain Contracts; Domain Contracts and Data Model precede Architecture Review / ADR authoring; ADR authoring is conditional, not prescribed; Implementation Plan is now an explicit numbered step; (2) Traceability Matrix (§8) — mandatory section within Domain Contracts; links every Master Plan requirement to a domain field, a consuming component, and a verification artifact; must be complete before Architecture Freeze; (3) Architecture Assumptions Register (§8) — mandatory artifact for every Category B epic; populated during Architecture Discovery; all assumptions must be VERIFIED before Architecture Freeze; maintained in the Architecture Discovery document; (4) Component Inventory (§8) — mandatory section within the Architecture Discovery document for UI-bearing epics; specifies every UI component with full data contract before domain contracts are authored; (5) Definition of Done and Architecture Exit Criteria (§8) — per-document DoDs defined for Architecture Discovery, Domain Contracts, Data Model, Architecture Review / ADR, Architecture Freeze, and Implementation Plan; Architecture Exit Criteria checklist formalises the implementation gate; all criteria must be satisfied before implementation begins. Derived from EPIC-04 Replay UI Experience initialisation process.*
