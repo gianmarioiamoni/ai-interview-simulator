@@ -30,9 +30,14 @@ from tests.domain.contracts.progress.conftest import (
     SESSION_ID,
     SESSION_ID_B,
     FIXED_COMPUTED_AT,
-    make_history,
     make_learning_progress,
-    make_two_histories,
+    make_single_entry_profile,
+    make_two_entry_profile,
+)
+from tests.domain.contracts.longitudinal.conftest import (
+    make_session_entry,
+    make_longitudinal_profile,
+    FIXED_DT as LONGITUDINAL_FIXED_DT,
 )
 
 
@@ -66,10 +71,10 @@ class TestCandidateIdentityContract:
         )
         assert identity.display_name == "Alice"
 
-    def test_no_duplicate_candidate_identity_in_session_history(self) -> None:
-        """SessionHistory already carries candidate_identity_id — no separate model needed."""
-        history = make_history()
-        assert history.candidate_identity_id == CANDIDATE_ID
+    def test_no_duplicate_candidate_identity_in_longitudinal_profile(self) -> None:
+        """LongitudinalProfile carries candidate_identity_id — no duplicate model needed."""
+        profile = make_single_entry_profile()
+        assert profile.candidate_identity_id == CANDIDATE_ID
 
 
 # ===========================================================================
@@ -125,8 +130,8 @@ class TestSessionProgressEntryContract:
 
     def test_entry_carries_role_seniority(self, learning_progress: LearningProgress) -> None:
         entry = learning_progress.session_entries[0]
-        assert entry.role == "backend_engineer"
-        assert entry.seniority == "Senior"
+        assert entry.role == "Backend Engineer"
+        assert entry.seniority == "senior"
 
     def test_entry_dimensional_scores_not_empty(self, learning_progress: LearningProgress) -> None:
         entry = learning_progress.session_entries[0]
@@ -144,60 +149,62 @@ class TestSessionProgressEntryContract:
 
 class TestLearningProgressBuilder:
     def test_builder_is_sole_creation_path(self) -> None:
-        """LearningProgress must be created via builder, not direct construction."""
-        histories = make_two_histories()
+        """LearningProgress must be created via builder from LongitudinalProfile."""
+        profile = make_two_entry_profile()
         progress = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories(histories)
+            .with_longitudinal_profile(profile)
             .with_computed_at(FIXED_COMPUTED_AT)
             .build()
         )
         assert progress.candidate_identity_id == CANDIDATE_ID
 
-    def test_builder_raises_without_candidate_id(self) -> None:
-        with pytest.raises(ValueError, match="candidate_identity_id"):
-            LearningProgressBuilder().with_session_histories([]).build()
-
-    def test_builder_raises_on_foreign_session_history(self) -> None:
-        history_foreign = make_history(candidate_id=CANDIDATE_ID_B)
-        with pytest.raises(ValueError, match=CANDIDATE_ID_B):
-            (
-                LearningProgressBuilder()
-                .with_candidate_identity_id(CANDIDATE_ID)
-                .with_session_histories([history_foreign])
-                .build()
-            )
-
-    def test_builder_sorts_by_interview_index(self) -> None:
-        h0 = make_history(session_id=SESSION_ID, interview_index=0)
-        h1 = make_history(session_id=SESSION_ID_B, interview_index=1)
+    def test_builder_returns_empty_when_profile_is_none(self) -> None:
+        """LP-LP-07: builder returns empty LearningProgress when profile is None."""
         progress = (
             LearningProgressBuilder()
             .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories([h1, h0])  # reversed input
+            .with_longitudinal_profile(None)
+            .build()
+        )
+        assert progress.is_empty
+        assert progress.has_sufficient_data is False
+
+    def test_builder_rejects_session_histories_input(self) -> None:
+        """LP-LP-07: builder must not accept SessionHistory[]; no such method exists."""
+        builder = LearningProgressBuilder()
+        assert not hasattr(builder, "with_session_histories"), (
+            "with_session_histories must not exist (ADR-034 Decision 5)"
+        )
+
+    def test_builder_entries_ordered_by_session_index(self) -> None:
+        """LP-LP-02: session_entries ordered by session_index ascending."""
+        profile = make_two_entry_profile()
+        progress = (
+            LearningProgressBuilder()
+            .with_longitudinal_profile(profile)
             .with_computed_at(FIXED_COMPUTED_AT)
             .build()
         )
         assert progress.session_entries[0].session_index == 0
         assert progress.session_entries[1].session_index == 1
 
-    def test_builder_never_modifies_session_history(self) -> None:
-        histories = make_two_histories()
-        original_ids = [h.session_id for h in histories]
+    def test_builder_profile_immutability_preserved(self) -> None:
+        """Builder must not mutate the source LongitudinalProfile."""
+        profile = make_single_entry_profile()
+        original_id = profile.candidate_identity_id
         _ = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories(histories)
+            .with_longitudinal_profile(profile)
             .build()
         )
-        assert [h.session_id for h in histories] == original_ids
+        assert profile.candidate_identity_id == original_id
 
-    def test_builder_empty_histories_allowed(self) -> None:
+    def test_builder_none_profile_is_empty(self) -> None:
         progress = (
             LearningProgressBuilder()
             .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories([])
+            .with_longitudinal_profile(None)
             .build()
         )
         assert progress.is_empty
@@ -206,7 +213,7 @@ class TestLearningProgressBuilder:
         progress = (
             LearningProgressBuilder()
             .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories([])
+            .with_longitudinal_profile(None)
             .build()
         )
         assert progress.computed_at.tzinfo is not None
@@ -461,30 +468,29 @@ class TestArchitectureInvariants:
         """LearningProgress has no persistence ID — it is derived-only."""
         assert not hasattr(learning_progress, "progress_id")
 
-    def test_progress_derived_from_session_history_exclusively(self) -> None:
-        """Progress entries only carry fields derivable from SessionHistory."""
-        h = make_history()
+    def test_progress_derived_from_longitudinal_profile_exclusively(self) -> None:
+        """Progress entries carry fields derived from LongitudinalProfile — not SessionHistory."""
+        profile = make_single_entry_profile()
+        snap_entry = profile.session_snapshots[0]
         progress = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories([h])
+            .with_longitudinal_profile(profile)
             .build()
         )
         entry = progress.session_entries[0]
-        assert entry.session_id == h.session_id
-        assert entry.session_index == h.interview_index
-        assert entry.role == h.interview_metadata.role
+        assert entry.session_id == snap_entry.session_id
+        assert entry.session_index == snap_entry.interview_index
+        assert entry.role == snap_entry.session_metadata.role
 
-    def test_progress_does_not_modify_session_history(self) -> None:
-        h = make_history()
-        original_session_id = h.session_id
+    def test_progress_does_not_modify_longitudinal_profile(self) -> None:
+        profile = make_single_entry_profile()
+        original_id = profile.candidate_identity_id
         _ = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories([h])
+            .with_longitudinal_profile(profile)
             .build()
         )
-        assert h.session_id == original_session_id
+        assert profile.candidate_identity_id == original_id
 
     def test_no_duplicate_identity_model_used(self) -> None:
         """Only CandidateIdentity from domain/contracts/identity is used; no duplicate."""
@@ -493,8 +499,8 @@ class TestArchitectureInvariants:
             candidate_identity_id=CANDIDATE_ID,
             created_at=datetime(2026, 7, 1, tzinfo=timezone.utc),
         )
-        h = make_history()
-        assert h.candidate_identity_id == identity.candidate_identity_id
+        profile = make_single_entry_profile()
+        assert profile.candidate_identity_id == identity.candidate_identity_id
 
     def test_learning_progress_schema_version_present(
         self, learning_progress: LearningProgress
@@ -510,37 +516,33 @@ class TestArchitectureInvariants:
 # ===========================================================================
 
 class TestDeterminism:
-    def test_same_histories_produce_same_session_count(self) -> None:
-        histories = make_two_histories()
+    def test_same_profile_produces_same_session_count(self) -> None:
+        profile = make_two_entry_profile()
         p1 = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories(histories)
+            .with_longitudinal_profile(profile)
             .with_computed_at(FIXED_COMPUTED_AT)
             .build()
         )
         p2 = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories(histories)
+            .with_longitudinal_profile(profile)
             .with_computed_at(FIXED_COMPUTED_AT)
             .build()
         )
         assert p1.session_count == p2.session_count
 
-    def test_same_histories_produce_same_dimensional_scores(self) -> None:
-        histories = make_two_histories()
+    def test_same_profile_produces_same_dimensional_scores(self) -> None:
+        profile = make_two_entry_profile()
         p1 = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories(histories)
+            .with_longitudinal_profile(profile)
             .with_computed_at(FIXED_COMPUTED_AT)
             .build()
         )
         p2 = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories(histories)
+            .with_longitudinal_profile(profile)
             .with_computed_at(FIXED_COMPUTED_AT)
             .build()
         )
@@ -569,11 +571,10 @@ class TestDeterminism:
 
 class TestIntegration:
     def test_full_pipeline_single_session(self) -> None:
-        h = make_history()
+        profile = make_single_entry_profile()
         progress = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories([h])
+            .with_longitudinal_profile(profile)
             .with_computed_at(FIXED_COMPUTED_AT)
             .build()
         )
@@ -595,11 +596,10 @@ class TestIntegration:
         assert comparison is not None
 
     def test_validator_after_builder(self) -> None:
-        histories = make_two_histories()
+        profile = make_two_entry_profile()
         progress = (
             LearningProgressBuilder()
-            .with_candidate_identity_id(CANDIDATE_ID)
-            .with_session_histories(histories)
+            .with_longitudinal_profile(profile)
             .with_computed_at(FIXED_COMPUTED_AT)
             .build()
         )

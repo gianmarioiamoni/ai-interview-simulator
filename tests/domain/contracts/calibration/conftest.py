@@ -14,13 +14,12 @@ from domain.contracts.progress.learning_progress import LearningProgress
 
 from tests.domain.contracts.progress.conftest import (
     CANDIDATE_ID,
-    SESSION_ID,
-    SESSION_ID_B,
     FIXED_COMPUTED_AT,
     make_learning_progress,
-    make_two_histories,
-    make_history,
 )
+from tests.domain.contracts.knowledge_snapshot.conftest import SESSION_ID
+
+SESSION_ID_B = "sess-test-002"
 from tests.domain.contracts.knowledge_snapshot.conftest import (
     make_knowledge_snapshot,
 )
@@ -100,7 +99,7 @@ def empty_progress_profile() -> CalibrationProfile:
     empty = (
         LearningProgressBuilder()
         .with_candidate_identity_id(CANDIDATE_ID)
-        .with_session_histories([])
+        .with_longitudinal_profile(None)
         .with_computed_at(FIXED_COMPUTED_AT)
         .build()
     )
