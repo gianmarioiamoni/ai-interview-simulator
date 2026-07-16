@@ -1,7 +1,11 @@
 # app/ui/views/report/report_view_model_builder.py
 # EPIC-V13-05 Phase 10 — adds narrative_insights, coaching_objectives, study_recommendations.
 # Phase 2 — study_recommendations from FinalReportDTO only (PC-05 / SR-02); no domain fallback.
+# Phase 5 — LearningProgress injected separately (Plane B; never from FinalReportDTO).
 
+from __future__ import annotations
+
+from domain.contracts.progress.learning_progress import LearningProgress
 from services.report_insight_builder import ReportInsightBuilder
 
 from app.ui.presenters.helpers.dimension_ranking import DimensionRanking
@@ -9,7 +13,11 @@ from app.ui.presenters.helpers.dimension_ranking import DimensionRanking
 
 class ReportViewModelBuilder:
 
-    def build(self, report):
+    def build(
+        self,
+        report,
+        learning_progress: LearningProgress | None = None,
+    ):
 
         dims = report.dimension_scores
         strongest, weakest = DimensionRanking.compute(dims)
@@ -58,4 +66,6 @@ class ReportViewModelBuilder:
             "narrative_insights": narrative_insights,
             "coaching_objectives": coaching_objectives,
             "study_recommendations": study_recommendations,
+            # Plane B — separately injected; never mapped from FinalReportDTO (DM-FR-04).
+            "learning_progress": learning_progress,
         }

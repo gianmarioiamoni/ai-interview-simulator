@@ -17,6 +17,7 @@ from app.ui.response.sections.counter_section import CounterSection
 from app.ui.response.config.button_mapper import ButtonMapper
 
 from app.ui.dto.final_report_dto import FinalReportDTO
+from app.ui.views.report.learning_progress_binder import bind_learning_progress
 from app.ui.views.report_view import build_report_markdown
 
 MAX_ATTEMPTS = 3
@@ -314,7 +315,14 @@ class UIResponseBuilder:
 
         report_dto = FinalReportDTO.from_report(state.report)
 
-        report_html = build_report_markdown(report_dto)
+        # Plane B bind at report UI time (F-W-05): persisted LongitudinalProfile →
+        # LearningProgress via ProgressTracker. Not available on InterviewState at report_node.
+        learning_progress = bind_learning_progress(state.report.candidate_identity_id)
+
+        report_html = build_report_markdown(
+            report_dto,
+            learning_progress=learning_progress,
+        )
 
         return UIResponse(
             state=state,

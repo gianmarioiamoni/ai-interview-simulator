@@ -1,5 +1,8 @@
 # app/ui/views/report/report_renderer.py
 # EPIC-V13-05 Phase 10 — adds narrative insights, coaching objectives, study recommendations.
+# Phase 5 — compose ProgressTrendPanel from separately injected LearningProgress (Plane B).
+
+from domain.contracts.progress.learning_progress import LearningProgress
 
 from .sections.overall_section import render_overall
 from .sections.executive_section import render_executive
@@ -17,6 +20,7 @@ from .sections.signal_section import render_signals
 from .sections.narrative_section import render_narrative
 from .sections.coaching_section import render_coaching_objectives
 from .sections.study_recommendations_section import render_study_recommendations
+from .sections.progress_trend_panel import render_progress_trend_panel
 
 
 class ReportRenderer:
@@ -43,4 +47,16 @@ class ReportRenderer:
 {render_narrative(vm)}
 {render_coaching_objectives(vm)}
 {render_study_recommendations(vm)}
+{self._render_progress_trend(vm)}
 """
+
+    def _render_progress_trend(self, vm) -> str:
+        learning_progress = vm.get("learning_progress")
+        if learning_progress is None:
+            return ""
+        if not isinstance(learning_progress, LearningProgress):
+            raise TypeError(
+                "vm['learning_progress'] must be LearningProgress or None "
+                f"(got {type(learning_progress)!r})"
+            )
+        return render_progress_trend_panel(learning_progress)
