@@ -74,12 +74,15 @@ def test_full_replay_flow_entry_navigate_exit() -> None:
     assert exited.runtime is None
 
 
-def test_resolve_session_id_from_report_prefers_session_history() -> None:
-    history = _session_history_fixture()
+def test_resolve_session_id_from_report_uses_report_session_id() -> None:
+    """I-C25-01: Report.session_id is sole source when report present."""
+    report = MagicMock()
+    report.session_id = "report-session-id"
     state = MagicMock()
-    state.session_history = history
+    state.report = report
+    state.session_history = _session_history_fixture()
     state.interview_id = "other-id"
-    assert resolve_session_id_from_report(state) == history.session_id
+    assert resolve_session_id_from_report(state) == "report-session-id"
 
 
 def test_ui_state_machine_compatibility_unchanged_without_replay() -> None:

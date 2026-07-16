@@ -170,11 +170,14 @@ def snapshot_to_gradio_updates(snapshot: ReplayLayoutSnapshot) -> tuple[object, 
 
 
 def resolve_session_id_from_report(state: InterviewState | None) -> str:
-    """Derive replay session_id from the completed interview (report entry path)."""
+    """Derive replay session_id from Report only (I-C25-01 / I-C25-02 / F-W-01).
+
+    When InterviewState.report is present, Report.session_id is the sole source.
+    When report is absent, replay-from-report is rejected (fail-fast).
+    SessionHistory.session_id and interview_id are never used on this path.
+    """
     if state is None:
         raise ValueError("InterviewState is required to start replay from report")
-    if state.session_history is not None:
-        return state.session_history.session_id
-    if state.interview_id:
-        return state.interview_id
-    raise ValueError("No session_id available for replay")
+    if state.report is None:
+        raise ValueError("Report is required to start replay from report")
+    return state.report.session_id
