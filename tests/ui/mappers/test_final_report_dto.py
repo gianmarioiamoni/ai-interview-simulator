@@ -4,12 +4,16 @@
 
 import inspect
 
+import pytest
+
 from app.ui.dto.final_report_dto import (
+    CoachingActionDTO,
     FeatureIdentityDTO,
     FinalReportDTO,
     NarrativeInsightDTO,
     StudyRecommendationDTO,
 )
+from domain.contracts.coaching.coaching_action import ActionCategory, CoachingAction
 from domain.contracts.coaching.coaching_builder import CoachingBuilder
 from domain.contracts.coaching.learning_objective import LearningObjective, ObjectivePriority
 from domain.contracts.coaching.study_recommendation import ResourceType, StudyRecommendation
@@ -243,3 +247,60 @@ class TestNarrativeInsightEvidenceMapping:
         objective_ids = {o.objective_id for o in collection.objectives}
         for action in collection.actions:
             assert action.objective_id in objective_ids
+
+
+class TestCoachingActionOriginMapping:
+    """EPIC-06 C2 — CoachingActionDTO origin join + fail-fast."""
+
+    def test_empty_actions_remain_empty(self):
+        report = make_report()
+        assert report.coaching_snapshot.collection.actions == ()
+        dto = FinalReportDTO.from_report(report)
+        assert dto.coaching_actions == []
+
+    def test_maps_action_with_resolved_origin_fields(self):
+        report = make_report_with_explainability()
+        collection = report.coaching_snapshot.collection
+        assert len(collection.actions) >= 1
+        dto = FinalReportDTO.from_report(report)
+        assert len(dto.coaching_actions) == len(collection.actions)
+        for mapped, domain in zip(
+            dto.coaching_actions, collection.actions, strict=True
+        ):
+            objective = collection.objective_by_id(domain.objective_id)
+            assert objective is not None
+            assert isinstance(mapped, CoachingActionDTO)
+            assert mapped.action_id == domain.action_id
+            assert mapped.objective_id == domain.objective_id
+            assert mapped.category == domain.category.value
+            assert mapped.description == domain.description
+            assert mapped.effort_estimate_hours == domain.effort_estimate_hours
+            assert mapped.is_immediate is domain.is_immediate
+            assert mapped.origin_feature_type == objective.feature_type.value
+            assert mapped.origin_supporting_observation_types == [
+                t.value for t in objective.supporting_observation_types
+            ]
+            assert mapped.origin_objective_description == objective.description
+
+    def test_missing_objective_fail_fast(self):
+        orphan = CoachingAction(
+            action_id="act-orphan",
+            objective_id="obj-missing",
+            category=ActionCategory.PRACTICE,
+            description="Orphan action without parent objective",
+            effort_estimate_hours=1.0,
+            is_immediate=False,
+        )
+        report = make_report().model_copy(
+            update={
+                "coaching_snapshot": CoachingBuilder.build(
+                    objectives=(),
+                    actions=(orphan,),
+                    recommendations=(),
+                    session_id=SESSION_ID,
+                    question_index=0,
+                )
+            }
+        )
+        with pytest.raises(ValueError, match="objective_id"):
+            FinalReportDTO.from_report(report)

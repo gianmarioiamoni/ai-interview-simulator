@@ -4,6 +4,7 @@
 # Phase 10 adds NarrativeInsightDTO, CoachingObjectiveDTO optional fields.
 # Phase 1 adds StudyRecommendationDTO, study_recommendations, session_id.
 # EPIC-06 C1 — FeatureIdentityDTO + NarrativeInsightDTO evidence fields.
+# EPIC-06 C2 — CoachingActionDTO + coaching_actions origin join.
 
 from dataclasses import dataclass
 from typing import List, Dict, Optional
@@ -16,6 +17,9 @@ from app.ui.mappers.hire_decision_mapper import HireDecisionMapper
 from app.ui.dto.builders.dimension_score_mapper import DimensionScoreMapper
 from app.ui.dto.builders.question_assessment_mapper import QuestionAssessmentMapper
 
+from domain.contracts.coaching.coaching_action import CoachingAction
+from domain.contracts.coaching.coaching_collection import CoachingCollection
+from domain.contracts.coaching.learning_objective import LearningObjective
 from domain.contracts.feedback.confidence import Confidence
 from domain.contracts.feature.feature_identity import FeatureIdentity
 from domain.contracts.narrative.narrative_insight import NarrativeInsight
@@ -89,6 +93,21 @@ class CoachingObjectiveDTO:
 
 
 @dataclass(frozen=True)
+class CoachingActionDTO:
+    """DTO for a CoachingAction with resolved LearningObjective origin (EPIC-06 §3.3)."""
+
+    action_id: str
+    objective_id: str
+    category: str
+    description: str
+    effort_estimate_hours: float
+    is_immediate: bool
+    origin_feature_type: str
+    origin_supporting_observation_types: List[str]
+    origin_objective_description: str
+
+
+@dataclass(frozen=True)
 class StudyRecommendationDTO:
     """DTO for a single StudyRecommendation (EPIC-V13-05 Phase 1 / PC-05)."""
     recommendation_id: str
@@ -97,6 +116,52 @@ class StudyRecommendationDTO:
     topic: str
     rationale: str
     estimated_duration_hours: float
+
+
+def _map_coaching_action(
+    action: CoachingAction,
+    objective: LearningObjective,
+) -> CoachingActionDTO:
+    return CoachingActionDTO(
+        action_id=action.action_id,
+        objective_id=action.objective_id,
+        category=(
+            action.category.value
+            if hasattr(action.category, "value")
+            else str(action.category)
+        ),
+        description=action.description,
+        effort_estimate_hours=action.effort_estimate_hours,
+        is_immediate=action.is_immediate,
+        origin_feature_type=(
+            objective.feature_type.value
+            if hasattr(objective.feature_type, "value")
+            else str(objective.feature_type)
+        ),
+        origin_supporting_observation_types=[
+            (
+                obs_type.value
+                if hasattr(obs_type, "value")
+                else str(obs_type)
+            )
+            for obs_type in objective.supporting_observation_types
+        ],
+        origin_objective_description=objective.description,
+    )
+
+
+def _map_coaching_actions(collection: CoachingCollection) -> List[CoachingActionDTO]:
+    mapped: List[CoachingActionDTO] = []
+    for action in collection.actions:
+        objective = collection.objective_by_id(action.objective_id)
+        if objective is None:
+            raise ValueError(
+                "Snapshot integrity violation (X-03): CoachingAction "
+                f"{action.action_id!r} objective_id {action.objective_id!r} "
+                "does not resolve on the same coaching_snapshot"
+            )
+        mapped.append(_map_coaching_action(action, objective))
+    return mapped
 
 
 def _safe_role_type(role_str: str) -> RoleType:
@@ -151,6 +216,9 @@ class FinalReportDTO(BaseModel):
     narrative_insights: List[NarrativeInsightDTO] = Field(default_factory=list)
     coaching_objectives: List[CoachingObjectiveDTO] = Field(default_factory=list)
 
+    # EPIC-06 C2 — coaching actions with resolved origin (may be empty)
+    coaching_actions: List[CoachingActionDTO] = Field(default_factory=list)
+
     # Phase 1 — study recommendations + replay session identity (EPIC-05 Data Model §2.2)
     study_recommendations: List[StudyRecommendationDTO] = Field(default_factory=list)
     session_id: str
@@ -180,6 +248,8 @@ class FinalReportDTO(BaseModel):
             _map_narrative_insight(i) for i in report.narrative.insights
         ]
 
+        collection = report.coaching_snapshot.collection
+
         coaching_objectives = [
             CoachingObjectiveDTO(
                 objective_id=obj.objective_id,
@@ -188,8 +258,10 @@ class FinalReportDTO(BaseModel):
                 confidence=obj.confidence,
                 feature_type=obj.feature_type.value if hasattr(obj.feature_type, "value") else str(obj.feature_type),
             )
-            for obj in report.coaching_snapshot.collection.objectives
+            for obj in collection.objectives
         ]
+
+        coaching_actions = _map_coaching_actions(collection)
 
         study_recommendations = [
             StudyRecommendationDTO(
@@ -204,7 +276,7 @@ class FinalReportDTO(BaseModel):
                 rationale=rec.rationale,
                 estimated_duration_hours=rec.estimated_duration_hours,
             )
-            for rec in report.coaching_snapshot.collection.recommendations
+            for rec in collection.recommendations
         ]
 
         return cls(
@@ -235,6 +307,7 @@ class FinalReportDTO(BaseModel):
             context_profile=report.context_profile,
             narrative_insights=narrative_insights,
             coaching_objectives=coaching_objectives,
+            coaching_actions=coaching_actions,
             study_recommendations=study_recommendations,
             session_id=report.session_id,
         )
