@@ -38,10 +38,9 @@
 | Formal §8.4 ADR Gate | **SKIP** — §2 |
 | BLOCKER findings | NONE |
 | Category B Exit Criteria (planning subset) | PASS — §8 |
-| Implementation Plan (§8.6) | NOT YET — next step |
+| Implementation Plan (§8.6) | ACCEPTED — `EPIC-07-IMPLEMENTATION-PLAN.md` |
 
-**Production code:** NOT authorized by this Freeze alone.  
-**Next authorized planning step:** Implementation Plan (`EPIC-07-IMPLEMENTATION-PLAN.md`).
+**Production code:** Authorized only after Implementation Plan acceptance **and** pre-P1 baseline — begin at **P1/C1**.
 
 ---
 
@@ -178,7 +177,7 @@
 | No BLOCKER findings open | PASS |
 | ADR decisions complete (where required) | PASS — none required; Gate SKIP |
 | Architecture Freeze declared (§8.5) | **PASS — this document** |
-| Implementation Plan accepted (§8.6) | **PENDING** — next step |
+| Implementation Plan accepted (§8.6) | **PASS** — `EPIC-07-IMPLEMENTATION-PLAN.md` ACCEPTED |
 
 ---
 
@@ -211,14 +210,14 @@ These are **not** open architectural questions and do **not** reopen Contracts, 
 |---|---|
 | Architecture Freeze approved? | **YES** |
 | Formal §8.4 ADR Gate | **SKIP** |
-| Ready for **Implementation Plan**? | **YES** |
-| Ready for **production code**? | **NO** — blocked until Implementation Plan accepted (§8.6 / §8.7) |
+| Ready for **Implementation Plan**? | **YES** (complete) |
+| Ready for **production code**? | **YES** — begin P1/C1 after pre-P1 baseline |
 
 ---
 
 ## 12. Recommendation
 
-**Next engineering task:** Produce `EPIC-07-IMPLEMENTATION-PLAN.md` (phases, commit boundaries, Implementation Dependency Validation, regression baseline). No production code in that step.
+**Next engineering task:** Implementation P1/C1 per `EPIC-07-IMPLEMENTATION-PLAN.md`.
 
 ---
 

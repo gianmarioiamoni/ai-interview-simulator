@@ -1,18 +1,19 @@
 # EPIC-07 — Production UX
 
-**Status:** ARCHITECTURE FREEZE APPROVED — Implementation Plan next  
+**Status:** IMPLEMENTATION PLAN ACCEPTED — P1 next  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-07  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-07; Product Goal P-07  
 **Roadmap Phase:** Phase 4 — Production Readiness  
 **Precondition:** EPIC-V13-04 CLOSED; EPIC-V13-05 CLOSED; Master Plan Dependencies for EPIC-V13-07 satisfied; working tree clean at initialization.  
-**Regression baseline (initialization):** Last recorded epic baseline 6708 passing / 0 failures (EPIC-06 initialization); not re-run at planning steps.  
+**Regression baseline (initialization):** Last recorded 6708 / 0 (EPIC-06 init); reconfirm as EPIC-07 baseline before P1 code.  
 **Architecture Discovery:** `EPIC-07-PRODUCTION-UX.md` — COMPLETE  
 **Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE  
 **Domain Contracts:** `EPIC-07-DOMAIN-CONTRACTS.md` — COMPLETE  
 **Data Model:** `EPIC-07-DATA-MODEL.md` — COMPLETE  
 **Architecture Freeze:** `EPIC-07-ARCHITECTURE-FREEZE.md` — **APPROVED**  
+**Implementation Plan:** `EPIC-07-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
 **Formal §8.4 ADR:** **SKIP** (Freeze §2)  
 **Playbook:** V13 Development Playbook Version 1.0
 
@@ -140,7 +141,7 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 | 5 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model — COMPLETE |
 | 6 | Formal §8.4 Architecture Review / ADR (conditional) | **SKIP** — Freeze §2 |
 | 7 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Architecture Freeze — **APPROVED** |
-| 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Implementation Plan — NEXT |
+| 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Implementation Plan — **ACCEPTED** |
 
 ---
 
@@ -166,9 +167,10 @@ Formal §8.4 Architecture Review / ADR  ← SKIP
 Architecture Freeze  ← APPROVED
   → EPIC-07-ARCHITECTURE-FREEZE.md
         ↓
-Implementation Plan  ← NEXT
+Implementation Plan  ← ACCEPTED
+  → EPIC-07-IMPLEMENTATION-PLAN.md
         ↓
-Implementation
+Implementation  ← NEXT (P1 / C1)
   (Macro Phase → Architecture Checkpoint → …)
         ↓
 CAR (incl. Architecture Traceability)
@@ -256,7 +258,7 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 
 ## 14. Recommendation
 
-**Next engineering task:** Implementation Plan for EPIC-V13-07 (`EPIC-07-IMPLEMENTATION-PLAN.md`) with Implementation Dependency Validation. No production code until Implementation Plan accepted.
+**Next engineering task:** Implementation P1 / C1 — presentation primitives & catalogs. Record pre-P1 full regression baseline first. Zero Known Failing Tests on every commit.
 
 ---
 
