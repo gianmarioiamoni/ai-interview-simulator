@@ -152,6 +152,8 @@ Next Macro Phase
 
 No macro phase may begin until the Architecture Checkpoint for the preceding phase has been completed and has explicitly authorized the next macro phase. Architecture Checkpoints are mandatory — they may not be skipped.
 
+Architecture Checkpoints are mandatory review gates executed ONLY after completion of the corresponding Macro Phase. Intermediate reviews may be performed when useful, but they are informal reviews and shall not replace the official Architecture Checkpoint defined by the Implementation Plan.
+
 ### Step 1 — Epic Planning
 
 Read the epic definition in the Master Plan. Confirm preconditions (prior epics, dependencies). Identify all artifacts the epic will produce, modify, or delete. Identify all `InterviewState` fields the epic touches and verify their declared ownership. Identify whether any new ADR or PAT is required before implementation can begin.
@@ -390,7 +392,9 @@ Trigger the Release Readiness Review when all Epics are closed (FR passed for ea
 
 Architecture Checkpoints are mandatory after every completed macro phase. An Architecture Checkpoint is a review-only activity: it performs no implementation and produces no code changes.
 
-**Trigger:** Every completed macro phase — automatically, without exception.
+**Trigger:** Every completed macro phase — automatically, without exception. The official Architecture Checkpoint is executed ONLY after the corresponding Macro Phase is complete, at the gate defined by the Implementation Plan.
+
+**Informal reviews:** Intermediate architectural reviews may be performed within a Macro Phase when useful (for example, after an early sub-phase). Such reviews are informal. They do not authorize the next Macro Phase and shall not replace the official Architecture Checkpoint.
 
 **Purpose:** Verify that the implementation of the completed macro phase is architecturally compliant before the next macro phase is authorized to begin.
 
@@ -451,7 +455,7 @@ The Freeze Integrity Check is performed by the author of the modification immedi
 |---|---|---|---|
 | Implementation Dependency Validation | Implementation Plan commit boundary table drafted | — | Plan acceptance |
 | ADR | New design decision before implementation | — | Implementation start |
-| Architecture Checkpoint | Every completed macro phase | Macro phase | Next macro phase start |
+| Architecture Checkpoint | Official gate after every completed macro phase (per Implementation Plan); informal mid-phase reviews do not replace it | Macro phase | Next macro phase start |
 | Mini Architecture Freeze | Additive ADR accepted during implementation; OR sequencing correction (Plan Correction Rule) | — | Resumption of implementation for new ADR scope; OR plan update |
 | CAR | Epic implementation phase complete | Implementation phase | Epic advance |
 | CAR (mid-epic) | Structural violation discovered during implementation | — | Continuation of affected increment |
@@ -806,3 +810,5 @@ If, during implementation, an unresolved architectural question emerges — a de
 *Revision 2026-07-15 (EPIC-03 close-out): Seven workflow improvements formalised from EPIC-03 Replay Engine implementation experience: (1) Macro Phase Lifecycle (§3) — added mandatory Architecture Freeze → Implementation Plan → Macro Phase → Architecture Checkpoint → Next Macro Phase lifecycle with diagram; (2) Cursor Chat Policy (§10) — formalised one-chat-per-macro-phase rule; new chat at every macro phase start, same chat for all sub-phases; (3) Architecture Checkpoint (§9) — added as mandatory review gate after every completed macro phase; produces PASS/WARNING/BLOCKER findings; explicitly authorises the next macro phase; added to Review Gate Summary; (4) Implementation Prompt Structure (§10) — defined 12 mandatory elements every Cursor implementation prompt must contain; (5) Regression Baseline Protocol (§10) — formalised that every completed phase updates the baseline and the next prompt must use the updated baseline; (6) Atomic Phase Commits (§6) — formalised that every sub-phase ends with one atomic commit; fallback git commands required when automated commit is unavailable; (7) Architecture-First Discipline (§2) — formalised as an engineering principle: frozen architecture is non-negotiable, no drift, no opportunistic refactoring, strict phase isolation.*
 
 *Revision 2026-07-15 (EPIC-04 initialisation): Five governance improvements formalised from EPIC-04 initialisation experience: (1) Category B workflow resequenced (§8) — Architecture Discovery precedes Domain Contracts; Domain Contracts and Data Model precede Architecture Review / ADR authoring; ADR authoring is conditional, not prescribed; Implementation Plan is now an explicit numbered step; (2) Traceability Matrix (§8) — mandatory section within Domain Contracts; links every Master Plan requirement to a domain field, a consuming component, and a verification artifact; must be complete before Architecture Freeze; (3) Architecture Assumptions Register (§8) — mandatory artifact for every Category B epic; populated during Architecture Discovery; all assumptions must be VERIFIED before Architecture Freeze; maintained in the Architecture Discovery document; (4) Component Inventory (§8) — mandatory section within the Architecture Discovery document for UI-bearing epics; specifies every UI component with full data contract before domain contracts are authored; (5) Definition of Done and Architecture Exit Criteria (§8) — per-document DoDs defined for Architecture Discovery, Domain Contracts, Data Model, Architecture Review / ADR, Architecture Freeze, and Implementation Plan; Architecture Exit Criteria checklist formalises the implementation gate; all criteria must be satisfied before implementation begins. Derived from EPIC-04 Replay UI Experience initialisation process.*
+
+*Revision 2026-07-16 (EPIC-04 Architecture Checkpoint A): Clarified Architecture Checkpoint timing (§3 Macro Phase Lifecycle, §9 Architecture Checkpoint, Review Gate Summary). Official Architecture Checkpoints execute ONLY after completion of the corresponding Macro Phase as defined by the Implementation Plan. Intermediate reviews may be performed when useful but are informal and do not replace the official checkpoint. Derived from EPIC-04 Macro Phase A experience — an intermediate review after Phase 2 was useful but must not be treated as Architecture Checkpoint A.*
