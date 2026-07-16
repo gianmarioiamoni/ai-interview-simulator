@@ -1,15 +1,16 @@
 # EPIC-07 — Production UX
 
-**Status:** ARCHITECTURE REVIEW COMPLETE — Domain Contracts next  
+**Status:** DOMAIN CONTRACTS COMPLETE — Data Model next  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-07  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-07; Product Goal P-07  
 **Roadmap Phase:** Phase 4 — Production Readiness  
 **Precondition:** EPIC-V13-04 CLOSED; EPIC-V13-05 CLOSED; Master Plan Dependencies for EPIC-V13-07 satisfied; working tree clean at initialization.  
-**Regression baseline (initialization):** Last recorded epic baseline 6708 passing / 0 failures (EPIC-06 initialization); not re-run at Discovery/Review.  
+**Regression baseline (initialization):** Last recorded epic baseline 6708 passing / 0 failures (EPIC-06 initialization); not re-run at Discovery/Review/Contracts.  
 **Architecture Discovery:** `EPIC-07-PRODUCTION-UX.md` — COMPLETE  
-**Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE (Discovery disposition; formal §8.4 ADR gate after Contracts + Data Model)  
+**Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE (Discovery disposition; formal §8.4 ADR gate after Data Model)  
+**Domain Contracts:** `EPIC-07-DOMAIN-CONTRACTS.md` — COMPLETE  
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -132,8 +133,8 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 | 1 | `docs/master-plan/epics/EPIC-07-OVERVIEW.md` | Living Category B status surface (this document) |
 | 2 | `docs/master-plan/epics/EPIC-07-PRODUCTION-UX.md` | Architecture Discovery — COMPLETE |
 | 3 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-REVIEW.md` | Discovery Architecture Review — COMPLETE; ADR count = 0 |
-| 4 | `docs/master-plan/epics/EPIC-07-DOMAIN-CONTRACTS.md` | Domain Contracts — NEXT |
-| 5 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model (after Contracts) |
+| 4 | `docs/master-plan/epics/EPIC-07-DOMAIN-CONTRACTS.md` | Domain Contracts — COMPLETE |
+| 5 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model — NEXT |
 | 6 | Formal §8.4 Architecture Review / ADR (conditional) | After Contracts + Data Model |
 | 7 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Gate authorizing Implementation Plan |
 | 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Phases + commit boundaries + Dependency Validation |
@@ -151,9 +152,10 @@ Architecture Discovery  ← COMPLETE
 Discovery Architecture Review  ← COMPLETE
   → EPIC-07-ARCHITECTURE-REVIEW.md  (ADR count = 0)
         ↓
-Domain Contracts  ← NEXT
+Domain Contracts  ← COMPLETE
+  → EPIC-07-DOMAIN-CONTRACTS.md
         ↓
-Data Model
+Data Model  ← NEXT
         ↓
 Formal §8.4 Architecture Review / ADR (conditional)
         ↓
@@ -232,9 +234,9 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 
 | ID | Status | Anchor |
 |---|---|---|
-| AA-01, AA-02, AA-03, AA-06, AA-09, AA-10, AA-11, AA-12 | **VERIFIED** | `EPIC-07-ARCHITECTURE-REVIEW.md` |
-| AA-08 | **INVALIDATED** | AR-04 — language mode = ADR-019 session mode |
-| AA-04, AA-05, AA-07, AA-13 | UNVERIFIED | Deferred (Contracts / evidence / §8.4 / process) |
+| AA-01, AA-02, AA-03, AA-05, AA-06, AA-09, AA-10, AA-11, AA-12 | **VERIFIED** | Review + Domain Contracts (AA-05 via I-SS-02) |
+| AA-08 | **INVALIDATED** | AR-04 / I-SC-03 — language mode = ADR-019 session mode |
+| AA-04, AA-07, AA-13 | UNVERIFIED | A11y evidence / formal §8.4 / process |
 
 ---
 
@@ -249,7 +251,7 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 
 ## 14. Recommendation
 
-**Next engineering task:** Domain Contracts for EPIC-V13-07 (`EPIC-07-DOMAIN-CONTRACTS.md`) under AR-01–AR-15 — Traceability Matrix required. Formal §8.4 ADR evaluation after Data Model. No Freeze / Implementation Plan / production code until Exit Criteria pass.
+**Next engineering task:** Data Model for EPIC-V13-07 (`EPIC-07-DATA-MODEL.md`). Formal §8.4 ADR evaluation after Data Model. No Freeze / Implementation Plan / production code until Exit Criteria pass.
 
 ---
 

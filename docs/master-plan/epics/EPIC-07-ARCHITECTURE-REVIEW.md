@@ -1,6 +1,6 @@
 # EPIC-07 — Production UX: Architecture Review
 
-**Status:** ARCHITECTURE REVIEW COMPLETE — Domain Contracts next  
+**Status:** ARCHITECTURE REVIEW COMPLETE — Domain Contracts COMPLETE (see `EPIC-07-DOMAIN-CONTRACTS.md`)  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-07  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -58,7 +58,7 @@ Authoritative statuses after this review. Discovery §6 register shall be update
 | AA-02 | Confirmation by existing architecture | **VERIFIED** | AR-02 — reuse ADR-003/019/033/037 + ARC-01; no ADR authored |
 | AA-03 | Confirmation by existing architecture (default) | **VERIFIED** | AR-03 — default no new `InterviewState` fields; Contracts may only reopen via ADR path |
 | AA-04 | Deferral | **UNVERIFIED** | AR-14 — Gradio WCAG achievability needs implementation evidence |
-| AA-05 | Deferral | **UNVERIFIED** | Needs path-level evidence at Contracts / later verification — not inventable here |
+| AA-05 | Deferred at Review → verified at Contracts | **VERIFIED** (via Domain Contracts I-SS-02) | See `EPIC-07-DOMAIN-CONTRACTS.md` |
 | AA-06 | Confirmation by existing architecture | **VERIFIED** | AR-15 — Master Plan deps are EPIC-04/05 only |
 | AA-07 | Deferral | **UNVERIFIED** | AR-16 — formal §8.4 after Contracts + Data Model |
 | AA-08 | Rejection (assumption false) | **INVALIDATED** | AR-04 — `en`/`it` locale dropdown ≠ ADR-019 language mode; response: EPIC-07 session-config polish must cover ADR-019 language mode as candidate-facing configuration concern |
