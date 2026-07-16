@@ -12,6 +12,7 @@ from app.ui.dto.final_report_dto import (
     FinalReportDTO,
     NarrativeInsightDTO,
     StudyRecommendationDTO,
+    _assert_explainability_projection_complete,
 )
 from domain.contracts.coaching.coaching_action import ActionCategory, CoachingAction
 from domain.contracts.coaching.coaching_builder import CoachingBuilder
@@ -304,3 +305,136 @@ class TestCoachingActionOriginMapping:
         )
         with pytest.raises(ValueError, match="objective_id"):
             FinalReportDTO.from_report(report)
+
+
+def _valid_insight_dto() -> NarrativeInsightDTO:
+    return NarrativeInsightDTO(
+        insight_type="strength_signal",
+        prose="Strong reasoning observed.",
+        confidence=0.9,
+        source_feature_id=FeatureIdentityDTO(
+            feature_type_id="reasoning_feature",
+            semantic_category="analytical_reasoning",
+            schema_version="1.0",
+        ),
+        is_traceable=True,
+    )
+
+
+def _valid_action_dto(
+    *,
+    origin_supporting_observation_types: list[str] | None = None,
+) -> CoachingActionDTO:
+    return CoachingActionDTO(
+        action_id="act-1",
+        objective_id="obj-1",
+        category="practice",
+        description="Drill causal reasoning",
+        effort_estimate_hours=2.0,
+        is_immediate=True,
+        origin_feature_type="reasoning",
+        origin_supporting_observation_types=(
+            ["reasoning_depth_low"]
+            if origin_supporting_observation_types is None
+            else origin_supporting_observation_types
+        ),
+        origin_objective_description="Strengthen causal reasoning",
+    )
+
+
+class TestExplainabilityProjectionCompletenessGate:
+    """EPIC-06 C3 — PC-E05 empty collections vs missing required fields."""
+
+    def test_empty_insights_and_actions_succeed(self):
+        report = make_report()
+        dto = FinalReportDTO.from_report(report)
+        assert dto.narrative_insights == []
+        assert dto.coaching_actions == []
+        _assert_explainability_projection_complete([], [])
+
+    def test_populated_explainability_passes_gate(self):
+        report = make_report_with_explainability()
+        dto = FinalReportDTO.from_report(report)
+        assert len(dto.narrative_insights) >= 1
+        assert len(dto.coaching_actions) >= 1
+        _assert_explainability_projection_complete(
+            dto.narrative_insights, dto.coaching_actions
+        )
+
+    def test_empty_origin_supporting_observation_types_allowed(self):
+        _assert_explainability_projection_complete(
+            [_valid_insight_dto()],
+            [_valid_action_dto(origin_supporting_observation_types=[])],
+        )
+
+    def test_missing_insight_feature_type_id_fail_fast(self):
+        insight = NarrativeInsightDTO(
+            insight_type="strength_signal",
+            prose="x",
+            confidence=0.5,
+            source_feature_id=FeatureIdentityDTO(
+                feature_type_id="",
+                semantic_category="analytical_reasoning",
+            ),
+            is_traceable=True,
+        )
+        with pytest.raises(ValueError, match="X-01"):
+            _assert_explainability_projection_complete([insight], [])
+
+    def test_missing_insight_semantic_category_fail_fast(self):
+        insight = NarrativeInsightDTO(
+            insight_type="strength_signal",
+            prose="x",
+            confidence=0.5,
+            source_feature_id=FeatureIdentityDTO(
+                feature_type_id="reasoning_feature",
+                semantic_category="",
+            ),
+            is_traceable=True,
+        )
+        with pytest.raises(ValueError, match="X-01"):
+            _assert_explainability_projection_complete([insight], [])
+
+    def test_insight_not_traceable_fail_fast(self):
+        insight = NarrativeInsightDTO(
+            insight_type="strength_signal",
+            prose="x",
+            confidence=0.5,
+            source_feature_id=FeatureIdentityDTO(
+                feature_type_id="reasoning_feature",
+                semantic_category="analytical_reasoning",
+            ),
+            is_traceable=False,
+        )
+        with pytest.raises(ValueError, match="X-02"):
+            _assert_explainability_projection_complete([insight], [])
+
+    def test_missing_origin_feature_type_fail_fast(self):
+        action = CoachingActionDTO(
+            action_id="act-1",
+            objective_id="obj-1",
+            category="practice",
+            description="Drill",
+            effort_estimate_hours=1.0,
+            is_immediate=False,
+            origin_feature_type="",
+            origin_supporting_observation_types=[],
+            origin_objective_description="Objective",
+        )
+        with pytest.raises(ValueError, match="X-04"):
+            _assert_explainability_projection_complete([], [action])
+
+    def test_missing_origin_objective_description_fail_fast(self):
+        action = CoachingActionDTO(
+            action_id="act-1",
+            objective_id="obj-1",
+            category="practice",
+            description="Drill",
+            effort_estimate_hours=1.0,
+            is_immediate=False,
+            origin_feature_type="reasoning",
+            origin_supporting_observation_types=[],
+            origin_objective_description="",
+        )
+        with pytest.raises(ValueError, match="X-04"):
+            _assert_explainability_projection_complete([], [action])

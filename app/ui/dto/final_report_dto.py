@@ -5,9 +5,10 @@
 # Phase 1 adds StudyRecommendationDTO, study_recommendations, session_id.
 # EPIC-06 C1 — FeatureIdentityDTO + NarrativeInsightDTO evidence fields.
 # EPIC-06 C2 — CoachingActionDTO + coaching_actions origin join.
+# EPIC-06 C3 — PC-E05 projection completeness gate.
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Sequence
 from pydantic import BaseModel, Field
 
 from app.ui.dto.dimension_score_dto import DimensionScoreDTO
@@ -164,6 +165,50 @@ def _map_coaching_actions(collection: CoachingCollection) -> List[CoachingAction
     return mapped
 
 
+def _assert_explainability_projection_complete(
+    insights: Sequence[NarrativeInsightDTO],
+    actions: Sequence[CoachingActionDTO],
+) -> None:
+    """PC-E05 — fail-fast gate for required explainability fields on present items.
+
+    Empty collections are valid (X-07 / EC-V-01 empty-set rule).
+    """
+    for insight in insights:
+        identity = insight.source_feature_id
+        if identity is None:
+            raise ValueError(
+                "Projection contract violation (X-01): NarrativeInsightDTO "
+                "missing source_feature_id"
+            )
+        if not identity.feature_type_id or not identity.semantic_category:
+            raise ValueError(
+                "Projection contract violation (X-01): source_feature_id requires "
+                "non-empty feature_type_id and semantic_category"
+            )
+        if insight.is_traceable is not True:
+            raise ValueError(
+                "Projection contract violation (X-02): NarrativeInsightDTO.is_traceable "
+                "must be True"
+            )
+
+    for action in actions:
+        if not action.origin_feature_type:
+            raise ValueError(
+                "Projection contract violation (X-04): CoachingActionDTO "
+                f"{action.action_id!r} missing origin_feature_type"
+            )
+        if action.origin_supporting_observation_types is None:
+            raise ValueError(
+                "Projection contract violation (X-04): CoachingActionDTO "
+                f"{action.action_id!r} missing origin_supporting_observation_types"
+            )
+        if not action.origin_objective_description:
+            raise ValueError(
+                "Projection contract violation (X-04): CoachingActionDTO "
+                f"{action.action_id!r} missing origin_objective_description"
+            )
+
+
 def _safe_role_type(role_str: str) -> RoleType:
     try:
         return RoleType(role_str)
@@ -262,6 +307,10 @@ class FinalReportDTO(BaseModel):
         ]
 
         coaching_actions = _map_coaching_actions(collection)
+
+        _assert_explainability_projection_complete(
+            narrative_insights, coaching_actions
+        )
 
         study_recommendations = [
             StudyRecommendationDTO(
