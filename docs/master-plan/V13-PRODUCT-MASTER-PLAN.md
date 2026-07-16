@@ -216,16 +216,16 @@ Side-by-side session comparison. Annotation or bookmarking. Sharing or exporting
 Produce a single, cohesive session report that renders all session artifacts from `Report` as the sole data source, eliminating dual reads and legacy routing.
 
 **Scope:**  
-Audit and consolidate all report rendering paths. Ensure `FinalReportDTO` (post-EPIC-V13-01) is the sole consumer API for report data. Add a replay entry point in the report (link to `ReplaySession`). Add a progress trend panel sourced from `LongitudinalProfile` (post-EPIC-V13-02). Add explainability anchors (§ EPIC-V13-06) to coaching sections. Validate that no report section reads from `SessionHistory` directly when the data is available in `Report`.
+Audit and consolidate all report rendering paths. Ensure `FinalReportDTO` (post-EPIC-V13-01) is the sole consumer API for report data. Add a replay entry point in the report (link to `ReplaySession`). Add a progress trend panel sourced from `LongitudinalProfile` (post-EPIC-V13-02). Validate that no report section reads from `SessionHistory` directly when the data is available in `Report`. The Unified Report shall expose stable report surfaces (narrative, coaching, and related DTO fields) consumed later by EPIC-V13-06; explainability implementation remains owned exclusively by EPIC-V13-06.
 
 **Expected Outcome:**  
 One data source. One report. Every report section is traceable to `Report` fields. The Unified Report is the primary deliverable of every completed session.
 
 **Dependencies:**  
-EPIC-V13-01 (scoring pipeline). EPIC-V13-02 (longitudinal profile for trend panel). EPIC-V13-03 (replay link). EPIC-V13-06 (explainability anchors).
+EPIC-V13-01 (scoring pipeline). EPIC-V13-02 (longitudinal profile for trend panel). EPIC-V13-03 (replay link).
 
 **Non-Goals:**  
-PDF export, email delivery, or sharing. These are V2 distribution concerns.
+PDF export, email delivery, or sharing. These are V2 distribution concerns. Explainability anchors, evidence-panel UX, and coaching origin surfacing are owned by EPIC-V13-06 — not implemented in EPIC-V13-05.
 
 ---
 
@@ -469,11 +469,11 @@ Depends on EPIC-V13-01 (replay must read from `Report`-consistent data). Can run
 **EPIC-V13-04 (Replay UI Experience)**  
 Depends on EPIC-V13-03 (Replay Engine).
 
-**EPIC-V13-06 (Explainability)**  
-Depends on EPIC-V13-02 (longitudinal profile data) and EPIC-V13-01 (clean report). Can begin UI design in parallel with Phase 2.
-
 **EPIC-V13-05 (Unified Report)**  
-Depends on EPIC-V13-01, EPIC-V13-02, EPIC-V13-03, EPIC-V13-06. Full report integration requires all contributing epics to be stable.
+Depends on EPIC-V13-01, EPIC-V13-02, EPIC-V13-03. Does not depend on EPIC-V13-06.
+
+**EPIC-V13-06 (Explainability)**  
+Depends on EPIC-V13-05 (Unified Report host surfaces) and EPIC-V13-01 (clean scoring data). UI design may begin in parallel with Phase 2; implementation requires EPIC-V13-05 stable.
 
 ### Phase 4 — Production Readiness (after Phase 3 complete)
 
@@ -545,3 +545,11 @@ V1.3 is officially complete and production-ready when all of the following are t
 ---
 
 *This document is the authoritative V1.3 roadmap. All V1.3 work is governed by it. Amendments require an explicit update to this document with a recorded rationale.*
+
+---
+
+### Amendment — 2026-07-16 (EPIC-05/06 dependency correction)
+
+**Rationale:** Architecture Clarification for EPIC-V13-05 finding F-B-01 proved the EPIC-05 ↔ EPIC-06 circular dependency was a documentation inconsistency only — not an architectural blocker. ADR-033 freezes Unified Report without explainability. EPIC-01 Architecture Freeze deferred explainability UI to EPIC-V13-06 and stated it is not blocking V13-05.
+
+**Correction:** Removed EPIC-V13-06 from EPIC-V13-05 Dependencies and Roadmap reverse edge. Retained EPIC-V13-06 → EPIC-V13-05. Clarified EPIC-V13-05 Scope/Non-Goals: stable report surfaces only; explainability owned by EPIC-V13-06. No architecture or product-scope change.
