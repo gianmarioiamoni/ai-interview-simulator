@@ -1,14 +1,15 @@
 # EPIC-07 — Production UX
 
-**Status:** ARCHITECTURE DISCOVERY COMPLETE — Domain Contracts next  
+**Status:** ARCHITECTURE REVIEW COMPLETE — Domain Contracts next  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-07  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-07; Product Goal P-07  
 **Roadmap Phase:** Phase 4 — Production Readiness  
 **Precondition:** EPIC-V13-04 CLOSED; EPIC-V13-05 CLOSED; Master Plan Dependencies for EPIC-V13-07 satisfied; working tree clean at initialization.  
-**Regression baseline (initialization):** Last recorded epic baseline 6708 passing / 0 failures (EPIC-06 initialization); not re-run at Discovery.  
+**Regression baseline (initialization):** Last recorded epic baseline 6708 passing / 0 failures (EPIC-06 initialization); not re-run at Discovery/Review.  
 **Architecture Discovery:** `EPIC-07-PRODUCTION-UX.md` — COMPLETE  
+**Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE (Discovery disposition; formal §8.4 ADR gate after Contracts + Data Model)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -130,11 +131,12 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 |---|---|---|
 | 1 | `docs/master-plan/epics/EPIC-07-OVERVIEW.md` | Living Category B status surface (this document) |
 | 2 | `docs/master-plan/epics/EPIC-07-PRODUCTION-UX.md` | Architecture Discovery — COMPLETE |
-| 3 | `docs/master-plan/epics/EPIC-07-DOMAIN-CONTRACTS.md` | Domain Contracts (if Discovery proves contract work) |
-| 4 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model (after Contracts) |
-| 5 | Architecture Review / ADR (conditional) | Only if unresolved decision remains |
-| 6 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Gate authorizing Implementation Plan |
-| 7 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Phases + commit boundaries + Dependency Validation |
+| 3 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-REVIEW.md` | Discovery Architecture Review — COMPLETE; ADR count = 0 |
+| 4 | `docs/master-plan/epics/EPIC-07-DOMAIN-CONTRACTS.md` | Domain Contracts — NEXT |
+| 5 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model (after Contracts) |
+| 6 | Formal §8.4 Architecture Review / ADR (conditional) | After Contracts + Data Model |
+| 7 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Gate authorizing Implementation Plan |
+| 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Phases + commit boundaries + Dependency Validation |
 
 ---
 
@@ -146,11 +148,14 @@ EPIC Initialization  ← COMPLETE
 Architecture Discovery  ← COMPLETE
   → EPIC-07-PRODUCTION-UX.md
         ↓
+Discovery Architecture Review  ← COMPLETE
+  → EPIC-07-ARCHITECTURE-REVIEW.md  (ADR count = 0)
+        ↓
 Domain Contracts  ← NEXT
         ↓
 Data Model
         ↓
-Architecture Review / ADR (conditional)
+Formal §8.4 Architecture Review / ADR (conditional)
         ↓
 Architecture Freeze
         ↓
@@ -223,11 +228,13 @@ Existing artifacts Architecture Discovery is expected to inspect. **No architect
 
 ## 12. Architecture Assumptions Register
 
-Authoritative Discovery register: `EPIC-07-PRODUCTION-UX.md` §6. All entries remain **UNVERIFIED** (Discovery must not resolve assumptions). Must be VERIFIED or INVALIDATED before Architecture Freeze.
+Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture Review). Remaining UNVERIFIED must close before Architecture Freeze.
 
 | ID | Status | Anchor |
 |---|---|---|
-| AA-01 … AA-13 | UNVERIFIED | `EPIC-07-PRODUCTION-UX.md` §6 |
+| AA-01, AA-02, AA-03, AA-06, AA-09, AA-10, AA-11, AA-12 | **VERIFIED** | `EPIC-07-ARCHITECTURE-REVIEW.md` |
+| AA-08 | **INVALIDATED** | AR-04 — language mode = ADR-019 session mode |
+| AA-04, AA-05, AA-07, AA-13 | UNVERIFIED | Deferred (Contracts / evidence / §8.4 / process) |
 
 ---
 
@@ -242,7 +249,7 @@ Authoritative Discovery register: `EPIC-07-PRODUCTION-UX.md` §6. All entries re
 
 ## 14. Recommendation
 
-**Next engineering task:** Domain Contracts for EPIC-V13-07 (`EPIC-07-DOMAIN-CONTRACTS.md`) against Discovery findings — Traceability Matrix required. No ADR, Freeze, Implementation Plan, or production code until Contracts + Data Model complete and Freeze passes.
+**Next engineering task:** Domain Contracts for EPIC-V13-07 (`EPIC-07-DOMAIN-CONTRACTS.md`) under AR-01–AR-15 — Traceability Matrix required. Formal §8.4 ADR evaluation after Data Model. No Freeze / Implementation Plan / production code until Exit Criteria pass.
 
 ---
 

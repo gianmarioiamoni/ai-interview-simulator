@@ -228,23 +228,23 @@ All live polish-target host surfaces for Master Plan EPIC-07 flows are enumerate
 
 ## 6. Architecture Assumptions Register
 
-All assumptions remain **UNVERIFIED**. Discovery populates the register; it does **not** resolve statuses (per task constraint). Resolution belongs to Domain Contracts / Data Model / Architecture Review.
+Statuses updated by `EPIC-07-ARCHITECTURE-REVIEW.md` (Discovery Architecture Review). Remaining `UNVERIFIED` items require Domain Contracts / Data Model / formal §8.4 / process close-out — not inventable at Discovery.
 
 | ID | Description | Status | Verification Document | Notes |
 |---|---|---|---|---|
-| AA-01 | EPIC-07 can be delivered without new persistent domain artifacts or new LangGraph nodes | UNVERIFIED | Domain Contracts / Data Model | Current tree is presentation-heavy; not proven |
-| AA-02 | Existing frozen ADRs (ADR-003, ADR-033, ADR-037, ARC-01, related) govern presentation boundaries without modification | UNVERIFIED | Architecture Review | No ADR authored in Discovery |
-| AA-03 | No new `InterviewState` fields are required for Production UX | UNVERIFIED | Domain Contracts | Sole-writer ID required if any field is touched |
-| AA-04 | Report and replay WCAG 2.1 AA + primary-flow keyboard navigation are achievable on existing host surfaces | UNVERIFIED | Domain Contracts / Freeze | Gradio capability unknowns |
-| AA-05 | Deterministic report/replay data paths already eliminate justified loading spinners; remaining loading/error regressions are presentation-only | UNVERIFIED | Data Model / Implementation evidence later | No runtime recomputation from UI |
-| AA-06 | EPIC-04 and EPIC-05 CLOSED surfaces are the complete polish targets required by Master Plan Dependencies | UNVERIFIED | Architecture Review | EPIC-06 not a Master Plan dependency |
-| AA-07 | Conditional ADR step can be skipped | UNVERIFIED | Architecture Review | After Contracts + Data Model only |
-| AA-08 | Master Plan “language mode” is satisfied by the existing language dropdown (`en`/`it`) without a distinct language-mode control or `LanguageProfile` UI binding | UNVERIFIED | Domain Contracts / Master Plan clarification | OF-03 |
-| AA-09 | Production UX polish of execution feedback may modify presenter blocks without changing runtime sole-writer of `FeedbackBundle` | UNVERIFIED | Domain Contracts | C-31 sits on runtime-adjacent path |
-| AA-10 | Unwired alternate view modules are out-of-scope debt for EPIC-07 unless they are on a live candidate path | UNVERIFIED | Architecture Review | OF-04 |
-| AA-11 | Session history loader stub is in-scope for EPIC-07 error-boundary / production-quality completeness | UNVERIFIED | Domain Contracts | May overlap EPIC-08 ops concerns |
-| AA-12 | Progress view Master Plan item is fully scoped to the report-hosted trend panel (no standalone progress page) | UNVERIFIED | Domain Contracts | OF-06 |
-| AA-13 | No open P0/P1 findings from prior epics block polish of EPIC-04/05 surfaces | UNVERIFIED | Prior-epic close artifacts / Review | EPIC-06 close-out incomplete (PROC-I-01) |
+| AA-01 | EPIC-07 can be delivered without new persistent domain artifacts or new LangGraph nodes | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-01 | Presentation-plane polish only |
+| AA-02 | Existing frozen ADRs (ADR-003, ADR-019, ADR-033, ADR-037, ARC-01, related) govern presentation boundaries without modification | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-02 | No ADR authored at Review |
+| AA-03 | No new `InterviewState` fields are required for Production UX | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-03 | Default; reopen only via ADR path if Contracts prove need |
+| AA-04 | Report and replay WCAG 2.1 AA + primary-flow keyboard navigation are achievable on existing host surfaces | UNVERIFIED | Domain Contracts / implementation evidence | AR-14 deferred |
+| AA-05 | Deterministic report/replay data paths already eliminate justified loading spinners; remaining loading/error regressions are presentation-only | UNVERIFIED | Domain Contracts / later evidence | Not inventable at Review |
+| AA-06 | EPIC-04 and EPIC-05 CLOSED surfaces are the complete polish targets required by Master Plan Dependencies | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-15 | EPIC-06 not a Master Plan dependency |
+| AA-07 | Conditional ADR step can be skipped | UNVERIFIED | Formal §8.4 after Contracts + Data Model | AR-16 |
+| AA-08 | Master Plan “language mode” is satisfied by the existing language dropdown (`en`/`it`) without a distinct language-mode control or `LanguageProfile` UI binding | **INVALIDATED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-04 | Language mode = ADR-019 session mode; locale ≠ mode |
+| AA-09 | Production UX polish of execution feedback may modify presenter blocks without changing runtime sole-writer of `FeedbackBundle` | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-11 | Presentation only |
+| AA-10 | Unwired alternate view modules are out-of-scope debt for EPIC-07 unless they are on a live candidate path | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-06 / AR-07 | Not reconstituted as live hosts; delete timing deferred |
+| AA-11 | Session history loader stub is in-scope for EPIC-07 error-boundary / production-quality completeness | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-12 | In EPIC-07 scope |
+| AA-12 | Progress view Master Plan item is fully scoped to the report-hosted trend panel (no standalone progress page) | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-05 | Report-hosted only |
+| AA-13 | No open P0/P1 findings from prior epics block polish of EPIC-04/05 surfaces | UNVERIFIED | Process / EPIC-06 close-out | AR-18 deferred |
 
 ---
 
@@ -332,14 +332,16 @@ All assumptions remain **UNVERIFIED**. Discovery populates the register; it does
 | All missing decisions listed as open items | YES (§8) |
 | All risks identified and classified | YES (§9) |
 | Component Inventory complete (UI-bearing) | YES (§4) |
-| Architecture Assumptions Register populated (UNVERIFIED allowed) | YES (§6) — none resolved |
+| Architecture Assumptions Register populated (UNVERIFIED allowed) | YES (§6) — post-Review statuses applied |
 | No code produced or modified | YES |
 
 ---
 
 ## 13. Recommendation (process only)
 
-**Next Playbook step:** Domain Contracts (`EPIC-07-DOMAIN-CONTRACTS.md`) — only for artifacts/contracts Discovery proves necessary; Traceability Matrix required before Freeze. Do not skip to Implementation Plan. Do not author ADR in the next step unless Contracts + Data Model later prove a genuine unresolved decision.
+**Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE (Discovery disposition; formal §8.4 ADR gate remains after Contracts + Data Model).
+
+**Next Playbook step:** Domain Contracts (`EPIC-07-DOMAIN-CONTRACTS.md`) under AR-01–AR-15; Traceability Matrix required before Freeze.
 
 ---
 
