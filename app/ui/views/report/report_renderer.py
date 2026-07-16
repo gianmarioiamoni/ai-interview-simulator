@@ -1,6 +1,7 @@
 # app/ui/views/report/report_renderer.py
 # EPIC-V13-05 Phase 10 — adds narrative insights, coaching objectives, study recommendations.
 # Phase 5 — compose ProgressTrendPanel from separately injected LearningProgress (Plane B).
+# EPIC-06 C7 — compose coaching actions surface with inline origin (OF-01).
 
 from domain.contracts.progress.learning_progress import LearningProgress
 
@@ -18,7 +19,10 @@ from .sections.question_section import render_questions
 from .sections.roadmap_section import render_roadmap
 from .sections.signal_section import render_signals
 from .sections.narrative_section import render_narrative
-from .sections.coaching_section import render_coaching_objectives
+from .sections.coaching_section import (
+    render_coaching_actions,
+    render_coaching_objectives,
+)
 from .sections.study_recommendations_section import render_study_recommendations
 from .sections.progress_trend_panel import render_progress_trend_panel
 
@@ -46,6 +50,7 @@ class ReportRenderer:
 {render_signals(vm)}
 {render_narrative(vm)}
 {render_coaching_objectives(vm)}
+{render_coaching_actions(vm)}
 {render_study_recommendations(vm)}
 {self._render_progress_trend(vm)}
 """

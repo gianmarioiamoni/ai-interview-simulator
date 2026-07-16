@@ -3,6 +3,7 @@
 # Phase 2 — study_recommendations from FinalReportDTO only (PC-05 / SR-02); no domain fallback.
 # Phase 5 — LearningProgress injected separately (Plane B; never from FinalReportDTO).
 # EPIC-06 C6 — narrative_insights from FinalReportDTO only (OF-01 / DTO-only UI).
+# EPIC-06 C7 — coaching_actions from FinalReportDTO only (OF-01 / DTO-only UI).
 
 from __future__ import annotations
 
@@ -41,6 +42,10 @@ class ReportViewModelBuilder:
         # Empty list is valid; do not fall through to coaching_snapshot.
         study_recommendations = list(getattr(report, "study_recommendations", ()))
 
+        # EPIC-06 C7 — coaching actions: FinalReportDTO only (OF-01 / DTO-only UI).
+        # Empty list is valid; do not fall through to domain coaching_snapshot.actions.
+        coaching_actions = list(getattr(report, "coaching_actions", ()))
+
         return {
             "report": report,
             "dims": dims,
@@ -63,6 +68,7 @@ class ReportViewModelBuilder:
             ),
             "narrative_insights": narrative_insights,
             "coaching_objectives": coaching_objectives,
+            "coaching_actions": coaching_actions,
             "study_recommendations": study_recommendations,
             # Plane B — separately injected; never mapped from FinalReportDTO (DM-FR-04).
             "learning_progress": learning_progress,
