@@ -140,6 +140,75 @@ def make_report(
     )
 
 
+def make_explainability_coaching_snapshot(
+    session_id: str = SESSION_ID,
+    candidate_id: str = CANDIDATE_ID,
+):
+    """EPIC-06 M0 — coaching snapshot with matching objectives + actions."""
+    from domain.contracts.coaching.coaching_action import ActionCategory, CoachingAction
+    from domain.contracts.coaching.coaching_builder import CoachingBuilder
+    from domain.contracts.coaching.learning_objective import (
+        LearningObjective,
+        ObjectivePriority,
+    )
+    from domain.contracts.feature.feature_type import FeatureType
+    from domain.contracts.observation.observation_type import ObservationType
+
+    objective = LearningObjective(
+        objective_id="obj-explainability-1",
+        feature_type=FeatureType.REASONING,
+        description="Strengthen causal reasoning depth",
+        priority=ObjectivePriority.HIGH,
+        confidence=0.88,
+        supporting_observation_types=(ObservationType.REASONING_DEPTH_LOW,),
+        detected_at_question_index=0,
+        candidate_identity_id=candidate_id,
+    )
+    action = CoachingAction.for_objective(
+        objective=objective,
+        action_id="act-explainability-1",
+        category=ActionCategory.DEEP_DIVE,
+        description="Complete five causal-reasoning trade-off drills",
+        effort_estimate_hours=3.0,
+        is_immediate=True,
+    )
+    return CoachingBuilder.build(
+        objectives=(objective,),
+        actions=(action,),
+        recommendations=(),
+        session_id=session_id,
+        question_index=0,
+    )
+
+
+def make_report_with_explainability(
+    report_id: str = REPORT_ID,
+    session_id: str = SESSION_ID,
+    candidate_id: str = CANDIDATE_ID,
+) -> Report:
+    """EPIC-06 M0 — Report fixture with insights + actions + objectives."""
+    from tests.domain.contracts.narrative.conftest import make_narrative
+
+    history = make_session_history(
+        session_id=session_id,
+        candidate_id=candidate_id,
+    )
+    return (
+        ReportBuilder()
+        .with_session_history(history)
+        .with_narrative(make_narrative(with_insights=True))
+        .with_coaching_snapshot(
+            make_explainability_coaching_snapshot(
+                session_id=session_id,
+                candidate_id=candidate_id,
+            )
+        )
+        .with_report_id(report_id)
+        .with_created_at(FIXED_REPORT_DT)
+        .build()
+    )
+
+
 # ---------------------------------------------------------------------------
 # Pytest fixtures
 # ---------------------------------------------------------------------------
@@ -162,3 +231,9 @@ def session_history():
 @pytest.fixture
 def report() -> Report:
     return make_report()
+
+
+@pytest.fixture
+def report_with_explainability() -> Report:
+    """EPIC-06 M0 baseline fixture: insights + actions + objectives."""
+    return make_report_with_explainability()

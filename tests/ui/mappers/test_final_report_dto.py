@@ -1,15 +1,24 @@
 # tests/ui/mappers/test_final_report_dto.py
 # EPIC-V13-05 Phase 9/1 — FinalReportDTO.from_report() architectural tests.
+# EPIC-06 C1 — NarrativeInsightDTO evidence mapping unit tests.
 
 import inspect
 
-from app.ui.dto.final_report_dto import FinalReportDTO, StudyRecommendationDTO
+from app.ui.dto.final_report_dto import (
+    FeatureIdentityDTO,
+    FinalReportDTO,
+    NarrativeInsightDTO,
+    StudyRecommendationDTO,
+)
 from domain.contracts.coaching.coaching_builder import CoachingBuilder
 from domain.contracts.coaching.learning_objective import LearningObjective, ObjectivePriority
 from domain.contracts.coaching.study_recommendation import ResourceType, StudyRecommendation
 from domain.contracts.feature.feature_type import FeatureType
 from domain.contracts.observation.observation_type import ObservationType
-from tests.domain.contracts.report.conftest import make_report
+from tests.domain.contracts.report.conftest import (
+    make_report,
+    make_report_with_explainability,
+)
 from tests.domain.contracts.session_history.conftest import CANDIDATE_ID, SESSION_ID
 
 
@@ -185,3 +194,52 @@ class TestFinalReportDTOFromReport:
         assert rec.topic == domain_rec.topic
         assert rec.rationale == domain_rec.rationale
         assert rec.estimated_duration_hours == domain_rec.estimated_duration_hours
+
+
+class TestNarrativeInsightEvidenceMapping:
+    """EPIC-06 C1 — NarrativeInsightDTO source_feature_id + is_traceable."""
+
+    def test_empty_insights_remain_empty(self):
+        report = make_report()
+        assert report.narrative.insights == ()
+        dto = FinalReportDTO.from_report(report)
+        assert dto.narrative_insights == []
+
+    def test_maps_source_feature_id_and_is_traceable(self):
+        report = make_report_with_explainability()
+        assert len(report.narrative.insights) >= 1
+        dto = FinalReportDTO.from_report(report)
+        assert len(dto.narrative_insights) == len(report.narrative.insights)
+        for mapped, domain in zip(
+            dto.narrative_insights, report.narrative.insights, strict=True
+        ):
+            assert isinstance(mapped, NarrativeInsightDTO)
+            assert isinstance(mapped.source_feature_id, FeatureIdentityDTO)
+            assert (
+                mapped.source_feature_id.feature_type_id
+                == domain.source_feature_id.feature_type_id
+            )
+            assert (
+                mapped.source_feature_id.semantic_category
+                == domain.source_feature_id.semantic_category
+            )
+            assert (
+                mapped.source_feature_id.schema_version
+                == domain.source_feature_id.schema_version
+            )
+            assert mapped.is_traceable is True
+            assert mapped.is_traceable is domain.is_traceable
+            assert mapped.prose == domain.prose
+            assert mapped.confidence == domain.confidence
+            assert mapped.insight_type == domain.insight_type.value
+
+    def test_explainability_baseline_fixture_has_actions_and_objectives(self):
+        """M0 fixture inventory: insights + actions + matching objectives."""
+        report = make_report_with_explainability()
+        assert len(report.narrative.insights) >= 1
+        collection = report.coaching_snapshot.collection
+        assert len(collection.objectives) >= 1
+        assert len(collection.actions) >= 1
+        objective_ids = {o.objective_id for o in collection.objectives}
+        for action in collection.actions:
+            assert action.objective_id in objective_ids

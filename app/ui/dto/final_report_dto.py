@@ -3,6 +3,7 @@
 # from_components deleted (R-05). from_report is the sole factory.
 # Phase 10 adds NarrativeInsightDTO, CoachingObjectiveDTO optional fields.
 # Phase 1 adds StudyRecommendationDTO, study_recommendations, session_id.
+# EPIC-06 C1 — FeatureIdentityDTO + NarrativeInsightDTO evidence fields.
 
 from dataclasses import dataclass
 from typing import List, Dict, Optional
@@ -16,17 +17,65 @@ from app.ui.dto.builders.dimension_score_mapper import DimensionScoreMapper
 from app.ui.dto.builders.question_assessment_mapper import QuestionAssessmentMapper
 
 from domain.contracts.feedback.confidence import Confidence
+from domain.contracts.feature.feature_identity import FeatureIdentity
+from domain.contracts.narrative.narrative_insight import NarrativeInsight
 from domain.contracts.report.report import Report
 from domain.contracts.user.role import RoleType
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 
 
 @dataclass(frozen=True)
+class FeatureIdentityDTO:
+    """Presentation projection of FeatureIdentity (EPIC-06 Data Model §2.2)."""
+
+    feature_type_id: str
+    semantic_category: str
+    schema_version: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class NarrativeInsightDTO:
-    """DTO for a single NarrativeInsight (EPIC-V13-05 Phase 10)."""
+    """DTO for a single NarrativeInsight (EPIC-V13-05 Phase 10 + EPIC-06 C1)."""
+
     insight_type: str
     prose: str
     confidence: float
+    source_feature_id: FeatureIdentityDTO
+    is_traceable: bool
+
+
+def _map_feature_identity(identity: FeatureIdentity) -> FeatureIdentityDTO:
+    feature_type_id = identity.feature_type_id
+    semantic_category = identity.semantic_category
+    if not feature_type_id or not semantic_category:
+        raise ValueError(
+            "Projection contract violation (X-01): source_feature_id requires "
+            "non-empty feature_type_id and semantic_category"
+        )
+    return FeatureIdentityDTO(
+        feature_type_id=feature_type_id,
+        semantic_category=semantic_category,
+        schema_version=identity.schema_version,
+    )
+
+
+def _map_narrative_insight(insight: NarrativeInsight) -> NarrativeInsightDTO:
+    if not insight.is_traceable:
+        raise ValueError(
+            "Projection contract violation (X-02): NarrativeInsight.is_traceable "
+            "must be True"
+        )
+    return NarrativeInsightDTO(
+        insight_type=(
+            insight.insight_type.value
+            if hasattr(insight.insight_type, "value")
+            else str(insight.insight_type)
+        ),
+        prose=insight.prose,
+        confidence=insight.confidence,
+        source_feature_id=_map_feature_identity(insight.source_feature_id),
+        is_traceable=insight.is_traceable,
+    )
 
 
 @dataclass(frozen=True)
@@ -128,12 +177,7 @@ class FinalReportDTO(BaseModel):
         )
 
         narrative_insights = [
-            NarrativeInsightDTO(
-                insight_type=i.insight_type.value if hasattr(i.insight_type, "value") else str(i.insight_type),
-                prose=i.prose,
-                confidence=i.confidence,
-            )
-            for i in report.narrative.insights
+            _map_narrative_insight(i) for i in report.narrative.insights
         ]
 
         coaching_objectives = [
