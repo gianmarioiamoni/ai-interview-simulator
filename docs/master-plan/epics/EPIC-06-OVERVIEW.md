@@ -1,13 +1,15 @@
 # EPIC-06 — Explainability
 
-**Status:** INITIALIZED — Architecture Discovery not started  
+**Status:** DOMAIN CONTRACTS COMPLETE — Data Model next  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-06  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-06; Product Goal P-06  
 **Roadmap Phase:** Phase 3 — User Experience  
 **Precondition:** EPIC-V13-05 CLOSED; EPIC-V13-01 CLOSED; regression baseline 6708 passing / 0 failures; working tree clean at initialization.  
-**Regression baseline (initialization):** 6708 passing tests, 0 failures
+**Regression baseline (initialization):** 6708 passing tests, 0 failures  
+**Architecture Discovery:** `EPIC-06-EXPLAINABILITY.md` — COMPLETE  
+**Domain Contracts:** `EPIC-06-DOMAIN-CONTRACTS.md` — COMPLETE
 
 ---
 
@@ -116,8 +118,8 @@ Inherited context (not direct Master Plan dependencies for this epic): EPIC-V13-
 | # | Document | Role |
 |---|---|---|
 | 1 | `docs/master-plan/epics/EPIC-06-OVERVIEW.md` | Living Category B status surface |
-| 2 | Architecture Discovery document | Current vs target; Component Inventory; Assumptions Register |
-| 3 | `docs/master-plan/epics/EPIC-06-DOMAIN-CONTRACTS.md` | Field-level contracts + Traceability Matrix |
+| 2 | `docs/master-plan/epics/EPIC-06-EXPLAINABILITY.md` | Architecture Discovery — COMPLETE |
+| 3 | `docs/master-plan/epics/EPIC-06-DOMAIN-CONTRACTS.md` | Domain Contracts — COMPLETE |
 | 4 | `docs/master-plan/epics/EPIC-06-DATA-MODEL.md` | Frozen field tables; presentation completeness; assumptions VERIFIED |
 | 5 | Architecture Review / ADR (conditional) | Only if unresolved decision remains |
 | 6 | `docs/master-plan/epics/EPIC-06-ARCHITECTURE-FREEZE.md` | Gate authorizing implementation |
@@ -130,11 +132,13 @@ Inherited context (not direct Master Plan dependencies for this epic): EPIC-V13-
 ```
 EPIC Initialization  ← COMPLETE (refined 2026-07-16)
         ↓
-Architecture Discovery  ← NEXT
+Architecture Discovery  ← COMPLETE
+  → EPIC-06-EXPLAINABILITY.md
         ↓
-Domain Contracts
+Domain Contracts  ← COMPLETE
+  → EPIC-06-DOMAIN-CONTRACTS.md
         ↓
-Data Model
+Data Model  ← NEXT
         ↓
 Architecture Review
 (ADR only if required)
@@ -214,26 +218,28 @@ Existing artifacts Architecture Discovery is expected to inspect. **No architect
 
 ## 12. Architecture Assumptions Register
 
-| ID | Description | Initial status | Verification document | Notes |
-|---|---|---|---|---|
-| AA-01 | EPIC-05 narrative/coaching DTO surfaces are stable hosts for additive explainability fields | UNVERIFIED | Architecture Discovery; Domain Contracts | From EPIC-05 Freeze / Data Model §7 |
-| AA-02 | Domain `NarrativeInsight` already carries traceable evidence identity (`source_feature_id` / ADR-023) sufficient for Observation anchoring | UNVERIFIED | Architecture Discovery; Domain Contracts | No new runtime producer assumed |
-| AA-03 | Domain `CoachingAction` already carries `source_gap_id` (ADR-025) sufficient for KnowledgeGap origin surfacing | UNVERIFIED | Architecture Discovery; Domain Contracts | |
-| AA-04 | Explainability is projection/presentation only — no LLM, no `reasoner_node` recomputation, no SessionHistory dual-read for Report-owned sections | UNVERIFIED | Architecture Discovery; Architecture Freeze | ARC-01 P-01; ADR-033 |
-| AA-05 | Presentation-mechanism choice does not introduce a new sole-writer domain artifact or persistent schema | UNVERIFIED | Architecture Discovery; Component Inventory | Mechanism unresolved at initialization |
-| AA-06 | The handling policy for missing evidence anchors shall be architecturally classified during Architecture Discovery (domain invariant violation vs presentation degradation) | UNVERIFIED | Architecture Discovery; Domain Contracts; Data Model | Policy not chosen at initialization |
-| AA-07 | No new ADR is required if ADR-023 / ADR-025 / ADR-033 fully cover ownership and boundaries after Contracts + Data Model | UNVERIFIED | Architecture Review (conditional); Architecture Freeze | Playbook §8.4 |
-| AA-08 | Observation / KnowledgeGap payloads needed for UI are already reachable via Report-plane / EPIC-05 host data without new persistence writers | UNVERIFIED | Architecture Discovery; Data Model | Extensibility claim from EPIC-05 |
-| AA-09 | Epic is UI-bearing → Component Inventory is mandatory in Architecture Discovery | UNVERIFIED | Architecture Discovery | Playbook Component Inventory rule |
-| AA-10 | Go-live explainability checklist items (every NarrativeInsight / CoachingAction surfaced) are acceptance criteria for this epic, not EPIC-05 | UNVERIFIED | Domain Contracts Traceability Matrix; Architecture Freeze | Master Plan §5 Product |
+Authoritative Contracts statuses: `EPIC-06-DOMAIN-CONTRACTS.md` §6 (Discovery §7 remains historical).
 
-**UNVERIFIED:** AA-01…AA-10. **VERIFIED:** none. **INVALIDATED:** none.
+| ID | Status | Anchor |
+|---|---|---|
+| AA-01 | **VERIFIED** | EPIC-05 host + PC-E06 |
+| AA-02 | **INVALIDATED** | Superseded: ProfileFeature identity (EC-N-01) |
+| AA-03 | **INVALIDATED** | Superseded: LearningObjective origin chain (EC-C-01) |
+| AA-04 | **VERIFIED** | Constraint + Report-plane feasibility |
+| AA-05 | **UNVERIFIED** | Presentation mechanism → Data Model / later |
+| AA-06 | **VERIFIED** | EC-V-01 fail-fast class |
+| AA-07 | **VERIFIED** | ADR step likely skip; reconfirm after Data Model |
+| AA-08 | **INVALIDATED** | Named payloads not required; Report fields suffice |
+| AA-09 | **VERIFIED** | Discovery inventory |
+| AA-10 | **VERIFIED** | EPIC-06 ownership of go-live explainability |
+
+**VERIFIED:** AA-01, AA-04, AA-06, AA-07, AA-09, AA-10. **INVALIDATED:** AA-02, AA-03, AA-08. **UNVERIFIED:** AA-05.
 
 ---
 
 ## 13. Recommendation
 
-**Next engineering task:** Produce Architecture Discovery for EPIC-V13-06 (Category B step 2). No Domain Contracts, no ADR, no implementation.
+**Next engineering task:** Produce Data Model Specification for EPIC-V13-06. No ADR unless Data Model surfaces new ownership conflict. No implementation.
 
 ---
 
