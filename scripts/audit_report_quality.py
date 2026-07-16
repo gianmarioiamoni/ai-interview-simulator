@@ -337,7 +337,21 @@ def run_audit():
             state = state.model_copy(update={"results_by_question": results_by_question,
                                               "interview_evaluation": evaluation})
 
-            report_dto = FinalReportDTO.from_components(state, evaluation)
+            # EPIC-V13-05 Phase 6 / F-W-06: FinalReportDTO.from_report is the sole factory.
+            if state.report is not None:
+                report_dto = FinalReportDTO.from_report(state.report)
+                report_html = build_report_markdown(report_dto)
+                print(f"\n--- FINAL REPORT DTO (from_report) ---")
+                print(f"  session_id: {report_dto.session_id}")
+                print(f"  overall_score: {report_dto.overall_score:.1f}")
+                print(f"  study_recommendations: {len(report_dto.study_recommendations)}")
+                print(f"  html_length: {len(report_html)}")
+            else:
+                print(f"\n--- FINAL REPORT DTO ---")
+                print(
+                    "  Skipped: state.report is None "
+                    "(from_report requires Report; legacy dual factory is forbidden)"
+                )
 
             # Print key report sections for audit
             print(f"\n--- SCORES ---")
