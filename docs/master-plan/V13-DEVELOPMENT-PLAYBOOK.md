@@ -100,6 +100,14 @@ The frozen architecture is the implementation contract. Implementation follows a
 
 Every implementation phase, every commit, and every save-token milestone must leave the runtime operational and the complete regression suite green. Planned failing tests are never accepted. If a migration would temporarily break the runtime or the test suite, the implementation plan must introduce bridge phases that restore full green before the breaking removal is committed. A broken test suite is not a milestone — it is a process violation.
 
+### Conversation Boundary Optimization
+
+Long-running implementation work must balance token cost against implementation continuity. Prefer continuing the current conversation while working inside the same implementation milestone or tightly coupled commit sequence. Prefer starting a new conversation only after completing a natural architectural boundary — for example, end of a milestone, end of a phase, end of an EPIC, Architecture Freeze, or Final Review.
+
+The decision must always weigh token savings from a shorter context against the token cost required to reconstruct implementation context. Never restart a conversation in the middle of a tightly coupled implementation sequence unless context size clearly outweighs reconstruction cost.
+
+This principle complements Zero Known Failing Tests (green suite at every milestone), Implementation Dependency Validation (self-contained commit boundaries), the Plan Correction Rule (sequencing corrections resume without full freeze), and the Freeze Integrity Check (frozen-document changes before resume). It does not alter those gates; it governs when conversation context itself should be reset.
+
 ---
 
 ## 3. Epic Workflow
@@ -849,6 +857,8 @@ If, during implementation, an unresolved architectural question emerges — a de
 6. **Declare a new Architecture Freeze** for the affected scope before resuming.
 7. **Resume implementation** only after the decision is frozen, the planning documents are updated, and the Freeze Integrity Check passes.
 
+**Conversation continuity under the Stopping Rule.** Apply Conversation Boundary Optimization (§2): sequencing-only corrections (Plan Correction Rule / Mini Architecture Freeze) resume in the same conversation whenever the interrupted work remains a tightly coupled commit sequence. Architectural-issue paths that complete a natural boundary (Architecture Freeze, phase end, or equivalent) may start a new conversation; do not restart mid-sequence solely because implementation paused.
+
 **Architectural decisions must never be made while coding.** A decision made in code is a decision that bypasses all review, rationale recording, and traceability. It is a process violation regardless of whether the decision is technically correct.
 
 ---
@@ -874,3 +884,5 @@ If, during implementation, an unresolved architectural question emerges — a de
 *Revision 2026-07-16 (EPIC-05 Documentation Certification): Formalised Documentation Certification rule that living status belongs in Epic Overview + Implementation Plan status headers; frozen Architecture Discovery / Domain Contracts / Data Model / Architecture Freeze bodies are not rewritten for close-out markers. Category B workflow Step 1 now requires a living `EPIC-NN-OVERVIEW.md` distinct from frozen Architecture Discovery. Derived from EPIC-05 Documentation Certification — EPIC-05 initially used Discovery as the only overview surface, which conflated historical discovery status with living certification markers.*
 
 *Revision 2026-07-16 (EPIC-06 Initialization refinement): Formalised **Known Inputs** as a mandatory Category B EPIC Initialization section (before Architecture Assumptions Register). Known Inputs list only already existing artifacts for Discovery to inspect — no decisions, analysis, or assumptions. Also formalised architecture-neutral Initialization: Initialization identifies the problem space and must not propose presentation mechanisms or other design alternatives. Derived from EPIC-V13-06 Initialization refinement.*
+
+*Revision 2026-07-16 (EPIC-06 Conversation Boundary Optimization): Added engineering principle "Conversation Boundary Optimization" (§2) — prefer continuing within the same implementation milestone or tightly coupled commit sequence; prefer a new conversation only after a natural architectural boundary; always balance shorter-context token savings against reconstruction cost. Stopping Rule (§8) updated so sequencing-only resume stays in the same conversation, while completed architectural boundaries may open a new one. Derived from EPIC-06 long-running implementation experience.*
