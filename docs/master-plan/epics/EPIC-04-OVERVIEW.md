@@ -1,13 +1,14 @@
 # EPIC-04 — Replay UI Experience
 
-**Status:** IMPLEMENTATION COMPLETE — Checkpoint A/B APPROVED; CAR APPROVED; Final Regression CERTIFIED (6637); Documentation Certification COMPLETE — Pending Final Review  
+**Status:** CLOSED  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-04  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-04  
 **Roadmap Phase:** Phase 3 — User Experience  
 **Precondition:** EPIC-V13-03 CLOSED; `ReplaySession` contract frozen (ADR-037); `replay_node` implemented, deterministic, LLM-free, regression-tested.  
-**Regression baseline (close-out):** 6637 passing tests, 0 failures
+**Regression baseline (close-out):** 6637 passing tests, 0 failures  
+**Final Review (FR / FAR):** APPROVED — 2026-07-16
 
 ---
 
@@ -171,7 +172,9 @@ Final Regression Certification  ← CERTIFIED (6637)
         ↓
 Documentation Certification  ← COMPLETE
         ↓
-Final Review (FR)  ← PENDING
+Final Review (FR / FAR)  ← APPROVED
+        ↓
+Epic Close  ← CLOSED
 ```
 
 ---

@@ -1,6 +1,6 @@
 # EPIC-04 — Replay UI Experience: Implementation Plan
 
-**Status:** ACCEPTED — Implementation COMPLETE (Phases 1–6); Checkpoint A/B APPROVED; CAR APPROVED; Final Regression CERTIFIED (6637)  
+**Status:** ACCEPTED — Implementation COMPLETE; all gates APPROVED/CERTIFIED; EPIC CLOSED  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-04  
 **Authority:** EPIC-04-ARCHITECTURE-FREEZE.md (APPROVED, commit `3e8f31a`)  
