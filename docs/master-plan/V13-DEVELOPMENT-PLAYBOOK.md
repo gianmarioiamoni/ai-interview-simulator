@@ -617,7 +617,7 @@ Applies whenever the epic introduces or substantially changes any of the followi
 
 **Mandatory workflow:**
 
-1. **Master Plan** — Epic scope, purpose, dependencies, non-goals, and success criteria. Create/maintain living `EPIC-NN-OVERVIEW.md` for workflow status markers (distinct from frozen Architecture Discovery).
+1. **Master Plan / EPIC Initialization** — Epic scope, purpose, dependencies, non-goals, and success criteria. Create/maintain living `EPIC-NN-OVERVIEW.md` for workflow status markers (distinct from frozen Architecture Discovery). Initialization must remain architecture-neutral: it identifies the problem space and does not propose presentation mechanisms, ownership solutions, or other design alternatives. Initialization must include a **Known Inputs** section (see below) before the Architecture Assumptions Register.
 2. **Architecture Discovery** — Full analysis of current state, target state, all affected subsystems, open decisions, and structural gaps. Produces a structured report of confirmed decisions, missing decisions, and risks. Does not produce code. Must contain a Component Inventory section (for UI-bearing epics) and populates the Architecture Assumptions Register. See Definition of Done §8.1.
 3. **Domain Contracts** — A dedicated domain contract specification document under `docs/master-plan/epics/`. Specifies the complete field set, types, validation invariants, ownership, lifecycle, and relationships of every new artifact. Contains the Traceability Matrix linking Master Plan requirements to domain contract fields. Precise enough that implementation is mechanical. See Definition of Done §8.2.
 4. **Data Model Specification** — A dedicated data model document. Resolves all open modelling decisions left by the Domain Contracts document. Freezes the complete field tables for all affected artifacts. Verifies replay completeness. Evaluates future extensibility. All Architecture Assumptions must be VERIFIED before this document is declared complete. See Definition of Done §8.3.
@@ -653,6 +653,23 @@ If a planning document contains unresolved open issues at the time of the freeze
 
 ---
 
+### Known Inputs (mandatory at EPIC Initialization — Category B)
+
+Every Category B epic Initialization Report (recorded in or referenced from the living `EPIC-NN-OVERVIEW.md`) shall include a **Known Inputs** section immediately before the Architecture Assumptions Register.
+
+**Purpose:** List every existing artifact that Architecture Discovery is expected to inspect, so Discovery begins from an explicit inventory of current inputs rather than from invented scope.
+
+**Content rules:**
+
+- The section shall contain **only already existing artifacts**.
+- No new architectural decisions may appear in this section.
+- No analysis, findings, alternatives, or assumptions may appear in this section.
+- Typical groupings (include those that apply): Existing ADRs; Existing domain artifacts; Existing presentation artifacts; Existing report artifacts; Existing UI host components.
+
+Known Inputs are an Initialization deliverable. They are not a substitute for Architecture Discovery Component Inventory, Domain Contracts, or Data Model.
+
+---
+
 ### Document Responsibilities
 
 Each planning document has a unique responsibility. Documents must not duplicate each other's content. If the same information appears in two documents, one of them is wrong.
@@ -660,6 +677,7 @@ Each planning document has a unique responsibility. Documents must not duplicate
 | Document | Unique Responsibility |
 |----------|-----------------------|
 | **Master Plan** | Epic scope, purpose, product goals, dependencies, non-goals, success criteria. Does not specify field-level data. |
+| **EPIC Overview / Initialization** | Living workflow status; Initialization Report (architecture-neutral problem space, Known Inputs, initial Assumptions Register). Does not invent architecture or choose presentation mechanisms. |
 | **Architecture Discovery** | Analysis of current state vs target state. Identifies affected subsystems, confirmed decisions, missing decisions, and risks. Contains Component Inventory (for UI-bearing epics). Populates Architecture Assumptions Register. Produces findings only — no decisions. |
 | **ADR** | Freezes decisions. Evaluates alternatives. Records rationale. Specifies migration impact. Each decision is owned by exactly one ADR. Created only when a genuine unresolved architectural decision cannot be resolved by existing ADRs. |
 | **Domain Contracts** | Field-level specification of every new or changed artifact: types, defaults, constraints, validators, ownership, lifecycle. Contains Traceability Matrix linking Master Plan requirements to domain fields. Does not evaluate alternatives (that is the ADR's job). |
@@ -854,3 +872,5 @@ If, during implementation, an unresolved architectural question emerges — a de
 *Revision 2026-07-16 (EPIC-04 Documentation Certification): Formalised Architecture Traceability Review as a mandatory CAR completion criterion for Category B epics (§9 CAR; cross-referenced from Epic Workflow Step 5, Definition of Done, Review Gate Summary, and Category B workflow). CAR is defined as architecture-conformance certification, not a code-quality review. Derived from EPIC-04 CAR experience — end-to-end component/ownership/dependency/data-source traceability was essential to certify frozen-architecture conformance.*
 
 *Revision 2026-07-16 (EPIC-05 Documentation Certification): Formalised Documentation Certification rule that living status belongs in Epic Overview + Implementation Plan status headers; frozen Architecture Discovery / Domain Contracts / Data Model / Architecture Freeze bodies are not rewritten for close-out markers. Category B workflow Step 1 now requires a living `EPIC-NN-OVERVIEW.md` distinct from frozen Architecture Discovery. Derived from EPIC-05 Documentation Certification — EPIC-05 initially used Discovery as the only overview surface, which conflated historical discovery status with living certification markers.*
+
+*Revision 2026-07-16 (EPIC-06 Initialization refinement): Formalised **Known Inputs** as a mandatory Category B EPIC Initialization section (before Architecture Assumptions Register). Known Inputs list only already existing artifacts for Discovery to inspect — no decisions, analysis, or assumptions. Also formalised architecture-neutral Initialization: Initialization identifies the problem space and must not propose presentation mechanisms or other design alternatives. Derived from EPIC-V13-06 Initialization refinement.*
