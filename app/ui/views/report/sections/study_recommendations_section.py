@@ -1,5 +1,5 @@
 # app/ui/views/report/sections/study_recommendations_section.py
-# EPIC-V13-05 Phase 10 — renders StudyRecommendation list from report.coaching_snapshot.
+# EPIC-V13-05 Phase 2 — renders study recommendations from FinalReportDTO via view-model only.
 
 _RESOURCE_ICONS = {
     "documentation": "📄",
@@ -11,7 +11,7 @@ _RESOURCE_ICONS = {
 
 
 def render_study_recommendations(vm):
-    """Render study recommendations panel sourced from report.coaching_snapshot."""
+    """Render study recommendations panel from VM study_recommendations (DTO-sourced)."""
     recommendations = vm.get("study_recommendations") or []
 
     if not recommendations:
