@@ -347,6 +347,27 @@ Update `INDEX.md` whenever: a new frozen component is shipped; a new ADR is acce
 
 Documentation updates are part of the Epic Close checklist (§3, Step 8). An epic whose implementation is complete but whose documentation has not been updated is not done.
 
+### Documentation Certification — Living Status vs Frozen Planning Bodies
+
+Documentation Certification updates **living status artifacts** only:
+
+- Epic Overview (`EPIC-NN-OVERVIEW.md`) — workflow markers, certification outcomes, final Assumptions summary
+- Implementation Plan **status header** and close-out workflow markers — phase/checkpoint/CAR/regression/documentation outcomes
+- Playbook — only when a reusable process improvement is identified
+
+Documentation Certification **must not rewrite** frozen planning bodies as if they were living status documents:
+
+- Architecture Discovery
+- Domain Contracts
+- Data Model Specification
+- Architecture Freeze
+
+Those documents remain historical records of decisions at the time they were frozen. Discovery-era Assumption statuses may remain as historical evidence; the **authoritative final VERIFIED** set is the Data Model / Architecture Freeze register, summarized in the Epic Overview at Documentation Certification.
+
+### Category B — Living Epic Overview
+
+Every Category B epic shall maintain `docs/master-plan/epics/EPIC-NN-OVERVIEW.md` as the **living** status document for workflow markers through Architecture Checkpoints, CAR, Regression Certification, Documentation Certification, Final Review, and Epic Close. Architecture Discovery remains a separate frozen analysis artifact and is not the living status surface.
+
 ---
 
 ## 9. Review Gates
@@ -596,7 +617,7 @@ Applies whenever the epic introduces or substantially changes any of the followi
 
 **Mandatory workflow:**
 
-1. **Master Plan** — Epic scope, purpose, dependencies, non-goals, and success criteria.
+1. **Master Plan** — Epic scope, purpose, dependencies, non-goals, and success criteria. Create/maintain living `EPIC-NN-OVERVIEW.md` for workflow status markers (distinct from frozen Architecture Discovery).
 2. **Architecture Discovery** — Full analysis of current state, target state, all affected subsystems, open decisions, and structural gaps. Produces a structured report of confirmed decisions, missing decisions, and risks. Does not produce code. Must contain a Component Inventory section (for UI-bearing epics) and populates the Architecture Assumptions Register. See Definition of Done §8.1.
 3. **Domain Contracts** — A dedicated domain contract specification document under `docs/master-plan/epics/`. Specifies the complete field set, types, validation invariants, ownership, lifecycle, and relationships of every new artifact. Contains the Traceability Matrix linking Master Plan requirements to domain contract fields. Precise enough that implementation is mechanical. See Definition of Done §8.2.
 4. **Data Model Specification** — A dedicated data model document. Resolves all open modelling decisions left by the Domain Contracts document. Freezes the complete field tables for all affected artifacts. Verifies replay completeness. Evaluates future extensibility. All Architecture Assumptions must be VERIFIED before this document is declared complete. See Definition of Done §8.3.
@@ -831,3 +852,5 @@ If, during implementation, an unresolved architectural question emerges — a de
 *Revision 2026-07-16 (EPIC-04 Architecture Checkpoint A): Clarified Architecture Checkpoint timing (§3 Macro Phase Lifecycle, §9 Architecture Checkpoint, Review Gate Summary). Official Architecture Checkpoints execute ONLY after completion of the corresponding Macro Phase as defined by the Implementation Plan. Intermediate reviews may be performed when useful but are informal and do not replace the official checkpoint. Derived from EPIC-04 Macro Phase A experience — an intermediate review after Phase 2 was useful but must not be treated as Architecture Checkpoint A.*
 
 *Revision 2026-07-16 (EPIC-04 Documentation Certification): Formalised Architecture Traceability Review as a mandatory CAR completion criterion for Category B epics (§9 CAR; cross-referenced from Epic Workflow Step 5, Definition of Done, Review Gate Summary, and Category B workflow). CAR is defined as architecture-conformance certification, not a code-quality review. Derived from EPIC-04 CAR experience — end-to-end component/ownership/dependency/data-source traceability was essential to certify frozen-architecture conformance.*
+
+*Revision 2026-07-16 (EPIC-05 Documentation Certification): Formalised Documentation Certification rule that living status belongs in Epic Overview + Implementation Plan status headers; frozen Architecture Discovery / Domain Contracts / Data Model / Architecture Freeze bodies are not rewritten for close-out markers. Category B workflow Step 1 now requires a living `EPIC-NN-OVERVIEW.md` distinct from frozen Architecture Discovery. Derived from EPIC-05 Documentation Certification — EPIC-05 initially used Discovery as the only overview surface, which conflated historical discovery status with living certification markers.*

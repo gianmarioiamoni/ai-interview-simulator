@@ -1,11 +1,12 @@
 # EPIC-05 — Unified Report: Implementation Plan
 
-**Status:** ACCEPTED  
+**Status:** ACCEPTED — Implementation COMPLETE (Phases 1–6); Checkpoint A/B APPROVED; CAR PASS; Regression CERTIFIED (6708); Documentation Certification COMPLETE — Pending Final Review  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-05  
 **Authority:** EPIC-05-ARCHITECTURE-FREEZE.md (APPROVED, commit `3fecfe5`)  
 **Governing ADRs:** ADR-003, ADR-025, ADR-033, ADR-034, ADR-037  
 **Regression baseline (plan open):** 6637 passing tests, 0 failures  
+**Regression baseline (close-out):** 6708 passing tests, 0 failures  
 **Precondition:** Architecture Freeze APPROVED. Implementation Dependency Validation applied (§2). No production implementation begins without this plan accepted.
 
 ---
@@ -391,25 +392,25 @@ Every WARNING has an owner phase or intentional acceptance.
 ## 9. Final Close-Out Workflow
 
 ```
-Implementation (Phases 1–6)
+Implementation (Phases 1–6)  ← COMPLETE
         ↓
-Architecture Checkpoint A (after Phase 3)
+Architecture Checkpoint A (after Phase 3)  ← APPROVED
         ↓
-Architecture Checkpoint B (after Phase 6)
+Architecture Checkpoint B (after Phase 6)  ← APPROVED
         ↓
-CAR — Construction Architecture Review
+CAR — Construction Architecture Review  ← PASS
   (mandatory Architecture Traceability Review — Category B)
         ↓
-Regression Certification
+Regression Certification  ← CERTIFIED (6708)
   (full suite green; baseline certified)
         ↓
-Documentation Certification
-  (Master Plan / INDEX / Architecture Guide / Assumptions / status markers)
+Documentation Certification  ← COMPLETE
+  (Overview status markers; Implementation Plan status; Assumptions final VERIFIED referenced)
         ↓
-Final Review (FR / FAR)
+Final Review (FR / FAR)  ← PENDING
   (Closed | Blocked)
         ↓
-EPIC Close
+EPIC Close  ← PENDING
 ```
 
 ---
@@ -443,16 +444,16 @@ EPIC Close
 | Architecture Checkpoints defined | YES — §3, §6 |
 | Warnings mapped to owner phases | YES — §8 |
 
-**Implementation Plan: ACCEPTED.**
-
-Exit Criterion #10 (Playbook) is now satisfiable. Production implementation of Phase 1 may begin in a **new Cursor chat** (Playbook §10 one-chat-per-macro-phase; Macro Phase A starts here).
+**Implementation Plan: ACCEPTED.** Implementation phases and post-implementation gates through Documentation Certification are complete; Final Review remains PENDING.
 
 ---
 
-## 12. First Implementation Task
+## 12. First Implementation Task (historical)
 
 **Macro Phase A / Phase 1** — extend `FinalReportDTO` with `study_recommendations` and `session_id`; map in `from_report`; unit tests; atomic commit; regression ≥ 6637.
 
+**Status:** COMPLETED (historical start guidance; not an open task).
+
 ---
 
-*This Implementation Plan is the accepted commit-boundary contract for EPIC-V13-05. Implementation must not deviate from frozen architecture without Stopping Rule / Freeze Integrity Check.*
+*This Implementation Plan is the accepted commit-boundary contract for EPIC-V13-05. Frozen architecture bodies are not rewritten here; living completion status is maintained in the header and §9. Implementation must not deviate from frozen architecture without Stopping Rule / Freeze Integrity Check.*
