@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from app.graph.nodes.replay_node import SessionLoader
 from app.graph.replay_graph import build_replay_graph
+from app.ui.replay.panels.replay_error_boundary import ReplayErrorBoundary
 from app.ui.replay.replay_view_controller import ReplayViewController
 from domain.contracts.replay.replay_request import ReplayRequest
 from domain.contracts.replay.replay_session import ReplaySession
-
-
-@dataclass(frozen=True)
-class ReplayErrorRoute:
-    """Failure routing token (C-09 target). Full boundary arrives in Phase 4."""
-
-    session: ReplaySession
 
 
 class ReplayEntryPoint:
@@ -44,13 +36,11 @@ class ReplayEntryPoint:
     def route(
         self,
         session: ReplaySession,
-    ) -> tuple[ReplayViewController | None, ReplayErrorRoute | None]:
+    ) -> tuple[ReplayViewController | None, ReplayErrorBoundary | None]:
         """Route solely by ``ReplaySession.is_successful`` (I-C01-03).
 
-        Returns ``(view_controller, error_route)`` with exactly one side set.
-        Success wires the concrete ``ReplayViewController`` (C-02).
-        Failure keeps the Phase-4 ``ReplayErrorBoundary`` routing token.
+        Returns ``(view_controller, error_boundary)`` with exactly one side set.
         """
         if session.is_successful:
             return (ReplayViewController(session), None)
-        return (None, ReplayErrorRoute(session=session))
+        return (None, ReplayErrorBoundary(session=session))

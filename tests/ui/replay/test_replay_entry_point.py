@@ -7,7 +7,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.ui.replay.replay_entry_point import ReplayEntryPoint, ReplayErrorRoute
+from app.ui.replay.panels.replay_error_boundary import ReplayErrorBoundary
+from app.ui.replay.replay_entry_point import ReplayEntryPoint
 from app.ui.replay.replay_view_controller import ReplayViewController
 from domain.contracts.replay.replay_enums import ReplayLevel, ReplayMode
 from domain.contracts.replay.replay_manifest import ReplayManifest, ReplaySourcePriority
@@ -124,13 +125,15 @@ def test_route_successful_session_to_view_controller() -> None:
     assert error_route is None
 
 
-def test_route_failed_session_to_error_route() -> None:
+def test_route_failed_session_to_error_boundary() -> None:
     entry = ReplayEntryPoint(session_loader=lambda _sid: None)
     session = _make_session(is_successful=False)
 
-    view_controller, error_route = entry.route(session)
+    view_controller, error_boundary = entry.route(session)
 
     assert view_controller is None
-    assert isinstance(error_route, ReplayErrorRoute)
-    assert error_route.session is session
-    assert error_route.session.failure_reason == "session_not_found"
+    assert isinstance(error_boundary, ReplayErrorBoundary)
+    assert error_boundary.session is session
+    assert error_boundary.session.failure_reason == "session_not_found"
+    model = error_boundary.render()
+    assert "session_not_found" not in model.candidate_message
