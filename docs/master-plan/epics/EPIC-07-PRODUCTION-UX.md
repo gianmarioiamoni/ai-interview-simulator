@@ -235,16 +235,16 @@ Statuses updated by `EPIC-07-ARCHITECTURE-REVIEW.md` (Discovery Architecture Rev
 | AA-01 | EPIC-07 can be delivered without new persistent domain artifacts or new LangGraph nodes | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-01 | Presentation-plane polish only |
 | AA-02 | Existing frozen ADRs (ADR-003, ADR-019, ADR-033, ADR-037, ARC-01, related) govern presentation boundaries without modification | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-02 | No ADR authored at Review |
 | AA-03 | No new `InterviewState` fields are required for Production UX | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-03 | Default; reopen only via ADR path if Contracts prove need |
-| AA-04 | Report and replay WCAG 2.1 AA + primary-flow keyboard navigation are achievable on existing host surfaces | UNVERIFIED | Domain Contracts / implementation evidence | AR-14 deferred |
+| AA-04 | Report and replay WCAG 2.1 AA + primary-flow keyboard navigation are achievable on existing host surfaces | **INVALIDATED** | EPIC-07-DATA-MODEL.md §11 | Achievability not a modelling fact; AX rows frozen; impl verification obligation |
 | AA-05 | Deterministic report/replay data paths already eliminate justified loading spinners; remaining loading/error regressions are presentation-only | **VERIFIED** | EPIC-07-DOMAIN-CONTRACTS.md I-SS-02 | Deterministic no-loader rule frozen at Contracts |
 | AA-06 | EPIC-04 and EPIC-05 CLOSED surfaces are the complete polish targets required by Master Plan Dependencies | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-15 | EPIC-06 not a Master Plan dependency |
-| AA-07 | Conditional ADR step can be skipped | UNVERIFIED | Formal §8.4 after Contracts + Data Model | AR-16 |
+| AA-07 | Conditional ADR step can be skipped | **VERIFIED** | EPIC-07-DATA-MODEL.md §13 | Formal §8.4 ADR authoring SKIP |
 | AA-08 | Master Plan “language mode” is satisfied by the existing language dropdown (`en`/`it`) without a distinct language-mode control or `LanguageProfile` UI binding | **INVALIDATED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-04 | Language mode = ADR-019 session mode; locale ≠ mode |
 | AA-09 | Production UX polish of execution feedback may modify presenter blocks without changing runtime sole-writer of `FeedbackBundle` | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-11 | Presentation only |
 | AA-10 | Unwired alternate view modules are out-of-scope debt for EPIC-07 unless they are on a live candidate path | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-06 / AR-07 | Not reconstituted as live hosts; delete timing deferred |
 | AA-11 | Session history loader stub is in-scope for EPIC-07 error-boundary / production-quality completeness | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-12 | In EPIC-07 scope |
 | AA-12 | Progress view Master Plan item is fully scoped to the report-hosted trend panel (no standalone progress page) | **VERIFIED** | EPIC-07-ARCHITECTURE-REVIEW.md AR-05 | Report-hosted only |
-| AA-13 | No open P0/P1 findings from prior epics block polish of EPIC-04/05 surfaces | UNVERIFIED | Process / EPIC-06 close-out | AR-18 deferred |
+| AA-13 | No open P0/P1 findings from prior epics block polish of EPIC-04/05 surfaces | **VERIFIED** | EPIC-07-DATA-MODEL.md §11 | No prior-epic P0/P1 alters EPIC-07 ephemeral shapes |
 
 ---
 

@@ -1,16 +1,18 @@
 # EPIC-07 — Production UX
 
-**Status:** DOMAIN CONTRACTS COMPLETE — Data Model next  
+**Status:** DATA MODEL COMPLETE — Architecture Freeze next (§8.4 ADR SKIP)  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-07  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-07; Product Goal P-07  
 **Roadmap Phase:** Phase 4 — Production Readiness  
 **Precondition:** EPIC-V13-04 CLOSED; EPIC-V13-05 CLOSED; Master Plan Dependencies for EPIC-V13-07 satisfied; working tree clean at initialization.  
-**Regression baseline (initialization):** Last recorded epic baseline 6708 passing / 0 failures (EPIC-06 initialization); not re-run at Discovery/Review/Contracts.  
+**Regression baseline (initialization):** Last recorded epic baseline 6708 passing / 0 failures (EPIC-06 initialization); not re-run at planning steps.  
 **Architecture Discovery:** `EPIC-07-PRODUCTION-UX.md` — COMPLETE  
-**Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE (Discovery disposition; formal §8.4 ADR gate after Data Model)  
+**Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE  
 **Domain Contracts:** `EPIC-07-DOMAIN-CONTRACTS.md` — COMPLETE  
+**Data Model:** `EPIC-07-DATA-MODEL.md` — COMPLETE  
+**Formal §8.4 ADR:** SKIP (recorded in Data Model §13; confirm in Architecture Freeze)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -134,9 +136,9 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 | 2 | `docs/master-plan/epics/EPIC-07-PRODUCTION-UX.md` | Architecture Discovery — COMPLETE |
 | 3 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-REVIEW.md` | Discovery Architecture Review — COMPLETE; ADR count = 0 |
 | 4 | `docs/master-plan/epics/EPIC-07-DOMAIN-CONTRACTS.md` | Domain Contracts — COMPLETE |
-| 5 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model — NEXT |
-| 6 | Formal §8.4 Architecture Review / ADR (conditional) | After Contracts + Data Model |
-| 7 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Gate authorizing Implementation Plan |
+| 5 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model — COMPLETE |
+| 6 | Formal §8.4 Architecture Review / ADR (conditional) | **SKIP** — no new ADR; confirm in Freeze |
+| 7 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Architecture Freeze — NEXT |
 | 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Phases + commit boundaries + Dependency Validation |
 
 ---
@@ -155,11 +157,12 @@ Discovery Architecture Review  ← COMPLETE
 Domain Contracts  ← COMPLETE
   → EPIC-07-DOMAIN-CONTRACTS.md
         ↓
-Data Model  ← NEXT
+Data Model  ← COMPLETE
+  → EPIC-07-DATA-MODEL.md
         ↓
-Formal §8.4 Architecture Review / ADR (conditional)
+Formal §8.4 Architecture Review / ADR  ← SKIP
         ↓
-Architecture Freeze
+Architecture Freeze  ← NEXT
         ↓
 Implementation Plan
         ↓
@@ -234,9 +237,9 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 
 | ID | Status | Anchor |
 |---|---|---|
-| AA-01, AA-02, AA-03, AA-05, AA-06, AA-09, AA-10, AA-11, AA-12 | **VERIFIED** | Review + Domain Contracts (AA-05 via I-SS-02) |
-| AA-08 | **INVALIDATED** | AR-04 / I-SC-03 — language mode = ADR-019 session mode |
-| AA-04, AA-07, AA-13 | UNVERIFIED | A11y evidence / formal §8.4 / process |
+| AA-01, AA-02, AA-03, AA-05, AA-06, AA-07, AA-09, AA-10, AA-11, AA-12, AA-13 | **VERIFIED** | Review + Contracts + Data Model |
+| AA-08 | **INVALIDATED** | AR-04 / language mode = ADR-019 session mode |
+| AA-04 | **INVALIDATED** | Data Model §11 — a11y = impl verification under frozen AX rows |
 
 ---
 
@@ -251,7 +254,7 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 
 ## 14. Recommendation
 
-**Next engineering task:** Data Model for EPIC-V13-07 (`EPIC-07-DATA-MODEL.md`). Formal §8.4 ADR evaluation after Data Model. No Freeze / Implementation Plan / production code until Exit Criteria pass.
+**Next engineering task:** Architecture Freeze for EPIC-V13-07 (`EPIC-07-ARCHITECTURE-FREEZE.md`). Record §8.4 ADR SKIP. No Implementation Plan / production code until Freeze passes.
 
 ---
 
