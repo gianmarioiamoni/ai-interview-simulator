@@ -1,6 +1,6 @@
 # EPIC-06 — Explainability
 
-**Status:** DOMAIN CONTRACTS COMPLETE — Data Model next  
+**Status:** DATA MODEL COMPLETE — Architecture Review next  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-06  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -9,7 +9,8 @@
 **Precondition:** EPIC-V13-05 CLOSED; EPIC-V13-01 CLOSED; regression baseline 6708 passing / 0 failures; working tree clean at initialization.  
 **Regression baseline (initialization):** 6708 passing tests, 0 failures  
 **Architecture Discovery:** `EPIC-06-EXPLAINABILITY.md` — COMPLETE  
-**Domain Contracts:** `EPIC-06-DOMAIN-CONTRACTS.md` — COMPLETE
+**Domain Contracts:** `EPIC-06-DOMAIN-CONTRACTS.md` — COMPLETE  
+**Data Model:** `EPIC-06-DATA-MODEL.md` — COMPLETE
 
 ---
 
@@ -138,9 +139,10 @@ Architecture Discovery  ← COMPLETE
 Domain Contracts  ← COMPLETE
   → EPIC-06-DOMAIN-CONTRACTS.md
         ↓
-Data Model  ← NEXT
+Data Model  ← COMPLETE
+  → EPIC-06-DATA-MODEL.md
         ↓
-Architecture Review
+Architecture Review  ← NEXT
 (ADR only if required)
         ↓
 Architecture Freeze
@@ -226,20 +228,20 @@ Authoritative Contracts statuses: `EPIC-06-DOMAIN-CONTRACTS.md` §6 (Discovery �
 | AA-02 | **INVALIDATED** | Superseded: ProfileFeature identity (EC-N-01) |
 | AA-03 | **INVALIDATED** | Superseded: LearningObjective origin chain (EC-C-01) |
 | AA-04 | **VERIFIED** | Constraint + Report-plane feasibility |
-| AA-05 | **UNVERIFIED** | Presentation mechanism → Data Model / later |
+| AA-05 | **PARTIALLY VERIFIED** | Reconstruction fields VERIFIED (`EPIC-06-DATA-MODEL.md` §8); UI mechanism still OF-01 |
 | AA-06 | **VERIFIED** | EC-V-01 fail-fast class |
-| AA-07 | **VERIFIED** | ADR step likely skip; reconfirm after Data Model |
+| AA-07 | **VERIFIED** | ADR step likely skip; reconfirm at Architecture Review |
 | AA-08 | **INVALIDATED** | Named payloads not required; Report fields suffice |
 | AA-09 | **VERIFIED** | Discovery inventory |
 | AA-10 | **VERIFIED** | EPIC-06 ownership of go-live explainability |
 
-**VERIFIED:** AA-01, AA-04, AA-06, AA-07, AA-09, AA-10. **INVALIDATED:** AA-02, AA-03, AA-08. **UNVERIFIED:** AA-05.
+**VERIFIED:** AA-01, AA-04, AA-06, AA-07, AA-09, AA-10. **PARTIALLY VERIFIED:** AA-05. **INVALIDATED:** AA-02, AA-03, AA-08.
 
 ---
 
 ## 13. Recommendation
 
-**Next engineering task:** Produce Data Model Specification for EPIC-V13-06. No ADR unless Data Model surfaces new ownership conflict. No implementation.
+**Next engineering task:** Architecture Review for EPIC-V13-06 (expect ADR skip). Then Architecture Freeze. No implementation.
 
 ---
 
