@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 @dataclass
 class UILayoutComponents:
-
     state: object
 
     role_input: object
@@ -41,7 +40,25 @@ class UILayoutComponents:
     report_section: object
     pdf_button: object
     json_button: object
+    replay_session_button: object
     new_interview_button: object
 
     global_loader: object
 
+    # EPIC-04 Phase 5 — Replay layout
+    replay_section: object
+    replay_page_title: object
+    replay_nav_progress: object
+    replay_backward_button: object
+    replay_forward_button: object
+    replay_question_panel: object
+    replay_summary_panel: object
+    replay_scoring_panel: object
+    replay_coaching_panel: object
+    replay_error_panel: object
+    replay_exit_button: object
+    replay_runtime: object
+
+    session_history_section: object
+    session_history_dropdown: object
+    replay_from_history_button: object

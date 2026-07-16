@@ -12,6 +12,14 @@ from app.ui.replay.panels.replay_scoring_panel import ReplayScoringPanel
 from app.ui.replay.panels.replay_session_summary_panel import ReplaySessionSummaryPanel
 from app.ui.replay.replay_context import ReplayContext
 from app.ui.replay.replay_entry_point import ReplayEntryPoint
+from app.ui.replay.replay_html_composer import (
+    compose_coaching_html,
+    compose_error_html,
+    compose_question_html,
+    compose_scoring_html,
+    compose_summary_html,
+    compose_success_panels,
+)
 from app.ui.replay.replay_view_controller import ReplayViewController
 
 __all__ = [
@@ -26,4 +34,10 @@ __all__ = [
     "ReplayScoringPanel",
     "ReplaySessionSummaryPanel",
     "ReplayViewController",
+    "compose_coaching_html",
+    "compose_error_html",
+    "compose_question_html",
+    "compose_scoring_html",
+    "compose_summary_html",
+    "compose_success_panels",
 ]

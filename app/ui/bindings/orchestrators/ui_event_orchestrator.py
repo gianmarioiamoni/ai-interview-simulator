@@ -1,7 +1,12 @@
 # app/ui/bindings/orchestrators/ui_event_orchestrator.py
 
+from __future__ import annotations
+
+from typing import Optional
+
 import gradio as gr
 
+from app.graph.nodes.replay_node import SessionLoader
 from app.ui.handlers.start_handler import start_handler
 from app.ui.state_handlers import new_interview
 
@@ -13,15 +18,25 @@ from app.ui.state_handlers import (
 from app.ui.state_handlers.export_handlers import export_pdf_handler, export_json_handler
 
 from app.ui.bindings.builders.ui_outputs_builder import UIOutputsBuilder
+from app.ui.bindings.handlers.replay_layout_coordinator import (
+    ReplayLayoutCoordinator,
+    ReplayRuntimeState,
+    resolve_session_id_from_report,
+    snapshot_to_gradio_updates,
+)
 from app.ui.bindings.validators.input_validator import InputValidator
 from app.ui.bindings.validators.submit_enabler import SubmitEnabler
 from app.ui.bindings.factories.streaming_handler_factory import StreamingHandlerFactory
+from domain.contracts.interview_state import InterviewState
+from domain.contracts.session_history.session_history import SessionHistory
 
 
 class UIEventOrchestrator:
-    def __init__(self, components):
+    def __init__(self, components, session_loader: SessionLoader):
         self.c = components
         self.state = components.state
+        self._session_loader = session_loader
+        self._replay = ReplayLayoutCoordinator(session_loader)
 
         self.outputs_builder = UIOutputsBuilder(components)
         self.outputs = self.outputs_builder.build()
@@ -44,6 +59,34 @@ class UIEventOrchestrator:
         self._bind_enable_submit()
         self._bind_navigation()
         self._bind_export()
+        self._bind_replay()
+
+    @property
+    def _replay_outputs(self) -> list[object]:
+        return [
+            self.c.replay_runtime,
+            self.c.replay_section,
+            self.c.report_section,
+            self.c.replay_nav_progress,
+            self.c.replay_backward_button,
+            self.c.replay_forward_button,
+            self.c.replay_question_panel,
+            self.c.replay_summary_panel,
+            self.c.replay_scoring_panel,
+            self.c.replay_coaching_panel,
+            self.c.replay_error_panel,
+        ]
+
+    def _loader_with_state(self, state: InterviewState | None) -> SessionLoader:
+        base = self._session_loader
+
+        def loader(session_id: str) -> Optional[SessionHistory]:
+            if state is not None and state.session_history is not None:
+                if state.session_history.session_id == session_id:
+                    return state.session_history
+            return base(session_id)
+
+        return loader
 
     # =========================================================
     # VALIDATION
@@ -84,7 +127,6 @@ class UIEventOrchestrator:
     # =========================================================
 
     def _bind_start(self):
-
         start_handler_wrapper = self.handler_factory.create(
             start_handler,
             [
@@ -214,5 +256,96 @@ class UIEventOrchestrator:
             export_json_handler,
             inputs=[self.state],
             outputs=[self.c.json_button],
+            show_progress=False,
+        )
+
+    # =========================================================
+    # REPLAY (EPIC-04 Phase 5)
+    # =========================================================
+
+    def _bind_replay(self) -> None:
+        def enter_from_report(
+            state: InterviewState | None,
+            _runtime: ReplayRuntimeState | None,
+        ):
+            session_id = resolve_session_id_from_report(state)
+            coordinator = ReplayLayoutCoordinator(self._loader_with_state(state))
+            snapshot = coordinator.enter(session_id)
+            updates = list(snapshot_to_gradio_updates(snapshot))
+            # Register session in history list
+            history_update = gr.update(
+                choices=[session_id],
+                value=session_id,
+            )
+            history_btn = gr.update(interactive=True)
+            return tuple(updates) + (history_update, history_btn)
+
+        def enter_from_history(
+            selected_session_id: str | None,
+            _runtime: ReplayRuntimeState | None,
+        ):
+            if not selected_session_id:
+                raise ValueError("Select a completed session to replay")
+            snapshot = self._replay.enter(selected_session_id)
+            return snapshot_to_gradio_updates(snapshot)
+
+        def navigate_forward(runtime: ReplayRuntimeState | None):
+            return snapshot_to_gradio_updates(self._replay.navigate_forward(runtime))
+
+        def navigate_backward(runtime: ReplayRuntimeState | None):
+            return snapshot_to_gradio_updates(self._replay.navigate_backward(runtime))
+
+        def exit_replay(
+            state: InterviewState | None,
+            runtime: ReplayRuntimeState | None,
+        ):
+            return snapshot_to_gradio_updates(self._replay.exit(runtime, state))
+
+        def enable_history_replay(selected: str | None):
+            return gr.update(interactive=bool(selected))
+
+        report_outputs = self._replay_outputs + [
+            self.c.session_history_dropdown,
+            self.c.replay_from_history_button,
+        ]
+
+        self.c.replay_session_button.click(
+            enter_from_report,
+            inputs=[self.state, self.c.replay_runtime],
+            outputs=report_outputs,
+            show_progress=False,
+        )
+
+        self.c.replay_from_history_button.click(
+            enter_from_history,
+            inputs=[self.c.session_history_dropdown, self.c.replay_runtime],
+            outputs=self._replay_outputs,
+            show_progress=False,
+        )
+
+        self.c.session_history_dropdown.change(
+            enable_history_replay,
+            inputs=[self.c.session_history_dropdown],
+            outputs=[self.c.replay_from_history_button],
+        )
+
+        self.c.replay_forward_button.click(
+            navigate_forward,
+            inputs=[self.c.replay_runtime],
+            outputs=self._replay_outputs,
+            show_progress=False,
+        )
+
+        self.c.replay_backward_button.click(
+            navigate_backward,
+            inputs=[self.c.replay_runtime],
+            outputs=self._replay_outputs,
+            show_progress=False,
+        )
+
+        self.c.replay_exit_button.click(
+            exit_replay,
+            inputs=[self.state, self.c.replay_runtime],
+            outputs=self._replay_outputs,
             show_progress=False,
         )
