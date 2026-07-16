@@ -400,7 +400,8 @@ Discovery register must be updated to match.
 
 ## 15. Recommendation
 
-**Next engineering task:** Architecture Freeze for EPIC-V13-07. Record §8.4 ADR **SKIP** per §13. Do not author an ADR. Do not begin Implementation Plan until Freeze passes Exit Criteria.
+**Architecture Freeze:** APPROVED — see `EPIC-07-ARCHITECTURE-FREEZE.md` (§8.4 ADR SKIP recorded).  
+**Next engineering task:** Implementation Plan (`EPIC-07-IMPLEMENTATION-PLAN.md`).
 
 ---
 

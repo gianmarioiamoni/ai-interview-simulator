@@ -1,6 +1,6 @@
 # EPIC-07 — Production UX
 
-**Status:** DATA MODEL COMPLETE — Architecture Freeze next (§8.4 ADR SKIP)  
+**Status:** ARCHITECTURE FREEZE APPROVED — Implementation Plan next  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-07  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -12,7 +12,8 @@
 **Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE  
 **Domain Contracts:** `EPIC-07-DOMAIN-CONTRACTS.md` — COMPLETE  
 **Data Model:** `EPIC-07-DATA-MODEL.md` — COMPLETE  
-**Formal §8.4 ADR:** SKIP (recorded in Data Model §13; confirm in Architecture Freeze)  
+**Architecture Freeze:** `EPIC-07-ARCHITECTURE-FREEZE.md` — **APPROVED**  
+**Formal §8.4 ADR:** **SKIP** (Freeze §2)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -137,9 +138,9 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 | 3 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-REVIEW.md` | Discovery Architecture Review — COMPLETE; ADR count = 0 |
 | 4 | `docs/master-plan/epics/EPIC-07-DOMAIN-CONTRACTS.md` | Domain Contracts — COMPLETE |
 | 5 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model — COMPLETE |
-| 6 | Formal §8.4 Architecture Review / ADR (conditional) | **SKIP** — no new ADR; confirm in Freeze |
-| 7 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Architecture Freeze — NEXT |
-| 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Phases + commit boundaries + Dependency Validation |
+| 6 | Formal §8.4 Architecture Review / ADR (conditional) | **SKIP** — Freeze §2 |
+| 7 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Architecture Freeze — **APPROVED** |
+| 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Implementation Plan — NEXT |
 
 ---
 
@@ -162,9 +163,10 @@ Data Model  ← COMPLETE
         ↓
 Formal §8.4 Architecture Review / ADR  ← SKIP
         ↓
-Architecture Freeze  ← NEXT
+Architecture Freeze  ← APPROVED
+  → EPIC-07-ARCHITECTURE-FREEZE.md
         ↓
-Implementation Plan
+Implementation Plan  ← NEXT
         ↓
 Implementation
   (Macro Phase → Architecture Checkpoint → …)
@@ -254,7 +256,7 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 
 ## 14. Recommendation
 
-**Next engineering task:** Architecture Freeze for EPIC-V13-07 (`EPIC-07-ARCHITECTURE-FREEZE.md`). Record §8.4 ADR SKIP. No Implementation Plan / production code until Freeze passes.
+**Next engineering task:** Implementation Plan for EPIC-V13-07 (`EPIC-07-IMPLEMENTATION-PLAN.md`) with Implementation Dependency Validation. No production code until Implementation Plan accepted.
 
 ---
 
