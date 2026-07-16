@@ -1,10 +1,44 @@
 # tests/ui/mappers/test_final_report_dto.py
-# EPIC-V13-05 Phase 9 — FinalReportDTO.from_report() architectural tests.
+# EPIC-V13-05 Phase 9/1 — FinalReportDTO.from_report() architectural tests.
 
-import pytest
+import inspect
 
-from app.ui.dto.final_report_dto import FinalReportDTO
+from app.ui.dto.final_report_dto import FinalReportDTO, StudyRecommendationDTO
+from domain.contracts.coaching.coaching_builder import CoachingBuilder
+from domain.contracts.coaching.learning_objective import LearningObjective, ObjectivePriority
+from domain.contracts.coaching.study_recommendation import ResourceType, StudyRecommendation
+from domain.contracts.feature.feature_type import FeatureType
+from domain.contracts.observation.observation_type import ObservationType
 from tests.domain.contracts.report.conftest import make_report
+from tests.domain.contracts.session_history.conftest import CANDIDATE_ID, SESSION_ID
+
+
+def _make_populated_coaching_snapshot():
+    objective = LearningObjective(
+        objective_id="obj-1",
+        feature_type=FeatureType.REASONING,
+        description="Strengthen algorithmic reasoning",
+        priority=ObjectivePriority.HIGH,
+        confidence=0.9,
+        supporting_observation_types=(ObservationType.REASONING_DEPTH_LOW,),
+        detected_at_question_index=0,
+        candidate_identity_id=CANDIDATE_ID,
+    )
+    recommendation = StudyRecommendation(
+        recommendation_id="rec-1",
+        objective_id=objective.objective_id,
+        resource_type=ResourceType.EXERCISE,
+        topic="Hash maps",
+        rationale="Addresses lookup complexity gaps",
+        estimated_duration_hours=2.0,
+    )
+    return CoachingBuilder.build(
+        objectives=(objective,),
+        actions=(),
+        recommendations=(recommendation,),
+        session_id=SESSION_ID,
+        question_index=0,
+    )
 
 
 class TestFinalReportDTOFromReport:
@@ -116,8 +150,38 @@ class TestFinalReportDTOFromReport:
 
     def test_no_interview_state_attributes_accessed(self):
         """Structural: from_report signature takes only Report, no InterviewState."""
-        import inspect
         sig = inspect.signature(FinalReportDTO.from_report)
         params = list(sig.parameters.keys())
         assert "state" not in params
         assert "report" in params
+
+    def test_session_id_equals_report_session_id(self):
+        """I-C02-03 / DM-FR-03: session_id mapped from Report.session_id only."""
+        report = make_report(session_id="session-phase1-001")
+        dto = FinalReportDTO.from_report(report)
+        assert dto.session_id == report.session_id
+        assert dto.session_id == "session-phase1-001"
+
+    def test_study_recommendations_empty_when_domain_empty(self):
+        """SR-03: empty list only when domain collection is empty."""
+        report = make_report()
+        assert report.coaching_snapshot.collection.recommendations == ()
+        dto = FinalReportDTO.from_report(report)
+        assert dto.study_recommendations == []
+
+    def test_study_recommendations_mapped_from_coaching_snapshot(self):
+        """PC-05 / SR-01: recommendations mapped from coaching_snapshot.collection."""
+        report = make_report().model_copy(
+            update={"coaching_snapshot": _make_populated_coaching_snapshot()}
+        )
+        dto = FinalReportDTO.from_report(report)
+        assert len(dto.study_recommendations) == 1
+        rec = dto.study_recommendations[0]
+        assert isinstance(rec, StudyRecommendationDTO)
+        domain_rec = report.coaching_snapshot.collection.recommendations[0]
+        assert rec.recommendation_id == domain_rec.recommendation_id
+        assert rec.objective_id == domain_rec.objective_id
+        assert rec.resource_type == domain_rec.resource_type.value
+        assert rec.topic == domain_rec.topic
+        assert rec.rationale == domain_rec.rationale
+        assert rec.estimated_duration_hours == domain_rec.estimated_duration_hours

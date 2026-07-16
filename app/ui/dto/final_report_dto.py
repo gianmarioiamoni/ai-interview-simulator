@@ -2,8 +2,9 @@
 # EPIC-V13-05 Phase 9/10 — FinalReportDTO sourced exclusively from Report v2.0.
 # from_components deleted (R-05). from_report is the sole factory.
 # Phase 10 adds NarrativeInsightDTO, CoachingObjectiveDTO optional fields.
+# Phase 1 adds StudyRecommendationDTO, study_recommendations, session_id.
 
-from dataclasses import dataclass, field as dc_field
+from dataclasses import dataclass
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 
@@ -36,6 +37,17 @@ class CoachingObjectiveDTO:
     priority: str
     confidence: float
     feature_type: str
+
+
+@dataclass(frozen=True)
+class StudyRecommendationDTO:
+    """DTO for a single StudyRecommendation (EPIC-V13-05 Phase 1 / PC-05)."""
+    recommendation_id: str
+    objective_id: str
+    resource_type: str
+    topic: str
+    rationale: str
+    estimated_duration_hours: float
 
 
 def _safe_role_type(role_str: str) -> RoleType:
@@ -90,6 +102,10 @@ class FinalReportDTO(BaseModel):
     narrative_insights: List[NarrativeInsightDTO] = Field(default_factory=list)
     coaching_objectives: List[CoachingObjectiveDTO] = Field(default_factory=list)
 
+    # Phase 1 — study recommendations + replay session identity (EPIC-05 Data Model §2.2)
+    study_recommendations: List[StudyRecommendationDTO] = Field(default_factory=list)
+    session_id: str
+
     @classmethod
     def from_report(cls, report: Report) -> "FinalReportDTO":
         """Build FinalReportDTO exclusively from Report v2.0 (ADR-033, R-05, EPIC-V13-05 Phase 9).
@@ -131,6 +147,22 @@ class FinalReportDTO(BaseModel):
             for obj in report.coaching_snapshot.collection.objectives
         ]
 
+        study_recommendations = [
+            StudyRecommendationDTO(
+                recommendation_id=rec.recommendation_id,
+                objective_id=rec.objective_id,
+                resource_type=(
+                    rec.resource_type.value
+                    if hasattr(rec.resource_type, "value")
+                    else str(rec.resource_type)
+                ),
+                topic=rec.topic,
+                rationale=rec.rationale,
+                estimated_duration_hours=rec.estimated_duration_hours,
+            )
+            for rec in report.coaching_snapshot.collection.recommendations
+        ]
+
         return cls(
             overall_score=scoring.overall_score,
             raw_score=scoring.raw_score or 0.0,
@@ -159,4 +191,6 @@ class FinalReportDTO(BaseModel):
             context_profile=report.context_profile,
             narrative_insights=narrative_insights,
             coaching_objectives=coaching_objectives,
+            study_recommendations=study_recommendations,
+            session_id=report.session_id,
         )
