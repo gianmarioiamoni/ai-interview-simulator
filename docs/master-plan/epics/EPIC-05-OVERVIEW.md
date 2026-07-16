@@ -1,6 +1,6 @@
 # EPIC-05 — Unified Report
 
-**Status:** IMPLEMENTATION COMPLETE — Checkpoint A/B APPROVED; CAR PASS; Regression CERTIFIED (6708); Documentation Certification COMPLETE — Pending Final Review  
+**Status:** CLOSED  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-05  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -8,7 +8,7 @@
 **Roadmap Phase:** Phase 3 — User Experience  
 **Precondition:** EPIC-V13-01/02/03/04 CLOSED; ADR-033 Accepted; Architecture Freeze APPROVED.  
 **Regression baseline (close-out):** 6708 passing tests, 0 failures  
-**Final Review (FR / FAR):** PENDING
+**Final Review (FR / FAR):** APPROVED — 2026-07-16
 
 ---
 
@@ -91,7 +91,7 @@ Discovery-era statuses in `EPIC-05-UNIFIED-REPORT.md` §6 remain historical Arch
 | `EPIC-05-DOMAIN-CONTRACTS.md` | Domain Contracts | COMPLETE (frozen) |
 | `EPIC-05-DATA-MODEL.md` | Data Model | COMPLETE (frozen) |
 | `EPIC-05-ARCHITECTURE-FREEZE.md` | Architecture Freeze | APPROVED (frozen) |
-| `EPIC-05-IMPLEMENTATION-PLAN.md` | Implementation Plan | ACCEPTED; living status header only |
+| `EPIC-05-IMPLEMENTATION-PLAN.md` | Implementation Plan | ACCEPTED; EPIC CLOSED |
 
 ---
 
@@ -131,9 +131,9 @@ Regression Certification  ← CERTIFIED (6708)
         ↓
 Documentation Certification  ← COMPLETE
         ↓
-Final Review (FR / FAR)  ← PENDING
+Final Review (FR / FAR)  ← APPROVED
         ↓
-Epic Close  ← PENDING
+Epic Close  ← CLOSED
 ```
 
 ---
@@ -147,8 +147,9 @@ Epic Close  ← PENDING
 | Construction Architecture Review (CAR) | PASS (Architecture Traceability complete; 0 BLOCKER) |
 | Regression Certification | CERTIFIED — 6708 passed / 0 failed |
 | Documentation Certification | COMPLETE |
-| Final Review (FR / FAR) | PENDING |
+| Final Review (FR / FAR) | APPROVED — 2026-07-16 |
+| Epic Close | CLOSED — 2026-07-16 |
 
 ---
 
-*This Overview is the living status document for EPIC-V13-05. Frozen Discovery / Domain Contracts / Data Model / Architecture Freeze bodies remain historical records.*
+*This Overview is the living status document for EPIC-V13-05. Frozen Discovery / Domain Contracts / Data Model / Architecture Freeze bodies remain historical records. Epic CLOSED.*

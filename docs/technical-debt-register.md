@@ -83,6 +83,12 @@
 |---|---|---|---|---|---|
 | TD-EP02-001 | `language_capability_summary` not reconstructable from `SessionHistory[]` — reconstructed `LongitudinalProfile` always has `language_capability_summary = []`; `LanguageCapability` is transient and not persisted in `SessionHistory` (OI-03 resolution) | `infrastructure/longitudinal/`, `domain/contracts/longitudinal/longitudinal_profile_builder.py` | Low | DEFERRED | ADR-034 D7, ADR-036 §6.5 |
 
+### EPIC-05 Unified Report
+
+| ID | Item | Location | Severity | Status | ADR |
+|---|---|---|---|---|---|
+| TD-EP05-001 | Presentation-path architectural suite bans `SessionHistory` imports but does not also parametrize an `InterviewEvaluation` import ban (CAR/FAR P2; spot-check clean) | `tests/ui/architecture/test_unified_report_architecture.py` | Low (P2) | OPEN | ADR-033 |
+
 ---
 
 ## Closed Items

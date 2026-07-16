@@ -1,6 +1,6 @@
 # EPIC-05 — Unified Report: Implementation Plan
 
-**Status:** ACCEPTED — Implementation COMPLETE (Phases 1–6); Checkpoint A/B APPROVED; CAR PASS; Regression CERTIFIED (6708); Documentation Certification COMPLETE — Pending Final Review  
+**Status:** ACCEPTED — Implementation COMPLETE; all gates APPROVED/CERTIFIED; EPIC CLOSED  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-05  
 **Authority:** EPIC-05-ARCHITECTURE-FREEZE.md (APPROVED, commit `3fecfe5`)  
@@ -407,10 +407,10 @@ Regression Certification  ← CERTIFIED (6708)
 Documentation Certification  ← COMPLETE
   (Overview status markers; Implementation Plan status; Assumptions final VERIFIED referenced)
         ↓
-Final Review (FR / FAR)  ← PENDING
+Final Review (FR / FAR)  ← APPROVED
   (Closed | Blocked)
         ↓
-EPIC Close  ← PENDING
+EPIC Close  ← CLOSED
 ```
 
 ---
@@ -444,7 +444,7 @@ EPIC Close  ← PENDING
 | Architecture Checkpoints defined | YES — §3, §6 |
 | Warnings mapped to owner phases | YES — §8 |
 
-**Implementation Plan: ACCEPTED.** Implementation phases and post-implementation gates through Documentation Certification are complete; Final Review remains PENDING.
+**Implementation Plan: ACCEPTED.** Implementation phases and all close-out gates complete; EPIC CLOSED.
 
 ---
 
