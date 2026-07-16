@@ -1,7 +1,7 @@
 # V1.3 Development Playbook
 
-**Status:** ACTIVE — Operational Handbook  
-**Date:** 2026-07-05  
+**Status:** ACTIVE — Version 1.0  
+**Date:** 2026-07-16  
 **Precondition:** V1.3 Product Master Plan frozen  
 **Authority:** This document is the operational handbook for all V1.3 engineering work. It complements and does not replace the Architecture Constitution (`ARC-01`), the Enterprise Engineering Playbook, or the Platform Engineering Manifest.
 
@@ -45,7 +45,7 @@ No implementation increment begins without a completed architecture review. Cont
 
 ### Deletion Is Completion
 
-A migration is not done until the legacy artifact is deleted from the codebase. Deprecated-but-not-deleted code is not a milestone milestone. It is a debt item. Every migration increment must have an explicit deletion target, and that target must be closed before the epic is marked done.
+A migration is not done until the legacy artifact is deleted from the codebase. Deprecated-but-not-deleted code is not a milestone. It is a debt item. Every migration increment must have an explicit deletion target, and that target must be closed before the epic is marked done.
 
 ### Small Incremental Changes
 
@@ -74,7 +74,7 @@ If a commit boundary fails this validation, the commit must be redesigned — ei
 
 When an implementation sequencing issue is discovered during implementation — one that affects only the ordering of commits and not the target architecture, ADRs, ownership, contracts, data model, or target behaviour — it is permitted to update the Implementation Plan without a full Architecture Freeze.
 
-Such a correction requires only a Mini Architecture Freeze (§9), which verifies:
+Such a correction requires only a Mini Architecture Freeze (§10), which verifies:
 
 - The target architecture is unchanged.
 - No ADR is modified.
@@ -176,27 +176,43 @@ If the epic introduces a new design decision, a new pattern, or a modification t
 
 Define all new domain contracts before writing implementation code. All contracts are `frozen=True` (or equivalent). All contracts use `extra=forbid`. No implementation begins on any component whose contract is not frozen.
 
-### Step 4 — Implementation
+### Step 4 — Architecture Freeze
 
-Implement against frozen contracts and accepted ADRs. Each commit addresses one logical concern. No mixed refactors. No silent fallbacks. Every new `InterviewState` field must have a declared sole writer at the moment of addition. Every reconstruction path must explicitly enumerate every field it copies (Reconstruction Completeness). Dead code is deleted, not deprecated.
+Confirm that all decisions required for implementation are frozen, unambiguous, and consistent. For Category B epics, Architecture Freeze is the formal gate defined in §8. For Category A epics, accepted ADRs are the equivalent decision freeze. Implementation planning and coding must not begin until this gate passes.
 
-### Step 5 — Architectural Review (CAR)
+### Step 5 — Implementation Plan
 
-After implementation is complete, perform a Construction Architecture Review (architecture-conformance certification — see §9). Verify: layering compliance (no domain-to-infrastructure imports); single ownership (no new dual-path violations); constitutional compliance (no computation in projection paths); PAT compliance (all operative patterns followed); and that all `InterviewState` fields have declared ownership. For Category B epics, Architecture Traceability Review is mandatory (§9). P0/P1 findings block the epic from advancing. P2/P3 findings are registered in the Technical Debt Register.
+Produce the commit boundary table and phase breakdown. Apply Implementation Dependency Validation (§2) before the plan is accepted. For Category B, the Implementation Plan must satisfy Definition of Done §8.6.
 
-### Step 6 — Regression
+### Step 6 — Macro Phase
+
+Implement against frozen contracts and accepted ADRs within the declared phase scope. Each commit addresses one logical concern. No mixed refactors. No silent fallbacks. Every new `InterviewState` field must have a declared sole writer at the moment of addition. Every reconstruction path must explicitly enumerate every field it copies (Reconstruction Completeness). Dead code is deleted, not deprecated. Every phase and commit must satisfy Zero Known Failing Tests (§2). See Macro Phase Lifecycle above.
+
+### Step 7 — Architecture Checkpoint
+
+After each completed macro phase, perform the official Architecture Checkpoint (§10). Intermediate informal reviews may help but do not authorize the next macro phase. The checkpoint must explicitly authorize (or block) the next macro phase.
+
+### Step 8 — Next Macro Phase
+
+Repeat Steps 6–7 until all macro phases are complete. No macro phase may begin until the preceding Architecture Checkpoint has authorized it.
+
+### Step 9 — Architectural Review (CAR)
+
+After all macro phases are complete, perform a Construction Architecture Review (architecture-conformance certification — see §10). Verify: layering compliance (no domain-to-infrastructure imports); single ownership (no new dual-path violations); constitutional compliance (no computation in projection paths); PAT compliance (all operative patterns followed); and that all `InterviewState` fields have declared ownership. For Category B epics, Architecture Traceability Review is mandatory (§10). P0/P1 findings block the epic from advancing. P2/P3 findings are registered in the Technical Debt Register.
+
+### Step 10 — Regression
 
 Run the full test suite. All V1.2 acceptance criteria must continue to pass. All new epic acceptance criteria must pass. Zero failures permitted to close the epic.
 
-### Step 7 — Documentation Update
+### Step 11 — Documentation Update
 
-Update all affected documents: the Master Plan (if epic scope changed), the Architecture Guide, relevant ADRs (status update), the INDEX (new frozen components, new ADRs), and the Technical Debt Register (new findings or closed items). Documentation is not optional and is not deferred.
+Update all affected documents: the Master Plan (if epic scope changed), the Architecture Guide, relevant ADRs (status update), the INDEX (new frozen components, new ADRs), and the Technical Debt Register (new findings or closed items). Documentation is not optional and is not deferred. For Category B living-status rules, see §9 Documentation Certification.
 
-### Step 8 — Final Review (FR)
+### Step 12 — Final Review (FR)
 
-Perform the Final Review after Documentation Update is complete. The FR is the mandatory Epic-closure gate. It verifies: all Epic objectives are satisfied as defined in the Master Plan and the Epic Overview document; all frozen planning documents have been fully implemented; no temporary bridges or compatibility layers remain unless explicitly planned with a named deletion target; the runtime architecture matches the frozen architecture; all ownership rules are satisfied; implementation debt is classified and registered; and lessons learned are captured. The FR produces a binary outcome: Closed or Blocked. A Blocked FR must enumerate blocking findings before any work on the next Epic begins.
+Perform the Final Review after Documentation Update is complete. The FR is the mandatory Epic-closure gate defined in §10. It produces a binary outcome: Closed or Blocked. A Blocked FR must enumerate blocking findings before any work on the next Epic begins.
 
-### Step 9 — Epic Close
+### Step 13 — Epic Close
 
 The Epic is formally closed when the FR passes. At this point: all acceptance criteria are satisfied; zero P0/P1 architectural findings remain open; all documentation is updated; all legacy artifacts targeted for deletion are deleted; the regression suite passes in full; and the FR has produced a Closed outcome.
 
@@ -223,7 +239,7 @@ An epic is done when all of the following are true:
 - All artifacts the epic was expected to produce exist, are correct, and are covered by tests.
 - All artifacts the epic was expected to delete have been deleted from the codebase.
 - The CAR has been performed and all P0/P1 findings are resolved.
-- For Category B epics, Architecture Traceability Review has passed (§9).
+- For Category B epics, Architecture Traceability Review has passed (§10).
 - The full regression suite passes with zero failures.
 - All new ADRs are in Accepted status.
 - All affected documentation has been updated (Architecture Guide, INDEX, ADRs, Technical Debt Register).
@@ -323,271 +339,9 @@ Total passing tests ≥ 2,500 at V1.3 release gate (Master Plan §5).
 
 ---
 
-## 8. Documentation Strategy
-
-### When to Update the Master Plan
-
-Update `V13-PRODUCT-MASTER-PLAN.md` when: an epic's scope changes (narrowing or expanding); a dependency is discovered that was not captured at planning time; a deferred feature is moved into or out of scope; or a risk materialises and the mitigation strategy changes. Every amendment requires a recorded rationale at the bottom of the affected section.
-
-### When to Write an ADR
-
-Follow the criteria in the Enterprise Engineering Playbook §E. In V1.3 specifically, the following always require an ADR:
-
-- Any decision about the `LongitudinalProfile` ownership model, storage schema, or update trigger.
-- Any modification to a frozen V1.2 contract.
-- Any exception to a constitutional principle (P-01 through P-05).
-- The scoring pipeline migration strategy (how `InterviewEvaluation` is disabled and `Report` is activated).
-- The `replay_node` reconstruction completeness contract.
-
-### When to Update the Architecture Constitution
-
-The Constitution (`ARC-01`) is amended only when V1.3 introduces a genuinely new invariant or proves an existing principle requires refinement. Amendments are proposed via ADR, reviewed explicitly, and recorded in the Constitution with a version note. The Constitution is not updated to describe V1.3 features — it describes principles that will remain valid beyond V1.3.
-
-### When to Update the Architecture Guide
-
-Update `ARCHITECTURE-GUIDE.md` at every epic close where the shipped architecture differs from what was previously documented. The guide reflects the current state of the system. Documentation-code divergence is a P2 finding in the CAR.
-
-### When to Update the INDEX
-
-Update `INDEX.md` whenever: a new frozen component is shipped; a new ADR is accepted; a component is deleted; or a Technical Debt Register item is opened or closed.
-
-### Documentation Is Not Optional
-
-Documentation updates are part of the Epic Close checklist (§3, Step 8). An epic whose implementation is complete but whose documentation has not been updated is not done.
-
-### Documentation Certification — Living Status vs Frozen Planning Bodies
-
-Documentation Certification updates **living status artifacts** only:
-
-- Epic Overview (`EPIC-NN-OVERVIEW.md`) — workflow markers, certification outcomes, final Assumptions summary
-- Implementation Plan **status header** and close-out workflow markers — phase/checkpoint/CAR/regression/documentation outcomes
-- Playbook — only when a reusable process improvement is identified
-
-Documentation Certification **must not rewrite** frozen planning bodies as if they were living status documents:
-
-- Architecture Discovery
-- Domain Contracts
-- Data Model Specification
-- Architecture Freeze
-
-Those documents remain historical records of decisions at the time they were frozen. Discovery-era Assumption statuses may remain as historical evidence; the **authoritative final VERIFIED** set is the Data Model / Architecture Freeze register, summarized in the Epic Overview at Documentation Certification.
-
-### Category B — Living Epic Overview
-
-Every Category B epic shall maintain `docs/master-plan/epics/EPIC-NN-OVERVIEW.md` as the **living** status document for workflow markers through Architecture Checkpoints, CAR, Regression Certification, Documentation Certification, Final Review, and Epic Close. Architecture Discovery remains a separate frozen analysis artifact and is not the living status surface.
-
----
-
-## 9. Review Gates
-
-### When to Trigger an ADR
-
-Trigger an ADR before beginning any implementation that involves a design decision not already governed by an accepted ADR. An ADR is required; it is not a best-practice recommendation. Implementation is blocked until the ADR is accepted. See §8 for V1.3-specific ADR triggers.
-
-### When to Trigger a CAR (Construction Architecture Review)
-
-Trigger a CAR at the close of every epic (mandatory). Additionally trigger a CAR when: a mid-epic audit finds a structural violation; a previously unknown dependency between two epics is discovered; or an implementation increment introduces a change to a frozen contract. The CAR is not a heavyweight ceremony — it is a focused structural review against the Architecture Constitution, the operative PATs, and the epic's stated scope. P0/P1 findings block the epic from closing.
-
-#### Architecture Traceability Review (mandatory for Category B)
-
-The Code Architecture Review (CAR) is an **architecture-conformance certification**, not a code-quality review.
-
-Every CAR shall include an end-to-end Architecture Traceability Review that verifies:
-
-- every component defined by the frozen architecture exists in the implementation;
-- no additional production components have been introduced outside the approved architecture;
-- responsibilities remain consistent with the frozen architecture;
-- ownership remains consistent;
-- dependencies remain consistent;
-- data sources remain consistent with the frozen Domain Contracts and Data Model;
-- the implementation conforms to Architecture Discovery, Domain Contracts, Data Model, Architecture Freeze, and Implementation Plan.
-
-Architecture Traceability is a mandatory completion criterion for every Category B epic. A CAR without a completed Architecture Traceability Review cannot authorize advance to Final Review.
-
-### When to Trigger an FR (Final Review)
-
-Trigger the Final Review after the last implementation phase of an Epic is complete and all CAR P0/P1 findings are resolved, before starting the next Epic.
-
-The FR is not an Architecture Review, a CAR, or a Release Readiness Review. It is a dedicated Epic-closure gate. It certifies:
-
-- All Epic objectives have been achieved as defined in the Master Plan and the Epic Overview document.
-- All frozen planning documents (ADRs, Domain Contracts, Data Model Specification, Architecture Freeze) have been fully implemented — no partial implementations, no deferred decisions.
-- No temporary bridges remain in the codebase unless explicitly planned in the Epic planning documents with a named deletion target and a target Epic.
-- No temporary compatibility layers remain unless explicitly planned with the same conditions.
-- The runtime architecture matches the frozen architecture documented at Epic planning time.
-- All ownership rules for `InterviewState` fields introduced or modified by this Epic are satisfied.
-- Implementation debt introduced or discovered during the Epic is classified and registered in the Technical Debt Register with target milestones.
-- Lessons learned are captured (either in the Playbook revision note or in a dedicated session note).
-
-The FR produces a binary outcome: **Closed** or **Blocked**. A Blocked FR must enumerate the blocking findings. The Epic does not advance to Closed status until the FR passes.
-
-**FR vs other review types:**
-
-| Review | Closes | Purpose |
-|---|---|---|
-| CAR | An implementation phase | Architecture-conformance certification (incl. Architecture Traceability for Category B) |
-| FR | An Epic | Epic objectives achieved; runtime matches frozen architecture |
-| RR | A Release Candidate | All Epics done; go-live criteria satisfied |
-| Go-Live Review | The product release | Production deployment validated |
-
-### When to Trigger an RR (Release Readiness Review)
-
-Trigger the Release Readiness Review when all Epics are closed (FR passed for each) and all go-live checklist items in the Master Plan (§5) are believed to be satisfied. The RR is the final gate before the V1.3 release tag. It verifies all Success Metrics (Master Plan §9), runs the full regression suite, confirms zero open P0/P1 findings, and validates all production deployment criteria. The RR is not a review of code — it is a review of evidence: test results, deployment validation records, performance baseline reports, and architecture audit reports.
-
-### Architecture Checkpoint
-
-Architecture Checkpoints are mandatory after every completed macro phase. An Architecture Checkpoint is a review-only activity: it performs no implementation and produces no code changes.
-
-**Trigger:** Every completed macro phase — automatically, without exception. The official Architecture Checkpoint is executed ONLY after the corresponding Macro Phase is complete, at the gate defined by the Implementation Plan.
-
-**Informal reviews:** Intermediate architectural reviews may be performed within a Macro Phase when useful (for example, after an early sub-phase). Such reviews are informal. They do not authorize the next Macro Phase and shall not replace the official Architecture Checkpoint.
-
-**Purpose:** Verify that the implementation of the completed macro phase is architecturally compliant before the next macro phase is authorized to begin.
-
-**Each Architecture Checkpoint must:**
-
-- Review the completed macro phase against the frozen architecture documents (ADR, Domain Contracts, Data Model, Architecture Freeze).
-- Produce findings classified as PASS, WARNING, or BLOCKER for each review dimension.
-- Explicitly authorize (or block) the next macro phase.
-
-**Architecture Checkpoint passes when all of the following are true:**
-
-- All implementation in the completed phase matches the frozen architecture.
-- No P0/P1 architectural violations are open.
-- The regression suite is green at the phase boundary.
-- No temporary bridge, compatibility layer, or partial migration remains unless it has an explicit named deletion target in the Implementation Plan.
-
-**Outcome:** The Architecture Checkpoint produces a binary authorization: **AUTHORIZED** (next macro phase may begin) or **BLOCKED** (blocking findings must be resolved first). A BLOCKED checkpoint prevents the next macro phase from starting; it does not block P2/P3 finding resolution within the same phase.
-
-**Scope:** Architecture Checkpoints cover architecture only. They do not review code style, test coverage, or documentation completeness — those are covered by the CAR and FR.
-
-### Mini Architecture Freeze
-
-Triggered when an additive ADR is discovered and accepted during implementation — one that was not part of the original epic planning set but is required to resolve a lifecycle, ownership, or boundary gap identified during Domain Discovery or implementation.
-
-**Purpose:** Verify that the new ADR introduces no contradiction, no ownership conflict, no replay conflict, no builder conflict, and no freeze violation before implementation resumes. This review is mandatory. It does not repeat the full Epic Architecture Freeze workflow.
-
-**Mini Architecture Freeze passes when all of the following are true:**
-
-- The new ADR does not contradict any decision in any previously accepted ADR or frozen planning document.
-- No artifact introduced by the ADR has a second declared producer, writer, or builder elsewhere in the frozen set.
-- No replay path introduced or affected by the ADR violates the Replay Boundary (ARC-01 §3).
-- No builder introduced by the ADR contains computation logic (P-05).
-- The new ADR is internally consistent with the Architecture Constitution (P-01 through P-08).
-- The document hierarchy remains internally consistent after the ADR is accepted.
-
-**Gate:** Implementation of any component governed by the new ADR cannot begin until the Mini Architecture Freeze passes. The outcome is recorded in the session commit message.
-
-**Scope:** Mini Architecture Freeze covers the new ADR only. It does not re-verify the full epic planning set. It does not replace the Epic Architecture Freeze or the Freeze Integrity Check.
-
----
-
-### Freeze Integrity Check
-
-Whenever a frozen planning document is modified — including an ADR, Architecture Freeze report, Architecture Constitution, Implementation Plan, Domain Contracts, Data Model Specification, or Architecture Guide — a Freeze Integrity Check is mandatory before implementation resumes.
-
-**A Freeze Integrity Check confirms all of the following:**
-
-- The target architecture is unchanged; only sequencing, process rules, or editorial corrections are modified.
-- The document hierarchy remains internally consistent; no contradiction is introduced between the modified document and any document it references or that references it.
-- No new architectural decision is embedded in the modification (decisions require a new or amended ADR).
-- The scope of the modification is limited to the stated intent; no unrelated changes are introduced.
-
-The Freeze Integrity Check is performed by the author of the modification immediately after editing, before any implementation work continues. If the check reveals a contradiction or an undeclared decision, the modification is revised until the check passes. Verification is recorded in the session commit message (e.g., "Freeze Integrity Check passed — only sequencing revised, architecture unchanged").
-
-### Review Gate Summary
-
-| Gate | Trigger | Closes | Blocks |
-|---|---|---|---|
-| Implementation Dependency Validation | Implementation Plan commit boundary table drafted | — | Plan acceptance |
-| ADR | New design decision before implementation | — | Implementation start |
-| Architecture Checkpoint | Official gate after every completed macro phase (per Implementation Plan); informal mid-phase reviews do not replace it | Macro phase | Next macro phase start |
-| Mini Architecture Freeze | Additive ADR accepted during implementation; OR sequencing correction (Plan Correction Rule) | — | Resumption of implementation for new ADR scope; OR plan update |
-| CAR | Epic implementation phase complete; Architecture Traceability required for Category B | Implementation phase | Epic advance / FR |
-| CAR (mid-epic) | Structural violation discovered during implementation | — | Continuation of affected increment |
-| FR (Final Review) | All Epic phases complete; all CAR P0/P1 resolved | Epic | Next Epic start |
-| Freeze Integrity Check | Any frozen document modified | — | Resumption of implementation |
-| RR | All Epics closed (FR passed); go-live checklist complete | Release Candidate | V1.3 release tag |
-| Go-Live Review | RR passed; production deployment validated | Product Release | Production tag |
-
----
-
-## 10. Cursor Usage Guidelines
-
-### Purpose of Cursor in V1.3
-
-Cursor accelerates implementation and documentation work. It does not replace architectural judgment, ADR authoring decisions, or epic planning. Every Cursor output is reviewed before it is accepted into the codebase or documentation.
-
-### Cursor Chat Policy
-
-Every Cursor chat session is scoped to a single macro phase.
-
-- **Start a new Cursor chat** at the beginning of every macro phase.
-- **Continue the same chat** throughout all sub-phases within that macro phase.
-- **Start another new chat** only when the next macro phase begins.
-
-The rationale: a single chat accumulating context across multiple macro phases degrades prompt quality and increases token cost without benefit. Each macro phase has a well-defined, independent scope — that scope maps exactly to one chat session.
-
-### Implementation Prompt Structure
-
-Every implementation prompt sent to Cursor shall contain all of the following elements, in order:
-
-1. **Cursor Chat decision** — new or continue, with rationale (new macro phase → new chat; same macro phase → continue).
-2. **SAVE-TOKEN** — mandatory at the start of every prompt.
-3. **Regression baseline** — current passing test count from the previous phase completion.
-4. **Authoritative documents** — file paths to the frozen architecture documents governing this phase.
-5. **Mission** — what this phase must accomplish, stated precisely.
-6. **Allowed scope** — files and modules that may be created or modified.
-7. **Forbidden scope** — files and modules that must not be touched.
-8. **Validation requirements** — the specific gates that must pass before this phase is complete.
-9. **Completion criteria** — the observable conditions that define phase completion.
-10. **Architecture review requirements** — any architectural invariants that must be verified.
-11. **Commit instructions** — atomic commit required; commit message format specified.
-12. **Required output format** — what the response must contain (typically: modified files, test results, commit status).
-
-Any prompt missing one or more of these elements is incomplete and must not be submitted until corrected.
-
-### Regression Baseline Protocol
-
-Every completed implementation phase updates the regression baseline:
-
-- The baseline is the passing test count at the end of the completed phase.
-- The next implementation prompt must reference that updated baseline, not the baseline from the start of the epic.
-- No phase may begin with a stale or incorrect baseline in the prompt.
-
-### For Implementation Work
-
-Provide Cursor with: the relevant frozen contracts (file paths, not pasted content); the accepted ADR(s) that govern the component; the specific scope of the increment (what to implement — and explicitly what not to touch); and any architectural constraints that are not obvious from the contracts alone. Cursor implements against a defined architecture. It does not discover the architecture by implementing.
-
-### For Document Editing
-
-When asking Cursor to edit planning or architectural documents, provide the specific change required with its rationale. Do not ask for open-ended document improvements. The change must be scoped: what section, what wording, and why. The document structure and style must be preserved.
-
-### Output Conventions
-
-- **Compact output only.** Modified files, acceptance checklist, open issues. No reasoning walk-through, no intermediate analysis, no generated code in summaries.
-- **No verbose explanations.** If a change requires explanation, the explanation belongs in the ADR or commit message, not in the Cursor response.
-- **No document previews.** Do not include the generated Markdown content in the response. Confirm the file was written; do not echo its contents.
-- **No implementation notes in summaries.** Summaries reference what was done, not how.
-
-### Save-Token Protocol
-
-Begin every session with a save-token before making any changes. This ensures the project state can be recovered if a session is interrupted. The save-token is mandatory at the start of every task, not optional.
-
-### What Cursor Must Never Do
-
-- Modify production code or tests during a planning or documentation task.
-- Generate TODO lists or implementation notes in planning documents.
-- Introduce new architectural scope not defined in the Master Plan.
-- Write ADRs without a human-defined problem statement and decision rationale.
-- Produce verbose reasoning, chain-of-thought analysis, or intermediate calculation dumps in any response.
-- Show generated Markdown content in responses when the instruction is to write a file.
-
----
-
 ## 8. Epic Planning Workflow
 
-The EPIC-01 planning process established the standard workflow for V1.3 epics. This section formalises that workflow and makes it mandatory for all subsequent epics.
+The EPIC-01 planning process established the standard workflow for V1.3 epics. This section formalises that workflow and makes it mandatory for all subsequent epics. Category selection here determines the pre-implementation path; Epic Close still follows §3 Steps 9–13 (CAR → Regression → Documentation Update → FR → Epic Close).
 
 Two categories of epic exist. The category determines the mandatory pre-implementation workflow. Misclassifying an epic as Category A when it belongs in Category B is a process violation.
 
@@ -602,10 +356,12 @@ Applies to epics that do not introduce new domain contracts, new persistent arti
 1. **Master Plan** — Epic scope, purpose, dependencies, and success criteria defined in the Master Plan or in a dedicated epic planning document under `docs/master-plan/epics/`.
 2. **Architecture Review** — An explicit review pass that identifies affected subsystems, confirms no missing decisions, and declares the epic ready for ADR.
 3. **ADR** — One or more ADRs frozen in `docs/decisions/` that cover every architectural decision the epic requires.
-4. **Implementation** — Incremental implementation against frozen decisions. No architectural choices during coding.
-5. **CAR (Construction Architecture Review)** — Architecture-conformance certification against ADR decisions and epic success criteria (§9).
-6. **RR (Regression Report)** — Confirms the full test suite passes and no regressions were introduced.
-7. **Epic Freeze** — Epic is declared complete. No further changes to the epic scope.
+4. **Implementation** — Incremental implementation against frozen decisions. No architectural choices during coding. Zero Known Failing Tests (§2) applies.
+5. **CAR (Construction Architecture Review)** — Architecture-conformance certification against ADR decisions and epic success criteria (§10).
+6. **Regression** — Confirms the full test suite passes and no regressions were introduced (§3 Step 10). Do not abbreviate this step as "RR" — RR means Release Readiness Review (§10).
+7. **Documentation Update** — Living status and affected docs updated (§3 Step 11; §9).
+8. **FR (Final Review)** — Epic-closure gate (§10). Binary outcome: Closed or Blocked.
+9. **Epic Close** — Epic is declared complete when the FR passes. No further changes to the epic scope.
 
 ---
 
@@ -630,18 +386,20 @@ Applies whenever the epic introduces or substantially changes any of the followi
 3. **Domain Contracts** — A dedicated domain contract specification document under `docs/master-plan/epics/`. Specifies the complete field set, types, validation invariants, ownership, lifecycle, and relationships of every new artifact. Contains the Traceability Matrix linking Master Plan requirements to domain contract fields. Precise enough that implementation is mechanical. See Definition of Done §8.2.
 4. **Data Model Specification** — A dedicated data model document. Resolves all open modelling decisions left by the Domain Contracts document. Freezes the complete field tables for all affected artifacts. Verifies replay completeness. Evaluates future extensibility. All Architecture Assumptions must be VERIFIED before this document is declared complete. See Definition of Done §8.3.
 5. **Architecture Review / ADR (conditional)** — Evaluate whether any genuine unresolved architectural decision remains after Domain Contracts and Data Model. Existing ADRs shall be reused whenever possible. A new ADR shall be created only if a genuine unresolved architectural decision remains at this stage. Do not create ADRs proactively. See Definition of Done §8.4.
-6. **Architecture Freeze** — A formal gate (described below). Implementation cannot begin before Architecture Freeze passes. All Architecture Exit Criteria (§8.6) must be satisfied. See Definition of Done §8.5.
-7. **Implementation Plan** — Commit boundary table with Implementation Dependency Validation. Phase breakdown. Regression baseline declared. See Definition of Done §8.6 (Implementation Plan DoD).
-8. **Implementation** — Incremental implementation against frozen contracts. No architectural choices during coding. Every phase must satisfy the Zero Known Failing Tests rule (§2). Bridge phases must be introduced wherever a migration would otherwise produce a temporarily broken runtime or test suite. If an unresolved question emerges, apply the Stopping Rule (below).
-9. **CAR (Construction Architecture Review)** — Architecture-conformance certification; includes mandatory Architecture Traceability Review (§9).
-10. **RR (Regression Report)** — Confirms the full test suite passes with no regressions.
-11. **Epic Freeze** — Epic is declared complete. No further scope additions.
+6. **Architecture Freeze** — A formal gate (described below). Implementation Plan and Implementation cannot begin before Architecture Freeze passes. All Architecture Exit Criteria (§8.7) must be satisfied. See Definition of Done §8.5.
+7. **Implementation Plan** — Commit boundary table with Implementation Dependency Validation. Phase breakdown. Regression baseline declared. See Definition of Done §8.6.
+8. **Implementation** — Incremental implementation against frozen contracts (Macro Phase Lifecycle, §3). No architectural choices during coding. Every phase must satisfy the Zero Known Failing Tests rule (§2). Bridge phases must be introduced wherever a migration would otherwise produce a temporarily broken runtime or test suite. If an unresolved question emerges, apply the Stopping Rule (below).
+9. **CAR (Construction Architecture Review)** — Architecture-conformance certification; includes mandatory Architecture Traceability Review (§10).
+10. **Regression** — Confirms the full test suite passes with no regressions (§3 Step 10). Do not abbreviate this step as "RR" — RR means Release Readiness Review (§10).
+11. **Documentation Update** — Living status and affected docs updated (§3 Step 11; §9 Documentation Certification).
+12. **FR (Final Review)** — Epic-closure gate (§10). Binary outcome: Closed or Blocked.
+13. **Epic Close** — Epic is declared complete when the FR passes. No further scope additions.
 
 ---
 
 ### Architecture Freeze
 
-Architecture Freeze is a mandatory gate between the planning phase (steps 1–5 of Category B) and the implementation phase (step 7). It is not a document — it is a verification checkpoint.
+Architecture Freeze is a mandatory gate between the planning phase (steps 1–5 of Category B) and Implementation Plan / Implementation (steps 7–8). It is not a document — it is a verification checkpoint.
 
 **Purpose:** Confirm that all decisions required for implementation are frozen, unambiguous, and consistent before a single line of production code is written.
 
@@ -692,9 +450,10 @@ Each planning document has a unique responsibility. Documents must not duplicate
 | **Data Model Specification** | Resolves all open modelling questions left by the Domain Contracts document. Freezes complete field tables. Verifies replay completeness. Evaluates extensibility. All Architecture Assumptions must be VERIFIED before this document is declared complete. Does not re-specify invariants (that is the Domain Contracts' job). |
 | **Architecture Freeze** | Formal gate document. Confirms all Architecture Exit Criteria are satisfied. Authorises implementation to begin. |
 | **Implementation Plan** | Commit boundary table with dependency validation. Phase breakdown. Regression baseline. |
-| **CAR (Construction Architecture Review)** | Post-implementation architecture-conformance certification. For Category B, includes mandatory Architecture Traceability Review (§9). |
-| **RR (Regression Report)** | Test suite results. Regression counts. No architectural content. |
-| **Epic Freeze** | Declaration that the epic is complete, all criteria are met, and the codebase is stable. |
+| **CAR (Construction Architecture Review)** | Post-implementation architecture-conformance certification. For Category B, includes mandatory Architecture Traceability Review (§10). |
+| **Regression Report** | Test suite results. Regression counts. No architectural content. Not abbreviated "RR" (RR = Release Readiness Review, §10). |
+| **FR (Final Review)** | Epic-closure gate (§10). Certifies objectives, frozen-architecture conformance, and Close/Blocked outcome. |
+| **Epic Close** | Declaration that the epic is complete (FR Closed), all criteria are met, and the codebase is stable. |
 
 ---
 
@@ -806,7 +565,7 @@ Each planning document has mandatory completion criteria. A document that does n
 
 #### §8.5 Architecture Freeze
 
-- All Architecture Exit Criteria (§8.6) are satisfied.
+- All Architecture Exit Criteria (§8.7) are satisfied.
 - The freeze document explicitly records whether any new ADR was required and, if not, why it was skipped.
 - All Architecture Assumptions are `VERIFIED`.
 - The Traceability Matrix is complete and referenced.
@@ -824,9 +583,9 @@ Each planning document has mandatory completion criteria. A document that does n
 
 ---
 
-### Architecture Exit Criteria
+### §8.7 Architecture Exit Criteria
 
-Implementation may begin only if **ALL** of the following are true. This list is the mandatory gate between planning and implementation. It is evaluated as part of the Architecture Freeze.
+Implementation Plan acceptance and Implementation may begin only if **ALL** of the following are true. This list is the mandatory gate between planning and implementation. It is evaluated as part of the Architecture Freeze.
 
 - [ ] Architecture Discovery is complete (§8.1 DoD satisfied).
 - [ ] Component Inventory is complete (for UI-bearing epics).
@@ -853,7 +612,7 @@ If, during implementation, an unresolved architectural question emerges — a de
    - If it is an **architectural issue**, continue with steps 3–6 below.
 3. **Return to the Architecture Review / ADR phase.** Document the question, evaluate alternatives, and freeze a decision in a new or amended ADR.
 4. **Update the affected planning documents** (Domain Contracts or Data Model Specification) if the decision changes any specified field, type, invariant, or ownership rule.
-5. **Perform a Freeze Integrity Check** (§9) on every modified frozen document before resuming implementation.
+5. **Perform a Freeze Integrity Check** (§10) on every modified frozen document before resuming implementation.
 6. **Declare a new Architecture Freeze** for the affected scope before resuming.
 7. **Resume implementation** only after the decision is frozen, the planning documents are updated, and the Freeze Integrity Check passes.
 
@@ -861,28 +620,299 @@ If, during implementation, an unresolved architectural question emerges — a de
 
 **Architectural decisions must never be made while coding.** A decision made in code is a decision that bypasses all review, rationale recording, and traceability. It is a process violation regardless of whether the decision is technically correct.
 
+## 9. Documentation Strategy
+
+### When to Update the Master Plan
+
+Update `V13-PRODUCT-MASTER-PLAN.md` when: an epic's scope changes (narrowing or expanding); a dependency is discovered that was not captured at planning time; a deferred feature is moved into or out of scope; or a risk materialises and the mitigation strategy changes. Every amendment requires a recorded rationale at the bottom of the affected section.
+
+### When to Write an ADR
+
+Follow the criteria in the Enterprise Engineering Playbook §E. In V1.3 specifically, the following always require an ADR:
+
+- Any decision about the `LongitudinalProfile` ownership model, storage schema, or update trigger.
+- Any modification to a frozen V1.2 contract.
+- Any exception to a constitutional principle (P-01 through P-05).
+- The scoring pipeline migration strategy (how `InterviewEvaluation` is disabled and `Report` is activated).
+- The `replay_node` reconstruction completeness contract.
+
+### When to Update the Architecture Constitution
+
+The Constitution (`ARC-01`) is amended only when V1.3 introduces a genuinely new invariant or proves an existing principle requires refinement. Amendments are proposed via ADR, reviewed explicitly, and recorded in the Constitution with a version note. The Constitution is not updated to describe V1.3 features — it describes principles that will remain valid beyond V1.3.
+
+### When to Update the Architecture Guide
+
+Update `ARCHITECTURE-GUIDE.md` at every epic close where the shipped architecture differs from what was previously documented. The guide reflects the current state of the system. Documentation-code divergence is a P2 finding in the CAR.
+
+### When to Update the INDEX
+
+Update `INDEX.md` whenever: a new frozen component is shipped; a new ADR is accepted; a component is deleted; or a Technical Debt Register item is opened or closed.
+
+### Documentation Is Not Optional
+
+Documentation updates are part of the Epic Close checklist (§3, Steps 11–13). An epic whose implementation is complete but whose documentation has not been updated is not done.
+
+### Documentation Certification — Living Status vs Frozen Planning Bodies
+
+Documentation Certification updates **living status artifacts** only:
+
+- Epic Overview (`EPIC-NN-OVERVIEW.md`) — workflow markers, certification outcomes, final Assumptions summary
+- Implementation Plan **status header** and close-out workflow markers — phase/checkpoint/CAR/regression/documentation outcomes
+- Playbook — only when a reusable process improvement is identified
+
+Documentation Certification **must not rewrite** frozen planning bodies as if they were living status documents:
+
+- Architecture Discovery
+- Domain Contracts
+- Data Model Specification
+- Architecture Freeze
+
+Those documents remain historical records of decisions at the time they were frozen. Discovery-era Assumption statuses may remain as historical evidence; the **authoritative final VERIFIED** set is the Data Model / Architecture Freeze register, summarized in the Epic Overview at Documentation Certification.
+
+### Category B — Living Epic Overview
+
+Every Category B epic shall maintain `docs/master-plan/epics/EPIC-NN-OVERVIEW.md` as the **living** status document for workflow markers through Architecture Checkpoints, CAR, Regression Certification, Documentation Certification, Final Review, and Epic Close. Architecture Discovery remains a separate frozen analysis artifact and is not the living status surface.
+
+---
+
+## 10. Review Gates
+
+### When to Trigger an ADR
+
+Trigger an ADR before beginning any implementation that involves a design decision not already governed by an accepted ADR. An ADR is required; it is not a best-practice recommendation. Implementation is blocked until the ADR is accepted. See §9 for V1.3-specific ADR triggers.
+
+### When to Trigger a CAR (Construction Architecture Review)
+
+Trigger a CAR at the close of every epic (mandatory). Additionally trigger a CAR when: a mid-epic audit finds a structural violation; a previously unknown dependency between two epics is discovered; or an implementation increment introduces a change to a frozen contract. The CAR is not a heavyweight ceremony — it is a focused structural review against the Architecture Constitution, the operative PATs, and the epic's stated scope. P0/P1 findings block the epic from closing.
+
+#### Architecture Traceability Review (mandatory for Category B)
+
+The Construction Architecture Review (CAR) is an **architecture-conformance certification**, not a code-quality review.
+
+Every CAR shall include an end-to-end Architecture Traceability Review that verifies:
+
+- every component defined by the frozen architecture exists in the implementation;
+- no additional production components have been introduced outside the approved architecture;
+- responsibilities remain consistent with the frozen architecture;
+- ownership remains consistent;
+- dependencies remain consistent;
+- data sources remain consistent with the frozen Domain Contracts and Data Model;
+- the implementation conforms to Architecture Discovery, Domain Contracts, Data Model, Architecture Freeze, and Implementation Plan.
+
+Architecture Traceability is a mandatory completion criterion for every Category B epic. A CAR without a completed Architecture Traceability Review cannot authorize advance to Final Review.
+
+### When to Trigger an FR (Final Review)
+
+Trigger the Final Review after the last implementation phase of an Epic is complete and all CAR P0/P1 findings are resolved, before starting the next Epic.
+
+The FR is not an Architecture Review, a CAR, or a Release Readiness Review. It is a dedicated Epic-closure gate. It certifies:
+
+- All Epic objectives have been achieved as defined in the Master Plan and the Epic Overview document.
+- All frozen planning documents (ADRs, Domain Contracts, Data Model Specification, Architecture Freeze) have been fully implemented — no partial implementations, no deferred decisions.
+- No temporary bridges remain in the codebase unless explicitly planned in the Epic planning documents with a named deletion target and a target Epic.
+- No temporary compatibility layers remain unless explicitly planned with the same conditions.
+- The runtime architecture matches the frozen architecture documented at Epic planning time.
+- All ownership rules for `InterviewState` fields introduced or modified by this Epic are satisfied.
+- Implementation debt introduced or discovered during the Epic is classified and registered in the Technical Debt Register with target milestones.
+- Lessons learned are captured (either in the Playbook revision note or in a dedicated session note).
+
+The FR produces a binary outcome: **Closed** or **Blocked**. A Blocked FR must enumerate the blocking findings. The Epic does not advance to Closed status until the FR passes.
+
+**FR vs other review types:**
+
+| Review | Closes | Purpose |
+|---|---|---|
+| CAR | An implementation | Architecture-conformance certification (incl. Architecture Traceability for Category B) |
+| FR | An Epic | Epic objectives achieved; runtime matches frozen architecture |
+| RR (Release Readiness Review) | A Release Candidate | All Epics done; go-live criteria satisfied |
+| Go-Live Review | The product release | Production deployment validated |
+
+### When to Trigger an RR (Release Readiness Review)
+
+Trigger the Release Readiness Review when all Epics are closed (FR passed for each) and all go-live checklist items in the Master Plan (§5) are believed to be satisfied. The RR is the final gate before the V1.3 release tag. It verifies all Success Metrics (Master Plan §9), runs the full regression suite, confirms zero open P0/P1 findings, and validates all production deployment criteria. The RR is not a review of code — it is a review of evidence: test results, deployment validation records, performance baseline reports, and architecture audit reports.
+
+### Architecture Checkpoint
+
+Architecture Checkpoints are mandatory after every completed macro phase. An Architecture Checkpoint is a review-only activity: it performs no implementation and produces no code changes.
+
+**Trigger:** Every completed macro phase — automatically, without exception. The official Architecture Checkpoint is executed ONLY after the corresponding Macro Phase is complete, at the gate defined by the Implementation Plan.
+
+**Informal reviews:** Intermediate architectural reviews may be performed within a Macro Phase when useful (for example, after an early sub-phase). Such reviews are informal. They do not authorize the next Macro Phase and shall not replace the official Architecture Checkpoint.
+
+**Purpose:** Verify that the implementation of the completed macro phase is architecturally compliant before the next macro phase is authorized to begin.
+
+**Each Architecture Checkpoint must:**
+
+- Review the completed macro phase against the frozen architecture documents (ADR, Domain Contracts, Data Model, Architecture Freeze).
+- Produce findings classified as PASS, WARNING, or BLOCKER for each review dimension.
+- Explicitly authorize (or block) the next macro phase.
+
+**Architecture Checkpoint passes when all of the following are true:**
+
+- All implementation in the completed phase matches the frozen architecture.
+- No P0/P1 architectural violations are open.
+- The regression suite is green at the phase boundary.
+- No temporary bridge, compatibility layer, or partial migration remains unless it has an explicit named deletion target in the Implementation Plan.
+
+**Outcome:** The Architecture Checkpoint produces a binary authorization: **AUTHORIZED** (next macro phase may begin) or **BLOCKED** (blocking findings must be resolved first). A BLOCKED checkpoint prevents the next macro phase from starting; it does not block P2/P3 finding resolution within the same phase.
+
+**Scope:** Architecture Checkpoints cover architecture only. They do not review code style, test coverage, or documentation completeness — those are covered by the CAR and FR.
+
+### Mini Architecture Freeze
+
+Triggered in either of the following cases:
+
+1. **Additive ADR during implementation** — an ADR is discovered and accepted that was not part of the original epic planning set but is required to resolve a lifecycle, ownership, or boundary gap identified during Domain Discovery or implementation.
+2. **Sequencing correction** — the Plan Correction Rule (§2) applies: commit ordering in the Implementation Plan must change, and the target architecture, ADRs, ownership, contracts, data model, and target behaviour remain unchanged.
+
+**Purpose (ADR trigger):** Verify that the new ADR introduces no contradiction, no ownership conflict, no replay conflict, no builder conflict, and no freeze violation before implementation resumes. This review is mandatory. It does not repeat the full Epic Architecture Freeze workflow.
+
+**Purpose (sequencing trigger):** Verify the Plan Correction Rule conditions (§2) before the Implementation Plan update is accepted. Implementation may resume immediately after the Mini Architecture Freeze passes.
+
+**Mini Architecture Freeze passes when all of the following are true (ADR trigger):**
+
+- The new ADR does not contradict any decision in any previously accepted ADR or frozen planning document.
+- No artifact introduced by the ADR has a second declared producer, writer, or builder elsewhere in the frozen set.
+- No replay path introduced or affected by the ADR violates the Replay Boundary (ARC-01 §3).
+- No builder introduced by the ADR contains computation logic (P-05).
+- The new ADR is internally consistent with the Architecture Constitution (P-01 through P-08).
+- The document hierarchy remains internally consistent after the ADR is accepted.
+
+**Mini Architecture Freeze passes when all Plan Correction Rule conditions (§2) are satisfied (sequencing trigger).**
+
+**Gate:** Implementation of any component governed by a new ADR cannot begin until the Mini Architecture Freeze passes. Sequencing corrections may resume only after the Mini Architecture Freeze passes. The outcome is recorded in the session commit message.
+
+**Scope:** For an ADR trigger, Mini Architecture Freeze covers the new ADR only. For a sequencing trigger, it covers the Implementation Plan correction only. It does not re-verify the full epic planning set. It does not replace the Epic Architecture Freeze or the Freeze Integrity Check.
+
+---
+
+### Freeze Integrity Check
+
+Whenever a frozen planning document is modified — including an ADR, Architecture Freeze report, Architecture Constitution, Implementation Plan, Domain Contracts, Data Model Specification, or Architecture Guide — a Freeze Integrity Check is mandatory before implementation resumes.
+
+**A Freeze Integrity Check confirms all of the following:**
+
+- The target architecture is unchanged; only sequencing, process rules, or editorial corrections are modified.
+- The document hierarchy remains internally consistent; no contradiction is introduced between the modified document and any document it references or that references it.
+- No new architectural decision is embedded in the modification (decisions require a new or amended ADR).
+- The scope of the modification is limited to the stated intent; no unrelated changes are introduced.
+
+The Freeze Integrity Check is performed by the author of the modification immediately after editing, before any implementation work continues. If the check reveals a contradiction or an undeclared decision, the modification is revised until the check passes. Verification is recorded in the session commit message (e.g., "Freeze Integrity Check passed — only sequencing revised, architecture unchanged").
+
+### Review Gate Summary
+
+| Gate | Trigger | Closes | Blocks |
+|---|---|---|---|
+| Implementation Dependency Validation | Implementation Plan commit boundary table drafted | — | Plan acceptance |
+| ADR | New design decision before implementation | — | Implementation start |
+| Mini Architecture Freeze | Additive ADR accepted during implementation; OR sequencing correction (Plan Correction Rule §2) | — | Resumption of implementation for new ADR scope; OR plan update |
+| Freeze Integrity Check | Any frozen document modified | — | Resumption of implementation |
+| Architecture Checkpoint | Official gate after every completed macro phase (per Implementation Plan); informal mid-phase reviews do not replace it | Macro phase | Next macro phase start |
+| CAR | Epic implementation complete; Architecture Traceability required for Category B | Implementation | Epic advance / FR |
+| CAR (mid-epic) | Structural violation discovered during implementation | — | Continuation of affected increment |
+| FR (Final Review) | All Epic phases complete; all CAR P0/P1 resolved; Documentation Update complete | Epic | Next Epic start |
+| RR (Release Readiness Review) | All Epics closed (FR passed); go-live checklist complete | Release Candidate | V1.3 release tag |
+| Go-Live Review | RR passed; production deployment validated | Product Release | Production tag |
+
+---
+
+## 11. Cursor Usage Guidelines
+
+### Purpose of Cursor in V1.3
+
+Cursor accelerates implementation and documentation work. It does not replace architectural judgment, ADR authoring decisions, or epic planning. Every Cursor output is reviewed before it is accepted into the codebase or documentation.
+
+### Cursor Chat Policy
+
+Every Cursor chat session is scoped to a single macro phase. This policy implements Conversation Boundary Optimization (§2) for Cursor sessions: continue within the macro phase; reset at the macro-phase boundary.
+
+- **Start a new Cursor chat** at the beginning of every macro phase.
+- **Continue the same chat** throughout all sub-phases within that macro phase.
+- **Start another new chat** only when the next macro phase begins.
+
+The rationale: a single chat accumulating context across multiple macro phases degrades prompt quality and increases token cost without benefit. Each macro phase has a well-defined, independent scope — that scope maps exactly to one chat session. Do not restart mid-phase solely to shorten context when reconstruction cost would outweigh the savings (see Conversation Boundary Optimization §2).
+
+### Implementation Prompt Structure
+
+Every implementation prompt sent to Cursor shall contain all of the following elements, in order:
+
+1. **Cursor Chat decision** — new or continue, with rationale (new macro phase → new chat; same macro phase → continue).
+2. **SAVE-TOKEN** — mandatory at the start of every prompt.
+3. **Regression baseline** — current passing test count from the previous phase completion.
+4. **Authoritative documents** — file paths to the frozen architecture documents governing this phase.
+5. **Mission** — what this phase must accomplish, stated precisely.
+6. **Allowed scope** — files and modules that may be created or modified.
+7. **Forbidden scope** — files and modules that must not be touched.
+8. **Validation requirements** — the specific gates that must pass before this phase is complete.
+9. **Completion criteria** — the observable conditions that define phase completion.
+10. **Architecture review requirements** — any architectural invariants that must be verified.
+11. **Commit instructions** — atomic commit required; commit message format specified.
+12. **Required output format** — what the response must contain (typically: modified files, test results, commit status).
+
+Any prompt missing one or more of these elements is incomplete and must not be submitted until corrected.
+
+### Regression Baseline Protocol
+
+Every completed implementation phase updates the regression baseline:
+
+- The baseline is the passing test count at the end of the completed phase.
+- The next implementation prompt must reference that updated baseline, not the baseline from the start of the epic.
+- No phase may begin with a stale or incorrect baseline in the prompt.
+
+### For Implementation Work
+
+Provide Cursor with: the relevant frozen contracts (file paths, not pasted content); the accepted ADR(s) that govern the component; the specific scope of the increment (what to implement — and explicitly what not to touch); and any architectural constraints that are not obvious from the contracts alone. Cursor implements against a defined architecture. It does not discover the architecture by implementing.
+
+### For Document Editing
+
+When asking Cursor to edit planning or architectural documents, provide the specific change required with its rationale. Do not ask for open-ended document improvements. The change must be scoped: what section, what wording, and why. The document structure and style must be preserved.
+
+### Output Conventions
+
+- **Compact output only.** Modified files, acceptance checklist, open issues. No reasoning walk-through, no intermediate analysis, no generated code in summaries.
+- **No verbose explanations.** If a change requires explanation, the explanation belongs in the ADR or commit message, not in the Cursor response.
+- **No document previews.** Do not include the generated Markdown content in the response. Confirm the file was written; do not echo its contents.
+- **No implementation notes in summaries.** Summaries reference what was done, not how.
+
+### Save-Token Protocol
+
+Begin every session with a save-token before making any changes. This ensures the project state can be recovered if a session is interrupted. The save-token is mandatory at the start of every task, not optional.
+
+### What Cursor Must Never Do
+
+- Modify production code or tests during a planning or documentation task.
+- Generate TODO lists or implementation notes in planning documents.
+- Introduce new architectural scope not defined in the Master Plan.
+- Write ADRs without a human-defined problem statement and decision rationale.
+- Produce verbose reasoning, chain-of-thought analysis, or intermediate calculation dumps in any response.
+- Show generated Markdown content in responses when the instruction is to write a file.
+
+---
+
 ---
 
 *This playbook is the operational handbook for V1.3. It is a living document. Amendments are made when process lessons are learned, not when preferences change. Every amendment requires a recorded rationale.*
 
-*Revision 2026-07-05: Added "Zero Known Failing Tests" engineering principle (§2), "Zero Known Failing Tests — Enforcement" testing rule (§7), "Freeze Integrity Check" review gate (§9), bridge-phase mandate in Category B workflow (§8 step 7), and Freeze Integrity Check in the Stopping Rule (§8). Derived from EPIC-01 Phase 6 implementation experience.*
+*Revision 2026-07-05: Added "Zero Known Failing Tests" engineering principle (§2), "Zero Known Failing Tests — Enforcement" testing rule (§7), "Freeze Integrity Check" review gate (§10), bridge-phase mandate in Category B workflow (§8), and Freeze Integrity Check in the Stopping Rule (§8). Derived from EPIC-01 Phase 6 implementation experience.*
 
-*Revision 2026-07-06: Added Final Review (FR) as a mandatory review type (§9). FR closes an Epic; RR closes a Release Candidate; Go-Live Review closes the product release. FR integrated into Epic Workflow as Step 8 (§3), Definition of Done (§5), and Review Gate Summary (§9). Derived from EPIC-01 Final Review experience — FR methodology proven valuable and made permanent.*
+*Revision 2026-07-06: Added Final Review (FR) as a mandatory review type (§10). FR closes an Epic; RR (Release Readiness Review) closes a Release Candidate; Go-Live Review closes the product release. FR integrated into Epic Workflow (§3), Definition of Done (§5), and Review Gate Summary (§10). Derived from EPIC-01 Final Review experience — FR methodology proven valuable and made permanent.*
 
-*Revision 2026-07-14: Added Mini Architecture Freeze review gate (§9). Triggered when an additive ADR is accepted during implementation. Verifies no contradiction, ownership conflict, replay conflict, builder conflict, or freeze violation before implementation resumes. Derived from EPIC-02 Domain Discovery Review experience (ADR-035 lifecycle). Added to Review Gate Summary table.*
+*Revision 2026-07-14: Added Mini Architecture Freeze review gate (§10). Triggered when an additive ADR is accepted during implementation. Verifies no contradiction, ownership conflict, replay conflict, builder conflict, or freeze violation before implementation resumes. Derived from EPIC-02 Domain Discovery Review experience (ADR-035 lifecycle). Added to Review Gate Summary table.*
 
-*Revision 2026-07-15: Added two engineering principles (§2): "Implementation Dependency Validation" — mandatory commit-boundary self-containment review performed during Implementation Plan authoring, before plan acceptance; and "Plan Correction Rule" — sequencing-only corrections to the Implementation Plan require only a Mini Architecture Freeze, not a full Architecture Freeze. Mini Architecture Freeze (§9) updated to cover both ADR-triggered and sequencing-correction triggers. Review Gate Summary (§9) updated with Implementation Dependency Validation gate. Stopping Rule (§8) updated with issue-classification step: sequencing issues apply Plan Correction Rule; architectural issues follow the full ADR path. Epic Workflow Step 1 (§3) updated to mandate Implementation Dependency Validation when the commit boundary table is drafted. Derived from EPIC-02 P3/C2 sequencing correction experience.*
+*Revision 2026-07-15: Added two engineering principles (§2): "Implementation Dependency Validation" — mandatory commit-boundary self-containment review performed during Implementation Plan authoring, before plan acceptance; and "Plan Correction Rule" — sequencing-only corrections to the Implementation Plan require only a Mini Architecture Freeze, not a full Architecture Freeze. Mini Architecture Freeze (§10) updated to cover both ADR-triggered and sequencing-correction triggers. Review Gate Summary (§10) updated with Implementation Dependency Validation gate. Stopping Rule (§8) updated with issue-classification step: sequencing issues apply Plan Correction Rule; architectural issues follow the full ADR path. Epic Workflow Step 1 (§3) updated to mandate Implementation Dependency Validation when the commit boundary table is drafted. Derived from EPIC-02 P3/C2 sequencing correction experience.*
 
-*Revision 2026-07-15 (EPIC-03 close-out): Seven workflow improvements formalised from EPIC-03 Replay Engine implementation experience: (1) Macro Phase Lifecycle (§3) — added mandatory Architecture Freeze → Implementation Plan → Macro Phase → Architecture Checkpoint → Next Macro Phase lifecycle with diagram; (2) Cursor Chat Policy (§10) — formalised one-chat-per-macro-phase rule; new chat at every macro phase start, same chat for all sub-phases; (3) Architecture Checkpoint (§9) — added as mandatory review gate after every completed macro phase; produces PASS/WARNING/BLOCKER findings; explicitly authorises the next macro phase; added to Review Gate Summary; (4) Implementation Prompt Structure (§10) — defined 12 mandatory elements every Cursor implementation prompt must contain; (5) Regression Baseline Protocol (§10) — formalised that every completed phase updates the baseline and the next prompt must use the updated baseline; (6) Atomic Phase Commits (§6) — formalised that every sub-phase ends with one atomic commit; fallback git commands required when automated commit is unavailable; (7) Architecture-First Discipline (§2) — formalised as an engineering principle: frozen architecture is non-negotiable, no drift, no opportunistic refactoring, strict phase isolation.*
+*Revision 2026-07-15 (EPIC-03 close-out): Seven workflow improvements formalised from EPIC-03 Replay Engine implementation experience: (1) Macro Phase Lifecycle (§3) — added mandatory Architecture Freeze → Implementation Plan → Macro Phase → Architecture Checkpoint → Next Macro Phase lifecycle with diagram; (2) Cursor Chat Policy (§11) — formalised one-chat-per-macro-phase rule; new chat at every macro phase start, same chat for all sub-phases; (3) Architecture Checkpoint (§10) — added as mandatory review gate after every completed macro phase; produces PASS/WARNING/BLOCKER findings; explicitly authorises the next macro phase; added to Review Gate Summary; (4) Implementation Prompt Structure (§11) — defined 12 mandatory elements every Cursor implementation prompt must contain; (5) Regression Baseline Protocol (§11) — formalised that every completed phase updates the baseline and the next prompt must use the updated baseline; (6) Atomic Phase Commits (§6) — formalised that every sub-phase ends with one atomic commit; fallback git commands required when automated commit is unavailable; (7) Architecture-First Discipline (§2) — formalised as an engineering principle: frozen architecture is non-negotiable, no drift, no opportunistic refactoring, strict phase isolation.*
 
 *Revision 2026-07-15 (EPIC-04 initialisation): Five governance improvements formalised from EPIC-04 initialisation experience: (1) Category B workflow resequenced (§8) — Architecture Discovery precedes Domain Contracts; Domain Contracts and Data Model precede Architecture Review / ADR authoring; ADR authoring is conditional, not prescribed; Implementation Plan is now an explicit numbered step; (2) Traceability Matrix (§8) — mandatory section within Domain Contracts; links every Master Plan requirement to a domain field, a consuming component, and a verification artifact; must be complete before Architecture Freeze; (3) Architecture Assumptions Register (§8) — mandatory artifact for every Category B epic; populated during Architecture Discovery; all assumptions must be VERIFIED before Architecture Freeze; maintained in the Architecture Discovery document; (4) Component Inventory (§8) — mandatory section within the Architecture Discovery document for UI-bearing epics; specifies every UI component with full data contract before domain contracts are authored; (5) Definition of Done and Architecture Exit Criteria (§8) — per-document DoDs defined for Architecture Discovery, Domain Contracts, Data Model, Architecture Review / ADR, Architecture Freeze, and Implementation Plan; Architecture Exit Criteria checklist formalises the implementation gate; all criteria must be satisfied before implementation begins. Derived from EPIC-04 Replay UI Experience initialisation process.*
 
-*Revision 2026-07-16 (EPIC-04 Architecture Checkpoint A): Clarified Architecture Checkpoint timing (§3 Macro Phase Lifecycle, §9 Architecture Checkpoint, Review Gate Summary). Official Architecture Checkpoints execute ONLY after completion of the corresponding Macro Phase as defined by the Implementation Plan. Intermediate reviews may be performed when useful but are informal and do not replace the official checkpoint. Derived from EPIC-04 Macro Phase A experience — an intermediate review after Phase 2 was useful but must not be treated as Architecture Checkpoint A.*
+*Revision 2026-07-16 (EPIC-04 Architecture Checkpoint A): Clarified Architecture Checkpoint timing (§3 Macro Phase Lifecycle, §10 Architecture Checkpoint, Review Gate Summary). Official Architecture Checkpoints execute ONLY after completion of the corresponding Macro Phase as defined by the Implementation Plan. Intermediate reviews may be performed when useful but are informal and do not replace the official checkpoint. Derived from EPIC-04 Macro Phase A experience — an intermediate review after Phase 2 was useful but must not be treated as Architecture Checkpoint A.*
 
-*Revision 2026-07-16 (EPIC-04 Documentation Certification): Formalised Architecture Traceability Review as a mandatory CAR completion criterion for Category B epics (§9 CAR; cross-referenced from Epic Workflow Step 5, Definition of Done, Review Gate Summary, and Category B workflow). CAR is defined as architecture-conformance certification, not a code-quality review. Derived from EPIC-04 CAR experience — end-to-end component/ownership/dependency/data-source traceability was essential to certify frozen-architecture conformance.*
+*Revision 2026-07-16 (EPIC-04 Documentation Certification): Formalised Architecture Traceability Review as a mandatory CAR completion criterion for Category B epics (§10 CAR; cross-referenced from Epic Workflow, Definition of Done, Review Gate Summary, and Category B workflow). CAR is defined as architecture-conformance certification, not a code-quality review. Derived from EPIC-04 CAR experience — end-to-end component/ownership/dependency/data-source traceability was essential to certify frozen-architecture conformance.*
 
 *Revision 2026-07-16 (EPIC-05 Documentation Certification): Formalised Documentation Certification rule that living status belongs in Epic Overview + Implementation Plan status headers; frozen Architecture Discovery / Domain Contracts / Data Model / Architecture Freeze bodies are not rewritten for close-out markers. Category B workflow Step 1 now requires a living `EPIC-NN-OVERVIEW.md` distinct from frozen Architecture Discovery. Derived from EPIC-05 Documentation Certification — EPIC-05 initially used Discovery as the only overview surface, which conflated historical discovery status with living certification markers.*
 
 *Revision 2026-07-16 (EPIC-06 Initialization refinement): Formalised **Known Inputs** as a mandatory Category B EPIC Initialization section (before Architecture Assumptions Register). Known Inputs list only already existing artifacts for Discovery to inspect — no decisions, analysis, or assumptions. Also formalised architecture-neutral Initialization: Initialization identifies the problem space and must not propose presentation mechanisms or other design alternatives. Derived from EPIC-V13-06 Initialization refinement.*
 
 *Revision 2026-07-16 (EPIC-06 Conversation Boundary Optimization): Added engineering principle "Conversation Boundary Optimization" (§2) — prefer continuing within the same implementation milestone or tightly coupled commit sequence; prefer a new conversation only after a natural architectural boundary; always balance shorter-context token savings against reconstruction cost. Stopping Rule (§8) updated so sequencing-only resume stays in the same conversation, while completed architectural boundaries may open a new one. Derived from EPIC-06 long-running implementation experience.*
+
+*Revision 2026-07-16 (Version 1.0 editorial consolidation): Stabilised the Playbook as Version 1.0. Editorial-only: resolved duplicate section number and restored logical order (§8 Epic Planning Workflow, §9 Documentation Strategy, §10 Review Gates, §11 Cursor Usage); aligned §3 step prose with the 13-step lifecycle diagram; fixed Architecture Exit Criteria numbering collision (§8.7 vs former Implementation Plan DoD §8.6); unified CAR naming (Construction Architecture Review); reserved RR for Release Readiness Review and renamed epic-level regression step accordingly; aligned Category A/B close-out with FR + Epic Close; clarified Mini Architecture Freeze dual triggers; cross-linked Cursor Chat Policy to Conversation Boundary Optimization; fixed typo and stale cross-references. No process semantics changed.*
