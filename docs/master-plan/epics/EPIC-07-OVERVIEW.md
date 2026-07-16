@@ -1,13 +1,14 @@
 # EPIC-07 — Production UX
 
-**Status:** INITIALIZATION COMPLETE — Architecture Discovery next  
+**Status:** ARCHITECTURE DISCOVERY COMPLETE — Domain Contracts next  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-07  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-07; Product Goal P-07  
 **Roadmap Phase:** Phase 4 — Production Readiness  
 **Precondition:** EPIC-V13-04 CLOSED; EPIC-V13-05 CLOSED; Master Plan Dependencies for EPIC-V13-07 satisfied; working tree clean at initialization.  
-**Regression baseline (initialization):** Last recorded epic baseline 6708 passing / 0 failures (EPIC-06 initialization); reconfirm at Architecture Discovery — suite not re-run in this planning step.  
+**Regression baseline (initialization):** Last recorded epic baseline 6708 passing / 0 failures (EPIC-06 initialization); not re-run at Discovery.  
+**Architecture Discovery:** `EPIC-07-PRODUCTION-UX.md` — COMPLETE  
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -128,7 +129,7 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 | # | Document | Role |
 |---|---|---|
 | 1 | `docs/master-plan/epics/EPIC-07-OVERVIEW.md` | Living Category B status surface (this document) |
-| 2 | `docs/master-plan/epics/EPIC-07-PRODUCTION-UX.md` | Architecture Discovery (next) |
+| 2 | `docs/master-plan/epics/EPIC-07-PRODUCTION-UX.md` | Architecture Discovery — COMPLETE |
 | 3 | `docs/master-plan/epics/EPIC-07-DOMAIN-CONTRACTS.md` | Domain Contracts (if Discovery proves contract work) |
 | 4 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model (after Contracts) |
 | 5 | Architecture Review / ADR (conditional) | Only if unresolved decision remains |
@@ -140,12 +141,12 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 ## 10. Architecture Workflow
 
 ```
-EPIC Initialization  ← COMPLETE (this document)
+EPIC Initialization  ← COMPLETE
         ↓
-Architecture Discovery  ← NEXT
+Architecture Discovery  ← COMPLETE
   → EPIC-07-PRODUCTION-UX.md
         ↓
-Domain Contracts
+Domain Contracts  ← NEXT
         ↓
 Data Model
         ↓
@@ -222,17 +223,11 @@ Existing artifacts Architecture Discovery is expected to inspect. **No architect
 
 ## 12. Architecture Assumptions Register
 
-Initialized at Initialization as UNVERIFIED. Architecture Discovery populates verification evidence. All must be VERIFIED (or INVALIDATED with response) before Architecture Freeze.
+Authoritative Discovery register: `EPIC-07-PRODUCTION-UX.md` §6. All entries remain **UNVERIFIED** (Discovery must not resolve assumptions). Must be VERIFIED or INVALIDATED before Architecture Freeze.
 
-| ID | Description | Status | Verification Document | Notes |
-|---|---|---|---|---|
-| AA-01 | EPIC-07 can be delivered without new persistent domain artifacts or new LangGraph nodes | UNVERIFIED | Architecture Discovery | Master Plan describes polish; Discovery confirms |
-| AA-02 | Existing frozen ADRs (esp. ADR-003, ADR-033, ADR-037, ARC-01) govern presentation boundaries without modification | UNVERIFIED | Architecture Discovery / Architecture Review | New ADR only if genuine gap remains |
-| AA-03 | No new `InterviewState` fields are required for Production UX | UNVERIFIED | Architecture Discovery | Sole-writer identification if any field is touched |
-| AA-04 | Report and replay accessibility (WCAG 2.1 AA) and primary-flow keyboard navigation are achievable on existing host surfaces | UNVERIFIED | Architecture Discovery Component Inventory | Bound to Master Plan Go-Live Product checklist |
-| AA-05 | Deterministic report/replay data paths already eliminate justified loading spinners; remaining loading/error regressions are presentation-only | UNVERIFIED | Architecture Discovery | No runtime recomputation from UI |
-| AA-06 | EPIC-04 and EPIC-05 CLOSED surfaces are the complete polish targets required by Master Plan Dependencies | UNVERIFIED | Architecture Discovery | EPIC-06 not a Master Plan dependency for EPIC-07 |
-| AA-07 | Conditional ADR step can be skipped | UNVERIFIED | Architecture Review | Reconfirm after Contracts + Data Model |
+| ID | Status | Anchor |
+|---|---|---|
+| AA-01 … AA-13 | UNVERIFIED | `EPIC-07-PRODUCTION-UX.md` §6 |
 
 ---
 
@@ -247,7 +242,7 @@ Initialized at Initialization as UNVERIFIED. Architecture Discovery populates ve
 
 ## 14. Recommendation
 
-**Next engineering task:** Architecture Discovery for EPIC-V13-07 (`EPIC-07-PRODUCTION-UX.md`), including Component Inventory for all UI-bearing polish surfaces and population of the Architecture Assumptions Register. No Domain Contracts, ADR, Freeze, Implementation Plan, or production code in the next step until Discovery completes.
+**Next engineering task:** Domain Contracts for EPIC-V13-07 (`EPIC-07-DOMAIN-CONTRACTS.md`) against Discovery findings — Traceability Matrix required. No ADR, Freeze, Implementation Plan, or production code until Contracts + Data Model complete and Freeze passes.
 
 ---
 
