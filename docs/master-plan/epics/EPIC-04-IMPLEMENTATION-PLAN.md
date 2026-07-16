@@ -1,10 +1,11 @@
 # EPIC-04 — Replay UI Experience: Implementation Plan
 
-**Status:** ACCEPTED  
+**Status:** ACCEPTED — Implementation COMPLETE (Phases 1–6); Checkpoint A/B APPROVED; CAR APPROVED; Final Regression CERTIFIED (6637)  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-04  
 **Authority:** EPIC-04-ARCHITECTURE-FREEZE.md (APPROVED, commit `3e8f31a`)  
-**Regression baseline:** 6574 passing tests, 0 failures  
+**Regression baseline (plan open):** 6574 passing tests, 0 failures  
+**Regression baseline (close-out):** 6637 passing tests, 0 failures  
 **Precondition:** Architecture Freeze APPROVED. Implementation Dependency Validation applied (§2). No implementation begins without this plan accepted.
 
 ---

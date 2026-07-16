@@ -1,12 +1,13 @@
 # EPIC-04 — Replay UI Experience
 
-**Status:** IMPLEMENTATION PLAN ACCEPTED — Implementation ready to begin  
-**Date:** 2026-07-15  
+**Status:** IMPLEMENTATION COMPLETE — Checkpoint A/B APPROVED; CAR APPROVED; Final Regression CERTIFIED (6637); Documentation Certification COMPLETE — Pending Final Review  
+**Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-04  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-04  
 **Roadmap Phase:** Phase 3 — User Experience  
-**Precondition:** EPIC-V13-03 CLOSED; `ReplaySession` contract frozen (ADR-037); `replay_node` implemented, deterministic, LLM-free, regression-tested.
+**Precondition:** EPIC-V13-03 CLOSED; `ReplaySession` contract frozen (ADR-037); `replay_node` implemented, deterministic, LLM-free, regression-tested.  
+**Regression baseline (close-out):** 6637 passing tests, 0 failures
 
 ---
 
@@ -34,11 +35,11 @@ Implement the Replay UI as a strictly read-only, LLM-free presentation layer con
 
 ## 4. Prerequisites (Definition of Ready)
 
-- [ ] EPIC-03 Final Review passed and CLOSED
-- [ ] `ReplaySession` frozen (`frozen=True`, `extra=forbid`, ADR-037 D3)
-- [ ] `replay_node` deterministic, LLM-free, regression-tested
-- [ ] ADR-037 D3 field set sufficiency pre-verified at EPIC-03 Architecture Freeze
-- [ ] No open P0/P1 findings from EPIC-03 affecting replay contracts
+- [x] EPIC-03 Final Review passed and CLOSED
+- [x] `ReplaySession` frozen (`frozen=True`, `extra=forbid`, ADR-037 D3)
+- [x] `replay_node` deterministic, LLM-free, regression-tested
+- [x] ADR-037 D3 field set sufficiency pre-verified at EPIC-03 Architecture Freeze
+- [x] No open P0/P1 findings from EPIC-03 affecting replay contracts
 
 ---
 
@@ -93,15 +94,15 @@ A new ADR shall be created **only if** a genuine unresolved architectural decisi
 | ID | Description | Status | Verification Document | Notes |
 |---|---|---|---|---|
 | AA-01 | `ReplaySession` field set (ADR-037 D3) is sufficient to render all UI panels defined in Master Plan §4 EPIC-V13-04 | VERIFIED | EPIC-04-REPLAY-UI.md §5 | Verified by Architecture Discovery Traceability Matrix: all 17 requirements mapped to source fields; no gap found |
-| AA-02 | No LLM call is reachable from any Replay UI component render path | CONDITIONALLY VERIFIED | EPIC-04-ARCHITECTURE-FREEZE.md | Architectural constraint confirmed; enforcement test required in implementation |
+| AA-02 | No LLM call is reachable from any Replay UI component render path | VERIFIED | `tests/ui/replay/test_replay_llm_free.py` | Phase 6 enforcement: `test_replay_ui_render_path_invokes_no_llm_service` |
 | AA-03 | ADR-003 (State-Driven UI) governs replay navigation state without requiring a new ADR | VERIFIED | EPIC-04-DOMAIN-CONTRACTS.md §2.2 | Navigation position is UI-scoped ephemeral cursor; ADR-003 governs without modification; no new ADR required |
-| AA-04 | ADR-037 requires no modification to satisfy EPIC-04 UI requirements | VERIFIED | EPIC-04-RELAY-UI.md §5 | Verified by Architecture Discovery: all requirements covered by existing ADR-037 D3 field set |
-| AA-05 | Replay UI is fully read-only; no write path to `InterviewState`, `SessionHistory`, or any domain artifact | VERIFIED | EPIC-04-DOMAIN-CONTRACTS.md §6 | Formally verified: read-only constraint table complete; `current_position` and `ReplayContext` are ephemeral UI-layer state |
+| AA-04 | ADR-037 requires no modification to satisfy EPIC-04 UI requirements | VERIFIED | EPIC-04-REPLAY-UI.md §5 | Verified by Architecture Discovery: all requirements covered by existing ADR-037 D3 field set |
+| AA-05 | Replay UI is fully read-only; no write path to `InterviewState`, `SessionHistory`, or any domain artifact | VERIFIED | EPIC-04-DOMAIN-CONTRACTS.md §6; Phase 6 read-only tests | Formally verified; confirmed by CAR and architectural tests |
 | AA-06 | `ReplaySession` is produced on demand per request; no caching or persistence is needed at the UI layer | VERIFIED | ADR-037 D1 §1.4 | ADR-037 D1 §1.4 confirms no persistence; Architecture Discovery confirms UI receives session in memory |
-| AA-07 | Responsive layout (mobile, tablet, desktop) is achievable within the existing frontend stack without new dependencies | VERIFIED | EPIC-04-DATA-MODEL.md §6 | Gradio framework confirmed; `gr.Row`, `gr.Column`, custom CSS injection sufficient for all three breakpoints; no new dependency required |
-| AA-08 | Performance is acceptable for sessions of 20+ questions without architectural changes | CONDITIONALLY VERIFIED | EPIC-04-DATA-MODEL.md §7 | O(1) navigation confirmed; no architectural blocker; profiling gates (load time, navigation step, memory) required in Implementation Plan |
+| AA-07 | Responsive layout (mobile, tablet, desktop) is achievable within the existing frontend stack without new dependencies | VERIFIED | EPIC-04-DATA-MODEL.md §6; Phase 5 responsive tests | Gradio + CSS breakpoints verified at 320 / 768 / 1280 |
+| AA-08 | Performance is acceptable for sessions of 20+ questions without architectural changes | VERIFIED | `tests/ui/replay/test_replay_performance.py` | Phase 6 gates: load ≤ 1s; navigation ≤ 100ms; memory ≤ 500 KB |
 
-**All assumptions must reach status VERIFIED before Architecture Freeze.**
+**All Architecture Assumptions are VERIFIED.** Assumptions CONDITIONALLY VERIFIED at Architecture Freeze reached full VERIFIED status during Phase 6 enforcement.
 
 ---
 
@@ -156,7 +157,21 @@ Implementation Plan  ← ACCEPTED
   → Phase breakdown
   → Regression baseline declared (6574 passing)
         ↓
-Implementation
+Macro Phase A (Phases 1–3)  ← COMPLETE
+        ↓
+Architecture Checkpoint A  ← APPROVED
+        ↓
+Macro Phase B (Phases 4–6)  ← COMPLETE
+        ↓
+Architecture Checkpoint B  ← APPROVED
+        ↓
+CAR (Architecture Traceability)  ← APPROVED
+        ↓
+Final Regression Certification  ← CERTIFIED (6637)
+        ↓
+Documentation Certification  ← COMPLETE
+        ↓
+Final Review (FR)  ← PENDING
 ```
 
 ---
@@ -165,16 +180,16 @@ Implementation
 
 Implementation may begin only if **ALL** of the following are true:
 
-- [ ] Architecture Discovery complete (§8.1 DoD satisfied)
-- [ ] Component Inventory complete
-- [ ] Traceability Matrix complete
-- [ ] Domain Contracts frozen (§8.2 DoD satisfied)
-- [ ] Data Model frozen (§8.3 DoD satisfied)
-- [ ] All Architecture Assumptions status = VERIFIED
-- [ ] No BLOCKER findings in any planning document
-- [ ] ADR decisions complete (if any ADR was required)
-- [ ] Architecture Freeze declared (§8.5 DoD satisfied)
-- [ ] Implementation Plan accepted (§8.6 DoD satisfied; Dependency Validation passed)
+- [x] Architecture Discovery complete (§8.1 DoD satisfied)
+- [x] Component Inventory complete
+- [x] Traceability Matrix complete
+- [x] Domain Contracts frozen (§8.2 DoD satisfied)
+- [x] Data Model frozen (§8.3 DoD satisfied)
+- [x] All Architecture Assumptions status = VERIFIED (AA-02/AA-08 finalized in Phase 6)
+- [x] No BLOCKER findings in any planning document
+- [x] ADR decisions complete (if any ADR was required)
+- [x] Architecture Freeze declared (§8.5 DoD satisfied)
+- [x] Implementation Plan accepted (§8.6 DoD satisfied; Dependency Validation passed)
 
 ---
 
