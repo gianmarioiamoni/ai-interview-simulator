@@ -135,7 +135,7 @@ Authoritative statuses after this review. Discovery §6 register shall be update
 
 | ID | Class | Notes |
 |---|---|---|
-| AA-04, AA-05, AA-07, AA-13 | UNVERIFIED assumptions | Deferred |
+| AA-04, AA-07, AA-13 | UNVERIFIED assumptions | Deferred (AA-05 verified at Domain Contracts) |
 | OF-01, OF-02, OF-04, OF-05, OF-07, OF-08, OF-10 | Remaining findings | Contracts / process / polish gaps |
 | MD-01, MD-03 (delete timing), MD-04, MD-05, MD-06 | Deferred missing decisions | Contracts or implementation knowledge |
 | RT-01…RT-08 | Active triggers | As listed |
