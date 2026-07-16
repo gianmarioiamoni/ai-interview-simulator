@@ -1,9 +1,10 @@
 # app/services/report_export_service.py
+# EPIC-06 C8 — C-26 export parity (X-08): same FinalReportDTO + build_report_markdown path as UI.
 
 # Report export service
 #
 # HTML → PDF rendering using WeasyPrint
-# Ensures visual consistency with UI report
+# Ensures visual consistency with UI report (explainability fields included)
 
 import json
 import logging
@@ -36,7 +37,7 @@ class ReportExportService:
                 "PDF export is unavailable: WeasyPrint native libraries are not installed on this system."
             )
 
-        html_content = self._build_full_html(report)
+        html_content = self.build_export_html(report)
 
         try:
             HTML(string=html_content).write_pdf(file_path)  # type: ignore[misc]
@@ -58,11 +59,19 @@ class ReportExportService:
         return file_path
 
     # ---------------------------------------------------------
+    # HTML EXPORT BODY (X-08 parity with UI render path)
+    # ---------------------------------------------------------
+
+    def build_export_html(self, report: FinalReportDTO) -> str:
+        """Build full HTML document from FinalReportDTO (same factory path as UI)."""
+        return self._build_full_html(report)
+
+    # ---------------------------------------------------------
     # INTERNAL: FULL HTML DOCUMENT
     # ---------------------------------------------------------
 
     def _build_full_html(self, report: FinalReportDTO) -> str:
-
+        # X-08: identical DTO → build_report_markdown path as report HTML UI.
         body = build_report_markdown(report)
 
         return f"""

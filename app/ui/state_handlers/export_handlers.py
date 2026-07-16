@@ -1,4 +1,5 @@
 # app/ui/state_handlers/export_handlers.py
+# EPIC-06 C8 — C-26 export handlers consume FinalReportDTO via sole from_report factory (X-08).
 
 import logging
 import gradio as gr
