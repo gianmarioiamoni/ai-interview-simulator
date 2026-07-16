@@ -2,6 +2,7 @@
 # EPIC-V13-05 Phase 10 — adds narrative_insights, coaching_objectives, study_recommendations.
 # Phase 2 — study_recommendations from FinalReportDTO only (PC-05 / SR-02); no domain fallback.
 # Phase 5 — LearningProgress injected separately (Plane B; never from FinalReportDTO).
+# EPIC-06 C6 — narrative_insights from FinalReportDTO only (OF-01 / DTO-only UI).
 
 from __future__ import annotations
 
@@ -24,12 +25,9 @@ class ReportViewModelBuilder:
 
         builder = ReportInsightBuilder()
 
-        # Phase 10 — narrative insights (FinalReportDTO carries pre-mapped DTOs;
-        # domain Report carries NarrativeInsight objects; both are supported via getattr).
-        narrative_insights = list(
-            getattr(report, "narrative_insights", None)
-            or (report.narrative.insights if hasattr(report, "narrative") else [])
-        )
+        # EPIC-06 C6 — narrative insights: FinalReportDTO only (OF-01 / DTO-only UI).
+        # Empty list is valid; do not fall through to domain Report.narrative.insights.
+        narrative_insights = list(getattr(report, "narrative_insights", ()))
 
         # Phase 10 — coaching objectives
         # FinalReportDTO carries pre-mapped CoachingObjectiveDTO list.
