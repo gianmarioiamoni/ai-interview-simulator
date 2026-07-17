@@ -152,6 +152,11 @@ class Settings(BaseSettings):
     health_db_probe_enabled: bool = True
     health_sandbox_probe_enabled: bool = True
 
+    # ── CI / deploy readiness gate (EPIC-08 P4/C11) ───────────────────────────
+    # Base URL of the running process edge; gate GETs READINESS_PATH on this host.
+    readiness_gate_base_url: str = "http://127.0.0.1:7860"
+    readiness_gate_timeout_s: float = 5.0
+
     # ── Graceful shutdown (EPIC-08 P5) ────────────────────────────────────────
     shutdown_drain_timeout_s: int = 30
 

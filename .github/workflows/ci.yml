@@ -29,3 +29,8 @@ jobs:
 
       - name: Test (pytest)
         run: pytest --tb=short
+
+      - name: Readiness deploy gate (local smoke)
+        env:
+          OPENAI_API_KEY: sk-ci-sentinel
+        run: python scripts/ci/run_local_readiness_gate_smoke.py
