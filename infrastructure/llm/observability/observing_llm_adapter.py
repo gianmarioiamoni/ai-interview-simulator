@@ -40,13 +40,15 @@ class _ObservingRawLLMProxy:
         started = time.monotonic()
         raw_message: AIMessage | None = None
         success = False
+        error_type: str | None = None
 
         try:
             raw_message = self._wrapped.invoke(messages, *args, **kwargs)
             success = True
             return raw_message
-        except Exception:
+        except Exception as exc:
             success = False
+            error_type = type(exc).__name__
             raise
         finally:
             latency_ms = (time.monotonic() - started) * 1000.0
@@ -57,7 +59,7 @@ class _ObservingRawLLMProxy:
             )
             metric = LLMCallMetric(
                 operation=operation,
-                model_name=snapshot.model_name,
+                model_name=snapshot.model_name or self._model_fallback,
                 latency_ms=latency_ms,
                 attempt=attempt,
                 success=success,
@@ -65,6 +67,7 @@ class _ObservingRawLLMProxy:
                 output_tokens=snapshot.output_tokens,
                 total_tokens=snapshot.total_tokens,
                 timestamp=datetime.now(timezone.utc),
+                error_type=error_type,
             )
             self._collector.record(metric)
             _emit_llm_call_log(metric)
@@ -123,10 +126,11 @@ def _resolve_model_fallback(wrapped: LLMPort) -> str:
 
 
 def _emit_llm_call_log(metric: LLMCallMetric) -> None:
+    # Informal path retained until C8 bridges AR-07 fields to emit_structured_log.
     logger.info(
         "llm.call operation=%s model=%s latency_ms=%.2f "
         "input_tokens=%s output_tokens=%s total_tokens=%s "
-        "attempt=%s success=%s",
+        "attempt=%s success=%s error_type=%s",
         metric.operation,
         metric.model_name,
         metric.latency_ms,
@@ -135,4 +139,5 @@ def _emit_llm_call_log(metric: LLMCallMetric) -> None:
         metric.total_tokens,
         metric.attempt,
         metric.success,
+        metric.error_type,
     )
