@@ -24,6 +24,10 @@ from app.ui.presentation.question_feedback_surface import (
     present_question_surface,
     surface_status_message,
 )
+from app.ui.presentation.report_surface import (
+    present_report_surface,
+    report_loader_visible,
+)
 from app.ui.presentation.surface_phase import SurfacePhase
 
 MAX_ATTEMPTS = 3
@@ -311,11 +315,16 @@ class UIResponseBuilder:
     def _build_report(self, state: InterviewState) -> UIResponse:
 
         # state.report is the sole authoritative runtime source (ADR-033, Phase 9).
-        loader_visible = False
+        # EPIC-07 C9 — report SurfaceState I-SS-02 + empty.report.unavailable.
         loader_value = map_loader_text(state.current_step)
         progress = map_loader_progress(state.current_step)
 
         if state.report is None:
+            surface_state = present_report_surface(
+                dto_ready=False,
+                is_processing=bool(state.is_processing),
+            )
+            report_output = surface_status_message(surface_state)
             return UIResponse(
                 state=state,
                 role_visible=False,
@@ -328,16 +337,21 @@ class UIResponseBuilder:
                 advanced_context_visible=False,
                 start_button_visible=False,
                 page_title="## Final Report",
-                report_output="<i>No report available</i>",
+                report_output=report_output,
                 report_section_visible=True,
                 pdf_download_btn_visible=False,
                 json_download_btn_visible=False,
-                loader_visible=loader_visible,
+                loader_visible=report_loader_visible(surface_state),
                 loader_value=loader_value,
                 current_progress=progress,
+                surface_state=surface_state,
             )
 
         report_dto = FinalReportDTO.from_report(state.report)
+        surface_state = present_report_surface(
+            dto_ready=True,
+            is_processing=bool(state.is_processing),
+        )
 
         # Plane B bind at report UI time (F-W-05): persisted LongitudinalProfile →
         # LearningProgress via ProgressTracker. Not available on InterviewState at report_node.
@@ -370,7 +384,8 @@ class UIResponseBuilder:
             written_visible=False,
             coding_visible=False,
             database_visible=False,
-            loader_visible=loader_visible,
+            loader_visible=report_loader_visible(surface_state),
             loader_value=loader_value,
             current_progress=progress,
+            surface_state=surface_state,
         )

@@ -68,6 +68,11 @@ from app.ui.presentation.question_feedback_surface import (
     present_question_surface,
     surface_status_message,
 )
+from app.ui.presentation.report_surface import (
+    REPORT_EMPTY_KEY,
+    present_report_surface,
+    report_loader_visible,
+)
 
 __all__ = [
     "AsyncBoundary",
@@ -111,11 +116,14 @@ __all__ = [
     "project_execution_error",
     "QUESTION_EMPTY_KEY",
     "FEEDBACK_EMPTY_KEY",
+    "REPORT_EMPTY_KEY",
     "assert_no_placeholder_chrome",
     "assert_texts_have_no_placeholder_chrome",
     "empty_copy_text",
     "format_execution_error_markdown",
     "present_feedback_surface",
     "present_question_surface",
+    "present_report_surface",
+    "report_loader_visible",
     "surface_status_message",
 ]

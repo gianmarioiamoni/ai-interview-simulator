@@ -69,6 +69,8 @@ def test_a4_report_state_still_renders_report():
     """A4: REPORT state (state.report set) must render the full report (regression guard)."""
     from unittest.mock import patch, MagicMock
 
+    from app.ui.presentation import SurfacePhase
+
     builder = UIResponseBuilder()
     state = _completed_state()
     state = state.model_copy(update={"report": make_report()})
@@ -80,6 +82,9 @@ def test_a4_report_state_still_renders_report():
 
     assert response.page_title == "## Final Report"
     assert response.report_section_visible is True
+    assert response.surface_state is not None
+    assert response.surface_state.phase is SurfacePhase.READY
+    assert response.loader_visible is False
 
 
 # ---------------------------------------------------------
