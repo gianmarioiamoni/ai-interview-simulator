@@ -325,7 +325,7 @@ See Commit plan table (Acceptance criteria column). Each commit independently ve
 | ID | Item | Blocking? |
 |---|---|---|
 | OI-01 | Exact process-edge allowlist for residual env reads (if any OS/platform bootstrap) finalized at C2/C3 | **Resolved (C3)** — allowlist = `tests/` + `scripts/` only; no production residual |
-| OI-02 | Node inventory split batch A/B finalized at C5 start from current graph module list | **Resolved (C5)** — batch A = core cycle (13 nodes); batch B = entry/session_close/report/longitudinal_update (+ replay at C6) |
+| OI-02 | Node inventory split batch A/B finalized at C5 start from current graph module list | **Resolved (C6)** — batch A = 13 core cycle; batch B = entry/session_close/report/longitudinal_update/replay; coverage gate active |
 | OI-03 | CAR must re-verify HF confinement (Freeze Observation O-01) | No for implementation start; **yes for epic close** |
 | OI-04 | EPIC-10 dead-code purity remains release-gate | No (AR-16) |
 

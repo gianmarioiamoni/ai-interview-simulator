@@ -117,8 +117,8 @@ def build_interview_graph(
     # Nodes
     # -----------------------------------------------------
 
-    # Batch A (C5): core interview cycle — structured logging via sole helper.
-    # Batch B (C6): session_close, report, longitudinal_update, entry.
+    # Batch A (C5) + Batch B interview nodes (C6) — structured logging via sole helper.
+    # Replay graph node "replay" is instrumented in replay_graph.py (batch B).
     graph.add_node("router", instrument_graph_node("router", router_node))
     graph.add_node("navigation", instrument_graph_node("navigation", navigation_node))
     graph.add_node("question", instrument_graph_node("question", build_question_node(llm)))
@@ -140,9 +140,14 @@ def build_interview_graph(
         "written", instrument_graph_node("written", WrittenEvaluationNode(llm))
     )
     graph.add_node("completion", instrument_graph_node("completion", completion_node))
-    graph.add_node("session_close", session_close_node)
-    graph.add_node("report", report_node)
-    graph.add_node("longitudinal_update", longitudinal_update)
+    graph.add_node(
+        "session_close", instrument_graph_node("session_close", session_close_node)
+    )
+    graph.add_node("report", instrument_graph_node("report", report_node))
+    graph.add_node(
+        "longitudinal_update",
+        instrument_graph_node("longitudinal_update", longitudinal_update),
+    )
     graph.add_node(
         "start_processing",
         instrument_graph_node("start_processing", start_processing_node),
@@ -153,7 +158,7 @@ def build_interview_graph(
     # -----------------------------------------------------
 
     graph.set_entry_point("entry")
-    graph.add_node("entry", lambda state: state)
+    graph.add_node("entry", instrument_graph_node("entry", lambda state: state))
 
     graph.add_conditional_edges(
         "entry",

@@ -66,12 +66,7 @@ class TestBatchInventory:
             first = node.args[0]
             if isinstance(first, ast.Constant) and isinstance(first.value, str):
                 instrumented.add(first.value)
-        assert instrumented == BATCH_A_GRAPH_NODES
-
-    def test_interview_graph_does_not_instrument_batch_b_yet(self) -> None:
-        source = INTERVIEW_GRAPH_PATH.read_text(encoding="utf-8")
-        for name in BATCH_B_GRAPH_NODES:
-            assert f'instrument_graph_node("{name}"' not in source
+        assert BATCH_A_GRAPH_NODES <= instrumented
 
 
 class TestInstrumentGraphNode:

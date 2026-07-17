@@ -23,6 +23,7 @@ from app.core.logger import get_logger
 from app.graph.nodes.replay_node import SessionLoader, replay_node
 from domain.contracts.replay.replay_graph_state import ReplayGraphState
 from domain.contracts.session_history.session_history import SessionHistory
+from infrastructure.observability.graph_node_logging import instrument_graph_node
 
 logger = get_logger(__name__)
 
@@ -49,7 +50,10 @@ def build_replay_graph(
     # Bind session_loader into replay_node via partial (keyword-only arg).
     bound_replay_node = partial(replay_node, session_loader=session_loader)
 
-    graph.add_node(_REPLAY_NODE_NAME, bound_replay_node)
+    graph.add_node(
+        _REPLAY_NODE_NAME,
+        instrument_graph_node(_REPLAY_NODE_NAME, bound_replay_node),
+    )
     graph.set_entry_point(_REPLAY_NODE_NAME)
     graph.add_edge(_REPLAY_NODE_NAME, END)
 
