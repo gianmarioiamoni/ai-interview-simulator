@@ -61,5 +61,6 @@ class UILayoutComponents:
     replay_runtime: object
 
     session_history_section: object
+    session_history_status: object
     session_history_dropdown: object
     replay_from_history_button: object

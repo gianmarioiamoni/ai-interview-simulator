@@ -178,6 +178,7 @@ class UILayoutBuilder:
             replay_exit_button=replay_components["replay_exit_button"],
             replay_runtime=replay_components["replay_runtime"],
             session_history_section=history_components["session_history_section"],
+            session_history_status=history_components["session_history_status"],
             session_history_dropdown=history_components["session_history_dropdown"],
             replay_from_history_button=history_components["replay_from_history_button"],
         )

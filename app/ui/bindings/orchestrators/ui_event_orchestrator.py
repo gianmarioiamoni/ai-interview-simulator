@@ -17,6 +17,7 @@ from app.ui.state_handlers import (
 )
 from app.ui.state_handlers.export_handlers import export_pdf_handler, export_json_handler
 from app.ui.presentation.session_history_load import load_session_history_list
+from app.ui.presentation.surface_phase import SurfacePhase
 
 from app.ui.bindings.builders.ui_outputs_builder import UIOutputsBuilder
 from app.ui.bindings.handlers.replay_layout_coordinator import (
@@ -275,19 +276,27 @@ class UIEventOrchestrator:
             coordinator = ReplayLayoutCoordinator(self._loader_with_state(state))
             snapshot = coordinator.enter(session_id)
             updates = list(snapshot_to_gradio_updates(snapshot))
-            # Register session in history list (SESSION_HISTORY_LOAD error path)
+            # Project history list READY/EMPTY/ERROR (EC-SH-01; forbid silent None)
             history_result = load_session_history_list(lambda: [session_id])
-            if history_result.error is not None:
-                gr.Warning(history_result.error.message_text)
+            presentation = history_result.presentation
+            status = presentation.status_message()
+            if presentation.phase is SurfacePhase.ERROR and presentation.error is not None:
+                warn = getattr(gr, "Warning", None)
+                if callable(warn):
+                    warn(presentation.error.message_text)
+                history_update = gr.update(choices=[], value=None)
+                history_btn = gr.update(interactive=False)
+            elif presentation.phase is SurfacePhase.EMPTY:
                 history_update = gr.update(choices=[], value=None)
                 history_btn = gr.update(interactive=False)
             else:
                 history_update = gr.update(
-                    choices=list(history_result.session_ids),
+                    choices=presentation.dropdown_choices(),
                     value=session_id,
                 )
                 history_btn = gr.update(interactive=True)
-            return tuple(updates) + (history_update, history_btn)
+            status_update = gr.update(value=status)
+            return tuple(updates) + (status_update, history_update, history_btn)
 
         def enter_from_history(
             selected_session_id: str | None,
@@ -314,6 +323,7 @@ class UIEventOrchestrator:
             return gr.update(interactive=bool(selected))
 
         report_outputs = self._replay_outputs + [
+            self.c.session_history_status,
             self.c.session_history_dropdown,
             self.c.replay_from_history_button,
         ]
