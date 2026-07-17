@@ -7,15 +7,15 @@ from typing import Any, Type, TypeVar
 from langchain_core.messages import AIMessage
 from pydantic import BaseModel
 
-from app.core.logger import get_logger
 from app.ports.llm_port import LLMPort, LLMResponse
 from infrastructure.config.settings import settings
 from infrastructure.llm.contracts.llm_call_metric import LLMCallMetric
 from infrastructure.llm.metrics.interview_metrics_collector import InterviewMetricsCollector
 from infrastructure.llm.metrics.llm_operation_context import LLMOperationContext
+from infrastructure.llm.observability.llm_structured_log_bridge import (
+    emit_llm_call_structured_log,
+)
 from infrastructure.llm.observability.token_usage_extractor import TokenUsageExtractor
-
-logger = get_logger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -70,7 +70,7 @@ class _ObservingRawLLMProxy:
                 error_type=error_type,
             )
             self._collector.record(metric)
-            _emit_llm_call_log(metric)
+            emit_llm_call_structured_log(metric)
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._wrapped, name)
@@ -123,21 +123,3 @@ def _resolve_model_fallback(wrapped: LLMPort) -> str:
         if model_name:
             return str(model_name)
     return _DEFAULT_MODEL_FALLBACK
-
-
-def _emit_llm_call_log(metric: LLMCallMetric) -> None:
-    # Informal path retained until C8 bridges AR-07 fields to emit_structured_log.
-    logger.info(
-        "llm.call operation=%s model=%s latency_ms=%.2f "
-        "input_tokens=%s output_tokens=%s total_tokens=%s "
-        "attempt=%s success=%s error_type=%s",
-        metric.operation,
-        metric.model_name,
-        metric.latency_ms,
-        metric.input_tokens,
-        metric.output_tokens,
-        metric.total_tokens,
-        metric.attempt,
-        metric.success,
-        metric.error_type,
-    )
