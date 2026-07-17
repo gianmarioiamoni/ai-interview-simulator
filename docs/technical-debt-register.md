@@ -89,6 +89,12 @@
 |---|---|---|---|---|---|
 | TD-EP05-001 | Presentation-path architectural suite bans `SessionHistory` imports but does not also parametrize an `InterviewEvaluation` import ban (CAR/FAR P2; spot-check clean) | `tests/ui/architecture/test_unified_report_architecture.py` | Low (P2) | OPEN | ADR-033 |
 
+### EPIC-07 Production UX
+
+| ID | Item | Location | Severity | Status | ADR |
+|---|---|---|---|---|---|
+| TD-EP07-001 | Gradio full browser axe-core / deeper WCAG tooling beyond structural + catalog a11y verification (NI-02 / AR-14; FR observation) | `app/ui/presentation/accessibility_*.py`, report/replay hosts | Low | DEFERRED | — |
+
 ---
 
 ## Closed Items

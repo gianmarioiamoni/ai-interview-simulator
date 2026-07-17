@@ -1,6 +1,6 @@
 # EPIC-07 — Production UX
 
-**Status:** CAR COMPLETE — Final Review next  
+**Status:** CLOSED  
 **Date:** 2026-07-17  
 **Epic ID:** EPIC-V13-07  
 **Playbook Category:** Category B — Major Architectural Epic  
@@ -9,17 +9,18 @@
 **Precondition:** EPIC-V13-04 CLOSED; EPIC-V13-05 CLOSED; Master Plan Dependencies for EPIC-V13-07 satisfied; working tree clean at initialization.  
 **Regression baseline (initialization):** 6708 / 0 (EPIC-06 init).  
 **EPIC-07 implementation baseline (pre-P1):** 6787 passing / 0 failures.  
-**Regression (post-implementation):** 7003 passing / 0 failures.  
+**Regression (close-out):** 7003 passing / 0 failures.  
+**Planning:** COMPLETE  
+**Implementation:** COMPLETE (P1–P7; C1–C15)  
+**Construction Architecture Review (CAR):** COMPLETE — PASS WITH MINOR OBSERVATIONS (Architecture Traceability; 0 P0/P1)  
+**Final Review (FR):** APPROVED — 2026-07-17  
+**Epic Close:** CLOSED — 2026-07-17  
 **Architecture Discovery:** `EPIC-07-PRODUCTION-UX.md` — COMPLETE  
 **Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE  
 **Domain Contracts:** `EPIC-07-DOMAIN-CONTRACTS.md` — COMPLETE  
 **Data Model:** `EPIC-07-DATA-MODEL.md` — COMPLETE  
 **Architecture Freeze:** `EPIC-07-ARCHITECTURE-FREEZE.md` — **APPROVED**  
-**Implementation Plan:** `EPIC-07-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** **COMPLETE** (P1–P7; C1–C15)  
-**Construction Architecture Review (CAR):** **COMPLETE** — PASS WITH MINOR OBSERVATIONS (Architecture Traceability; 0 P0/P1)  
-**Final Review (FR):** **NEXT**  
-**Epic Close:** pending  
+**Implementation Plan:** `EPIC-07-IMPLEMENTATION-PLAN.md` — **ACCEPTED**; EPIC CLOSED  
 **Formal §8.4 ADR:** **SKIP** (Freeze §2)  
 **Playbook:** V13 Development Playbook Version 1.0
 
@@ -98,8 +99,8 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 - CAR (with Architecture Traceability) — **COMPLETE**
 - Regression — **COMPLETE** (7003 / 0)
 - Documentation Certification (living Overview alignment) — **COMPLETE**
-- Final Review (FR) — **NEXT**
-- Epic Close — pending
+- Final Review (FR) — **APPROVED**
+- Epic Close — **CLOSED**
 
 **Non-goals (Master Plan):** Onboarding tours, tooltips, or help overlays; internationalisation (V2); dark mode (V2).
 
@@ -151,7 +152,7 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 | 5 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model — COMPLETE |
 | 6 | Formal §8.4 Architecture Review / ADR (conditional) | **SKIP** — Freeze §2 |
 | 7 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Architecture Freeze — **APPROVED** |
-| 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Implementation Plan — **ACCEPTED**; Implementation **COMPLETE** |
+| 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Implementation Plan — **ACCEPTED**; EPIC CLOSED |
 
 ---
 
@@ -200,9 +201,9 @@ Regression  ← COMPLETE (7003 / 0)
         ↓
 Documentation Certification  ← COMPLETE (living Overview aligned)
         ↓
-Final Review (FR)  ← NEXT
+Final Review (FR)  ← APPROVED
         ↓
-Epic Close  ← pending
+Epic Close  ← CLOSED
 ```
 
 ---
@@ -245,13 +246,13 @@ Epic Close  ← pending
 | Construction Architecture Review (CAR) | **COMPLETE** — PASS WITH MINOR OBSERVATIONS (Architecture Traceability; 0 P0/P1) |
 | Regression Certification | **COMPLETE** — 7003 passed / 0 failed |
 | Documentation Certification | **COMPLETE** — living Overview aligned with post-CAR state |
-| Final Review (FR) | **NEXT** |
-| Epic Close | pending |
+| Final Review (FR) | **APPROVED** — 2026-07-17 (APPROVED WITH MINOR OBSERVATIONS) |
+| Epic Close | **CLOSED** — 2026-07-17 |
 
-### CAR observations (non-blocking)
+### FR observations (non-blocking; registered)
 
-1. Living Overview status markers aligned in this Documentation Certification step.
-2. Gradio full browser a11y evidence depth remains NI-02 verification debt (acceptable; non-blocking).
+1. NI-02 — Gradio full browser a11y evidence depth remains structural/automated (acceptable / backlog; `TD-EP07-001`).
+2. PROC-I-01 — EPIC-06 living Overview close-out still open (external process; does not reopen EPIC-07).
 
 ---
 
@@ -327,10 +328,9 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 
 ## 16. Recommendation
 
-**Next engineering task:** Final Review (FR) for EPIC-V13-07.  
-**Do not** close the Epic until FR produces Closed.  
-Epic Close remains pending.
+**EPIC-V13-07 is CLOSED.**  
+**Next planned activity:** Continue Phase 4 — initialize or advance **EPIC-V13-08 (Deployment & Operations)**; optionally complete EPIC-06 living close-out (PROC-I-01) in parallel if still open.
 
 ---
 
-*This Overview is the living status document for EPIC-V13-07. Frozen Discovery / Domain Contracts / Data Model / Architecture Freeze bodies remain historical records after freeze. Implementation and CAR are COMPLETE; Final Review is NEXT.*
+*This Overview is the living status document for EPIC-V13-07. Frozen Discovery / Domain Contracts / Data Model / Architecture Freeze bodies remain historical records. Epic CLOSED.*

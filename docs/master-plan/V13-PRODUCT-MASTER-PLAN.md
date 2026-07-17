@@ -250,6 +250,8 @@ AI-generated explanations of explanations. Natural language "why" query interfac
 
 ### EPIC-V13-07 — Production UX
 
+**Status:** CLOSED — 2026-07-17  
+
 **Purpose:**  
 Bring every user-facing flow to production quality: no placeholder states, no error surfaces that expose internal state, no unhandled loading regressions.
 
@@ -477,7 +479,7 @@ Depends on EPIC-V13-05 (Unified Report host surfaces) and EPIC-V13-01 (clean sco
 
 ### Phase 4 — Production Readiness (after Phase 3 complete)
 
-**EPIC-V13-07 (Production UX)**  
+**EPIC-V13-07 (Production UX)** — **CLOSED** (2026-07-17)  
 Depends on EPIC-V13-04 and EPIC-V13-05 being feature-complete.
 
 **EPIC-V13-08 (Deployment & Operations)**  
