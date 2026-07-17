@@ -1,5 +1,5 @@
 # tests/ui/architecture/test_unwired_host_deletion_architecture.py
-# EPIC-07 C13 — EC-UH-01 / R-14: DELETE_TARGET modules not imported by live bind path.
+# EPIC-07 C13/C14 — EC-UH-01 / R-14: DELETE_TARGET absent; not imported by live bind.
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
-# EC-UH-01 closed inventory (Data Model §4.7) — modules still present until C14.
+# EC-UH-01 closed inventory (Data Model §4.7) — removed in C14.
 DELETE_TARGET_MODULES: frozenset[str] = frozenset(
     {
         "app.ui.views.setup_view",
@@ -112,12 +112,12 @@ class TestDeleteTargetInventory:
         }
         assert actual_paths == expected_paths
 
-    def test_delete_target_modules_still_present_on_disk(self) -> None:
-        """C13 proves non-import before C14 deletion; targets must still exist."""
+    def test_delete_target_modules_absent_from_disk(self) -> None:
+        """C14: DELETE_TARGET modules must be removed from the codebase."""
         for module_name in sorted(DELETE_TARGET_MODULES):
             path = _module_to_path(module_name)
-            assert path is not None and path.is_file(), (
-                f"DELETE_TARGET module missing before C14: {module_name}"
+            assert path is None or not path.is_file(), (
+                f"DELETE_TARGET module still present after C14: {module_name}"
             )
 
 
