@@ -42,7 +42,9 @@ class TestEmitC4Boundaries:
 class TestReportExportBoundary:
     def test_emit_report_export_failure_uses_catalog(self) -> None:
         entry = get_candidate_facing_error_entry("err.report_export.failed")
-        error = _emit_report_export_failure()
+        # Isolate from Gradio: gr.Warning falls back to warnings.warn outside Blocks.
+        with patch.object(export_handlers_module.gr, "Warning", MagicMock()):
+            error = _emit_report_export_failure()
         assert error.boundary is AsyncBoundary.REPORT_EXPORT
         assert error.message_text == entry.message_text
 
