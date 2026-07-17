@@ -142,14 +142,14 @@ Rollback restores **data files + image/Settings** as needed. Do not “reverse-m
 
 ## 9. Doc review checklist (C15 acceptance)
 
-- [ ] V1.2 versioning policy extended (VP-01–VP-07) and EPIC-08 freeze rules (VP-08–VP-10) present  
-- [ ] Prerequisites, execution sequence, validation, rollback documented  
-- [ ] Relationship to C14 deploy/readiness stated; deploy steps not duplicated  
-- [ ] Explicit: no on-disk shape / `schema_version` code change in EPIC-08 (AR-14; rejects AR-15)  
-- [ ] No Domain Contracts / Data Model / `InterviewState` / LangGraph guidance that implies runtime schema rewrite  
-- [ ] Category A preserved  
+- [x] V1.2 versioning policy extended (VP-01–VP-07) and EPIC-08 freeze rules (VP-08–VP-10) present  
+- [x] Prerequisites, execution sequence, validation, rollback documented  
+- [x] Relationship to C14 deploy/readiness stated; deploy steps not duplicated  
+- [x] Explicit: no on-disk shape / `schema_version` code change in EPIC-08 (AR-14; rejects AR-15)  
+- [x] No Domain Contracts / Data Model / `InterviewState` / LangGraph guidance that implies runtime schema rewrite  
+- [x] Category A preserved  
 
-**Review result:** ________  **Date:** ________  **Reviewer:** ________
+**Review result:** PASS  **Date:** 2026-07-18  **Reviewer:** Architecture Checkpoint C
 
 ---
 

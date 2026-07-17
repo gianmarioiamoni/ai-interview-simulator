@@ -228,17 +228,17 @@ Operators must not bypass a red readiness gate for production promotion. Product
 
 Reviewer confirms:
 
-- [ ] Local / staging / production procedures documented for the HF Spaces Docker model (AR-13)
-- [ ] HF Spaces stated as sole production deployment target (AR-01)
-- [ ] Reproducibility note present: same image + Settings/env → same behaviour
-- [ ] Readiness path documented as `GET /health/ready`
-- [ ] CI readiness gate referenced
-- [ ] SIGTERM drain documented as process-edge only (no graph/orchestration steps)
-- [ ] Runtime config attributed to Settings (no dual env-read guidance)
-- [ ] No DB migration / schema_version / on-disk shape instructions in this document (deferred to C15)
-- [ ] No new deployment platform, Domain Contracts, Data Model, or LangGraph topology guidance introduced
+- [x] Local / staging / production procedures documented for the HF Spaces Docker model (AR-13)
+- [x] HF Spaces stated as sole production deployment target (AR-01)
+- [x] Reproducibility note present: same image + Settings/env → same behaviour
+- [x] Readiness path documented as `GET /health/ready`
+- [x] CI readiness gate referenced
+- [x] SIGTERM drain documented as process-edge only (no graph/orchestration steps)
+- [x] Runtime config attributed to Settings (no dual env-read guidance)
+- [x] No DB migration / schema_version / on-disk shape instructions in this document (deferred to C15)
+- [x] No new deployment platform, Domain Contracts, Data Model, or LangGraph topology guidance introduced
 
-**Review result:** ________  **Date:** ________  **Reviewer:** ________
+**Review result:** PASS  **Date:** 2026-07-18  **Reviewer:** Architecture Checkpoint C
 
 ---
 

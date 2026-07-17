@@ -1,6 +1,6 @@
 # EPIC-08 — Deployment & Operations
 
-**Status:** IMPLEMENTATION COMPLETE — ready for Checkpoint C
+**Status:** IMPLEMENTATION COMPLETE — Checkpoint C PASS; CAR authorized
 **Date:** 2026-07-18
 **Epic ID:** EPIC-V13-08
 **Playbook Category:** Category A — Standard Epic
@@ -9,7 +9,7 @@
 **Precondition:** EPIC-V13-07 CLOSED; working tree clean at initialization.
 **Regression baseline (initialization):** 7003 passed / 0 failed.
 **EPIC-08 implementation baseline (pre-P1):** 7003 passed / 0 failed.
-**Regression baseline (current):** 7417 passed / 0 failed (after P7 / C17 certification).
+**Regression baseline (current):** 7417 passed / 0 failed (Checkpoint C re-verified).
 **Planning:** Initialization COMPLETE
 **Architecture Discovery:** `EPIC-08-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**
 **Architecture Review:** `EPIC-08-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**
@@ -18,7 +18,7 @@
 **Data Model:** N/A (Category A)
 **Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**
 **Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)
-**Implementation:** **COMPLETE** (P1–P7; C1–C17) — ready for Checkpoint C
+**Implementation:** **COMPLETE** (P1–P7; C1–C17); Checkpoint C **PASS**; CAR **AUTHORIZED**
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -251,7 +251,7 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 
 **Date:** 2026-07-18  
 **Scope:** Documentation + verification only (no production code).  
-**Verdict:** **PASS** — EPIC-08 implementation complete; ready for Checkpoint C → CAR.
+**Verdict:** **PASS** — EPIC-08 implementation complete; Checkpoint C **PASS**; CAR **AUTHORIZED**.
 
 ### Freeze §13 / Master Plan P-08 mapping
 
@@ -297,15 +297,15 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | ADR (conditional) | **SKIP** (not required) |
 | Architecture Freeze | **APPROVED** |
 | Implementation Plan | **ACCEPTED** (`EPIC-08-IMPLEMENTATION-PLAN.md`) |
-| Implementation | **COMPLETE** (P1–P7; C1–C17) — ready for Checkpoint C |
+| Implementation | **COMPLETE** (P1–P7; C1–C17) |
 | Checkpoint A | **PASS** (2026-07-18) — Macro B (P4–P5) authorized |
 | Checkpoint B | **PASS** (2026-07-18) — Macro C (P6–P7) authorized |
-| Checkpoint C | **PENDING** |
-| CAR / Regression / FR / Epic Close | NOT STARTED |
+| Checkpoint C | **PASS** (2026-07-18) — CAR authorized |
+| CAR / Regression / FR / Epic Close | CAR **AUTHORIZED** — NOT STARTED |
 
 ---
 
 ## 14. Next Activities
 
-1. **Architecture Checkpoint C** (after P7 / C17) — authorize CAR per `EPIC-08-IMPLEMENTATION-PLAN.md`.
+1. **CAR** — Conformity Architecture Review per `EPIC-08-IMPLEMENTATION-PLAN.md` (Checkpoint C authorized).
 2. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.
