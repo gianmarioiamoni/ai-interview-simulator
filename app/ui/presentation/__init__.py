@@ -81,6 +81,18 @@ from app.ui.presentation.replay_surface import (
     REPLAY_EMPTY_KEY,
     present_replay_surface,
 )
+from app.ui.presentation.accessibility_keyboard import (
+    AX01_REQUIREMENT_ID,
+    AX01_SURFACES,
+    AX01_VERIFICATION_ARTIFACT_TYPE,
+    KEYBOARD_OPERABLE_COMPONENT_NAMES,
+    PRIMARY_FLOW_CONTROLS,
+    PrimaryFlowControl,
+    assert_keyboard_operable_primary_control,
+    component_accessible_name,
+    component_config_name,
+    primary_flow_controls_by_surface,
+)
 
 __all__ = [
     "AsyncBoundary",
@@ -138,4 +150,14 @@ __all__ = [
     "present_replay_surface",
     "report_loader_visible",
     "surface_status_message",
+    "AX01_REQUIREMENT_ID",
+    "AX01_SURFACES",
+    "AX01_VERIFICATION_ARTIFACT_TYPE",
+    "KEYBOARD_OPERABLE_COMPONENT_NAMES",
+    "PRIMARY_FLOW_CONTROLS",
+    "PrimaryFlowControl",
+    "assert_keyboard_operable_primary_control",
+    "component_accessible_name",
+    "component_config_name",
+    "primary_flow_controls_by_surface",
 ]
