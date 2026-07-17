@@ -57,6 +57,17 @@ from app.ui.presentation.execution_error_presentation import (
     classify_execution_error_kind,
     project_execution_error,
 )
+from app.ui.presentation.question_feedback_surface import (
+    FEEDBACK_EMPTY_KEY,
+    QUESTION_EMPTY_KEY,
+    assert_no_placeholder_chrome,
+    assert_texts_have_no_placeholder_chrome,
+    empty_copy_text,
+    format_execution_error_markdown,
+    present_feedback_surface,
+    present_question_surface,
+    surface_status_message,
+)
 
 __all__ = [
     "AsyncBoundary",
@@ -98,4 +109,13 @@ __all__ = [
     "ExecutionErrorPresentation",
     "classify_execution_error_kind",
     "project_execution_error",
+    "QUESTION_EMPTY_KEY",
+    "FEEDBACK_EMPTY_KEY",
+    "assert_no_placeholder_chrome",
+    "assert_texts_have_no_placeholder_chrome",
+    "empty_copy_text",
+    "format_execution_error_markdown",
+    "present_feedback_surface",
+    "present_question_surface",
+    "surface_status_message",
 ]

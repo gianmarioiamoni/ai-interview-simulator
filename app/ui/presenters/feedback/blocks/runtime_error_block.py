@@ -1,4 +1,5 @@
 # app/ui/presenters/feedback/blocks/runtime_error_block.py
+# EPIC-07 P4/C8 — candidate-safe execution error block via EC-EX-01 (no traceback).
 
 from typing import Optional
 
@@ -7,19 +8,20 @@ from app.contracts.feedback_bundle import (
     FeedbackSignal,
     LearningSuggestion,
 )
+from app.ui.presentation.execution_error_kind import ExecutionErrorKind
+from app.ui.presentation.execution_error_presentation import project_execution_error
+from app.ui.presentation.question_feedback_surface import format_execution_error_markdown
 from domain.contracts.feedback.severity import Severity
 from domain.contracts.feedback.error_type import ErrorType
 from infrastructure.config.evaluation import FEEDBACK_CONFIDENCE_RUNTIME_ERROR
 
-_MAX_TRACEBACK_LINES = 15
-
-
-def _format_traceback(raw: str) -> str:
-    lines = raw.strip().splitlines()
-    if len(lines) > _MAX_TRACEBACK_LINES:
-        kept = lines[:2] + ["  ..."] + lines[-(  _MAX_TRACEBACK_LINES - 3):]
-        lines = kept
-    return "\n".join(lines)
+_ERROR_TYPE_TO_KIND: dict[ErrorType, ExecutionErrorKind] = {
+    ErrorType.SYNTAX: ExecutionErrorKind.SYNTAX,
+    ErrorType.RUNTIME: ExecutionErrorKind.RUNTIME,
+    ErrorType.SIGNATURE: ExecutionErrorKind.RUNTIME,
+    ErrorType.TIMEOUT: ExecutionErrorKind.RUNTIME,
+    ErrorType.UNKNOWN: ExecutionErrorKind.UNKNOWN_SAFE,
+}
 
 
 def _extract_failing_input(execution) -> Optional[str]:
@@ -36,6 +38,12 @@ def _extract_failing_input(execution) -> Optional[str]:
             if args is not None:
                 return str(args)
     return None
+
+
+def _structured_kind(error_type: ErrorType | None) -> ExecutionErrorKind | None:
+    if error_type is None:
+        return None
+    return _ERROR_TYPE_TO_KIND.get(error_type)
 
 
 class RuntimeErrorBlock:
@@ -57,46 +65,36 @@ class RuntimeErrorBlock:
         raw_error = (analysis.primary_error or "").strip()
         error_type = analysis.error_type
 
-        # -----------------------------------------------------
-        # TYPE-AWARE MESSAGING
-        # -----------------------------------------------------
+        presentation = project_execution_error(
+            structured_kind=_structured_kind(error_type),
+            raw_error=raw_error,
+        )
 
-        if error_type == ErrorType.SYNTAX:
+        if presentation.kind is ExecutionErrorKind.SYNTAX:
             title = "⚠️ Syntax Error"
             suggestion = "Check syntax (missing colons, parentheses, indentation)"
-
         elif error_type == ErrorType.SIGNATURE:
             title = "⚠️ Signature Error"
             suggestion = "Ensure function signature matches expected parameters"
-
         elif error_type == ErrorType.TIMEOUT:
             title = "⚠️ Timeout Error"
             suggestion = "Optimize algorithm (likely O(n²) or worse)"
-
-        elif error_type == ErrorType.RUNTIME:
+        elif presentation.kind is ExecutionErrorKind.SQL:
+            title = "⚠️ SQL Error"
+            suggestion = "Check SQL syntax, table names, and join conditions"
+        elif presentation.kind is ExecutionErrorKind.RUNTIME:
             title = "⚠️ Runtime Error"
             suggestion = "Check variable definitions, imports, and edge cases"
-
         else:
-            title = "⚠️ Runtime Error"
-            suggestion = "Check variable definitions, imports, and variable scope"
-
-        # -----------------------------------------------------
-        # SIGNALS  (last line = exception summary for signal)
-        # -----------------------------------------------------
-
-        last_line = raw_error.splitlines()[-1] if raw_error else raw_error
+            title = "⚠️ Execution Error"
+            suggestion = "Review your solution and try again"
 
         signals = [
             FeedbackSignal(
                 severity=Severity.ERROR,
-                message=last_line,
+                message=presentation.candidate_message,
             )
         ]
-
-        # -----------------------------------------------------
-        # LEARNING
-        # -----------------------------------------------------
 
         learning = [
             LearningSuggestion(
@@ -105,17 +103,11 @@ class RuntimeErrorBlock:
             )
         ]
 
-        # -----------------------------------------------------
-        # CONTENT — full traceback + optional failing input
-        # -----------------------------------------------------
-
-        traceback_section = _format_traceback(raw_error)
         failing_input = _extract_failing_input(execution)
-
         parts: list[str] = []
         if failing_input is not None:
-            parts.append(f"**Input:** `{failing_input}`\n")
-        parts.append(f"**Traceback:**\n```\n{traceback_section}\n```")
+            parts.append(f"**Input:** `{failing_input}`")
+        parts.append(format_execution_error_markdown(presentation))
 
         if evaluation and getattr(evaluation, "feedback", None):
             parts.append(f"### 🔎 Analysis\n{evaluation.feedback}")

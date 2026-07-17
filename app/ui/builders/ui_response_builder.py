@@ -19,6 +19,12 @@ from app.ui.response.config.button_mapper import ButtonMapper
 from app.ui.dto.final_report_dto import FinalReportDTO
 from app.ui.views.report.learning_progress_binder import bind_learning_progress
 from app.ui.views.report_view import build_report_markdown
+from app.ui.presentation.question_feedback_surface import (
+    present_feedback_surface,
+    present_question_surface,
+    surface_status_message,
+)
+from app.ui.presentation.surface_phase import SurfacePhase
 
 MAX_ATTEMPTS = 3
 
@@ -199,6 +205,23 @@ class UIResponseBuilder:
         # ---------------------------------------------------------
         editor_prefill = previous_value if (not is_feedback_mode and previous_value) else ""
 
+        # ---------------------------------------------------------
+        # EPIC-07 C8 — question/feedback SurfaceState wiring
+        # ---------------------------------------------------------
+        allows_loader = bool(state.is_processing)
+        if is_feedback_mode:
+            surface_state = present_feedback_surface(
+                has_feedback=bool(feedback),
+                allows_loader=allows_loader,
+            )
+            if surface_state.phase is SurfacePhase.EMPTY:
+                feedback = surface_status_message(surface_state)
+        else:
+            surface_state = present_question_surface(
+                has_question=True,
+                allows_loader=allows_loader,
+            )
+
         return UIResponse(
             state=state,
             role_visible=False,
@@ -234,6 +257,7 @@ class UIResponseBuilder:
             loader_visible=loader_visible,
             loader_value=loader_value,
             current_progress=progress,
+            surface_state=surface_state,
         )
 
     # =====================================================
