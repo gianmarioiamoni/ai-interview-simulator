@@ -33,6 +33,7 @@ from app.ports.llm_port import LLMPort
 from domain.contracts.longitudinal.longitudinal_profile_repository import (
     LongitudinalProfileRepository,
 )
+from infrastructure.observability.graph_node_logging import instrument_graph_node
 
 
 # ---------------------------------------------------------
@@ -116,22 +117,36 @@ def build_interview_graph(
     # Nodes
     # -----------------------------------------------------
 
-    graph.add_node("router", router_node)
-    graph.add_node("navigation", navigation_node)
-    graph.add_node("question", build_question_node(llm))
-    graph.add_node("execution", ExecutionNode(execution_engine))
-    graph.add_node("evaluation", EvaluationNode())
-    graph.add_node("evaluation_aggregate", EvaluationAggregateNode(evaluation_service))
-    graph.add_node("feedback", FeedbackNode(llm))
-    graph.add_node("reasoner", reasoner_node)
-    graph.add_node("hint", HintNode(hint_service))
-    graph.add_node("decision", DecisionNode())
-    graph.add_node("written", WrittenEvaluationNode(llm))
-    graph.add_node("completion", completion_node)
+    # Batch A (C5): core interview cycle — structured logging via sole helper.
+    # Batch B (C6): session_close, report, longitudinal_update, entry.
+    graph.add_node("router", instrument_graph_node("router", router_node))
+    graph.add_node("navigation", instrument_graph_node("navigation", navigation_node))
+    graph.add_node("question", instrument_graph_node("question", build_question_node(llm)))
+    graph.add_node(
+        "execution", instrument_graph_node("execution", ExecutionNode(execution_engine))
+    )
+    graph.add_node("evaluation", instrument_graph_node("evaluation", EvaluationNode()))
+    graph.add_node(
+        "evaluation_aggregate",
+        instrument_graph_node(
+            "evaluation_aggregate", EvaluationAggregateNode(evaluation_service)
+        ),
+    )
+    graph.add_node("feedback", instrument_graph_node("feedback", FeedbackNode(llm)))
+    graph.add_node("reasoner", instrument_graph_node("reasoner", reasoner_node))
+    graph.add_node("hint", instrument_graph_node("hint", HintNode(hint_service)))
+    graph.add_node("decision", instrument_graph_node("decision", DecisionNode()))
+    graph.add_node(
+        "written", instrument_graph_node("written", WrittenEvaluationNode(llm))
+    )
+    graph.add_node("completion", instrument_graph_node("completion", completion_node))
     graph.add_node("session_close", session_close_node)
     graph.add_node("report", report_node)
     graph.add_node("longitudinal_update", longitudinal_update)
-    graph.add_node("start_processing", start_processing_node)
+    graph.add_node(
+        "start_processing",
+        instrument_graph_node("start_processing", start_processing_node),
+    )
 
     # -----------------------------------------------------
     # Entry
