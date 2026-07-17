@@ -1,6 +1,6 @@
 # EPIC-08 — Deployment & Operations
 
-**Status:** ARCHITECTURE FREEZE APPROVED  
+**Status:** IMPLEMENTATION PLAN ACCEPTED  
 **Date:** 2026-07-18  
 **Epic ID:** EPIC-V13-08  
 **Playbook Category:** Category A — Standard Epic  
@@ -15,8 +15,8 @@
 **Domain Contracts:** N/A (Category A)  
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**  
-**Implementation Plan:** NOT STARTED (authorized)  
-**Implementation:** NOT STARTED  
+**Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)  
+**Implementation:** NOT STARTED (authorized after pre-P1 baseline)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -254,14 +254,14 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | Architecture Review | **APPROVED WITH OBSERVATIONS** |
 | ADR (conditional) | **SKIP** (not required) |
 | Architecture Freeze | **APPROVED** |
-| Implementation Plan | NOT STARTED (authorized) |
-| Implementation | NOT STARTED |
+| Implementation Plan | **ACCEPTED** (`EPIC-08-IMPLEMENTATION-PLAN.md`) |
+| Implementation | NOT STARTED (authorized after pre-P1 baseline) |
 | CAR / Regression / FR / Epic Close | NOT STARTED |
 
 ---
 
 ## 14. Next Activities
 
-1. **Implementation Plan** — phases/commits against `EPIC-08-ARCHITECTURE-FREEZE.md`.
-2. **Implementation** — after Implementation Plan accepted.
+1. **Pre-P1** — full regression; record EPIC-08 implementation baseline.
+2. **Implementation** — begin P1 / C1 per `EPIC-08-IMPLEMENTATION-PLAN.md`.
 3. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.
