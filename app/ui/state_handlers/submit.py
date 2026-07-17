@@ -11,6 +11,11 @@ from app.runtime.interview_runtime import get_runtime_llm
 from app.ui.constants.loader_steps import LoaderStep
 from app.ui.state_handlers.ui_builder import build_ui_response_from_state
 from app.ui.adapters.ui_output_adapter import UIOutputAdapter
+from app.ui.presentation.async_boundary import AsyncBoundary
+from app.ui.presentation.boundary_error_emission import present_boundary_failure
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 def submit_answer(
     state: InterviewState,
@@ -83,11 +88,26 @@ def submit_answer(
     # ---------------------------------------------------------
     # GRAPH EXECUTION
     # ---------------------------------------------------------
-    llm = get_runtime_llm()
-
-    use_case = EvaluateAnswerUseCase(llm=llm)
-
-    new_state = use_case.execute(new_state)
+    try:
+        llm = get_runtime_llm()
+        use_case = EvaluateAnswerUseCase(llm=llm)
+        new_state = use_case.execute(new_state)
+    except Exception as exc:
+        logger.error("Answer submit failed (ANSWER_SUBMIT): %s", exc)
+        new_state.current_step = None
+        new_state.current_progress = 0
+        new_state.awaiting_user_input = True
+        new_state.is_processing = False
+        new_state.intent = ActionType.NONE
+        response = build_ui_response_from_state(new_state)
+        present_boundary_failure(
+            response,
+            AsyncBoundary.ANSWER_SUBMIT,
+            surface_id="question",
+            allows_loader=True,
+        )
+        yield UIOutputAdapter.to_gradio(response)
+        return
 
     # ---------------------------------------------------------
     # RESET LOADER STATE

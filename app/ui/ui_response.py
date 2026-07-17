@@ -1,11 +1,17 @@
 # app/ui/ui_response.py
 
+from __future__ import annotations
+
 import gradio as gr
-from typing import List, Any
+from typing import TYPE_CHECKING, List, Any, Optional
 from dataclasses import dataclass
 
 from app.ui.components.loader.loader_renderer import render_loader
 from app.ui.mappers.output_mapper import OutputMapper
+
+if TYPE_CHECKING:
+    from app.ui.presentation.candidate_facing_error import CandidateFacingError
+    from app.ui.presentation.surface_state import SurfaceState
 
 
 @dataclass
@@ -76,6 +82,10 @@ class UIResponse:
     current_progress: int = 0
 
     setup_inputs_interactive: bool = True
+
+    # EPIC-07 ephemeral presentation (not Gradio wire fields)
+    candidate_facing_error: Optional["CandidateFacingError"] = None
+    surface_state: Optional["SurfaceState"] = None
 
 
     # =========================================================

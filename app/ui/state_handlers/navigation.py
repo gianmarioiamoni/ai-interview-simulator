@@ -10,6 +10,8 @@ from app.ui.state_handlers.ui_builder import (
 )
 from app.ui.constants.loader_steps import LoaderStep
 from app.ui.adapters.ui_output_adapter import UIOutputAdapter
+from app.ui.presentation.async_boundary import AsyncBoundary
+from app.ui.presentation.boundary_error_emission import present_boundary_failure
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -87,13 +89,20 @@ def next_question(state: InterviewState):
     try:
         new_state = run_interview_graph(new_state)
     except Exception as exc:
-        logger.error("Interview graph failed during next/report: %s", exc)
+        logger.error("Interview graph failed during next/report (NEXT_OR_REPORT): %s", exc)
         new_state.is_processing = False
         new_state.awaiting_user_input = True
         new_state.intent = ActionType.NONE
         new_state.current_step = None
         new_state.current_progress = 0
-        yield UIOutputAdapter.to_gradio(build_ui_response_from_state(new_state))
+        response = build_ui_response_from_state(new_state)
+        present_boundary_failure(
+            response,
+            AsyncBoundary.NEXT_OR_REPORT,
+            surface_id="report" if is_report else "question",
+            allows_loader=True,
+        )
+        yield UIOutputAdapter.to_gradio(response)
         return
 
     # ---------------------------------------------------------

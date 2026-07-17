@@ -23,6 +23,12 @@ from app.ui.presentation.surface_state_validation import (
     validate_loader_allowed,
     validate_surface_id,
 )
+from app.ui.presentation.boundary_error_emission import (
+    BOUNDARY_MESSAGE_KEYS,
+    build_error_surface_state,
+    emit_boundary_error,
+    present_boundary_failure,
+)
 
 __all__ = [
     "AsyncBoundary",
@@ -42,4 +48,8 @@ __all__ = [
     "validate_empty_phase_coupling",
     "validate_loader_allowed",
     "validate_deterministic_surface_not_loading",
+    "BOUNDARY_MESSAGE_KEYS",
+    "build_error_surface_state",
+    "emit_boundary_error",
+    "present_boundary_failure",
 ]
