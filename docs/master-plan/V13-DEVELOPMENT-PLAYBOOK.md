@@ -186,7 +186,7 @@ Produce the commit boundary table and phase breakdown. Apply Implementation Depe
 
 ### Step 6 — Macro Phase
 
-Implement against frozen contracts and accepted ADRs within the declared phase scope. Each commit addresses one logical concern. No mixed refactors. No silent fallbacks. Every new `InterviewState` field must have a declared sole writer at the moment of addition. Every reconstruction path must explicitly enumerate every field it copies (Reconstruction Completeness). Dead code is deleted, not deprecated. Every phase and commit must satisfy Zero Known Failing Tests (§2). See Macro Phase Lifecycle above.
+Implement against frozen contracts and accepted ADRs within the declared phase scope. Each commit addresses one logical concern. No mixed refactors. No silent fallbacks. Every new `InterviewState` field must have a declared sole writer at the moment of addition. Every reconstruction path must explicitly enumerate every field it copies (Reconstruction Completeness). Dead code is deleted, not deprecated. Every phase and commit must satisfy Zero Known Failing Tests (§2). Every implementation commit completion uses the Implementation Completion Report (§6). See Macro Phase Lifecycle above.
 
 ### Step 7 — Architecture Checkpoint
 
@@ -292,6 +292,31 @@ git commit -m "<type>(<scope>): <subject>"
 ```
 
 No sub-phase is complete without its commit. A sub-phase with uncommitted changes is not a milestone — it is incomplete work.
+
+### Implementation Completion Report (mandatory)
+
+Every implementation commit completion response **must** use the following report structure, in this exact order. This is a reporting standard, not a new review gate. It does not alter Epic Workflow (§3), Architecture Checkpoint, CAR, FR, or other §10 gates.
+
+| # | Section | Required content |
+|---|---|---|
+| 1 | **Preflight** | Working tree status; HEAD; stash |
+| 2 | **Implementation Plan verification** | Previous phase completion; current phase; current commit; next commit (or next activity) |
+| 3 | **Modified files** | Paths created, modified, or deleted |
+| 4 | **Architecture validation** | Traceability to frozen plan/scope; confirm no unplanned architectural decisions |
+| 5 | **Test results** | Targeted tests; full regression total |
+| 6 | **Acceptance checklist** | Commit / phase acceptance criteria for this boundary |
+| 7 | **Phase checkpoint** | Previous phase; current phase; next phase / next activity |
+| 8 | **Open issues** | Blocking or residual items, or none |
+| 9 | **Commit** | Hash; message; regression total; confirmation of planned-scope adherence and implementation progress |
+
+Every such report **must** also explicitly confirm:
+
+- Implementation remained within the planned scope of the current commit / phase in the approved Implementation Plan.
+- No architectural decisions were introduced unless explicitly planned (Architecture-First Discipline §2; Stopping Rule §8).
+- The complete regression suite is green before proceeding (Zero Known Failing Tests §2 / §7).
+- The next implementation step is the next commit or next activity named by the approved Implementation Plan (Implementation Dependency Validation §2). Sequencing-only corrections follow the Plan Correction Rule (§2) and Mini Architecture Freeze (§10); frozen-document edits require Freeze Integrity Check (§10). Conversation continuity follows Conversation Boundary Optimization (§2).
+
+Omit prose outside these sections unless the task explicitly requests explanation. Do not print production code or document contents in the report.
 
 ---
 
@@ -847,7 +872,7 @@ Every implementation prompt sent to Cursor shall contain all of the following el
 9. **Completion criteria** — the observable conditions that define phase completion.
 10. **Architecture review requirements** — any architectural invariants that must be verified.
 11. **Commit instructions** — atomic commit required; commit message format specified.
-12. **Required output format** — what the response must contain (typically: modified files, test results, commit status).
+12. **Required output format** — for implementation commits, the Implementation Completion Report (§6), in the mandatory section order.
 
 Any prompt missing one or more of these elements is incomplete and must not be submitted until corrected.
 
@@ -869,7 +894,8 @@ When asking Cursor to edit planning or architectural documents, provide the spec
 
 ### Output Conventions
 
-- **Compact output only.** Modified files, acceptance checklist, open issues. No reasoning walk-through, no intermediate analysis, no generated code in summaries.
+- **Implementation commits:** Use the Implementation Completion Report (§6) as the sole required response structure. Do not invent alternate report layouts.
+- **Non-implementation / documentation tasks:** Compact output only — Preflight, Modified files, Editorial or Acceptance validation as applicable, Open issues, Commit. No reasoning walk-through, no intermediate analysis, no generated code in summaries.
 - **No verbose explanations.** If a change requires explanation, the explanation belongs in the ADR or commit message, not in the Cursor response.
 - **No document previews.** Do not include the generated Markdown content in the response. Confirm the file was written; do not echo its contents.
 - **No implementation notes in summaries.** Summaries reference what was done, not how.
@@ -916,3 +942,5 @@ Begin every session with a save-token before making any changes. This ensures th
 *Revision 2026-07-16 (EPIC-06 Conversation Boundary Optimization): Added engineering principle "Conversation Boundary Optimization" (§2) — prefer continuing within the same implementation milestone or tightly coupled commit sequence; prefer a new conversation only after a natural architectural boundary; always balance shorter-context token savings against reconstruction cost. Stopping Rule (§8) updated so sequencing-only resume stays in the same conversation, while completed architectural boundaries may open a new one. Derived from EPIC-06 long-running implementation experience.*
 
 *Revision 2026-07-16 (Version 1.0 editorial consolidation): Stabilised the Playbook as Version 1.0. Editorial-only: resolved duplicate section number and restored logical order (§8 Epic Planning Workflow, §9 Documentation Strategy, §10 Review Gates, §11 Cursor Usage); aligned §3 step prose with the 13-step lifecycle diagram; fixed Architecture Exit Criteria numbering collision (§8.7 vs former Implementation Plan DoD §8.6); unified CAR naming (Construction Architecture Review); reserved RR for Release Readiness Review and renamed epic-level regression step accordingly; aligned Category A/B close-out with FR + Epic Close; clarified Mini Architecture Freeze dual triggers; cross-linked Cursor Chat Policy to Conversation Boundary Optimization; fixed typo and stale cross-references. No process semantics changed.*
+
+*Revision 2026-07-17 (Implementation Completion Report): Formalised mandatory Implementation Completion Report under Commit Guidelines (§6) — nine ordered sections (Preflight through Commit) plus explicit confirmations for planned scope, no unplanned architectural decisions, green regression suite, and next Implementation Plan step. Cross-references Implementation Dependency Validation, Plan Correction Rule, Conversation Boundary Optimization, Freeze Integrity Check, and Zero Known Failing Tests. Cross-linked from Macro Phase Step 6 (§3), Implementation Prompt Structure item 12 (§11), and Output Conventions (§11). Reporting standard only — no new review gate; workflow semantics unchanged. Version 1.0 remains ACTIVE.*
