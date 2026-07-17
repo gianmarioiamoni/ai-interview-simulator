@@ -1,6 +1,6 @@
 # EPIC-08 — Deployment & Operations
 
-**Status:** IMPLEMENTATION IN PROGRESS (P3 complete; next P4 / C9)
+**Status:** IMPLEMENTATION IN PROGRESS (Checkpoint A PASS; Macro B authorized)
 **Date:** 2026-07-18
 **Epic ID:** EPIC-V13-08
 **Playbook Category:** Category A — Standard Epic
@@ -18,7 +18,7 @@
 **Data Model:** N/A (Category A)
 **Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**
 **Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)
-**Implementation:** IN PROGRESS — P3 complete (C8); next P4 / C9
+**Implementation:** IN PROGRESS — Macro A complete; Checkpoint A **PASS**; Macro B **AUTHORIZED**; next P4 / C9
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -257,12 +257,13 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | ADR (conditional) | **SKIP** (not required) |
 | Architecture Freeze | **APPROVED** |
 | Implementation Plan | **ACCEPTED** (`EPIC-08-IMPLEMENTATION-PLAN.md`) |
-| Implementation | **IN PROGRESS** — P3 complete (C8); next P4 / C9 |
+| Implementation | **IN PROGRESS** — Macro A complete; Checkpoint A **PASS**; Macro B authorized |
+| Checkpoint A | **PASS** (2026-07-18) — Macro B (P4–P5) authorized |
 | CAR / Regression / FR / Epic Close | NOT STARTED |
 
 ---
 
 ## 14. Next Activities
 
-1. **Implementation** — begin P4 / C9 per `EPIC-08-IMPLEMENTATION-PLAN.md` (after Checkpoint A if required).
+1. **Implementation** — begin P4 / C9 per `EPIC-08-IMPLEMENTATION-PLAN.md` (Macro B authorized).
 2. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.

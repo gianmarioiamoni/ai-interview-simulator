@@ -302,6 +302,13 @@ See Commit plan table (Acceptance criteria column). Each commit independently ve
 
 ## 12. Architecture Checkpoint mandates
 
+| Checkpoint | Status |
+|---|---|
+| **A** (after P3 / C8) | **PASS** — 2026-07-18; Macro B (P4–P5) **AUTHORIZED** |
+| **B** (after P5 / C13) | Pending |
+| **C** (after P7 / C17) | Pending |
+
+
 | Checkpoint | After | Must verify | Authorizes |
 |---|---|---|---|
 | **A** | P3 / C8 | Config + logging + LLM obs match Freeze; suite green; no Freeze drift | Macro B (P4–P5) |
