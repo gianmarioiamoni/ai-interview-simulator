@@ -7,7 +7,10 @@ from typing import Optional
 
 import gradio as gr
 
+from app.core.logger import get_logger
 from app.graph.nodes.replay_node import SessionLoader
+from app.ui.presentation.async_boundary import AsyncBoundary
+from app.ui.presentation.boundary_error_emission import emit_boundary_error
 from app.ui.replay.panels.replay_error_boundary import ReplayErrorBoundary
 from app.ui.replay.replay_context import ReplayContext
 from app.ui.replay.replay_entry_point import ReplayEntryPoint
@@ -19,6 +22,8 @@ from app.ui.replay.replay_view_controller import ReplayViewController
 from app.ui.state_machine.ui_state_machine import UIStateMachine
 from app.ui.ui_state import UIState
 from domain.contracts.interview_state import InterviewState
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -61,7 +66,18 @@ class ReplayLayoutCoordinator:
         if ui_state != UIState.REPLAY:
             raise RuntimeError("ReplayContext must resolve to UIState.REPLAY")
 
-        session = self._entry.load(session_id)
+        try:
+            session = self._entry.load(session_id)
+        except Exception as exc:
+            logger.error("Replay enter failed (REPLAY_ENTER): %s", exc)
+            error = emit_boundary_error(AsyncBoundary.REPLAY_ENTER)
+            runtime = ReplayRuntimeState(
+                context=context,
+                controller=None,
+                error_boundary=ReplayErrorBoundary(candidate_facing_error=error),
+            )
+            return self._snapshot(runtime)
+
         controller, error_boundary = self._entry.route(session)
         runtime = ReplayRuntimeState(
             context=context,

@@ -29,6 +29,10 @@ from app.ui.presentation.boundary_error_emission import (
     emit_boundary_error,
     present_boundary_failure,
 )
+from app.ui.presentation.session_history_load import (
+    SessionHistoryLoadResult,
+    load_session_history_list,
+)
 
 __all__ = [
     "AsyncBoundary",
@@ -52,4 +56,6 @@ __all__ = [
     "build_error_surface_state",
     "emit_boundary_error",
     "present_boundary_failure",
+    "SessionHistoryLoadResult",
+    "load_session_history_list",
 ]

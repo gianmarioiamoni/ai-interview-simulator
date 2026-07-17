@@ -16,6 +16,7 @@ from app.ui.state_handlers import (
     next_question,
 )
 from app.ui.state_handlers.export_handlers import export_pdf_handler, export_json_handler
+from app.ui.presentation.session_history_load import load_session_history_list
 
 from app.ui.bindings.builders.ui_outputs_builder import UIOutputsBuilder
 from app.ui.bindings.handlers.replay_layout_coordinator import (
@@ -272,12 +273,18 @@ class UIEventOrchestrator:
             coordinator = ReplayLayoutCoordinator(self._loader_with_state(state))
             snapshot = coordinator.enter(session_id)
             updates = list(snapshot_to_gradio_updates(snapshot))
-            # Register session in history list
-            history_update = gr.update(
-                choices=[session_id],
-                value=session_id,
-            )
-            history_btn = gr.update(interactive=True)
+            # Register session in history list (SESSION_HISTORY_LOAD error path)
+            history_result = load_session_history_list(lambda: [session_id])
+            if history_result.error is not None:
+                gr.Warning(history_result.error.message_text)
+                history_update = gr.update(choices=[], value=None)
+                history_btn = gr.update(interactive=False)
+            else:
+                history_update = gr.update(
+                    choices=list(history_result.session_ids),
+                    value=session_id,
+                )
+                history_btn = gr.update(interactive=True)
             return tuple(updates) + (history_update, history_btn)
 
         def enter_from_history(
