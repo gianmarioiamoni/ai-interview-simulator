@@ -38,27 +38,31 @@ class TestProductionEntrypointsNoOsEnviron:
 
 
 class TestMainUsesSettings:
-    def test_main_launches_with_settings_host_and_port(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_main_launches_with_settings_host_and_port(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from infrastructure.config import settings as settings_module
 
         monkeypatch.setattr(settings_module.settings, "server_host", "127.0.0.1")
         monkeypatch.setattr(settings_module.settings, "server_port", 9999)
         monkeypatch.setattr(settings_module.settings, "hf_token", "hf_test_token")
 
-        mock_app = MagicMock()
-        monkeypatch.setattr("app.main.build_app", lambda: mock_app)
+        mock_demo = MagicMock()
+        mock_asgi = MagicMock()
+        mock_run = MagicMock()
+        monkeypatch.setattr("app.main.build_app", lambda: mock_demo)
         monkeypatch.setattr("app.main.ensure_corpus", MagicMock())
+        monkeypatch.setattr(
+            "app.main.build_process_asgi_app",
+            lambda demo, settings=None: mock_asgi,
+        )
+        monkeypatch.setattr("app.main.run_process_app", mock_run)
 
         from app.main import main
 
         main()
 
-        mock_app.launch.assert_called_once_with(
-            server_name="127.0.0.1",
-            server_port=9999,
-            share=False,
-            quiet=False,
-        )
+        mock_run.assert_called_once_with(mock_asgi, host="127.0.0.1", port=9999)
 
     def test_main_passes_settings_hf_token_to_ensure_corpus(
         self, monkeypatch: pytest.MonkeyPatch
@@ -70,9 +74,13 @@ class TestMainUsesSettings:
         monkeypatch.setattr(settings_module.settings, "server_port", 7860)
 
         mock_ensure = MagicMock()
-        mock_app = MagicMock()
         monkeypatch.setattr("app.main.ensure_corpus", mock_ensure)
-        monkeypatch.setattr("app.main.build_app", lambda: mock_app)
+        monkeypatch.setattr("app.main.build_app", lambda: MagicMock())
+        monkeypatch.setattr(
+            "app.main.build_process_asgi_app",
+            lambda demo, settings=None: MagicMock(),
+        )
+        monkeypatch.setattr("app.main.run_process_app", MagicMock())
 
         from app.main import main
 

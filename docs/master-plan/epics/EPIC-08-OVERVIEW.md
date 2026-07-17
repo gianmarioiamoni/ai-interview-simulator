@@ -1,6 +1,6 @@
 # EPIC-08 — Deployment & Operations
 
-**Status:** IMPLEMENTATION IN PROGRESS (P4 / C9 complete)
+**Status:** IMPLEMENTATION IN PROGRESS (P4 / C10 complete)
 **Date:** 2026-07-18
 **Epic ID:** EPIC-V13-08
 **Playbook Category:** Category A — Standard Epic
@@ -9,7 +9,7 @@
 **Precondition:** EPIC-V13-07 CLOSED; working tree clean at initialization.
 **Regression baseline (initialization):** 7003 passed / 0 failed.
 **EPIC-08 implementation baseline (pre-P1):** 7003 passed / 0 failed.
-**Regression baseline (current):** 7362 passed / 0 failed (after P4 / C9).
+**Regression baseline (current):** 7369 passed / 0 failed (after P4 / C10).
 **Planning:** Initialization COMPLETE
 **Architecture Discovery:** `EPIC-08-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**
 **Architecture Review:** `EPIC-08-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**
@@ -18,7 +18,7 @@
 **Data Model:** N/A (Category A)
 **Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**
 **Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)
-**Implementation:** IN PROGRESS — P4 / C9 complete; next P4 / C10
+**Implementation:** IN PROGRESS — P4 / C10 complete; next P4 / C11
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -257,7 +257,7 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | ADR (conditional) | **SKIP** (not required) |
 | Architecture Freeze | **APPROVED** |
 | Implementation Plan | **ACCEPTED** (`EPIC-08-IMPLEMENTATION-PLAN.md`) |
-| Implementation | **IN PROGRESS** — P4 / C9 complete; next P4 / C10 |
+| Implementation | **IN PROGRESS** — P4 / C10 complete; next P4 / C11 |
 | Checkpoint A | **PASS** (2026-07-18) — Macro B (P4–P5) authorized |
 | CAR / Regression / FR / Epic Close | NOT STARTED |
 
@@ -265,5 +265,5 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 
 ## 14. Next Activities
 
-1. **Implementation** — continue P4 / C10 per `EPIC-08-IMPLEMENTATION-PLAN.md`.
+1. **Implementation** — continue P4 / C11 per `EPIC-08-IMPLEMENTATION-PLAN.md`.
 2. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.
