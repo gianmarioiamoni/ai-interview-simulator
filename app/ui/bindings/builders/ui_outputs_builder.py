@@ -18,6 +18,7 @@ class UIOutputsBuilder:
             self.c.interview_length_input,
             self.c.company_input,
             self.c.language_input,
+            self.c.enabled_languages_input,
             self.c.advanced_context_accordion,
             self.c.start_button,
             # 6 TITLE

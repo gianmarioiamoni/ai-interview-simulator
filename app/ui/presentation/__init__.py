@@ -33,6 +33,14 @@ from app.ui.presentation.session_history_load import (
     SessionHistoryLoadResult,
     load_session_history_list,
 )
+from app.ui.presentation.session_config_presentation import SessionConfigPresentation
+from app.ui.presentation.session_config_validation import (
+    derive_language_mode,
+    is_language_mode_complete,
+    validate_enabled_languages_vocabulary,
+    validate_language_mode_coupling,
+    validate_language_mode_not_locale_alone,
+)
 
 __all__ = [
     "AsyncBoundary",
@@ -58,4 +66,10 @@ __all__ = [
     "present_boundary_failure",
     "SessionHistoryLoadResult",
     "load_session_history_list",
+    "SessionConfigPresentation",
+    "derive_language_mode",
+    "is_language_mode_complete",
+    "validate_enabled_languages_vocabulary",
+    "validate_language_mode_coupling",
+    "validate_language_mode_not_locale_alone",
 ]

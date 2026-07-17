@@ -11,6 +11,7 @@ OUTPUT_KEYS = [
     "interview_length_radio",
     "company_input",
     "language_dropdown",
+    "enabled_languages_input",
     "advanced_context_accordion",
     "start_button",
     # 6 TITLE

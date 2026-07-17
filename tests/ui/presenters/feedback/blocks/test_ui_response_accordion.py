@@ -18,7 +18,9 @@ class TestUIResponseAccordion:
     def test_output_contract_includes_accordion_key(self):
         assert "advanced_context_accordion" in OUTPUT_KEYS
 
-    def test_accordion_key_after_language_dropdown(self):
+    def test_accordion_key_after_enabled_languages_input(self):
         idx_lang = OUTPUT_KEYS.index("language_dropdown")
+        idx_enabled = OUTPUT_KEYS.index("enabled_languages_input")
         idx_acc = OUTPUT_KEYS.index("advanced_context_accordion")
-        assert idx_acc == idx_lang + 1
+        assert idx_enabled == idx_lang + 1
+        assert idx_acc == idx_enabled + 1

@@ -69,7 +69,18 @@ class UILayoutBuilder:
         language_input = gr.Dropdown(
             choices=["en", "it"],
             value="en",
-            label="Language",
+            label="UI locale",
+            visible=True,
+        )
+
+        enabled_languages_input = gr.CheckboxGroup(
+            choices=[
+                ("Python", "python"),
+                ("JavaScript", "javascript"),
+                ("TypeScript", "typescript"),
+            ],
+            value=["python"],
+            label="Coding languages (session mode)",
             visible=True,
         )
 
@@ -129,6 +140,7 @@ class UILayoutBuilder:
             interview_length_input=interview_length_input,
             company_input=company_input,
             language_input=language_input,
+            enabled_languages_input=enabled_languages_input,
             job_description_input=job_description_input,
             company_description_input=company_description_input,
             advanced_context_accordion=advanced_context_accordion,

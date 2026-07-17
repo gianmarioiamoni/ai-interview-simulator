@@ -125,6 +125,10 @@ class UIResponse:
                 visible=self.language_visible,
                 interactive=self.setup_inputs_interactive,
             ),
+            "enabled_languages_input": gr.update(
+                visible=self.language_visible,
+                interactive=self.setup_inputs_interactive,
+            ),
             "advanced_context_accordion": gr.update(
                 visible=self.advanced_context_visible,
             ),

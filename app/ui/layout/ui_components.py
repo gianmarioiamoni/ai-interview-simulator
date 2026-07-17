@@ -14,6 +14,7 @@ class UILayoutComponents:
     interview_length_input: object
     company_input: object
     language_input: object
+    enabled_languages_input: object
     job_description_input: object
     company_description_input: object
     advanced_context_accordion: object
