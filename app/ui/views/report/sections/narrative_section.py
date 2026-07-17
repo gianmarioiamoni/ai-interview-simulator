@@ -78,7 +78,7 @@ def render_narrative(vm):
         text_color, bg_color, border_color = _TYPE_COLORS.get(type_val, ("#374151", "#f8fafc", "#e2e8f0"))
 
         confidence_html = (
-            f'<span style="font-size:0.78em;color:#6b7280;margin-left:8px;">confidence: {confidence:.0%}</span>'
+            f'<span style="font-size:0.78em;color:#374151;margin-left:8px;">confidence: {confidence:.0%}</span>'
             if confidence is not None
             else ""
         )

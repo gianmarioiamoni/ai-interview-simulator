@@ -6,13 +6,16 @@ import io
 import base64
 
 
-def _fig_to_base64(fig):
+def _fig_to_base64(fig, *, alt: str):
     buf = io.BytesIO()
     fig.savefig(buf, format="png", bbox_inches="tight")
     buf.seek(0)
     img_base64 = base64.b64encode(buf.read()).decode("utf-8")
     plt.close(fig)
-    return f'<img src="data:image/png;base64,{img_base64}" style="max-width:100%;">'
+    return (
+        f'<img src="data:image/png;base64,{img_base64}" '
+        f'alt="{alt}" style="max-width:100%;">'
+    )
 
 
 def radar_chart(dimensions, scores):
@@ -32,4 +35,7 @@ def radar_chart(dimensions, scores):
     ax.set_xticklabels(dimensions)
     ax.set_ylim(0, 100)
 
-    return _fig_to_base64(fig)
+    return _fig_to_base64(
+        fig,
+        alt="Scoring dimensions radar chart",
+    )

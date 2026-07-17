@@ -170,7 +170,7 @@ def _render_feature_trend_row(feature_trend: FeatureTrend) -> str:
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
   <span style="font-weight:600;color:#1e293b;font-size:0.95em;">{feature_id}</span>
   <span style="font-size:0.78em;font-weight:700;text-transform:uppercase;color:{text_color};">{escape(label)}</span>
-  <span style="font-size:0.78em;color:#6b7280;">observed: {feature_trend.sessions_observed}</span>
+  <span style="font-size:0.78em;color:#374151;">observed: {feature_trend.sessions_observed}</span>
 </div>
 <div style="font-size:0.85em;color:#475569;">
   Earliest confidence: {earliest} · Latest confidence: {latest}

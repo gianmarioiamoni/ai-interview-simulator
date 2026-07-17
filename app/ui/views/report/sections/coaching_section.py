@@ -91,7 +91,7 @@ def render_coaching_objectives(vm):
         )
 
         confidence_html = (
-            f'<span style="font-size:0.78em;color:#6b7280;margin-left:8px;">confidence: {confidence:.0%}</span>'
+            f'<span style="font-size:0.78em;color:#374151;margin-left:8px;">confidence: {confidence:.0%}</span>'
             if confidence is not None
             else ""
         )
@@ -135,7 +135,7 @@ def render_coaching_actions(vm):
         is_immediate = getattr(action, "is_immediate", False)
 
         effort_html = (
-            f'<span style="font-size:0.78em;color:#6b7280;">{hours:.0f}h estimated</span>'
+            f'<span style="font-size:0.78em;color:#374151;">{hours:.0f}h estimated</span>'
             if hours is not None
             else ""
         )

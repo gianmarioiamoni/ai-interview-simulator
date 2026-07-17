@@ -27,7 +27,7 @@ def render_study_recommendations(vm):
         label = resource_val.replace("_", " ").title()
         hours = getattr(rec, "estimated_duration_hours", None)
         duration_html = (
-            f'<span style="font-size:0.78em;color:#6b7280;">{hours:.0f}h estimated</span>'
+            f'<span style="font-size:0.78em;color:#374151;">{hours:.0f}h estimated</span>'
             if hours is not None
             else ""
         )
