@@ -1,6 +1,6 @@
 # EPIC-08 — Deployment & Operations
 
-**Status:** IMPLEMENTATION IN PROGRESS (Checkpoint B PASS; Macro C authorized)
+**Status:** IMPLEMENTATION COMPLETE — ready for Checkpoint C
 **Date:** 2026-07-18
 **Epic ID:** EPIC-V13-08
 **Playbook Category:** Category A — Standard Epic
@@ -9,7 +9,7 @@
 **Precondition:** EPIC-V13-07 CLOSED; working tree clean at initialization.
 **Regression baseline (initialization):** 7003 passed / 0 failed.
 **EPIC-08 implementation baseline (pre-P1):** 7003 passed / 0 failed.
-**Regression baseline (current):** 7417 passed / 0 failed (after P7 / C16).
+**Regression baseline (current):** 7417 passed / 0 failed (after P7 / C17 certification).
 **Planning:** Initialization COMPLETE
 **Architecture Discovery:** `EPIC-08-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**
 **Architecture Review:** `EPIC-08-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**
@@ -18,7 +18,7 @@
 **Data Model:** N/A (Category A)
 **Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**
 **Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)
-**Implementation:** IN PROGRESS — Macro C; P7 / C16 complete; next P7 / C17
+**Implementation:** **COMPLETE** (P1–P7; C1–C17) — ready for Checkpoint C
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -235,15 +235,55 @@ Inventory of **already existing** artifacts for Architecture Discovery to inspec
 
 Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentation items owned by this epic:
 
-- [ ] Environment-parameterised configuration: no hardcoded paths, keys, or environment assumptions.
-- [ ] Structured logging: every node emits structured events with `session_id`, node name, duration, outcome.
-- [ ] Health endpoint active and used as CI deployment gate.
-- [ ] Graceful shutdown verified under SIGTERM.
-- [ ] LLM call observability: per-call token usage, latency, model tier.
+- [x] Environment-parameterised configuration: no hardcoded paths, keys, or environment assumptions.
+- [x] Structured logging: every node emits structured events with `session_id`, node name, duration, outcome.
+- [x] Health endpoint active and used as CI deployment gate.
+- [x] Graceful shutdown verified under SIGTERM.
+- [x] LLM call observability: per-call token usage, latency, model tier.
 - [x] Deployment runbook complete and reviewed (HF Spaces operational model; local / staging / production).
 - [x] Database migration runbook documented and tested.
 - [x] Platform-specific HF behaviour confined to infrastructure (no Domain / LangGraph / `InterviewState` / frozen-model leakage).
-- [ ] Full regression suite green at epic close (baseline at init: 7003 / 0).
+- [x] Full regression suite green at implementation certification (7417 / 0; ≥ baseline 7003). Epic-close regression re-run remains a later workflow gate.
+
+---
+
+## 12A. Production-Readiness Certification (P7 / C17)
+
+**Date:** 2026-07-18  
+**Scope:** Documentation + verification only (no production code).  
+**Verdict:** **PASS** — EPIC-08 implementation complete; ready for Checkpoint C → CAR.
+
+### Freeze §13 / Master Plan P-08 mapping
+
+| Criterion | Evidence | Status |
+|---|---|---|
+| Settings exclusive; no production `os.environ` | C1–C3; `test_epic08_config_architecture.py`; C16 hardening | **PASS** |
+| Structured logging schema per OBS rules | C4–C6; node coverage + emission gates | **PASS** |
+| LLM observability via existing path (tokens, latency, model) | C7–C8; ObservingLLMAdapter / bridge; C16 single-path | **PASS** |
+| Readiness health active; CI/deploy gated | C9–C11; `GET /health/ready`; readiness gate | **PASS** |
+| SIGTERM process drain verified | C12–C13; topology freeze (IB-05) | **PASS** |
+| Deployment + DB migration runbooks (HF; policy only) | C14–C15; `docs/ops/` | **PASS** |
+| Zero HF leakage (Domain / LangGraph / InterviewState / contracts) | C3 + C16 O-01 surfaces | **PASS** |
+| Full regression ≥ baseline | C17 suite: **7417 passed / 0 failed** (baseline 7003) | **PASS** |
+| AR-16 — EPIC-10 dead-code purity | Explicitly **not** required to close EPIC-08 implementation | **N/A (deferred)** |
+
+### Architectural gates (still green)
+
+| Gate | Result |
+|---|---|
+| Config / HF confinement (C3) | Green |
+| LLM telemetry single path (C8) | Green |
+| Health side-effect-free (C9) | Green |
+| Readiness CI gate (C11) | Green |
+| Topology / shutdown invariants (C13) | Green |
+| P7 hardening (C16) | Green (16 tests) |
+| Aggregated arch gate run (C17) | **350 passed / 0 failed** |
+
+### Explicit exclusions (by Freeze)
+
+- EPIC-10 dead-code purge (AR-16) — release gate / EPIC-10
+- EPIC-09 SLO validation — downstream consumer
+- Checkpoint C / CAR / FR / Epic Close — **not** part of C17
 
 ---
 
@@ -257,14 +297,15 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | ADR (conditional) | **SKIP** (not required) |
 | Architecture Freeze | **APPROVED** |
 | Implementation Plan | **ACCEPTED** (`EPIC-08-IMPLEMENTATION-PLAN.md`) |
-| Implementation | **IN PROGRESS** — Macro C; P7 / C16 complete; next P7 / C17 |
+| Implementation | **COMPLETE** (P1–P7; C1–C17) — ready for Checkpoint C |
 | Checkpoint A | **PASS** (2026-07-18) — Macro B (P4–P5) authorized |
 | Checkpoint B | **PASS** (2026-07-18) — Macro C (P6–P7) authorized |
+| Checkpoint C | **PENDING** |
 | CAR / Regression / FR / Epic Close | NOT STARTED |
 
 ---
 
 ## 14. Next Activities
 
-1. **Implementation** — P7 / C17 (production-readiness checklist + full regression certification) per `EPIC-08-IMPLEMENTATION-PLAN.md`.
+1. **Architecture Checkpoint C** (after P7 / C17) — authorize CAR per `EPIC-08-IMPLEMENTATION-PLAN.md`.
 2. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.

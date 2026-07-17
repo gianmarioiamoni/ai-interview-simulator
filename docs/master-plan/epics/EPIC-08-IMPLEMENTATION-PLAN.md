@@ -306,7 +306,7 @@ See Commit plan table (Acceptance criteria column). Each commit independently ve
 |---|---|
 | **A** (after P3 / C8) | **PASS** — 2026-07-18; Macro B (P4–P5) **AUTHORIZED** |
 | **B** (after P5 / C13) | **PASS** — 2026-07-18; Macro C (P6–P7) **AUTHORIZED** |
-| **C** (after P7 / C17) | Pending |
+| **C** (after P7 / C17) | **PENDING** — C17 complete 2026-07-18; Checkpoint C not yet executed |
 
 
 | Checkpoint | After | Must verify | Authorizes |
@@ -350,9 +350,10 @@ See Commit plan table (Acceptance criteria column). Each commit independently ve
 | Dependency Validation | PASSED |
 | Risk Validation | PASSED |
 | Pre-P1 baseline recorded | **YES** — 7003 passed / 0 failed |
-| Implementation may begin | **YES** — P1 / C1 in progress / complete per commit gate |
+| Implementation (C1–C17) | **COMPLETE** — 2026-07-18; regression certification 7417 / 0 |
+| Implementation may begin | **N/A** — implementation complete |
 
-**Recommendation:** Proceed to **P1 / C2** after C1 commit.
+**Recommendation:** Proceed to **Architecture Checkpoint C** (authorize CAR). Do not start CAR until Checkpoint C passes.
 
 ---
 
