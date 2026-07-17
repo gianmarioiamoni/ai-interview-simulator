@@ -46,6 +46,17 @@ from app.ui.presentation.session_config_validation import (
     validate_language_mode_coupling,
     validate_language_mode_not_locale_alone,
 )
+from app.ui.presentation.execution_error_kind import ExecutionErrorKind
+from app.ui.presentation.execution_error_catalog import (
+    EXECUTION_ERROR_CATALOG,
+    ExecutionErrorCatalogEntry,
+    get_execution_error_entry,
+)
+from app.ui.presentation.execution_error_presentation import (
+    ExecutionErrorPresentation,
+    classify_execution_error_kind,
+    project_execution_error,
+)
 
 __all__ = [
     "AsyncBoundary",
@@ -80,4 +91,11 @@ __all__ = [
     "validate_enabled_languages_vocabulary",
     "validate_language_mode_coupling",
     "validate_language_mode_not_locale_alone",
+    "ExecutionErrorKind",
+    "EXECUTION_ERROR_CATALOG",
+    "ExecutionErrorCatalogEntry",
+    "get_execution_error_entry",
+    "ExecutionErrorPresentation",
+    "classify_execution_error_kind",
+    "project_execution_error",
 ]
