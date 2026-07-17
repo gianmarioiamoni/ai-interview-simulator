@@ -35,7 +35,7 @@ def test_score_not_available_when_no_scoring() -> None:
     assert model.overall_score is None
     assert model.hire_decision is None
     assert model.level is None
-    assert model.score_unavailable_label == "score not available"
+    assert model.score_unavailable_label == "Score is not available for this session."
 
 
 def test_omits_duration_and_company_when_none() -> None:

@@ -34,7 +34,11 @@ def test_empty_insights_and_objectives_show_neutral_indicators() -> None:
     model = ReplayCoachingPanel(session).render()
 
     assert model.narrative_insights == ()
-    assert model.narrative_empty_label == "No narrative insights recorded"
+    assert model.narrative_empty_label == (
+        "No narrative insights were recorded for this session."
+    )
     assert model.coaching_objectives == ()
-    assert model.coaching_empty_label == "No coaching objectives recorded"
+    assert model.coaching_empty_label == (
+        "No coaching objectives were recorded for this session."
+    )
     assert model.coaching_recommendations == ()

@@ -1,10 +1,13 @@
 # app/ui/replay/panels/replay_navigation_bar.py
+# EPIC-07 P5/C10 — empty timeline uses empty.replay.no_questions catalog.
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Literal
 
+from app.ui.presentation.question_feedback_surface import surface_status_message
+from app.ui.presentation.replay_surface import present_replay_surface
 from domain.contracts.replay.replay_timeline import ReplayTimeline
 
 NavigationSignal = Literal["navigate_forward", "navigate_backward"]
@@ -32,10 +35,11 @@ class ReplayNavigationBar:
     def render(self) -> NavigationViewModel:
         timeline = self._timeline
         if timeline.is_empty:
+            empty_surface = present_replay_surface(has_questions=False)
             return NavigationViewModel(
                 current_position=self._current_position,
                 total_positions=0,
-                display_label="No questions",
+                display_label=surface_status_message(empty_surface),
                 is_empty=True,
                 backward_enabled=False,
                 forward_enabled=False,

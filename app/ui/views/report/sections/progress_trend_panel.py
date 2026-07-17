@@ -1,10 +1,13 @@
 # app/ui/views/report/sections/progress_trend_panel.py
 # EPIC-V13-05 Phase 4 — C-23 ProgressTrendPanel (Plane B presentation only).
+# EPIC-07 P5/C10 — insufficient-data uses empty.progress.insufficient catalog.
 
 from __future__ import annotations
 
 from html import escape
 
+from app.ui.presentation.progress_surface import present_progress_surface
+from app.ui.presentation.question_feedback_surface import surface_status_message
 from domain.contracts.progress.learning_progress import (
     BehavioralTrend,
     FeatureTrend,
@@ -36,26 +39,27 @@ def render_progress_trend_panel(learning_progress: LearningProgress) -> str:
     Visibility gate (frozen): session_count >= 3.
     Does not compute trends; does not use has_sufficient_data as the UI gate.
     """
-    if learning_progress.session_count < _UI_TREND_SESSION_THRESHOLD:
-        return _render_insufficient_data(learning_progress.session_count)
+    has_sufficient = learning_progress.session_count >= _UI_TREND_SESSION_THRESHOLD
+    surface = present_progress_surface(has_sufficient_sessions=has_sufficient)
+    if not has_sufficient:
+        return _render_insufficient_data(
+            learning_progress.session_count,
+            message=surface_status_message(surface),
+        )
 
     return _render_trend(learning_progress)
 
 
-def _render_insufficient_data(session_count: int) -> str:
-    remaining = _UI_TREND_SESSION_THRESHOLD - session_count
-    sessions_word = "session" if remaining == 1 else "sessions"
+def _render_insufficient_data(session_count: int, *, message: str) -> str:
+    safe_message = escape(message)
     return f"""
 <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px;" data-progress-state="insufficient-data">
 <h2 style="margin:0 0 14px 0;color:#1e293b;">Progress Trend</h2>
 <p style="color:#64748b;font-size:0.9em;margin:0 0 8px 0;">
-Insufficient data to show a progress trend.
+{safe_message}
 </p>
 <p style="color:#94a3b8;font-size:0.85em;margin:0;">
 {session_count} session{"s" if session_count != 1 else ""} recorded.
-Complete at least {_UI_TREND_SESSION_THRESHOLD} sessions
-({remaining} more {sessions_word}) before a trend can be displayed.
-No trend is extrapolated from sparse history.
 </p>
 </div>
 """

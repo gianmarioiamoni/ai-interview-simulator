@@ -63,9 +63,11 @@ def test_middle_position_both_controls_enabled() -> None:
 
 
 def test_empty_timeline_disables_controls_and_shows_no_questions() -> None:
+    from app.ui.presentation import REPLAY_EMPTY_KEY, get_empty_copy_entry
+
     bar = ReplayNavigationBar(timeline=_timeline(0), current_position=0)
     model = bar.render()
-    assert model.display_label == "No questions"
+    assert model.display_label == get_empty_copy_entry(REPLAY_EMPTY_KEY).message_text
     assert model.is_empty is True
     assert model.forward_enabled is False
     assert model.backward_enabled is False

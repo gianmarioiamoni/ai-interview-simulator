@@ -102,23 +102,30 @@ class TestProgressTrendPanelVisibilityGate:
     """UI gate is session_count >= 3 only (not has_sufficient_data)."""
 
     def test_session_count_zero_renders_insufficient_data(self) -> None:
+        from app.ui.presentation import PROGRESS_EMPTY_KEY, get_empty_copy_entry
+
         html = render_progress_trend_panel(_make_learning_progress(0))
         assert 'data-progress-state="insufficient-data"' in html
-        assert "Insufficient data" in html
+        assert get_empty_copy_entry(PROGRESS_EMPTY_KEY).message_text in html
         assert 'data-progress-state="trend"' not in html
         assert "reasoning_feature" not in html
 
     def test_session_count_one_renders_insufficient_data(self) -> None:
+        from app.ui.presentation import PROGRESS_EMPTY_KEY, get_empty_copy_entry
+
         html = render_progress_trend_panel(_make_learning_progress(1))
         assert 'data-progress-state="insufficient-data"' in html
+        assert get_empty_copy_entry(PROGRESS_EMPTY_KEY).message_text in html
         assert "1 session recorded" in html
         assert "reasoning_feature" not in html
 
     def test_session_count_two_renders_insufficient_data(self) -> None:
+        from app.ui.presentation import PROGRESS_EMPTY_KEY, get_empty_copy_entry
+
         html = render_progress_trend_panel(_make_learning_progress(2))
         assert 'data-progress-state="insufficient-data"' in html
+        assert get_empty_copy_entry(PROGRESS_EMPTY_KEY).message_text in html
         assert "2 sessions recorded" in html
-        assert "No trend is extrapolated" in html
         assert "reasoning_feature" not in html
         assert 'data-overall-trend=' not in html
 

@@ -59,7 +59,7 @@ class ReplaySessionSummaryPanel:
             hire_decision = scoring.hire_decision
             level = scoring.level
         else:
-            score_unavailable = "score not available"
+            score_unavailable = "Score is not available for this session."
 
         return SessionSummaryViewModel(
             interview_index=metadata.interview_index,

@@ -34,8 +34,8 @@ class ReplayCoachingPanel:
     SECTION_A_LABEL = "Session Narrative"
     SECTION_B_LABEL = "Study Plan"
     OVERVIEW_LABEL = "Knowledge Overview"
-    NARRATIVE_EMPTY = "No narrative insights recorded"
-    COACHING_EMPTY = "No coaching objectives recorded"
+    NARRATIVE_EMPTY = "No narrative insights were recorded for this session."
+    COACHING_EMPTY = "No coaching objectives were recorded for this session."
 
     def __init__(self, session: ReplaySession) -> None:
         self._session = session

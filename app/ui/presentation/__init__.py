@@ -73,6 +73,14 @@ from app.ui.presentation.report_surface import (
     present_report_surface,
     report_loader_visible,
 )
+from app.ui.presentation.progress_surface import (
+    PROGRESS_EMPTY_KEY,
+    present_progress_surface,
+)
+from app.ui.presentation.replay_surface import (
+    REPLAY_EMPTY_KEY,
+    present_replay_surface,
+)
 
 __all__ = [
     "AsyncBoundary",
@@ -117,6 +125,8 @@ __all__ = [
     "QUESTION_EMPTY_KEY",
     "FEEDBACK_EMPTY_KEY",
     "REPORT_EMPTY_KEY",
+    "PROGRESS_EMPTY_KEY",
+    "REPLAY_EMPTY_KEY",
     "assert_no_placeholder_chrome",
     "assert_texts_have_no_placeholder_chrome",
     "empty_copy_text",
@@ -124,6 +134,8 @@ __all__ = [
     "present_feedback_surface",
     "present_question_surface",
     "present_report_surface",
+    "present_progress_surface",
+    "present_replay_surface",
     "report_loader_visible",
     "surface_status_message",
 ]
