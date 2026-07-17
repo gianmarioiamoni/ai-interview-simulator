@@ -3,7 +3,7 @@
 **Epic:** EPIC-V13-08 (C14 / P6)  
 **Freeze:** AR-01, AR-13; reproducibility per Freeze §9  
 **Platform:** Hugging Face Spaces (Docker SDK) — sole production deployment target  
-**Out of scope (C15):** DB migration / SQLite schema versioning policy runbook
+**Complement:** `docs/ops/DB-MIGRATION-RUNBOOK.md` (C15) — SQLite versioning policy / migration ops only
 
 ---
 

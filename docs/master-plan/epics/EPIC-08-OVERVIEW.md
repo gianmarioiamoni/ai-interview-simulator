@@ -9,7 +9,7 @@
 **Precondition:** EPIC-V13-07 CLOSED; working tree clean at initialization.
 **Regression baseline (initialization):** 7003 passed / 0 failed.
 **EPIC-08 implementation baseline (pre-P1):** 7003 passed / 0 failed.
-**Regression baseline (current):** 7401 passed / 0 failed (after P6 / C14).
+**Regression baseline (current):** 7401 passed / 0 failed (after P6 / C15).
 **Planning:** Initialization COMPLETE
 **Architecture Discovery:** `EPIC-08-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**
 **Architecture Review:** `EPIC-08-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**
@@ -18,7 +18,7 @@
 **Data Model:** N/A (Category A)
 **Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**
 **Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)
-**Implementation:** IN PROGRESS — Macro C (P6); C14 complete; next P6 / C15
+**Implementation:** IN PROGRESS — Macro C; P6 (C14–C15) complete; next P7 / C16
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -241,7 +241,7 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 - [ ] Graceful shutdown verified under SIGTERM.
 - [ ] LLM call observability: per-call token usage, latency, model tier.
 - [x] Deployment runbook complete and reviewed (HF Spaces operational model; local / staging / production).
-- [ ] Database migration runbook documented and tested.
+- [x] Database migration runbook documented and tested.
 - [ ] Platform-specific HF behaviour confined to infrastructure (no Domain / LangGraph / `InterviewState` / frozen-model leakage).
 - [ ] Full regression suite green at epic close (baseline at init: 7003 / 0).
 
@@ -257,7 +257,7 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | ADR (conditional) | **SKIP** (not required) |
 | Architecture Freeze | **APPROVED** |
 | Implementation Plan | **ACCEPTED** (`EPIC-08-IMPLEMENTATION-PLAN.md`) |
-| Implementation | **IN PROGRESS** — Macro C (P6); C14 complete; next C15 |
+| Implementation | **IN PROGRESS** — Macro C; P6 complete (C14–C15); next P7 / C16 |
 | Checkpoint A | **PASS** (2026-07-18) — Macro B (P4–P5) authorized |
 | Checkpoint B | **PASS** (2026-07-18) — Macro C (P6–P7) authorized |
 | CAR / Regression / FR / Epic Close | NOT STARTED |
@@ -266,5 +266,5 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 
 ## 14. Next Activities
 
-1. **Implementation** — P6 / C15 (DB migration runbook — policy extension only) per `EPIC-08-IMPLEMENTATION-PLAN.md`.
+1. **Implementation** — P7 / C16 (arch hardening tests) per `EPIC-08-IMPLEMENTATION-PLAN.md`.
 2. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.
