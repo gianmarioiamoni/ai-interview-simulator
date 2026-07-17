@@ -1,22 +1,24 @@
 # EPIC-08 — Deployment & Operations
 
-**Status:** IMPLEMENTATION PLAN ACCEPTED  
+**Status:** IMPLEMENTATION IN PROGRESS (P1 / C1 complete)  
 **Date:** 2026-07-18  
 **Epic ID:** EPIC-V13-08  
 **Playbook Category:** Category A — Standard Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-08; Product Goal P-08  
 **Roadmap Phase:** Phase 4 — Production Readiness  
 **Precondition:** EPIC-V13-07 CLOSED; working tree clean at initialization.  
-**Regression baseline (initialization):** 7003 passed / 0 failed.  
-**Planning:** Initialization COMPLETE  
-**Architecture Discovery:** `EPIC-08-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
-**Architecture Review:** `EPIC-08-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
-**Formal ADR:** **SKIP** (ADR required: NO)  
-**Domain Contracts:** N/A (Category A)  
-**Data Model:** N/A (Category A)  
-**Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**  
-**Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)  
-**Implementation:** NOT STARTED (authorized after pre-P1 baseline)  
+**Regression baseline (initialization):** 7003 passed / 0 failed.
+**EPIC-08 implementation baseline (pre-P1):** 7003 passed / 0 failed.
+**Regression baseline (current):** 7012 passed / 0 failed (after P1 / C1).
+**Planning:** Initialization COMPLETE
+**Architecture Discovery:** `EPIC-08-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**
+**Architecture Review:** `EPIC-08-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**
+**Formal ADR:** **SKIP** (ADR required: NO)
+**Domain Contracts:** N/A (Category A)
+**Data Model:** N/A (Category A)
+**Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**
+**Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)
+**Implementation:** IN PROGRESS — P1 / C1 complete; next P1 / C2
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -255,13 +257,12 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | ADR (conditional) | **SKIP** (not required) |
 | Architecture Freeze | **APPROVED** |
 | Implementation Plan | **ACCEPTED** (`EPIC-08-IMPLEMENTATION-PLAN.md`) |
-| Implementation | NOT STARTED (authorized after pre-P1 baseline) |
+| Implementation | **IN PROGRESS** — P1 / C1 complete; next P1 / C2 |
 | CAR / Regression / FR / Epic Close | NOT STARTED |
 
 ---
 
 ## 14. Next Activities
 
-1. **Pre-P1** — full regression; record EPIC-08 implementation baseline.
-2. **Implementation** — begin P1 / C1 per `EPIC-08-IMPLEMENTATION-PLAN.md`.
-3. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.
+1. **Implementation** — continue P1 / C2 per `EPIC-08-IMPLEMENTATION-PLAN.md`.
+2. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.

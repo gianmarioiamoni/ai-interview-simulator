@@ -22,7 +22,7 @@
 | Formal ADR | SKIP |
 | Domain Contracts / Data Model | N/A (Category A) |
 | Regression baseline (epic init) | 7003 passed / 0 failed |
-| Pre-P1 gate | Re-run full suite; record **EPIC-08 implementation baseline** in Overview before first code commit |
+| Pre-P1 gate | **DONE** — EPIC-08 implementation baseline recorded in Overview: 7003 passed / 0 failed |
 | Platform | Hugging Face Spaces only (AR-01) |
 
 ---
@@ -342,10 +342,10 @@ See Commit plan table (Acceptance criteria column). Each commit independently ve
 | Implementation Plan complete (§8.6) | Yes |
 | Dependency Validation | PASSED |
 | Risk Validation | PASSED |
-| Pre-P1 baseline recorded | **Pending** (first implementation action) |
-| Implementation may begin | **YES** — after pre-P1 full regression baseline recorded |
+| Pre-P1 baseline recorded | **YES** — 7003 passed / 0 failed |
+| Implementation may begin | **YES** — P1 / C1 in progress / complete per commit gate |
 
-**Recommendation:** Implementation can begin with **P1 / C1** immediately after recording the pre-P1 regression baseline.
+**Recommendation:** Proceed to **P1 / C2** after C1 commit.
 
 ---
 

@@ -5,16 +5,20 @@
 # Responsibility:
 # Centralized configuration management.
 # Loads environment variables and provides type-safe access.
+# Exclusive runtime configuration entry point (EPIC-08 CFG-01 / AR-03).
 
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import model_validator
 from typing import Self
 
 
 class Settings(BaseSettings):
     # ── Credentials ──────────────────────────────────────────────────────────
     openai_api_key: str = ""
-    hf_token: str | None = None
+    hf_token: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("HF_TOKEN", "HUGGINGFACE_TOKEN", "hf_token"),
+    )
 
     # ── Corpus ───────────────────────────────────────────────────────────────
     # HF Dataset repo ID containing the pre-built Chroma corpus artifact.
@@ -128,11 +132,35 @@ class Settings(BaseSettings):
     # no longer generate new derived patterns.
     reasoner_bridge_window: int = 3
 
+    # ── Process edge / server (EPIC-08 P1/P5) ─────────────────────────────────
+    server_host: str = "0.0.0.0"
+    server_port: int = Field(
+        default=7860,
+        validation_alias=AliasChoices("PORT", "SERVER_PORT", "server_port"),
+    )
+
+    # ── Persistence paths (EPIC-08 CFG-04) ────────────────────────────────────
+    sqlite_db_path: str = "data/questions.db"
+
+    # ── Observability / logging (EPIC-08 P2) ──────────────────────────────────
+    log_level: str = "INFO"
+    log_sink: str = "stdout"
+
+    # ── Health / readiness probes (EPIC-08 P4) ────────────────────────────────
+    health_probe_timeout_ms: int = 5000
+    health_llm_probe_enabled: bool = True
+    health_db_probe_enabled: bool = True
+    health_sandbox_probe_enabled: bool = True
+
+    # ── Graceful shutdown (EPIC-08 P5) ────────────────────────────────────────
+    shutdown_drain_timeout_s: int = 30
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         protected_namespaces=(),
         extra="ignore",
+        populate_by_name=True,
     )
 
     @model_validator(mode="after")
