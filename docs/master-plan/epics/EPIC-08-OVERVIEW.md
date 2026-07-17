@@ -1,6 +1,6 @@
 # EPIC-08 — Deployment & Operations
 
-**Status:** INITIALIZED  
+**Status:** ARCHITECTURE FREEZE APPROVED  
 **Date:** 2026-07-18  
 **Epic ID:** EPIC-V13-08  
 **Playbook Category:** Category A — Standard Epic  
@@ -9,13 +9,13 @@
 **Precondition:** EPIC-V13-07 CLOSED; working tree clean at initialization.  
 **Regression baseline (initialization):** 7003 passed / 0 failed.  
 **Planning:** Initialization COMPLETE  
-**Architecture Discovery:** PENDING (chat discovery draft exists; formal freeze pending)  
-**Architecture Review:** NOT STARTED  
-**Formal ADR:** NOT STARTED (conditional — create only if a genuine unresolved decision remains)  
-**Domain Contracts:** N/A (Category A — unless Discovery invalidates category)  
-**Data Model:** N/A (Category A — unless Discovery invalidates category)  
-**Architecture Freeze:** NOT STARTED  
-**Implementation Plan:** NOT STARTED  
+**Architecture Discovery:** `EPIC-08-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
+**Architecture Review:** `EPIC-08-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
+**Formal ADR:** **SKIP** (ADR required: NO)  
+**Domain Contracts:** N/A (Category A)  
+**Data Model:** N/A (Category A)  
+**Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**  
+**Implementation Plan:** NOT STARTED (authorized)  
 **Implementation:** NOT STARTED  
 **Playbook:** V13 Development Playbook Version 1.0
 
@@ -126,13 +126,13 @@ Inventory of **already existing** artifacts for Architecture Discovery to inspec
 
 | ID | Description | Status | Verification Document | Notes |
 |---|---|---|---|---|
-| AA-01 | No new `InterviewState` fields are required for logging, health, or shutdown. | UNVERIFIED | Architecture Discovery / Architecture Review | Escalate to Category B if invalidated |
-| AA-02 | Health payload and structured log event shapes remain infrastructure contracts, not domain `frozen` models. | UNVERIFIED | Architecture Discovery / Architecture Review | |
-| AA-03 | Extending SQLite schema versioning policy does not change on-disk `schema_version` / stored shape in this epic. | UNVERIFIED | Architecture Discovery / Architecture Review | Invalidate → Category B + Data Model |
-| AA-04 | LLM observability extends existing V1.2 cost telemetry ownership paths (no dual writers). | UNVERIFIED | Architecture Discovery / Architecture Review | |
+| AA-01 | No new `InterviewState` fields are required for logging, health, or shutdown. | VERIFIED | `EPIC-08-ARCHITECTURE-DISCOVERY.md` | Escalate to Category B if invalidated later |
+| AA-02 | Health payload and structured log event shapes remain infrastructure contracts, not domain `frozen` models. | VERIFIED | `EPIC-08-ARCHITECTURE-DISCOVERY.md` | |
+| AA-03 | Extending SQLite schema versioning policy does not change on-disk `schema_version` / stored shape in this epic. | VERIFIED | `EPIC-08-ARCHITECTURE-DISCOVERY.md` | Invalidate → Category B + Data Model |
+| AA-04 | LLM observability extends existing V1.2 cost telemetry ownership paths (no dual writers). | VERIFIED | `EPIC-08-ARCHITECTURE-DISCOVERY.md` | |
 | AA-05 | Hugging Face Spaces remains the sole production deployment target for V1.3. | VERIFIED | This Overview (Known Inputs) | User-confirmed; platform migration out of scope |
-| AA-06 | Platform-specific HF behaviour can be confined to infrastructure without Domain/LangGraph/`InterviewState` leakage. | UNVERIFIED | Architecture Review / CAR | Binding principle |
-| AA-07 | EPIC-V13-10 dead-code cleanup is a release-gate concern, not a hard blocker for EPIC-08 feature freeze. | UNVERIFIED | Architecture Review | Master Plan lists EPIC-10 as dependency |
+| AA-06 | Platform-specific HF behaviour can be confined to infrastructure without Domain/LangGraph/`InterviewState` leakage. | VERIFIED | `EPIC-08-ARCHITECTURE-DISCOVERY.md` | CAR must re-check leakage |
+| AA-07 | EPIC-V13-10 dead-code cleanup is a release-gate concern, not a hard blocker for EPIC-08 feature freeze. | VERIFIED | `EPIC-08-ARCHITECTURE-REVIEW.md` AR-16 | Release gate / EPIC-10 |
 
 ---
 
@@ -250,11 +250,11 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | Workflow step | Status |
 |---|---|
 | Initialization (this document) | **COMPLETE** |
-| Architecture Discovery (formal artifact) | PENDING |
-| Architecture Review | NOT STARTED |
-| ADR (conditional) | NOT STARTED |
-| Architecture Freeze | N/A until Review (Category A: accepted ADR / Review freeze) |
-| Implementation Plan | NOT STARTED |
+| Architecture Discovery (formal artifact) | **COMPLETE** |
+| Architecture Review | **APPROVED WITH OBSERVATIONS** |
+| ADR (conditional) | **SKIP** (not required) |
+| Architecture Freeze | **APPROVED** |
+| Implementation Plan | NOT STARTED (authorized) |
 | Implementation | NOT STARTED |
 | CAR / Regression / FR / Epic Close | NOT STARTED |
 
@@ -262,8 +262,6 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 
 ## 14. Next Activities
 
-1. **Architecture Discovery** — formalize discovery artifact from current-state inspection of Known Inputs; populate confirmed/missing decisions; keep Assumptions Register current.
-2. **Architecture Review** — Category A review pass; confirm no missing decisions; declare ready for conditional ADR or ready for Implementation Plan.
-3. **Conditional ADR** — only if shutdown, health, schema, or HF confinement crosses a constitutional boundary not already governed.
-4. **Implementation Plan** — after Review (and ADR if required) freeze.
-5. **Do not** create Domain Contracts, Data Model, or Architecture Freeze documents unless category is reclassified to B.
+1. **Implementation Plan** — phases/commits against `EPIC-08-ARCHITECTURE-FREEZE.md`.
+2. **Implementation** — after Implementation Plan accepted.
+3. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.
