@@ -305,7 +305,7 @@ See Commit plan table (Acceptance criteria column). Each commit independently ve
 | Checkpoint | Status |
 |---|---|
 | **A** (after P3 / C8) | **PASS** — 2026-07-18; Macro B (P4–P5) **AUTHORIZED** |
-| **B** (after P5 / C13) | Pending |
+| **B** (after P5 / C13) | **PASS** — 2026-07-18; Macro C (P6–P7) **AUTHORIZED** |
 | **C** (after P7 / C17) | Pending |
 
 
