@@ -1,7 +1,7 @@
 # EPIC-07 — Production UX
 
-**Status:** IMPLEMENTATION PLAN ACCEPTED — P1 next  
-**Date:** 2026-07-16  
+**Status:** CAR COMPLETE — Final Review next  
+**Date:** 2026-07-17  
 **Epic ID:** EPIC-V13-07  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-07; Product Goal P-07  
@@ -9,12 +9,17 @@
 **Precondition:** EPIC-V13-04 CLOSED; EPIC-V13-05 CLOSED; Master Plan Dependencies for EPIC-V13-07 satisfied; working tree clean at initialization.  
 **Regression baseline (initialization):** 6708 / 0 (EPIC-06 init).  
 **EPIC-07 implementation baseline (pre-P1):** 6787 passing / 0 failures.  
+**Regression (post-implementation):** 7003 passing / 0 failures.  
 **Architecture Discovery:** `EPIC-07-PRODUCTION-UX.md` — COMPLETE  
 **Architecture Review:** `EPIC-07-ARCHITECTURE-REVIEW.md` — COMPLETE  
 **Domain Contracts:** `EPIC-07-DOMAIN-CONTRACTS.md` — COMPLETE  
 **Data Model:** `EPIC-07-DATA-MODEL.md` — COMPLETE  
 **Architecture Freeze:** `EPIC-07-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-07-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
+**Implementation:** **COMPLETE** (P1–P7; C1–C15)  
+**Construction Architecture Review (CAR):** **COMPLETE** — PASS WITH MINOR OBSERVATIONS (Architecture Traceability; 0 P0/P1)  
+**Final Review (FR):** **NEXT**  
+**Epic Close:** pending  
 **Formal §8.4 ADR:** **SKIP** (Freeze §2)  
 **Playbook:** V13 Development Playbook Version 1.0
 
@@ -70,27 +75,31 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 - [x] EPIC-V13-04 CLOSED
 - [x] EPIC-V13-05 CLOSED
 - [x] Master Plan epic definition unambiguous (scope, outcome, non-goals)
-- [ ] Phase-3-complete sequencing vs explicit Dependencies — inconsistency classified (see Open Issues); does not alter explicit EPIC-07 Dependencies
-- [ ] No open P0/P1 from prior epics affecting polish targets — verify during Architecture Discovery
-- [ ] Sole writer for any `InterviewState` field this epic may touch — identify during Architecture Discovery (Initialization assumes none until proven otherwise)
+- [x] Phase-3-complete sequencing vs explicit Dependencies — inconsistency classified (DOC-I-01); explicit EPIC-07 Dependencies govern
+- [x] No open P0/P1 from prior epics affecting polish targets — verified during Architecture Discovery / Freeze (AA-13)
+- [x] Sole writer for any `InterviewState` field this epic may touch — none introduced (AR-03); verified at Freeze / CAR
 
 ---
 
 ## 5. Expected Deliverables
 
 - Living `EPIC-07-OVERVIEW.md` (this document — workflow status)
-- Category B planning set (Discovery → Contracts → Data Model → conditional ADR → Freeze → Implementation Plan)
-- Production-quality polish across Master Plan in-scope flows:
+- Category B planning set (Discovery → Contracts → Data Model → conditional ADR → Freeze → Implementation Plan) — **COMPLETE**
+- Production-quality polish across Master Plan in-scope flows — **COMPLETE** (C1–C15):
   - Session configuration (role, seniority, language mode)
   - Question presentation (written, coding, SQL)
   - Code execution feedback (candidate-friendly test / syntax / runtime errors)
   - Report delivery flow (no loading regressions on deterministic data)
   - Replay navigation
   - Progress view
-- Error boundary completeness at every async boundary (candidate-facing fallback)
-- Accessibility baseline: keyboard navigation for primary flows; WCAG 2.1 AA target for report and replay
-- Behavioral + architectural tests as required by frozen Implementation Plan
-- CAR (with Architecture Traceability), Regression, Documentation Certification, FR, Epic Close
+- Error boundary completeness at every async boundary (candidate-facing fallback) — **COMPLETE**
+- Accessibility baseline: keyboard navigation for primary flows; WCAG 2.1 AA target for report and replay — **COMPLETE** (verification artefacts per AR-14)
+- Behavioral + architectural tests as required by frozen Implementation Plan — **COMPLETE**
+- CAR (with Architecture Traceability) — **COMPLETE**
+- Regression — **COMPLETE** (7003 / 0)
+- Documentation Certification (living Overview alignment) — **COMPLETE**
+- Final Review (FR) — **NEXT**
+- Epic Close — pending
 
 **Non-goals (Master Plan):** Onboarding tours, tooltips, or help overlays; internationalisation (V2); dark mode (V2).
 
@@ -142,7 +151,7 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 | 5 | `docs/master-plan/epics/EPIC-07-DATA-MODEL.md` | Data Model — COMPLETE |
 | 6 | Formal §8.4 Architecture Review / ADR (conditional) | **SKIP** — Freeze §2 |
 | 7 | `docs/master-plan/epics/EPIC-07-ARCHITECTURE-FREEZE.md` | Architecture Freeze — **APPROVED** |
-| 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Implementation Plan — **ACCEPTED** |
+| 8 | `docs/master-plan/epics/EPIC-07-IMPLEMENTATION-PLAN.md` | Implementation Plan — **ACCEPTED**; Implementation **COMPLETE** |
 
 ---
 
@@ -171,25 +180,84 @@ Architecture Freeze  ← APPROVED
 Implementation Plan  ← ACCEPTED
   → EPIC-07-IMPLEMENTATION-PLAN.md
         ↓
-Implementation  ← NEXT (P1 / C1)
-  (Macro Phase → Architecture Checkpoint → …)
+Macro Phase A (P1–P3 / C1–C6)  ← COMPLETE
         ↓
-CAR (incl. Architecture Traceability)
+Architecture Checkpoint A  ← AUTHORIZED Macro B
         ↓
-Regression
+Macro Phase B (P4–P5 / C7–C10)  ← COMPLETE
         ↓
-Documentation Certification
+Architecture Checkpoint B  ← AUTHORIZED Macro C
         ↓
-Final Review (FR)
+Macro Phase C (P6–P7 / C11–C15)  ← COMPLETE
         ↓
-Epic Close
+Architecture Checkpoint C  ← AUTHORIZED CAR
+        ↓
+Implementation  ← COMPLETE (P1–P7; C1–C15)
+        ↓
+CAR (incl. Architecture Traceability)  ← COMPLETE — PASS WITH MINOR OBSERVATIONS
+        ↓
+Regression  ← COMPLETE (7003 / 0)
+        ↓
+Documentation Certification  ← COMPLETE (living Overview aligned)
+        ↓
+Final Review (FR)  ← NEXT
+        ↓
+Epic Close  ← pending
 ```
 
 ---
 
-## 11. Known Inputs
+## 11. Implementation Progress
 
-Existing artifacts Architecture Discovery is expected to inspect. **No architectural decisions. No analysis. No assumptions.**
+| Macro Phase | Phases | Commits | Status |
+|---|---|---|---|
+| A — Foundation & async/session | P1, P2, P3 | C1–C6 | **COMPLETE** |
+| B — Feedback, report, replay polish | P4, P5 | C7–C10 | **COMPLETE** |
+| C — Accessibility, deletion, hardening | P6, P7 | C11–C15 | **COMPLETE** |
+
+| Commit | Phase | Concern | Status |
+|---|---|---|---|
+| C1 | P1 | Enums + `CandidateFacingError` + catalogs | COMPLETE |
+| C2 | P1 | `SurfaceState` + DM-V-SS helpers | COMPLETE |
+| C3 | P2 | Emit errors for start / submit / next-or-report | COMPLETE |
+| C4 | P2 | Emit errors for export / replay-enter / history-load | COMPLETE |
+| C5 | P3 | Language mode setup presentation + validation | COMPLETE |
+| C6 | P3 | Session history list READY/EMPTY/ERROR | COMPLETE |
+| C7 | P4 | `ExecutionErrorPresentation` projector; traceback ban | COMPLETE |
+| C8 | P4 | Question/feedback SurfaceState wiring | COMPLETE |
+| C9 | P5 | Report deterministic no-loader + empty catalog | COMPLETE |
+| C10 | P5 | Progress + replay empty/error polish | COMPLETE |
+| C11 | P6 | Keyboard primary-flow tests (AX-01) | COMPLETE |
+| C12 | P6 | Report/replay a11y verification (AX-02…AX-05) | COMPLETE |
+| C13 | P7 | Arch test: DELETE_TARGET not imported by live bind | COMPLETE |
+| C14 | P7 | Delete DELETE_TARGET modules | COMPLETE |
+| C15 | P7 | Hardening arch tests | COMPLETE |
+
+---
+
+## 12. Certification Record
+
+| Gate | Outcome |
+|---|---|
+| Architecture Checkpoint A | AUTHORIZED Macro B |
+| Architecture Checkpoint B | AUTHORIZED Macro C |
+| Architecture Checkpoint C | AUTHORIZED CAR |
+| Construction Architecture Review (CAR) | **COMPLETE** — PASS WITH MINOR OBSERVATIONS (Architecture Traceability; 0 P0/P1) |
+| Regression Certification | **COMPLETE** — 7003 passed / 0 failed |
+| Documentation Certification | **COMPLETE** — living Overview aligned with post-CAR state |
+| Final Review (FR) | **NEXT** |
+| Epic Close | pending |
+
+### CAR observations (non-blocking)
+
+1. Living Overview status markers aligned in this Documentation Certification step.
+2. Gradio full browser a11y evidence depth remains NI-02 verification debt (acceptable; non-blocking).
+
+---
+
+## 13. Known Inputs
+
+Existing artifacts Architecture Discovery is expected to inspect. **No architectural decisions. No analysis. No assumptions.** Historical Initialization inventory — retained unchanged.
 
 ### Existing ADRs
 
@@ -236,7 +304,7 @@ Existing artifacts Architecture Discovery is expected to inspect. **No architect
 
 ---
 
-## 12. Architecture Assumptions Register
+## 14. Architecture Assumptions Register
 
 Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture Review). Remaining UNVERIFIED must close before Architecture Freeze.
 
@@ -248,7 +316,7 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 
 ---
 
-## 13. Master Plan Inconsistencies (classified — no planning changes proposed)
+## 15. Master Plan Inconsistencies (classified — no planning changes proposed)
 
 | ID | Class | Statement | Disposition at Initialization |
 |---|---|---|---|
@@ -257,10 +325,12 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 
 ---
 
-## 14. Recommendation
+## 16. Recommendation
 
-**Next engineering task:** Implementation P1 / C1 — presentation primitives & catalogs. Record pre-P1 full regression baseline first. Zero Known Failing Tests on every commit.
+**Next engineering task:** Final Review (FR) for EPIC-V13-07.  
+**Do not** close the Epic until FR produces Closed.  
+Epic Close remains pending.
 
 ---
 
-*This Overview is the living status document for EPIC-V13-07. Frozen Discovery / Domain Contracts / Data Model / Architecture Freeze bodies (when authored) remain historical records after freeze.*
+*This Overview is the living status document for EPIC-V13-07. Frozen Discovery / Domain Contracts / Data Model / Architecture Freeze bodies remain historical records after freeze. Implementation and CAR are COMPLETE; Final Review is NEXT.*
