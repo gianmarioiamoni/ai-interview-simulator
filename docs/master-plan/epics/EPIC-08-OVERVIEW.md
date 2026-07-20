@@ -1,6 +1,6 @@
 # EPIC-08 — Deployment & Operations
 
-**Status:** CAR COMPLETE — PASS WITH OBSERVATIONS; Final Review authorized
+**Status:** FINAL REVIEW COMPLETE — PASS WITH OBSERVATIONS; Epic Close authorized
 **Date:** 2026-07-20
 **Epic ID:** EPIC-V13-08
 **Playbook Category:** Category A — Standard Epic
@@ -9,7 +9,7 @@
 **Precondition:** EPIC-V13-07 CLOSED; working tree clean at initialization.
 **Regression baseline (initialization):** 7003 passed / 0 failed.
 **EPIC-08 implementation baseline (pre-P1):** 7003 passed / 0 failed.
-**Regression baseline (current):** 7417 passed / 0 failed (C17 / Checkpoint C certification; CAR-confirmed).
+**Regression baseline (current):** 7417 passed / 0 failed (epic-close Final Review certification).
 **Planning:** Initialization COMPLETE
 **Architecture Discovery:** `EPIC-08-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**
 **Architecture Review:** `EPIC-08-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**
@@ -19,7 +19,8 @@
 **Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**
 **Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)
 **Implementation:** **COMPLETE** (P1–P7; C1–C17); Checkpoint C **PASS**
-**Construction Architecture Review (CAR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1); Final Review **AUTHORIZED**
+**Construction Architecture Review (CAR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1)
+**Final Review (FR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1); Epic Close **AUTHORIZED**
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -244,7 +245,7 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 - [x] Deployment runbook complete and reviewed (HF Spaces operational model; local / staging / production).
 - [x] Database migration runbook documented and tested.
 - [x] Platform-specific HF behaviour confined to infrastructure (no Domain / LangGraph / `InterviewState` / frozen-model leakage).
-- [x] Full regression suite green at implementation certification (7417 / 0; ≥ baseline 7003). Epic-close regression re-run remains a later workflow gate.
+- [x] Full regression suite green at implementation certification and epic-close Final Review (7417 / 0; ≥ baseline 7003).
 
 ---
 
@@ -252,7 +253,7 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 
 **Date:** 2026-07-18  
 **Scope:** Documentation + verification only (no production code).  
-**Verdict:** **PASS** — EPIC-08 implementation complete; Checkpoint C **PASS**; CAR **COMPLETE** (PASS WITH OBSERVATIONS).
+**Verdict:** **PASS** — EPIC-08 implementation complete; Checkpoint C **PASS**; CAR **COMPLETE** (PASS WITH OBSERVATIONS); epic-close Final Review **PASS WITH OBSERVATIONS** (regression re-confirmed 7417 / 0).
 
 ### Freeze §13 / Master Plan P-08 mapping
 
@@ -265,7 +266,7 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | SIGTERM process drain verified | C12–C13; topology freeze (IB-05) | **PASS** |
 | Deployment + DB migration runbooks (HF; policy only) | C14–C15; `docs/ops/` | **PASS** |
 | Zero HF leakage (Domain / LangGraph / InterviewState / contracts) | C3 + C16 O-01 surfaces | **PASS** |
-| Full regression ≥ baseline | C17 suite: **7417 passed / 0 failed** (baseline 7003) | **PASS** |
+| Full regression ≥ baseline | C17 + epic-close FR: **7417 passed / 0 failed** (baseline 7003) | **PASS** |
 | AR-16 — EPIC-10 dead-code purity | Explicitly **not** required to close EPIC-08 implementation | **N/A (deferred)** |
 
 ### Architectural gates (still green)
@@ -302,13 +303,20 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | Checkpoint A | **PASS** (2026-07-18) — Macro B (P4–P5) authorized |
 | Checkpoint B | **PASS** (2026-07-18) — Macro C (P6–P7) authorized |
 | Checkpoint C | **PASS** (2026-07-18) — CAR authorized |
-| Construction Architecture Review (CAR) | **COMPLETE** (2026-07-20) — **PASS WITH OBSERVATIONS**; 0 P0/P1; Final Review **AUTHORIZED** |
-| Regression / Documentation / FR / Epic Close | Final Review **AUTHORIZED** — NOT STARTED |
+| Construction Architecture Review (CAR) | **COMPLETE** (2026-07-20) — **PASS WITH OBSERVATIONS**; 0 P0/P1 |
+| Regression Certification | **COMPLETE** (2026-07-20) — **7417 passed / 0 failed** (epic-close FR suite) |
+| Documentation Certification | **COMPLETE** (2026-07-20) — Overview / Plan / Freeze status aligned |
+| Final Review (FR) | **COMPLETE** (2026-07-20) — **PASS WITH OBSERVATIONS**; 0 P0/P1; Epic Close **AUTHORIZED** |
+| Epic Close | **AUTHORIZED** — NOT STARTED |
+
+### FR observations (non-blocking)
+
+1. OI-04 / AR-16 — EPIC-10 deploy-artifact dead-code purity remains intentionally deferred (release-gate; does not block EPIC-08 close).
 
 ---
 
 ## 14. Next Activities
 
-1. **Regression Certification** (epic-close full suite re-run) → Documentation Update → **Final Review** → Epic Close.
+1. **Epic Close** (formal CLOSED declaration only — no further EPIC-08 scope).
 2. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.
 3. **Carry-forward (non-blocking):** EPIC-10 dead-code purity remains release-gate (AR-16 / OI-04).

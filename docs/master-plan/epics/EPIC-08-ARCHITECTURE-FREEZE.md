@@ -213,7 +213,7 @@ Stable fields for structured operational events. Null/omit only when not applica
 - [x] SIGTERM process drain verified
 - [x] Deployment + DB migration runbooks complete (HF model; policy only)
 - [x] Zero HF leakage into Domain / LangGraph / `InterviewState` / frozen models
-- [x] Full regression green at implementation / CAR certification (7417 / 0; epic-close re-run remains FR/close gate)
+- [x] Full regression green at implementation / CAR / epic-close Final Review certification (7417 / 0)
 
 ---
 

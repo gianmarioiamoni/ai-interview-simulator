@@ -308,6 +308,7 @@ See Commit plan table (Acceptance criteria column). Each commit independently ve
 | **B** (after P5 / C13) | **PASS** — 2026-07-18; Macro C (P6–P7) **AUTHORIZED** |
 | **C** (after P7 / C17) | **PASS** — 2026-07-18; CAR **AUTHORIZED** |
 | **CAR** | **PASS WITH OBSERVATIONS** — 2026-07-20; Final Review **AUTHORIZED** (0 P0/P1) |
+| **Final Review** | **PASS WITH OBSERVATIONS** — 2026-07-20; Epic Close **AUTHORIZED** (0 P0/P1) |
 
 
 | Checkpoint | After | Must verify | Authorizes |
@@ -335,7 +336,7 @@ See Commit plan table (Acceptance criteria column). Each commit independently ve
 | OI-01 | Exact process-edge allowlist for residual env reads (if any OS/platform bootstrap) finalized at C2/C3 | **Resolved (C3)** — allowlist = `tests/` + `scripts/` only; no production residual |
 | OI-02 | Node inventory split batch A/B finalized at C5 start from current graph module list | **Resolved (C6)** — batch A = 13 core cycle; batch B = entry/session_close/report/longitudinal_update/replay; coverage gate active |
 | OI-03 | CAR must re-verify HF confinement (Freeze Observation O-01) | **Resolved (CAR 2026-07-20)** — O-01 surfaces clean; C3+C16 arch gates green |
-| OI-04 | EPIC-10 dead-code purity remains release-gate | No (AR-16); carried forward post-CAR |
+| OI-04 | EPIC-10 dead-code purity remains release-gate | No (AR-16); carried forward post-FR (non-blocking) |
 
 **Blocking open issues for implementation start:** None.
 
@@ -354,9 +355,12 @@ See Commit plan table (Acceptance criteria column). Each commit independently ve
 | Implementation (C1–C17) | **COMPLETE** — 2026-07-18; regression certification 7417 / 0 |
 | Checkpoint C | **PASS** — 2026-07-18; CAR authorized |
 | CAR | **PASS WITH OBSERVATIONS** — 2026-07-20; Final Review authorized |
+| Regression Certification | **COMPLETE** — 2026-07-20; 7417 passed / 0 failed |
+| Documentation Certification | **COMPLETE** — 2026-07-20 |
+| Final Review | **PASS WITH OBSERVATIONS** — 2026-07-20; Epic Close authorized |
 | Implementation may begin | **N/A** — implementation complete |
 
-**Recommendation:** Proceed to **Regression Certification → Documentation Update → Final Review**.
+**Recommendation:** Proceed to **Epic Close**.
 
 ---
 
