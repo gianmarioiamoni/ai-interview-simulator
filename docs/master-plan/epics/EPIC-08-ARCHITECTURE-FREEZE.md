@@ -206,14 +206,14 @@ Stable fields for structured operational events. Null/omit only when not applica
 
 ## 13. Success criteria
 
-- [ ] Settings exclusive config; no production `os.environ` direct access
-- [ ] Structured logging schema fields emitted per OBS rules
-- [ ] LLM observability: tokens, latency, model via existing path
-- [ ] Readiness health active; CI/deploy gated
-- [ ] SIGTERM process drain verified
-- [ ] Deployment + DB migration runbooks complete (HF model; policy only)
-- [ ] Zero HF leakage into Domain / LangGraph / `InterviewState` / frozen models
-- [ ] Full regression green at epic close
+- [x] Settings exclusive config; no production `os.environ` direct access
+- [x] Structured logging schema fields emitted per OBS rules
+- [x] LLM observability: tokens, latency, model via existing path
+- [x] Readiness health active; CI/deploy gated
+- [x] SIGTERM process drain verified
+- [x] Deployment + DB migration runbooks complete (HF model; policy only)
+- [x] Zero HF leakage into Domain / LangGraph / `InterviewState` / frozen models
+- [x] Full regression green at implementation / CAR certification (7417 / 0; epic-close re-run remains FR/close gate)
 
 ---
 
