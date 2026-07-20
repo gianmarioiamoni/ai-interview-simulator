@@ -95,6 +95,12 @@
 |---|---|---|---|---|---|
 | TD-EP07-001 | Gradio full browser axe-core / deeper WCAG tooling beyond structural + catalog a11y verification (NI-02 / AR-14; FR observation) | `app/ui/presentation/accessibility_*.py`, report/replay hosts | Low | DEFERRED | — |
 
+### EPIC-08 Deployment & Operations
+
+| ID | Item | Location | Severity | Status | ADR |
+|---|---|---|---|---|---|
+| TD-EP08-001 | Deploy-artifact dead-code purity deferred to EPIC-10 (AR-16 / OI-04; Epic Close observation) | deploy artifact / EPIC-V13-10 scope | Low | DEFERRED | — |
+
 ---
 
 ## Closed Items

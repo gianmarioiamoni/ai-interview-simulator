@@ -1,6 +1,6 @@
 # EPIC-08 — Deployment & Operations
 
-**Status:** FINAL REVIEW COMPLETE — PASS WITH OBSERVATIONS; Epic Close authorized
+**Status:** CLOSED WITH OBSERVATIONS
 **Date:** 2026-07-20
 **Epic ID:** EPIC-V13-08
 **Playbook Category:** Category A — Standard Epic
@@ -9,18 +9,19 @@
 **Precondition:** EPIC-V13-07 CLOSED; working tree clean at initialization.
 **Regression baseline (initialization):** 7003 passed / 0 failed.
 **EPIC-08 implementation baseline (pre-P1):** 7003 passed / 0 failed.
-**Regression baseline (current):** 7417 passed / 0 failed (epic-close Final Review certification).
-**Planning:** Initialization COMPLETE
+**Regression (close-out):** 7417 passed / 0 failed (epic-close Final Review certification; reconfirmed at Epic Close).
+**Planning:** COMPLETE
 **Architecture Discovery:** `EPIC-08-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**
 **Architecture Review:** `EPIC-08-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**
 **Formal ADR:** **SKIP** (ADR required: NO)
 **Domain Contracts:** N/A (Category A)
 **Data Model:** N/A (Category A)
 **Architecture Freeze:** `EPIC-08-ARCHITECTURE-FREEZE.md` — **APPROVED**
-**Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED** (7 phases / 17 commits)
+**Implementation Plan:** `EPIC-08-IMPLEMENTATION-PLAN.md` — **ACCEPTED**; EPIC CLOSED
 **Implementation:** **COMPLETE** (P1–P7; C1–C17); Checkpoint C **PASS**
 **Construction Architecture Review (CAR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1)
-**Final Review (FR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1); Epic Close **AUTHORIZED**
+**Final Review (FR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1)
+**Epic Close:** **CLOSED WITH OBSERVATIONS** — 2026-07-20
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -306,17 +307,17 @@ Aligned with Master Plan expected outcome and §5 Go-Live Engineering/Documentat
 | Construction Architecture Review (CAR) | **COMPLETE** (2026-07-20) — **PASS WITH OBSERVATIONS**; 0 P0/P1 |
 | Regression Certification | **COMPLETE** (2026-07-20) — **7417 passed / 0 failed** (epic-close FR suite) |
 | Documentation Certification | **COMPLETE** (2026-07-20) — Overview / Plan / Freeze status aligned |
-| Final Review (FR) | **COMPLETE** (2026-07-20) — **PASS WITH OBSERVATIONS**; 0 P0/P1; Epic Close **AUTHORIZED** |
-| Epic Close | **AUTHORIZED** — NOT STARTED |
+| Final Review (FR) | **COMPLETE** (2026-07-20) — **PASS WITH OBSERVATIONS**; 0 P0/P1 |
+| Epic Close | **CLOSED WITH OBSERVATIONS** — 2026-07-20 |
 
-### FR observations (non-blocking)
+### Close observations (non-blocking; registered)
 
-1. OI-04 / AR-16 — EPIC-10 deploy-artifact dead-code purity remains intentionally deferred (release-gate; does not block EPIC-08 close).
+1. OI-04 / AR-16 — EPIC-10 deploy-artifact dead-code purity remains intentionally deferred (release-gate; `TD-EP08-001`).
 
 ---
 
 ## 14. Next Activities
 
-1. **Epic Close** (formal CLOSED declaration only — no further EPIC-08 scope).
-2. **Do not** create Domain Contracts, Data Model, or ADRs unless category is reclassified to B or a boundary crossing is newly evidenced.
-3. **Carry-forward (non-blocking):** EPIC-10 dead-code purity remains release-gate (AR-16 / OI-04).
+1. **EPIC-V13-08 is CLOSED WITH OBSERVATIONS.** No further EPIC-08 scope.
+2. **Next planned activity:** Continue Phase 4 — initialize or advance **EPIC-V13-09 (Performance & Scalability Baseline)**.
+3. **Carry-forward (non-blocking):** EPIC-10 dead-code purity remains release-gate (AR-16 / OI-04 / `TD-EP08-001`).

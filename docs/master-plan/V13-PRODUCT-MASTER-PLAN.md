@@ -271,6 +271,8 @@ Onboarding tours, tooltips, or help overlays (nice-to-have, not blocking). Inter
 
 ### EPIC-V13-08 — Deployment & Operations
 
+**Status:** CLOSED WITH OBSERVATIONS — 2026-07-20  
+
 **Purpose:**  
 Define and implement the production deployment configuration, observability infrastructure, and operational runbooks.
 
@@ -482,7 +484,7 @@ Depends on EPIC-V13-05 (Unified Report host surfaces) and EPIC-V13-01 (clean sco
 **EPIC-V13-07 (Production UX)** — **CLOSED** (2026-07-17)  
 Depends on EPIC-V13-04 and EPIC-V13-05 being feature-complete.
 
-**EPIC-V13-08 (Deployment & Operations)**  
+**EPIC-V13-08 (Deployment & Operations)** — **CLOSED WITH OBSERVATIONS** (2026-07-20)  
 Can begin environment configuration work in parallel with Phase 2; health endpoint and graceful shutdown require feature stability from Phase 3.
 
 **EPIC-V13-09 (Performance & Scalability Baseline)**  
