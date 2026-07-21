@@ -231,7 +231,7 @@ PDF export, email delivery, or sharing. These are V2 distribution concerns. Expl
 
 ### EPIC-V13-06 — Explainability
 
-**Status:** Final Review COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1); Epic Close AUTHORIZED — 2026-07-22  
+**Status:** **CLOSED WITH OBSERVATIONS** (0 P0/P1) — 2026-07-22  
 
 **Purpose:**  
 Make every coaching assertion traceable to its evidence source, surfaced in the report UI.
@@ -355,8 +355,8 @@ The following must be true before V1.3 is declared complete.
 ### Product
 
 - [ ] Unified Report renders all session artifacts from `Report` as the sole data source.
-- [ ] Every `NarrativeInsight` surfaces its evidence anchor in the report UI.
-- [ ] Every `CoachingAction` surfaces its `KnowledgeGap` origin in the report UI.
+- [x] Every `NarrativeInsight` surfaces its evidence anchor in the report UI. *(EPIC-V13-06 — ProfileFeature identity `source_feature_id` + `is_traceable` per Contracts EC-N-01; Master Plan “Observation anchor” wording = accepted drift D-01)*
+- [x] Every `CoachingAction` surfaces its `KnowledgeGap` origin in the report UI. *(EPIC-V13-06 — LearningObjective origin chain per Contracts EC-C-01; Master Plan “KnowledgeGap origin” wording = accepted drift D-02)*
 - [ ] Replay UI navigates any stored session question-by-question with correct data.
 - [ ] Progress view reflects behavioral profile trends (from `LongitudinalProfile`), not only dimensional scores.
 - [ ] All primary user flows are production-quality with no placeholder states or internal error surfaces.
@@ -483,8 +483,8 @@ Depends on EPIC-V13-03 (Replay Engine).
 **EPIC-V13-05 (Unified Report)**  
 Depends on EPIC-V13-01, EPIC-V13-02, EPIC-V13-03. Does not depend on EPIC-V13-06.
 
-**EPIC-V13-06 (Explainability)** — **Final Review COMPLETE — PASS WITH OBSERVATIONS**; Epic Close AUTHORIZED (2026-07-22)  
-Depends on EPIC-V13-05 (Unified Report host surfaces) and EPIC-V13-01 (clean scoring data). Implementation complete (C1–C8, C10). Living Overview: `docs/master-plan/epics/EPIC-06-OVERVIEW.md`. Next: Epic Close.
+**EPIC-V13-06 (Explainability)** — **CLOSED WITH OBSERVATIONS** (2026-07-22)  
+Depends on EPIC-V13-05 (Unified Report host surfaces) and EPIC-V13-01 (clean scoring data). Implementation complete (C1–C8, C10). Living Overview: `docs/master-plan/epics/EPIC-06-OVERVIEW.md`. Non-blocking carry-forward: OF-03 ADR-025 docs drift; optional AT-08 named module; OF-04 deferred.
 
 ### Phase 4 — Production Readiness (after Phase 3 complete)
 

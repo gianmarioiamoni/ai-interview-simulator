@@ -1,7 +1,7 @@
 # EPIC-06 — Explainability
 
-**Status:** Final Review COMPLETE — **PASS WITH OBSERVATIONS** (0 P0/P1); Epic Close AUTHORIZED — 2026-07-22  
-**Date:** 2026-07-16 (initialized); CAR/FR recovery 2026-07-22  
+**Status:** **CLOSED WITH OBSERVATIONS** (0 P0/P1) — 2026-07-22  
+**Date:** 2026-07-16 (initialized); CAR/FR/Close recovery 2026-07-22  
 **Epic ID:** EPIC-V13-06  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-06; Product Goal P-06  
@@ -17,7 +17,7 @@
 **Implementation:** COMPLETE (C1–C8, C10; C9/OF-04 deferred)  
 **Construction Architecture Review (CAR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-22  
 **Final Review (FR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-22  
-**Epic Close:** AUTHORIZED (not performed)  
+**Epic Close:** **CLOSED WITH OBSERVATIONS** — 2026-07-22  
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -104,7 +104,7 @@ Regression / Documentation Certification  ← COMPLETE (FR reconfirm)
         ↓
 Final Review (FR)  ← COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1)
         ↓
-Epic Close  ← AUTHORIZED (not performed)
+Epic Close  ← CLOSED WITH OBSERVATIONS
 ```
 
 ---
@@ -207,7 +207,7 @@ Production touch set confined to Report DTO / report UI / export path + tests. *
 |---|---|---|
 | P0 | 0 | — |
 | P1 | 0 | — |
-| P2 / P3 | 5 observations | Non-blocking; see §10 |
+| P2 / P3 | 5 observations | Non-blocking; see §11 |
 
 ### Authorization
 
@@ -262,15 +262,53 @@ Production touch set confined to Report DTO / report UI / export path + tests. *
 |---|---|---|
 | P0 | 0 | — |
 | P1 | 0 | — |
-| P2 / P3 | 5 observations | Non-blocking; §10 |
+| P2 / P3 | 5 observations | Non-blocking; §11 |
 
 ### Authorization
 
-**Epic Close authorized** (FR 2026-07-22). Do not perform Epic Close in this activity.
+**Epic Close authorized** (FR 2026-07-22). Superseded by §10 Epic Close.
 
 ---
 
-## 10. Remaining observations (non-blocking)
+## 10. Epic Close
+
+**Date:** 2026-07-22  
+**HEAD at close:** `15ae578d9eb65a16e3fc513f66908b17e0cf1ce8`  
+**Playbook:** Step 13 — Epic Close  
+**FR outcome:** **PASS WITH OBSERVATIONS** / Closed (0 P0/P1)  
+**Verdict:** **CLOSED WITH OBSERVATIONS**
+
+### Closure verification
+
+| Criterion | Result |
+|---|---|
+| C1–C8, C10 complete | **PASS** |
+| C9 / OF-04 | **DEFERRED** (plan-allowed; non-blocking) |
+| CAR | **PASS WITH OBSERVATIONS** (0 P0/P1) |
+| Final Review | **PASS WITH OBSERVATIONS** (0 P0/P1) — binary Closed |
+| Explainability R-01…R-07 | **PASS** |
+| Regression certification | **PASS** — FR suite **111 passed / 0 failed**; lineage EPIC-10 **7378 / 0** |
+| Documentation synchronized | **PASS** — Overview / Plan / Master Plan |
+| Zero open P0/P1 | **PASS** |
+| No temporary bridges | **PASS** |
+| Domain / architecture surfaces unchanged at close | **PASS** — docs-only close |
+
+### Remaining observations (non-blocking)
+
+1. **O-CAR-01 / OF-03** — ADR-025 unrealized KnowledgeGap / FK documentation drift (docs debt).
+2. **O-CAR-02** — AT-08 intent covered; no dedicated named AT-08 architectural test module.
+3. **O-CAR-03 / D-01–D-02** — Master Plan legacy “Observation anchor” / “KnowledgeGap origin” wording (Freeze-accepted).
+4. **O-CAR-04** — ACP living transcripts absent pre-recovery; recovered at CAR Traceability.
+5. **OF-04** — Optional objective-level enrichment deferred (C9 skipped).
+
+### Next activities
+
+1. **EPIC-V13-06 is CLOSED WITH OBSERVATIONS.** No further EPIC-06 scope.
+2. **Carry-forward (non-blocking):** OF-03 ADR-025 docs alignment; optional named AT-08; optional OF-04.
+
+---
+
+## 11. Remaining observations (non-blocking)
 
 1. **O-CAR-01 / OF-03** — ADR-025 unrealized KnowledgeGap / FK documentation drift remains open docs debt (Freeze INFORMATION; out of critical path).
 2. **O-CAR-02** — AT-08 intent enforced by implementation (origin join from LearningObjective; scoring `knowledge_gaps` not used as action origin) but no dedicated named `AT-08` architectural test module.
@@ -280,7 +318,7 @@ Production touch set confined to Report DTO / report UI / export path + tests. *
 
 ---
 
-## 11. Architecture Assumptions Register
+## 12. Architecture Assumptions Register
 
 Authoritative Contracts statuses: `EPIC-06-DOMAIN-CONTRACTS.md` §6; Freeze §18.
 
@@ -299,7 +337,7 @@ Authoritative Contracts statuses: `EPIC-06-DOMAIN-CONTRACTS.md` §6; Freeze §18
 
 ---
 
-## 12. Status
+## 13. Status
 
 | Workflow step | Status |
 |---|---|
@@ -313,18 +351,17 @@ Authoritative Contracts statuses: `EPIC-06-DOMAIN-CONTRACTS.md` §6; Freeze §18
 | Implementation (C1–C8, C10) | **COMPLETE** |
 | Construction Architecture Review (CAR) | **COMPLETE** — **PASS WITH OBSERVATIONS**; 0 P0/P1 |
 | Regression Certification | **COMPLETE** — FR reconfirm **111 passed / 0 failed** |
-| Documentation Certification | **COMPLETE** — Overview / Plan / Master Plan FR markers aligned |
+| Documentation Certification | **COMPLETE** — Overview / Plan / Master Plan close markers aligned |
 | Final Review (FR) | **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) |
-| Epic Close | **AUTHORIZED** — not performed |
+| Epic Close | **CLOSED WITH OBSERVATIONS** — 2026-07-22 |
 
 ---
 
-## 13. Next Activities
+## 14. Next Activities
 
-1. **Epic Close** for EPIC-V13-06 — authorized by this Final Review.
-2. Do **not** treat epic as CLOSED until Epic Close is performed.
-3. Non-blocking carry-forward: OF-03 ADR-025 docs alignment; optional named AT-08 module; optional OF-04.
+1. **EPIC-V13-06 is CLOSED WITH OBSERVATIONS.** No further EPIC-06 scope.
+2. Non-blocking carry-forward: OF-03 ADR-025 docs alignment; optional named AT-08 module; optional OF-04.
 
 ---
 
-*This Overview is the living status document for EPIC-V13-06. Frozen Discovery / Domain Contracts / Data Model / Architecture Freeze bodies remain historical records after freeze.*
+*This Overview is the living status document for EPIC-V13-06. Frozen Discovery / Domain Contracts / Data Model / Architecture Freeze bodies remain historical records. Epic CLOSED WITH OBSERVATIONS.*
