@@ -348,6 +348,16 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 
 ---
 
-## 17. Next activity
+## 17. Implementation progress
 
-**Pre-P1** — full regression; record EPIC-09 implementation baseline in `EPIC-09-OVERVIEW.md`; begin **C1** (SLO-Q harness).
+| Gate | Status |
+|---|---|
+| Pre-P1 baseline | **DONE** — 7417 passed / 0 failed (recorded in Overview) |
+| C1 | **DONE** — SLO-Q harness under `tests/performance/` |
+| Next | **C2** — optional infra cycle emit |
+
+---
+
+## 18. Next activity
+
+**C2** — optional infra cycle emit via existing Freeze fields (OBS-01/03/05; AR-10).

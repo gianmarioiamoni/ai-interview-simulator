@@ -1,14 +1,14 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION PLAN ACCEPTED — awaiting Pre-P1 / C1  
-**Date:** 2026-07-20  
+**Status:** IMPLEMENTATION IN PROGRESS — P1 / C1 complete  
+**Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-09; Product Goal P-09  
 **Roadmap Phase:** Phase 4 — Production Readiness  
 **Precondition:** EPIC-V13-01 CLOSED; EPIC-V13-03 CLOSED; EPIC-V13-08 CLOSED WITH OBSERVATIONS; Architecture Freeze APPROVED.  
-**Regression baseline (planning):** 7417 passed / 0 failed (EPIC-08 close-out) — **reconfirm at Pre-P1**  
-**EPIC-09 implementation baseline (pre-P1):** *pending Pre-P1*  
+**Regression baseline (planning):** 7417 passed / 0 failed (EPIC-08 close-out)  
+**EPIC-09 implementation baseline (pre-P1):** **7417 passed / 0 failed**  
 **Planning:** COMPLETE  
 **Architecture Discovery:** `EPIC-09-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
 **Architecture Review:** `EPIC-09-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
@@ -17,7 +17,7 @@
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-09-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** NOT STARTED  
+**Implementation:** IN PROGRESS — Pre-P1 done; **C1 complete**; next **C2**  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-09 (Interview Replay / session persistence).
@@ -96,14 +96,24 @@ Architecture Discovery       ← COMPLETE
 Architecture Review          ← APPROVED WITH OBSERVATIONS
 Architecture Freeze          ← APPROVED
 Implementation Plan          ← ACCEPTED
-Pre-P1 baseline              ← NEXT
-Implementation (C1–C12)      ← NOT STARTED
+Pre-P1 baseline              ← COMPLETE (7417 passed / 0 failed)
+Implementation (C1–C12)      ← IN PROGRESS (C1 complete; next C2)
 Checkpoint A / B / C
 CAR → Regression → Docs → FR → Epic Close
 ```
 
 ---
 
-## 7. Next planned activity
+## 7. Implementation progress
 
-**Pre-P1** — full regression; record EPIC-09 implementation baseline; begin **C1** (SLO-Q harness) per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+| Commit | Phase | Status |
+|---|---|---|
+| Pre-P1 | — | **DONE** — baseline 7417 passed / 0 failed |
+| C1 | P1 | **DONE** — SLO-Q written invoke harness + stub + P99 helper |
+| C2 | P1 | NEXT — optional infra cycle emit |
+
+---
+
+## 8. Next planned activity
+
+**C2** — optional infra cycle emit via existing Freeze schema fields per `EPIC-09-IMPLEMENTATION-PLAN.md`.
