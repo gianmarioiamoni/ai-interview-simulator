@@ -1,9 +1,9 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** ARCHITECTURE REVIEW COMPLETE — Domain Contracts next  
+**Status:** ARCHITECTURE FREEZE APPROVED — Domain Contracts next (Impl blocked until Contracts)  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
-**Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Review AR-13)  
+**Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Freeze)  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-10; Product Goal P-10  
 **Roadmap Phase:** Phase 5 — Release Gate  
 **Precondition:** EPIC-V13-01 CLOSED; EPIC-V13-09 CLOSED; Phase 4 complete; working tree clean at initialization.  
@@ -11,9 +11,10 @@
 **Architecture Discovery:** `EPIC-10-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
 **Architecture Review:** `EPIC-10-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
 **Formal ADR:** **SKIP** (AR-11 — ADR required: NO)  
-**Domain Contracts:** **REQUIRED** (AR-07) — NOT STARTED  
-**Data Model:** **N/A (default)** — escalate only if durable shape hit (AR-07)  
-**Architecture Freeze:** NOT STARTED  
+**Domain Contracts:** **REQUIRED** (AR-07 / Freeze) — NOT STARTED  
+**Data Model:** **N/A (frozen default)** — escalate only if durable shape hit  
+**Architecture Freeze:** `EPIC-10-ARCHITECTURE-FREEZE.md` — **APPROVED**  
+**Implementation Plan:** NOT STARTED — acceptance blocked until Domain Contracts (Freeze IC-10)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -159,13 +160,13 @@ Architecture Discovery  ← COMPLETE
 Architecture Review  ← APPROVED WITH OBSERVATIONS
   (ADR SKIP — AR-11)
         ↓
-Domain Contracts  ← NEXT (REQUIRED — AR-07)
+Architecture Freeze  ← APPROVED (decision Freeze)
         ↓
-Data Model  ← N/A (default; escalate if durable shape)
+Domain Contracts  ← NEXT (REQUIRED — gate for Impl Plan acceptance)
         ↓
-Architecture Freeze
+Data Model  ← N/A (frozen default; escalate if durable shape)
         ↓
-Implementation Plan
+Implementation Plan  ← blocked until Contracts (IC-10)
         ↓
 Implementation
   (Macro Phase → Architecture Checkpoint → …)
@@ -262,9 +263,10 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Living Overview created | **YES** — this document |
 | Architecture Discovery | **COMPLETE** — `EPIC-10-ARCHITECTURE-DISCOVERY.md` |
 | Architecture Review | **APPROVED WITH OBSERVATIONS** — `EPIC-10-ARCHITECTURE-REVIEW.md` |
+| Architecture Freeze | **APPROVED** — `EPIC-10-ARCHITECTURE-FREEZE.md` |
 | Formal ADR | **SKIP** (AR-11) |
-| Domain Contracts | **REQUIRED** — next activity |
-| Data Model | **N/A (default)** (AR-07) |
-| Code / architecture implementation | **NOT STARTED** |
+| Domain Contracts | **REQUIRED** — next activity (Impl Plan acceptance blocked — IC-10) |
+| Data Model | **N/A (frozen default)** |
+| Code / architecture implementation | **NOT AUTHORIZED** until Contracts + Impl Plan acceptance |
 
 **Next planned activity:** Domain Contracts — Ownership Matrix + deletion specs + Traceability (`EPIC-10-DOMAIN-CONTRACTS.md`).
