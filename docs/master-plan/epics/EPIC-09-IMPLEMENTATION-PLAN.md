@@ -364,10 +364,11 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | C8 | **DONE** — early vs late degradation gate (≤1.25 + absolute hold) |
 | Checkpoint B | **PASSED** — Macro C (P6–P7) authorized |
 | C9 | **DONE** — **P0-ABSENT** certified (no compute remediation; C7–C8 re-verified green) |
-| Next | **C10** |
+| C10 | **DONE** — CAT/ARC arch hardening tests (`tests/infrastructure/architecture/test_epic09_hardening_architecture.py`) |
+| Next | **C11** |
 
 ---
 
 ## 18. Next activity
 
-**C10** — Category A / ARC-01 arch constraint tests (P7).
+**C11** — Performance baseline report + readiness checklist (P7).

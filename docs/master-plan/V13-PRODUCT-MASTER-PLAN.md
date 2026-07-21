@@ -292,7 +292,7 @@ Container orchestration (Kubernetes, ECS). Autoscaling. Multi-region deployment.
 
 ### EPIC-V13-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro C / C9 complete (P0-ABSENT) — 2026-07-21  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro C / C10 complete (CAT/ARC arch tests) — 2026-07-21  
 
 **Purpose:**  
 Establish and verify the performance baseline required for production, and resolve any P0 bottlenecks before the release gate.
@@ -489,7 +489,7 @@ Depends on EPIC-V13-04 and EPIC-V13-05 being feature-complete.
 **EPIC-V13-08 (Deployment & Operations)** — **CLOSED WITH OBSERVATIONS** (2026-07-20)  
 Can begin environment configuration work in parallel with Phase 2; health endpoint and graceful shutdown require feature stability from Phase 3.
 
-**EPIC-V13-09 (Performance & Scalability Baseline)** — **IMPLEMENTATION IN PROGRESS** (Macro C / C9 complete — P0-ABSENT certified, 2026-07-21)  
+**EPIC-V13-09 (Performance & Scalability Baseline)** — **IMPLEMENTATION IN PROGRESS** (Macro C / C10 complete — CAT/ARC arch tests, 2026-07-21)  
 Preliminary profiling can begin in Phase 2. Full load test and SLO validation require Phase 3 feature completeness. SLO-D (SessionHistory DB read) dispositioned N/A for V1.3 per Architecture Freeze.
 
 ### Phase 5 — Release Gate

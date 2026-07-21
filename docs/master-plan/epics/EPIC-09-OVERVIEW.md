@@ -1,6 +1,6 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro C / C9 complete — next C10  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro C / C10 complete — next C11  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -17,7 +17,7 @@
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-09-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** IN PROGRESS — **C1–C9 complete**; Checkpoint A **PASSED**; Checkpoint B **PASSED**; next **C10**  
+**Implementation:** IN PROGRESS — **C1–C10 complete**; Checkpoint A **PASSED**; Checkpoint B **PASSED**; next **C11**  
 **P0 disposition (P6 / C9):** **P0-ABSENT** — no in-scope SLO violations under P5 stub-LLM load (C7–C8 green); no compute remediation applied  
 **Playbook:** V13 Development Playbook Version 1.0
 
@@ -98,7 +98,7 @@ Architecture Review          ← APPROVED WITH OBSERVATIONS
 Architecture Freeze          ← APPROVED
 Implementation Plan          ← ACCEPTED
 Pre-P1 baseline              ← COMPLETE (7417 passed / 0 failed)
-Implementation (C1–C12)      ← IN PROGRESS (C1–C9 complete; Macro C / P6 done)
+Implementation (C1–C12)      ← IN PROGRESS (C1–C10 complete; Macro C / P7 started)
 Checkpoint A                 ← PASSED
 Checkpoint B                 ← PASSED (Macro C authorized)
 Checkpoint C
@@ -123,6 +123,7 @@ CAR → Regression → Docs → FR → Epic Close
 | C8 | P5 | **DONE** — early vs late degradation gate (≤1.25 + absolute hold) |
 | Checkpoint B | — | **PASSED** — Macro C (P6–P7) authorized |
 | C9 | P6 | **DONE** — **P0-ABSENT** certified (no remediation; C7–C8 re-verified green) |
+| C10 | P7 | **DONE** — CAT/ARC arch hardening tests (`test_epic09_hardening_architecture`) |
 
 ### P6 / C9 — P0 certification
 
@@ -139,4 +140,4 @@ CAR → Regression → Docs → FR → Epic Close
 
 ## 8. Next planned activity
 
-**C10** — Category A / ARC-01 arch constraint tests per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+**C11** — Performance baseline report + readiness checklist per `EPIC-09-IMPLEMENTATION-PLAN.md`.
