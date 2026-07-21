@@ -1,10 +1,10 @@
 # EPIC-06 — Explainability: Implementation Plan
 
-**Status:** IMPLEMENTATION PLAN ACCEPTED  
+**Status:** IMPLEMENTATION COMPLETE — CAR **PASS WITH OBSERVATIONS** (0 P0/P1); Final Review AUTHORIZED — 2026-07-22  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-06  
 **Playbook Category:** Category B — Major Architectural Epic  
-**Phase:** Implementation Plan (Playbook §8.6)  
+**Phase:** Implementation Plan (Playbook §8.6) — close-out markers updated at CAR recovery  
 **Precondition:** `EPIC-06-ARCHITECTURE-FREEZE.md` APPROVED; ADR STEP SKIPPED; working tree clean  
 **Authority:** Implementation sequence, commit boundaries, tests, OF-01 presentation-mechanism selection (implementation-only). No architecture changes. No ADR. No production code in this document step.
 
@@ -379,8 +379,26 @@ On stop: fix in-phase or escalate Architecture Checkpoint; do not proceed to nex
 
 ## 20. Next Step
 
-Begin Macro Phase **M0**, then **M1 / C1** (NarrativeInsightDTO evidence mapping). Do not start M3 UI until ACP-M1 and ACP-M2 pass.
+~~Begin Macro Phase **M0**, then **M1 / C1**.~~ **Superseded** — implementation complete; see §21.
 
 ---
 
-*Implementation Plan accepted. Architecture remains frozen. OF-01 resolved as inline presentation within existing report sections. No production code modified in this planning step.*
+## 21. Close-out status (CAR recovery — 2026-07-22)
+
+| Gate | Status |
+|---|---|
+| C1–C8, C10 | **DONE** |
+| C9 / OF-04 | **DEFERRED** (plan-allowed; non-blocking) |
+| ACP-M0…M4 | **RECOVERED at CAR Traceability** (living checkpoint transcripts were absent pre-recovery) |
+| CAR | **PASS WITH OBSERVATIONS** — 2026-07-22; 0 P0/P1; Final Review **AUTHORIZED** |
+| CAR explainability suite | **111 passed / 0 failed** |
+| Regression Certification | **PENDING** (FR path) |
+| Documentation Certification | **PENDING** (FR path; Overview/Plan/MP CAR markers updated here) |
+| Final Review | **AUTHORIZED** — not performed |
+| Epic Close | **PENDING** |
+
+Open plan issues disposition at CAR: OF-01 **RESOLVED** (executed); OF-03 **OPEN** docs debt (O-CAR-01); OF-04 **DEFERRED**.
+
+---
+
+*Implementation Plan accepted. Architecture remains frozen. OF-01 resolved as inline presentation within existing report sections. CAR recovery updated living status markers only.*
