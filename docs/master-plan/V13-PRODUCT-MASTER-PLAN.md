@@ -313,7 +313,8 @@ Horizontal scaling. Distributed caching (Redis). CDN configuration. Query optimi
 
 ### EPIC-V13-10 — Final Architecture Cleanup
 
-**Status:** INITIALIZED — 2026-07-21  
+**Status:** CAR COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1); Final Review AUTHORIZED — 2026-07-21  
+
 
 **Purpose:**  
 Complete the V1.2 technical debt register and enforce all V1.3 PAT requirements, leaving the codebase in a state suitable for long-term production maintenance.
@@ -344,10 +345,10 @@ The following must be true before V1.3 is declared complete.
 - [ ] `LongitudinalProfile` is produced and persisted after every session completion.
 - [ ] `replay_node` is implemented, non-fatal, write-once, and LLM-free.
 - [ ] Domain invariant I-11 ("Replay never invokes LLM calls") is enforced by an architectural test.
-- [ ] All four emerging PATs from the V1.2 retrospective are formally registered.
-- [ ] Reconstruction Completeness PAT is declared and all reconstruction paths are audited.
-- [ ] Zero `InterviewState` fields without a declared sole writer.
-- [ ] Zero deprecated artifacts without a deletion milestone.
+- [x] All four emerging PATs from the V1.2 retrospective are formally registered. *(EPIC-V13-10 — INDEX Official Patterns OP-01…04 + P-08; dual PAT/OP namespaces)*
+- [x] Reconstruction Completeness PAT is declared and all reconstruction paths are audited. *(EPIC-V13-10 — ARC-01 P-08; AT-06)*
+- [x] Zero `InterviewState` fields without a declared sole writer. *(EPIC-V13-10 — Ownership Matrix 43/43; AT-01; authorized writer sets)*
+- [x] Zero deprecated artifacts without a deletion milestone. *(EPIC-V13-10 — stubs deleted; `TD-EP10-001` dual-model residual registered with deferred redesign milestone)*
 
 ### Product
 
@@ -496,8 +497,8 @@ Preliminary profiling can begin in Phase 2. Full load test and SLO validation re
 
 ### Phase 5 — Release Gate
 
-**EPIC-V13-10 (Final Architecture Cleanup — full audit)** — **INITIALIZED** (2026-07-21)  
-Final audit pass. All deprecations resolved. All PAT violations addressed. Release gate checklist completed. Living Overview: `docs/master-plan/epics/EPIC-10-OVERVIEW.md`. Architecture Discovery next.
+**EPIC-V13-10 (Final Architecture Cleanup — full audit)** — **CAR COMPLETE — PASS WITH OBSERVATIONS**; Final Review AUTHORIZED (2026-07-21)  
+Final audit pass. Ownership Matrix, PAT/OP registry, dead-code purity, and AT-01…07 gates certified. Living Overview: `docs/master-plan/epics/EPIC-10-OVERVIEW.md`. Next: Final Review → Epic Close.
 
 **V1.3 Release**
 
