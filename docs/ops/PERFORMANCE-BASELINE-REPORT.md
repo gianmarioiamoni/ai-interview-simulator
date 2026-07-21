@@ -162,7 +162,7 @@ EPIC-09 authorized surfaces remain harnesses, optional infra cycle emit within e
 | AO-08 | ARC-01 preserved | §7; C10 arch tests | **PASS** |
 | LOAD-03 | Degradation ≤ 1.25 + absolute hold | §4 | **PASS** |
 | O-02 | Zero compute-in-projection; no new caches/state fields | C10 arch tests | **PASS** |
-| Full regression ≥ Pre-P1 | Suite certification | **Deferred to C12** |
+| Full regression ≥ Pre-P1 | C12 suite certification | **PASS** — **7485 passed / 0 failed** (baseline 7417) |
 
 ---
 
@@ -184,4 +184,5 @@ EPIC-09 authorized surfaces remain harnesses, optional infra cycle emit within e
 |---|---|
 | Path | `docs/ops/PERFORMANCE-BASELINE-REPORT.md` |
 | Created | EPIC-V13-09 Commit C11 |
+| C12 regression note | Full suite **7485 / 0** (2026-07-21); ≥ Pre-P1 7417 |
 | Supersedes | None (initial V1.3 performance baseline) |

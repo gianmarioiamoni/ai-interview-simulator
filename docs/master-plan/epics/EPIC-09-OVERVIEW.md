@@ -1,6 +1,6 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro C / C11 complete — next C12  
+**Status:** IMPLEMENTATION COMPLETE — Macro C / C12 complete — Ready for Checkpoint C / CAR  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -9,6 +9,7 @@
 **Precondition:** EPIC-V13-01 CLOSED; EPIC-V13-03 CLOSED; EPIC-V13-08 CLOSED WITH OBSERVATIONS; Architecture Freeze APPROVED.  
 **Regression baseline (planning):** 7417 passed / 0 failed (EPIC-08 close-out)  
 **EPIC-09 implementation baseline (pre-P1):** **7417 passed / 0 failed**  
+**C12 full regression certification:** **7485 passed / 0 failed** (≥ Pre-P1; 2026-07-21)  
 **Planning:** COMPLETE  
 **Architecture Discovery:** `EPIC-09-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
 **Architecture Review:** `EPIC-09-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
@@ -17,7 +18,7 @@
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-09-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** IN PROGRESS — **C1–C11 complete**; Checkpoint A **PASSED**; Checkpoint B **PASSED**; next **C12**  
+**Implementation:** **COMPLETE** — **C1–C12**; Checkpoint A **PASSED**; Checkpoint B **PASSED**; Macro C complete; **Ready for Checkpoint C / CAR**  
 **P0 disposition (P6 / C9):** **P0-ABSENT** — no in-scope SLO violations under P5 stub-LLM load (C7–C8 green); no compute remediation applied  
 **Baseline report:** `docs/ops/PERFORMANCE-BASELINE-REPORT.md` — **PUBLISHED** (AR-19; SLO-D N/A)  
 **Playbook:** V13 Development Playbook Version 1.0
@@ -99,10 +100,10 @@ Architecture Review          ← APPROVED WITH OBSERVATIONS
 Architecture Freeze          ← APPROVED
 Implementation Plan          ← ACCEPTED
 Pre-P1 baseline              ← COMPLETE (7417 passed / 0 failed)
-Implementation (C1–C12)      ← IN PROGRESS (C1–C11 complete; baseline report published)
+Implementation (C1–C12)      ← COMPLETE (C1–C12; Macro C done)
 Checkpoint A                 ← PASSED
 Checkpoint B                 ← PASSED (Macro C authorized)
-Checkpoint C
+Checkpoint C                 ← READY (CAR authorized pending formal gate)
 CAR → Regression → Docs → FR → Epic Close
 ```
 
@@ -126,6 +127,7 @@ CAR → Regression → Docs → FR → Epic Close
 | C9 | P6 | **DONE** — **P0-ABSENT** certified (no remediation; C7–C8 re-verified green) |
 | C10 | P7 | **DONE** — CAT/ARC arch hardening tests (`test_epic09_hardening_architecture`) |
 | C11 | P7 | **DONE** — `docs/ops/PERFORMANCE-BASELINE-REPORT.md` + readiness checklist |
+| C12 | P7 | **DONE** — full regression **7485 / 0**; Macro C complete; **Ready for CAR** |
 
 ### P6 / C9 — P0 certification
 
@@ -138,7 +140,7 @@ CAR → Regression → Docs → FR → Epic Close
 | Freeze stop rule (PRD-05) | N/A — no Category B pressure |
 | Category A / ARC-01 | Held — no Domain Contracts, Data Model, InterviewState, topology, persistence, or cache changes |
 
-### P7 / C11 — Performance production-readiness checklist
+### P7 / C11–C12 — Performance production-readiness checklist
 
 | Criterion | Status |
 |---|---|
@@ -147,10 +149,23 @@ CAR → Regression → Docs → FR → Epic Close
 | In-scope SLOs + load + degradation | **PASS** (see baseline report §2 / §4) |
 | P0-ABSENT | **PASS** (C9) |
 | CAT/ARC arch tests (O-02) | **PASS** (C10) |
-| Full regression ≥ Pre-P1 | **Deferred to C12** |
+| Full regression ≥ Pre-P1 | **PASS** — **7485 passed / 0 failed** (baseline 7417) |
+
+### P7 / C12 — Full regression certification
+
+| Item | Result |
+|---|---|
+| Date | 2026-07-21 |
+| Full suite | **7485 passed / 0 failed** |
+| Pre-P1 baseline | 7417 passed / 0 failed |
+| Delta | +68 vs Pre-P1 (EPIC-09 harness/arch/doc tests) |
+| Known failing tests | **Zero** |
+| EPIC-09 arch + performance gates | **62 passed / 0 failed** |
+| Macro C (P6–P7) | **COMPLETE** |
+| CAR authorization | **AUTHORIZED** pending Checkpoint C formal gate |
 
 ---
 
 ## 8. Next planned activity
 
-**C12** — Full regression certification + authorize CAR per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+**Checkpoint C** — confirm baseline report + arch tests + full regression + P0-absent; authorize **CAR**.
