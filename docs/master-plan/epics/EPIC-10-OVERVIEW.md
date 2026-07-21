@@ -1,13 +1,16 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** INITIALIZED — Architecture Discovery not started  
+**Status:** ARCHITECTURE DISCOVERY COMPLETE — Architecture Review next  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
-**Playbook Category:** Category B — Major Architectural Epic  
+**Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Discovery §9)  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-10; Product Goal P-10  
 **Roadmap Phase:** Phase 5 — Release Gate  
 **Precondition:** EPIC-V13-01 CLOSED; EPIC-V13-09 CLOSED; Phase 4 complete; working tree clean at initialization.  
-**Regression baseline (initialization):** 7485 passed / 0 failed (EPIC-09 close-out); reconfirm at Architecture Discovery — suite not re-run in this planning step.  
+**Regression baseline (initialization):** 7485 passed / 0 failed (EPIC-09 close-out); suite not re-run at Discovery.  
+**Architecture Discovery:** `EPIC-10-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
+**Architecture Review:** NOT STARTED  
+**Domain Contracts / Data Model:** CONDITIONAL (Discovery AA-02 / ARD-07)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -70,8 +73,8 @@ Concrete cleanup mechanisms, registry locations, ownership declaration formats, 
 - [x] EPIC-V13-01 CLOSED
 - [x] EPIC-V13-09 CLOSED (Phase 4 complete)
 - [x] Working tree clean at initialization
-- [ ] Category confirmation vs Domain Contracts / Data Model necessity — Architecture Discovery
-- [ ] Full inventory of `deprecated`, dead code, and `InterviewState` ownership gaps — Architecture Discovery
+- [x] Category confirmation — Category B confirmed (Discovery §9); Contracts/Data Model conditional (ARD-07)
+- [x] Full inventory of `deprecated`, dead code, and `InterviewState` ownership gaps — Architecture Discovery
 
 ---
 
@@ -146,16 +149,16 @@ Concrete cleanup mechanisms, registry locations, ownership declaration formats, 
 ## 10. Architecture Workflow
 
 ```
-EPIC Initialization  ← COMPLETE (this document)
+EPIC Initialization  ← COMPLETE
         ↓
-Architecture Discovery  ← NEXT
+Architecture Discovery  ← COMPLETE
   → EPIC-10-ARCHITECTURE-DISCOVERY.md
         ↓
-Domain Contracts (if required)
+Architecture Review / ADR (conditional)  ← NEXT
         ↓
-Data Model (if required)
+Domain Contracts (if required — ARD-07)
         ↓
-Architecture Review / ADR (conditional)
+Data Model (if required — ARD-07)
         ↓
 Architecture Freeze
         ↓
@@ -221,13 +224,16 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 
 | ID | Description | Status | Verification Document | Notes |
 |---|---|---|---|---|
-| AA-01 | Full Phase 5 audit can close without introducing new product features. | UNVERIFIED | Architecture Discovery | Non-goals bind |
-| AA-02 | Domain Contracts / Data Model are required only if ownership or stored-shape changes are proven necessary. | UNVERIFIED | Architecture Discovery | May remain N/A |
-| AA-03 | Existing ARC-01 + PAT-01…06 + OP-* documents are sufficient starting inputs for PAT formalization decisions. | UNVERIFIED | Architecture Discovery | No new ADR at init |
-| AA-04 | EPIC-V13-01 closure removed scoring-residue blockers that would prevent audit close. | UNVERIFIED | Architecture Discovery | Master Plan dependency |
-| AA-05 | `TD-EP08-001` deploy-artifact dead-code purity is in EPIC-10 scope. | UNVERIFIED | Architecture Discovery | EPIC-08 AR-16 |
-| AA-06 | Phase 1 governance work (if any) does not satisfy Phase 5 full-audit close criteria by itself. | UNVERIFIED | Architecture Discovery | Master Plan §8 |
-| AA-07 | Reconstruction Completeness enforcement can build on prior epic evidence without reopening closed feature epics. | UNVERIFIED | Architecture Discovery | |
+| AA-01 | Full Phase 5 audit can close without introducing new product features. | VERIFIED | `EPIC-10-ARCHITECTURE-DISCOVERY.md` §10 | |
+| AA-02 | Domain Contracts / Data Model required only if ownership or stored-shape changes proven necessary. | VERIFIED (conditional) | Discovery §9–§10 | Final necessity → Review ARD-07 |
+| AA-03 | Existing ARC-01 + PAT-01…06 + OP-* are sufficient starting inputs for registry reconciliation. | VERIFIED | Discovery §3 / §10 | Unification action → Review |
+| AA-04 | EPIC-V13-01 closure removed scoring-residue blockers that prevent audit start. | VERIFIED | Discovery §10 | Residue services remain cleanup scope |
+| AA-05 | `TD-EP08-001` deploy-artifact dead-code purity is in EPIC-10 scope. | VERIFIED | Discovery §5.4 / §10 | |
+| AA-06 | Phase 1 governance does not by itself satisfy Phase 5 full-audit close. | VERIFIED | Discovery §3 / §10 | |
+| AA-07 | Reconstruction Completeness enforcement can build on prior epic evidence without reopening closed feature epics. | VERIFIED | Discovery §10 | P-08 vs PAT naming → Review |
+| AA-08 | Master Plan “five new PATs” = OP-01…04 + P-08 (not five new Pattern Freeze IDs). | VERIFIED | Discovery §3.2 | |
+| AA-09 | No open confirmed live PAT-06 corollary violation documented today. | VERIFIED | Discovery §6.3 | Suspects remain |
+| AA-10 | Complete OP-04 ownership matrix does not exist for all 45 fields. | VERIFIED | Discovery §4 | |
 
 ---
 
@@ -251,10 +257,9 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 |---|---|
 | Epic initialized | **YES** |
 | Living Overview created | **YES** — this document |
-| Architecture-neutral Initialization | **YES** — no mechanisms selected |
-| Known Inputs recorded | **YES** — §11 |
-| Assumptions Register opened | **YES** — §12 (all UNVERIFIED) |
-| Architecture Discovery | **NOT STARTED** — next activity |
-| Code / architecture implementation | **NOT STARTED** — out of scope for Initialization |
+| Architecture Discovery | **COMPLETE** — `EPIC-10-ARCHITECTURE-DISCOVERY.md` |
+| Assumptions Register | **YES** — §12 (AA-01…AA-10 VERIFIED per Discovery) |
+| Architecture Review | **NOT STARTED** — next activity |
+| Code / architecture implementation | **NOT STARTED** |
 
-**Next planned activity:** Architecture Discovery → `EPIC-10-ARCHITECTURE-DISCOVERY.md`.
+**Next planned activity:** Architecture Review (ARD-01…ARD-10) — conditional ADR; then Contracts/Data Model if ARD-07 requires.
