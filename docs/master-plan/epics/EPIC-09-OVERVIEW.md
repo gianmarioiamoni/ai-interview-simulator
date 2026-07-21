@@ -1,6 +1,6 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** CAR COMPLETE — **PASS** — Final Review authorized  
+**Status:** Final Review **COMPLETE** — **PASS** — Epic Close authorized  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -10,6 +10,7 @@
 **Regression baseline (planning):** 7417 passed / 0 failed (EPIC-08 close-out)  
 **EPIC-09 implementation baseline (pre-P1):** **7417 passed / 0 failed**  
 **C12 full regression certification:** **7485 passed / 0 failed** (≥ Pre-P1; 2026-07-21)  
+**Regression (close-out / FR):** **7485 passed / 0 failed** (C12 suite; no production code after C12)  
 **Planning:** COMPLETE  
 **Architecture Discovery:** `EPIC-09-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
 **Architecture Review:** `EPIC-09-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
@@ -20,6 +21,8 @@
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
 **Implementation:** **COMPLETE** — **C1–C12**; Checkpoint A **PASSED**; Checkpoint B **PASSED**; Checkpoint C **PASSED**  
 **Construction Architecture Review (CAR):** **COMPLETE** — **PASS** (0 P0/P1) — 2026-07-21  
+**Final Review (FR):** **COMPLETE** — **PASS** (0 P0/P1) — 2026-07-21  
+**Epic Close:** **AUTHORIZED** (not yet closed)  
 **P0 disposition (P6 / C9):** **P0-ABSENT** — no in-scope SLO violations under P5 stub-LLM load (C7–C8 green); no compute remediation applied  
 **Baseline report:** `docs/ops/PERFORMANCE-BASELINE-REPORT.md` — **PUBLISHED** (AR-19; SLO-D N/A)  
 **Playbook:** V13 Development Playbook Version 1.0
@@ -105,8 +108,11 @@ Implementation (C1–C12)      ← COMPLETE
 Checkpoint A                 ← PASSED
 Checkpoint B                 ← PASSED
 Checkpoint C                 ← PASSED (CAR authorized)
-CAR                          ← COMPLETE — PASS (0 P0/P1); Final Review authorized
-Regression → Docs → FR → Epic Close
+CAR                          ← COMPLETE — PASS (0 P0/P1)
+Regression Certification     ← COMPLETE (7485 / 0)
+Documentation Certification  ← COMPLETE
+Final Review (FR)            ← COMPLETE — PASS (0 P0/P1); Epic Close authorized
+Epic Close                   ← AUTHORIZED
 ```
 
 ---
@@ -131,7 +137,8 @@ Regression → Docs → FR → Epic Close
 | C11 | P7 | **DONE** — `docs/ops/PERFORMANCE-BASELINE-REPORT.md` + readiness checklist |
 | C12 | P7 | **DONE** — full regression **7485 / 0**; Macro C complete |
 | Checkpoint C | — | **PASSED** — 2026-07-21; CAR authorized |
-| CAR | — | **COMPLETE** — **PASS** (0 P0/P1); Final Review authorized |
+| CAR | — | **COMPLETE** — **PASS** (0 P0/P1) |
+| Final Review (FR) | — | **COMPLETE** — **PASS** (0 P0/P1); Epic Close authorized |
 
 ### P6 / C9 — P0 certification
 
@@ -221,10 +228,77 @@ Regression → Docs → FR → Epic Close
 
 ### Authorization
 
-**Final Review authorized.** Next: Regression → Documentation Update → FR → Epic Close.
+**Final Review authorized** (CAR 2026-07-21). Superseded by §10 Final Review.
 
 ---
 
-## 9. Next planned activity
+## 9. Close-out certifications (Regression + Documentation)
 
-**Regression Certification** (Playbook Step 10), then Documentation Update → Final Review → Epic Close.
+| Gate | Status |
+|---|---|
+| Regression Certification | **COMPLETE** — **7485 passed / 0 failed** (C12; FR reconfirm: EPIC-09 performance + arch gates green; no production code after C12) |
+| Documentation Certification | **COMPLETE** — Overview / Plan / Freeze living status aligned; baseline report published; Master Plan CAR/FR markers updated as needed |
+
+---
+
+## 10. Final Review (FR)
+
+**Date:** 2026-07-21  
+**Scope:** Epic-closure gate only (Playbook §10). No implementation or architecture changes.  
+**Category:** A  
+**Verdict:** **PASS** — binary outcome **Closed** (Epic Close authorized)
+
+### FR checklist
+
+| Criterion | Result |
+|---|---|
+| Master Plan / Overview objectives (G-01–G-08; P-09; AO-01–AO-08) | **PASS** — SLOs, profiling, load, P0-ABSENT, baseline report, ARC-01 held |
+| Frozen planning fully implemented (AR-01–AR-22; CAT-*; MEAS/LOAD/PROF/PRD) | **PASS** — C1–C12 complete; no deferred in-scope decisions |
+| Review observations O-01–O-04 resolved or closed | **PASS** — all resolved/held at CAR (Freeze §16) |
+| No temporary bridges / compatibility layers | **PASS** — none introduced |
+| Runtime matches frozen architecture (Category A) | **PASS** — harness + optional infra emit only; CAR verified |
+| InterviewState ownership (EPIC-09) | **N/A** — no state fields introduced |
+| Implementation debt classified | **PASS** — CAR 0 P2/P3; no new TD items |
+| Evidence present | **PASS** — baseline report; C12 regression; arch tests; CAR PASS |
+| Production readiness (performance) | **READY** — PRD-01–05 / baseline §8 |
+| ADR | **SKIP** (not required) |
+
+### Findings
+
+| Severity | Count | Notes |
+|---|---|---|
+| P0 | 0 | — |
+| P1 | 0 | — |
+| P2 / P3 | 0 | No new Technical Debt Register items from FR |
+
+### Authorization
+
+**Epic Close authorized.** Next: Epic Close (Playbook Step 13).
+
+---
+
+## 11. Status
+
+| Workflow step | Status |
+|---|---|
+| Initialization | **COMPLETE** |
+| Architecture Discovery | **COMPLETE** |
+| Architecture Review | **APPROVED WITH OBSERVATIONS** |
+| ADR (conditional) | **SKIP** (not required) |
+| Architecture Freeze | **APPROVED** |
+| Implementation Plan | **ACCEPTED** |
+| Implementation | **COMPLETE** (C1–C12) |
+| Checkpoint A | **PASSED** |
+| Checkpoint B | **PASSED** |
+| Checkpoint C | **PASSED** — 2026-07-21 |
+| Construction Architecture Review (CAR) | **COMPLETE** — **PASS** (0 P0/P1) — 2026-07-21 |
+| Regression Certification | **COMPLETE** — **7485 passed / 0 failed** |
+| Documentation Certification | **COMPLETE** — 2026-07-21 |
+| Final Review (FR) | **COMPLETE** — **PASS** (0 P0/P1) — 2026-07-21 |
+| Epic Close | **AUTHORIZED** |
+
+---
+
+## 12. Next planned activity
+
+**Epic Close** (Playbook Step 13).

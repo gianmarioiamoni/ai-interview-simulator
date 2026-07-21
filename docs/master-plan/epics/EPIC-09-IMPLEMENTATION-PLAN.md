@@ -1,6 +1,6 @@
 # EPIC-09 — Implementation Plan
 
-**Status:** ACCEPTED — Implementation **COMPLETE**; Checkpoint C **PASS**; CAR **PASS** (Final Review authorized)  
+**Status:** ACCEPTED — Implementation **COMPLETE**; Checkpoint C **PASS**; CAR **PASS**; Final Review **PASS** (Epic Close authorized)  
 **Date:** 2026-07-20  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -369,9 +369,12 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | C12 | **DONE** — full regression **7485 passed / 0 failed** (≥ Pre-P1 7417); Macro C complete |
 | Checkpoint C | **PASS** — 2026-07-21; CAR authorized |
 | CAR | **PASS** — 2026-07-21; 0 P0/P1; Final Review **AUTHORIZED** |
+| Regression Certification | **COMPLETE** — 2026-07-21; **7485 passed / 0 failed** |
+| Documentation Certification | **COMPLETE** — 2026-07-21 |
+| Final Review | **PASS** — 2026-07-21; 0 P0/P1; Epic Close **AUTHORIZED** |
 
 ---
 
 ## 18. Next activity
 
-**Regression Certification** → Documentation Update → Final Review → Epic Close.
+**Epic Close** (Playbook Step 13).
