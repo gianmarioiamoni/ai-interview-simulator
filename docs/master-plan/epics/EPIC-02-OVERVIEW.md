@@ -1,10 +1,22 @@
 # EPIC-02 Overview — Cross-Session Profile Continuity
 
 **Epic ID:** EPIC-V13-02  
-**Status:** PLANNED  
+**Status:** CLOSED  
 **Phase:** Phase 2 — Core Domain  
-**Date:** 2026-07-06  
-**Master Plan Reference:** §4 EPIC-V13-02
+**Date:** 2026-07-06 (initialized); Epic Close 2026-07-15; living sync 2026-07-22  
+**Master Plan Reference:** §4 EPIC-V13-02  
+**Playbook Category:** Category B — Major Architectural Epic  
+**Architecture Discovery:** `EPIC-02-LONGITUDINAL-PROFILE.md` — historical planning record  
+**Domain Contracts:** `EPIC-02-DOMAIN-CONTRACTS.md` — FROZEN  
+**Data Model:** `EPIC-02-DATA-MODEL.md` — FROZEN  
+**Architecture Freeze:** `EPIC-02-ARCHITECTURE-FREEZE.md` — FROZEN  
+**Implementation Plan:** `EPIC-02-IMPLEMENTATION-PLAN.md` — ACCEPTED; EPIC CLOSED  
+**Implementation:** COMPLETE (P1–P5)  
+**Governing ADR:** ADR-034 (+ ADR-035/036 language runtime ownership)  
+**Construction Architecture Review (CAR):** Historical — closure commit present; no contemporaneous Overview CAR transcript  
+**Final Review (FR):** Historical — closure accepted by successor epics (EPIC-04/05 DoR)  
+**Epic Close:** CLOSED — 2026-07-15 (`e051ada`)  
+**Playbook:** V13 Development Playbook Version 1.0
 
 ---
 
@@ -163,4 +175,19 @@ The following ADR decisions must be frozen before implementation begins. ADRs ar
 
 ---
 
-*This document is the authoritative overview for EPIC-02. It does not contain implementation details, ADR content, or domain contract specifications. Those are produced in the Category B pre-implementation workflow.*
+## 12. Epic Close (living status — 2026-07-22 sync)
+
+**Verdict:** CLOSED  
+
+| Gate | Outcome |
+|---|---|
+| Implementation P1–P5 | COMPLETE |
+| Closure commit | `e051ada` — `chore(epic-02): finalize epic closure` (2026-07-15) |
+| Successor acceptance | EPIC-04/05 list EPIC-V13-02 CLOSED |
+| Carry-forward | `TD-EP02-001` (if present) — non-blocking / deferred |
+
+**EPIC-V13-02 is CLOSED.** No further EPIC-02 scope.
+
+---
+
+*This Overview is the living status document for EPIC-V13-02. Frozen Discovery / Domain Contracts / Data Model / Architecture Freeze bodies remain historical records. Epic CLOSED.*

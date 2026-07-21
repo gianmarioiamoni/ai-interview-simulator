@@ -1,10 +1,13 @@
 # EPIC-02 — Implementation Plan
 
-**Status:** ACTIVE  
+**Status:** ACCEPTED — Implementation COMPLETE (P1–P5); EPIC CLOSED  
 **Epic ID:** EPIC-V13-02  
 **Date:** 2026-07-14  
+**Close-out sync:** 2026-07-22 — living status aligned at Release Documentation Synchronization  
+**Epic Close:** 2026-07-15 (`e051ada`)  
 **Precondition:** Architecture Freeze declared (`EPIC-02-ARCHITECTURE-FREEZE.md`). All frozen documents accepted.  
-**Authority:** This document defines the implementation sequence for EPIC-02. Every phase must preserve the invariants declared in ADR-034. Any deviation requires a Freeze Integrity Check before the deviation is committed.
+**Authority:** This document defines the implementation sequence for EPIC-02. Every phase must preserve the invariants declared in ADR-034. Any deviation requires a Freeze Integrity Check before the deviation is committed.  
+**Living Overview:** `EPIC-02-OVERVIEW.md`
 
 ---
 

@@ -69,7 +69,7 @@ Concrete presentation mechanisms, ownership solutions, and component-level desig
 | EPIC-V13-01 | CLOSED | `Report` authority |
 | EPIC-V13-02 | CLOSED | Progress / longitudinal surfaces |
 | EPIC-V13-03 | CLOSED | Replay engine / `ReplaySession` |
-| EPIC-V13-06 | NOT CLOSED in living Overview | Explainability implementation commits present; CAR / FR / Epic Close markers absent from `EPIC-06-OVERVIEW.md`. Not listed as EPIC-07 Master Plan dependency. See Open Issues. |
+| EPIC-V13-06 | CLOSED WITH OBSERVATIONS (2026-07-22) | Explainability closed after EPIC-07. Not a Master Plan dependency for EPIC-07. PROC-I-01 resolved. |
 
 ### Prerequisites (Definition of Ready — Master Plan dependency subset)
 
@@ -322,14 +322,14 @@ Authoritative register: `EPIC-07-PRODUCTION-UX.md` §6 (updated by Architecture 
 | ID | Class | Statement | Disposition at Initialization |
 |---|---|---|---|
 | DOC-I-01 | Documentation sequencing inconsistency | Master Plan §8 Phase 4 opens “after Phase 3 complete” (Phase 3 includes EPIC-V13-06), while EPIC-V13-07 Dependencies list only EPIC-V13-04 and EPIC-V13-05 | Classified. Explicit Dependencies govern Definition of Ready for EPIC-07 start. No Master Plan edit in this step. |
-| PROC-I-01 | Process / living-status inconsistency | User context asserts prior epics complete; `EPIC-06-OVERVIEW.md` is not CLOSED (Architecture Review / Freeze / Implementation Plan artifacts exist; implementation commits present; CAR / FR / Epic Close markers absent) | Classified. Does not block EPIC-07 Initialization under explicit Master Plan Dependencies. Recommend EPIC-06 close-out before or in parallel with EPIC-07 Discovery. |
+| PROC-I-01 | Process / living-status inconsistency | At EPIC-07 init, `EPIC-06-OVERVIEW.md` lacked CAR / FR / Epic Close markers | **RESOLVED** — EPIC-06 CLOSED WITH OBSERVATIONS 2026-07-22 |
 
 ---
 
 ## 16. Recommendation
 
 **EPIC-V13-07 is CLOSED.**  
-**Next planned activity:** Continue Phase 4 — initialize or advance **EPIC-V13-08 (Deployment & Operations)**; optionally complete EPIC-06 living close-out (PROC-I-01) in parallel if still open.
+**Next planned activity (historical at close):** EPIC-V13-08. **Current release gate:** Release Readiness Review (all epics closed; VERSION/tag postponed per Playbook §10).
 
 ---
 

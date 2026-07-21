@@ -136,6 +136,8 @@ The Reconstruction Completeness PAT must be declared and enforced for all V1.3 i
 
 ### EPIC-V13-01 — Scoring Pipeline Migration
 
+**Status:** **CLOSED** — 2026-07-05 (implementation complete through Phase 7C; living Overview recovered 2026-07-22)
+
 **Purpose:**  
 Complete the V1.2 RC3-deferred migration: retire `InterviewEvaluation` as a routing and presentation artifact. Make `Report` the sole authoritative source of scoring data for the presentation layer.
 
@@ -154,6 +156,8 @@ Changing scoring logic, dimension weights, or calibration constants. This is a m
 ---
 
 ### EPIC-V13-02 — Cross-Session Profile Continuity
+
+**Status:** **CLOSED** — 2026-07-15 (`e051ada` closure commit; living Overview synced 2026-07-22)
 
 **Purpose:**  
 Define and implement `LongitudinalProfile` — the persistent, cross-session accumulation of `CandidateProfileSnapshot` instances that enables behavioral profile tracking across sessions.
@@ -174,6 +178,8 @@ Cohort-level benchmarking (`PeerBenchmark` is V2). Organisation-level profiles (
 
 ### EPIC-V13-03 — Replay Engine
 
+**Status:** **CLOSED** — 2026-07-15 (migration complete `e13a47f`; EPIC-04 DoR accepts FR/Close; living Overview recovered 2026-07-22)
+
 **Purpose:**  
 Implement `replay_node` as a closed, deterministic session reconstruction pipeline that consumes a `SessionHistory` and produces a navigable session view without any LLM calls.
 
@@ -193,6 +199,8 @@ Re-submission of answers in replay mode. Comparative replay (comparing two sessi
 
 ### EPIC-V13-04 — Replay UI Experience
 
+**Status:** **CLOSED** — 2026-07-16  
+
 **Purpose:**  
 Build the candidate-facing session replay interface backed by `ReplaySession`.
 
@@ -211,6 +219,8 @@ Side-by-side session comparison. Annotation or bookmarking. Sharing or exporting
 ---
 
 ### EPIC-V13-05 — Unified Report
+
+**Status:** **CLOSED** — 2026-07-16  
 
 **Purpose:**  
 Produce a single, cohesive session report that renders all session artifacts from `Report` as the sole data source, eliminating dual reads and legacy routing.
@@ -341,12 +351,12 @@ The following must be true before V1.3 is declared complete.
 
 ### Architecture
 
-- [ ] `InterviewEvaluation` deleted from codebase. No reference to it remains in any production path.
+- [ ] `InterviewEvaluation` deleted from codebase. No reference to it remains in any production path. *(PARTIAL — domain class removed; `InterviewEvaluationService` name + comment residue remain; Release Readiness Audit 2026-07-21)*
 - [x] `report_output: str | None` dead field removed from `InterviewState`. *(certified EPIC-V13-10 P6 / CLN-07 — not present on `InterviewState`; UI HTML `report_output` surface is unrelated)*
-- [ ] `Report` is the sole authoritative scoring artifact consumed by all presentation consumers.
-- [ ] `LongitudinalProfile` is produced and persisted after every session completion.
-- [ ] `replay_node` is implemented, non-fatal, write-once, and LLM-free.
-- [ ] Domain invariant I-11 ("Replay never invokes LLM calls") is enforced by an architectural test.
+- [x] `Report` is the sole authoritative scoring artifact consumed by all presentation consumers. *(EPIC-V13-01/05 — `FinalReportDTO.from_report`; UI architecture tests)*
+- [x] `LongitudinalProfile` is produced and persisted after every session completion. *(EPIC-V13-02 — `longitudinal_update_node` after `report`)*
+- [x] `replay_node` is implemented, non-fatal, write-once, and LLM-free. *(EPIC-V13-03)*
+- [x] Domain invariant I-11 ("Replay never invokes LLM calls") is enforced by an architectural test. *(EPIC-V13-03 — `test_replay_architectural_invariants.py`)*
 - [x] All four emerging PATs from the V1.2 retrospective are formally registered. *(EPIC-V13-10 — INDEX Official Patterns OP-01…04 + P-08; dual PAT/OP namespaces)*
 - [x] Reconstruction Completeness PAT is declared and all reconstruction paths are audited. *(EPIC-V13-10 — ARC-01 P-08; AT-06)*
 - [x] Zero `InterviewState` fields without a declared sole writer. *(EPIC-V13-10 — Ownership Matrix 43/43; AT-01; authorized writer sets)*
@@ -354,45 +364,45 @@ The following must be true before V1.3 is declared complete.
 
 ### Product
 
-- [ ] Unified Report renders all session artifacts from `Report` as the sole data source.
+- [x] Unified Report renders all session artifacts from `Report` as the sole data source. *(EPIC-V13-05 CLOSED)*
 - [x] Every `NarrativeInsight` surfaces its evidence anchor in the report UI. *(EPIC-V13-06 — ProfileFeature identity `source_feature_id` + `is_traceable` per Contracts EC-N-01; Master Plan “Observation anchor” wording = accepted drift D-01)*
 - [x] Every `CoachingAction` surfaces its `KnowledgeGap` origin in the report UI. *(EPIC-V13-06 — LearningObjective origin chain per Contracts EC-C-01; Master Plan “KnowledgeGap origin” wording = accepted drift D-02)*
-- [ ] Replay UI navigates any stored session question-by-question with correct data.
-- [ ] Progress view reflects behavioral profile trends (from `LongitudinalProfile`), not only dimensional scores.
-- [ ] All primary user flows are production-quality with no placeholder states or internal error surfaces.
-- [ ] Accessibility: keyboard navigation for primary flows; WCAG 2.1 AA for report and replay.
+- [x] Replay UI navigates any stored session question-by-question with correct data. *(EPIC-V13-04 CLOSED)*
+- [x] Progress view reflects behavioral profile trends (from `LongitudinalProfile`), not only dimensional scores. *(EPIC-V13-02/05 — ProgressTrendPanel / `LearningProgress`)*
+- [x] All primary user flows are production-quality with no placeholder states or internal error surfaces. *(EPIC-V13-07 CLOSED)*
+- [ ] Accessibility: keyboard navigation for primary flows; WCAG 2.1 AA for report and replay. *(PARTIAL — structural keyboard coverage certified EPIC-07; full axe/WCAG suite deferred `TD-EP07-001`)*
 
 ### Engineering
 
-- [ ] All defined SLOs met under 50-session load test.
-- [ ] Structured logging: every node emits structured events with session_id, node name, duration, outcome.
-- [ ] Health endpoint active and used as CI deployment gate.
-- [ ] Environment-parameterised configuration: no hardcoded paths, keys, or environment assumptions.
-- [ ] Graceful shutdown verified under SIGTERM.
-- [ ] Database migration runbook documented and tested.
+- [x] All defined SLOs met under 50-session load test. *(EPIC-V13-09 — `docs/ops/PERFORMANCE-BASELINE-REPORT.md`; P0-ABSENT; SLO-D N/A)*
+- [x] Structured logging: every node emits structured events with session_id, node name, duration, outcome. *(EPIC-V13-08 — `instrument_graph_node`)*
+- [x] Health endpoint active and used as CI deployment gate. *(EPIC-V13-08 — `/health/ready` + CI gate scripts)*
+- [ ] Environment-parameterised configuration: no hardcoded paths, keys, or environment assumptions. *(PARTIAL — EPIC-08 closed with observations; residual default-path hygiene remains)*
+- [x] Graceful shutdown verified under SIGTERM. *(EPIC-V13-08 / Deployment Runbook)*
+- [x] Database migration runbook documented and tested. *(EPIC-V13-08 — `docs/ops/DB-MIGRATION-RUNBOOK.md`)*
 
 ### Testing
 
-- [ ] All V1.2 acceptance criteria continue to pass (full regression).
-- [ ] `replay_node` reconstructs stored sessions deterministically across 20 test fixtures.
-- [ ] Scoring pipeline migration: 100% of report presentation tests read from `Report`, zero from `InterviewEvaluation`.
-- [ ] `LongitudinalProfile` accumulates correctly across synthetic 10-session dataset.
-- [ ] Total test suite ≥ 2,500 passing tests.
-- [ ] Zero P0/P1 open issues at release gate.
+- [x] All V1.2 acceptance criteria continue to pass (full regression). *(EPIC-V13-10 certified suite 7378 / 0)*
+- [x] `replay_node` reconstructs stored sessions deterministically across 20 test fixtures. *(EPIC-V13-03 — ≥24 cases in `test_replay_determinism.py`)*
+- [ ] Scoring pipeline migration: 100% of report presentation tests read from `Report`, zero from `InterviewEvaluation`. *(PARTIAL — production path clean; import-ban gap `TD-EP05-001` P2)*
+- [x] `LongitudinalProfile` accumulates correctly across synthetic 10-session dataset. *(EPIC-V13-02 LP-08)*
+- [x] Total test suite ≥ 2,500 passing tests. *(EPIC-V13-10 close-out 7378 / 0)*
+- [x] Zero P0/P1 open issues at release gate. *(no open V1.3-classified P0/P1; non-blocking carry-forward TDs remain)*
 
 ### Documentation
 
-- [ ] All V1.3 ADRs authored, reviewed, and merged.
-- [ ] Deployment runbook complete and reviewed.
-- [ ] Performance baseline report published as a release artifact.
-- [ ] Architecture Constitution updated to reflect any V1.3 amendments.
-- [ ] Pattern registry updated with all new PATs.
+- [x] All V1.3 ADRs authored, reviewed, and merged. *(ADR-033…037 and related runtime ownership ADRs)*
+- [x] Deployment runbook complete and reviewed. *(EPIC-V13-08 — `docs/ops/DEPLOYMENT-RUNBOOK.md`)*
+- [x] Performance baseline report published as a release artifact. *(EPIC-V13-09 — `docs/ops/PERFORMANCE-BASELINE-REPORT.md` published; attach-to-tag deferred until RR)*
+- [x] Architecture Constitution updated to reflect any V1.3 amendments. *(EPIC-V13-10 — OP/P-08)*
+- [x] Pattern registry updated with all new PATs. *(INDEX PAT + OP namespaces)*
 
 ### Release
 
-- [ ] V1.3 release tag created with changelog.
-- [ ] All V1.2 features regression-verified at release gate.
-- [ ] Performance baseline report attached to release.
+- [ ] V1.3 release tag created with changelog. *(POSTPONED — Playbook §10: RR is the final gate before the V1.3 release tag; `VERSION` remains `1.1.0` until RR PASS)*
+- [ ] All V1.2 features regression-verified at release gate. *(POSTPONED — epic-close suite green; formal RR ceremony not yet executed)*
+- [ ] Performance baseline report attached to release. *(POSTPONED — artifact exists; attach after RR PASS / tag ceremony)*
 
 ---
 
@@ -464,24 +474,24 @@ Epics are sequenced by dependency and risk. No sprint planning is implied.
 **Architecture Governance (EPIC-V13-10 — governance phase)**  
 Phase 1 begins with the architectural governance work required to support the remaining V1.3 implementation. This work precedes the first migration increment and may include: evaluation of proposed PATs against the existing pattern registry; authoring of new ADRs for any V1.3 design decisions not yet formally documented; targeted amendments to the Architecture Constitution where V1.3 introduces genuinely new concerns; and clarification of existing architectural rules where ambiguity has been identified. Proposed PATs and ADRs follow the normal governance process — no pattern or decision becomes official until it has completed that process. This is not the full EPIC-V13-10 cleanup — that audit runs throughout V1.3 and closes at Phase 5.
 
-**EPIC-V13-01 (Scoring Pipeline Migration)**  
-The highest-dependency epic. Everything downstream of the scoring pipeline depends on `Report` being authoritative. This must be completed and validated before EPIC-V13-05 (Unified Report) and before any replay or longitudinal artifacts accumulate scoring data.
+**EPIC-V13-01 (Scoring Pipeline Migration)** — **CLOSED** (2026-07-05)  
+The highest-dependency epic. Everything downstream of the scoring pipeline depends on `Report` being authoritative. This must be completed and validated before EPIC-V13-05 (Unified Report) and before any replay or longitudinal artifacts accumulate scoring data. Living Overview: `docs/master-plan/epics/EPIC-01-OVERVIEW.md`.
 
 ### Phase 2 — Core Domain (after Phase 1 complete)
 
-**EPIC-V13-02 (Cross-Session Profile Continuity)**  
-Depends on clean scoring data (EPIC-V13-01). Can run in parallel with EPIC-V13-03.
+**EPIC-V13-02 (Cross-Session Profile Continuity)** — **CLOSED** (2026-07-15)  
+Depends on clean scoring data (EPIC-V13-01). Can run in parallel with EPIC-V13-03. Living Overview: `docs/master-plan/epics/EPIC-02-OVERVIEW.md`.
 
-**EPIC-V13-03 (Replay Engine)**  
-Depends on EPIC-V13-01 (replay must read from `Report`-consistent data). Can run in parallel with EPIC-V13-02.
+**EPIC-V13-03 (Replay Engine)** — **CLOSED** (2026-07-15)  
+Depends on EPIC-V13-01 (replay must read from `Report`-consistent data). Can run in parallel with EPIC-V13-02. Living Overview: `docs/master-plan/epics/EPIC-03-OVERVIEW.md`.
 
 ### Phase 3 — User Experience (after Phase 2 complete)
 
-**EPIC-V13-04 (Replay UI Experience)**  
-Depends on EPIC-V13-03 (Replay Engine).
+**EPIC-V13-04 (Replay UI Experience)** — **CLOSED** (2026-07-16)  
+Depends on EPIC-V13-03 (Replay Engine). Living Overview: `docs/master-plan/epics/EPIC-04-OVERVIEW.md`.
 
-**EPIC-V13-05 (Unified Report)**  
-Depends on EPIC-V13-01, EPIC-V13-02, EPIC-V13-03. Does not depend on EPIC-V13-06.
+**EPIC-V13-05 (Unified Report)** — **CLOSED** (2026-07-16)  
+Depends on EPIC-V13-01, EPIC-V13-02, EPIC-V13-03. Does not depend on EPIC-V13-06. Living Overview: `docs/master-plan/epics/EPIC-05-OVERVIEW.md`.
 
 **EPIC-V13-06 (Explainability)** — **CLOSED WITH OBSERVATIONS** (2026-07-22)  
 Depends on EPIC-V13-05 (Unified Report host surfaces) and EPIC-V13-01 (clean scoring data). Implementation complete (C1–C8, C10). Living Overview: `docs/master-plan/epics/EPIC-06-OVERVIEW.md`. Non-blocking carry-forward: OF-03 ADR-025 docs drift; optional AT-08 named module; OF-04 deferred.
@@ -489,20 +499,20 @@ Depends on EPIC-V13-05 (Unified Report host surfaces) and EPIC-V13-01 (clean sco
 ### Phase 4 — Production Readiness (after Phase 3 complete)
 
 **EPIC-V13-07 (Production UX)** — **CLOSED** (2026-07-17)  
-Depends on EPIC-V13-04 and EPIC-V13-05 being feature-complete.
+Depends on EPIC-V13-04 and EPIC-V13-05 being feature-complete. Living Overview: `docs/master-plan/epics/EPIC-07-OVERVIEW.md`.
 
 **EPIC-V13-08 (Deployment & Operations)** — **CLOSED WITH OBSERVATIONS** (2026-07-20)  
-Can begin environment configuration work in parallel with Phase 2; health endpoint and graceful shutdown require feature stability from Phase 3.
+Can begin environment configuration work in parallel with Phase 2; health endpoint and graceful shutdown require feature stability from Phase 3. Living Overview: `docs/master-plan/epics/EPIC-08-OVERVIEW.md`.
 
-**EPIC-V13-09 (Performance & Scalability Baseline)** — **CLOSED** (2026-07-21)
-Preliminary profiling can begin in Phase 2. Full load test and SLO validation require Phase 3 feature completeness. SLO-D (SessionHistory DB read) dispositioned N/A for V1.3 per Architecture Freeze. Baseline report published; P0-ABSENT under stub-LLM load.
+**EPIC-V13-09 (Performance & Scalability Baseline)** — **CLOSED** (2026-07-21)  
+Preliminary profiling can begin in Phase 2. Full load test and SLO validation require Phase 3 feature completeness. SLO-D (SessionHistory DB read) dispositioned N/A for V1.3 per Architecture Freeze. Baseline report published; P0-ABSENT under stub-LLM load. Living Overview: `docs/master-plan/epics/EPIC-09-OVERVIEW.md`.
 
 ### Phase 5 — Release Gate
 
 **EPIC-V13-10 (Final Architecture Cleanup — full audit)** — **CLOSED WITH OBSERVATIONS** (2026-07-21)  
 Final audit pass complete. Ownership Matrix, PAT/OP registry, dead-code purity, and AT-01…07 gates certified. Living Overview: `docs/master-plan/epics/EPIC-10-OVERVIEW.md`. Non-blocking carry-forward: `TD-EP10-001`, `TD-EP10-002`.
 
-**V1.3 Release**
+**V1.3 Release** — **NOT STARTED** (awaiting Release Readiness Review; no `v1.3*` tag; `VERSION` remains `1.1.0`)
 
 ---
 
@@ -564,3 +574,17 @@ V1.3 is officially complete and production-ready when all of the following are t
 **Rationale:** Architecture Clarification for EPIC-V13-05 finding F-B-01 proved the EPIC-05 ↔ EPIC-06 circular dependency was a documentation inconsistency only — not an architectural blocker. ADR-033 freezes Unified Report without explainability. EPIC-01 Architecture Freeze deferred explainability UI to EPIC-V13-06 and stated it is not blocking V13-05.
 
 **Correction:** Removed EPIC-V13-06 from EPIC-V13-05 Dependencies and Roadmap reverse edge. Retained EPIC-V13-06 → EPIC-V13-05. Clarified EPIC-V13-05 Scope/Non-Goals: stable report surfaces only; explainability owned by EPIC-V13-06. No architecture or product-scope change.
+
+---
+
+### Amendment — 2026-07-22 (Release Documentation Synchronization)
+
+**Rationale:** Release Readiness Audit (2026-07-21, HEAD `97f78ce`) found Master Plan §4/§5/§8 and EPIC-01/02/03 living status critically desynced from repository truth. EPIC-06 was subsequently closed (2026-07-22). This amendment synchronizes living documentation only — no code, architecture, or release ceremony.
+
+**Corrections:**
+1. §4 / §8 — recorded CLOSED (or CLOSED WITH OBSERVATIONS) for EPIC-V13-01…10 with living Overview pointers.
+2. §5 Go-Live Checklist — checked only items with objective repository / epic-close evidence; left PARTIAL and release-ceremony items unchecked with explicit residual notes.
+3. Recovered living Overviews for EPIC-01 and EPIC-03; synced EPIC-02 Overview from PLANNED → CLOSED; aligned Implementation Plan status headers for EPIC-01…03.
+4. **VERSION / CHANGELOG / README / release tag postponed:** Playbook §10 states RR (Release Readiness Review) is the final gate before the V1.3 release tag. `VERSION` remains `1.1.0`. No `v1.3*` tag. CHANGELOG/README remain at Stable 1.1.0 until RR PASS authorizes promotion.
+
+**Next gate:** Release Readiness Review (not performed by this amendment).

@@ -1,10 +1,12 @@
 # EPIC-01 — Implementation Plan
 
-**Status:** READY FOR IMPLEMENTATION  
+**Status:** ACCEPTED — Implementation COMPLETE (Phases 1–7C); EPIC CLOSED  
 **Date:** 2026-07-05  
+**Close-out sync:** 2026-07-22 — living status aligned at Release Documentation Synchronization  
 **Revision:** 2026-07-05 — Phases 7+8 (previously atomic) replaced with bridge-based sequence 7A→7B→7C to satisfy engineering rule: "Zero Known Failing Tests per phase/commit."  
 **Precondition:** Architecture Freeze passed (`EPIC-01-ARCHITECTURE-FREEZE.md`). No new architectural decisions permitted.  
-**Authority:** This document translates the frozen architecture into an executable implementation roadmap. All decisions reference ADR-033, EPIC-01-DOMAIN-CONTRACTS.md, and EPIC-01-DATA-MODEL.md.
+**Authority:** This document translates the frozen architecture into an executable implementation roadmap. All decisions reference ADR-033, EPIC-01-DOMAIN-CONTRACTS.md, and EPIC-01-DATA-MODEL.md.  
+**Living Overview:** `EPIC-01-OVERVIEW.md`
 
 ---
 

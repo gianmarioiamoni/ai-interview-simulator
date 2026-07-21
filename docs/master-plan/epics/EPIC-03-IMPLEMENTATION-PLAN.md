@@ -1,11 +1,14 @@
 # EPIC-03 — Implementation Plan
 
-**Status:** ACTIVE  
+**Status:** ACCEPTED — Implementation COMPLETE; EPIC CLOSED  
 **Date:** 2026-07-15  
+**Close-out sync:** 2026-07-22 — living status aligned at Release Documentation Synchronization  
+**Epic Close:** 2026-07-15 (`e13a47f` migration cleanup)  
 **Epic ID:** EPIC-V13-03  
 **Authority:** EPIC-03-ARCHITECTURE-FREEZE.md (FROZEN, commit `db28db7`)  
 **Regression baseline:** 6332 passing tests  
-**Precondition:** Architecture Freeze declared. Implementation Plan Dependency Validation applied (§2). No implementation begins without this plan accepted.
+**Precondition:** Architecture Freeze declared. Implementation Plan Dependency Validation applied (§2). No implementation begins without this plan accepted.  
+**Living Overview:** `EPIC-03-OVERVIEW.md`
 
 ---
 
