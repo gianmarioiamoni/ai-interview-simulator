@@ -354,10 +354,11 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 |---|---|
 | Pre-P1 baseline | **DONE** — 7417 passed / 0 failed (recorded in Overview) |
 | C1 | **DONE** — SLO-Q harness under `tests/performance/` |
-| Next | **C2** — optional infra cycle emit |
+| C2 | **DONE** — optional infra cycle emit (`question_cycle_logging`) |
+| Next | **C3** — SLO-R harness |
 
 ---
 
 ## 18. Next activity
 
-**C2** — optional infra cycle emit via existing Freeze fields (OBS-01/03/05; AR-10).
+**C3** — SLO-R harness: `session_close` → `report` span (AR-03, MEAS-05).

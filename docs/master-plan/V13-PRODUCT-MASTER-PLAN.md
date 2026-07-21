@@ -489,7 +489,7 @@ Depends on EPIC-V13-04 and EPIC-V13-05 being feature-complete.
 **EPIC-V13-08 (Deployment & Operations)** — **CLOSED WITH OBSERVATIONS** (2026-07-20)  
 Can begin environment configuration work in parallel with Phase 2; health endpoint and graceful shutdown require feature stability from Phase 3.
 
-**EPIC-V13-09 (Performance & Scalability Baseline)** — **IMPLEMENTATION IN PROGRESS** (P1 / C1 complete, 2026-07-21)  
+**EPIC-V13-09 (Performance & Scalability Baseline)** — **IMPLEMENTATION IN PROGRESS** (P1 / C2 complete, 2026-07-21)  
 Preliminary profiling can begin in Phase 2. Full load test and SLO validation require Phase 3 feature completeness. SLO-D (SessionHistory DB read) dispositioned N/A for V1.3 per Architecture Freeze.
 
 ### Phase 5 — Release Gate
