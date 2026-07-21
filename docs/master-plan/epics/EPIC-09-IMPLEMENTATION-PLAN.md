@@ -360,10 +360,11 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | Checkpoint A | **PASSED** — Macro A measurement green; Macro B authorized |
 | C5 | **DONE** — reasoner + KP profiling harness (`profiling_reasoner_kp`) |
 | C6 | **DONE** — longitudinal_update (+ repo I/O) profiling harness |
-| Next | **C7** — 50-session stub-LLM load runner |
+| C7 | **DONE** — 50-session stub-LLM load + absolute SLO gates |
+| Next | **C8** — early vs late degradation gate |
 
 ---
 
 ## 18. Next activity
 
-**C7** — 50-session stub-LLM load + absolute SLO asserts per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+**C8** — early vs late degradation gate (≤1.25 + absolute hold) per `EPIC-09-IMPLEMENTATION-PLAN.md`.

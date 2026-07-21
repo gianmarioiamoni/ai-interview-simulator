@@ -1,6 +1,6 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro B / P4 complete (C5–C6) — next C7  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro B / C7 complete — next C8  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -17,7 +17,7 @@
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-09-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** IN PROGRESS — **C1–C6 complete**; Checkpoint A **PASSED**; P4 profiling done; next **C7** (load)  
+**Implementation:** IN PROGRESS — **C1–C7 complete**; Checkpoint A **PASSED**; next **C8** (degradation gate)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-09 (Interview Replay / session persistence).
@@ -97,7 +97,7 @@ Architecture Review          ← APPROVED WITH OBSERVATIONS
 Architecture Freeze          ← APPROVED
 Implementation Plan          ← ACCEPTED
 Pre-P1 baseline              ← COMPLETE (7417 passed / 0 failed)
-Implementation (C1–C12)      ← IN PROGRESS (C1–C6 complete; Macro B / P4 done)
+Implementation (C1–C12)      ← IN PROGRESS (C1–C7 complete; Macro B / P5 started)
 Checkpoint A                 ← PASSED
 Checkpoint B / C
 CAR → Regression → Docs → FR → Epic Close
@@ -117,10 +117,11 @@ CAR → Regression → Docs → FR → Epic Close
 | Checkpoint A | — | **PASSED** — Macro B authorized |
 | C5 | P4 | **DONE** — reasoner + KP stage profiling harness |
 | C6 | P4 | **DONE** — longitudinal_update (+ repo I/O) profiling harness |
-| C7 | P5 | NEXT — 50-session stub-LLM load runner |
+| C7 | P5 | **DONE** — 50-session stub-LLM load + absolute SLO gates |
+| C8 | P5 | NEXT — early vs late degradation gate |
 
 ---
 
 ## 8. Next planned activity
 
-**C7** — 50-session stub-LLM load + absolute SLO asserts per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+**C8** — early vs late degradation gate (≤1.25 + absolute hold) per `EPIC-09-IMPLEMENTATION-PLAN.md`.
