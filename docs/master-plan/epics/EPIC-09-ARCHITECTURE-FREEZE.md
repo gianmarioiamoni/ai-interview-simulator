@@ -247,15 +247,15 @@ Freeze is **APPROVED**. Implementation Plan exit criteria:
 
 ## 16. Observations carried forward
 
-| ID | Observation |
-|---|---|
-| O-01 | Baseline report must document SLO-D N/A |
-| O-02 | CAR must verify zero compute-in-projection and zero new caches/state fields |
-| O-03 | Live-LLM appendix must not replace stub-primary certification |
-| O-04 | Exact synthetic session shape and degradation threshold → Implementation Plan |
+| ID | Observation | CAR disposition (2026-07-21) |
+|---|---|---|
+| O-01 | Baseline report must document SLO-D N/A | **Resolved** — `docs/ops/PERFORMANCE-BASELINE-REPORT.md` §6 |
+| O-02 | CAR must verify zero compute-in-projection and zero new caches/state fields | **Verified** — C10 arch tests + CAR; 0 P0/P1 |
+| O-03 | Live-LLM appendix must not replace stub-primary certification | **Held** — stub-primary; live appendix not used as P0 gate |
+| O-04 | Exact synthetic session shape and degradation threshold → Implementation Plan | **Resolved** — Impl Plan §3 (50×5; ≤1.25) |
 
 ---
 
 ## 17. Next activity
 
-**Pre-P1 / C1** per `EPIC-09-IMPLEMENTATION-PLAN.md` (ACCEPTED).
+**CAR PASS** (2026-07-21). Continue close-out: Regression → Documentation Update → Final Review → Epic Close.

@@ -1,6 +1,6 @@
 # EPIC-09 — Implementation Plan
 
-**Status:** ACCEPTED  
+**Status:** ACCEPTED — Implementation **COMPLETE**; Checkpoint C **PASS**; CAR **PASS** (Final Review authorized)  
 **Date:** 2026-07-20  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -366,11 +366,12 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | C9 | **DONE** — **P0-ABSENT** certified (no compute remediation; C7–C8 re-verified green) |
 | C10 | **DONE** — CAT/ARC arch hardening tests (`tests/infrastructure/architecture/test_epic09_hardening_architecture.py`) |
 | C11 | **DONE** — `docs/ops/PERFORMANCE-BASELINE-REPORT.md` (AR-19; SLO-D N/A) + readiness checklist |
-| C12 | **DONE** — full regression **7485 passed / 0 failed** (≥ Pre-P1 7417); Macro C complete; Ready for CAR |
-| Next | **Checkpoint C** |
+| C12 | **DONE** — full regression **7485 passed / 0 failed** (≥ Pre-P1 7417); Macro C complete |
+| Checkpoint C | **PASS** — 2026-07-21; CAR authorized |
+| CAR | **PASS** — 2026-07-21; 0 P0/P1; Final Review **AUTHORIZED** |
 
 ---
 
 ## 18. Next activity
 
-**Checkpoint C** — authorize CAR (baseline report + arch tests + regression + P0-absent).
+**Regression Certification** → Documentation Update → Final Review → Epic Close.
