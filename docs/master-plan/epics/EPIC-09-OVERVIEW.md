@@ -1,6 +1,6 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro A / C4 complete — Checkpoint A ready  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro B / C5 complete — next C6  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -17,7 +17,7 @@
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-09-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** IN PROGRESS — **C1–C4 complete** (Macro A measurement); Checkpoint A pending evaluation; next **C5** after Checkpoint A  
+**Implementation:** IN PROGRESS — **C1–C5 complete**; Checkpoint A **PASSED**; Macro B profiling started; next **C6**  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-09 (Interview Replay / session persistence).
@@ -97,8 +97,8 @@ Architecture Review          ← APPROVED WITH OBSERVATIONS
 Architecture Freeze          ← APPROVED
 Implementation Plan          ← ACCEPTED
 Pre-P1 baseline              ← COMPLETE (7417 passed / 0 failed)
-Implementation (C1–C12)      ← IN PROGRESS (C1–C4 complete; Macro A measurement done)
-Checkpoint A                 ← READY FOR EVALUATION
+Implementation (C1–C12)      ← IN PROGRESS (C1–C5 complete; Macro B / P4 started)
+Checkpoint A                 ← PASSED
 Checkpoint B / C
 CAR → Regression → Docs → FR → Epic Close
 ```
@@ -114,11 +114,12 @@ CAR → Regression → Docs → FR → Epic Close
 | C2 | P1 | **DONE** — optional infra cycle emit (`question_cycle.complete`) |
 | C3 | P2 | **DONE** — SLO-R close→report harness (&lt; 3s) |
 | C4 | P3 | **DONE** — SLO-P replay reconstruction harness (&lt; 1s) |
-| Checkpoint A | — | **READY** — SLO-Q/R/P harnesses present; awaiting formal gate |
-| C5 | P4 | NEXT after Checkpoint A — reasoner/KP profiling |
+| Checkpoint A | — | **PASSED** — Macro B authorized |
+| C5 | P4 | **DONE** — reasoner + KP stage profiling harness |
+| C6 | P4 | NEXT — longitudinal_update profiling |
 
 ---
 
 ## 8. Next planned activity
 
-**Checkpoint A** evaluation (authorize Macro B), then **C5** — reasoner + KP profiling per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+**C6** — profile `longitudinal_update_node` (+ repo I/O) per `EPIC-09-IMPLEMENTATION-PLAN.md`.

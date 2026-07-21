@@ -357,11 +357,12 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | C2 | **DONE** — optional infra cycle emit (`question_cycle_logging`) |
 | C3 | **DONE** — SLO-R close→report harness under `tests/performance/` |
 | C4 | **DONE** — SLO-P replay reconstruction harness under `tests/performance/` |
-| Checkpoint A | **READY FOR EVALUATION** — Macro A measurement (C1–C4) complete |
-| Next | Checkpoint A → **C5** |
+| Checkpoint A | **PASSED** — Macro A measurement green; Macro B authorized |
+| C5 | **DONE** — reasoner + KP profiling harness (`profiling_reasoner_kp`) |
+| Next | **C6** — longitudinal_update profiling |
 
 ---
 
 ## 18. Next activity
 
-**Checkpoint A** — confirm SLO-Q/R/P harnesses green + suite green; then **C5** (reasoner + KP profiling).
+**C6** — profile `longitudinal_update_node` (+ repo I/O) per `EPIC-09-IMPLEMENTATION-PLAN.md`.
