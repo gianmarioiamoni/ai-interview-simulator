@@ -362,11 +362,12 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | C6 | **DONE** — longitudinal_update (+ repo I/O) profiling harness |
 | C7 | **DONE** — 50-session stub-LLM load + absolute SLO gates |
 | C8 | **DONE** — early vs late degradation gate (≤1.25 + absolute hold) |
-| Checkpoint B | **READY FOR EVALUATION** — Macro B P4–P5 (C5–C8) complete |
-| Next | Checkpoint B → **C9** |
+| Checkpoint B | **PASSED** — Macro C (P6–P7) authorized |
+| C9 | **DONE** — **P0-ABSENT** certified (no compute remediation; C7–C8 re-verified green) |
+| Next | **C10** |
 
 ---
 
 ## 18. Next activity
 
-**Checkpoint B** — confirm 50-session stub load + degradation green; then **C9** (P0 remediation or P0-absent certification).
+**C10** — Category A / ARC-01 arch constraint tests (P7).

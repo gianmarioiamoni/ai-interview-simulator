@@ -1,6 +1,6 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro B / C8 complete — Checkpoint B ready  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro C / C9 complete — next C10  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -17,7 +17,8 @@
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-09-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** IN PROGRESS — **C1–C8 complete**; Checkpoint A **PASSED**; Checkpoint B ready; next **C9** after Checkpoint B  
+**Implementation:** IN PROGRESS — **C1–C9 complete**; Checkpoint A **PASSED**; Checkpoint B **PASSED**; next **C10**  
+**P0 disposition (P6 / C9):** **P0-ABSENT** — no in-scope SLO violations under P5 stub-LLM load (C7–C8 green); no compute remediation applied  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-09 (Interview Replay / session persistence).
@@ -97,9 +98,9 @@ Architecture Review          ← APPROVED WITH OBSERVATIONS
 Architecture Freeze          ← APPROVED
 Implementation Plan          ← ACCEPTED
 Pre-P1 baseline              ← COMPLETE (7417 passed / 0 failed)
-Implementation (C1–C12)      ← IN PROGRESS (C1–C8 complete; Macro B load done)
+Implementation (C1–C12)      ← IN PROGRESS (C1–C9 complete; Macro C / P6 done)
 Checkpoint A                 ← PASSED
-Checkpoint B                 ← READY FOR EVALUATION
+Checkpoint B                 ← PASSED (Macro C authorized)
 Checkpoint C
 CAR → Regression → Docs → FR → Epic Close
 ```
@@ -120,11 +121,22 @@ CAR → Regression → Docs → FR → Epic Close
 | C6 | P4 | **DONE** — longitudinal_update (+ repo I/O) profiling harness |
 | C7 | P5 | **DONE** — 50-session stub-LLM load + absolute SLO gates |
 | C8 | P5 | **DONE** — early vs late degradation gate (≤1.25 + absolute hold) |
-| Checkpoint B | — | **READY** — Macro B complete; awaiting formal gate |
-| C9 | P6 | NEXT after Checkpoint B — P0 remediation or P0-absent cert |
+| Checkpoint B | — | **PASSED** — Macro C (P6–P7) authorized |
+| C9 | P6 | **DONE** — **P0-ABSENT** certified (no remediation; C7–C8 re-verified green) |
+
+### P6 / C9 — P0 certification
+
+| Item | Result |
+|---|---|
+| P5 load (C7) | Green — SLO-Q P99 &lt; 8s; SLO-R max &lt; 3s; zero hard failures |
+| Degradation (C8) | Green — late/early ≤ 1.25; absolute SLO hold |
+| In-scope P0 list (AR-17) | **Empty** |
+| Remediation applied | **None** (certification-only; no speculative compute changes) |
+| Freeze stop rule (PRD-05) | N/A — no Category B pressure |
+| Category A / ARC-01 | Held — no Domain Contracts, Data Model, InterviewState, topology, persistence, or cache changes |
 
 ---
 
 ## 8. Next planned activity
 
-**Checkpoint B** evaluation (authorize Macro C), then **C9** — P0 remediation or P0-absent certification per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+**C10** — Category A / ARC-01 arch constraint tests per `EPIC-09-IMPLEMENTATION-PLAN.md`.
