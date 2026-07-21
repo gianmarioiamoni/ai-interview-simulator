@@ -313,6 +313,8 @@ Horizontal scaling. Distributed caching (Redis). CDN configuration. Query optimi
 
 ### EPIC-V13-10 — Final Architecture Cleanup
 
+**Status:** INITIALIZED — 2026-07-21  
+
 **Purpose:**  
 Complete the V1.2 technical debt register and enforce all V1.3 PAT requirements, leaving the codebase in a state suitable for long-term production maintenance.
 
@@ -494,8 +496,8 @@ Preliminary profiling can begin in Phase 2. Full load test and SLO validation re
 
 ### Phase 5 — Release Gate
 
-**EPIC-V13-10 (Final Architecture Cleanup — full audit)**  
-Final audit pass. All deprecations resolved. All PAT violations addressed. Release gate checklist completed.
+**EPIC-V13-10 (Final Architecture Cleanup — full audit)** — **INITIALIZED** (2026-07-21)  
+Final audit pass. All deprecations resolved. All PAT violations addressed. Release gate checklist completed. Living Overview: `docs/master-plan/epics/EPIC-10-OVERVIEW.md`. Architecture Discovery next.
 
 **V1.3 Release**
 
