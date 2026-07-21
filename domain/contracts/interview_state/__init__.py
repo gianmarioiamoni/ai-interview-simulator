@@ -5,7 +5,6 @@ from .results import InterviewStateResultsMixin
 from .progress import InterviewStateProgressMixin
 from .events import InterviewStateEventsMixin
 from .computed import InterviewStateComputedMixin
-from .validation import InterviewStateValidationMixin
 from .factory import InterviewStateFactoryMixin
 
 
@@ -15,7 +14,6 @@ class InterviewState(
     InterviewStateProgressMixin,
     InterviewStateEventsMixin,
     InterviewStateComputedMixin,
-    InterviewStateValidationMixin,
     InterviewStateFactoryMixin,
 ):
     pass

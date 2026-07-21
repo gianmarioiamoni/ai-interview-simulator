@@ -4,8 +4,8 @@
 Responsibilities (orchestration only):
 1. Build ReasonerInput via ReasoningContextBuilder.
 2. Call ReasonerService.reason().
-3. Update InterviewState with the new interview_memory and
-   current_reasoning_decision.
+3. Update InterviewState with the new interview_memory (and observation /
+   profile pipeline outputs).
 4. Append a ReasoningEntry to reasoning_history.
 5. Return the new state.
 
@@ -16,7 +16,7 @@ This node contains NO reasoning logic. All domain logic lives in:
 
 Failure policy (ADR-029, advisory):
   Any exception is caught, logged with structured context, and the original
-  state is returned with current_reasoning_decision = None.
+  state is returned unchanged.
   The interview NEVER stops due to a Reasoner failure.
 """
 
@@ -105,7 +105,6 @@ def reasoner_node(state: InterviewState) -> InterviewState:
         return state.model_copy(
             update={
                 "interview_memory": updated_memory,
-                "current_reasoning_decision": decision,
                 "observation_store": updated_observation_store,
                 "candidate_profile_v2": updated_candidate_profile_v2,
             }
@@ -120,7 +119,7 @@ def reasoner_node(state: InterviewState) -> InterviewState:
             type(exc).__name__,
             elapsed_ms,
         )
-        return state.model_copy(update={"current_reasoning_decision": None})
+        return state
 
 
 # ---------------------------------------------------------------------------

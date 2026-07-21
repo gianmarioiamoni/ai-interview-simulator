@@ -31,8 +31,6 @@ def test_follow_up_count_invalid() -> None:
 
 
 def test_interview_state_minimal_instantiation() -> None:
-    from domain.contracts.interview.interview_progress import InterviewProgress
-    
     state = InterviewState(
         interview_id="int-1",
         role=Role(type=RoleType.BACKEND_ENGINEER),
@@ -44,7 +42,7 @@ def test_interview_state_minimal_instantiation() -> None:
     assert state.answers == []
     assert state.results_by_question == {}
     assert state.scoring_snapshot is None
-    assert state.progress == InterviewProgress.SETUP
+    assert state.is_completed is False
 
 
 def test_minimal_state_has_no_results() -> None:

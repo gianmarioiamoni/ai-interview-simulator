@@ -7,7 +7,6 @@ from domain.contracts.shared.performance_dimension_type import PerformanceDimens
 from domain.contracts.question.question import Question
 from domain.contracts.interview.answer import Answer
 from domain.contracts.question.question_result import QuestionResult
-from domain.contracts.interview.interview_progress import InterviewProgress
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.interview.interview_cost_metrics import InterviewCostMetrics
 from domain.contracts.interview.interview_metrics import InterviewMetrics
@@ -24,7 +23,6 @@ from app.settings.constants import MAX_FOLLOW_UPS_PER_INTERVIEW
 from domain.contracts.interview_state.last_question_context import LastQuestionContext
 from domain.events.interview_event import InterviewEvent
 from domain.contracts.reasoning.interview_memory import InterviewMemory
-from domain.contracts.reasoning.reasoner_decision import ReasonerDecision
 
 from domain.contracts.observation.observation_store import ObservationStore
 from domain.contracts.reasoning.candidate_profile import CandidateProfile as _CandidateProfileV12
@@ -41,8 +39,6 @@ class InterviewStateBase(BaseModel):
     company: str
     language: str = "en"
     interview_type: InterviewType = InterviewType.TECHNICAL
-
-    progress: InterviewProgress = InterviewProgress.SETUP
 
     questions: list[Question] = Field(default_factory=list)
     asked_question_ids: list[str] = Field(default_factory=list)
@@ -98,11 +94,6 @@ class InterviewStateBase(BaseModel):
 
     # Single-writer: InterviewReasoner only (ADR-032).
     interview_memory: InterviewMemory = Field(default_factory=InterviewMemory)
-
-    # Advisory output of the last ReasonerNode cycle.
-    # Transient: meaningful only for the immediately following nodes.
-    # Reset to None at the start of each new question cycle.
-    current_reasoning_decision: ReasonerDecision | None = None
 
     # ----------------------------------------------------------------
     # V1.2 fields — session-scoped, nullable until each pipeline stage runs.

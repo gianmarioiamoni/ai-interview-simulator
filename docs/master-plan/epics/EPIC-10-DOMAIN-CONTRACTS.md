@@ -16,7 +16,7 @@
 
 Deliver Category B Domain Contracts required by Architecture Freeze:
 
-- Full `InterviewState` Ownership Matrix (45 fields)
+- Full `InterviewState` Ownership Matrix (43 fields after P3 deletions)
 - Authorized writer sets (including explicit multi-writer sets)
 - Primary readers where required for deletion / enforcement
 - `candidate_profile_v2` ownership (no rename / dual-model redesign)
@@ -79,9 +79,9 @@ Deliver Category B Domain Contracts required by Architecture Freeze:
 
 | Field | Type | Authorized writers | Primary readers | Disposition |
 |---|---|---|---|---|
-| `progress` | `InterviewProgress` | Factory (SETUP only) | `interview_state_mapper` (weak; `is_completed` preferred); validation mixin | **DELETE** (§5) |
 | `dimension_signals` | `Dict[PerformanceDimensionType, float]` | **evaluation_node** | `reasoning_context_builder`; `written_block` presenter | **KEEP** — has production readers |
-| `current_reasoning_decision` | `ReasonerDecision \| None` | **reasoner_node** (set + clear) | None outside reasoner_node | **DELETE** (§5) |
+
+**Deleted in P3 (EC-DEL-01):** `progress`, `current_reasoning_decision` — removed from `InterviewState` and from the machine matrix artifact.
 
 ### 4.3 Navigation / questions
 
@@ -135,7 +135,7 @@ Deliver Category B Domain Contracts required by Architecture Freeze:
 | `allowed_actions` | `list[ActionType]` | decision_node; adaptive_navigation_node (clear) | UI navigation | |
 | `is_completed` | `bool` | **completion_node** | eval_agg, export | |
 
-**Matrix coverage count:** 45 / 45 fields.
+**Matrix coverage count:** 43 / 43 fields (P3: `progress` + `current_reasoning_decision` deleted).
 
 ---
 
@@ -143,11 +143,11 @@ Deliver Category B Domain Contracts required by Architecture Freeze:
 
 | Field | Proof | Decision | Durable shape impact |
 |---|---|---|---|
-| `progress` | Never advanced past SETUP; production completion uses `is_completed`; mapper equality is stale | **DELETE APPROVED** | **None** — not on SessionHistory/Report |
+| `progress` | Never advanced past SETUP; production completion uses `is_completed`; mapper equality is stale | **DELETE EXECUTED (P3)** | **None** — not on SessionHistory/Report |
 | `dimension_signals` | Production readers: reasoner context builder + written feedback presenter | **KEEP** (overturns Freeze conditional delete) | N/A |
-| `current_reasoning_decision` | Written/cleared only by reasoner_node; no outside production readers | **DELETE APPROVED** | **None** — transient runtime only |
+| `current_reasoning_decision` | Written/cleared only by reasoner_node; no outside production readers | **DELETE EXECUTED (P3)** | **None** — transient runtime only |
 
-**Impl obligations on DELETE:** remove field + fix compile/test breakages; update mapper off `progress`; remove orphan reasoner write of `current_reasoning_decision` (or delete with field).
+**Impl obligations on DELETE:** **DONE (P3)** — fields removed; mapper uses `is_completed`; reasoner no longer writes `current_reasoning_decision`; `InterviewProgress` enum + progress validation mixin deleted.
 
 ---
 
@@ -214,8 +214,8 @@ Deliver Category B Domain Contracts required by Architecture Freeze:
 | ID | Status after Contracts |
 |---|---|
 | AA-02 | **VERIFIED** — Contracts delivered; Data Model N/A certified |
-| AA-10 | **VERIFIED** — Matrix complete 45/45 |
-| Freeze CLN-03 | **Amended by evidence** — `dimension_signals` KEEP; other two DELETE APPROVED |
+| AA-10 | **VERIFIED** — Matrix complete 43/43 (P3 deletions applied) |
+| Freeze CLN-03 | **Amended by evidence** — `dimension_signals` KEEP; `progress` + `current_reasoning_decision` DELETE EXECUTED (P3) |
 
 ---
 
@@ -224,7 +224,7 @@ Deliver Category B Domain Contracts required by Architecture Freeze:
 | Item | Result |
 |---|---|
 | Domain Contracts | **APPROVED** |
-| Ownership Matrix | **COMPLETE** (45/45) |
+| Ownership Matrix | **COMPLETE** (43/43 after P3) |
 | Data Model | **N/A — CERTIFIED** |
 | Redesign | **None** |
 | Next | Implementation Plan (acceptance now unblocked for Contracts gate; coding still requires accepted Impl Plan) |

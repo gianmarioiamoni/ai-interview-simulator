@@ -43,7 +43,7 @@ class InterviewStateMapper:
         return InterviewSessionDTO(
             session_id=state.interview_id,
             current_question=question_dto,
-            is_completed=state.progress.value == "completed",
+            is_completed=state.is_completed,
             current_area=current_area,
         )
 

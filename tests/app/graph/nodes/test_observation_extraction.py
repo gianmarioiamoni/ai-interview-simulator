@@ -302,7 +302,7 @@ class TestReasonerNodeObservationStoreIntegration:
     def test_existing_reasoner_output_still_present(self) -> None:
         result = self._run_node_with_signal()
         assert result.interview_memory is not None
-        assert result.current_reasoning_decision is not None
+        assert len(result.interview_memory.reasoning_history.entries) >= 1
 
     def test_candidate_profile_v2_set_by_knowledge_pipeline(self) -> None:
         # Phase D populates candidate_profile_v2 when observation_store has observations

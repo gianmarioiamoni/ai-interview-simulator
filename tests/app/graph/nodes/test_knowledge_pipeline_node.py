@@ -253,7 +253,7 @@ class TestReasonerNodeCandidateProfileV2Integration:
     def test_v1_fields_intact(self) -> None:
         result = self._run_node_with_observations()
         assert result.interview_memory is not None
-        assert result.current_reasoning_decision is not None
+        assert len(result.interview_memory.reasoning_history.entries) >= 1
 
 
 # ---------------------------------------------------------------------------

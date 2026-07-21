@@ -56,24 +56,20 @@ def test_node_returns_interview_state():
     assert isinstance(result, InterviewState)
 
 
-def test_node_updates_current_reasoning_decision():
-    state = _empty_state()
-    result = reasoner_node(state)
-    assert result.current_reasoning_decision is not None
-
-
 def test_node_updates_interview_memory():
     state = _empty_state()
     result = reasoner_node(state)
     assert isinstance(result.interview_memory, InterviewMemory)
+    assert len(result.interview_memory.reasoning_history.entries) == 1
 
 
 def test_node_does_not_mutate_original_state():
     state = _empty_state()
     original_q_idx = state.current_question_index
+    original_entries = len(state.interview_memory.reasoning_history.entries)
     reasoner_node(state)
     assert state.current_question_index == original_q_idx
-    assert state.current_reasoning_decision is None
+    assert len(state.interview_memory.reasoning_history.entries) == original_entries
 
 
 def test_node_appends_reasoning_entry():
@@ -102,7 +98,7 @@ def test_node_survives_builder_failure():
     ):
         result = reasoner_node(state)
     assert isinstance(result, InterviewState)
-    assert result.current_reasoning_decision is None
+    assert result is state
 
 
 def test_node_survives_service_failure():
@@ -112,7 +108,7 @@ def test_node_survives_service_failure():
         side_effect=ValueError("service boom"),
     ):
         result = reasoner_node(state)
-    assert result.current_reasoning_decision is None
+    assert result is state
 
 
 def test_node_returns_original_state_fields_on_failure():

@@ -25,7 +25,7 @@ def test_reasoner_whole_and_stages_are_profiled() -> None:
     assert evidence.knowledge_pipeline_ms >= 0.0
     assert evidence.written_cycle_ms >= evidence.whole_node_ms
     assert stub.invoke_call_count >= 1
-    assert state.current_reasoning_decision is not None
+    assert len(state.interview_memory.reasoning_history.entries) >= 1
 
 
 def test_knowledge_pipeline_is_per_question_cost() -> None:

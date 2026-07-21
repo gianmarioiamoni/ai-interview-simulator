@@ -86,10 +86,17 @@ def _nodes_referencing(field: str) -> set[str]:
 class TestAT01MatrixCompleteness:
     """AT-01 / I-OM-01 — every InterviewState field appears exactly once with writers."""
 
-    def test_matrix_field_count_is_45(self) -> None:
+    def test_matrix_field_count_is_43(self) -> None:
         matrix = _load_matrix()
-        assert matrix["field_count"] == 45
-        assert len(_matrix_fields(matrix)) == 45
+        assert matrix["field_count"] == 43
+        assert len(_matrix_fields(matrix)) == 43
+
+    def test_deleted_fields_absent_from_state_and_matrix(self) -> None:
+        deleted = {"progress", "current_reasoning_decision"}
+        matrix_names = {row["field"] for row in _matrix_fields(_load_matrix())}
+        state_names = set(InterviewState.model_fields.keys())
+        assert deleted.isdisjoint(matrix_names)
+        assert deleted.isdisjoint(state_names)
 
     def test_matrix_covers_all_interview_state_fields(self) -> None:
         matrix_names = {row["field"] for row in _matrix_fields(_load_matrix())}

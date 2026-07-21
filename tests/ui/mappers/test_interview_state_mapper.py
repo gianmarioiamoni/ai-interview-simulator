@@ -5,14 +5,11 @@
 
 import pytest
 
-from domain.contracts.interview.interview_progress import InterviewProgress
-
 from app.ui.mappers.interview_state_mapper import InterviewStateMapper
 
 from tests.factories.interview_state_factory import (
     build_interview_state,
     build_state_with_execution,
-    build_written_question_state,
 )
 from tests.domain.contracts.report.conftest import make_report
 
@@ -24,9 +21,7 @@ from tests.domain.contracts.report.conftest import make_report
 
 def test_session_dto_in_progress_maps_current_question_correctly():
 
-    state = build_interview_state().model_copy(
-        update={"progress": InterviewProgress.IN_PROGRESS}
-    )
+    state = build_interview_state()
 
     mapper = InterviewStateMapper()
     dto = mapper.to_session_dto(state)
@@ -42,9 +37,7 @@ def test_session_dto_in_progress_maps_current_question_correctly():
 
 def test_session_dto_second_question_advances_index():
 
-    state = build_interview_state(current_question_index=1).model_copy(
-        update={"progress": InterviewProgress.IN_PROGRESS}
-    )
+    state = build_interview_state(current_question_index=1)
 
     mapper = InterviewStateMapper()
     dto = mapper.to_session_dto(state)
@@ -59,7 +52,7 @@ def test_session_dto_completed_returns_no_current_question():
 
     state = state.model_copy(
         update={
-            "progress": InterviewProgress.COMPLETED,
+            "is_completed": True,
             "current_question_index": len(state.questions),
         }
     )

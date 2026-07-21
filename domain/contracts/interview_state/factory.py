@@ -4,7 +4,6 @@ from uuid import uuid4, uuid5, NAMESPACE_URL
 from domain.contracts.user.role import Role, RoleType
 from domain.contracts.interview.interview_type import InterviewType
 from domain.contracts.question.question import Question
-from domain.contracts.interview.interview_progress import InterviewProgress
 from domain.contracts.shared.action_type import ActionType
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
 
@@ -37,7 +36,6 @@ class InterviewStateFactoryMixin:
             company=company.strip(),
             language=language,
             questions=questions,
-            progress=InterviewProgress.SETUP,
             seniority_level=seniority_level,
             interview_length=interview_length,
             context_profile=context_profile or InterviewContextProfile(),
@@ -60,7 +58,6 @@ class InterviewStateFactoryMixin:
             # -------------------------------------------------
             role=Role(type=RoleType.FULLSTACK_ENGINEER),
             interview_type=InterviewType.TECHNICAL,
-            progress=InterviewProgress.SETUP,
             # -------------------------------------------------
             # BASIC INFO
             # -------------------------------------------------

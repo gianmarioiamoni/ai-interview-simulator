@@ -107,9 +107,10 @@ class TestCoreFieldStability:
         state = _make_state()
         assert isinstance(state.interview_memory, InterviewMemory)
 
-    def test_current_reasoning_decision_still_none_by_default(self) -> None:
-        state = _make_state()
-        assert state.current_reasoning_decision is None
+    def test_deleted_ephemeral_fields_absent(self) -> None:
+        fields = set(InterviewState.model_fields.keys())
+        assert "current_reasoning_decision" not in fields
+        assert "progress" not in fields
 
     def test_follow_up_count_still_validated(self) -> None:
         with pytest.raises(ValidationError):

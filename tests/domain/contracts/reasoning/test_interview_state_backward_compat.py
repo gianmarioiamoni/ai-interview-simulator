@@ -39,7 +39,8 @@ def test_interview_state_has_interview_memory_field():
     from domain.contracts.interview_state.base import InterviewStateBase
     fields = InterviewStateBase.model_fields
     assert "interview_memory" in fields
-    assert "current_reasoning_decision" in fields
+    assert "current_reasoning_decision" not in fields
+    assert "progress" not in fields
 
 
 def test_interview_state_interview_memory_default():
@@ -47,13 +48,6 @@ def test_interview_state_interview_memory_default():
     kwargs = _make_base_state_kwargs()
     state = InterviewStateBase(**kwargs)
     assert isinstance(state.interview_memory, InterviewMemory)
-
-
-def test_interview_state_current_reasoning_decision_default_none():
-    from domain.contracts.interview_state.base import InterviewStateBase
-    kwargs = _make_base_state_kwargs()
-    state = InterviewStateBase(**kwargs)
-    assert state.current_reasoning_decision is None
 
 
 def test_interview_memory_context_removed():

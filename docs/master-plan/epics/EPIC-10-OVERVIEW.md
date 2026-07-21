@@ -1,6 +1,6 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro B P2 complete; Checkpoint B pending P3  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro B complete; Checkpoint B ready  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
 **Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Freeze)  
@@ -10,6 +10,8 @@
 **Regression baseline (initialization):** 7485 passed / 0 failed (EPIC-09 close-out)  
 **EPIC-10 implementation baseline (pre-P1):** 7485 passed / 0 failed (reconfirmed 2026-07-21; ≥ planning baseline)  
 **P1 regression (post C1–C2):** 7490 passed / 0 failed (+5 AT-04/AT-05)  
+**P3 regression (post C6–C7):** 7494 passed / 0 failed  
+ 
 **Architecture Discovery:** `EPIC-10-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
 **Architecture Review:** `EPIC-10-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
 **Formal ADR:** **SKIP** (AR-11 — ADR required: NO)  
@@ -17,7 +19,7 @@
 **Data Model:** **N/A — CERTIFIED** (Contracts §8)  
 **Architecture Freeze:** `EPIC-10-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-10-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** Macro B / P2 COMPLETE (C3–C5); next Macro B / P3  
+**Implementation:** Macro B COMPLETE (P2–P3); next Macro C / P4  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -176,6 +178,7 @@ Pre-P1 baseline  ← COMPLETE (7485)
 Implementation (C1–C14; Macros A–E)
   Macro A / P1  ← COMPLETE (C1–C2; Checkpoint A ready)
   Macro B / P2  ← COMPLETE (C3–C5; ownership matrix + asked_question_ids)
+  Macro B / P3  ← COMPLETE (C6–C7; progress + current_reasoning_decision deleted)
   (Checkpoint A → B → C → D → E → CAR …)
         ↓
 CAR (incl. Architecture Traceability)
@@ -279,7 +282,8 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Macro A / P1 (C1–C2) | **COMPLETE** — INDEX OP registry; OP-02 hygiene; AT-04/AT-05 green |
 | Checkpoint A | **PASSED** — Macro B authorized |
 | Macro B / P2 (C3–C5) | **COMPLETE** — Ownership matrix JSON; AT-01; asked_question_ids aligned |
-| Checkpoint B | **PENDING P3** — field deletions (`progress`, `current_reasoning_decision`) |
-| Implementation | **IN PROGRESS** — next: Macro B / P3 (C6) |
+| Macro B / P3 (C6–C7) | **COMPLETE** — `progress` + `current_reasoning_decision` deleted; matrix 43/43 |
+| Checkpoint B | **READY** — AT-01 green; deleted fields absent; asked_question_ids aligned |
+| Implementation | **IN PROGRESS** — next: Macro C / P4 (C8) |
 
-**Next planned activity:** Macro B / **P3** — Delete `progress` + `current_reasoning_decision` (C6–C7) per Implementation Plan.
+**Next planned activity:** Macro C / **P4** — Delete stubs & scaffolding (C8–C10) per Implementation Plan.
