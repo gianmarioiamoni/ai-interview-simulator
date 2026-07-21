@@ -1,6 +1,6 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** Final Review **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1); **Epic Close AUTHORIZED**  
+**Status:** **CLOSED WITH OBSERVATIONS** (0 P0/P1) — 2026-07-21  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
 **Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Freeze; Category A reclassification **REJECTED** AR-13)  
@@ -25,7 +25,7 @@
 **Implementation:** Macro E / P7 COMPLETE (C14); Checkpoint E **PASSED**  
 **Construction Architecture Review (CAR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-21  
 **Final Review (FR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-21  
-**Epic Close:** **AUTHORIZED** (not executed)  
+**Epic Close:** **CLOSED WITH OBSERVATIONS** — 2026-07-21  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -197,7 +197,7 @@ Regression / Documentation Certification  ← COMPLETE (P7 + FR reconfirm)
         ↓
 Final Review (FR)  ← COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1)
         ↓
-Epic Close  ← AUTHORIZED (not executed)
+Epic Close  ← CLOSED WITH OBSERVATIONS
 ```
 
 ---
@@ -304,7 +304,7 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Regression Certification | **COMPLETE** — **7378 passed / 0 failed** (P7; FR AT reconfirm 23/0) |
 | Documentation Certification | **COMPLETE** — Overview / Plan / Master Plan / TD register aligned |
 | Final Review | **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-21 |
-| Epic Close | **AUTHORIZED** — not executed |
+| Epic Close | **CLOSED WITH OBSERVATIONS** — 2026-07-21 |
 
 ### P6 documentation certification (C13)
 
@@ -492,6 +492,40 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 
 ### Authorization
 
-**Epic Close authorized** (FR 2026-07-21). Do **not** execute Epic Close in this activity.
+**Epic Close authorized** (FR 2026-07-21). Superseded by §17 Epic Close.
 
-**Next planned activity:** Epic Close — separate prompt.
+---
+
+## 17. Epic Close
+
+**Date:** 2026-07-21  
+**HEAD at close:** `c25a252ed01025e5d5f8862769b4af7e11f43a44`  
+**Playbook:** Step 13 — Epic Close  
+**FR outcome:** **PASS WITH OBSERVATIONS** / Closed (0 P0/P1)  
+**Verdict:** **CLOSED WITH OBSERVATIONS**
+
+### Closure verification
+
+| Criterion | Result |
+|---|---|
+| C1–C14 complete | **PASS** |
+| Checkpoints A–E | **PASSED** |
+| CAR | **PASS WITH OBSERVATIONS** (0 P0/P1) |
+| Final Review | **PASS WITH OBSERVATIONS** (0 P0/P1) — binary Closed |
+| Regression certification | **PASS** — 7378 passed / 0 failed (P7; FR AT 23/0) |
+| Documentation synchronized | **PASS** — Overview / Plan / Contracts / Freeze / Master Plan / TD register |
+| Technical debt registered | **PASS** — `TD-EP08-001` CLOSED; `TD-EP10-001` / `TD-EP10-002` OPEN (non-blocking) |
+| Zero open P0/P1 | **PASS** |
+| Legacy deletions in epic scope | **PASS** — stubs + MIG scaffolding retired; AT-02 |
+| Domain / architecture surfaces unchanged at close | **PASS** — docs-only close |
+
+### Remaining observations (non-blocking)
+
+1. **TD-EP10-001** (OPEN) — CandidateProfile `dimension_scores` dual-model residual; redesign out of EPIC-10 (AR-08 / O-04).
+2. **TD-EP10-002** (OPEN) — Residual `InterviewStateProgressMixin` / `progress.py` module name after field `progress` deletion (cosmetic).
+
+### Next activities
+
+1. **EPIC-V13-10 is CLOSED WITH OBSERVATIONS.** No further EPIC-10 scope.
+2. **Next planned activity:** Phase 5 remaining — V1.3 Release Readiness / release artifacts (Master Plan §8 Phase 5; DoD items outside EPIC-10).
+3. **Carry-forward (non-blocking):** Resolve or schedule `TD-EP10-001` / `TD-EP10-002` outside this epic.
