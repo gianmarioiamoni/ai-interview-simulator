@@ -106,6 +106,7 @@
 | ID | Item | Location | Severity | Status | ADR |
 |---|---|---|---|---|---|
 | TD-EP10-001 | CandidateProfile residual dual-model: V1.1 `dimension_scores` retained alongside V1.2 `features`; rename / `dimension_scores` removal / semantic migration explicitly out of EPIC-10 (AR-08, CLN-08, O-04) | `domain/contracts/reasoning/candidate_profile.py`; `InterviewState.candidate_profile_v2` | Low | OPEN (deferred redesign) | AR-08 |
+| TD-EP10-002 | Residual module name `InterviewStateProgressMixin` / `progress.py` after `InterviewState.progress` field deletion (helpers only; no state-field drift) — cosmetic rename deferred (O-CAR-01 / FR) | `domain/contracts/interview_state/progress.py` | Low | OPEN (cosmetic rename) | — |
 
 ---
 

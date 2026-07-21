@@ -1,6 +1,6 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** CAR COMPLETE — **PASS WITH OBSERVATIONS** (0 P0/P1); **Final Review AUTHORIZED**  
+**Status:** Final Review **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1); **Epic Close AUTHORIZED**  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
 **Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Freeze; Category A reclassification **REJECTED** AR-13)  
@@ -14,7 +14,7 @@
 **P4 regression (post C8–C10):** 7373 passed / 0 failed (retired obsolete scaffolding + stub detector tests; AT-02 added)  
 **P5 regression (post C11–C12):** 7378 passed / 0 failed (+AT-03/+AT-07); `TD-EP08-001` CLOSED  
 **P7 certified regression (C14):** 7378 passed / 0 failed — **re-baselined** (see §P7)  
-**CAR AT reconfirm (2026-07-21):** AT-01…07 **23 passed / 0 failed**  
+**FR AT reconfirm (2026-07-21):** AT-01…07 **23 passed / 0 failed**  
 **Architecture Discovery:** `EPIC-10-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
 **Architecture Review:** `EPIC-10-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
 **Formal ADR:** **SKIP** (AR-11 — ADR required: NO)  
@@ -24,7 +24,8 @@
 **Implementation Plan:** `EPIC-10-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
 **Implementation:** Macro E / P7 COMPLETE (C14); Checkpoint E **PASSED**  
 **Construction Architecture Review (CAR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-21  
-**Final Review (FR):** **AUTHORIZED** (not yet executed)  
+**Final Review (FR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-21  
+**Epic Close:** **AUTHORIZED** (not executed)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -192,11 +193,11 @@ Implementation (C1–C14; Macros A–E)
         ↓
 CAR (incl. Architecture Traceability)  ← COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1)
         ↓
-Regression / Documentation Certification  ← next (FR gate sequence)
+Regression / Documentation Certification  ← COMPLETE (P7 + FR reconfirm)
         ↓
-Final Review (FR)  ← AUTHORIZED
+Final Review (FR)  ← COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1)
         ↓
-Epic Close
+Epic Close  ← AUTHORIZED (not executed)
 ```
 
 ---
@@ -300,8 +301,10 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Checkpoint E | **PASSED** — CAR authorized |
 | Implementation | **COMPLETE** |
 | CAR | **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-21 |
-| Final Review | **AUTHORIZED** — not executed |
-| Epic Close | **NOT STARTED** |
+| Regression Certification | **COMPLETE** — **7378 passed / 0 failed** (P7; FR AT reconfirm 23/0) |
+| Documentation Certification | **COMPLETE** — Overview / Plan / Master Plan / TD register aligned |
+| Final Review | **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-21 |
+| Epic Close | **AUTHORIZED** — not executed |
 
 ### P6 documentation certification (C13)
 
@@ -429,6 +432,66 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 
 ### Authorization
 
-**Final Review authorized** (CAR 2026-07-21). Do **not** execute FR or Epic Close in this activity.
+**Final Review authorized** (CAR 2026-07-21). Superseded by §16 Final Review.
 
-**Next planned activity:** Final Review (FR) — separate prompt; not Epic Close.
+---
+
+## 16. Final Review (FR)
+
+**Date:** 2026-07-21  
+**HEAD reviewed:** `5a8a9411c208068f5d90fc2d7d5a4483afb66b0e`  
+**Scope:** Epic-closure gate only (Playbook §10). No implementation or architecture changes. No Epic Close.  
+**Category:** B  
+**Verdict:** **PASS WITH OBSERVATIONS** (0 P0 / 0 P1) — binary outcome **Closed**
+
+### Preflight
+
+| Item | Result |
+|---|---|
+| Working tree | **CLEAN** |
+| HEAD | `5a8a9411c208068f5d90fc2d7d5a4483afb66b0e` |
+| CAR | **PASS WITH OBSERVATIONS** (0 P0/P1) — Final Review authorized |
+| Checkpoints A–E | **PASSED** |
+| Implementation P1–P7 / C1–C14 | **COMPLETE** |
+
+### FR checklist
+
+| Criterion | Result |
+|---|---|
+| Master Plan / Overview objectives (P-10; AO-01…AO-08) | **PASS** — PAT/OP registry; Ownership Matrix 43/43; dead-code purity; PAT-06 corollary; deprecated dispositions |
+| Frozen planning fully implemented (AR-01…AR-14; CLN-*; AT-01…07) | **PASS** — C1–C14 complete; no deferred in-scope decisions |
+| CAR outcome incorporated | **PASS** — Traceability Review held; observations carried forward |
+| Review observations resolved or registered | **PASS** — `TD-EP10-001` OPEN (AR-08 out of scope); O-CAR-01 → `TD-EP10-002` |
+| No temporary bridges / compatibility layers | **PASS** — none introduced |
+| Runtime matches frozen architecture | **PASS** — CAR + AT-01…07 |
+| InterviewState ownership | **PASS** — matrix 43/43; AT-01; deleted fields absent |
+| Implementation debt classified | **PASS** — `TD-EP08-001` CLOSED; `TD-EP10-001` / `TD-EP10-002` registered |
+| Evidence present | **PASS** — P7 regression 7378/0; FR AT reconfirm 23/0; CAR Traceability |
+| ADR | **SKIP** (AR-11) |
+
+### Regression (FR reconfirm)
+
+| Metric | Value |
+|---|---|
+| P7 certified suite | **7378 passed / 0 failed** |
+| Re-baseline vs Pre-P1 7485 | **JUSTIFIED / CERTIFIED** (−107 intentional CLN-02/CLN-04) |
+| FR AT-01…07 reconfirm | **23 passed / 0 failed** |
+
+### Findings
+
+| Severity | Count | Notes |
+|---|---|---|
+| P0 | 0 | — |
+| P1 | 0 | — |
+| P2 / P3 | 2 observations | Non-blocking; registered in Technical Debt Register |
+
+### Remaining observations (non-blocking)
+
+1. **TD-EP10-001** (OPEN) — CandidateProfile `dimension_scores` dual-model residual; redesign explicitly out of EPIC-10 (AR-08 / O-04).
+2. **TD-EP10-002** (OPEN; was O-CAR-01) — Residual module name `InterviewStateProgressMixin` / `progress.py` after field `progress` deletion (helpers only; cosmetic).
+
+### Authorization
+
+**Epic Close authorized** (FR 2026-07-21). Do **not** execute Epic Close in this activity.
+
+**Next planned activity:** Epic Close — separate prompt.

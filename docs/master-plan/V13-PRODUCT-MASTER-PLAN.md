@@ -313,7 +313,7 @@ Horizontal scaling. Distributed caching (Redis). CDN configuration. Query optimi
 
 ### EPIC-V13-10 — Final Architecture Cleanup
 
-**Status:** CAR COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1); Final Review AUTHORIZED — 2026-07-21  
+**Status:** Final Review COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1); Epic Close AUTHORIZED — 2026-07-21  
 
 
 **Purpose:**  
@@ -497,8 +497,8 @@ Preliminary profiling can begin in Phase 2. Full load test and SLO validation re
 
 ### Phase 5 — Release Gate
 
-**EPIC-V13-10 (Final Architecture Cleanup — full audit)** — **CAR COMPLETE — PASS WITH OBSERVATIONS**; Final Review AUTHORIZED (2026-07-21)  
-Final audit pass. Ownership Matrix, PAT/OP registry, dead-code purity, and AT-01…07 gates certified. Living Overview: `docs/master-plan/epics/EPIC-10-OVERVIEW.md`. Next: Final Review → Epic Close.
+**EPIC-V13-10 (Final Architecture Cleanup — full audit)** — **Final Review COMPLETE — PASS WITH OBSERVATIONS**; Epic Close AUTHORIZED (2026-07-21)  
+Final audit pass. Ownership Matrix, PAT/OP registry, dead-code purity, and AT-01…07 gates certified. Living Overview: `docs/master-plan/epics/EPIC-10-OVERVIEW.md`. Next: Epic Close.
 
 **V1.3 Release**
 
