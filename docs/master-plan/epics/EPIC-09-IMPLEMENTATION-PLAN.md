@@ -356,10 +356,12 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | C1 | **DONE** — SLO-Q harness under `tests/performance/` |
 | C2 | **DONE** — optional infra cycle emit (`question_cycle_logging`) |
 | C3 | **DONE** — SLO-R close→report harness under `tests/performance/` |
-| Next | **C4** — SLO-P harness |
+| C4 | **DONE** — SLO-P replay reconstruction harness under `tests/performance/` |
+| Checkpoint A | **READY FOR EVALUATION** — Macro A measurement (C1–C4) complete |
+| Next | Checkpoint A → **C5** |
 
 ---
 
 ## 18. Next activity
 
-**C4** — SLO-P harness: replay reconstruction on materialized SessionHistory (AR-04, RPL-*).
+**Checkpoint A** — confirm SLO-Q/R/P harnesses green + suite green; then **C5** (reasoner + KP profiling).
