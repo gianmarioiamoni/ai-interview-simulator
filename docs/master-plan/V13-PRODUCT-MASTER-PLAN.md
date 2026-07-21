@@ -231,7 +231,7 @@ PDF export, email delivery, or sharing. These are V2 distribution concerns. Expl
 
 ### EPIC-V13-06 — Explainability
 
-**Status:** CAR COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1); Final Review AUTHORIZED — 2026-07-22  
+**Status:** Final Review COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1); Epic Close AUTHORIZED — 2026-07-22  
 
 **Purpose:**  
 Make every coaching assertion traceable to its evidence source, surfaced in the report UI.
@@ -483,8 +483,8 @@ Depends on EPIC-V13-03 (Replay Engine).
 **EPIC-V13-05 (Unified Report)**  
 Depends on EPIC-V13-01, EPIC-V13-02, EPIC-V13-03. Does not depend on EPIC-V13-06.
 
-**EPIC-V13-06 (Explainability)** — **CAR COMPLETE — PASS WITH OBSERVATIONS**; Final Review AUTHORIZED (2026-07-22)  
-Depends on EPIC-V13-05 (Unified Report host surfaces) and EPIC-V13-01 (clean scoring data). Implementation complete (C1–C8, C10). Living Overview: `docs/master-plan/epics/EPIC-06-OVERVIEW.md`. Next: Final Review → Epic Close.
+**EPIC-V13-06 (Explainability)** — **Final Review COMPLETE — PASS WITH OBSERVATIONS**; Epic Close AUTHORIZED (2026-07-22)  
+Depends on EPIC-V13-05 (Unified Report host surfaces) and EPIC-V13-01 (clean scoring data). Implementation complete (C1–C8, C10). Living Overview: `docs/master-plan/epics/EPIC-06-OVERVIEW.md`. Next: Epic Close.
 
 ### Phase 4 — Production Readiness (after Phase 3 complete)
 

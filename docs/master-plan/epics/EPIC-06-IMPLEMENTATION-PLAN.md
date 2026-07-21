@@ -1,10 +1,10 @@
 # EPIC-06 — Explainability: Implementation Plan
 
-**Status:** IMPLEMENTATION COMPLETE — CAR **PASS WITH OBSERVATIONS** (0 P0/P1); Final Review AUTHORIZED — 2026-07-22  
+**Status:** IMPLEMENTATION COMPLETE — FR **PASS WITH OBSERVATIONS** (0 P0/P1); Epic Close AUTHORIZED — 2026-07-22  
 **Date:** 2026-07-16  
 **Epic ID:** EPIC-V13-06  
 **Playbook Category:** Category B — Major Architectural Epic  
-**Phase:** Implementation Plan (Playbook §8.6) — close-out markers updated at CAR recovery  
+**Phase:** Implementation Plan (Playbook §8.6) — close-out markers updated at CAR/FR recovery  
 **Precondition:** `EPIC-06-ARCHITECTURE-FREEZE.md` APPROVED; ADR STEP SKIPPED; working tree clean  
 **Authority:** Implementation sequence, commit boundaries, tests, OF-01 presentation-mechanism selection (implementation-only). No architecture changes. No ADR. No production code in this document step.
 
@@ -383,22 +383,22 @@ On stop: fix in-phase or escalate Architecture Checkpoint; do not proceed to nex
 
 ---
 
-## 21. Close-out status (CAR recovery — 2026-07-22)
+## 21. Close-out status (CAR/FR recovery — 2026-07-22)
 
 | Gate | Status |
 |---|---|
 | C1–C8, C10 | **DONE** |
 | C9 / OF-04 | **DEFERRED** (plan-allowed; non-blocking) |
 | ACP-M0…M4 | **RECOVERED at CAR Traceability** (living checkpoint transcripts were absent pre-recovery) |
-| CAR | **PASS WITH OBSERVATIONS** — 2026-07-22; 0 P0/P1; Final Review **AUTHORIZED** |
-| CAR explainability suite | **111 passed / 0 failed** |
-| Regression Certification | **PENDING** (FR path) |
-| Documentation Certification | **PENDING** (FR path; Overview/Plan/MP CAR markers updated here) |
-| Final Review | **AUTHORIZED** — not performed |
-| Epic Close | **PENDING** |
+| CAR | **PASS WITH OBSERVATIONS** — 2026-07-22; 0 P0/P1 |
+| Final Review | **PASS WITH OBSERVATIONS** — 2026-07-22; 0 P0/P1; Epic Close **AUTHORIZED** |
+| Explainability suite (CAR/FR) | **111 passed / 0 failed** |
+| Regression Certification | **COMPLETE** — FR reconfirm 111/0 |
+| Documentation Certification | **COMPLETE** — Overview / Plan / Master Plan FR markers aligned |
+| Epic Close | **AUTHORIZED** — not performed |
 
-Open plan issues disposition at CAR: OF-01 **RESOLVED** (executed); OF-03 **OPEN** docs debt (O-CAR-01); OF-04 **DEFERRED**.
+Open plan issues disposition: OF-01 **RESOLVED** (executed); OF-03 **OPEN** docs debt (O-CAR-01); OF-04 **DEFERRED**.
 
 ---
 
-*Implementation Plan accepted. Architecture remains frozen. OF-01 resolved as inline presentation within existing report sections. CAR recovery updated living status markers only.*
+*Implementation Plan accepted. Architecture remains frozen. OF-01 resolved as inline presentation within existing report sections. CAR/FR recovery updated living status markers only.*

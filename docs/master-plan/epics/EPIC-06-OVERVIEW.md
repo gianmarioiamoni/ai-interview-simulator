@@ -1,7 +1,7 @@
 # EPIC-06 — Explainability
 
-**Status:** CAR COMPLETE — **PASS WITH OBSERVATIONS** (0 P0/P1); Final Review AUTHORIZED — 2026-07-22  
-**Date:** 2026-07-16 (initialized); CAR recovery 2026-07-22  
+**Status:** Final Review COMPLETE — **PASS WITH OBSERVATIONS** (0 P0/P1); Epic Close AUTHORIZED — 2026-07-22  
+**Date:** 2026-07-16 (initialized); CAR/FR recovery 2026-07-22  
 **Epic ID:** EPIC-V13-06  
 **Playbook Category:** Category B — Major Architectural Epic  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-06; Product Goal P-06  
@@ -16,8 +16,8 @@
 **Implementation Plan:** `EPIC-06-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
 **Implementation:** COMPLETE (C1–C8, C10; C9/OF-04 deferred)  
 **Construction Architecture Review (CAR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-22  
-**Final Review (FR):** PENDING (authorized by CAR)  
-**Epic Close:** PENDING  
+**Final Review (FR):** **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) — 2026-07-22  
+**Epic Close:** AUTHORIZED (not performed)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 ---
@@ -72,7 +72,7 @@ Inherited context (not direct Master Plan dependencies for this epic): EPIC-V13-
 - Pre-render / projection completeness validation (EC-V-01 fail-fast)
 - Inline OF-01 presentation on C-20 + coaching actions + export parity
 - Behavioral + architectural tests
-- CAR (with Architecture Traceability) ← **COMPLETE**; Regression / Docs / FR / Epic Close remain
+- CAR (with Architecture Traceability) ← **COMPLETE**; FR ← **COMPLETE**; Epic Close AUTHORIZED
 
 **Non-goals (Master Plan):** AI-generated explanations of explanations; NL “why” query UI (V2+); enterprise audit trails (V2).
 
@@ -100,11 +100,11 @@ Implementation (M0–M4 / C1–C8, C10)  ← COMPLETE
         ↓
 CAR (incl. Architecture Traceability)  ← COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1)
         ↓
-Regression / Documentation Certification  ← PENDING (FR path)
+Regression / Documentation Certification  ← COMPLETE (FR reconfirm)
         ↓
-Final Review (FR)  ← AUTHORIZED
+Final Review (FR)  ← COMPLETE — PASS WITH OBSERVATIONS (0 P0/P1)
         ↓
-Epic Close  ← PENDING
+Epic Close  ← AUTHORIZED (not performed)
 ```
 
 ---
@@ -207,15 +207,70 @@ Production touch set confined to Report DTO / report UI / export path + tests. *
 |---|---|---|
 | P0 | 0 | — |
 | P1 | 0 | — |
-| P2 / P3 | 3 observations | Non-blocking; see §9 |
+| P2 / P3 | 5 observations | Non-blocking; see §10 |
 
 ### Authorization
 
-**Final Review authorized** (CAR 2026-07-22). Do not perform Final Review or Epic Close in this activity.
+**Final Review authorized** (CAR 2026-07-22). Superseded by §9 Final Review.
 
 ---
 
-## 9. Open observations (non-blocking)
+## 9. Final Review (FR)
+
+**Date:** 2026-07-22  
+**HEAD reviewed:** `e7f0b4677ed81a2de6805700fa3dcb1d5c54ff32`  
+**Scope:** Epic-closure gate only (Playbook §10). Governance recovery. No implementation or architecture changes. No Epic Close.  
+**Category:** B  
+**Verdict:** **PASS WITH OBSERVATIONS** (0 P0 / 0 P1) — binary outcome **Closed**
+
+### Preflight
+
+| Item | Result |
+|---|---|
+| Working tree | **CLEAN** |
+| HEAD | `e7f0b4677ed81a2de6805700fa3dcb1d5c54ff32` |
+| CAR | **PASS WITH OBSERVATIONS** (0 P0/P1) — Final Review authorized |
+| Implementation C1–C8, C10 | **COMPLETE** |
+| C9 / OF-04 | **DEFERRED** (plan-allowed) |
+
+### FR checklist
+
+| Criterion | Result |
+|---|---|
+| Master Plan / Overview objectives (P-06 explainability) | **PASS** — candidate-visible insight evidence + action origins on Report plane |
+| Frozen planning fully implemented | **PASS** — Freeze §22 / Contracts / Data Model / Plan C1–C8,C10; OF-04 optional deferred |
+| CAR outcome incorporated | **PASS** — Traceability held; observations carried forward |
+| Explainability acceptance R-01…R-07 | **PASS** |
+| No temporary bridges / compatibility layers | **PASS** — none introduced |
+| Runtime matches frozen architecture | **PASS** — CAR + FR suite reconfirm |
+| No new InterviewState writers / dual-read | **PASS** |
+| Implementation debt classified | **PASS** — O-CAR-* / OF-03 / OF-04 non-blocking |
+| Evidence present | **PASS** — CAR Traceability; FR suite 111/0 |
+| ADR | **SKIP** (Freeze §17) |
+| Zero open P0/P1 | **PASS** |
+
+### Regression (FR reconfirm)
+
+| Metric | Value |
+|---|---|
+| Explainability FR suite | **111 passed / 0 failed** |
+| Full-suite lineage | EPIC-06 retained; later epic closes green (EPIC-10 **7378 / 0**) |
+
+### Findings
+
+| Severity | Count | Notes |
+|---|---|---|
+| P0 | 0 | — |
+| P1 | 0 | — |
+| P2 / P3 | 5 observations | Non-blocking; §10 |
+
+### Authorization
+
+**Epic Close authorized** (FR 2026-07-22). Do not perform Epic Close in this activity.
+
+---
+
+## 10. Remaining observations (non-blocking)
 
 1. **O-CAR-01 / OF-03** — ADR-025 unrealized KnowledgeGap / FK documentation drift remains open docs debt (Freeze INFORMATION; out of critical path).
 2. **O-CAR-02** — AT-08 intent enforced by implementation (origin join from LearningObjective; scoring `knowledge_gaps` not used as action origin) but no dedicated named `AT-08` architectural test module.
@@ -225,7 +280,7 @@ Production touch set confined to Report DTO / report UI / export path + tests. *
 
 ---
 
-## 10. Architecture Assumptions Register
+## 11. Architecture Assumptions Register
 
 Authoritative Contracts statuses: `EPIC-06-DOMAIN-CONTRACTS.md` §6; Freeze §18.
 
@@ -244,7 +299,7 @@ Authoritative Contracts statuses: `EPIC-06-DOMAIN-CONTRACTS.md` §6; Freeze §18
 
 ---
 
-## 11. Status
+## 12. Status
 
 | Workflow step | Status |
 |---|---|
@@ -257,18 +312,18 @@ Authoritative Contracts statuses: `EPIC-06-DOMAIN-CONTRACTS.md` §6; Freeze §18
 | Implementation Plan | **ACCEPTED** |
 | Implementation (C1–C8, C10) | **COMPLETE** |
 | Construction Architecture Review (CAR) | **COMPLETE** — **PASS WITH OBSERVATIONS**; 0 P0/P1 |
-| Regression Certification | **PENDING** (FR path; CAR reconfirm 111/0) |
-| Documentation Certification | **PENDING** (FR path; living Overview aligned at CAR) |
-| Final Review (FR) | **AUTHORIZED** — not performed |
-| Epic Close | **PENDING** |
+| Regression Certification | **COMPLETE** — FR reconfirm **111 passed / 0 failed** |
+| Documentation Certification | **COMPLETE** — Overview / Plan / Master Plan FR markers aligned |
+| Final Review (FR) | **COMPLETE** — **PASS WITH OBSERVATIONS** (0 P0/P1) |
+| Epic Close | **AUTHORIZED** — not performed |
 
 ---
 
-## 12. Next Activities
+## 13. Next Activities
 
-1. **Final Review (FR)** for EPIC-V13-06 — authorized by this CAR.
-2. Do **not** treat epic as CLOSED until FR + Epic Close complete.
-3. Non-blocking: OF-03 ADR-025 docs alignment; optional named AT-08 module; optional OF-04.
+1. **Epic Close** for EPIC-V13-06 — authorized by this Final Review.
+2. Do **not** treat epic as CLOSED until Epic Close is performed.
+3. Non-blocking carry-forward: OF-03 ADR-025 docs alignment; optional named AT-08 module; optional OF-04.
 
 ---
 
