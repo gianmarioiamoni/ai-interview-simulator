@@ -230,6 +230,23 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 **Implementation Reference:** V1.2-IMPLEMENTATION-BASELINE §B8  
 **CAR Authority:** Enterprise Engineering Playbook v1.2 §Section O; V1.2-PATTERN-FREEZE.md §Construction Architecture Review
 
+## Official Patterns (ARC-01)
+
+| ID | Name | Document | Status |
+|---|---|---|---|
+| OP-01 | Cascading Closure | `ARC-01-ARCHITECTURE-CONSTITUTION.md` §5; `ARCHITECTURE-GUIDE.md` §8 | **Official — ARC-01** |
+| OP-02 | Projection Artifact | `ARC-01-ARCHITECTURE-CONSTITUTION.md` §5; `ARCHITECTURE-GUIDE.md` §8 | **Official — ARC-01** |
+| OP-03 | Runtime First / Projection Later | `ARC-01-ARCHITECTURE-CONSTITUTION.md` §5; `ARCHITECTURE-GUIDE.md` §8 | **Official — ARC-01** |
+| OP-04 | Sole Writer Node | `ARC-01-ARCHITECTURE-CONSTITUTION.md` §5; `ARCHITECTURE-GUIDE.md` §8 | **Official — ARC-01** |
+| OP-05 | Single Builder | `ARC-01-ARCHITECTURE-CONSTITUTION.md` §5; `ARCHITECTURE-GUIDE.md` §8 | **Official — ARC-01** |
+| OP-06 | Immutable Accumulation | `ARC-01-ARCHITECTURE-CONSTITUTION.md` §5; `ARCHITECTURE-GUIDE.md` §8 | **Official — ARC-01** |
+
+**Constitutional principle (not a PAT):** [P-08 — Reconstruction Completeness](ARC-01-ARCHITECTURE-CONSTITUTION.md#p-08--reconstruction-completeness) — remains ARC-01 principle; not registered as PAT-07.
+
+**Namespace rule (EPIC-V13-10 / AR-01):** PAT-01…06 (Engineering Pattern Registry) and OP-01…06 (Official Patterns) are **distinct namespaces**. Do **not** renumber OPs as PAT-07+. Numeric ID collision is managed by namespace labels.
+
+**Master Plan wording note (AR-01 / REG-05):** “five new PATs” = **OP-01…04 + P-08**. The six original PATs remain PAT-01…06. P-08 wording in the Master Plan is a historical synonym for the constitutional principle, not a Pattern Freeze PAT.
+
 ---
 
 ## Document Versions
@@ -249,6 +266,7 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | 2.0 | 2026-07-02 | Engineering | V1.2 Construction Phase: V1.2-IMPLEMENTATION-ROADMAP.md created; Construction Phase operational guide registered; Construction Readiness Assessment: GO |
 | 2.1 | 2026-07-02 | Engineering | DOC-M1 Pattern Freeze: V1.2-PATTERN-FREEZE.md created; PAT-01 to PAT-04 registered; Pattern Registry section added; Manifest v1.1 and Playbook v1.1 updated |
 | 2.2 | 2026-07-03 | Engineering | RC-C Methodology Freeze: PAT-05 and PAT-06 registered; CAR, Pattern Extraction, Runtime Ownership, Methodology Evolution formalised; Manifest v1.2 and Playbook v1.2 updated; Implementation Baseline v1.2 updated; STATUS promoted to RC-C COMPLETE |
+| 2.3 | 2026-07-21 | Engineering | EPIC-V13-10 P1: Official Patterns (ARC-01) section — OP-01…06 + P-08 cross-link; dual PAT/OP namespace note; Master Plan “five new PATs” = OP-01…04 + P-08 |
 
 ## Technical Debt Register (M2-8)
 

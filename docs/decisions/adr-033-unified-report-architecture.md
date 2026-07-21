@@ -38,7 +38,7 @@ This ADR freezes the architectural decisions required to unblock EPIC-V13-01 (Sc
 
 `ScoringSnapshot` is produced by `InterviewEvaluationService` (or its successor after decomposition) and passed to `session_close_node`, which writes it to `SessionHistoryBuilder` and then to `ReportBuilder`.
 
-`ScoringSnapshot` is `frozen=True` with a single builder (`ScoringSnapshotBuilder`). It has no computation methods — it is a pure Projection Artifact (PAT-04).
+`ScoringSnapshot` is `frozen=True` with a single builder (`ScoringSnapshotBuilder`). It has no computation methods — it is a pure Projection Artifact (OP-02).
 
 ### Rationale
 

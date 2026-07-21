@@ -1,6 +1,6 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** IMPLEMENTATION PLAN ACCEPTED — awaiting Pre-P1 / C1  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro A (P1) complete; Checkpoint A ready  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
 **Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Freeze)  
@@ -8,7 +8,8 @@
 **Roadmap Phase:** Phase 5 — Release Gate  
 **Precondition:** EPIC-V13-01 CLOSED; EPIC-V13-09 CLOSED; Phase 4 complete; working tree clean at initialization.  
 **Regression baseline (initialization):** 7485 passed / 0 failed (EPIC-09 close-out)  
-**EPIC-10 implementation baseline (pre-P1):** *pending Pre-P1*  
+**EPIC-10 implementation baseline (pre-P1):** 7485 passed / 0 failed (reconfirmed 2026-07-21; ≥ planning baseline)  
+**P1 regression (post C1–C2):** 7490 passed / 0 failed (+5 AT-04/AT-05)  
 **Architecture Discovery:** `EPIC-10-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
 **Architecture Review:** `EPIC-10-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
 **Formal ADR:** **SKIP** (AR-11 — ADR required: NO)  
@@ -16,7 +17,7 @@
 **Data Model:** **N/A — CERTIFIED** (Contracts §8)  
 **Architecture Freeze:** `EPIC-10-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-10-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** NOT STARTED  
+**Implementation:** Macro A / P1 COMPLETE (C1–C2); next Macro B / P2  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -170,9 +171,10 @@ Data Model  ← N/A — CERTIFIED
         ↓
 Implementation Plan  ← ACCEPTED
         ↓
-Pre-P1 baseline  ← NEXT
+Pre-P1 baseline  ← COMPLETE (7485)
         ↓
 Implementation (C1–C14; Macros A–E)
+  Macro A / P1  ← COMPLETE (C1–C2; Checkpoint A ready)
   (Checkpoint A → B → C → D → E → CAR …)
         ↓
 CAR (incl. Architecture Traceability)
@@ -272,6 +274,9 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Domain Contracts | **APPROVED** — `EPIC-10-DOMAIN-CONTRACTS.md` |
 | Data Model | **N/A — CERTIFIED** |
 | Implementation Plan | **ACCEPTED** — `EPIC-10-IMPLEMENTATION-PLAN.md` |
-| Implementation | **NOT STARTED** — Pre-P1 next |
+| Pre-P1 baseline | **COMPLETE** — 7485 passed / 0 failed |
+| Macro A / P1 (C1–C2) | **COMPLETE** — INDEX OP registry; OP-02 hygiene; AT-04/AT-05 green |
+| Checkpoint A | **READY** — authorize Macro B / P2 |
+| Implementation | **IN PROGRESS** — next: Macro B / P2 (C3) |
 
-**Next planned activity:** Pre-P1 full regression baseline → **C1** (INDEX Official Patterns) per Implementation Plan.
+**Next planned activity:** Macro B / **P2** — Ownership matrix artifact (C3) per Implementation Plan.

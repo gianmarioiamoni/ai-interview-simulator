@@ -13,7 +13,7 @@ from domain.contracts.report.scoring_dimension import ScoringDimension
 class ScoringSnapshot(BaseModel):
     """Immutable aggregate scoring record for a completed session.
 
-    A Projection Artifact (PAT-04): carries all scoring data previously held
+    A Projection Artifact (OP-02): carries all scoring data previously held
     by InterviewEvaluation. Produced exclusively by ScoringSnapshotBuilder.
 
     The three convenience dict fields (dimension_scores, dimension_signals,

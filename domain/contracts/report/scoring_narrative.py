@@ -10,7 +10,7 @@ from domain.contracts.report.scoring_narrative_item import ScoringNarrativeItem
 class ScoringNarrative(BaseModel):
     """Immutable LLM-generated hiring-context narrative for a completed session.
 
-    A Projection Artifact (PAT-04): carries all prose previously held by
+    A Projection Artifact (OP-02): carries all prose previously held by
     InterviewEvaluation (executive_summary, went_well, held_you_back,
     knowledge_gaps, next_strategy, improvement_suggestions).
 

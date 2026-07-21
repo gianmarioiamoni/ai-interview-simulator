@@ -12,7 +12,7 @@ _VALID_LEVELS = frozenset({"strong", "moderate", "weak"})
 class ScoringDimension(BaseModel):
     """Immutable per-dimension scoring record.
 
-    A Projection Artifact (PAT-04): carries computed scoring data for one
+    A Projection Artifact (OP-02): carries computed scoring data for one
     performance dimension. Produced by ScoringSnapshotBuilder from
     InterviewEvaluationService output; never computed here.
     """

@@ -11,7 +11,7 @@
 
 ### Purpose
 
-`ScoringSnapshot` is a Projection Artifact (PAT-04). It captures the aggregate scoring result of a completed interview session: the final numeric scores, hire decision, confidence, and gating outcome. It is immutable and has no computational methods. It is the canonical, sole-authoritative source of scoring data for the presentation layer after `InterviewEvaluation` is deleted.
+`ScoringSnapshot` is a Projection Artifact (OP-02). It captures the aggregate scoring result of a completed interview session: the final numeric scores, hire decision, confidence, and gating outcome. It is immutable and has no computational methods. It is the canonical, sole-authoritative source of scoring data for the presentation layer after `InterviewEvaluation` is deleted.
 
 ### Ownership
 
@@ -91,7 +91,7 @@ report_node
 
 ### Purpose
 
-`ScoringNarrative` captures the LLM-generated hiring-context narrative for a completed session. It is a Projection Artifact (PAT-04). It encapsulates the candidate-facing prose sections that explain the hire decision and provide actionable coaching advice. It is immutable, produced once per session, and sourced exclusively by the presentation layer.
+`ScoringNarrative` captures the LLM-generated hiring-context narrative for a completed session. It is a Projection Artifact (OP-02). It encapsulates the candidate-facing prose sections that explain the hire decision and provide actionable coaching advice. It is immutable, produced once per session, and sourced exclusively by the presentation layer.
 
 ### Ownership
 
