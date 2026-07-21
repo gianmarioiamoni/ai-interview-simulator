@@ -355,10 +355,11 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | Pre-P1 baseline | **DONE** — 7417 passed / 0 failed (recorded in Overview) |
 | C1 | **DONE** — SLO-Q harness under `tests/performance/` |
 | C2 | **DONE** — optional infra cycle emit (`question_cycle_logging`) |
-| Next | **C3** — SLO-R harness |
+| C3 | **DONE** — SLO-R close→report harness under `tests/performance/` |
+| Next | **C4** — SLO-P harness |
 
 ---
 
 ## 18. Next activity
 
-**C3** — SLO-R harness: `session_close` → `report` span (AR-03, MEAS-05).
+**C4** — SLO-P harness: replay reconstruction on materialized SessionHistory (AR-04, RPL-*).

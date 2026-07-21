@@ -1,6 +1,6 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION IN PROGRESS — P1 / C2 complete  
+**Status:** IMPLEMENTATION IN PROGRESS — P2 / C3 complete  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -17,7 +17,7 @@
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-09-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** IN PROGRESS — Pre-P1 done; **C1–C2 complete**; next **C3**  
+**Implementation:** IN PROGRESS — Pre-P1 done; **C1–C3 complete**; next **C4**  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-09 (Interview Replay / session persistence).
@@ -97,7 +97,7 @@ Architecture Review          ← APPROVED WITH OBSERVATIONS
 Architecture Freeze          ← APPROVED
 Implementation Plan          ← ACCEPTED
 Pre-P1 baseline              ← COMPLETE (7417 passed / 0 failed)
-Implementation (C1–C12)      ← IN PROGRESS (C1–C2 complete; next C3)
+Implementation (C1–C12)      ← IN PROGRESS (C1–C3 complete; next C4)
 Checkpoint A / B / C
 CAR → Regression → Docs → FR → Epic Close
 ```
@@ -111,10 +111,11 @@ CAR → Regression → Docs → FR → Epic Close
 | Pre-P1 | — | **DONE** — baseline 7417 passed / 0 failed |
 | C1 | P1 | **DONE** — SLO-Q written invoke harness + stub + P99 helper |
 | C2 | P1 | **DONE** — optional infra cycle emit (`question_cycle.complete`) |
-| C3 | P2 | NEXT — SLO-R harness |
+| C3 | P2 | **DONE** — SLO-R close→report harness (&lt; 3s) |
+| C4 | P3 | NEXT — SLO-P replay harness |
 
 ---
 
 ## 8. Next planned activity
 
-**C3** — SLO-R harness (`session_close` → `report` span) per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+**C4** — SLO-P harness (replay reconstruction on materialized SessionHistory) per `EPIC-09-IMPLEMENTATION-PLAN.md`.
