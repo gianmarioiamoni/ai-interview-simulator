@@ -78,3 +78,30 @@ def test_a3_happy_path_appends_new_question():
 
     assert len(new_state.questions) == 2
     assert new_state.current_question_index == 1
+
+
+def test_next_appends_top_level_asked_question_ids():
+    """EPIC-10 C5: NEXT appends current question id to top-level asked_question_ids."""
+    q1 = build_question(qid="q1")
+    q2 = build_question(qid="q2")
+    state = _make_adaptive_state(questions=[q1, q2], planned_area_count=2, current_index=0)
+    state = state.model_copy(update={"asked_question_ids": []})
+
+    node = AdaptiveNavigationNode(lazy_service=None)
+    new_state = node(state)
+
+    assert "q1" in new_state.asked_question_ids
+    assert new_state.current_question_index == 1
+
+
+def test_next_does_not_duplicate_asked_question_ids():
+    """EPIC-10 C5: NEXT is idempotent for already-recorded asked_question_ids."""
+    q1 = build_question(qid="q1")
+    q2 = build_question(qid="q2")
+    state = _make_adaptive_state(questions=[q1, q2], planned_area_count=2, current_index=0)
+    state = state.model_copy(update={"asked_question_ids": ["q1"]})
+
+    node = AdaptiveNavigationNode(lazy_service=None)
+    new_state = node(state)
+
+    assert new_state.asked_question_ids == ["q1"]

@@ -57,6 +57,7 @@ Deliver Category B Domain Contracts required by Architecture Freeze:
 ## 4. InterviewState Ownership Matrix (EC-IS-01)
 
 **Source of truth:** `domain/contracts/interview_state/base.py` (+ factory/mixins).  
+**Machine artifact (AT-01):** `docs/master-plan/epics/EPIC-10-OWNERSHIP-MATRIX.json` — kept in sync with this section; consumed by `tests/domain/contracts/interview_state/test_epic10_ownership_matrix.py`.  
 **Legend:** Factory = `InterviewStateFactoryMixin.create_*`; UI = named `app/ui/state_handlers/*`; nodes = `app/graph/nodes/*`.
 
 ### 4.1 Session identity / init (Factory)

@@ -1,6 +1,6 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro A (P1) complete; Checkpoint A ready  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro B P2 complete; Checkpoint B pending P3  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
 **Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Freeze)  
@@ -17,7 +17,7 @@
 **Data Model:** **N/A — CERTIFIED** (Contracts §8)  
 **Architecture Freeze:** `EPIC-10-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-10-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** Macro A / P1 COMPLETE (C1–C2); next Macro B / P2  
+**Implementation:** Macro B / P2 COMPLETE (C3–C5); next Macro B / P3  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -175,6 +175,7 @@ Pre-P1 baseline  ← COMPLETE (7485)
         ↓
 Implementation (C1–C14; Macros A–E)
   Macro A / P1  ← COMPLETE (C1–C2; Checkpoint A ready)
+  Macro B / P2  ← COMPLETE (C3–C5; ownership matrix + asked_question_ids)
   (Checkpoint A → B → C → D → E → CAR …)
         ↓
 CAR (incl. Architecture Traceability)
@@ -276,7 +277,9 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Implementation Plan | **ACCEPTED** — `EPIC-10-IMPLEMENTATION-PLAN.md` |
 | Pre-P1 baseline | **COMPLETE** — 7485 passed / 0 failed |
 | Macro A / P1 (C1–C2) | **COMPLETE** — INDEX OP registry; OP-02 hygiene; AT-04/AT-05 green |
-| Checkpoint A | **READY** — authorize Macro B / P2 |
-| Implementation | **IN PROGRESS** — next: Macro B / P2 (C3) |
+| Checkpoint A | **PASSED** — Macro B authorized |
+| Macro B / P2 (C3–C5) | **COMPLETE** — Ownership matrix JSON; AT-01; asked_question_ids aligned |
+| Checkpoint B | **PENDING P3** — field deletions (`progress`, `current_reasoning_decision`) |
+| Implementation | **IN PROGRESS** — next: Macro B / P3 (C6) |
 
-**Next planned activity:** Macro B / **P2** — Ownership matrix artifact (C3) per Implementation Plan.
+**Next planned activity:** Macro B / **P3** — Delete `progress` + `current_reasoning_decision` (C6–C7) per Implementation Plan.

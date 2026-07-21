@@ -129,6 +129,9 @@ class AdaptiveNavigationNode:
             snapshot = _build_last_question_context(state)
             retrieval_memory = state.retrieval_memory
             current_question = state.current_question
+            # EC-IS-01 §4.3 / EPIC-10 C5: top-level asked_question_ids append on NEXT
+            # (aligned with nested retrieval_memory.asked_question_ids updates).
+            asked_question_ids = list(state.asked_question_ids)
 
             if current_question is not None:
                 result = state.results_by_question.get(current_question.id)
@@ -139,6 +142,8 @@ class AdaptiveNavigationNode:
                     memory_updater=self._memory_updater,
                     variety_memory=self._variety_memory,
                 )
+                if current_question.id not in asked_question_ids:
+                    asked_question_ids = [*asked_question_ids, current_question.id]
 
             if (
                 state.adaptive_interview_enabled
@@ -195,6 +200,7 @@ class AdaptiveNavigationNode:
                                 "last_question_context": snapshot,
                                 "question_display_text": None,
                                 "retrieval_memory": retrieval_memory,
+                                "asked_question_ids": asked_question_ids,
                                 "awaiting_user_input": True,
                                 "last_feedback_bundle": None,
                                 "allowed_actions": [],
@@ -204,6 +210,7 @@ class AdaptiveNavigationNode:
                     return state.model_copy(
                         update={
                             "retrieval_memory": retrieval_memory,
+                            "asked_question_ids": asked_question_ids,
                             "awaiting_user_input": True,
                             "intent": None,
                         }
@@ -221,6 +228,7 @@ class AdaptiveNavigationNode:
                         "last_question_context": snapshot,
                         "question_display_text": None,
                         "retrieval_memory": retrieval_memory,
+                        "asked_question_ids": asked_question_ids,
                         "awaiting_user_input": True,
                         "last_feedback_bundle": None,
                         "allowed_actions": [],
@@ -235,6 +243,7 @@ class AdaptiveNavigationNode:
                         "last_question_context": snapshot,
                         "question_display_text": None,
                         "retrieval_memory": retrieval_memory,
+                        "asked_question_ids": asked_question_ids,
                         "awaiting_user_input": True,
                         "last_feedback_bundle": None,
                         "allowed_actions": [],
@@ -245,6 +254,7 @@ class AdaptiveNavigationNode:
             return state.model_copy(
                 update={
                     "retrieval_memory": retrieval_memory,
+                    "asked_question_ids": asked_question_ids,
                     "awaiting_user_input": True,
                     "intent": None,
                 }
