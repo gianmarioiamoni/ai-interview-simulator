@@ -2,7 +2,7 @@
 
 from .base import InterviewStateBase
 from .results import InterviewStateResultsMixin
-from .progress import InterviewStateProgressMixin
+from .question_results import InterviewStateQuestionResultsMixin
 from .events import InterviewStateEventsMixin
 from .computed import InterviewStateComputedMixin
 from .factory import InterviewStateFactoryMixin
@@ -11,7 +11,7 @@ from .factory import InterviewStateFactoryMixin
 class InterviewState(
     InterviewStateBase,
     InterviewStateResultsMixin,
-    InterviewStateProgressMixin,
+    InterviewStateQuestionResultsMixin,
     InterviewStateEventsMixin,
     InterviewStateComputedMixin,
     InterviewStateFactoryMixin,

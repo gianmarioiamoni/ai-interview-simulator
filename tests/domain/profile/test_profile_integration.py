@@ -17,6 +17,9 @@ from domain.profile.candidate_profile_summary import (
     CandidateProfileSummary,
     ProfileMaturityLevel,
 )
+from tests.domain.profile.profile_test_helpers import (
+    candidate_profile_with_dimension_scores,
+)
 
 
 def _trace(avg: float, count: int, trend: Trend = Trend.STABLE) -> DimensionTrace:
@@ -32,28 +35,22 @@ def _trace(avg: float, count: int, trend: Trend = Trend.STABLE) -> DimensionTrac
 
 class TestBuilderToPipelineIntegration:
     def test_builder_produces_profile_consumed_by_statistics(self) -> None:
-        profile = (
-            CandidateProfileBuilder()
-            .with_dimension(ProfileDimension.TECHNICAL_DEPTH, _trace(75.0, 5))
-            .with_questions_answered(5)
-            .build()
+        profile = candidate_profile_with_dimension_scores(
+            {ProfileDimension.TECHNICAL_DEPTH: _trace(75.0, 5)},
+            questions_answered=5,
         )
         stats = CandidateProfileStatistics.compute(profile)
         assert stats.assessed_dimension_count == 1
         assert stats.dominant_dimension == ProfileDimension.TECHNICAL_DEPTH
 
     def test_delta_then_comparison_consistent(self) -> None:
-        before = (
-            CandidateProfileBuilder()
-            .with_dimension(ProfileDimension.TECHNICAL_DEPTH, _trace(60.0, 3))
-            .with_questions_answered(3)
-            .build()
+        before = candidate_profile_with_dimension_scores(
+            {ProfileDimension.TECHNICAL_DEPTH: _trace(60.0, 3)},
+            questions_answered=3,
         )
-        after = (
-            CandidateProfileBuilder.from_profile(before)
-            .with_dimension(ProfileDimension.TECHNICAL_DEPTH, _trace(80.0, 6, Trend.IMPROVING))
-            .with_questions_answered(6)
-            .build()
+        after = candidate_profile_with_dimension_scores(
+            {ProfileDimension.TECHNICAL_DEPTH: _trace(80.0, 6, Trend.IMPROVING)},
+            questions_answered=6,
         )
 
         delta = CandidateProfileDelta.compute(before, after)
@@ -64,14 +61,14 @@ class TestBuilderToPipelineIntegration:
         assert comparison.delta.questions_delta == delta.questions_delta
 
     def test_summary_reflects_statistics(self) -> None:
-        profile = (
-            CandidateProfileBuilder()
-            .with_dimension(ProfileDimension.TECHNICAL_DEPTH, _trace(85.0, 6, Trend.IMPROVING))
-            .with_dimension(ProfileDimension.PROBLEM_SOLVING, _trace(65.0, 4, Trend.STABLE))
-            .with_dimension(ProfileDimension.COMMUNICATION, _trace(45.0, 3, Trend.DECLINING))
-            .with_questions_answered(8)
-            .with_areas_covered(["algo", "design"])
-            .build()
+        profile = candidate_profile_with_dimension_scores(
+            {
+                ProfileDimension.TECHNICAL_DEPTH: _trace(85.0, 6, Trend.IMPROVING),
+                ProfileDimension.PROBLEM_SOLVING: _trace(65.0, 4, Trend.STABLE),
+                ProfileDimension.COMMUNICATION: _trace(45.0, 3, Trend.DECLINING),
+            },
+            questions_answered=8,
+            areas_covered=["algo", "design"],
         )
         summary = CandidateProfileSummary.summarize(profile)
         stats = CandidateProfileStatistics.compute(profile)
@@ -84,7 +81,6 @@ class TestBuilderToPipelineIntegration:
     def test_from_profile_round_trip_identity(self) -> None:
         original = (
             CandidateProfileBuilder()
-            .with_dimension(ProfileDimension.SYSTEM_DESIGN, _trace(70.0, 4))
             .with_questions_answered(4)
             .with_areas_covered(["cloud"])
             .with_last_updated_at(3)
@@ -95,16 +91,16 @@ class TestBuilderToPipelineIntegration:
 
     def test_empty_to_full_evolution(self) -> None:
         empty = CandidateProfileBuilder().build()
-        full = (
-            CandidateProfileBuilder()
-            .with_dimension(ProfileDimension.TECHNICAL_DEPTH, _trace(70.0, 5, Trend.IMPROVING))
-            .with_dimension(ProfileDimension.PROBLEM_SOLVING, _trace(55.0, 4, Trend.STABLE))
-            .with_dimension(ProfileDimension.COMMUNICATION, _trace(60.0, 3, Trend.STABLE))
-            .with_dimension(ProfileDimension.SYSTEM_DESIGN, _trace(65.0, 4, Trend.STABLE))
-            .with_dimension(ProfileDimension.ENGINEERING_JUDGMENT, _trace(50.0, 2))
-            .with_questions_answered(10)
-            .with_areas_covered(["algorithms", "design"])
-            .build()
+        full = candidate_profile_with_dimension_scores(
+            {
+                ProfileDimension.TECHNICAL_DEPTH: _trace(70.0, 5, Trend.IMPROVING),
+                ProfileDimension.PROBLEM_SOLVING: _trace(55.0, 4, Trend.STABLE),
+                ProfileDimension.COMMUNICATION: _trace(60.0, 3, Trend.STABLE),
+                ProfileDimension.SYSTEM_DESIGN: _trace(65.0, 4, Trend.STABLE),
+                ProfileDimension.ENGINEERING_JUDGMENT: _trace(50.0, 2),
+            },
+            questions_answered=10,
+            areas_covered=["algorithms", "design"],
         )
 
         delta = CandidateProfileDelta.compute(empty, full)

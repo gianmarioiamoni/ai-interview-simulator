@@ -1,6 +1,8 @@
 # domain/contracts/reasoning/candidate_profile.py
 
-from pydantic import BaseModel, Field
+from __future__ import annotations
+
+from pydantic import BaseModel, Field, PrivateAttr
 
 from domain.contracts.feature.profile_feature import ProfileFeature
 from domain.contracts.reasoning.dimension_trace import DimensionTrace
@@ -18,19 +20,32 @@ class CandidateProfile(BaseModel):
     Raw per-question scores are NOT stored here — they exist in
     `state.results_by_question`. Only derived aggregates are kept.
 
-    V1.2 (RS-02A, ADR-018, ADR-020): features carries the ProfileFeature[]
-    produced by FeatureEngine for the most recent pipeline cycle.  Default
-    is an empty tuple (backward-compatible).  Builder is the sole write path.
+    Single authoritative knowledge representation (TD-EP10-001):
+    ``features`` (ProfileFeature[] from FeatureEngine). ``dimension_scores``
+    is a derived read projection — not a peer stored model field.
     """
 
-    dimension_scores: dict[ProfileDimension, DimensionTrace] = Field(
-        default_factory=dict
-    )
+    features: tuple[ProfileFeature, ...] = Field(default_factory=tuple)
     signals: dict[ProfileSignal, SignalTrace] = Field(default_factory=dict)
     questions_answered: int = Field(default=0, ge=0)
     areas_covered: list[str] = Field(default_factory=list)
     last_updated_at_question_index: int = Field(default=-1)
-    # V1.2 (RS-02A): ProfileFeature[] from FeatureEngine; empty before first pipeline cycle.
-    features: tuple[ProfileFeature, ...] = Field(default_factory=tuple)
+
+    _derived_dimension_scores: dict[ProfileDimension, DimensionTrace] = PrivateAttr(
+        default_factory=dict
+    )
 
     model_config = {"frozen": True, "extra": "forbid"}
+
+    @property
+    def dimension_scores(self) -> dict[ProfileDimension, DimensionTrace]:
+        """Derived ProfileDimension → DimensionTrace projection of ``features``."""
+        if self._derived_dimension_scores:
+            return self._derived_dimension_scores
+        if not self.features:
+            return {}
+        from domain.profile.candidate_profile_derivation_service import (
+            CandidateProfileDerivationService,
+        )
+
+        return CandidateProfileDerivationService().derive(self.features).dimension_scores

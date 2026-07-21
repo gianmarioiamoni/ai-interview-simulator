@@ -87,7 +87,7 @@
 
 | ID | Item | Location | Severity | Status | ADR |
 |---|---|---|---|---|---|
-| TD-EP05-001 | Presentation-path architectural suite bans `SessionHistory` imports but does not also parametrize an `InterviewEvaluation` import ban (CAR/FAR P2; spot-check clean) | `tests/ui/architecture/test_unified_report_architecture.py` | Low (P2) | OPEN | ADR-033 |
+| TD-EP05-001 | Presentation-path architectural suite bans `SessionHistory` imports but does not also parametrize an `InterviewEvaluation` import ban (CAR/FAR P2; spot-check clean) | `tests/ui/architecture/test_unified_report_architecture.py` | Low (P2) | **CLOSED** (V1.3 Architecture Score Remediation) | ADR-033 |
 
 ### EPIC-07 Production UX
 
@@ -105,8 +105,8 @@
 
 | ID | Item | Location | Severity | Status | ADR |
 |---|---|---|---|---|---|
-| TD-EP10-001 | CandidateProfile residual dual-model: V1.1 `dimension_scores` retained alongside V1.2 `features`; rename / `dimension_scores` removal / semantic migration explicitly out of EPIC-10 (AR-08, CLN-08, O-04) | `domain/contracts/reasoning/candidate_profile.py`; `InterviewState.candidate_profile_v2` | Low | OPEN (deferred redesign) | AR-08 |
-| TD-EP10-002 | Residual module name `InterviewStateProgressMixin` / `progress.py` after `InterviewState.progress` field deletion (helpers only; no state-field drift) — cosmetic rename deferred (O-CAR-01 / FR) | `domain/contracts/interview_state/progress.py` | Low | OPEN (cosmetic rename) | — |
+| TD-EP10-001 | CandidateProfile residual dual-model: V1.1 `dimension_scores` retained alongside V1.2 `features`; rename / `dimension_scores` removal / semantic migration explicitly out of EPIC-10 (AR-08, CLN-08, O-04) | `domain/contracts/reasoning/candidate_profile.py`; `InterviewState.candidate_profile_v2` | Low | **CLOSED** (V1.3 Architecture Score Remediation — `features` sole authoritative field; `dimension_scores` derived projection) | AR-08 |
+| TD-EP10-002 | Residual module name `InterviewStateProgressMixin` / `progress.py` after `InterviewState.progress` field deletion (helpers only; no state-field drift) — cosmetic rename deferred (O-CAR-01 / FR) | `domain/contracts/interview_state/question_results.py` | Low | **CLOSED** (V1.3 Architecture Score Remediation — renamed to `InterviewStateQuestionResultsMixin`) | — |
 
 ---
 
@@ -117,6 +117,9 @@
 | TD-003 | Duplicate RetrievalDocument contracts | — | Legacy retrieval removed |
 | TD-004 | Legacy `services/retrieval` | — | Removed |
 | TD-EP08-001 | Deploy-artifact dead-code purity | EPIC-V13-10 P5 | Stubs deleted (P4); `.dockerignore` + AT-07 certified (AR-06) |
+| TD-EP10-001 | CandidateProfile `dimension_scores` / `features` dual-model | V1.3 Architecture Score Remediation | `features` sole authoritative stored representation; `dimension_scores` derived projection |
+| TD-EP10-002 | `InterviewStateProgressMixin` / `progress.py` residual name | V1.3 Architecture Score Remediation | Renamed to `InterviewStateQuestionResultsMixin` / `question_results.py` |
+| TD-EP05-001 | Presentation-path `InterviewEvaluation` import ban gap | V1.3 Architecture Score Remediation | Parametrized ban added beside `SessionHistory` ban |
 
 ---
 

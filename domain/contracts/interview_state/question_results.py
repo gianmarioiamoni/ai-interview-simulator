@@ -1,7 +1,7 @@
-# domain/contracts/interview_state/progress.py
+# domain/contracts/interview_state/question_results.py
 
 
-class InterviewStateProgressMixin:
+class InterviewStateQuestionResultsMixin:
 
     def clear_result_for_question(self, qid: str):
 

@@ -2,6 +2,9 @@
 
 import pytest
 from domain.contracts.reasoning.candidate_profile import CandidateProfile
+from tests.domain.profile.profile_test_helpers import (
+    candidate_profile_with_dimension_scores,
+)
 from domain.contracts.reasoning.evidence_store import EvidenceStore
 from domain.contracts.reasoning.evidence_type import EvidenceType
 from domain.contracts.reasoning.interview_memory import InterviewMemory
@@ -88,9 +91,7 @@ def test_declining_trend_boosts_strength():
     sig = make_signal(dim=ProfileDimension.PROBLEM_SOLVING)
     store = EvidenceStore(signals=[sig])
     trace = make_dim_trace(trend=Trend.DECLINING)
-    profile = CandidateProfile(
-        dimension_scores={ProfileDimension.PROBLEM_SOLVING: trace}
-    )
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.PROBLEM_SOLVING: trace})
     memory = InterviewMemory(evidence_store=store)
     inp = make_input(memory=memory, candidate_profile_v2=profile)
     result = CoverageDetector().detect(inp)
@@ -103,9 +104,7 @@ def test_non_declining_trace_uses_base_strength():
     sig = make_signal(dim=ProfileDimension.PROBLEM_SOLVING)
     store = EvidenceStore(signals=[sig])
     trace = make_dim_trace(trend=Trend.STABLE)
-    profile = CandidateProfile(
-        dimension_scores={ProfileDimension.PROBLEM_SOLVING: trace}
-    )
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.PROBLEM_SOLVING: trace})
     memory = InterviewMemory(evidence_store=store)
     inp = make_input(memory=memory, candidate_profile_v2=profile)
     result = CoverageDetector().detect(inp)

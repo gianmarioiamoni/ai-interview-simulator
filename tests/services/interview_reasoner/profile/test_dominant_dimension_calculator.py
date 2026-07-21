@@ -3,13 +3,14 @@
 
 import pytest
 
-from domain.contracts.reasoning.candidate_profile import CandidateProfile
 from domain.contracts.reasoning.profile_dimension import ProfileDimension
-from domain.contracts.reasoning.trend import Trend
 from services.interview_reasoner.profile.dominant_dimension_calculator import (
     DominantDimensionCalculator,
 )
 
+from tests.domain.profile.profile_test_helpers import (
+    candidate_profile_with_dimension_scores,
+)
 from tests.services.interview_reasoner.profile.conftest import empty_profile, mk_trace
 
 _calc = DominantDimensionCalculator()
@@ -23,12 +24,12 @@ def test_empty_profile_returns_none():
 
 
 def test_single_dim_returns_it():
-    p = CandidateProfile(dimension_scores={TD: mk_trace(ev=2)})
+    p = candidate_profile_with_dimension_scores({TD: mk_trace(ev=2)})
     assert _calc.calculate(p) == TD
 
 
 def test_highest_evidence_count_wins():
-    p = CandidateProfile(dimension_scores={
+    p = candidate_profile_with_dimension_scores({
         TD: mk_trace(ev=5, avg=60.0),
         PS: mk_trace(ev=2, avg=70.0),
     })
@@ -37,7 +38,7 @@ def test_highest_evidence_count_wins():
 
 def test_tiebreak_lowest_avg_score():
     # Same evidence_count; lower avg → more problematic → dominant
-    p = CandidateProfile(dimension_scores={
+    p = candidate_profile_with_dimension_scores({
         TD: mk_trace(ev=3, avg=70.0),
         PS: mk_trace(ev=3, avg=40.0),
     })
@@ -46,7 +47,7 @@ def test_tiebreak_lowest_avg_score():
 
 def test_reflects_full_session_not_cycle():
     # Accumulated evidence over many cycles
-    p = CandidateProfile(dimension_scores={
+    p = candidate_profile_with_dimension_scores({
         TD: mk_trace(ev=10, avg=55.0),
         CO: mk_trace(ev=3, avg=30.0),
     })
@@ -54,7 +55,7 @@ def test_reflects_full_session_not_cycle():
 
 
 def test_multiple_dims_all_equal():
-    p = CandidateProfile(dimension_scores={
+    p = candidate_profile_with_dimension_scores({
         TD: mk_trace(ev=3, avg=50.0),
         PS: mk_trace(ev=3, avg=50.0),
     })

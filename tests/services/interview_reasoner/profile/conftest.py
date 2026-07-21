@@ -13,6 +13,9 @@ from domain.contracts.reasoning.evidence_source import EvidenceSource
 from domain.contracts.reasoning.evidence_type import EvidenceType
 from domain.contracts.reasoning.profile_dimension import ProfileDimension
 from domain.contracts.reasoning.trend import Trend
+from tests.domain.profile.profile_test_helpers import (
+    candidate_profile_with_dimension_scores,
+)
 
 
 def uid() -> str:
@@ -58,4 +61,4 @@ def profile_with_trace(
     dim: ProfileDimension = ProfileDimension.TECHNICAL_DEPTH,
     **trace_kwargs,
 ) -> CandidateProfile:
-    return CandidateProfile(dimension_scores={dim: mk_trace(**trace_kwargs)})
+    return candidate_profile_with_dimension_scores({dim: mk_trace(**trace_kwargs)})

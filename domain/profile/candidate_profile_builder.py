@@ -6,16 +6,18 @@ Constraints (ADR-037, ADR-032):
 - No persistence, no SessionHistory, no Replay, no Narrative, no Coaching.
 - Produces immutable frozen objects only.
 - Fluent interface; each with_* method returns self for chaining.
+- features is the sole authoritative knowledge write path (TD-EP10-001).
 """
 
 from __future__ import annotations
 
 from domain.contracts.feature.profile_feature import ProfileFeature
 from domain.contracts.reasoning.candidate_profile import CandidateProfile
-from domain.contracts.reasoning.dimension_trace import DimensionTrace
-from domain.contracts.reasoning.profile_dimension import ProfileDimension
 from domain.contracts.reasoning.profile_signal import ProfileSignal
 from domain.contracts.reasoning.signal_trace import SignalTrace
+from domain.profile.candidate_profile_derivation_service import (
+    CandidateProfileDerivationService,
+)
 
 
 class CandidateProfileBuilder:
@@ -25,7 +27,7 @@ class CandidateProfileBuilder:
 
         profile = (
             CandidateProfileBuilder()
-            .with_dimension(ProfileDimension.TECHNICAL_DEPTH, trace)
+            .with_profile_features(features)
             .with_questions_answered(3)
             .with_areas_covered(["algorithms", "system design"])
             .with_last_updated_at(2)
@@ -34,33 +36,15 @@ class CandidateProfileBuilder:
     """
 
     def __init__(self) -> None:
-        self._dimension_scores: dict[ProfileDimension, DimensionTrace] = {}
         self._signals: dict[ProfileSignal, SignalTrace] = {}
         self._questions_answered: int = 0
         self._areas_covered: list[str] = []
         self._last_updated_at_question_index: int = -1
-        # V1.2 (RS-02A, ADR-018, ADR-020): ProfileFeature[] from FeatureEngine.
-        # Stored internally and emitted into CandidateProfile.features via build().
         self._profile_features: tuple[ProfileFeature, ...] = ()
 
     # ------------------------------------------------------------------
     # Fluent setters
     # ------------------------------------------------------------------
-
-    def with_dimension(
-        self,
-        dimension: ProfileDimension,
-        trace: DimensionTrace,
-    ) -> "CandidateProfileBuilder":
-        self._dimension_scores[dimension] = trace
-        return self
-
-    def with_dimensions(
-        self,
-        dimension_scores: dict[ProfileDimension, DimensionTrace],
-    ) -> "CandidateProfileBuilder":
-        self._dimension_scores = dict(dimension_scores)
-        return self
 
     def with_signal(
         self,
@@ -86,10 +70,10 @@ class CandidateProfileBuilder:
     def with_profile_features(
         self, features: tuple[ProfileFeature, ...] | list[ProfileFeature]
     ) -> "CandidateProfileBuilder":
-        """Accept ProfileFeature[] from FeatureEngine (V1.2 path, RS-02A).
+        """Accept ProfileFeature[] from FeatureEngine (authoritative knowledge path).
 
         Features are stored internally and emitted via build() into
-        CandidateProfile.features (ADR-018, ADR-020, ADR-037).
+        CandidateProfile.features (ADR-018, ADR-020, ADR-037, TD-EP10-001).
         """
         if isinstance(features, list):
             self._profile_features = tuple(features)
@@ -122,7 +106,6 @@ class CandidateProfileBuilder:
         ProfileFeature[] (RS-02A, ADR-020).
         """
         builder = cls()
-        builder._dimension_scores = dict(profile.dimension_scores)
         builder._signals = dict(profile.signals)
         builder._questions_answered = profile.questions_answered
         builder._areas_covered = list(profile.areas_covered)
@@ -136,11 +119,18 @@ class CandidateProfileBuilder:
 
     def build(self) -> CandidateProfile:
         """Produce an immutable CandidateProfile. Sole creation path."""
-        return CandidateProfile(
-            dimension_scores=self._dimension_scores,
+        profile = CandidateProfile(
+            features=self._profile_features,
             signals=self._signals,
             questions_answered=self._questions_answered,
             areas_covered=self._areas_covered,
             last_updated_at_question_index=self._last_updated_at_question_index,
-            features=self._profile_features,
         )
+        if self._profile_features:
+            derived = CandidateProfileDerivationService().derive(self._profile_features)
+            object.__setattr__(
+                profile,
+                "_derived_dimension_scores",
+                derived.dimension_scores,
+            )
+        return profile

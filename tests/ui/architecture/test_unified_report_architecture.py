@@ -121,6 +121,20 @@ class TestNoSessionHistoryDualReadOnPresentationPath:
         assert not any("session_history" in name for name in imported)
 
 
+class TestNoInterviewEvaluationDualReadOnPresentationPath:
+    """TD-EP05-001 — presentation path also bans InterviewEvaluation imports."""
+
+    @pytest.mark.parametrize("relative_path", REPORT_PRESENTATION_MODULES)
+    def test_module_does_not_import_interview_evaluation(self, relative_path: str) -> None:
+        source = _read(relative_path)
+        imported = _imported_names(source)
+        assert "InterviewEvaluation" not in imported
+        assert not any(
+            name == "interview_evaluation" or name.endswith(".interview_evaluation")
+            for name in imported
+        )
+
+
 class TestStudyRecommendationsSoleSource:
     def test_vm_builder_study_recommendations_has_no_coaching_snapshot_fallback(
         self,

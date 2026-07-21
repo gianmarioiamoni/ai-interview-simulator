@@ -18,8 +18,8 @@ class DerivedProfileData(BaseModel):
     Carries all computed values required by CandidateProfileBuilder.with_derived_data().
     Contains NO domain logic and NO algorithms — pure data carrier (ADS-04, PAT-08).
 
-    Sole producer: CandidateProfileDerivationService (S-02, not yet implemented).
-    Sole consumer: CandidateProfileBuilder.with_derived_data() (S-03, not yet implemented).
+    Sole producer: CandidateProfileDerivationService.
+    Sole consumer: CandidateProfileBuilder.build() (derives dimension projection from features).
     """
 
     # Scored dimensions — only dimensions with >= 1 contributing feature are present.

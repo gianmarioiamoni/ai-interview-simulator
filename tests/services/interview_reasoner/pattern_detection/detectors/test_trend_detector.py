@@ -1,7 +1,9 @@
 # tests/services/interview_reasoner/pattern_detection/detectors/test_trend_detector.py
 
 import pytest
-from domain.contracts.reasoning.candidate_profile import CandidateProfile
+from tests.domain.profile.profile_test_helpers import (
+    candidate_profile_with_dimension_scores,
+)
 from domain.contracts.reasoning.evidence_type import EvidenceType
 from domain.contracts.reasoning.evidence_polarity import EvidencePolarity
 from domain.contracts.reasoning.interview_memory import InterviewMemory
@@ -46,7 +48,7 @@ def test_empty_memory_no_output():
 
 def test_declining_trend_emits_weakness():
     trace = make_dim_trace(trend=Trend.DECLINING, evidence_count=3)
-    profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace})
     inp = make_input(candidate_profile_v2=profile)
     result = TrendDetector().detect(inp)
     weakness = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_WEAKNESS]
@@ -58,8 +60,8 @@ def test_declining_trend_emits_weakness():
 def test_declining_trend_strength_scales_with_evidence_count():
     trace_few = make_dim_trace(trend=Trend.DECLINING, evidence_count=1)
     trace_many = make_dim_trace(trend=Trend.DECLINING, evidence_count=10)
-    profile_few = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_few})
-    profile_many = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_many})
+    profile_few = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace_few})
+    profile_many = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace_many})
     r_few = TrendDetector().detect(make_input(candidate_profile_v2=profile_few))
     r_many = TrendDetector().detect(make_input(candidate_profile_v2=profile_many))
     s_few = r_few.generated_signals[0].strength
@@ -71,7 +73,7 @@ def test_declining_trend_strength_scales_with_evidence_count():
 
 def test_improving_trend_emits_strength():
     trace = make_dim_trace(trend=Trend.IMPROVING, evidence_count=3)
-    profile = CandidateProfile(dimension_scores={ProfileDimension.COMMUNICATION: trace})
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.COMMUNICATION: trace})
     result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     strength = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_STRENGTH]
     assert len(strength) == 1
@@ -82,8 +84,8 @@ def test_improving_trend_emits_strength():
 def test_improving_trend_strength_scales_with_evidence_count():
     trace_few = make_dim_trace(trend=Trend.IMPROVING, evidence_count=1)
     trace_many = make_dim_trace(trend=Trend.IMPROVING, evidence_count=10)
-    profile_few = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_few})
-    profile_many = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace_many})
+    profile_few = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace_few})
+    profile_many = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace_many})
     r_few = TrendDetector().detect(make_input(candidate_profile_v2=profile_few))
     r_many = TrendDetector().detect(make_input(candidate_profile_v2=profile_many))
     assert r_many.generated_signals[0].strength > r_few.generated_signals[0].strength
@@ -93,7 +95,7 @@ def test_improving_trend_strength_scales_with_evidence_count():
 
 def test_stable_trend_emits_strength():
     trace = make_dim_trace(trend=Trend.STABLE)
-    profile = CandidateProfile(dimension_scores={ProfileDimension.PROBLEM_SOLVING: trace})
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.PROBLEM_SOLVING: trace})
     result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     sigs = [e for e in result.generated_signals if e.signal_type == EvidenceType.REPEATED_STRENGTH]
     assert len(sigs) == 1
@@ -104,7 +106,7 @@ def test_stable_trend_emits_strength():
 
 def test_insufficient_data_no_signal():
     trace = make_dim_trace(trend=Trend.INSUFFICIENT_DATA)
-    profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace})
     result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     assert result.generated_signals == []
 
@@ -113,7 +115,7 @@ def test_insufficient_data_no_signal():
 
 def test_volatile_score_emits_confidence_drop():
     trace = make_dim_trace(trend=Trend.STABLE, average_score=60.0, last_score=80.0)  # deviation 20 > threshold 15
-    profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace})
     result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert len(drops) == 1
@@ -121,7 +123,7 @@ def test_volatile_score_emits_confidence_drop():
 
 def test_non_volatile_score_no_confidence_drop():
     trace = make_dim_trace(trend=Trend.STABLE, average_score=60.0, last_score=65.0)  # deviation 5 < threshold
-    profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace})
     result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
@@ -129,7 +131,7 @@ def test_non_volatile_score_no_confidence_drop():
 
 def test_no_last_score_skips_volatility():
     trace = make_dim_trace(trend=Trend.STABLE, last_score=None)
-    profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace})
     result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert drops == []
@@ -137,7 +139,7 @@ def test_no_last_score_skips_volatility():
 
 def test_volatility_strength_capped_at_1():
     trace = make_dim_trace(trend=Trend.STABLE, average_score=0.0, last_score=100.0)  # max deviation
-    profile = CandidateProfile(dimension_scores={ProfileDimension.TECHNICAL_DEPTH: trace})
+    profile = candidate_profile_with_dimension_scores({ProfileDimension.TECHNICAL_DEPTH: trace})
     result = TrendDetector().detect(make_input(candidate_profile_v2=profile))
     drops = [e for e in result.generated_signals if e.signal_type == EvidenceType.CONFIDENCE_DROP]
     assert all(e.strength <= 1.0 for e in drops)
