@@ -1,6 +1,6 @@
 # EPIC-09 — Implementation Plan
 
-**Status:** ACCEPTED — Implementation **COMPLETE**; Checkpoint C **PASS**; CAR **PASS**; Final Review **PASS** (Epic Close authorized)  
+**Status:** ACCEPTED — Implementation COMPLETE; all gates APPROVED/CERTIFIED; EPIC CLOSED  
 **Date:** 2026-07-20  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -372,9 +372,10 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | Regression Certification | **COMPLETE** — 2026-07-21; **7485 passed / 0 failed** |
 | Documentation Certification | **COMPLETE** — 2026-07-21 |
 | Final Review | **PASS** — 2026-07-21; 0 P0/P1; Epic Close **AUTHORIZED** |
+| Epic Close | **CLOSED** — 2026-07-21 |
 
 ---
 
 ## 18. Next activity
 
-**Epic Close** (Playbook Step 13).
+**N/A** — EPIC-V13-09 **CLOSED**. Proceed to EPIC-V13-10 when sequenced.
