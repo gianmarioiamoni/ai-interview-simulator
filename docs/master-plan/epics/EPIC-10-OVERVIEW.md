@@ -1,20 +1,22 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** DOMAIN CONTRACTS APPROVED — Implementation Plan next  
+**Status:** IMPLEMENTATION PLAN ACCEPTED — awaiting Pre-P1 / C1  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
 **Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Freeze)  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-10; Product Goal P-10  
 **Roadmap Phase:** Phase 5 — Release Gate  
 **Precondition:** EPIC-V13-01 CLOSED; EPIC-V13-09 CLOSED; Phase 4 complete; working tree clean at initialization.  
-**Regression baseline (initialization):** 7485 passed / 0 failed (EPIC-09 close-out); suite not re-run at Discovery.  
+**Regression baseline (initialization):** 7485 passed / 0 failed (EPIC-09 close-out)  
+**EPIC-10 implementation baseline (pre-P1):** *pending Pre-P1*  
 **Architecture Discovery:** `EPIC-10-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
 **Architecture Review:** `EPIC-10-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
 **Formal ADR:** **SKIP** (AR-11 — ADR required: NO)  
 **Domain Contracts:** `EPIC-10-DOMAIN-CONTRACTS.md` — **APPROVED**  
 **Data Model:** **N/A — CERTIFIED** (Contracts §8)  
 **Architecture Freeze:** `EPIC-10-ARCHITECTURE-FREEZE.md` — **APPROVED**  
-**Implementation Plan:** NOT STARTED — Contracts gate cleared (IC-10)  
+**Implementation Plan:** `EPIC-10-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
+**Implementation:** NOT STARTED  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -166,10 +168,12 @@ Domain Contracts  ← APPROVED
         ↓
 Data Model  ← N/A — CERTIFIED
         ↓
-Implementation Plan  ← NEXT
+Implementation Plan  ← ACCEPTED
         ↓
-Implementation
-  (Macro Phase → Architecture Checkpoint → …)
+Pre-P1 baseline  ← NEXT
+        ↓
+Implementation (C1–C14; Macros A–E)
+  (Checkpoint A → B → C → D → E → CAR …)
         ↓
 CAR (incl. Architecture Traceability)
         ↓
@@ -267,6 +271,7 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Formal ADR | **SKIP** (AR-11) |
 | Domain Contracts | **APPROVED** — `EPIC-10-DOMAIN-CONTRACTS.md` |
 | Data Model | **N/A — CERTIFIED** |
-| Code / architecture implementation | **NOT AUTHORIZED** until Impl Plan acceptance |
+| Implementation Plan | **ACCEPTED** — `EPIC-10-IMPLEMENTATION-PLAN.md` |
+| Implementation | **NOT STARTED** — Pre-P1 next |
 
-**Next planned activity:** Implementation Plan against Freeze + Domain Contracts.
+**Next planned activity:** Pre-P1 full regression baseline → **C1** (INDEX Official Patterns) per Implementation Plan.
