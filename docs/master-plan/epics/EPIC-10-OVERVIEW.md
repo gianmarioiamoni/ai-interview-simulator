@@ -1,6 +1,6 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro C / P4 complete; Checkpoint C ready  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro D / P5 complete; Checkpoint D ready  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
 **Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Freeze)  
@@ -12,6 +12,7 @@
 **P1 regression (post C1–C2):** 7490 passed / 0 failed (+5 AT-04/AT-05)  
 **P3 regression (post C6–C7):** 7494 passed / 0 failed  
 **P4 regression (post C8–C10):** 7373 passed / 0 failed (retired obsolete scaffolding + stub detector tests; AT-02 added)  
+**P5 regression (post C11–C12):** 7378 passed / 0 failed (+AT-03/+AT-07); `TD-EP08-001` CLOSED  
 **Architecture Discovery:** `EPIC-10-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
 **Architecture Review:** `EPIC-10-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
 **Formal ADR:** **SKIP** (AR-11 — ADR required: NO)  
@@ -19,7 +20,7 @@
 **Data Model:** **N/A — CERTIFIED** (Contracts §8)  
 **Architecture Freeze:** `EPIC-10-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-10-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** Macro C / P4 COMPLETE (C8–C10); next Macro D / P5  
+**Implementation:** Macro D / P5 COMPLETE (C11–C12); next Macro E / P6  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -180,6 +181,7 @@ Implementation (C1–C14; Macros A–E)
   Macro B / P2  ← COMPLETE (C3–C5; ownership matrix + asked_question_ids)
   Macro B / P3  ← COMPLETE (C6–C7; progress + current_reasoning_decision deleted)
   Macro C / P4  ← COMPLETE (C8–C10; stubs + MIG scaffolding retired)
+  Macro D / P5  ← COMPLETE (C11–C12; PAT-06 corollary + .dockerignore; TD-EP08-001 CLOSED)
   (Checkpoint A → B → C → D → E → CAR …)
         ↓
 CAR (incl. Architecture Traceability)
@@ -286,7 +288,9 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Macro B / P3 (C6–C7) | **COMPLETE** — `progress` + `current_reasoning_decision` deleted; matrix 43/43 |
 | Checkpoint B | **PASSED** — Macro C authorized |
 | Macro C / P4 (C8–C10) | **COMPLETE** — gradio_app + EvaluationBridgeDetector deleted; MIG-06 scaffolding tests retired; AT-02 green |
-| Checkpoint C | **READY** — stubs gone; scaffolding retired |
-| Implementation | **IN PROGRESS** — next: Macro D / P5 (C11) |
+| Checkpoint C | **PASSED** — Macro D authorized |
+| Macro D / P5 (C11–C12) | **COMPLETE** — AT-03 PAT-06 corollary; `.dockerignore` + AT-07; `TD-EP08-001` CLOSED |
+| Checkpoint D | **READY** — AT-03 + AT-07 green; TD-EP08-001 closed |
+| Implementation | **IN PROGRESS** — next: Macro E / P6 (C13) |
 
-**Next planned activity:** Macro D / **P5** — PAT-06 corollary + `.dockerignore` (C11–C12) per Implementation Plan.
+**Next planned activity:** Macro E / **P6** — Documentation certification (C13) per Implementation Plan.

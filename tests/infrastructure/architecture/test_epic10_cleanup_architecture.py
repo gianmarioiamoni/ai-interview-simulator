@@ -4,6 +4,7 @@
 # AT-02: Deleted stubs absent (gradio_app, EvaluationBridgeDetector) — Macro C / P4.
 # AT-04: INDEX Official Patterns lists OP-01…06 + P-08 cross-ref (AR-01, AR-02, REG-*).
 # AT-05: No Projection-as-PAT-04 mislabels in domain/contracts/report (AR-09, REG-06).
+# AT-07: Deploy purity — deleted paths absent + .dockerignore globs — Macro D / P5.
 
 from __future__ import annotations
 
@@ -13,6 +14,20 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 INDEX_PATH = REPO_ROOT / "docs" / "master-plan" / "INDEX.md"
 REPORT_CONTRACTS_ROOT = REPO_ROOT / "domain" / "contracts" / "report"
+DOCKERIGNORE_PATH = REPO_ROOT / ".dockerignore"
+
+# Minimum globs required by Implementation Plan AR-14 / AT-07.
+REQUIRED_DOCKERIGNORE_GLOBS: tuple[str, ...] = (
+    "tests/",
+    ".git/",
+    "docs/",
+    "data/",
+    "__pycache__/",
+    ".venv/",
+    "htmlcov/",
+    ".pytest_cache/",
+    "gradio_app.py",
+)
 
 DELETED_STUB_PATHS: tuple[str, ...] = (
     "gradio_app.py",
@@ -126,3 +141,23 @@ class TestAT05NoProjectionAsPat04InReportContracts:
             "Projection Artifact labeled as PAT-04 (use OP-02): "
             + ", ".join(violations)
         )
+
+
+class TestAT07DeployPurity:
+    """AT-07 / AR-06 — deleted stubs absent + .dockerignore covers non-runtime globs."""
+
+    def test_dockerignore_present(self) -> None:
+        assert DOCKERIGNORE_PATH.is_file(), "Missing .dockerignore (AR-06 / TD-EP08-001)"
+
+    def test_dockerignore_contains_required_globs(self) -> None:
+        text = DOCKERIGNORE_PATH.read_text(encoding="utf-8")
+        missing = [glob for glob in REQUIRED_DOCKERIGNORE_GLOBS if glob not in text]
+        assert missing == [], f"AT-07: .dockerignore missing required globs: {missing}"
+
+    def test_deleted_stub_paths_absent_for_deploy_purity(self) -> None:
+        present = [
+            relative
+            for relative in DELETED_STUB_PATHS
+            if (REPO_ROOT / relative).exists()
+        ]
+        assert present == [], f"AT-07: deleted stubs still present: {present}"

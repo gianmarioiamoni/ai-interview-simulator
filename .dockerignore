@@ -1,0 +1,23 @@
+# EPIC-V13-10 P5 / AR-06 / AT-07 — deploy-artifact purity (TD-EP08-001).
+# Exclude non-runtime paths from Docker image (defense-in-depth after stub deletes).
+
+.git/
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.pyc
+*.pyo
+
+tests/
+docs/
+data/
+
+*.md
+!README.md
+
+gradio_app.py
