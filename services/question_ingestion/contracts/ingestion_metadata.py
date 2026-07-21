@@ -1,20 +1,6 @@
 # services/question_ingestion/contracts/ingestion_metadata.py
+"""Compatibility re-export — canonical location is domain.contracts.question."""
 
-from datetime import datetime
+from domain.contracts.question.ingestion_metadata import IngestionMetadata
 
-from pydantic import BaseModel
-
-
-class IngestionMetadata(BaseModel):
-
-    source_name: str
-
-    source_type: str
-
-    dataset_version: str
-
-    ingestion_timestamp: datetime
-
-    model_config = {
-        "frozen": True,
-    }
+__all__ = ["IngestionMetadata"]

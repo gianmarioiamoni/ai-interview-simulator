@@ -1,46 +1,58 @@
 # ADR-007 — Domain Layer Boundary Exceptions
 
-**Status:** Proposed
+**Status:** Superseded (Resolved)
 **Date:** 2026-06-18
+**Resolved:** 2026-07-22 (V1.3 Maintainability Remediation)
 **Owner:** Domain
 
 ---
 
 ## Context
 
-<!-- TODO: Strict hexagonal/clean architecture requires domain to be framework-free.
-Observed violations: domain/contracts imports services/ and app/ -->
+Strict hexagonal/clean architecture requires the domain layer to be free of
+`services/`, `app/`, and `infrastructure/` imports. Historical exceptions existed
+in InterviewState and related question contracts (TD-DL-001).
 
 ## Decision
 
-<!-- TODO: Document which imports are intentional exceptions and which are accidental coupling -->
+No domain → outer-layer import exceptions are permitted.
+
+Canonical contract types used by InterviewState / question bank models live under
+`domain/contracts/`. Former outer-layer modules may re-export for compatibility
+only.
 
 ## Rationale
 
-<!-- TODO: Pragmatic decision vs full refactor cost -->
+Layer separation and coupling maintainability scores were blocked by confirmed
+domain → outer imports. Moving pure contracts into domain restores Dependency
+Inversion without changing runtime behavior.
 
 ## Alternatives Considered
 
 | Option | Rejected Because |
 |---|---|
-| Full domain isolation (no service imports) | |
-| Flatten domain into services | |
+| Keep intentional exceptions (ADR-007 Proposed) | Blocks Maintainability Certification (layer separation / coupling) |
+| Flatten domain into services | Violates ARC-01 ownership and Ownership Matrix |
 
 ## Consequences
 
 ### Positive
--
+- Domain isolatable and testable without outer-layer imports
+- Enforced by `tests/infrastructure/architecture/test_domain_layer_isolation.py`
 
 ### Negative / Risks
-- Domain tests require mocking service layer
-- Clean Architecture invariant broken in 3+ files
+- Thin compatibility re-exports remain at prior service/app paths (temporary)
 
 ## Implementation Evidence
 
-- `domain/contracts/interview_state/base.py` — imports `services/`, `app/`
-- `domain/contracts/question/question_bank_item.py` — imports `services.question_ingestion`
-- `domain/contracts/question/question_runtime_lineage.py` — imports `services.interview_selection`
+- `domain/contracts/question/interview_retrieval_memory.py`
+- `domain/contracts/question/ingestion_metadata.py`
+- `domain/contracts/interview/interview_stage.py`
+- `domain/contracts/interview/loader_step.py`
+- `domain/contracts/interview/follow_up_limits.py`
+- `domain/contracts/interview/business_context_constants.py`
+- TD-DL-001 **CLOSED**
 
 ## Review Trigger
 
-Domain refactor or violation count increases beyond 5 files.
+Any new domain import of `services/`, `app/`, or `infrastructure/` fails AT gate.

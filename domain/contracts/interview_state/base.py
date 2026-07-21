@@ -12,14 +12,13 @@ from domain.contracts.interview.interview_cost_metrics import InterviewCostMetri
 from domain.contracts.interview.interview_metrics import InterviewMetrics
 from domain.contracts.user.role import Role
 from domain.contracts.shared.action_type import ActionType
-from services.question_corpus.contracts.interview_retrieval_memory import (
+from domain.contracts.question.interview_retrieval_memory import (
     InterviewRetrievalMemory,
 )
-
-from app.ui.constants.loader_steps import LoaderStep
-from app.contracts.feedback_bundle import FeedbackBundle
+from domain.contracts.interview.loader_step import LoaderStep
+from domain.contracts.feedback.feedback import FeedbackBundle
 from domain.contracts.interview.interview_context_profile import InterviewContextProfile
-from app.settings.constants import MAX_FOLLOW_UPS_PER_INTERVIEW
+from domain.contracts.interview.follow_up_limits import MAX_FOLLOW_UPS_PER_INTERVIEW
 from domain.contracts.interview_state.last_question_context import LastQuestionContext
 from domain.events.interview_event import InterviewEvent
 from domain.contracts.reasoning.interview_memory import InterviewMemory

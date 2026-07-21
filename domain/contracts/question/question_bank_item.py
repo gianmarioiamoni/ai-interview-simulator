@@ -9,7 +9,7 @@ from domain.contracts.user.role import Role
 from domain.contracts.user.seniority_level import SeniorityLevel
 from domain.contracts.question.question_provenance import QuestionProvenance
 
-from services.question_ingestion.contracts.ingestion_metadata import IngestionMetadata
+from domain.contracts.question.ingestion_metadata import IngestionMetadata
 
 
 class QuestionBankItem(BaseModel):

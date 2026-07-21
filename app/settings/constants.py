@@ -34,9 +34,10 @@ DEFAULT_INTERVIEW_LENGTH = 20
 DEFAULT_FOLLOWUP_RATE = 0.20
 
 # Maximum consecutive follow-ups per interview.
-# Derived from infrastructure/config/settings.py (max_follow_ups_per_interview).
-from infrastructure.config.settings import settings as _settings
-MAX_FOLLOW_UPS_PER_INTERVIEW: int = _settings.max_follow_ups_per_interview
+# Canonical SSOT: domain.contracts.interview.follow_up_limits
+from domain.contracts.interview.follow_up_limits import (
+    MAX_FOLLOW_UPS_PER_INTERVIEW,
+)
 
 # Technical interview area weights (must sum to 1.0).
 # Validated by Phase 7E-C (practical allocation) and Phase 7E-F.

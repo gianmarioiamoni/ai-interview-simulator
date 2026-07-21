@@ -1,12 +1,6 @@
 # services/interview_selection/interview_stage.py
+"""Compatibility re-export — canonical location is domain.contracts.interview."""
 
-from enum import Enum
+from domain.contracts.interview.interview_stage import InterviewStage
 
-
-class InterviewStage(str, Enum):
-
-    WARMUP = "warmup"
-
-    CORE = "core"
-
-    ADVANCED = "advanced"
+__all__ = ["InterviewStage"]

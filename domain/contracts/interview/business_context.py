@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from enum import Enum
 
-from infrastructure.config.settings import settings
+from domain.contracts.interview.business_context_constants import (
+    BUSINESS_CONTEXT_MIN_KEYWORD_SCORE,
+)
 
 
 # Module-level keyword sets — single source of truth for classification vocabulary.
@@ -58,7 +60,7 @@ class BusinessContext(str, Enum):
             return cls.GENERIC
 
         text = company_description.lower()
-        threshold = settings.business_context_min_keyword_score
+        threshold = BUSINESS_CONTEXT_MIN_KEYWORD_SCORE
 
         scores: dict[str, int] = {
             "fintech": sum(1 for kw in _FINTECH_KEYWORDS if kw in text),

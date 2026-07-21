@@ -23,7 +23,7 @@
 
 | ID | Item | Location | Severity | Status | ADR |
 |---|---|---|---|---|---|
-| TD-DL-001 | Domain imports `services/` and `app/` — layer violation | `domain/contracts/interview_state/base.py`, `question_bank_item.py`, `question_runtime_lineage.py` | High | OPEN | ADR-007 |
+| TD-DL-001 | Domain imports `services/` and `app/` — layer violation | `domain/contracts/interview_state/base.py`, `question_bank_item.py`, `question_runtime_lineage.py`, `business_context.py` | High | **CLOSED** (V1.3 Maintainability Remediation) | ADR-007 |
 | TD-DL-002 | Duplicate `allowed_actions` field declaration | `domain/contracts/interview_state/base.py` lines 55 & 85 | Medium | OPEN | — |
 | TD-DL-003 | Duplicate `LLMPort` Protocol | `app/ports/llm_port.py` + `infrastructure/llm/llm_adapter.py` | Medium | OPEN | — |
 
@@ -60,8 +60,8 @@
 |---|---|---|---|
 | TD-DOC-001 | `README.md` describes wrong product | High | OPEN |
 | TD-DOC-002 | `system_overview.md` states Chroma "planned" — already implemented | Low | OPEN |
-| TD-DOC-003 | No `.env.example` | High | OPEN |
-| TD-DOC-004 | No configuration reference doc | High | OPEN |
+| TD-DOC-003 | No `.env.example` | High | **CLOSED** (present at HEAD; register hygiene) |
+| TD-DOC-004 | No configuration reference doc | High | **CLOSED** (`docs/architecture/configuration.md` present; register hygiene) |
 
 ### Test Coverage
 
@@ -120,6 +120,9 @@
 | TD-EP10-001 | CandidateProfile `dimension_scores` / `features` dual-model | V1.3 Architecture Score Remediation | `features` sole authoritative stored representation; `dimension_scores` derived projection |
 | TD-EP10-002 | `InterviewStateProgressMixin` / `progress.py` residual name | V1.3 Architecture Score Remediation | Renamed to `InterviewStateQuestionResultsMixin` / `question_results.py` |
 | TD-EP05-001 | Presentation-path `InterviewEvaluation` import ban gap | V1.3 Architecture Score Remediation | Parametrized ban added beside `SessionHistory` ban |
+| TD-DL-001 | Domain → `services/` / `app/` / `infrastructure/` imports | V1.3 Maintainability Remediation | Contracts moved into `domain/`; outer paths are re-exports; AT gate `test_domain_layer_isolation.py` |
+| TD-DOC-003 | No `.env.example` | V1.3 Maintainability Remediation | Artifact present; stale OPEN closed |
+| TD-DOC-004 | No configuration reference doc | V1.3 Maintainability Remediation | `docs/architecture/configuration.md` present; stale OPEN closed |
 
 ---
 

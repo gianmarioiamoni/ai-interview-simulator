@@ -2,9 +2,7 @@
 
 from pydantic import BaseModel, Field
 
-from services.interview_selection.interview_stage import (
-    InterviewStage,
-)
+from domain.contracts.interview.interview_stage import InterviewStage
 
 
 class QuestionRuntimeLineage(BaseModel):
