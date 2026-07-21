@@ -401,7 +401,7 @@ The following must be true before V1.3 is declared complete.
 ### Release
 
 - [ ] V1.3 release tag created with changelog. *(POSTPONED — Playbook §10: RR is the final gate before the V1.3 release tag; `VERSION` remains `1.1.0` until RR PASS)*
-- [ ] All V1.2 features regression-verified at release gate. *(POSTPONED — epic-close suite green; formal RR ceremony not yet executed)*
+- [x] All V1.2 features regression-verified at release gate. *(RR 2026-07-22 — **7378 passed / 0 failed** at HEAD `b77ffd8`; see `V13-RELEASE-READINESS-REVIEW.md`)*
 - [ ] Performance baseline report attached to release. *(POSTPONED — artifact exists; attach after RR PASS / tag ceremony)*
 
 ---
@@ -512,7 +512,7 @@ Preliminary profiling can begin in Phase 2. Full load test and SLO validation re
 **EPIC-V13-10 (Final Architecture Cleanup — full audit)** — **CLOSED WITH OBSERVATIONS** (2026-07-21)  
 Final audit pass complete. Ownership Matrix, PAT/OP registry, dead-code purity, and AT-01…07 gates certified. Living Overview: `docs/master-plan/epics/EPIC-10-OVERVIEW.md`. Non-blocking carry-forward: `TD-EP10-001`, `TD-EP10-002`.
 
-**V1.3 Release** — **NOT STARTED** (awaiting Release Readiness Review; no `v1.3*` tag; `VERSION` remains `1.1.0`)
+**V1.3 Release** — **RR COMPLETE — NOT RELEASE READY** (2026-07-22; `docs/master-plan/V13-RELEASE-READINESS-REVIEW.md`; no `v1.3*` tag; `VERSION` remains `1.1.0`)
 
 ---
 
@@ -588,3 +588,17 @@ V1.3 is officially complete and production-ready when all of the following are t
 4. **VERSION / CHANGELOG / README / release tag postponed:** Playbook §10 states RR (Release Readiness Review) is the final gate before the V1.3 release tag. `VERSION` remains `1.1.0`. No `v1.3*` tag. CHANGELOG/README remain at Stable 1.1.0 until RR PASS authorizes promotion.
 
 **Next gate:** Release Readiness Review (not performed by this amendment).
+
+---
+
+### Amendment — 2026-07-22 (Release Readiness Review)
+
+**Rationale:** Playbook §10 RR is the final gate before the V1.3 release tag. Formal RR executed at HEAD `b77ffd8` after EPIC-06 close and living-documentation synchronization.
+
+**Outcome:** **NOT RELEASE READY** — recorded in `docs/master-plan/V13-RELEASE-READINESS-REVIEW.md`.
+
+**Unsatisfied gates:** Master Plan §9 Architecture score ≥ 9.5 (no V1.3 scorecard; last formal Architecture score 9/10); Maintainability score ≥ 9.5 (no scorecard); production-equivalent deployment validation record incomplete.
+
+**Cleared vs prior audit:** all epics FR-closed (including EPIC-06); Master Plan / Overview sync; RR regression **7378 / 0**.
+
+**VERSION / CHANGELOG / README / release tag:** remain postponed until a subsequent RR returns RELEASE READY (or RELEASE READY WITH OBSERVATIONS authorizing ceremony).
