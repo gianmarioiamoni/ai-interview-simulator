@@ -140,7 +140,7 @@ The Reconstruction Completeness PAT must be declared and enforced for all V1.3 i
 Complete the V1.2 RC3-deferred migration: retire `InterviewEvaluation` as a routing and presentation artifact. Make `Report` the sole authoritative source of scoring data for the presentation layer.
 
 **Scope:**  
-Extend `ReportBuilder` to accept and embed scoring dimensions currently held in `InterviewEvaluation`. Update `FinalReportDTO` to read exclusively from `Report`. Update all `UIStateMachine` routing conditions that reference `interview_evaluation`. Delete `InterviewEvaluation` and all its construction paths once the migration is complete. Remove the `report_output: str | None` dead field from `InterviewState`.
+Extend `ReportBuilder` to accept and embed scoring dimensions currently held in `InterviewEvaluation`. Update `FinalReportDTO` to read exclusively from `Report`. Update all `UIStateMachine` routing conditions that reference `interview_evaluation`. Delete `InterviewEvaluation` and all its construction paths once the migration is complete. Remove the `report_output: str | None` dead field from `InterviewState` (**done** — field absent; EPIC-V13-10 CLN-07 docs certification).
 
 **Expected Outcome:**  
 `Report` is the single artifact consumed by all presentation consumers. `InterviewEvaluation` does not exist in the codebase. `InterviewState` contains no dead fields from V1.1. The scoring pipeline is architecturally self-consistent with the V1.2 Constitution.
@@ -339,7 +339,7 @@ The following must be true before V1.3 is declared complete.
 ### Architecture
 
 - [ ] `InterviewEvaluation` deleted from codebase. No reference to it remains in any production path.
-- [ ] `report_output: str | None` dead field removed from `InterviewState`.
+- [x] `report_output: str | None` dead field removed from `InterviewState`. *(certified EPIC-V13-10 P6 / CLN-07 — not present on `InterviewState`; UI HTML `report_output` surface is unrelated)*
 - [ ] `Report` is the sole authoritative scoring artifact consumed by all presentation consumers.
 - [ ] `LongitudinalProfile` is produced and persisted after every session completion.
 - [ ] `replay_node` is implemented, non-fatal, write-once, and LLM-free.

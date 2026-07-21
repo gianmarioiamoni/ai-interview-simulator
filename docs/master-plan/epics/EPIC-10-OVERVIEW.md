@@ -1,6 +1,6 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro D / P5 complete; Checkpoint D ready  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro E / P6 complete; awaiting P7 certification  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
 **Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Freeze)  
@@ -20,7 +20,7 @@
 **Data Model:** **N/A — CERTIFIED** (Contracts §8)  
 **Architecture Freeze:** `EPIC-10-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-10-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** Macro D / P5 COMPLETE (C11–C12); next Macro E / P6  
+**Implementation:** Macro E / P6 COMPLETE (C13); next P7 (C14)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -182,6 +182,7 @@ Implementation (C1–C14; Macros A–E)
   Macro B / P3  ← COMPLETE (C6–C7; progress + current_reasoning_decision deleted)
   Macro C / P4  ← COMPLETE (C8–C10; stubs + MIG scaffolding retired)
   Macro D / P5  ← COMPLETE (C11–C12; PAT-06 corollary + .dockerignore; TD-EP08-001 CLOSED)
+  Macro E / P6  ← COMPLETE (C13; docs certification — report_output + TD-EP10-001)
   (Checkpoint A → B → C → D → E → CAR …)
         ↓
 CAR (incl. Architecture Traceability)
@@ -290,7 +291,18 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Macro C / P4 (C8–C10) | **COMPLETE** — gradio_app + EvaluationBridgeDetector deleted; MIG-06 scaffolding tests retired; AT-02 green |
 | Checkpoint C | **PASSED** — Macro D authorized |
 | Macro D / P5 (C11–C12) | **COMPLETE** — AT-03 PAT-06 corollary; `.dockerignore` + AT-07; `TD-EP08-001` CLOSED |
-| Checkpoint D | **READY** — AT-03 + AT-07 green; TD-EP08-001 closed |
-| Implementation | **IN PROGRESS** — next: Macro E / P6 (C13) |
+| Checkpoint D | **PASSED** — Macro E authorized |
+| Macro E / P6 (C13) | **COMPLETE** — MP `report_output` CLN-07; `TD-EP10-001` dual-model registered; Overview updated |
+| Checkpoint E | **PENDING P7** — full regression + AT-01…07 + CAR authorization |
+| Implementation | **IN PROGRESS** — next: Macro E / P7 (C14) |
 
-**Next planned activity:** Macro E / **P6** — Documentation certification (C13) per Implementation Plan.
+### P6 documentation certification (C13)
+
+| Item | Result |
+|---|---|
+| CLN-07 / O-01 — stale MP `InterviewState.report_output` go-live claim | **CORRECTED** — go-live checkbox `[x]`; field absent on state |
+| O-04 / AR-08 — CandidateProfile `dimension_scores` dual-model residual | **REGISTERED** — `TD-EP10-001` (OPEN / deferred redesign) |
+| Contracts §6 disposition sync | **UPDATED** — P6 executed notes |
+| CAR / Final Review | **NOT STARTED** — deferred to P7 |
+
+**Next planned activity:** Macro E / **P7** — Full regression & CAR readiness (C14) per Implementation Plan.

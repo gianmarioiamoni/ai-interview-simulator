@@ -101,6 +101,12 @@
 |---|---|---|---|---|---|
 | TD-EP08-001 | Deploy-artifact dead-code purity deferred to EPIC-10 (AR-16 / OI-04; Epic Close observation) | deploy artifact / EPIC-V13-10 scope | Low | **CLOSED** (EPIC-V13-10 P5) | — |
 
+### EPIC-10 Final Architecture Cleanup
+
+| ID | Item | Location | Severity | Status | ADR |
+|---|---|---|---|---|---|
+| TD-EP10-001 | CandidateProfile residual dual-model: V1.1 `dimension_scores` retained alongside V1.2 `features`; rename / `dimension_scores` removal / semantic migration explicitly out of EPIC-10 (AR-08, CLN-08, O-04) | `domain/contracts/reasoning/candidate_profile.py`; `InterviewState.candidate_profile_v2` | Low | OPEN (deferred redesign) | AR-08 |
+
 ---
 
 ## Closed Items
