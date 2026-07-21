@@ -1,16 +1,19 @@
 # EPIC-10 — Final Architecture Cleanup
 
-**Status:** ARCHITECTURE DISCOVERY COMPLETE — Architecture Review next  
+**Status:** ARCHITECTURE REVIEW COMPLETE — Domain Contracts next  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-10  
-**Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Discovery §9)  
+**Playbook Category:** Category B — Major Architectural Epic (**confirmed** — Review AR-13)  
 **Master Plan Reference:** V13-PRODUCT-MASTER-PLAN.md §4 EPIC-V13-10; Product Goal P-10  
 **Roadmap Phase:** Phase 5 — Release Gate  
 **Precondition:** EPIC-V13-01 CLOSED; EPIC-V13-09 CLOSED; Phase 4 complete; working tree clean at initialization.  
 **Regression baseline (initialization):** 7485 passed / 0 failed (EPIC-09 close-out); suite not re-run at Discovery.  
 **Architecture Discovery:** `EPIC-10-ARCHITECTURE-DISCOVERY.md` — **COMPLETE**  
-**Architecture Review:** NOT STARTED  
-**Domain Contracts / Data Model:** CONDITIONAL (Discovery AA-02 / ARD-07)  
+**Architecture Review:** `EPIC-10-ARCHITECTURE-REVIEW.md` — **APPROVED WITH OBSERVATIONS**  
+**Formal ADR:** **SKIP** (AR-11 — ADR required: NO)  
+**Domain Contracts:** **REQUIRED** (AR-07) — NOT STARTED  
+**Data Model:** **N/A (default)** — escalate only if durable shape hit (AR-07)  
+**Architecture Freeze:** NOT STARTED  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-10 (Progress Tracking). This is V13 Final Architecture Cleanup / release-gate audit.
@@ -26,7 +29,7 @@
 | **Master Plan reference** | `V13-PRODUCT-MASTER-PLAN.md` §4 EPIC-V13-10; Product Goal **P-10** |
 | **Category** | **Category B** — Major Architectural Epic |
 | **Phase** | Phase 5 — Release Gate |
-| **Category rationale** | Master Plan scope includes `InterviewState` sole-writer / reader audit (state contracts), formal PAT registration / enforcement, and deploy-artifact dead-code purity. Prefer Category B to avoid Playbook misclassification. Discovery confirms whether Domain Contracts / Data Model are required or may be N/A. |
+| **Category rationale** | Review AR-13: state-contract Ownership Matrix + possible InterviewState field deletion. Domain Contracts REQUIRED; Data Model N/A by default (AR-07). |
 
 ---
 
@@ -152,13 +155,13 @@ Concrete cleanup mechanisms, registry locations, ownership declaration formats, 
 EPIC Initialization  ← COMPLETE
         ↓
 Architecture Discovery  ← COMPLETE
-  → EPIC-10-ARCHITECTURE-DISCOVERY.md
         ↓
-Architecture Review / ADR (conditional)  ← NEXT
+Architecture Review  ← APPROVED WITH OBSERVATIONS
+  (ADR SKIP — AR-11)
         ↓
-Domain Contracts (if required — ARD-07)
+Domain Contracts  ← NEXT (REQUIRED — AR-07)
         ↓
-Data Model (if required — ARD-07)
+Data Model  ← N/A (default; escalate if durable shape)
         ↓
 Architecture Freeze
         ↓
@@ -258,8 +261,10 @@ Initial register for Discovery to verify. Status values follow Playbook: `UNVERI
 | Epic initialized | **YES** |
 | Living Overview created | **YES** — this document |
 | Architecture Discovery | **COMPLETE** — `EPIC-10-ARCHITECTURE-DISCOVERY.md` |
-| Assumptions Register | **YES** — §12 (AA-01…AA-10 VERIFIED per Discovery) |
-| Architecture Review | **NOT STARTED** — next activity |
+| Architecture Review | **APPROVED WITH OBSERVATIONS** — `EPIC-10-ARCHITECTURE-REVIEW.md` |
+| Formal ADR | **SKIP** (AR-11) |
+| Domain Contracts | **REQUIRED** — next activity |
+| Data Model | **N/A (default)** (AR-07) |
 | Code / architecture implementation | **NOT STARTED** |
 
-**Next planned activity:** Architecture Review (ARD-01…ARD-10) — conditional ADR; then Contracts/Data Model if ARD-07 requires.
+**Next planned activity:** Domain Contracts — Ownership Matrix + deletion specs + Traceability (`EPIC-10-DOMAIN-CONTRACTS.md`).
