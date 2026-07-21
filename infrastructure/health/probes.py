@@ -133,8 +133,9 @@ def _default_llm_connectivity_check(settings: Settings) -> None:
         api_key=settings.openai_api_key,
         timeout=_timeout_seconds(settings),
     )
-    # Materialize one page to force a round-trip without chat completions.
-    list(client.models.list(limit=1))
+    # Force a models.list round-trip without chat completions.
+    # OpenAI SDK Models.list does not accept limit= (openai>=2.x).
+    next(iter(client.models.list()), None)
 
 
 def _timeout_seconds(settings: Settings) -> float:

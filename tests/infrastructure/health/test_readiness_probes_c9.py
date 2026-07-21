@@ -111,7 +111,8 @@ class TestProbeLlm:
         from infrastructure.health import probes as probes_module
 
         probes_module._default_llm_connectivity_check(_settings())
-        models.list.assert_called_once()
+        # openai>=2.x Models.list rejects limit=; call must stay kwargs-free.
+        models.list.assert_called_once_with()
         client.chat.completions.create.assert_not_called()
 
     def test_skipped_when_disabled(self) -> None:
