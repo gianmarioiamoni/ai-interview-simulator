@@ -1,6 +1,6 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro B / C7 complete — next C8  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro B / C8 complete — Checkpoint B ready  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -17,7 +17,7 @@
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-09-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** IN PROGRESS — **C1–C7 complete**; Checkpoint A **PASSED**; next **C8** (degradation gate)  
+**Implementation:** IN PROGRESS — **C1–C8 complete**; Checkpoint A **PASSED**; Checkpoint B ready; next **C9** after Checkpoint B  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-09 (Interview Replay / session persistence).
@@ -97,9 +97,10 @@ Architecture Review          ← APPROVED WITH OBSERVATIONS
 Architecture Freeze          ← APPROVED
 Implementation Plan          ← ACCEPTED
 Pre-P1 baseline              ← COMPLETE (7417 passed / 0 failed)
-Implementation (C1–C12)      ← IN PROGRESS (C1–C7 complete; Macro B / P5 started)
+Implementation (C1–C12)      ← IN PROGRESS (C1–C8 complete; Macro B load done)
 Checkpoint A                 ← PASSED
-Checkpoint B / C
+Checkpoint B                 ← READY FOR EVALUATION
+Checkpoint C
 CAR → Regression → Docs → FR → Epic Close
 ```
 
@@ -118,10 +119,12 @@ CAR → Regression → Docs → FR → Epic Close
 | C5 | P4 | **DONE** — reasoner + KP stage profiling harness |
 | C6 | P4 | **DONE** — longitudinal_update (+ repo I/O) profiling harness |
 | C7 | P5 | **DONE** — 50-session stub-LLM load + absolute SLO gates |
-| C8 | P5 | NEXT — early vs late degradation gate |
+| C8 | P5 | **DONE** — early vs late degradation gate (≤1.25 + absolute hold) |
+| Checkpoint B | — | **READY** — Macro B complete; awaiting formal gate |
+| C9 | P6 | NEXT after Checkpoint B — P0 remediation or P0-absent cert |
 
 ---
 
 ## 8. Next planned activity
 
-**C8** — early vs late degradation gate (≤1.25 + absolute hold) per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+**Checkpoint B** evaluation (authorize Macro C), then **C9** — P0 remediation or P0-absent certification per `EPIC-09-IMPLEMENTATION-PLAN.md`.

@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
 from tests.performance.load_stub_sessions import (  # noqa: E402
     LOAD_SESSION_COUNT,
     assert_absolute_load_slos,
+    assert_degradation_gate,
     run_stub_load,
 )
 
@@ -21,6 +22,7 @@ from tests.performance.load_stub_sessions import (  # noqa: E402
 def main() -> int:
     result = run_stub_load(session_count=LOAD_SESSION_COUNT)
     assert_absolute_load_slos(result)
+    assert_degradation_gate(result)
     print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
     return 0
 
