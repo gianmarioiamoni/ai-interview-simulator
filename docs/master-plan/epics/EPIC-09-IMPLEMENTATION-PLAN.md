@@ -365,10 +365,11 @@ Mark load tests with appropriate pytest markers if slow; CI must still execute t
 | Checkpoint B | **PASSED** — Macro C (P6–P7) authorized |
 | C9 | **DONE** — **P0-ABSENT** certified (no compute remediation; C7–C8 re-verified green) |
 | C10 | **DONE** — CAT/ARC arch hardening tests (`tests/infrastructure/architecture/test_epic09_hardening_architecture.py`) |
-| Next | **C11** |
+| C11 | **DONE** — `docs/ops/PERFORMANCE-BASELINE-REPORT.md` (AR-19; SLO-D N/A) + readiness checklist |
+| Next | **C12** |
 
 ---
 
 ## 18. Next activity
 
-**C11** — Performance baseline report + readiness checklist (P7).
+**C12** — Full regression certification + authorize CAR (P7).

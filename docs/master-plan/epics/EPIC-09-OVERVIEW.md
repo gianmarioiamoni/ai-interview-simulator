@@ -1,6 +1,6 @@
 # EPIC-09 — Performance & Scalability Baseline
 
-**Status:** IMPLEMENTATION IN PROGRESS — Macro C / C10 complete — next C11  
+**Status:** IMPLEMENTATION IN PROGRESS — Macro C / C11 complete — next C12  
 **Date:** 2026-07-21  
 **Epic ID:** EPIC-V13-09  
 **Playbook Category:** Category A — Standard Epic  
@@ -17,8 +17,9 @@
 **Data Model:** N/A (Category A)  
 **Architecture Freeze:** `EPIC-09-ARCHITECTURE-FREEZE.md` — **APPROVED**  
 **Implementation Plan:** `EPIC-09-IMPLEMENTATION-PLAN.md` — **ACCEPTED**  
-**Implementation:** IN PROGRESS — **C1–C10 complete**; Checkpoint A **PASSED**; Checkpoint B **PASSED**; next **C11**  
+**Implementation:** IN PROGRESS — **C1–C11 complete**; Checkpoint A **PASSED**; Checkpoint B **PASSED**; next **C12**  
 **P0 disposition (P6 / C9):** **P0-ABSENT** — no in-scope SLO violations under P5 stub-LLM load (C7–C8 green); no compute remediation applied  
+**Baseline report:** `docs/ops/PERFORMANCE-BASELINE-REPORT.md` — **PUBLISHED** (AR-19; SLO-D N/A)  
 **Playbook:** V13 Development Playbook Version 1.0
 
 **Disambiguation:** Not PRD EPIC-09 (Interview Replay / session persistence).
@@ -98,7 +99,7 @@ Architecture Review          ← APPROVED WITH OBSERVATIONS
 Architecture Freeze          ← APPROVED
 Implementation Plan          ← ACCEPTED
 Pre-P1 baseline              ← COMPLETE (7417 passed / 0 failed)
-Implementation (C1–C12)      ← IN PROGRESS (C1–C10 complete; Macro C / P7 started)
+Implementation (C1–C12)      ← IN PROGRESS (C1–C11 complete; baseline report published)
 Checkpoint A                 ← PASSED
 Checkpoint B                 ← PASSED (Macro C authorized)
 Checkpoint C
@@ -124,6 +125,7 @@ CAR → Regression → Docs → FR → Epic Close
 | Checkpoint B | — | **PASSED** — Macro C (P6–P7) authorized |
 | C9 | P6 | **DONE** — **P0-ABSENT** certified (no remediation; C7–C8 re-verified green) |
 | C10 | P7 | **DONE** — CAT/ARC arch hardening tests (`test_epic09_hardening_architecture`) |
+| C11 | P7 | **DONE** — `docs/ops/PERFORMANCE-BASELINE-REPORT.md` + readiness checklist |
 
 ### P6 / C9 — P0 certification
 
@@ -136,8 +138,19 @@ CAR → Regression → Docs → FR → Epic Close
 | Freeze stop rule (PRD-05) | N/A — no Category B pressure |
 | Category A / ARC-01 | Held — no Domain Contracts, Data Model, InterviewState, topology, persistence, or cache changes |
 
+### P7 / C11 — Performance production-readiness checklist
+
+| Criterion | Status |
+|---|---|
+| Baseline report published (AR-19 / PRD-02) | **PASS** — `docs/ops/PERFORMANCE-BASELINE-REPORT.md` |
+| SLO-D N/A documented (PRD-03 / O-01) | **PASS** |
+| In-scope SLOs + load + degradation | **PASS** (see baseline report §2 / §4) |
+| P0-ABSENT | **PASS** (C9) |
+| CAT/ARC arch tests (O-02) | **PASS** (C10) |
+| Full regression ≥ Pre-P1 | **Deferred to C12** |
+
 ---
 
 ## 8. Next planned activity
 
-**C11** — Performance baseline report + readiness checklist per `EPIC-09-IMPLEMENTATION-PLAN.md`.
+**C12** — Full regression certification + authorize CAR per `EPIC-09-IMPLEMENTATION-PLAN.md`.
