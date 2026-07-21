@@ -155,9 +155,9 @@ Deliver Category B Domain Contracts required by Architecture Freeze:
 
 | Artifact | Authorized “owner” (disposition) | Decision | Notes |
 |---|---|---|---|
-| `gradio_app.py` | EPIC-10 cleanup (CLN-01) | **DELETE** | Deploy purity |
-| `EvaluationBridgeDetector` + dedicated tests | EPIC-10 cleanup (CLN-02) | **DELETE** | Registry already excludes |
-| Obsolete MIG/TCP scaffolding tests (transitional dual-path only) | EPIC-10 cleanup (CLN-04) | **RETIRE** | Keep tests that still guard live invariants |
+| `gradio_app.py` | EPIC-10 cleanup (CLN-01) | **DELETE EXECUTED (P4)** | Deploy purity |
+| `EvaluationBridgeDetector` + dedicated tests | EPIC-10 cleanup (CLN-02) | **DELETE EXECUTED (P4)** | Registry already excludes |
+| Obsolete MIG/TCP scaffolding tests (transitional dual-path only) | EPIC-10 cleanup (CLN-04) | **RETIRE EXECUTED (P4)** | Retired MIG-06 derivation test trio; live TCP invariant tests kept |
 | Live TCP fields (`session_history`, `report`, `observation_store`, `candidate_profile_v2`, `candidate_identity_id`) | Existing node owners (§4.5) | **KEEP** | |
 | `InterviewState.report_output` (docs claim) | N/A — not on state | **DOCS CORRECT** (CLN-07) | UI `report_output` HTML surface unrelated |
 | CandidateProfile `dimension_scores` dual-model | Out of scope (AR-08) | **KEEP / TD** | Not EPIC-10 delete |

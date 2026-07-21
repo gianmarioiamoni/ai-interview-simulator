@@ -27,7 +27,7 @@ Results:
 * OPENAI_API_KEY validated at startup via pydantic model_validator; fail-fast on missing key
 * CORPUS_HF_REPO centralized in Settings; removed raw os.environ.get from corpus_loader
 * app/main.py now calls ensure_corpus() — local startup fail-fast aligned with app.py
-* gradio_app.py deprecated with SystemExit; superseded by app/main.py and app.py
+* gradio_app.py deleted (EPIC-V13-10 P4 / CLN-01); entrypoints remain app/main.py and app.py
 * configuration.md fully populated (all env vars, types, defaults, required flags)
 * .env.example created at project root
 * 22 new/updated tests: settings validation + corpus loader startup paths

@@ -127,7 +127,7 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | Evidence freshness weighting | Reserved for V1.2 | **Reserved (ADR-039)** |
 | `ProfileFeature` abstraction | Reserved for V1.2 | **Reserved (ADR-048)** |
 | `EvaluationSignalWriter` | `services/interview_reasoner/evaluation_signal_writer.py` | **Frozen (M2-8)** |
-| `EvaluationBridgeDetector` | `services/interview_reasoner/pattern_detection/detectors/evaluation_bridge_detector.py` | **Deprecated M2-7B / Remove V1.2** |
+| `EvaluationBridgeDetector` | *(deleted EPIC-V13-10 P4 / CLN-02)* | **Deleted** — superseded by `EvaluationSignalDetector` |
 | `LeadershipDetector` full specification | TDS §20.2 | **Design Frozen (M2-7F)** |
 | `CollaborationDetector` full specification | TDS §20.3 | **Design Frozen (M2-7F)** |
 | `AdaptabilityDetector` full specification | TDS §20.4 | **Design Frozen (M2-7F)** |
@@ -154,7 +154,7 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | 100 | `LeadershipDetector` | M2-7H | **Active** |
 | 110 | `CollaborationDetector` | M2-7I | **Active** |
 | 120 | `AdaptabilityDetector` | M2-7J | **Active** |
-| — | `EvaluationBridgeDetector` | M2-6A (superseded) | **Deprecated — not in registry** |
+| — | `EvaluationBridgeDetector` | M2-6A (superseded) | **Deleted (EPIC-V13-10 P4)** |
 
 ## Active ADRs
 
@@ -276,7 +276,7 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 |---|---|---|
 | TD-001 | EvaluationSignalWriter missing (P0-1 from M2-7M audit) | Shipped in M2-8; `evaluation_signal_writer.py` |
 | TD-002 | `questions_answered` counter not incremented per cycle (P0-2) | Fixed in `ReasonerService._propagate_evidence()` |
-| TD-003 | `EvaluationBridgeDetector` superseded but still present in codebase | Deprecated; removed from registry; file retained for V1.2 removal window |
+| TD-003 | `EvaluationBridgeDetector` superseded but still present in codebase | **CLOSED (EPIC-V13-10 P4)** — module + dedicated tests deleted |
 | TD-004 | `domain/contracts/reasoning/` count mismatch in INDEX (stated 19, actual 27) | Corrected in INDEX v1.6 |
 | TD-005 | Detector catalog in INDEX showed all detectors as "Planned" | Corrected to Active in INDEX v1.6 |
 
@@ -284,7 +284,7 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 
 | ID | Item | Priority | Reason | Planned Milestone | ADR |
 |---|---|---|---|---|---|
-| TD-006 | `EvaluationBridgeDetector` file deletion | P3 | Retained one-milestone per ADR-059 deprecation policy | V1.2 | ADR-059 |
+| TD-006 | `EvaluationBridgeDetector` file deletion | P3 | **CLOSED (EPIC-V13-10 P4 / CLN-02)** | EPIC-V13-10 | ADR-059 |
 | TD-007 | `InterviewMemoryContext` full removal | P2 | Deprecated M2; safe to remove once all consumers verified | M3 | ADR-032 |
 | TD-008 | `ReasoningTrace` not attached to `ReasonerDecision` output (ADR-041 arch-only) | P3 | Internal audit only; no external consumer yet | V1.2 | ADR-041 |
 | TD-009 | `ReasoningTrace` audit hashes (`input_hash`/`output_hash`) not implemented | P3 | ADR-047 arch direction | V1.2 | ADR-047 |
@@ -407,5 +407,5 @@ V1.2 ADRs start from **ADR-068**.
 | V1.2 M3 | CoachingEngine pipeline | ADR-067 |
 | V1.2 M4 | Behavioral ObservationModel | ADR-055, ADR-066 |
 | V1.2 M5 | Evidence freshness weighting | ADR-039 |
-| V1.2 M6 | EvaluationBridgeDetector removal | ADR-059, TD-006 |
+| V1.2 M6 | EvaluationBridgeDetector removal | **DONE** — EPIC-V13-10 P4 (ADR-059, TD-006) |
 | V1.2 M7 | Domain layer cleanup (InterviewMemoryContext removal) | ADR-032, TD-007 |

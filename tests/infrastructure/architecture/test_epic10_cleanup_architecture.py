@@ -1,6 +1,7 @@
 # tests/infrastructure/architecture/test_epic10_cleanup_architecture.py
 #
-# EPIC-10 Macro A / P1 — governance architecture gates (partial).
+# EPIC-10 architecture gates:
+# AT-02: Deleted stubs absent (gradio_app, EvaluationBridgeDetector) — Macro C / P4.
 # AT-04: INDEX Official Patterns lists OP-01…06 + P-08 cross-ref (AR-01, AR-02, REG-*).
 # AT-05: No Projection-as-PAT-04 mislabels in domain/contracts/report (AR-09, REG-06).
 
@@ -12,6 +13,20 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 INDEX_PATH = REPO_ROOT / "docs" / "master-plan" / "INDEX.md"
 REPORT_CONTRACTS_ROOT = REPO_ROOT / "domain" / "contracts" / "report"
+
+DELETED_STUB_PATHS: tuple[str, ...] = (
+    "gradio_app.py",
+    "services/interview_reasoner/pattern_detection/detectors/"
+    "evaluation_bridge_detector.py",
+    "tests/services/interview_reasoner/pattern_detection/detectors/"
+    "test_evaluation_bridge_detector.py",
+)
+
+RETIRED_MIG_SCAFFOLDING_TESTS: tuple[str, ...] = (
+    "tests/domain/profile/test_candidate_profile_derivation_service.py",
+    "tests/domain/profile/test_derived_profile_data.py",
+    "tests/domain/profile/test_derivation_rules.py",
+)
 
 REQUIRED_OP_IDS: tuple[str, ...] = (
     "OP-01",
@@ -32,6 +47,39 @@ PROJECTION_AS_PAT04_PATTERN = re.compile(
 def _read_index() -> str:
     assert INDEX_PATH.is_file(), f"Missing INDEX: {INDEX_PATH}"
     return INDEX_PATH.read_text(encoding="utf-8")
+
+
+class TestAT02DeletedStubsAbsent:
+    """AT-02 / CLN-01 / CLN-02 — deleted stubs must remain absent."""
+
+    def test_gradio_app_and_evaluation_bridge_detector_absent(self) -> None:
+        present = [
+            relative
+            for relative in DELETED_STUB_PATHS
+            if (REPO_ROOT / relative).exists()
+        ]
+        assert present == [], f"Deleted stubs still present: {present}"
+
+    def test_evaluation_bridge_detector_not_importable(self) -> None:
+        import importlib
+
+        try:
+            importlib.import_module(
+                "services.interview_reasoner.pattern_detection.detectors."
+                "evaluation_bridge_detector"
+            )
+        except ModuleNotFoundError:
+            return
+        raise AssertionError("EvaluationBridgeDetector module must not be importable")
+
+    def test_retired_mig_scaffolding_tests_absent(self) -> None:
+        """CLN-04 — obsolete MIG-06 derivation scaffolding tests retired."""
+        present = [
+            relative
+            for relative in RETIRED_MIG_SCAFFOLDING_TESTS
+            if (REPO_ROOT / relative).exists()
+        ]
+        assert present == [], f"Retired MIG scaffolding tests still present: {present}"
 
 
 class TestAT04IndexOfficialPatterns:
