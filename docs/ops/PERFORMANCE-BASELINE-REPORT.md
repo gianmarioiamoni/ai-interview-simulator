@@ -6,7 +6,8 @@
 **Primary certification LLM:** Deterministic stub/fake (AR-16)  
 **Governing Freeze:** `docs/master-plan/epics/EPIC-09-ARCHITECTURE-FREEZE.md`  
 **Harness sources:** `tests/performance/`, `scripts/performance/`  
-**P0 disposition:** **P0-ABSENT** (EPIC-09 C9)
+**P0 disposition:** **P0-ABSENT** (EPIC-09 C9)  
+**Release attachment:** **ATTACHED** to V1.3.0 (`v1.3.0` tag; ceremony 2026-07-22; Master Plan §5 / RR authorization)
 
 ---
 

@@ -5,6 +5,44 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.3.0] — 2026-07-22
+
+### Stable Release (SR-V1.3)
+
+- VERSION promoted from 1.1.0 to 1.3.0 stable
+- README Current Status updated to V1.3.0 Stable
+- Release Readiness Review: **RELEASE READY WITH OBSERVATIONS**
+- Architecture Scorecard: **CERTIFIED 9.7**
+- Maintainability Scorecard: **CERTIFIED 9.5**
+- Production-equivalent deployment validation: **VALIDATED WITH OBSERVATIONS**
+- Full regression at Final RR: **7409 passed / 0 failed**
+- Performance baseline report attached (`docs/ops/PERFORMANCE-BASELINE-REPORT.md`; P0-ABSENT)
+- All EPIC-V13-01…10 closed (FR passed); zero open V1.3-classified P0/P1
+
+### Production Completion (V1.3 Epics)
+
+- EPIC-01 — Legacy evaluation removal; `Report` sole scoring artifact; SessionHistory v2.0
+- EPIC-02 — `LongitudinalProfile` cross-session continuity and progress tracking
+- EPIC-03 — Deterministic `replay_node` and Replay UI (no LLM on replay path)
+- EPIC-04 — Session history / replay materialization hardening
+- EPIC-05 — Unified Report as primary deliverable
+- EPIC-06 — Explainability anchors on coaching assertions
+- EPIC-07 — Production UX hardening (primary flows; residual WCAG deferred)
+- EPIC-08 — Deployment & operations (health, graceful shutdown, runbooks)
+- EPIC-09 — Performance & scalability baseline (50-session load; SLOs met under stub LLM)
+- EPIC-10 — Final architecture cleanup (Ownership Matrix, PAT/OP registry, AT-01…07)
+
+### Release Gate Evidence
+
+- `docs/master-plan/V13-RELEASE-READINESS-REVIEW.md`
+- `docs/master-plan/V13-ARCHITECTURE-SCORECARD.md`
+- `docs/master-plan/V13-MAINTAINABILITY-SCORECARD.md`
+- `docs/master-plan/V13-DEPLOYMENT-VALIDATION.md`
+- `docs/ops/PERFORMANCE-BASELINE-REPORT.md`
+- `docs/ops/DEPLOYMENT-RUNBOOK.md`
+
+---
+
 ## [1.1.0] — 2026-07-01
 
 ### Stable Release (SR-1)

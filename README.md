@@ -204,42 +204,40 @@ Push to the HF Space repository. The `Dockerfile` and `spaces.yml` are already c
 
 ## Current Status
 
-**Version:** 1.1.0 Stable
+**Version:** 1.3.0 Stable
 
 - M1 (Humanizer / Follow-Up Engine) — Frozen
 - M2 (Interview Reasoner / 13 Detectors / EvaluationSignalWriter) — Frozen
-- API Freeze — Complete (M2-8)
-- Contract Freeze — Complete
-- Certification — Complete (M2-9)
-- Stable Release — Complete (SR-1, 2026-07-01)
-- Test suite: 2,802 passing / 0 failures
+- V1.2 Knowledge Pipeline / coaching continuity — Shipped
+- V1.3 Production release — Complete (SR-V1.3, 2026-07-22)
+- Release Readiness — RELEASE READY WITH OBSERVATIONS
+- Architecture — CERTIFIED 9.7 · Maintainability — CERTIFIED 9.5
+- Deployment validation — VALIDATED WITH OBSERVATIONS
+- Test suite (Final RR): 7,409 passing / 0 failures
+- Performance baseline — attached (`docs/ops/PERFORMANCE-BASELINE-REPORT.md`)
 
-V1.2 is planned. Extension points are reserved in V1.1 ADRs. See `docs/master-plan/PRD-V1.1-V1.2.md` and `docs/master-plan/INDEX.md`.
+See `docs/master-plan/V13-PRODUCT-MASTER-PLAN.md` and `docs/master-plan/INDEX.md`.
 
 ---
 
 ## Roadmap
 
-**V1.1 (current RC)**
-- Adaptive interview graph
-- Humanizer + follow-up engine
-- Interview Reasoner (13 detectors, deterministic, LLM-free)
-- EvaluationSignalWriter (same-cycle evidence visibility)
-- Structured coaching report with hire decision
+**V1.3 (current stable)**
+- Unified Report as sole scoring artifact
+- LongitudinalProfile cross-session continuity
+- Deterministic replay runtime and Replay UI
+- Explainability anchors on coaching assertions
+- Production UX, deployment/ops, and performance baseline
+- Architecture cleanup (Ownership Matrix, PAT/OP registry)
 
-**V1.2 (planned)**
-- ProfileFeature abstraction (ADR-048)
-- NarrativeGenerator consuming ProfileFeatures (ADR-050)
-- CoachingEngine pipeline (ADR-067)
-- Evidence freshness weighting (ADR-039)
-- Observation model for behavioral detectors (ADR-055, ADR-066)
-- Domain layer cleanup (TD-DL-001)
+**V1.1 / V1.2 (shipped foundation)**
+- Adaptive interview graph, Humanizer, Interview Reasoner
+- Knowledge pipeline and in-session coaching continuity
 
-**Future**
+**Future (V2+)**
 - Knowledge gap classification engine (ADR-020)
 - Multi-language coding engine (ADR-016)
-- Replay engine (ADR-023)
-- Progress tracking persistence (ADR-022)
+- REST API / multi-tenant / SaaS (Master Plan Deferred Features)
 
 ---
 

@@ -400,9 +400,9 @@ The following must be true before V1.3 is declared complete.
 
 ### Release
 
-- [ ] V1.3 release tag created with changelog. *(POSTPONED — Playbook §10: RR is the final gate before the V1.3 release tag; `VERSION` remains `1.1.0` until RR PASS)*
-- [x] All V1.2 features regression-verified at release gate. *(RR 2026-07-22 — **7378 passed / 0 failed** at HEAD `b77ffd8`; see `V13-RELEASE-READINESS-REVIEW.md`)*
-- [ ] Performance baseline report attached to release. *(POSTPONED — artifact exists; attach after RR PASS / tag ceremony)*
+- [x] V1.3 release tag created with changelog. *(ceremony 2026-07-22 — `VERSION`=`1.3.0`; tag `v1.3.0`; `CHANGELOG.md` `[1.3.0]`)*
+- [x] All V1.2 features regression-verified at release gate. *(Final RR 2026-07-22 — **7409 passed / 0 failed**; see `V13-RELEASE-READINESS-REVIEW.md`)*
+- [x] Performance baseline report attached to release. *(ceremony 2026-07-22 — `docs/ops/PERFORMANCE-BASELINE-REPORT.md` marked ATTACHED to V1.3.0)*
 
 ---
 
@@ -512,7 +512,7 @@ Preliminary profiling can begin in Phase 2. Full load test and SLO validation re
 **EPIC-V13-10 (Final Architecture Cleanup — full audit)** — **CLOSED WITH OBSERVATIONS** (2026-07-21)  
 Final audit pass complete. Ownership Matrix, PAT/OP registry, dead-code purity, and AT-01…07 gates certified. Living Overview: `docs/master-plan/epics/EPIC-10-OVERVIEW.md`. Non-blocking carry-forward: `TD-EP10-001`, `TD-EP10-002`.
 
-**V1.3 Release** — **RR COMPLETE — NOT RELEASE READY** (2026-07-22; `docs/master-plan/V13-RELEASE-READINESS-REVIEW.md`; no `v1.3*` tag; `VERSION` remains `1.1.0`)
+**V1.3 Release** — **RELEASED** (2026-07-22; Final RR **RELEASE READY WITH OBSERVATIONS**; `VERSION`=`1.3.0`; tag `v1.3.0`; see `V13-RELEASE-READINESS-REVIEW.md`)
 
 ---
 
@@ -602,3 +602,18 @@ V1.3 is officially complete and production-ready when all of the following are t
 **Cleared vs prior audit:** all epics FR-closed (including EPIC-06); Master Plan / Overview sync; RR regression **7378 / 0**.
 
 **VERSION / CHANGELOG / README / release tag:** remain postponed until a subsequent RR returns RELEASE READY (or RELEASE READY WITH OBSERVATIONS authorizing ceremony).
+
+---
+
+### Amendment — 2026-07-22 (V1.3 Release Finalization Ceremony)
+
+**Rationale:** Final RR returned **RELEASE READY WITH OBSERVATIONS** and authorized VERSION / CHANGELOG / README promotion, performance-baseline attach, and the V1.3 release tag (Playbook §10 post-PASS; RR §7).
+
+**Ceremony (documentation / identity only — no production code):**
+1. `VERSION` promoted `1.1.0` → `1.3.0`.
+2. `CHANGELOG.md` `[1.3.0]` entry finalized; `README.md` Current Status synchronized.
+3. Performance baseline report marked **ATTACHED** to V1.3.0.
+4. Git tag `v1.3.0` created on the release-finalization commit.
+5. Master Plan §5 Release items and §8 Phase 5 Release status closed as **RELEASED**.
+
+**Outcome:** V1.3 stable release finalized (`SR-V1.3`). Residual RR/DV observations remain non-blocking.

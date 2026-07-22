@@ -129,7 +129,7 @@ Note: Master Plan §5 Testing still labels historical `TD-EP05-001` PARTIAL text
 | O-RR-01 | Non-blocking | `InterviewEvaluationService` naming / comment residue | No |
 | O-RR-02 | Non-blocking | Env default-path hygiene residual | No |
 | O-RR-04 | Deferred | `TD-EP07-001` full axe/WCAG suite | No |
-| O-RR-06 | Deferred (ceremony) | VERSION / CHANGELOG / tag / baseline attach | No — post-RR |
+| O-RR-06 | Closed (ceremony) | VERSION / CHANGELOG / tag / baseline attach | No — completed in release finalization |
 | O-RR-07 | Non-blocking | Master Plan §5 Testing still mentions closed `TD-EP05-001` as PARTIAL | No (doc drift) |
 | O-DV-02 | Ops env | Docker image export failed (host/containerd); process-edge parity used | No |
 | O-DV-03 | Low | WeasyPrint native-lib warning at startup | No |

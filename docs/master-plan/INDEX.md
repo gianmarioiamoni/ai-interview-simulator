@@ -1,6 +1,6 @@
 # Master Plan Index — AI Interview Simulator V1.1 / V1.2
 
-**Status:** V1.1.0 STABLE (2026-07-01) · **V1.2 Architecture Freeze COMPLETE (2026-07-02)** · **DOC-M1 Pattern Freeze COMPLETE (2026-07-02)** · **RC-C Methodology Freeze COMPLETE (2026-07-03)**. VERSION=1.1.0. 2802 tests passing. All P0/P1 findings resolved. Platform Engineering Manifest and Enterprise Engineering Playbook established. Stable Release Certificate issued (SR-1). V1.2 Architecture Certificate issued (AC-V1.2). Implementation Baseline frozen. DOC-M1 Pattern Freeze issued: PAT-01 to PAT-04 accepted. RC-C Methodology Freeze: PAT-05 and PAT-06 accepted; CAR, Pattern Extraction, Runtime Ownership, and Methodology Evolution formalised.
+**Status:** **V1.3.0 STABLE (2026-07-22, SR-V1.3)** · V1.1.0 STABLE (SR-1, 2026-07-01) · V1.2 Architecture Freeze COMPLETE · DOC-M1 Pattern Freeze COMPLETE · RC-C Methodology Freeze COMPLETE. VERSION=1.3.0. Final RR: RELEASE READY WITH OBSERVATIONS (7409/0). Architecture CERTIFIED 9.7 · Maintainability CERTIFIED 9.5 · Deployment VALIDATED WITH OBSERVATIONS. Stable Release Certificate issued (SR-V1.3). Performance baseline attached to `v1.3.0`.
 
 ## V1.2 Architecture Freeze Summary
 
@@ -267,6 +267,7 @@ Signals written by `EvaluationSignalWriter` in `_inject_evaluation_signals` ARE 
 | 2.1 | 2026-07-02 | Engineering | DOC-M1 Pattern Freeze: V1.2-PATTERN-FREEZE.md created; PAT-01 to PAT-04 registered; Pattern Registry section added; Manifest v1.1 and Playbook v1.1 updated |
 | 2.2 | 2026-07-03 | Engineering | RC-C Methodology Freeze: PAT-05 and PAT-06 registered; CAR, Pattern Extraction, Runtime Ownership, Methodology Evolution formalised; Manifest v1.2 and Playbook v1.2 updated; Implementation Baseline v1.2 updated; STATUS promoted to RC-C COMPLETE |
 | 2.3 | 2026-07-21 | Engineering | EPIC-V13-10 P1: Official Patterns (ARC-01) section — OP-01…06 + P-08 cross-link; dual PAT/OP namespace note; Master Plan “five new PATs” = OP-01…04 + P-08 |
+| 2.4 | 2026-07-22 | Engineering | SR-V1.3 Stable Release: INDEX status promoted to V1.3.0 STABLE; SR-V1.3 certificate issued; VERSION/CHANGELOG/README synchronized; `v1.3.0` tag |
 
 ## Technical Debt Register (M2-8)
 
@@ -366,6 +367,54 @@ Documentation freeze: **COMPLETE**
 API freeze: **COMPLETE**
 
 **RECOMMENDATION: CERTIFIED FOR V1.1.0 STABLE RELEASE**
+
+---
+
+## V1.3.0 Stable Release Certificate
+
+**Certificate ID:** SR-V1.3  
+**Version:** 1.3.0  
+**Date:** 2026-07-22  
+**Status:** CERTIFIED STABLE (RELEASE READY WITH OBSERVATIONS)  
+**Tag:** `v1.3.0`
+
+### Gate Evidence
+
+| Gate | Result | Artifact |
+|---|---|---|
+| Release Readiness Review | RELEASE READY WITH OBSERVATIONS | `V13-RELEASE-READINESS-REVIEW.md` |
+| Architecture Score | 9.7 CERTIFIED | `V13-ARCHITECTURE-SCORECARD.md` |
+| Maintainability Score | 9.5 CERTIFIED | `V13-MAINTAINABILITY-SCORECARD.md` |
+| Deployment Validation | VALIDATED WITH OBSERVATIONS | `V13-DEPLOYMENT-VALIDATION.md` |
+| Performance baseline | ATTACHED (P0-ABSENT) | `docs/ops/PERFORMANCE-BASELINE-REPORT.md` |
+| Regression (Final RR) | 7409 passed / 0 failed | RR record |
+
+### Epic Completion
+
+| Epic | Status |
+|---|---|
+| EPIC-V13-01…05, 07, 09 | CLOSED |
+| EPIC-V13-06, 08, 10 | CLOSED WITH OBSERVATIONS (0 P0/P1) |
+
+### Release Identity
+
+| Item | Value |
+|---|---|
+| `VERSION` | 1.3.0 |
+| `CHANGELOG.md` | `[1.3.0]` entry |
+| `README.md` | Current Status — 1.3.0 Stable |
+| Open V1.3-classified P0/P1 | 0 |
+
+### Certification Verdict
+
+Final RR: **RELEASE READY WITH OBSERVATIONS**  
+Architecture / Maintainability: **CERTIFIED** (≥ 9.5)  
+Production-equivalent deploy: **VALIDATED WITH OBSERVATIONS**  
+Full regression: **7409 PASSED / 0 FAILED**  
+Performance baseline: **ATTACHED**  
+V1.3-classified P0/P1: **ZERO**
+
+**RECOMMENDATION: CERTIFIED FOR V1.3.0 STABLE RELEASE**
 
 ---
 
